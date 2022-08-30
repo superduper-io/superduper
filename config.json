@@ -1,0 +1,19 @@
+{
+  "single_thread": false,
+  "hash_set": {
+    "host": "localhost",
+    "port": 5000
+  },
+  "jobs": {
+    "host": "localhost",
+    "port": 5001
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 5002
+  },
+  "mongodb": {
+    "host": "localhost",
+    "port": 5003
+  }
+}

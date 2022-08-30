@@ -1,7 +1,8 @@
 import torch
 
+from sddb import cf
 from sddb.training.losses import NegativeLoss
-from sddb.training import RepresentationTrainer, ImputationTrainer
+from sddb.training.training import RepresentationTrainer, ImputationTrainer
 from tests.material.models import Dummy, DummyClassifier, DummyLabel
 
 
@@ -17,7 +18,7 @@ def test_representation_trainer(collection_no_hashes):
     model = Dummy()
 
     t = RepresentationTrainer(
-        client={},
+        client=cf['mongodb'],
         database='test_db',
         collection='test_collection',
         encoders=model,
@@ -37,7 +38,7 @@ def test_imputation_trainer(collection_no_hashes):
     label = DummyLabel()
 
     t = ImputationTrainer(
-        client={},
+        client=cf['mongodb'],
         database='test_db',
         collection='test_collection',
         encoders=(model, label),

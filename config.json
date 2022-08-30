@@ -10,7 +10,7 @@
   },
   "redis": {
     "host": "localhost",
-    "port": 5002
+    "port": 6379
   },
   "mongodb": {
     "host": "localhost",

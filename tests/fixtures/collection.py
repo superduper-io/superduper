@@ -5,6 +5,7 @@ import torch
 
 from sddb.models.converters import FloatTensor
 import sddb.client
+from sddb import cf
 
 
 def random_word():
@@ -21,9 +22,17 @@ def random_string():
     return str_.strip()
 
 
+def mongo_client():
+    return pymongo.MongoClient(**cf['mongodb'])
+
+
+def sddb_client():
+    return sddb.client.SddbClient(**cf['mongodb'])
+
+
 @pytest.fixture()
 def collection_no_hashes():
-    collection = pymongo.MongoClient().test_db.test_collection
+    collection = mongo_client().test_db.test_collection
     lookup = {True: 'apple', False: 'pear'}
     for i in range(10):
         if i < 8:
@@ -32,13 +41,14 @@ def collection_no_hashes():
         else:
             collection.insert_one({'test': random_string(), '_fold': 'valid',
                                    'fruit': lookup[random.random() < 0.5]})
-    yield sddb.client.SddbClient().test_db.test_collection
-    pymongo.MongoClient().drop_database('test_db')
+    yield sddb_client().test_db.test_collection
+    mongo_client().drop_database('test_db')
 
 
 @pytest.fixture()
 def collection_hashes():
-    collection = sddb.client.SddbClient().test_db.test_collection
+    sddb_client().drop_database('test_db')
+    collection = sddb_client().test_db.test_collection
 
     for i in range(10):
         if i < 8:
@@ -49,7 +59,7 @@ def collection_hashes():
                         'dummy': {
                             '_content': {
                                 'bytes': FloatTensor.encode(torch.randn(10)),
-                                'converter': 'sddb.converters.FloatTensor',
+                                'converter': 'sddb.models.converters.FloatTensor',
                             }
                         }
                     }
@@ -64,13 +74,13 @@ def collection_hashes():
                         'dummy': {
                             '_content': {
                                 'bytes': FloatTensor.encode(torch.randn(10)),
-                                'converter': 'sddb.converters.FloatTensor',
+                                'converter': 'sddb.models.converters.FloatTensor',
                             }
                         },
                         'valid_only': {
                             '_content': {
                                 'bytes': FloatTensor.encode(torch.randn(10)),
-                                'converter': 'sddb.converters.FloatTensor',
+                                'converter': 'sddb.models.converters.FloatTensor',
                             }
                         }
                     }
@@ -89,7 +99,7 @@ def collection_hashes():
                     'kwargs': {},
                 },
                 'name': 'dummy',
-                'converter': 'sddb.converters.FloatTensor',
+                'converter': 'sddb.models.converters.FloatTensor',
             }
         },
         'target': '_base'
@@ -106,18 +116,18 @@ def collection_hashes():
                     'kwargs': {},
                 },
                 'name': 'valid_only',
-                'converter': 'sddb.converters.FloatTensor',
+                'converter': 'sddb.models.converters.FloatTensor',
                 'filter': {'_fold': 'valid'}
             }
         },
         'target': '_base'
     })
 
-    collection = sddb.client.SddbClient().test_db.test_collection
+    collection = sddb_client().test_db.test_collection
 
     yield collection
 
-    pymongo.MongoClient().drop_database('test_db')
+    mongo_client().drop_database('test_db')
 
 
 @pytest.fixture()
@@ -138,6 +148,6 @@ def test_document2():
 @pytest.fixture()
 def delete():
     yield
-    pymongo.MongoClient().test_db.test_collection.delete_many({
+    mongo_client().test_db.test_collection.delete_many({
         'test': {'$in': ['abcd efgh', 'efgh ijkl']}
     })

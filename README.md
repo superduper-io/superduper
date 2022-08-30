@@ -1,6 +1,23 @@
 # Super Duper DB
 
-### Architecture
+## Installation
+
+### Mac OSX
+
+Install redis and mongodb
+
+```
+brew install redis
+brew install mongodb
+```
+
+Then install the python requirements
+
+```
+pip install -r requirements.txt
+```
+
+## Architecture
 
 ![](./img/architecture.png)
 

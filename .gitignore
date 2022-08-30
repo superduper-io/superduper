@@ -139,3 +139,6 @@ dmypy.json
 
 # Supervisord logs
 /logs
+
+# Config file (maybe sensitive)
+/config.json

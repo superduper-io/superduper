@@ -1,0 +1,12 @@
+flask
+numpy
+pillow
+pymongo
+pytest
+redis
+requests
+rq
+supervisor
+torch
+tqdm
+

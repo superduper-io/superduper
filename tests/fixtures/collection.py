@@ -30,9 +30,9 @@ def sddb_client():
     return sddb.client.SddbClient(**cf['mongodb'])
 
 
-@pytest.fixture()
+@pytest.fixture
 def collection_no_hashes():
-    collection = mongo_client().test_db.test_collection
+    collection = sddb_client().test_db.test_collection
     lookup = {True: 'apple', False: 'pear'}
     for i in range(10):
         if i < 8:
@@ -45,7 +45,54 @@ def collection_no_hashes():
     mongo_client().drop_database('test_db')
 
 
-@pytest.fixture()
+@pytest.fixture
+def collection_many_models():
+    collection = sddb_client().test_db.test_collection
+    collection.create_model({
+        'type': 'import',
+        'args': {
+            'path': 'tests.material.models.Dummy',
+            'kwargs': {},
+        },
+        'name': 'extra-1',
+        'converter': 'sddb.models.converters.FloatTensor',
+        'dependencies': [],
+    })
+    collection.create_model({
+        'type': 'import',
+        'args': {
+            'path': 'tests.material.models.Dummy',
+            'kwargs': {},
+        },
+        'name': 'extra-1-1',
+        'converter': 'sddb.models.converters.FloatTensor',
+        'dependencies': ['extra-1'],
+    })
+    collection.create_model({
+        'type': 'import',
+        'args': {
+            'path': 'tests.material.models.Dummy',
+            'kwargs': {},
+        },
+        'name': 'extra-1-2',
+        'converter': 'sddb.models.converters.FloatTensor',
+        'dependencies': ['extra-1'],
+    })
+    collection.create_model({
+        'type': 'import',
+        'args': {
+            'path': 'tests.material.models.Dummy',
+            'kwargs': {},
+        },
+        'name': 'extra-1-1-1',
+        'converter': 'sddb.models.converters.FloatTensor',
+        'dependencies': ['extra-1-1'],
+    })
+    yield collection
+    mongo_client().drop_database('test_db')
+
+
+@pytest.fixture
 def collection_hashes():
     sddb_client().drop_database('test_db')
     collection = sddb_client().test_db.test_collection
@@ -90,9 +137,8 @@ def collection_hashes():
 
     collection.create_semantic_index({
         'name': 'dummy',
-        'keys': ['_base'],
-        'models': {
-            '_base': {
+        'models': [
+            {
                 'type': 'import',
                 'args': {
                     'path': 'tests.material.models.Dummy',
@@ -101,15 +147,13 @@ def collection_hashes():
                 'name': 'dummy',
                 'converter': 'sddb.models.converters.FloatTensor',
             }
-        },
-        'target': '_base'
+        ],
     })
 
     collection.create_semantic_index({
         'name': 'valid_only',
-        'keys': ['_base'],
-        'models': {
-            '_base': {
+        'models': [
+            {
                 'type': 'import',
                 'args': {
                     'path': 'tests.material.models.Dummy',
@@ -117,10 +161,10 @@ def collection_hashes():
                 },
                 'name': 'valid_only',
                 'converter': 'sddb.models.converters.FloatTensor',
-                'filter': {'_fold': 'valid'}
+                'filter': {'_fold': 'valid'},
+                'key': '_base'
             }
-        },
-        'target': '_base'
+        ],
     })
 
     collection = sddb_client().test_db.test_collection
@@ -130,22 +174,22 @@ def collection_hashes():
     mongo_client().drop_database('test_db')
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_document():
     return {'test': 'abcd efgh'}
 
 
-@pytest.fixture()
+@pytest.fixture
 def special_test_document():
     return {'test': 'abcd efgh', 'special': True}
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_document2():
     return {'test': 'efgh ijkl'}
 
 
-@pytest.fixture()
+@pytest.fixture
 def delete():
     yield
     mongo_client().test_db.test_collection.delete_many({

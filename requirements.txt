@@ -1,4 +1,6 @@
 flask
+matplotlib
+networkx
 numpy
 pillow
 pymongo

@@ -20,6 +20,16 @@ def decode(handle, bytes_):
     return converters[handle].decode(bytes_)
 
 
+class Utf8:
+    @staticmethod
+    def encode(x):
+        return bytes(x)
+
+    @staticmethod
+    def decode(x):
+        return x.decode('utf-8')
+
+
 class PILImage:
     @staticmethod
     def encode(x):

@@ -1,7 +1,10 @@
+import random
 import time
 
+from sddb.lookup.hashes import HashSet
 from tests.fixtures.collection import (
-    collection_hashes, test_document, test_document2, delete, special_test_document
+    collection_hashes, test_document, test_document2, delete, special_test_document,
+    collection_many_models, random_string,
 )
 
 
@@ -38,8 +41,22 @@ def test_insert_many(collection_hashes, test_document, test_document2, delete):
     assert all(['dummy' in x['_outputs']['_base'] for x in docs])
 
 
+def test_insert_many_with_dependencies(collection_many_models):
+    lookup = {True: 'apple', False: 'pear'}
+    for i in range(10):
+        if i < 8:
+            collection_many_models.insert_one({'test': random_string(), '_fold': 'train',
+                                               'fruit': lookup[random.random() < 0.5]})
+        else:
+            collection_many_models.insert_one({'test': random_string(), '_fold': 'valid',
+                                               'fruit': lookup[random.random() < 0.5]})
+
+
 def test_get_hash_set(collection_hashes):
     assert tuple(collection_hashes.hash_set.h.shape) == (10, 10)
     collection_hashes.semantic_index = 'valid_only'
     assert tuple(collection_hashes.hash_set.h.shape) == (2, 10)
 
+
+def test_get_plan(collection_many_models):
+    collection_many_models._create_plan()

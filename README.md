@@ -1,4 +1,4 @@
-<a href="https://www.superduperdb.com"><img src="img/symbol_purple.png" width="125" align="right" /></a>
+<a href="https://www.superduperdb.com"><img src="img/symbol_purple.png" width="150" align="right" /></a>
 
 # Welcome to SuperDuperDB!
 

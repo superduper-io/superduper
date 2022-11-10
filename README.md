@@ -1,4 +1,4 @@
-# Super Duper DB
+![w:200](img/logo.png)
 
 ## Installation
 

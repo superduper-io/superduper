@@ -1,4 +1,9 @@
-![w:200](img/white_on_purple.png)
+<a href="https://www.superduperdb.com"><img src="img/purple.png" width="275" align="right" /></a>
+
+# Welcome to SuperDuperDB!
+
+> Revolutionizing AI by bringing deep learning and databases together
+
 
 ## Installation
 

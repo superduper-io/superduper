@@ -40,6 +40,11 @@ class MongoStyleDict(dict):
 
 
 def create_batch(args):
+    """
+    Create a singleton batch in a manner similar to the PyTorch dataloader
+
+    :param args: single data point for batching
+    """
     if isinstance(args, (tuple, list)):
         return tuple([create_batch(x) for x in args])
     if isinstance(args, dict):
@@ -54,6 +59,8 @@ def create_batch(args):
 def unpack_batch(args):
     """
     Unpack a batch into lines of tensor output.
+
+    :param args: a batch of model outputs
 
     >>> unpack_batch(torch.randn(1, 10))[0].shape
     torch.Size([10])
@@ -92,6 +99,15 @@ def unpack_batch(args):
 
 
 def apply_model(model, args, single=True, verbose=False, **kwargs):
+    """
+    Apply model to args including pre-processing, forward pass and post-processing.
+
+    :param model: model object including methods *preprocess*, *forward* and *postprocess*
+    :param args: single or multiple data points over which to evaluate model
+    :param single: toggle to apply model to single or multiple (batched) datapoints.
+    :param verbose: display progress bar
+    :param kwargs: key, value pairs to be passed to dataloader
+    """
     if single:
         prepared = model.preprocess(args)
         singleton_batch = create_batch(prepared)

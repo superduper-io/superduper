@@ -32,6 +32,7 @@ def sddb_client():
 
 @pytest.fixture
 def collection_no_hashes():
+    mongo_client().drop_database('test_db')
     collection = sddb_client().test_db.test_collection
     lookup = {True: 'apple', False: 'pear'}
     for i in range(10):
@@ -146,6 +147,7 @@ def collection_hashes():
                 },
                 'name': 'dummy',
                 'converter': 'sddb.models.converters.FloatTensor',
+                'active': True,
             }
         ],
     })
@@ -162,7 +164,8 @@ def collection_hashes():
                 'name': 'valid_only',
                 'converter': 'sddb.models.converters.FloatTensor',
                 'filter': {'_fold': 'valid'},
-                'key': '_base'
+                'key': '_base',
+                'active': True,
             }
         ],
     })

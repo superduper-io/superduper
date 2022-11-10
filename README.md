@@ -28,10 +28,3 @@ pip install -r requirements.txt
 1. Redis database - database instance for rq master
 1. Job worker - worker node(s) for jobs, computes vectors, and performs model trainings.
    Retrieves jobs from redis.
-   
-## TODO
-
-- concept of multiple downloads per collection (e.g. download website, apply extractor, get urls)
-- model registry in mongo
-- some models allowed to go into main record and not into `_outputs`
-- models in mongodb filesystem https://pymongo.readthedocs.io/en/stable/examples/gridfs.html

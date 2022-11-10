@@ -2,7 +2,7 @@ from sddb.client import SddbClient
 from bson import BSON
 from flask import request, Flask
 
-# https://flask.palletsprojects.com/en/2.1.x/patterns/streaming/ streaming for the find method
+# https://flask.palletsprojects.com/en/2.1.x/patterns/streaming/ streaming for the find endpoint
 
 from sddb import cf
 

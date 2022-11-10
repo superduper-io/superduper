@@ -1,7 +1,10 @@
-from sddb.training.loading import QueryDataset
 import torch
 import torch.utils.data
+
 from sddb import cf
+from sddb.training.loading import QueryDataset
+
+from tests.fixtures.collection import collection_hashes
 
 
 def test_query_dataset(collection_hashes):

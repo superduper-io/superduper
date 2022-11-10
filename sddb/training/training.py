@@ -85,7 +85,7 @@ class Trainer:
 
     @property
     def client(self):
-        return SddbClient(*self._client)
+        return SddbClient(**self._client)
 
     @property
     def database(self):
@@ -103,6 +103,9 @@ class Trainer:
     def apply_splitter_and_encoders(self, sample):
         if self.splitter is not None:
             sample = self.splitter(sample)
+        else:
+            # This is for example the classification case
+            sample = [sample for _ in self.learn_fields]
         return _Mapped([x.preprocess for x in self.learn_encoders], self.learn_fields)(sample)
 
     @property
@@ -268,19 +271,19 @@ class RepresentationTrainer(Trainer):
         self.collection.create_semantic_index({
             'name': name,
             'keys': self.fields,
-            'models': {
-                f'{k}': {
+            'models': [
+                {
                     'name': f'{name}:{i}',
                     'object': self.encoders[i],
                     'active': i == len(self.fields) - 1,
                     'type': 'in_memory',
                     'args': {},
                     'filter': {'_fold': 'valid'},
-                    'converter': 'sddb.converters.FloatTensor',
+                    'converter': 'sddb.models.converters.FloatTensor',
+                    'key': self.fields[i],
                 }
                 for i, k in enumerate(self.fields)
-            },
-            'target': f'{self.fields[-1]}'
+            ],
         })
         self.collection.semantic_index = name
 

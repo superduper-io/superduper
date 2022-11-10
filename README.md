@@ -2,7 +2,7 @@
 
 # Welcome to SuperDuperDB!
 
-> Revolutionizing AI by bringing deep learning and databases together
+> Transforming AI by bringing deep learning and databases together
 
 
 ## Installation

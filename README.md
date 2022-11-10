@@ -1,4 +1,4 @@
-![w:200](img/logo.png)
+![w:200](img/black.png)
 
 ## Installation
 

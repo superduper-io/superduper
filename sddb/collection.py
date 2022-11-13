@@ -1,14 +1,16 @@
+import sys
 from collections import defaultdict
 import hashlib
 import multiprocessing
 import networkx
 import random
+import warnings
+warnings.filterwarnings('ignore')
 
 from pymongo import UpdateOne
 from pymongo.collection import Collection as BaseCollection
 from pymongo.cursor import Cursor
 import torch.utils.data
-import tqdm
 
 from sddb import cf
 from sddb import models
@@ -16,7 +18,7 @@ from sddb.lookup import hashes
 from sddb.models.converters import decode, encode
 from sddb import requests as sddb_requests
 from sddb.training.loading import BasicDataset
-from sddb.utils import apply_model, unpack_batch, MongoStyleDict, Downloader
+from sddb.utils import apply_model, unpack_batch, MongoStyleDict, Downloader, Progress
 
 
 class ArgumentDefaultDict(defaultdict):
@@ -28,7 +30,6 @@ class ArgumentDefaultDict(defaultdict):
 
 class SddbCursor(Cursor):
     def __init__(self, collection, *args, features=None, convert=True, **kwargs):
-        print(args)
         super().__init__(collection, *args, **kwargs)
         self.attr_collection = collection
         self.features = features
@@ -201,8 +202,8 @@ class Collection(BaseCollection):
         c = self.find(filter, {f'_outputs.{key}.{name}': 1})
         loaded = []
         ids = []
-        docs = tqdm.tqdm(c, total=n_docs)
-        docs.set_description(f'loading hashes: "{name}"')
+        docs = Progress()(c, total=n_docs)
+        print(f'loading hashes: "{name}"')
         for r in docs:
             h = r['_outputs'][key][name]
             loaded.append(h)
@@ -218,15 +219,18 @@ class Collection(BaseCollection):
 
     def process_documents_with_model(self, model_name, ids=None, batch_size=10,
                                      verbose=False):
+        print('getting requires')
         if 'requires' not in self._model_info[model_name]:
             filter = {'_id': {'$in': ids}}
         else:
             filter = {'_id': {'$in': ids},
-                      '$exists': {self._model_info[model_name]['requires']: 1}}
+                      self._model_info[model_name]['requires']: {'$exists': 1}}
+        print('finding documents under filter')
         documents = list(self.find(
             filter,
             features=self._model_info[model_name].get('features', {})
         ))
+        print('done.')
         ids = [r['_id'] for r in documents]
         for r in documents:
             del r['_id']
@@ -240,8 +244,8 @@ class Collection(BaseCollection):
         if hasattr(model, 'forward'):
             loader = torch.utils.data.DataLoader(inputs, batch_size=batch_size)
             if verbose:
-                loader = tqdm.tqdm(loader)
-                loader.set_description(f'processing with {model_name}')
+                print(f'processing with {model_name}')
+                loader = Progress()(loader, file=sys.stdout)
             outputs = []
             has_post = hasattr(model, 'postprocess')
             for batch in loader:
@@ -278,21 +282,22 @@ class Collection(BaseCollection):
         else:
             tmp = [{model_name: out} for out in outputs]
         key = self._model_info[model_name].get('key', '_base')
-        for i, r in enumerate(tmp):
-            if 'target' not in self._model_info[model_name]:
-                self.bulk_write([
-                    UpdateOne({'_id': id},
-                              {'$set': {f'_outputs.{key}.{model_name}': r[model_name]}})
-                    for id in ids
-                ])
-            else:
-                self.bulk_write([
-                    UpdateOne({'_id': id},
-                              {'$set': {
-                                  self._model_info[model_name]['target']: r[model_name]
-                              }})
-                    for id in ids
-                ])
+        print('bulk writing...')
+        if 'target' not in self._model_info[model_name]:
+            self.bulk_write([
+                UpdateOne({'_id': id},
+                          {'$set': {f'_outputs.{key}.{model_name}': tmp[i][model_name]}})
+                for i, id in enumerate(ids)
+            ])
+        else:
+            self.bulk_write([
+                UpdateOne({'_id': id},
+                          {'$set': {
+                              self._model_info[model_name]['target']: tmp[i][model_name]
+                          }})
+                for i, id in enumerate(ids)
+            ])
+        print('done.')
         return tmp
 
     @staticmethod
@@ -411,28 +416,39 @@ class Collection(BaseCollection):
                                     blocking=True)
         return output
 
-    def download_content(self, ids):
-        assert ids is not None
-        documents = list(self.find({'_id': {'$in': ids}}, {'_outputs': 0}, raw=True))
-        urls, keys, ids = self._gather_urls(documents)
+    def download_content(self, ids=None, documents=None, download_folder=None,
+                         timeout=-1):
+        if documents is None:
+            assert ids is not None
+            documents = list(self.find({'_id': {'$in': ids}}, {'_outputs': 0}, raw=True))
+        urls, keys, place_ids = self._gather_urls(documents)
         if not urls:
             return
         files = []
+        if download_folder is None:
+            download_folder = self.meta.get('downloads', 'data/downloads')
         for url in urls:
             files.append(
-                f'{self.meta["data"]}/{hashlib.sha1(url.encode("utf-8")).hexdigest()}'
+                f'{download_folder}/{hashlib.sha1(url.encode("utf-8")).hexdigest()}'
             )
         downloader = Downloader(
             urls=urls,
             files=files,
             n_workers=self.meta.get('n_download_workers', 0),
-            timeout=self.download_timeout
+            timeout=self.download_timeout if timeout == -1  else timeout,
         )
         downloader.go()
-        self.bulk_write([
-            UpdateOne({'_id': id_}, {'$set': {f'{key}._content.path': file}})
-            for id_, key, file in zip(ids, keys, files)
-        ])
+        if ids is not None:
+            self.bulk_write([
+                UpdateOne({'_id': id_}, {'$set': {f'{key}._content.path': file}})
+                for id_, key, file in zip(place_ids, keys, files)
+            ])
+        else:
+            for id_, key, file in zip(place_ids, keys, files):
+                tmp = MongoStyleDict(documents[id_])
+                tmp[f'{key}._content.path'] = file
+                documents[id_] = tmp
+            return documents
 
     def insert_many(
         self,
@@ -441,10 +457,9 @@ class Collection(BaseCollection):
         verbose=False,
         **kwargs,
     ):
-        if 'valid_probability' in self.meta:
-            for document in documents:
-                r = random.random()
-                document['_fold'] = 'valid' if r < self.meta['valid_probability'] else 'train'
+        for document in documents:
+            r = random.random()
+            document['_fold'] = 'valid' if r < self.meta.get('valid_probability', 0.05) else 'train'
         output = super().insert_many(documents, *args, **kwargs)
         self._process_documents(output.inserted_ids, verbose=verbose)
         return output
@@ -478,30 +493,24 @@ class Collection(BaseCollection):
             self._process_documents(ids)
         return result
 
-    def find_nearest(self, semantic_index, h=None, n=100, model=None, document=None,
-                     ids=None):
-        if self.single_thread:
-            if model is not None:
-                model = self._models[model]
-                with torch.no_grad():
-                    h = apply_model(model, document, True)[0]
-            si = self.semantic_index['name']
-            self.semantic_index = semantic_index
-            if ids is None:
-                hash_set = self.hash_set
-            else:
-                hash_set = self.hash_set[ids]
-            output = hash_set.find_nearest_from_hash(h, n=n)
-            self.semantic_index = si
-            return output
+    def _find_nearest(self, filter, ids=None):
+        assert '$like' in filter
+        if ids is None:
+            hash_set = self.hash_set
         else:
-            return sddb_requests.hash_set.find_nearest(
-                self.database.name,
-                self.name,
-                self.semantic_index['name'],
-                document=document,
-                model=model,
-            )
+            hash_set = self.hash_set[ids]
+        if '_id' in filter['$like']['document']:
+            return hash_set.find_nearest_from_id(filter['$like']['document']['_id'],
+                                                 n=filter['$like']['n'])
+        else:
+            man = next(man for man in self.semantic_index['models']
+                       if man['key'] in filter['$like']['document'])
+            model = self._models[man['name']]
+            document = MongoStyleDict(filter['$like']['document'])
+            r = document[man['key']] if man['key'] != '_base' else document
+            with torch.no_grad():
+                h = apply_model(model, r, True)[0]
+        return hash_set.find_nearest_from_hash(h, n=filter['$like']['n'])
 
     def find_one(self, filter=None, *args, similar_first=True, raw=False, features=None,
                  convert=True, **kwargs):
@@ -522,23 +531,6 @@ class Collection(BaseCollection):
             return result
         return None
 
-    def _find_similar(self, filter, like_place, ids=None):
-        document = (
-            filter['$like']['document'] if like_place == '_base'
-            else filter[like_place]['$like']['document']
-        )
-        model = next(
-            man['name'] for man in self.semantic_index['models']
-            if man.get('key', '_base') == like_place
-        )
-        return self.find_nearest(
-            semantic_index=self.semantic_index['name'],
-            model=model,
-            document=document,
-            n=filter[like_place]['$like']['n'] if like_place != '_base' else filter['$like']['n'],
-            ids=ids,
-        )
-
     @staticmethod
     def _test_only_like(r):
         """
@@ -558,9 +550,6 @@ class Collection(BaseCollection):
 
     @staticmethod
     def _remove_like_from_filter(r):
-        for k in r:
-            if isinstance(r[k], dict):
-                r[k] = Collection._remove_like_from_filter(r[k])
         return {k: v for k, v in r.items() if k != '$like'}
 
     @staticmethod
@@ -587,9 +576,9 @@ class Collection(BaseCollection):
                         else:
                             return f'{k}.{like_place}'
 
-    def _find_similar_then_matches(self, filter, like_place, *args, raw=False,
+    def _find_similar_then_matches(self, filter, *args, raw=False,
                                    convert=True, **kwargs):
-        similar = self._find_similar(filter, like_place)
+        similar = self._find_nearest(filter)
         only_like = self._test_only_like(filter)
         if not only_like:
             new_filter = self._remove_like_from_filter(filter)
@@ -606,7 +595,7 @@ class Collection(BaseCollection):
         else:
             return SddbCursor(self, filter, *args, convert=convert, **kwargs)
 
-    def _find_matches_then_similar(self, filter, like_place, *args, raw=False,
+    def _find_matches_then_similar(self, filter, *args, raw=False,
                                    convert=True, **kwargs):
         only_like = self._test_only_like(filter)
         if not only_like:
@@ -620,26 +609,37 @@ class Collection(BaseCollection):
                 **kwargs,
             )
             ids = [x['_id'] for x in matches_cursor]
-            similar = self._find_similar(filter, like_place, ids=ids)
+            similar = self._find_nearest(filter, ids=ids)
         else:
-            similar = self._find_similar(filter, like_place)
+            similar = self._find_nearest(filter)
         if raw:
             return Cursor(self, {'_id': {'$in': similar['ids']}})
         else:
             return SddbCursor(self, {'_id': {'$in': similar['ids']}}, convert=convert)
 
     def find(self, filter=None, *args, similar_first=True, raw=False,
-             features=None, convert=True, **kwargs):
+             features=None, convert=True, download=False, **kwargs):
+        if download:
+            assert '_id' not in filter
+            filter['_id'] = 0
+            urls = self._gather_urls([filter])[0]
+            if urls:
+                filter = self.download_content(documents=[filter], download_folder='/tmp',
+                                               timeout=None)[0]
+                filter = SddbCursor.convert_types(filter)
+            del filter['_id']
+
         if filter is None:
             filter = {}
         like_place = self._find_like_operator(filter)
+        assert (like_place is None or like_place == '_base')
         if like_place is not None:
             filter = MongoStyleDict(filter)
             if similar_first:
-                return self._find_similar_then_matches(filter, like_place, *args, raw=raw,
+                return self._find_similar_then_matches(filter, *args, raw=raw,
                                                        convert=convert, **kwargs)
             else:
-                return self._find_matches_then_similar(filter, like_place, *args, raw=raw,
+                return self._find_matches_then_similar(filter, *args, raw=raw,
                                                        convert=convert, **kwargs)
         else:
             if features is not None:

@@ -17,7 +17,6 @@ from sddb.training.loading import BasicDataset
 
 
 class MongoStyleDict(dict):
-    # TODO consider adding '_base' as special case
     def __getitem__(self, item):
         if '.' not in item:
             return super().__getitem__(item)
@@ -120,7 +119,7 @@ def apply_model(model, args, single=True, verbose=False, **kwargs):
         loader = torch.utils.data.DataLoader(inputs, **kwargs)
         out = []
         if verbose:
-            progress = tqdm.tqdm(total=len(args))
+            progress = Progress()(total=len(args))
         for batch in loader:
             tmp = model.forward(batch)
             tmp = unpack_batch(tmp)
@@ -207,7 +206,7 @@ class Downloader:
                           connections.
         :param test: If *True* perform a test run.
         """
-        progress_bar = tqdm.tqdm(total=len(self.urls))
+        progress_bar = Progress(total=len(self.urls), file=sys.stdout)
         progress_bar.set_description('downloading from urls')
         self.failed = 0
         progress_bar.set_description("failed: 0")
@@ -313,3 +312,34 @@ class Downloader:
                 self._async_apply_callback(args=(r.content, self.urls[i], self.files[i]))
             else:  # pragma: no cover
                 self.callback(r.content, self.urls[i], self.files[i])
+
+
+def basic_progress(iterator, *args, total=None, **kwargs):
+    it = 1
+    if total is None:
+        try:
+            total = len(iterator)
+        except AttributeError:
+            pass
+    for item in iterator:
+        if total is not None:
+            if it == total:
+                print(f'({it}/{total})')
+            else:
+                print(f'({it}/{total})\r', end='')
+        else:
+            print(f'({it}...)\r', end='')
+        yield item
+        it += 1
+
+
+class Progress:
+    style = 'basic'
+
+    def __call__(self, *args, **kwargs):
+        if self.style == 'tqdm':
+            return tqdm.tqdm(*args, **kwargs)
+        elif self.style == 'basic':
+            return basic_progress(*args, **kwargs)
+        else:
+            raise NotImplementedError(f'style of progress not implemented {self.style}')

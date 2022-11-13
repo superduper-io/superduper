@@ -1,10 +1,12 @@
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 import io
 import json
 import pprint
 import os
 import time
 
+import bson
+from jinja2 import Environment, BaseLoader
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -15,13 +17,15 @@ app = Flask(__name__)
 CORS(app)
 
 
-@app.route('/insert', methods=['POST'])
+@app.route('/insert_many', methods=['POST'])
 def upload():
-    file = request.files['file'].decode('utf-8')
+    args = request.args
+    collection = client[args['database']][args['collection']]
+    file = request.files['file'].read().decode('utf-8')
     json_content = json.loads(file)
     with open('logs/gui.log', 'w') as f:
         with redirect_stdout(Unbuffered(f)):
-            client.ebay.documents.insert_many(json_content)
+            collection.insert_many(json_content, verbose=True)
     return jsonify(msg='ok')
 
 
@@ -61,14 +65,58 @@ def stream():
     return app.response_class(generate(), mimetype='text/event-stream')
 
 
+@app.route('/list_database_names', methods=['GET'])
+def list_database_names():
+    dbs = client.list_database_names()
+    dbs = [db for db in dbs if db not in {'config', 'admin', 'local'}
+           and not db.startswith('_')]
+    return jsonify(dbs)
+
+
+@app.route('/list_collection_names', methods=['GET'])
+def list_collection_names():
+    database = request.args['database']
+    collections = client[database].list_collection_names()
+    collections = [collection for collection in collections
+                   if not collection.startswith('_') and '._' not in collection]
+    return jsonify(collections)
+
+
+def replace_id_with_object_id(filter):
+    for k in filter:
+        if k == '_id':
+            filter[k] = bson.ObjectId(filter['_id'])
+        elif isinstance(filter[k], dict):
+            filter[k] = replace_id_with_object_id(filter[k])
+    return filter
+
+
 @app.route('/find', methods=['POST'])
-def main():
+def find():
     data = request.get_json()
-    print(data)
-    result = client.ebay.documents.find_one({}, {'page': 0})
+    collection = client[data['database']][data['collection']]
+    data['filter'] = replace_id_with_object_id(data['filter'])
+    print(data['filter'])
+    raw_c = collection.find(data['filter'], {'_outputs': 0}, raw=True, download=True)
+    html_template = collection.meta['html_template']
+    raw_out = []
+    it = 0
+    for r in raw_c:
+        raw_out.append(r)
+        it += 1
+        if it >= data.get('n', 10):
+            break
     buffer = io.StringIO()
-    pprint.pprint(result, buffer)
-    return jsonify({"printed": buffer.getvalue()})
+    pprint.pprint(raw_out, buffer)
+    html_template = Environment(loader=BaseLoader).from_string(html_template)
+    html = '\n'.join([
+        html_template.render(r=r)
+        for r in raw_out
+    ])
+    return jsonify({
+        "printed": buffer.getvalue(),
+        "html": html,
+    })
 
 
 if __name__ == '__main__':

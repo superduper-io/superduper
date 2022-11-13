@@ -206,7 +206,7 @@ class Downloader:
                           connections.
         :param test: If *True* perform a test run.
         """
-        progress_bar = Progress(total=len(self.urls), file=sys.stdout)
+        progress_bar = tqdm.tqdm(total=len(self.urls))
         progress_bar.set_description('downloading from urls')
         self.failed = 0
         progress_bar.set_description("failed: 0")
@@ -315,22 +315,22 @@ class Downloader:
 
 
 def basic_progress(iterator, *args, total=None, **kwargs):
-    it = 1
     if total is None:
         try:
             total = len(iterator)
         except AttributeError:
             pass
-    for item in iterator:
-        if total is not None:
-            if it == total:
-                print(f'({it}/{total})')
+    if total is not None:
+        chunksize = int(total / 10)
+    else:
+        chunksize = 10
+    for i, item in enumerate(iterator):
+        if (i + 1) % chunksize == 0:
+            if total is not None:
+                print(f'({i + 1}/{total})')
             else:
-                print(f'({it}/{total})\r', end='')
-        else:
-            print(f'({it}...)\r', end='')
+                print(f'({i + 1}...)')
         yield item
-        it += 1
 
 
 class Progress:

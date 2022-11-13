@@ -1,4 +1,3 @@
-import tqdm
 from torch.utils import data
 import pymongo
 
@@ -82,10 +81,11 @@ class QueryDataset(data.Dataset):
         self.filter = filter if filter is not None else {}
         self.download = download
 
+        from sddb.utils import Progress
         if not self.download:
             cursor = self.collection.find(self.filter, {'_id': 1})
             self.ids = []
-            docs = tqdm.tqdm(cursor, total=len(self))
+            docs = Progress()(cursor, total=len(self))
             docs.set_description(f'downloading ids for {filter}')
             for r in docs:
                 self.ids.append(r['_id'])
@@ -93,7 +93,7 @@ class QueryDataset(data.Dataset):
             cursor = self.collection.find(self.filter)
             self.ids = []
             self.documents = {}
-            docs = tqdm.tqdm(cursor, total=len(self))
+            docs = Progress()(cursor, total=len(self))
             docs.set_description(f'downloading records for {filter}')
             for r in docs:
                 self.ids.append(r['_id'])

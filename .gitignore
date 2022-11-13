@@ -149,3 +149,5 @@ dmypy.json
 # links
 /architectures
 /sddb/servers/static
+/converters
+/models

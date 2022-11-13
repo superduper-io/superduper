@@ -1,3 +1,4 @@
+import os
 import sys
 from collections import defaultdict
 import hashlib
@@ -738,7 +739,8 @@ class Collection(BaseCollection):
                 '<existing-model-name>',
                 {
                     'name': '<name-of-model-to-be-added>',
-                    'type': ...
+                    'path': '<path-to-pickle>',
+                    'object': '<python-object[optional]>'
                     'active': True/False # one should be active
                     'filter': '<active-set-of-model>',
                     'key': 'the-key'
@@ -764,21 +766,24 @@ class Collection(BaseCollection):
         if 'semantic_index' not in self.meta:
             self.update_meta_data('semantic_index', manifest['name'])
 
-    def create_model(self, manifest):
+    def create_model(self, manifest, in_memory=False):
         '''
         manifest = {
             'name': '<model-name>',
-            'type': '<import-type>',
-            'args': '<arguments-to-import-type>',
             'filter': '<active-set-of-model>',
             'converter': '<import-path-of-converter[optional]>',
+            'path': '<path-to-pickle>',
             'object': '<python-object[optional]>',
             'active': '<toggle-to-false-for-not-watching-inserts[optional]',
         }
         '''
+        if 'object' in manifest and not in_memory:
+            assert not os.path.exists(manifest['path'])
+            models.loading.save(manifest['object'], manifest['path'])
+            del manifest['object']
         assert manifest['name'] not in self['_models'].distinct('name'), \
             f'Model {manifest["name"]} already exists!'
-        if manifest['type'] == 'in_memory':
+        if in_memory:
             self._models[manifest['name']] = manifest['object']
         self['_models'].insert_one({k: v for k, v in manifest.items() if k != 'object'})
 
@@ -787,7 +792,7 @@ class Collection(BaseCollection):
         manifest = {
             'name': '<metric-name>',
             'type': '<object-type>',  # import, pickle, ...
-            'args': '<arguments-to-import-type>',
+            'path': '<path-to-pickle>',
             'task': '<imputation/classification>',
         }
         '''

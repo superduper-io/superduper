@@ -35,6 +35,7 @@ class SddbCursor(Cursor):
         self.attr_collection = collection
         self.features = features
         self.convert = convert
+        # self.filesystem = self.__da
 
     @staticmethod
     def convert_types(r, convert=True):
@@ -43,7 +44,8 @@ class SddbCursor(Cursor):
                 if '_content' in r[k]:
                     if 'bytes' in r[k]['_content']:
                         if convert:
-                            r[k] = decode(r[k]['_content']['converter'], r[k]['_content']['bytes'])
+                            r[k] = decode(r[k]['_content']['converter'],
+                                          r[k]['_content']['bytes'])
                         else:
                             pass
                     elif 'path' in r[k]['_content']:
@@ -98,6 +100,10 @@ class Collection(BaseCollection):
         self.single_thread = cf.get('single_thread', True)
         self.remote = cf.get('remote', False)
         self.download_timeout = 2
+
+    @property
+    def filesystem(self):
+        return self.database.client.filesystem
 
     def _load_model(self, name):
         manifest = self['_models'].find_one({'name': name})
@@ -721,16 +727,6 @@ class Collection(BaseCollection):
         assert manifest['name'] not in self['_losses'].distinct('name')
         self['_losses'].insert_one(manifest)
 
-    def compile_neighbours(self):
-        '''
-        Find ids of similar items, and add these to the records (used for retrieval
-        enhanced deep learning)
-
-        Useful for e.g. retrieval enhanced ML
-        '''
-        # TODO do this
-        ...
-
     def create_semantic_index(self, manifest):
         '''
         manifest = {
@@ -739,22 +735,27 @@ class Collection(BaseCollection):
                 '<existing-model-name>',
                 {
                     'name': '<name-of-model-to-be-added>',
-                    'path': '<path-to-pickle>',
                     'object': '<python-object[optional]>'
-                    'active': True/False # one should be active
+                    'active': True/False, # at least one model should be active
                     'filter': '<active-set-of-model>',
                     'key': 'the-key'
                 },
             ],
             'metrics': [
-                {
-                    'name': 'p@1',
-                    'type': ...,
-                    'args': {...},
-                }
+                {'name': 'p@1', 'object': '<python-object[optional]>'},
+                '<existing-metric-name>
             ],
-            'loss': 'loss to use[optional]',
-            'measure': 'dot',
+            (
+                'loss': '<name-of-existing-loss>',
+                or
+                {'name': '<loss-name>', 'object': '<python-object[optional]>'},
+            ),
+            (
+                'measure': '<name-of-existing-measure>'
+                or
+                {'name': '<measure-name>', 'object': '<python-object[optional]>'},
+            )
+
         }
         '''
         for i, man in enumerate(manifest['models']):
@@ -772,9 +773,8 @@ class Collection(BaseCollection):
             'name': '<model-name>',
             'filter': '<active-set-of-model>',
             'converter': '<import-path-of-converter[optional]>',
-            'path': '<path-to-pickle>',
             'object': '<python-object[optional]>',
-            'active': '<toggle-to-false-for-not-watching-inserts[optional]',
+            'active': '<toggle-to-false-for-not-watching-inserts[optional]>',
         }
         '''
         if 'object' in manifest and not in_memory:
@@ -786,6 +786,9 @@ class Collection(BaseCollection):
         if in_memory:
             self._models[manifest['name']] = manifest['object']
         self['_models'].insert_one({k: v for k, v in manifest.items() if k != 'object'})
+
+    def _create_file_object(self):
+        ...
 
     def create_metric(self, manifest):
         '''

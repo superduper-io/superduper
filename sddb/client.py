@@ -1,4 +1,6 @@
 from pymongo.mongo_client import MongoClient
+import gridfs
+
 from . import database
 from sddb import cf
 
@@ -8,6 +10,7 @@ class SddbClient(MongoClient):
         super().__init__(*args, **kwargs)
         self.args = args
         self.kwargs = kwargs
+        self.filesystem = gridfs.GridFS(self['_sddb_files'])
 
     def __repr__(self):
         return f'SddbClient({self.args, self.kwargs})'

@@ -1,11 +1,15 @@
+import io
 import pickle
 
 
-def load(r):
-    with open(r['path'], 'rb') as f:
-        return pickle.load(f)
+def load(file_id, filesystem):
+    bytes_ = filesystem.get(file_id).read()
+    f = io.BytesIO(bytes_)
+    return pickle.load(f)
 
 
-def save(model, path):
-    with open(path, 'wb') as f:
-        pickle.dump(model, f)
+def save(object, filesystem):
+    with io.BytesIO() as f:
+        pickle.dump(object, f)
+        bytes_ = f.getvalue()
+    return filesystem.put(bytes_)

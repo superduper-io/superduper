@@ -1,9 +1,10 @@
+import pickle
+
 import pymongo
 import pytest
 import random
 import torch
 
-from sddb.models.converters import FloatTensor
 import sddb.client
 from sddb import cf
 
@@ -48,47 +49,32 @@ def collection_no_hashes():
 
 @pytest.fixture
 def collection_many_models():
+    with open('tests/material/pickles/dummy.pkl', 'rb') as f:
+        m = pickle.load(f)
     collection = sddb_client().test_db.test_collection
-    collection.create_model({
-        'type': 'import',
-        'args': {
-            'path': 'tests.material.models.Dummy',
-            'kwargs': {},
-        },
-        'name': 'extra-1',
-        'converter': 'sddb.models.converters.FloatTensor',
-        'dependencies': [],
-    })
-    collection.create_model({
-        'type': 'import',
-        'args': {
-            'path': 'tests.material.models.Dummy',
-            'kwargs': {},
-        },
-        'name': 'extra-1-1',
-        'converter': 'sddb.models.converters.FloatTensor',
-        'dependencies': ['extra-1'],
-    })
-    collection.create_model({
-        'type': 'import',
-        'args': {
-            'path': 'tests.material.models.Dummy',
-            'kwargs': {},
-        },
-        'name': 'extra-1-2',
-        'converter': 'sddb.models.converters.FloatTensor',
-        'dependencies': ['extra-1'],
-    })
-    collection.create_model({
-        'type': 'import',
-        'args': {
-            'path': 'tests.material.models.Dummy',
-            'kwargs': {},
-        },
-        'name': 'extra-1-1-1',
-        'converter': 'sddb.models.converters.FloatTensor',
-        'dependencies': ['extra-1-1'],
-    })
+    collection.create_model(
+        object=m,
+        name='extra-1',
+        converter='float_tensor',
+    )
+    collection.create_model(
+        object=m,
+        name='extra-1-1',
+        converter='float_tensor',
+        dependencies=['extra-1'],
+    )
+    collection.create_model(
+        object=m,
+        name='extra-1-2',
+        converter='float_tensor',
+        dependencies=['extra-1'],
+    )
+    collection.create_model(
+        object=m,
+        name='extra-1-1-1',
+        converter='float_tensor',
+        dependencies=['extra-1-1'],
+    )
     yield collection
     mongo_client().drop_database('test_db')
 
@@ -97,6 +83,9 @@ def collection_many_models():
 def collection_hashes():
     sddb_client().drop_database('test_db')
     collection = sddb_client().test_db.test_collection
+    with open('tests/material/fixtuers/float_tensor.pkl', 'rb') as f:
+        float_tensor = pickle.load(f)
+    collection.create_converter('float_tensor', float_tensor)
 
     for i in range(10):
         if i < 8:
@@ -106,8 +95,8 @@ def collection_hashes():
                     '_base': {
                         'dummy': {
                             '_content': {
-                                'bytes': FloatTensor.encode(torch.randn(10)),
-                                'converter': 'sddb.models.converters.FloatTensor',
+                                'bytes': float_tensor.encode(torch.randn(10)),
+                                'converter': 'float_tensor',
                             }
                         }
                     }
@@ -121,14 +110,14 @@ def collection_hashes():
                     '_base': {
                         'dummy': {
                             '_content': {
-                                'bytes': FloatTensor.encode(torch.randn(10)),
-                                'converter': 'sddb.models.converters.FloatTensor',
+                                'bytes': float_tensor.encode(torch.randn(10)),
+                                'converter': 'float_tensor',
                             }
                         },
                         'valid_only': {
                             '_content': {
-                                'bytes': FloatTensor.encode(torch.randn(10)),
-                                'converter': 'sddb.models.converters.FloatTensor',
+                                'bytes': float_tensor.encode(torch.randn(10)),
+                                'converter': 'float_tensor',
                             }
                         }
                     }
@@ -136,45 +125,41 @@ def collection_hashes():
                 '_fold': 'valid',
             })
 
-    collection.create_semantic_index({
-        'name': 'dummy',
-        'models': [
+    with open('tests/material/pickles/float_tensor.pkl') as f:
+        dummy = pickle.load(f)
+
+    collection.create_semantic_index(
+        name='dummy',
+        models=[
             {
-                'type': 'import',
-                'args': {
-                    'path': 'tests.material.models.Dummy',
-                    'kwargs': {},
-                },
+                'object': dummy,
                 'name': 'dummy',
-                'converter': 'sddb.models.converters.FloatTensor',
+                'converter': 'float_tensor',
                 'active': True,
             }
         ],
-    })
+    )
 
-    collection.create_semantic_index({
-        'name': 'valid_only',
-        'models': [
+    collection.create_semantic_index(
+        name='valid_only',
+        models=[
             {
-                'type': 'import',
-                'args': {
-                    'path': 'tests.material.models.Dummy',
-                    'kwargs': {},
-                },
+                'object': dummy,
                 'name': 'valid_only',
-                'converter': 'sddb.models.converters.FloatTensor',
+                'converter': 'float_tensor',
                 'filter': {'_fold': 'valid'},
                 'key': '_base',
                 'active': True,
             }
         ],
-    })
+    )
 
     collection = sddb_client().test_db.test_collection
 
     yield collection
 
     mongo_client().drop_database('test_db')
+    mongo_client().drop_database('_test_db:test_collection:files')
 
 
 @pytest.fixture
@@ -198,3 +183,24 @@ def delete():
     mongo_client().test_db.test_collection.delete_many({
         'test': {'$in': ['abcd efgh', 'efgh ijkl']}
     })
+
+
+@pytest.fixture
+def loaded_model():
+    with open('tests/material/pickles/dummy.pkl', 'rb') as f:
+        m = pickle.load(f)
+        yield m
+
+
+@pytest.fixture
+def loaded_converter():
+    with open('tests/material/pickles/float_tensor.pkl', 'rb') as f:
+        m = pickle.load(f)
+        yield m
+
+
+@pytest.fixture
+def cleanup_models():
+    yield
+    collection = sddb_client().test_db.test_collection
+    collection.delete_models(['test-model'], force=True)

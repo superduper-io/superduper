@@ -1,11 +1,14 @@
-import os
+import click
 import sys
 from collections import defaultdict
 import hashlib
 import multiprocessing
+
+import gridfs
 import networkx
 import random
 import warnings
+
 warnings.filterwarnings('ignore')
 
 from pymongo import UpdateOne
@@ -14,9 +17,8 @@ from pymongo.cursor import Cursor
 import torch.utils.data
 
 from sddb import cf
-from sddb import models
 from sddb.lookup import hashes
-from sddb.models.converters import decode, encode
+from sddb.models import loading
 from sddb import requests as sddb_requests
 from sddb.training.loading import BasicDataset
 from sddb.utils import apply_model, unpack_batch, MongoStyleDict, Downloader, Progress
@@ -29,41 +31,43 @@ class ArgumentDefaultDict(defaultdict):
         return super().__getitem__(item)
 
 
+def convert_types(r, convert=True, converters=None):
+    if converters is None:
+        converters = {}
+    for k in r:
+        if isinstance(r[k], dict):
+            if '_content' in r[k]:
+                if 'bytes' in r[k]['_content']:
+                    if convert:
+                        converter = converters[r[k]['_content']['converter']]
+                        r[k] = converter.decode(r[k]['_content']['bytes'])
+                    else:
+                        pass
+                elif 'path' in r[k]['_content']:
+                    try:
+                        with open(r[k]['_content']['path'], 'rb') as f:
+                            if convert:
+                                converter = converters[r[k]['_content']['converter']]
+                                r[k] = converter.decode(f.read())
+                            else:
+                                r[k]['_content']['bytes'] = f.read()
+                    except FileNotFoundError:
+                        return
+                else:
+                    raise NotImplementedError(
+                        f'neither "bytes" nor "path" found in record {r}'
+                    )
+            else:
+                convert_types(r[k], convert=convert, converters=converters)
+    return r
+
+
 class SddbCursor(Cursor):
     def __init__(self, collection, *args, features=None, convert=True, **kwargs):
         super().__init__(collection, *args, **kwargs)
         self.attr_collection = collection
         self.features = features
         self.convert = convert
-        # self.filesystem = self.__da
-
-    @staticmethod
-    def convert_types(r, convert=True):
-        for k in r:
-            if isinstance(r[k], dict):
-                if '_content' in r[k]:
-                    if 'bytes' in r[k]['_content']:
-                        if convert:
-                            r[k] = decode(r[k]['_content']['converter'],
-                                          r[k]['_content']['bytes'])
-                        else:
-                            pass
-                    elif 'path' in r[k]['_content']:
-                        try:
-                            with open(r[k]['_content']['path'], 'rb') as f:
-                                if convert:
-                                    r[k] = decode(r[k]['_content']['converter'], f.read())
-                                else:
-                                    r[k]['_content']['bytes'] = f.read()
-                        except FileNotFoundError:
-                            return
-                    else:
-                        raise NotImplementedError(
-                            f'neither "bytes" nor "path" found in record {r}'
-                        )
-                else:
-                    SddbCursor.convert_types(r[k], convert=convert)
-        return r
 
     def next(self):
         r = super().next()
@@ -74,7 +78,7 @@ class SddbCursor(Cursor):
                     r[k] = r['_outputs'][k][self.features[k]]
                 else:
                     r = {'_base': r['_outputs'][k][self.features[k]]}
-        r = self.convert_types(r, convert=self.convert)
+        r = convert_types(r, convert=self.convert, converters=self.attr_collection.converters)
         if r is None:
             return self.next()
         else:
@@ -95,22 +99,74 @@ class Collection(BaseCollection):
         })
         self._hash_set = None
         self._model_info = ArgumentDefaultDict(self._get_model_info)
-        self._models = ArgumentDefaultDict(self._load_model)
         self._all_hash_sets = ArgumentDefaultDict(self._load_hashes)
         self.single_thread = cf.get('single_thread', True)
         self.remote = cf.get('remote', False)
         self.download_timeout = 2
+        self._filesystem = None
+        self._filesystem_name = f'_{self.database.name}:{self.name}:files'
+
+        self.models = ArgumentDefaultDict(lambda x: self._load_object('models', x))
+        self.converters = ArgumentDefaultDict(lambda x: self._load_object('converters', x))
+        self.losses = ArgumentDefaultDict(lambda x: self._load_object('losses', x))
+        self.metrics = ArgumentDefaultDict(lambda x: self._load_object('metrics', x))
+        self.measures = ArgumentDefaultDict(lambda x: self._load_object('measures', x))
 
     @property
     def filesystem(self):
-        return self.database.client.filesystem
+        if self._filesystem is None:
+            self._filesystem = gridfs.GridFS(
+                self.database.client[self._filesystem_name]
+            )
+        return self._filesystem
 
-    def _load_model(self, name):
-        manifest = self['_models'].find_one({'name': name})
+    def _create_pickled_file(self, object):
+        return loading.save(object, filesystem=self.filesystem)
+
+    def _load_pickled_file(self, file_id):
+        return loading.load(file_id, filesystem=self.filesystem)
+
+    def _create_object(self, type, name, object):
+        assert name not in self[f'_{type}'].distinct('name')
+        file_id = self._create_pickled_file(object)
+        self[f'_{type}'].insert_one({'name': name, 'object': file_id})
+
+    def create_loss(self, name, object):
+        return self._create_object('losses', name, object)
+
+    def create_model(self, name, object, filter=None, converter=None, active=True, in_memory=False,
+                     dependencies=None, key='_base'):
+        if dependencies is None:
+            dependencies = []
+        assert name not in self['_models'].distinct('name'), \
+            f'Model {name} already exists!'
+        if converter and isinstance(converter, dict):
+            self.create_converter(**converter)
+            converter = converter['name']
+        elif converter:
+            assert isinstance(converter, str)
+            assert converter in self['_converters'].distinct('name')
+        if not in_memory:
+            file_id = self._create_pickled_file(object)
+            self['_models'].insert_one({
+                'name': name,
+                'object': file_id,
+                'filter': filter if filter else {},
+                'converter': converter,
+                'active': active,
+                'dependencies': dependencies,
+                'key': key,
+            })
+        else:
+            self.models[name] = object
+
+    def _load_object(self, type, name):
+        manifest = self[f'_{type}'].find_one({'name': name})
         if manifest is None:
-            raise Exception(f'No such model "{name}" has been registered.')
-        m = models.loading.load(manifest)
-        m.eval()
+            raise Exception(f'No such object of type "{type}", "{name}" has been registered.')
+        m = self._load_pickled_file(manifest['object'])
+        if type == 'models':
+            m.eval()
         return m
 
     def _get_meta(self):
@@ -121,10 +177,6 @@ class Collection(BaseCollection):
 
     def _get_model_info(self, name):
         return self['_models'].find_one({'name': name})
-
-    @property
-    def models(self):
-        return self._models
 
     @property
     def active_models(self):
@@ -246,7 +298,7 @@ class Collection(BaseCollection):
             passed_docs = [r[key] for r in documents]
         else:
             passed_docs = documents
-        model = self._models[model_name]
+        model = self.models[model_name]
         inputs = BasicDataset(passed_docs, model.preprocess)
         if hasattr(model, 'forward'):
             loader = torch.utils.data.DataLoader(inputs, batch_size=batch_size)
@@ -277,10 +329,11 @@ class Collection(BaseCollection):
                     outputs.append(model.preprocess(r))
 
         if 'converter' in self._model_info[model_name]:
+            converter = self.converters[self._model_info[model_name]['converter']]
             tmp = [
                 {model_name: {
                     '_content': {
-                        'bytes': encode(self._model_info[model_name]['converter'], x),
+                        'bytes': converter.encode(x),
                         'converter': self._model_info[model_name]['converter']
                     }
                 }}
@@ -373,7 +426,7 @@ class Collection(BaseCollection):
                     else:
                         dependencies = sum([
                             job_ids[dep]
-                            for dep in self._model_info[model]['dependencies']
+                            for dep in self._model_info[model].get('dependencies', [])
                         ], [])
                     process_id = sddb_requests.jobs.process_documents_with_model(
                         database=self.database.name,
@@ -512,7 +565,7 @@ class Collection(BaseCollection):
         else:
             man = next(man for man in self.semantic_index['models']
                        if man['key'] in filter['$like']['document'])
-            model = self._models[man['name']]
+            model = self.models[man['name']]
             document = MongoStyleDict(filter['$like']['document'])
             r = document[man['key']] if man['key'] != '_base' else document
             with torch.no_grad():
@@ -633,7 +686,7 @@ class Collection(BaseCollection):
             if urls:
                 filter = self.download_content(documents=[filter], download_folder='/tmp',
                                                timeout=None)[0]
-                filter = SddbCursor.convert_types(filter)
+                filter = convert_types(filter, converters=self.converters)
             del filter['_id']
 
         if filter is None:
@@ -656,6 +709,27 @@ class Collection(BaseCollection):
                 return Cursor(self, filter, *args, **kwargs)
             else:
                 return SddbCursor(self, filter, *args, convert=convert, **kwargs)
+
+    def _delete_objects(self, type, objects=None, force=False):
+        if objects is None:
+            objects = self[f'_{type}'].distinct('name')
+        if click.confirm(f'You are about to delete these {type}: {objects}, are you sure?',
+                         default=False) or force:
+            for r in self[f'_{type}'].find({'name': {'$in': objects}}):
+                self.filesystem.delete(r['object'])
+                self[f'_{type}'].delete_one({'name': r['name']})
+
+    def delete_converters(self, converters=None, force=False):
+        return self._delete_objects('converters', objects=converters, force=force)
+
+    def delete_metrics(self, metrics=None, force=False):
+        return self._delete_objects('metrics', objects=metrics, force=force)
+
+    def delete_losses(self, losses=None, force=False):
+        return self._delete_objects('losses', objects=losses, force=force)
+
+    def delete_models(self, models=None, force=False):
+        return self._delete_objects('models', objects=models, force=force)
 
     def delete_one(
         self,
@@ -682,131 +756,65 @@ class Collection(BaseCollection):
     def list_models(self):
         return self['_models'].distinct('name')
 
+    def list_converters(self):
+        return self['_converters'].distinct('name')
+
+    def list_losses(self):
+        return self['_losses'].distinct('name')
+
+    def list_measures(self):
+        return self['_measures'].distinct('name')
+
     def list_semantic_indexes(self):
         return self['_semantic_indexes'].distinct('name')
 
     def list_imputations(self):
         raise NotImplementedError
 
-    def create_imputation(self, models):
-        '''
-        manifest = {
-            'name': '<thename>',
-            'input': ['<key1>'],
-            'label': ['<key2>'],
-            'models': {
-                '<key1>': '<existing-model>',
-                '<key2[optional]>': {
-                    'name': '<name-of-model-for-label-encoding>',
-                    'type': ...,
-                    'active': False # one should be inactive,
-                },
-            },
-            'metrics': [
-                {
-                    'name': 'p@1',
-                    'type': ...,
-                    'args': {...},
-                }
-            ],
-            'filter': '<active-set-of-model>',
-        }
-        '''
+    def create_imputation(self, *args, **kwargs):
+        raise NotImplementedError
 
-    def create_loss(self, manifest):
-        '''
-        manifest = {
-            'name': '<thename>',
-            'type': 'import',
-            'args': {
-                'path': '...',
-                'kwargs': {...}
-            },
-        }
-        '''
-        assert manifest['name'] not in self['_losses'].distinct('name')
-        self['_losses'].insert_one(manifest)
-
-    def create_semantic_index(self, manifest):
-        '''
-        manifest = {
-            'name': '<thename>',
-            'models': [
-                '<existing-model-name>',
-                {
-                    'name': '<name-of-model-to-be-added>',
-                    'object': '<python-object[optional]>'
-                    'active': True/False, # at least one model should be active
-                    'filter': '<active-set-of-model>',
-                    'key': 'the-key'
-                },
-            ],
-            'metrics': [
-                {'name': 'p@1', 'object': '<python-object[optional]>'},
-                '<existing-metric-name>
-            ],
-            (
-                'loss': '<name-of-existing-loss>',
-                or
-                {'name': '<loss-name>', 'object': '<python-object[optional]>'},
-            ),
-            (
-                'measure': '<name-of-existing-measure>'
-                or
-                {'name': '<measure-name>', 'object': '<python-object[optional]>'},
-            )
-
-        }
-        '''
-        for i, man in enumerate(manifest['models']):
+    def create_semantic_index(self, name, models, metrics=None, loss=None, measure=None):
+        for i, man in enumerate(models):
             if isinstance(man, str):
                 continue
-            self.create_model(man)
-            manifest['models'][i] = man['name']
-        self['_semantic_indexes'].insert_one(manifest)
+            self.create_model(**man)
+            models[i] = man['name']
+
+        if metrics is not None:
+            for i, man in enumerate(metrics):
+                if isinstance(man, str):
+                    continue
+                self.create_metric(**man)
+                metrics[i] = man['name']
+
+        if loss is not None:
+            if isinstance(loss, str):
+                pass
+            else:
+                self.create_loss(**loss)
+
+        if measure is not None:
+            if isinstance(measure, str):
+                pass
+            else:
+                self.create_measure(**measure)
+
+        self['_semantic_indexes'].insert_one({
+            'name': name,
+            'models': models,
+            'metrics': metrics,
+            'loss': loss,
+            'measure': measure,
+        })
         if 'semantic_index' not in self.meta:
-            self.update_meta_data('semantic_index', manifest['name'])
+            self.update_meta_data('semantic_index', name)
 
-    def create_model(self, manifest, in_memory=False):
-        '''
-        manifest = {
-            'name': '<model-name>',
-            'filter': '<active-set-of-model>',
-            'converter': '<import-path-of-converter[optional]>',
-            'object': '<python-object[optional]>',
-            'active': '<toggle-to-false-for-not-watching-inserts[optional]>',
-        }
-        '''
-        if 'object' in manifest and not in_memory:
-            assert not os.path.exists(manifest['path'])
-            models.loading.save(manifest['object'], manifest['path'])
-            del manifest['object']
-        assert manifest['name'] not in self['_models'].distinct('name'), \
-            f'Model {manifest["name"]} already exists!'
-        if in_memory:
-            self._models[manifest['name']] = manifest['object']
-        self['_models'].insert_one({k: v for k, v in manifest.items() if k != 'object'})
+    def create_converter(self, name, object):
+        return self._create_object('converters', name, object)
 
-    def _create_file_object(self):
-        ...
-
-    def create_metric(self, manifest):
-        '''
-        manifest = {
-            'name': '<metric-name>',
-            'type': '<object-type>',  # import, pickle, ...
-            'path': '<path-to-pickle>',
-            'task': '<imputation/classification>',
-        }
-        '''
-        assert manifest['name'] not in self['_metrics'].distinct('name'), \
-            f'Metric {manifest["name"]} already exists!'
-        self['_metrics'].insert_one(manifest)
-
-    def load_metric(self, name):
-        r = self['_metrics'].find_one({'name': name})
-        m = models.loading.load(r)
-        return m
+    def create_metric(self, name, object):
+        return self._create_object('metrics', name, object)
 
     def update_meta_data(self, key, value):
         self['_meta'].update_one({}, {'$set': {key: value}}, upsert=True)

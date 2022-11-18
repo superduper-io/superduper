@@ -46,10 +46,6 @@ def find_one():
     collection = collections[f'{database}.{collection}']
     collection.remote = False
     collection.single_thread = True
-    import warnings
-    warnings.warn(str(filter))
-    warnings.warn(str(args))
-    warnings.warn(str(kwargs))
     result = collection.find_one(filter, *args, convert=False, **kwargs)
     return bytes(BSON.encode(result))
 

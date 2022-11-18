@@ -555,6 +555,9 @@ class Collection(BaseCollection):
 
     def _find_nearest(self, filter, ids=None):
         assert '$like' in filter
+        print(filter)
+        if set(filter['$like'].keys()) == {'_id'}:
+            filter['$like'] = {'document': {'_id': filter['$like']['_id']}, 'n': 10}
         if ids is None:
             hash_set = self.hash_set
         else:
@@ -713,6 +716,10 @@ class Collection(BaseCollection):
     def _delete_objects(self, type, objects=None, force=False):
         if objects is None:
             objects = self[f'_{type}'].distinct('name')
+        for k in objects:
+            if k in getattr(self, type):
+                del getattr(self, type)[k]
+
         if click.confirm(f'You are about to delete these {type}: {objects}, are you sure?',
                          default=False) or force:
             for r in self[f'_{type}'].find({'name': {'$in': objects}}):

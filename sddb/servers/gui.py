@@ -1,5 +1,5 @@
 import pickle
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import redirect_stdout
 import io
 import json
 import pprint
@@ -102,14 +102,16 @@ def create_model():
     file_bytes = request.files['file'].read()
     model = pickle.loads(file_bytes)
     assert manifest['name'].split('.pkl')[0]
-    if si:
-        client[database][collection].create_semantic_index({
-            'name': manifest['name'],
-            'models': [{'object': model, **manifest}],
-            'measure': 'css'
-        })
-    else:
-        client[database][collection].create_model(object=model, **manifest)
+    with open('logs/gui.log', 'w') as f:
+        with redirect_stdout(Unbuffered(f)):
+            if si:
+                client[database][collection].create_semantic_index(
+                    name=manifest['name'],
+                    models=[{'object': model, **manifest}],
+                    verbose=True,
+                )
+            else:
+                client[database][collection].create_model(object=model, **manifest, verbose=True)
     return 'ok'
 
 
@@ -120,6 +122,7 @@ def find():
     data['filter'] = replace_id_with_object_id(data['filter'])
     print(data['filter'])
     raw_c = collection.find(data['filter'], {'_outputs': 0}, raw=True, download=True)
+    c = collection.find(data['filter'], download=True)
     html_template = collection.meta['html_template']
     raw_out = []
     it = 0
@@ -128,8 +131,15 @@ def find():
         it += 1
         if it >= data.get('n', 10):
             break
+    it = 0
+    out = []
+    for r in c:
+        out.append(r)
+        it += 1
+        if it >= data.get('n', 10):
+            break
     buffer = io.StringIO()
-    pprint.pprint(raw_out, buffer)
+    pprint.pprint(out, buffer)
     html_template = Environment(loader=BaseLoader).from_string(html_template)
     html = '\n'.join([
         html_template.render(r=r)

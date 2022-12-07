@@ -30,7 +30,7 @@ def _handle_function_output(func, database, collection, *args, identifier=None, 
 
 
 def _download_content(collection, ids):
-    return collection.download_content(ids=ids)
+    return collection._download_content(ids=ids)
 
 
 def download_content(database, collection, ids, identifier=None):
@@ -44,7 +44,7 @@ def download_content(database, collection, ids, identifier=None):
 
 
 def _process_documents_with_model(collection, model_name, ids, batch_size=10, verbose=False):
-    collection.process_documents_with_model(
+    collection._process_documents_with_model(
         model_name=model_name,
         ids=ids,
         batch_size=batch_size,

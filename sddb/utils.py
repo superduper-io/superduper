@@ -332,7 +332,7 @@ def basic_progress(iterator, *args, total=None, **kwargs):
 
 
 class Progress:
-    style = 'tqdm'
+    style = 'basic'
 
     def __call__(self, *args, **kwargs):
         if self.style == 'tqdm':

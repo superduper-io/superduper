@@ -65,6 +65,20 @@ def convert_types(r, convert=True, converters=None):
 
 class SddbCursor(Cursor):
     def __init__(self, collection, *args, features=None, convert=True, scores=None, **kwargs):
+        """
+        Cursor subclassing *pymongo.cursor.Cursor*. Converts content on disk to Python objects
+        if *convert==True*. If *features* are specified, these are substituted in the records
+        for the raw data. This is useful, for instance if images are present, and they should
+        be featurized by a certain model. If *scores* are added, these are added to the results
+        records.
+
+        :param collection: collection
+        :param *args: args to pass to super()
+        :param features: feature dictionary
+        :param convert: toggle to *True* to interpret bytes in records using converters
+        :param scores: similarity scores to add to records
+        :param **kwargs: kwargs to pass to super()
+        """
         super().__init__(collection, *args, **kwargs)
         self.attr_collection = collection
         self.features = features
@@ -94,6 +108,46 @@ class SddbCursor(Cursor):
 
 
 class Collection(BaseCollection):
+    """
+    SuperDuperDB collection type, subclassing *pymongo.collection.Collection*.
+    Key methods are:
+
+    Creating objects:
+
+    - *create_model*
+    - *create_semantic_index*
+    - *create_imputation*
+    - *create_converter*
+    - *create_loss*
+    - *create_metric*
+
+    Inserting, searching and updating data:
+
+    - *insert_one
+    - *find_one*
+    - *update_one*
+    - *insert_many
+    - *find_many*
+    - *update_many*
+
+    Viewing meta-data
+
+    - *list_models*
+    - *list_semantic_indexes*
+    - *list_imputations*
+    - *list_converters*
+    - *list_losss*
+    - *list_metrics*
+
+    Key properties:
+
+    - *meta* (meta data of collection)
+    - *models* (dictionary of models)
+    - *losses* (dictionary of losses)
+    - *metrics* (dictionary of metrics)
+    - *converters* (dictionary of converters)
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._meta = None
@@ -106,7 +160,7 @@ class Collection(BaseCollection):
         self._all_hash_sets = ArgumentDefaultDict(self._load_hashes)
         self.single_thread = cf.get('single_thread', True)
         self.remote = cf.get('remote', False)
-        self.download_timeout = 2
+        self.download_timeout = None
         self._filesystem = None
         self._filesystem_name = f'_{self.database.name}:{self.name}:files'
 
@@ -138,14 +192,37 @@ class Collection(BaseCollection):
         self[f'_{type}'].insert_one({'name': name, 'object': file_id})
 
     def create_loss(self, name, object):
+        """
+        Create a loss function directly from a Python object.
+
+        :param name: name of loss function
+        :param object: Python object
+        """
         return self._create_object('losses', name, object)
 
     def create_model(self, name, object=None, filter=None, converter=None, active=True, in_memory=False,
                      dependencies=None, key='_base', verbose=False, semantic_index=False,
                      process_docs=True, loader_kwargs=None, max_chunk_size=5000, features=None):
         """
-        :param name:
-        :param object: If specified the model object (pickle-able) else None if model already exists
+        Create a model registered in the collection directly from a python session.
+        The added model will then watch incoming records and add outputs computed on those
+        records into the "_outputs" of the records. The model is then stored inside MongoDB and can
+        be accessed using the *SddbClient*.
+
+        :param name: name of model
+        :param object: if specified the model object (pickle-able) else None if model already exists
+        :param filter: filter specifying which documents model acts on
+        :param converter: converter for converting model outputs back and forth from bytes
+        :param active: toggle to *False* if model should not actively process incoming data
+        :param in_memory: toggle to *True* if model should only exist in current session
+        :param dependencies: list of models on which model's inputs depend (executed prior)
+        :param key: key in records on which model acts (default whole record "_base")
+        :param verbose: toggle to *True* if processing on data is verbose
+        :param semantic_index: toggle to *True*
+        :param process_docs: toggle to *False* if documents not to be processed by models
+        :param loader_kwargs: kwargs to be passed to dataloader for model in processing
+        :param max_chunk_size: maximum chunk size of documents to be held in memory simultaneously
+        :param features: dictionary of features to be substituted from model outputs to record
         """
         if loader_kwargs is None:
             loader_kwargs = {}
@@ -206,8 +283,8 @@ class Collection(BaseCollection):
         if process_docs and active:
             ids = [r['_id'] for r in self.find(filter if filter else {}, {'_id': 1})]
             if ids:
-                self.process_documents_with_model(name, ids, verbose=verbose,
-                                                  max_chunk_size=max_chunk_size)
+                self._process_documents_with_model(name, ids, verbose=verbose,
+                                                   max_chunk_size=max_chunk_size)
 
     def _load_object(self, type, name):
         manifest = self[f'_{type}'].find_one({'name': name})
@@ -309,6 +386,7 @@ class Collection(BaseCollection):
     def _load_hashes(self, name):
         filter = self._model_info[name].get('filter', {})
         key = self._model_info[name].get('key', '_base')
+        filter[f'_outputs.{key}.{name}'] = {'$exists': 1}
         n_docs = self.count_documents(filter)
         c = self.find(filter, {f'_outputs.{key}.{name}': 1})
         loaded = []
@@ -328,20 +406,21 @@ class Collection(BaseCollection):
         active_key = next(m['name'] for m in self.semantic_index['models'] if m['active'])
         return self._all_hash_sets[active_key]
 
-    def process_documents_with_model(self, model_name, ids=None, batch_size=10,
-                                     verbose=False, max_chunk_size=None):
+    def _process_documents_with_model(self, model_name, ids=None, batch_size=10,
+                                      verbose=False, max_chunk_size=None):
         model_info = self._model_info[model_name]
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
                 print('computing chunk '
                       f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
-                self.process_documents_with_model(
+                self._process_documents_with_model(
                     model_name,
                     ids=ids[i: i + max_chunk_size],
                     batch_size=batch_size,
                     verbose=verbose,
                 )
             return
+
 
         print('getting requires')
         if 'requires' not in self._model_info[model_name]:
@@ -351,6 +430,8 @@ class Collection(BaseCollection):
                       self._model_info[model_name]['requires']: {'$exists': 1}}
         print('finding documents under filter')
         features = self._model_info[model_name].get('features', {})
+        if features is None:
+            features = {}
         if '_base' not in features:
             documents = list(self.find(filter, features=features))
             ids = [r['_id'] for r in documents]
@@ -453,7 +534,7 @@ class Collection(BaseCollection):
 
     def _process_documents(self, ids, batch_size=10, verbose=False, blocking=False):
         if self.single_thread:
-            self.download_content(ids=ids)
+            self._download_content(ids=ids)
         else:
             job_ids = defaultdict(lambda: [])
             download_id = sddb_requests.jobs.download_content(
@@ -490,12 +571,12 @@ class Collection(BaseCollection):
                     continue
 
                 if self.single_thread:
-                    self.process_documents_with_model(
+                    self._process_documents_with_model(
                         model_name=model, ids=sub_ids, batch_size=batch_size, verbose=verbose,
                         max_chunk_size=self._model_info[model].get('max_chunk_size', 5000),
                     )
                     if self._model_info[model].get('download', False):
-                        self.download_content(ids=sub_ids)
+                        self._download_content(ids=sub_ids)
                 else:
                     if iteration == 0:
                         dependencies = [download_id]
@@ -541,6 +622,13 @@ class Collection(BaseCollection):
         *args,
         **kwargs,
     ):
+        """
+        Insert a document into database.
+
+        :param documents: list of documents
+        :param *args: args to be passed to super()
+        :param **kwargs: kwargs to be passed to super()
+        """
         if 'valid_probability' in self.meta:
             r = random.random()
             document['_fold'] = (
@@ -552,8 +640,8 @@ class Collection(BaseCollection):
                                     blocking=True)
         return output
 
-    def download_content(self, ids=None, documents=None, download_folder=None,
-                         timeout=-1, raises=False):
+    def _download_content(self, ids=None, documents=None, download_folder=None,
+                          timeout=-1, raises=True):
         if documents is None:
             assert ids is not None
             documents = list(self.find({'_id': {'$in': ids}}, {'_outputs': 0}, raw=True))
@@ -592,9 +680,17 @@ class Collection(BaseCollection):
         self,
         documents,
         *args,
-        verbose=False,
+        verbose=True,
         **kwargs,
     ):
+        """
+        Insert many documents into database.
+
+        :param documents: list of documents
+        :param *args: args to be passed to super()
+        :param verbose: toggle to *True* to display outputs during computation
+        :param **kwargs: kwargs to be passed to super()
+        """
         for document in documents:
             r = random.random()
             document['_fold'] = 'valid' if r < self.meta.get('valid_probability', 0.05) else 'train'
@@ -605,10 +701,18 @@ class Collection(BaseCollection):
     def update_one(
         self,
         filter,
-        refresh=True,
         *args,
+        refresh=True,
         **kwargs,
     ):
+        """
+        Update a document in the database.
+
+        :param filter: MongoDB like filter
+        :param *args: args to be passed to super()
+        :param refresh: Toggle to *False* to not process document again with models.
+        :param **kwargs: kwargs to be passed to super()
+        """
         if refresh and self.list_models():
             id_ = super().find_one(filter, *args, **kwargs)['_id']
         result = super().update_one(filter, *args, **kwargs)
@@ -658,7 +762,21 @@ class Collection(BaseCollection):
         return hash_set.find_nearest_from_hash(h, n=filter['$like']['n'])
 
     def find_one(self, filter=None, *args, similar_first=False, raw=False, features=None,
-                 convert=True, **kwargs):
+                 convert=True, download=False, **kwargs):
+        """
+        Behaves like MongoDB *find_one* with exception of "$like" operator.
+        See *Collection.find* for more details.
+
+        :param filter: filter dictionary
+        :param *args: args passed to super()
+        :param similar_first: toggle to *True* to first find similar things, and then
+                              apply filter to these things
+        :param raw: toggle to *True* to not convert bytes to Python objects but return raw bytes
+        :param features: dictionary of model outputs to replace for dictionary elements
+        :param convert: (TODO remove) convert cursor byte fields to Python types
+        :param download: toggle to *True* in case query has downloadable "_content" components
+        :param **kwargs: kwargs to be passed to super()
+        """
         if self.remote:
             return sddb_requests.client.find_one(
                 self.database.name,
@@ -668,10 +786,11 @@ class Collection(BaseCollection):
                 similar_first=similar_first,
                 raw=raw,
                 features=features,
+                download=download,
                 **kwargs,
             )
         cursor = self.find(filter, *args,
-                           raw=raw, features=features, convert=convert, **kwargs)
+                           raw=raw, features=features, convert=convert, download=download, **kwargs)
         for result in cursor.limit(-1):
             return result
         return None
@@ -723,6 +842,7 @@ class Collection(BaseCollection):
 
     def _find_similar_then_matches(self, filter, *args, raw=False,
                                    convert=True, features=None, **kwargs):
+
         similar = self._find_nearest(filter)
         only_like = self._test_only_like(filter)
         if not only_like:
@@ -750,6 +870,7 @@ class Collection(BaseCollection):
 
     def _find_matches_then_similar(self, filter, *args, raw=False,
                                    convert=True, features=None, **kwargs):
+
         only_like = self._test_only_like(filter)
         if not only_like:
             new_filter = self._remove_like_from_filter(filter)
@@ -757,8 +878,9 @@ class Collection(BaseCollection):
                 self,
                 new_filter,
                 {'_id': 1},
-                *args,
+                *args[1:],
                 convert=convert,
+                features=features,
                 **kwargs,
             )
             ids = [x['_id'] for x in matches_cursor]
@@ -773,6 +895,19 @@ class Collection(BaseCollection):
 
     def find(self, filter=None, *args, similar_first=False, raw=False,
              features=None, convert=True, download=False, **kwargs):
+        """
+        Behaves like MongoDB *find* with exception of "$like" operator.
+
+        :param filter: filter dictionary
+        :param *args: args passed to super()
+        :param similar_first: toggle to *True* to first find similar things, and then
+                              apply filter to these things
+        :param raw: toggle to *True* to not convert bytes to Python objects but return raw bytes
+        :param features: dictionary of model outputs to replace for dictionary elements
+        :param convert: (TODO remove) convert cursor byte fields to Python types
+        :param download: toggle to *True* in case query has downloadable "_content" components
+        :param **kwargs: kwargs to be passed to super()
+        """
 
         if download:
             filter = copy.deepcopy(filter)
@@ -780,8 +915,8 @@ class Collection(BaseCollection):
             filter['_id'] = 0
             urls = self._gather_urls([filter])[0]
             if urls:
-                filter = self.download_content(documents=[filter], download_folder='/tmp',
-                                               timeout=None, raises=True)[0]
+                filter = self._download_content(documents=[filter], download_folder='/tmp',
+                                                timeout=None, raises=True)[0]
                 filter = convert_types(filter, converters=self.converters)
             del filter['_id']
 
@@ -806,7 +941,6 @@ class Collection(BaseCollection):
     def _delete_objects(self, type, objects=None, force=False):
         if objects is None:
             objects = self[f'_{type}'].distinct('name')
-
         data = list(self[f'_{type}'].find({'name': {'$in': objects}}))
         data += list(self[f'_{type}'].find({'$or': [
             {'name': {'$regex': f'^{x}\.'}}
@@ -861,6 +995,8 @@ class Collection(BaseCollection):
             _ = self._delete_objects(
                 'models', objects=[x for x in models if '.' not in x], force=True
             )
+            for m in models:
+                del self._model_info[m]
             for r in deleted_info:
                 print(f'unsetting output field _outputs.{r["key"]}.{r["name"]}')
                 super().update_many(
@@ -948,16 +1084,39 @@ class Collection(BaseCollection):
             self.update_meta_data('semantic_index', name)
 
     def create_converter(self, name, object):
+        """
+        Create a converter directly from a Python object.
+
+        :param name: name of converter
+        :param object: Python object
+        """
         return self._create_object('converters', name, object)
 
     def create_metric(self, name, object):
+        """
+        Create a metric directly from a Python object.
+
+        :param name: name of metric
+        :param object: Python object
+        """
         return self._create_object('metrics', name, object)
 
     def update_meta_data(self, key, value):
+        """
+        Update key-value pair of collection meta-data (*Collection.meta*).
+
+        :param key: key
+        :param value: value
+        """
         self['_meta'].update_one({}, {'$set': {key: value}}, upsert=True)
         self._get_meta()
 
     def set_meta_data(self, r):
+        """
+        Replace meta data with new record.
+
+        :param r: record to replace meta-data by.
+        """
         r_current = self['_meta'].find_one()
         if r_current is not None:
             self['_meta'].replace_one({'_id': r['_id']}, r, upsert=True)
@@ -972,9 +1131,17 @@ class Collection(BaseCollection):
         *args,
         **kwargs,
     ):
-        if self.list_models():
-            id_ = super().find_one(filter, *args, **kwargs)['_id']
-        result= super().replace_one(filter, replacement, *args, **kwargs)
+        """
+        Replace a document in the database. The outputs of models will be refreshed for this
+        document.
+
+        :param filter: MongoDB like filter
+        :param *args: args to be passed to super()
+        :param refresh: Toggle to *False* to not process document again with models.
+        :param **kwargs: kwargs to be passed to super()
+        """
+        id_ = super().find_one(filter, *args, **kwargs)['_id']
+        result= super().replace_one({'_id': id_}, replacement, *args, **kwargs)
         if self.list_models():
             self._process_documents([id_])
         return result

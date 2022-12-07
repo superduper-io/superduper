@@ -1,4 +1,4 @@
-<a href="https://www.superduperdb.com"><img src="img/symbol_purple.png" width="150" align="right" /></a>
+<a href="https://www.superduperdb.com"><img src="https://raw.githubusercontent.com/blythed/superduperdb/main/img/symbol_purple.png" width="150" align="right" /></a>
 
 # Welcome to SuperDuperDB!
 
@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 ## Architecture
 
-![](./img/architecture.png)
+![](https://raw.githubusercontent.com/blythed/superduperdb/main/img/architecture.png)
 
 1. Client - run on client to send off requests to various work horses.
 1. MongoDB - standard mongo deployment.

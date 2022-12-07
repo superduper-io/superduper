@@ -1,1 +1,2 @@
-include requirements.txt img/*.png
+include requirements.txt
+include img/*.png

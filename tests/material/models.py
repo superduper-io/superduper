@@ -16,7 +16,7 @@ class Dummy(torch.nn.Module):
         return x.matmul(self.W)
 
 
-class DummyLabel(torch.nn.Module):
+class DummyTarget(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.layer = torch.nn.Linear(10, 2)

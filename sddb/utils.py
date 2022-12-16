@@ -20,12 +20,11 @@ class MongoStyleDict(dict):
     def __getitem__(self, item):
         if '.' not in item:
             return super().__getitem__(item)
-        else:
-            parts = item.split('.')
-            parent = parts[0]
-            child = '.'.join(parts[1:])
-            sub = MongoStyleDict(self.__getitem__(parent))
-            return sub[child]
+        parts = item.split('.')
+        parent = parts[0]
+        child = '.'.join(parts[1:])
+        sub = MongoStyleDict(self.__getitem__(parent))
+        return sub[child]
 
     def __setitem__(self, key, value):
         if '.' not in key:
@@ -119,16 +118,12 @@ def apply_model(model, args, single=True, verbose=False, **kwargs):
         inputs = BasicDataset(args, model.preprocess)
         loader = torch.utils.data.DataLoader(inputs, **kwargs)
         out = []
-        if verbose:
-            progress = Progress()(total=len(args))
-        for batch in loader:
+        for batch in Progress()(loader, total=len(loader)):
             tmp = model.forward(batch)
             tmp = unpack_batch(tmp)
             if hasattr(model, 'postprocess'):
                 tmp = list(map(model.postprocess, tmp))
             out.extend(tmp)
-            if verbose:
-                progress.update(len(tmp))
         return out
 
 
@@ -312,16 +307,18 @@ class Downloader:
                 self.callback(r.content, self.urls[i], self.files[i])
 
 
-def basic_progress(iterator, *args, total=None, **kwargs):
+def basic_progress(iterator, *args, total=None, n_chunks=10, **kwargs):
     if total is None:
         try:
             total = len(iterator)
         except AttributeError:
             pass
     if total is not None:
-        chunksize = int(total / 10)
+        chunksize = int(total / n_chunks)
     else:
         chunksize = 10
+    if chunksize == 0:
+        chunksize = total
     for i, item in enumerate(iterator):
         if (i + 1) % chunksize == 0:
             if total is not None:
@@ -333,11 +330,12 @@ def basic_progress(iterator, *args, total=None, **kwargs):
 
 class Progress:
     style = 'basic'
+    n_chunks = 25
 
     def __call__(self, *args, **kwargs):
         if self.style == 'tqdm':
             return tqdm.tqdm(*args, **kwargs)
         elif self.style == 'basic':
-            return basic_progress(*args, **kwargs)
+            return basic_progress(*args, n_chunks=self.n_chunks, **kwargs)
         else:
             raise NotImplementedError(f'style of progress not implemented {self.style}')

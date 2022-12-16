@@ -1,24 +1,26 @@
-from sddb.lookup.measures import measures
-
-
 class HashSet:
-    def __init__(self, h, index):
+    def __init__(self, h, index, measure):
         self.h = h
         self.index = index
         self.lookup = dict(zip(index, range(len(index))))
+        self.measure = measure
 
-    def find_nearest_from_id(self, id_, measure='css', n=100):
-        return self.find_nearest_from_ids([id_], measure, n=n)[0]
+    @property
+    def shape(self):
+        return self.h.shape
 
-    def find_nearest_from_ids(self, ids, measure='css', n=100):
+    def find_nearest_from_id(self, id_, n=100):
+        return self.find_nearest_from_ids([id_], n=n)[0]
+
+    def find_nearest_from_ids(self, ids, n=100):
         ix = list(map(self.lookup.__getitem__, ids))
-        return self.find_nearest_from_hashes(self.h[ix, :], measure, n=n)
+        return self.find_nearest_from_hashes(self.h[ix, :], n=n)
 
-    def find_nearest_from_hash(self, h, measure='css', n=100):
-        return self.find_nearest_from_hashes(h[None, :], measure, n=n)[0]
+    def find_nearest_from_hash(self, h, n=100):
+        return self.find_nearest_from_hashes(h[None, :], n=n)[0]
 
-    def find_nearest_from_hashes(self, h, measure='css', n=100):
-        similarities = measures[measure](h, self.h)
+    def find_nearest_from_hashes(self, h, n=100):
+        similarities = self.measure(h, self.h)
         scores, ix = similarities.topk(min(n, similarities.shape[1]), dim=1)
         ix = ix.tolist()
         scores = scores.tolist()
@@ -28,7 +30,7 @@ class HashSet:
 
     def __getitem__(self, item):
         ix = [self.lookup[i] for i in item]
-        return HashSet(self.h[ix], item)
+        return HashSet(self.h[ix], item, self.measure)
 
 
 class FaissHashSet(HashSet):

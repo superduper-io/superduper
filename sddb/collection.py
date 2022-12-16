@@ -21,7 +21,7 @@ from sddb import cf
 from sddb.lookup import hashes
 from sddb.models import loading
 from sddb import requests as sddb_requests
-from sddb.training.loading import BasicDataset
+from sddb import training
 from sddb.utils import apply_model, unpack_batch, MongoStyleDict, Downloader, Progress
 
 
@@ -64,7 +64,8 @@ def convert_types(r, convert=True, converters=None):
 
 
 class SddbCursor(Cursor):
-    def __init__(self, collection, *args, features=None, convert=True, scores=None, **kwargs):
+    def __init__(self, collection, *args, features=None, convert=True, scores=None,
+                 similar_join=None, **kwargs):
         """
         Cursor subclassing *pymongo.cursor.Cursor*. Converts content on disk to Python objects
         if *convert==True*. If *features* are specified, these are substituted in the records
@@ -77,6 +78,7 @@ class SddbCursor(Cursor):
         :param features: feature dictionary
         :param convert: toggle to *True* to interpret bytes in records using converters
         :param scores: similarity scores to add to records
+        :param similar_join: replace ids by documents in subfield of _like
         :param **kwargs: kwargs to pass to super()
         """
         super().__init__(collection, *args, **kwargs)
@@ -84,6 +86,12 @@ class SddbCursor(Cursor):
         self.features = features
         self.convert = convert
         self.scores = (s for s in scores) if scores is not None else None
+        self.similar_join = similar_join
+        self._args = args
+        self._kwargs = kwargs
+
+    def get_ids(self, r):
+        return r['_like'][self.similar_join]
 
     def next(self):
         r = super().next()
@@ -92,16 +100,22 @@ class SddbCursor(Cursor):
         if self.features is not None and self.features:
             r = MongoStyleDict(r)
             for k in self.features:
-                if k != '_base':
-                    r[k] = r['_outputs'][k][self.features[k]]
-                else:
-                    r = {'_base': r['_outputs'][k][self.features[k]]}
+                r[k] =  r['_outputs'][k][self.features[k]]
+        if self.similar_join is not None:
+            if self.similar_join in r.get('_like', {}):
+                ids = r['_like'][self.similar_join]
+                lookup = {r['_id']: r for r in self.collection.find({'_id': {'$in': ids}},
+                                                                    *self._args[1:],
+                                                                    **self._kwargs)}
+                for i, id_ in enumerate(r['_like'][self.similar_join]):
+                    r['_like'][self.similar_join][i] = lookup[id_]
+
         r = convert_types(r, convert=self.convert, converters=self.attr_collection.converters)
         if r is None:
             return self.next()
         else:
-            if '_base' in r:
-                return r['_base']
+            # if '_base' in r:
+            #     return r['_base']
             return r
 
     __next__ = next
@@ -169,8 +183,19 @@ class Collection(BaseCollection):
         self.losses = ArgumentDefaultDict(lambda x: self._load_object('losses', x))
         self.metrics = ArgumentDefaultDict(lambda x: self._load_object('metrics', x))
         self.measures = ArgumentDefaultDict(lambda x: self._load_object('measures', x))
+        self.splitters = ArgumentDefaultDict(lambda x: self._load_object('splitters', x))
 
         self.headers = None
+
+    def random_id(self, filter_=None):
+        if filter_ is None:
+            filter_ = {}
+        for r in self.aggregate([
+            {'$match': filter_},
+            {'$sample': {'size': 1}},
+            {'$project': {'_id': 1}}
+        ]):
+            return r['_id']
 
     @property
     def filesystem(self):
@@ -276,6 +301,7 @@ class Collection(BaseCollection):
                 'loader_kwargs': loader_kwargs,
                 'max_chunk_size': max_chunk_size,
                 'features': features,
+                'training': False,
             })
         else:
             self.models[name] = object
@@ -283,8 +309,8 @@ class Collection(BaseCollection):
         if process_docs and active:
             ids = [r['_id'] for r in self.find(filter if filter else {}, {'_id': 1})]
             if ids:
-                self._process_documents_with_model(name, ids, verbose=verbose,
-                                                   max_chunk_size=max_chunk_size)
+                self.process_documents_with_model(name, ids, verbose=verbose,
+                                                  max_chunk_size=max_chunk_size)
 
     def _load_object(self, type, name):
         manifest = self[f'_{type}'].find_one({'name': name})
@@ -294,7 +320,7 @@ class Collection(BaseCollection):
         if '.' in name:
             _, attribute = name.split('.')
             m = getattr(m, attribute)
-        if type == 'models':
+        if type == 'models' and hasattr(m, 'eval'):
             m.eval()
         return m
 
@@ -342,6 +368,9 @@ class Collection(BaseCollection):
         for i, r_m in enumerate(self._semantic_index_data['models']):
             if isinstance(r_m, str):
                 self._semantic_index_data['models'][i] = self._model_info[r_m]
+        self._semantic_index_data['active_models'] = [
+            x['name'] for x in self._semantic_index_data['models'] if x['active']
+        ]
         return self._semantic_index_data
 
     @semantic_index.setter
@@ -384,43 +413,52 @@ class Collection(BaseCollection):
         return urls, mongo_keys, ids
 
     def _load_hashes(self, name):
-        filter = self._model_info[name].get('filter', {})
-        key = self._model_info[name].get('key', '_base')
-        filter[f'_outputs.{key}.{name}'] = {'$exists': 1}
+        info = self['_semantic_indexes'].find_one({'name': name})
+        model_name = next(x for x in info['models'] if self._model_info[x]['active'])
+        filter = self._model_info[model_name].get('filter', {})
+        key = self._model_info[model_name].get('key', '_base')
+        filter[f'_outputs.{key}.{model_name}'] = {'$exists': 1}
         n_docs = self.count_documents(filter)
-        c = self.find(filter, {f'_outputs.{key}.{name}': 1})
+        c = self.find(filter, {f'_outputs.{key}.{model_name}': 1})
+        measure = self.measures[info['measure']]
         loaded = []
         ids = []
         docs = Progress()(c, total=n_docs)
         print(f'loading hashes: "{name}"')
         for r in docs:
-            h = MongoStyleDict(r)[f'_outputs.{key}.{name}']
+            h = MongoStyleDict(r)[f'_outputs.{key}.{model_name}']
             loaded.append(h)
             ids.append(r['_id'])
-        return hashes.HashSet(torch.stack(loaded), ids)
+        return hashes.HashSet(torch.stack(loaded), ids, measure=measure)
 
     @property
     def hash_set(self):
         if self.semantic_index_name is None:
             raise Exception('No semantic index has been set!')
-        active_key = next(m['name'] for m in self.semantic_index['models'] if m['active'])
-        return self._all_hash_sets[active_key]
+        return self._all_hash_sets[self.semantic_index_name]
 
-    def _process_documents_with_model(self, model_name, ids=None, batch_size=10,
-                                      verbose=False, max_chunk_size=None):
+    def refresh_model_outputs(self, name, verbose=False):
+        info = self._model_info[name]
+        ids = [r['_id'] for r in self.find(info.get('filter', {}), {'_id': 1})]
+        self.process_documents_with_model(name, ids=ids, **info['loader_kwargs'],
+                                          max_chunk_size=info.get('max_chunk_size'),
+                                          verbose=verbose)
+
+    def process_documents_with_model(self, model_name, ids, batch_size=10,
+                                     verbose=False, max_chunk_size=None, num_workers=0):
         model_info = self._model_info[model_name]
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
                 print('computing chunk '
                       f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
-                self._process_documents_with_model(
+                self.process_documents_with_model(
                     model_name,
                     ids=ids[i: i + max_chunk_size],
                     batch_size=batch_size,
                     verbose=verbose,
+                    num_workers=num_workers,
                 )
             return
-
 
         print('getting requires')
         if 'requires' not in self._model_info[model_name]:
@@ -428,28 +466,23 @@ class Collection(BaseCollection):
         else:
             filter = {'_id': {'$in': ids},
                       self._model_info[model_name]['requires']: {'$exists': 1}}
+
         print('finding documents under filter')
         features = self._model_info[model_name].get('features', {})
         if features is None:
             features = {}
-        if '_base' not in features:
-            documents = list(self.find(filter, features=features))
-            ids = [r['_id'] for r in documents]
-            for r in documents:
-                del r['_id']
-        else:
-            documents = list(self.find(filter))
-            ids = [r['_id'] for r in documents]
-            assert len(list(self._model_info[model_name].get('features', {}).keys())) == 1
-            documents = [r['_outputs']['_base'][features['_base']] for r in documents]
+        documents = list(self.find(filter, features=features))
+        ids = [r['_id'] for r in documents]
+        for r in documents:
+            del r['_id']
         print('done.')
         key = model_info.get('key', '_base')
-        if key != '_base':
+        if key != '_base' or '_base' in features:
             passed_docs = [r[key] for r in documents]
         else:
             passed_docs = documents
         model = self.models[model_name]
-        inputs = BasicDataset(passed_docs, model.preprocess)
+        inputs = training.loading.BasicDataset(passed_docs, model.preprocess)
         if hasattr(model, 'forward'):
             loader_kwargs = self._model_info[model_name].get('loader_kwargs', {})
             if 'batch_size' not in loader_kwargs:
@@ -516,6 +549,39 @@ class Collection(BaseCollection):
         print('done.')
         return tmp
 
+    def _compute_neighbourhood(self, name, ids):
+        info = self['_neighbourhoods'].find_one({'name': name})
+        h = self._all_hash_sets[info['name']]
+        print(f'computing neighbours based on neighbour "{name}" and '
+              f'index "{info["semantic_index"]}"')
+        for i in Progress()(range(0, len(ids), info['batch_size'])):
+            sub = ids[i: i + info['batch_size']]
+            results = h.find_nearest_from_ids(sub, n=info['n'])
+            similar_ids = [res['ids'] for res in results]
+            self.bulk_write([
+                UpdateOne({'_id': id_}, {'$set': {f'_like.{name}': sids}})
+                for id_, sids in zip(sub, similar_ids)
+            ])
+
+    def list_neighbourhoods(self):
+        return self['_neighbourhoods'].distinct('name')
+
+    def create_neighbourhood(self, name, n=10, semantic_index=None, batch_size=100):
+        assert name not in self.list_neighbourhoods()
+        if semantic_index is None:
+            assert self.semantic_index_name
+        self['_neighbourhoods'].insert_one({
+            'name': name,
+            'semantic_index': semantic_index if semantic_index else self.semantic_index_name,
+            'n': n,
+            'batch_size': batch_size,
+        })
+        info = self['_semantic_indexes'].find_one({'name': name})
+        model_name = next(m for m in info['models'] if self._model_info[m]['active'])
+        filter_ = self._model_info[model_name].get('filter', {})
+        ids = [r['_id'] for r in self.find(filter_, {'_id': 1})]
+        self._compute_neighbourhood(name, ids)
+
     @staticmethod
     def standardize_dict(d):
         keys = sorted(list(d.keys()))
@@ -571,7 +637,7 @@ class Collection(BaseCollection):
                     continue
 
                 if self.single_thread:
-                    self._process_documents_with_model(
+                    self.process_documents_with_model(
                         model_name=model, ids=sub_ids, batch_size=batch_size, verbose=verbose,
                         max_chunk_size=self._model_info[model].get('max_chunk_size', 5000),
                     )
@@ -714,7 +780,7 @@ class Collection(BaseCollection):
         :param **kwargs: kwargs to be passed to super()
         """
         if refresh and self.list_models():
-            id_ = super().find_one(filter, *args, **kwargs)['_id']
+            id_ = super().find_one(filter, {'_id': 1})['_id']
         result = super().update_one(filter, *args, **kwargs)
         if refresh and self.list_models():
             document = super().find_one({'_id': id_}, {'_outputs': 0})
@@ -762,7 +828,7 @@ class Collection(BaseCollection):
         return hash_set.find_nearest_from_hash(h, n=filter['$like']['n'])
 
     def find_one(self, filter=None, *args, similar_first=False, raw=False, features=None,
-                 convert=True, download=False, **kwargs):
+                 convert=True, download=False, similar_join=None, **kwargs):
         """
         Behaves like MongoDB *find_one* with exception of "$like" operator.
         See *Collection.find* for more details.
@@ -775,6 +841,7 @@ class Collection(BaseCollection):
         :param features: dictionary of model outputs to replace for dictionary elements
         :param convert: (TODO remove) convert cursor byte fields to Python types
         :param download: toggle to *True* in case query has downloadable "_content" components
+        :param similar_join: replace ids by documents
         :param **kwargs: kwargs to be passed to super()
         """
         if self.remote:
@@ -789,8 +856,8 @@ class Collection(BaseCollection):
                 download=download,
                 **kwargs,
             )
-        cursor = self.find(filter, *args,
-                           raw=raw, features=features, convert=convert, download=download, **kwargs)
+        cursor = self.find(filter, *args, raw=raw, features=features, convert=convert,
+                           download=download, similar_join=similar_join, **kwargs)
         for result in cursor.limit(-1):
             return result
         return None
@@ -840,8 +907,8 @@ class Collection(BaseCollection):
                         else:
                             return f'{k}.{like_place}'
 
-    def _find_similar_then_matches(self, filter, *args, raw=False,
-                                   convert=True, features=None, **kwargs):
+    def _find_similar_then_matches(self, filter, *args, raw=False, convert=True, features=None,
+                                   **kwargs):
 
         similar = self._find_nearest(filter)
         only_like = self._test_only_like(filter)
@@ -894,7 +961,7 @@ class Collection(BaseCollection):
                               features=features, **kwargs)
 
     def find(self, filter=None, *args, similar_first=False, raw=False,
-             features=None, convert=True, download=False, **kwargs):
+             features=None, convert=True, download=False, similar_join=None, **kwargs):
         """
         Behaves like MongoDB *find* with exception of "$like" operator.
 
@@ -906,6 +973,7 @@ class Collection(BaseCollection):
         :param features: dictionary of model outputs to replace for dictionary elements
         :param convert: (TODO remove) convert cursor byte fields to Python types
         :param download: toggle to *True* in case query has downloadable "_content" components
+        :param similar_join: replace ids by documents
         :param **kwargs: kwargs to be passed to super()
         """
 
@@ -936,7 +1004,8 @@ class Collection(BaseCollection):
             if raw:
                 return Cursor(self, filter, *args, **kwargs)
             else:
-                return SddbCursor(self, filter, *args, convert=convert, features=features, **kwargs)
+                return SddbCursor(self, filter, *args, convert=convert, features=features,
+                                  similar_join=similar_join, **kwargs)
 
     def _delete_objects(self, type, objects=None, force=False):
         if objects is None:
@@ -958,6 +1027,19 @@ class Collection(BaseCollection):
                 self[f'_{type}'].delete_one({'name': r['name']})
         return data
 
+    def delete_neighbourhood(self, name):
+        info = self['_neighbourhoods'].find_one({'name': name})
+        si_info = self['_semantic_indexes'].find_one({'name': info['semantic_index']})
+        model = next(m for m in si_info['models'] if self._model_info[m]['active'])
+        filter_ = self._model_info[model]['filter']
+        n_documents = self.count_documents(filter_)
+        if click.confirm(f'Removing neighbourhood "{name}", this will affect {n_documents}'
+                         ' documents. Are you sure?', default=False):
+            self['_neighbourhoods'].delete_one({'name': name})
+            self.update_many(filter_, {'$unset': {'_like': name}}, refresh=False)
+        else:
+            print('aborting')
+
     def delete_converters(self, converters=None, force=False):
         return self._delete_objects('converters', objects=converters, force=force)
 
@@ -966,6 +1048,10 @@ class Collection(BaseCollection):
 
     def delete_losses(self, losses=None, force=False):
         return self._delete_objects('losses', objects=losses, force=force)
+
+    def delete_imputation(self, name, force=False):
+        self.delete_model(name, force=force)
+        self['_imputations'].delete_many({'name': name})
 
     def delete_semantic_index(self, name, force=False):
         models = self['_semantic_indexes'].find_one({'name': name}, {'models': 1})
@@ -1026,8 +1112,11 @@ class Collection(BaseCollection):
             return
         super().delete_many(filter, *args, **kwargs)
 
-    def list_models(self):
-        return self['_models'].distinct('name')
+    def list_models(self, training=False):
+        if training is None:
+            return self['_models'].distinct('name')
+        else:
+            return self['_models'].distinct('name', {'training': training})
 
     def list_converters(self):
         return self['_converters'].distinct('name')
@@ -1042,16 +1131,168 @@ class Collection(BaseCollection):
         return self['_semantic_indexes'].distinct('name')
 
     def list_imputations(self):
-        raise NotImplementedError
+        return self['_imputations'].distinct('name')
 
-    def create_imputation(self, *args, **kwargs):
-        raise NotImplementedError
+    def _train_imputation(self, name):
 
-    def create_semantic_index(self, name, models, metrics=None, loss=None, measure=None):
+        if self.remote:
+            sddb_requests.jobs.train_imputation(name)
+
+        info = self['_imputations'].find_one({'name': name})
+
+        self['_models'].update_one({'name': info['name']}, {'$set': {'training': True}})
+
+        model = self.models[info['model']]
+        target = self.models[info['target']]
+        loss = self.losses[info['loss']]
+        metrics = {k: self.metrics[k] for k in info['metrics']}
+
+        fields = (
+            self._model_info[info['model']]['key'],
+            self._model_info[info['target']]['key'],
+        )
+
+        training.train_tools.ImputationTrainer(
+            name,
+            cf['mongodb'],
+            self.database.name,
+            self.name,
+            encoders=(model, target),
+            fields=fields,
+            save_names=(info['model'], info['target']),
+            loss=loss,
+            metrics=metrics,
+            **info['trainer_kwargs'],
+            save=self._replace_model,
+            features=info.get('features', {}),
+            filter=info['filter'],
+            projection=info['projection'],
+            n_epochs=info['n_epochs'],
+        ).train()
+
+        self['_models'].update_one({'name': info['model']}, {'$set': {'training': False}})
+        r = self['_models'].find_one({'name': info['model']})
+        ids = [r['_id'] for r in self.find(r.get('filter', {}), {'_id': 1})]
+        self.process_documents_with_model(info['model'], ids, **r.get('loader_kwargs', {}),
+                                          verbose=True)
+
+    def _replace_model(self, name, object):
+        r = self['_models'].find_one({'name': name})
+        assert name in self.list_models(training=None), 'model doesn\'t exist to replace'
+        file_id = self._create_pickled_file(object)
+        self.filesystem.delete(r['object'])
+        self['_models'].update_one({'name': name}, {'$set': {'object': file_id}})
+
+    def create_imputation(self, name, model, loss, target,
+                          metrics=None, filter=None, projection=None,
+                          n_epochs=20, features=None, **trainer_kwargs):
+
+        if target is not None and isinstance(target, dict):
+            self.create_model(**target, active=False)
+            target_name = target['name']
+        else:
+            assert target in self.list_models()
+            target_name = target
+
+        if isinstance(model, dict):
+            model['process_docs'] = False
+            self.create_model(**model)
+            model_name = model['name']
+        else:
+            assert model in self.list_models()
+            model_name = model
+
+        if not isinstance(loss, str):
+            self.create_loss(**loss)
+            loss = loss['name']
+
+        if metrics is not None:
+            for i, metric in enumerate(metrics):
+                if isinstance(metric, str):
+                    continue
+                if isinstance(metric, dict):
+                    self.create_metric(metric['name'], metric['object'])
+                    metrics[i] = metric['name']
+
+        self['_imputations'].insert_one({
+            'name': name,
+            'model': model_name,
+            'target': target_name,
+            'metrics': metrics,
+            'loss': loss,
+            'projection': projection,
+            'filter': filter,
+            'n_epochs': n_epochs,
+            'trainer_kwargs': trainer_kwargs,
+            'features': features,
+        })
+        self._train_imputation(name)
+
+    def _train_semantic_index(self, name, encoders, loss, measure, metrics=None,
+                              splitter=None, **trainer_kwargs):
+        if self.remote:
+            sddb_requests.jobs.train_semantic_index(
+                name,
+                encoders,
+                loss,
+                measure,
+                metrics=metrics,
+                splitter=splitter,
+                **trainer_kwargs,
+            )
+
+        save_names = [x[:] for x in encoders]
+        fields = []
+        for i, e in enumerate(encoders):
+            r = self['_models'].find_one({'name': e})
+            fields.append(r['key'])
+            encoders[i] = self.models[e]
+
+        loss = self.losses[loss]
+
+        if splitter is not None:
+            splitter = self.splitters[splitter]
+
+        training.train_tools.RepresentationTrainer(
+            name,
+            cf['mongodb'],
+            self.database.name,
+            self.name,
+            encoders=encoders,
+            fields=fields,
+            save_names=save_names,
+            splitter=splitter,
+            loss=loss,
+            save=self._replace_model,
+            watch='loss',
+            **trainer_kwargs,
+        ).train()
+
+        self.semantic_index = name
+        for model in self.semantic_index['active_models']:
+            filter_ = self._model_info[model].get('filter', {})
+            if '_fold' in filter_:
+                del filter_['_fold']
+            self['_models'].update_one({'name': model}, {'$set': {'filter': filter_}})
+            ids = [x['_id'] for x in self.find(filter_, {'_id': 1})]
+            self.process_documents_with_model(
+                model,
+                ids,
+                verbose=True,
+                **self._model_info.get('loader_kwargs', {}),
+                max_chunk_size=self._model_info.get('max_chunk_size'),
+            )
+
+    def create_semantic_index(self, name, models, metrics=None, loss=None, measure=None,
+                              splitter=None, **trainer_kwargs):
+
         for i, man in enumerate(models):
             if isinstance(man, str):
                 continue
-            self.create_model(**man)
+            if loss is None:
+                self.create_model(**man)
+            else:
+                self.create_model(**man, process_docs=False)
             models[i] = man['name']
 
         if metrics is not None:
@@ -1061,11 +1302,29 @@ class Collection(BaseCollection):
                 self.create_metric(**man)
                 metrics[i] = man['name']
 
+        if len(models) == 1:
+            assert splitter is not None
+
+        if splitter is not None:
+            if isinstance(splitter, str):
+                pass
+            else:
+                self.create_splitter(**splitter)
+                splitter = splitter['name']
+
+        if measure is not None:
+            if isinstance(measure, str):
+                pass
+            else:
+                self.create_measure(**measure)
+                measure = measure['name']
+
         if loss is not None:
             if isinstance(loss, str):
                 pass
             else:
                 self.create_loss(**loss)
+                loss = loss['name']
 
         if measure is not None:
             if isinstance(measure, str):
@@ -1080,8 +1339,25 @@ class Collection(BaseCollection):
             'loss': loss,
             'measure': measure,
         })
-        if 'semantic_index' not in self.meta:
-            self.update_meta_data('semantic_index', name)
+        if loss is None:
+            if 'semantic_index' not in self.meta:
+                self.update_meta_data('semantic_index', name)
+            return
+        else:
+            active_model = next(m for m in models if self._model_info[m]['active'])
+            filter = self._model_info[active_model].get('filter', {})
+            filter['_fold'] = 'valid'
+            self['_models'].update_one({'name': active_model}, {'$set': {'filter': filter}})
+
+        self._train_semantic_index(
+            name=name,
+            encoders=models,
+            loss=loss,
+            metrics=metrics,
+            measure=measure,
+            splitter=splitter,
+            **trainer_kwargs,
+        )
 
     def create_converter(self, name, object):
         """
@@ -1091,6 +1367,24 @@ class Collection(BaseCollection):
         :param object: Python object
         """
         return self._create_object('converters', name, object)
+
+    def create_splitter(self, name, object):
+        """
+        Create a document splitter directly from a Python object.
+
+        :param name: name of splitter
+        :param object: Python object
+        """
+        return self._create_object('splitters', name, object)
+
+    def create_measure(self, name, object):
+        """
+        Create a document measure directly from a Python object.
+
+        :param name: name of measure
+        :param object: Python object
+        """
+        return self._create_object('measures', name, object)
 
     def create_metric(self, name, object):
         """
@@ -1129,6 +1423,7 @@ class Collection(BaseCollection):
         filter,
         replacement,
         *args,
+        refresh=False,
         **kwargs,
     ):
         """
@@ -1141,7 +1436,7 @@ class Collection(BaseCollection):
         :param **kwargs: kwargs to be passed to super()
         """
         id_ = super().find_one(filter, *args, **kwargs)['_id']
-        result= super().replace_one({'_id': id_}, replacement, *args, **kwargs)
-        if self.list_models():
+        result = super().replace_one({'_id': id_}, replacement, *args, **kwargs)
+        if refresh and self.list_models():
             self._process_documents([id_])
         return result

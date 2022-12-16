@@ -19,4 +19,4 @@ class SddbClient(MongoClient):
         return database.Database(self, name)
 
 
-client = SddbClient(**cf['mongodb'])
+the_client = SddbClient(**cf['mongodb'])

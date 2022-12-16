@@ -25,6 +25,13 @@ def download_content(database, collection, ids, dependencies=()):
     return r.text
 
 
+def train_imputation(
+    *args,
+    **kwargs,
+):
+    raise NotImplementedError
+
+
 def process_documents_with_model(
     database,
     collection,

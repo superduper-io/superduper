@@ -151,3 +151,7 @@ dmypy.json
 /sddb/servers/static
 /converters
 /models
+
+# Meta
+/.jd
+/.syncignore

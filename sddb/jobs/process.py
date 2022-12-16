@@ -44,7 +44,7 @@ def download_content(database, collection, ids, identifier=None):
 
 
 def _process_documents_with_model(collection, model_name, ids, batch_size=10, verbose=False):
-    collection._process_documents_with_model(
+    collection.process_documents_with_model(
         model_name=model_name,
         ids=ids,
         batch_size=batch_size,

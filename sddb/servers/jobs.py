@@ -1,3 +1,5 @@
+import datetime
+
 from bson import ObjectId
 import uuid
 
@@ -5,23 +7,58 @@ from flask import Flask, request
 from redis import Redis
 from rq import Queue
 
+from sddb.client import the_client
 from sddb.jobs import process
 from sddb import cf
 
-q = Queue(connection=Redis(port=cf['redis']['port']))
+q = Queue(connection=Redis(port=cf['redis']['port']), default_timeout=24 * 60 * 60)
 app = Flask(__name__)
+
+
+@app.route('/process/', method=['POST'])
+def process():
+    data = dict(request.get_json())
+    assert 'collection' in data
+    assert 'database' in data
+    assert 'method' in data
+    assert 'kwargs' in data
+    if 'ids' in data['kwargs']:
+        data['kwargs']['ids'] = [ObjectId(id_) for id_ in data['kwargs']['ids']]
+    job_id = str(uuid.uuid4())
+    collection = the_client[data['database']][data['collection']]
+    collection['_jobs'].insert_one({
+        'identifier': job_id,
+        'time': datetime.datetime.now(),
+        'status': 'pending',
+        'method': data['method'],
+        'args': data.get('args', ()),
+        'kwargs': data['kwargs'],
+        'stdout': [],
+        'stderr': [],
+    })
+    job = q.enqueue(
+        process._function_job,
+        database_name=data['database'],
+        collection_name=data['collection'],
+        function_name=data['method'],
+        identifier=job_id,
+        args=data.get('args', ()),
+        kwargs=data['kwargs'],
+        depends_on=data.get('dependencies', ())
+    )
+    return str(job.id)
 
 
 @app.route('/process_documents_with_model', methods=['POST'])
 def process_documents_with_model():
     data = request.get_json()
-    database = data.get('database')
-    collection = data.get('collection')
-    ids = data.get('ids')
+    database = data['database']
+    collection = data['collection']
+    ids = data['ids']
     ids = [ObjectId(id_) for id_ in ids]
-    model_name = data.get('model_name')
-    batch_size = int(data.get('batch_size'))
-    verbose = data.get('verbose')
+    model_name = data['model_name']
+    batch_size = int(data.get('batch_size', 10))
+    verbose = data.get('verbose', False)
     blocking = data.get('blocking', False)
     dependencies = data.get('dependencies', ())
     print(dependencies)

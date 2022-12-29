@@ -25,11 +25,65 @@ def download_content(database, collection, ids, dependencies=()):
     return r.text
 
 
-def train_imputation(
-    *args,
-    **kwargs,
-):
-    raise NotImplementedError
+def train_imputation(database, collection, name):
+    print('submitting:')
+    print(f'''
+        train_imputation(
+            {database},
+            {collection},
+            {name},
+        )
+    ''')
+    r = requests.post(
+        f'http://{cf["jobs"]["host"]}:{cf["jobs"]["port"]}/train_imputation',
+        json={
+            'collection': collection,
+            'database': database,
+            'name': name,
+        }
+    )
+    return r.text
+
+
+def train_semantic_index(database, collection, name):
+    print('submitting:')
+    print(f'''
+        train_semantic_index(
+            {database},
+            {collection},
+            {name},
+        )
+    ''')
+    r = requests.post(
+        f'http://{cf["jobs"]["host"]}:{cf["jobs"]["port"]}/train_semantic_index',
+        json={
+            'collection': collection,
+            'database': database,
+            'name': name,
+        }
+    )
+    return r.text
+
+
+def process(database, collection, method, *args, dependencies=(), **kwargs):
+    if 'ids' in kwargs:
+        kwargs['ids'] = [str(id_) for id_ in kwargs['ids']]
+    r = requests.post(
+        f'http://{cf["jobs"]["host"]}:{cf["jobs"]["port"]}/process_documents_with_model',
+        json={
+            'collection': collection,
+            'database': database,
+            'method': method,
+            'args': list(args),
+            'kwargs': kwargs,
+            'dependencies': list(dependencies),
+        }
+    )
+    if r.status_code == 500:
+        raise Exception(r.text)
+    else:
+        return r.text
+
 
 
 def process_documents_with_model(
@@ -37,10 +91,8 @@ def process_documents_with_model(
     collection,
     model_name,
     ids,
-    batch_size=10,
-    verbose=False,
-    blocking=False,
     dependencies=(),
+    **kwargs,
 ):
     print('submitting:')
     print(f'''
@@ -49,9 +101,7 @@ def process_documents_with_model(
             {collection},
             {model_name},
             {ids},
-            batch_size={batch_size},
-            verbose={verbose},
-            blocking={blocking},
+            kwargs={kwargs},
             dependencies={dependencies},
         )
     ''')
@@ -62,11 +112,12 @@ def process_documents_with_model(
             'collection': collection,
             'database': database,
             'model_name': model_name,
-            'batch_size': batch_size,
-            'verbose': verbose,
             'ids': ids,
-            'blocking': blocking,
+            'kwargs': kwargs,
             'dependencies': list(dependencies),
         }
     )
-    return r.text
+    if r.status_code == 500:
+        raise Exception(r.text)
+    else:
+        return r.text

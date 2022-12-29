@@ -4,7 +4,6 @@ import torch
 
 
 class Dummy(torch.nn.Module):
-
     def __init__(self):
         super().__init__()
         self.W = torch.nn.Parameter(torch.randn(10, 10))

@@ -1,7 +1,7 @@
 import torch
 
-from sddb.training.losses import NegativeLoss
 from tests.material.converters import FloatTensor
+from tests.material.losses import ranking_loss
 from tests.material.metrics import accuracy
 
 from tests.material.models import Dummy, DummyClassifier, DummyTarget
@@ -34,7 +34,7 @@ def test_representation_trainer(collection_no_hashes):
     collection_no_hashes.create_semantic_index(
         'my_semantic_index',
         measure={'name': 'css', 'object': css},
-        loss={'name': 'negative_loss', 'object': NegativeLoss()},
+        loss={'name': 'negative_loss', 'object': ranking_loss},
         models=[{'name': 'my_model', 'object': Dummy(),  'key': '_base', 'filter': {},
                  'active': True, 'converter': {'name': 'float_tensor', 'object': FloatTensor()}}],
         splitter={'name': 'simple', 'object': simple_split},

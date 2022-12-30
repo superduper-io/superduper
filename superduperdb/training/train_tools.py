@@ -6,9 +6,9 @@ import pymongo
 import torch.utils.data
 import tqdm
 
-from sddb import client
-from sddb.training.loading import QueryDataset
-from sddb.utils import MongoStyleDict, apply_model
+from superduperdb import client
+from superduperdb.training.loading import QueryDataset
+from superduperdb.utils import MongoStyleDict, apply_model
 
 
 class Trainer:
@@ -181,7 +181,7 @@ class Trainer:
 
     @property
     def client(self):
-        return client.SddbClient(**self._client)
+        return client.SuperDuperClient(**self._client)
 
     @property
     def database(self):

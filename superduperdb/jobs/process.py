@@ -2,7 +2,7 @@ import contextlib
 import datetime
 import traceback
 
-from sddb.client import the_client
+from superduperdb.client import the_client
 
 
 class Logger:
@@ -29,37 +29,6 @@ class Logger:
         pass
 
 
-def _handle_function_output(func, database, collection, *args, identifier=None, **kwargs):
-    try:
-        collection = the_client[database][collection]
-        collection['_jobs'].insert_one({
-            'identifier': identifier,
-            'time': datetime.datetime.now(),
-            'status': 'running',
-            'func': func.__name__,
-            'args': args,
-            'kwargs': kwargs,
-            'stdout': [],
-            'stderr': [],
-        })
-        with contextlib.redirect_stdout(Logger(collection, identifier)):
-            with contextlib.redirect_stderr(Logger(collection, identifier, stream='stderr')):
-                collection.single_thread = True
-                out = func(collection, *args, **kwargs)
-                collection['_jobs'].update_one(
-                    {'identifier': identifier},
-                    {'$set': {'status': 'success'}}
-                )
-                return out
-    except Exception as e:
-        tb = traceback.format_exc()
-        collection['_jobs'].update_one(
-            {'identifier': identifier},
-            {'$set': {'status': 'failed', 'msg': tb}}
-        )
-        raise e
-
-
 def handle_function_output(function, collection, identifier, *args, **kwargs):
     with contextlib.redirect_stdout(Logger(collection, identifier)):
         with contextlib.redirect_stderr(Logger(collection, identifier, stream='stderr')):
@@ -67,7 +36,7 @@ def handle_function_output(function, collection, identifier, *args, **kwargs):
 
 
 def _function_job(database_name, collection_name, function_name, identifier,
-                  *args, **kwargs):
+                  args_, kwargs_):
     collection = the_client[database_name][collection_name]
     function = getattr(collection, function_name)
     collection['_jobs'].update_one({'identifier': identifier},
@@ -77,8 +46,8 @@ def _function_job(database_name, collection_name, function_name, identifier,
             function,
             collection,
             identifier,
-            *args,
-            **kwargs,
+            *args_,
+            **kwargs_,
         )
     except Exception as e:
         tb = traceback.format_exc()
@@ -87,4 +56,6 @@ def _function_job(database_name, collection_name, function_name, identifier,
             {'$set': {'status': 'failed', 'msg': tb}}
         )
         raise e
+    collection['_jobs'].update_one({'identifier': identifier},
+                                   {'$set': {'status': 'success'}})
 

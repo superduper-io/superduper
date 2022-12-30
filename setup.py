@@ -5,7 +5,7 @@ import pathlib
 from distutils.util import convert_path
 
 versions = {}
-ver_path = convert_path('sddb/version.py')
+ver_path = convert_path('superduperdb/version.py')
 with open(ver_path) as ver_file:
     exec(ver_file.read(), versions)
 

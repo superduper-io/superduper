@@ -84,7 +84,7 @@ class QueryDataset(data.Dataset):
         self.features = features
         self.projection = projection
 
-        from sddb.utils import Progress
+        from superduperdb.utils import Progress
         if not self.download:
             cursor = self.collection.find(self.filter, {'_id': 1})
             self.ids = []
@@ -107,8 +107,8 @@ class QueryDataset(data.Dataset):
 
     @property
     def client(self):
-        from sddb.client import SddbClient
-        return SddbClient(**self._client)
+        from superduperdb.client import SuperDuperClient
+        return SuperDuperClient(**self._client)
 
     @property
     def database(self):

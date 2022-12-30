@@ -1,7 +1,7 @@
 from bson import BSON
 import requests
 
-from sddb import cf
+from superduperdb import cf
 
 
 def find(database, collection, *args, **kwargs):
@@ -34,5 +34,5 @@ def find_one(database, collection, filter, *args, **kwargs):
         stream=True
     )
     r = BSON.decode(response.content)
-    from sddb.collection import SddbCursor
-    return SddbCursor.convert_types(r, convert=True)
+    from superduperdb.collection import SuperDuperCursor
+    return SuperDuperCursor.convert_types(r, convert=True)

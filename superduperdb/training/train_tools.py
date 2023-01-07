@@ -1,14 +1,15 @@
 import random
 import time
+import uuid
 from collections import defaultdict
 
 import pymongo
 import torch.utils.data
-import tqdm
 
 from superduperdb import client
 from superduperdb.training.loading import QueryDataset
-from superduperdb.utils import MongoStyleDict, apply_model
+from superduperdb.utils import MongoStyleDict, progressbar
+from superduperdb.models.utils import apply_model
 
 
 class Trainer:
@@ -38,6 +39,7 @@ class Trainer:
                  no_improve_then_stop=10,
                  download=False):
 
+        self.id = uuid.uuid4()
         self.train_name = train_name
         self._client = client
         self._database = database
@@ -81,9 +83,9 @@ class Trainer:
         )
         self.best = []
         self.metrics = metrics if metrics is not None else {}
-        if isinstance(self.keys, str):
+        if isinstance(self.keys, str):  # pragma: no cover
             self.keys = (self.keys,)
-        if not isinstance(self.encoders, tuple) and not isinstance(self.encoders, list):
+        if not isinstance(self.encoders, tuple) and not isinstance(self.encoders, list):  # pragma: no cover
             self.encoders = (self.encoders,)
         self.learn_fields = self.keys
         self.learn_encoders = self.encoders
@@ -109,9 +111,9 @@ class Trainer:
     def _early_stop(self):
         if self.watch == 'loss':
             to_watch = [-x for x in self.metric_values['loss']]
-        else:
+        else:  # pragma: no cover
             to_watch = self.metric_values[self.watch]
-        if min(to_watch[-self.no_improve_then_stop:]) > min(to_watch):
+        if max(to_watch[-self.no_improve_then_stop:]) < max(to_watch):  # pragma: no cover
             print('early stopping triggered!')
             return True
         return False
@@ -151,7 +153,7 @@ class Trainer:
                         tmp.append(param[ind[0]].item())
                     elif len(ind) == 2:
                         tmp.append(param[ind[0], ind[1]].item())
-                    else:
+                    else:  # pragma: no cover
                         raise Exception('3d tensors not supported')
                 self.weights_dict[f'{f}.{p}'].append(tmp)
 
@@ -167,17 +169,13 @@ class Trainer:
             print('saving')
             for sn, encoder in zip(self.save_names, self.encoders):
                 self.save(sn, encoder)
-        else:
+        else:  # pragma: no cover
             print('no best model found...')
-
-    def _load_metrics(self):
-        for m in self.metrics:
-            self.metrics[m] = self.collection.load_metric(m)
 
     def calibrate(self, encoder):
         if not hasattr(encoder, 'calibrate'):
             return
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @property
     def client(self):
@@ -240,10 +238,23 @@ class Trainer:
         return loss
 
     def prepare_validation_set(self):
-        raise NotImplementedError
+        if self.splitter is not None:
+            _ids = []
+            for r in self.collection.find({**self.filter, '_fold': 'valid'}, raw=True):
+                r0, r1 = self.splitter(r)
+                if '_id' in r0:
+                    del r0['_id']
+                if '_id' in r1:  # pragma: no cover
+                    del r1['_id']
+                new_r = {**r0, '_other': r1}
+                new_r['_fold'] = 'temp'
+                new_r['_training_id'] = self.training_id
+                result = self.collection.insert_one(new_r, refresh=False)
+                _ids.append(result.inserted_ids[0])
+            self.split_valid_ids = _ids
 
-    def validate_model(self):
-        raise NotImplementedError
+    def validate_model(self, dataloader, model):
+        raise NotImplementedError  # pragma: no cover
 
     def train(self):
 
@@ -285,13 +296,13 @@ class Trainer:
                     self.log_progress(fold='VALID', iteration=it, epoch=epoch, **metrics)
                     self._save_metrics()
                     stop = self._early_stop()
-                    if stop:
+                    if stop:  # pragma: no cover
                         return
                 if self.n_iterations is not None and it >= self.n_iterations:
                     return
 
-            epoch += 1
-            if self.n_epochs is not None and epoch >= self.n_epochs:
+            epoch += 1  # pragma: no cover
+            if self.n_epochs is not None and epoch >= self.n_epochs:  # pragma: no cover
                 return
 
 
@@ -311,27 +322,36 @@ class ImputationTrainer(Trainer):
             {**self.filter, '_fold': 'valid'},
             features=self.features,
         ))
-        inputs_ = [r[self.keys[0]] for r in docs]
-        targets = [r[self.keys[1]] for r in docs]
+        if self.keys[0] != '_base':
+            inputs_ = [r[self.keys[0]] for r in docs]
+        else:  # pragma: no cover
+            inputs_ = docs
+
+        if self.keys[1] != '_base':
+            targets = [r[self.keys[1]] for r in docs]
+        else:  # pragma: no cover
+            targets = docs
         outputs = apply_model(
             self.inference_model,
             inputs_,
             single=False,
-            verbose=True,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )
-        for metric in self.metrics:
-            self.metric_values[metric].append(self.metrics[metric](outputs, targets))
-        loss = []
+        metric_values = defaultdict(lambda: [])
+        for o, t in zip(outputs, targets):
+            for metric in self.metrics:
+                metric_values[metric].append(self.metrics[metric](o, t))
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.encoders)
-            loss.append(self.loss(*outputs).item())
-        self.metric_values['loss'].append(sum(loss) / len(loss))
-        self._save_metrics()
+            metric_values['loss'].append(self.loss(*outputs).item())
+
+        for k in metric_values:
+            metric_values[k] = sum(metric_values[k]) / len(metric_values[k])
         for e in self.encoders:
             if hasattr(e, 'train'):
                 e.train()
+        return metric_values
 
 
 class _Mapped:
@@ -349,12 +369,9 @@ class RepresentationTrainer(Trainer):
     sub_collection = '_semantic_indexes'
 
     def __init__(self, *args, n_retrieve=100, splitter=None, **kwargs):
-        super().__init__(*args, **kwargs)
         self.n_retrieve = n_retrieve
         self.splitter = splitter
-
-    def prepare_validation_set(self):
-        raise NotImplementedError
+        super().__init__(*args, **kwargs)
 
     def validate_model(self, data_loader, epoch):
         for m in self.encoders:
@@ -362,48 +379,53 @@ class RepresentationTrainer(Trainer):
                 m.eval()
         try:
             self.collection.unset_hash_set()
-        except KeyError as e:
+        except KeyError as e:  # pragma: no cover
             if not 'semantic_index' in str(e):
                 raise e
 
         self.collection.semantic_index = self.train_name
         lookup = dict(zip(self.save_names, self.encoders))
-        for m in self.collection.semantic_index['active_models']:
-            self.collection.process_documents_with_model(m, self.valid_ids, verbose=True,
-                                                         model=lookup[m])
+        _ids = self.valid_ids if self.splitter is None else self.split_valid_ids
 
-        anchors = tqdm.tqdm(
-            self.collection.find({'_id': {'$in': self.valid_ids}},
+        for m in self.collection.list_models(**{'name': {'$in': self.save_names}, 'active': True}):
+            self.collection._process_documents_with_model(m, _ids, verbose=True, model=lookup[m])
+
+        anchors = progressbar(
+            self.collection.find({'_id': {'$in': _ids}},
                                  self.projection,
                                  features=self.features).sort('_id', pymongo.ASCENDING),
-            total=len(self.valid_ids),
+            total=len(_ids),
         )
 
-        metrics_values = defaultdict(lambda: [])
+        metric_values = defaultdict(lambda: [])
 
-        # TODO this won't work for the self-supervised case...
-        active_model = self.collection.semantic_index['active_models'][0]
-        key = self.collection._model_info[active_model]['key']
+        active_model = \
+            self.collection.list_models(**{'active': True, 'name': {'$in': self.save_names}})[0]
+        key = self.collection['_models'].find_one({'name': active_model}, {'key': 1})['key']
         for r in anchors:
             _id = r['_id']
-            del r['_id']
-            del r[key]
+            if self.splitter is not None:
+                r = r['_other']
+            if '_id' in r:
+                del r['_id']
+            if len(self.encoders) > 1:
+                del r[key]
             result = list(self.collection.find({'$like': {'document': r, 'n': 100}}, {'_id': 1}))
             result = sorted(result, key=lambda r: -r['_score'])
             result = [r['_id'] for r in result]
             for metric in self.metrics:
-                metrics_values[metric].append(self.metrics[metric](result, _id))
+                metric_values[metric].append(self.metrics[metric](result, _id))
 
-        for k in metrics_values:
-            metrics_values[k] = sum(metrics_values[k]) / len(metrics_values[k])
+        for k in metric_values:
+            metric_values[k] = sum(metric_values[k]) / len(metric_values[k])
 
         loss_values = []
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.learn_encoders)
             loss_values.append(self.loss(*outputs).item())
-        metrics_values['loss'] = sum(loss_values) / len(loss_values)
+        metric_values['loss'] = sum(loss_values) / len(loss_values)
         for m in self.encoders:
             if hasattr(m, 'train'):
                 m.train()
-        return metrics_values
+        return metric_values
 

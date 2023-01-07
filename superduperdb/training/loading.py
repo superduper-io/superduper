@@ -3,7 +3,7 @@ import pymongo
 
 
 class BasicDataset(data.Dataset):
-    def __init__(self, documents, transform=None):
+    def __init__(self, documents, transform):
         super().__init__()
         self.documents = documents
         self.transform = transform
@@ -12,14 +12,10 @@ class BasicDataset(data.Dataset):
         return len(self.documents)
 
     def __getitem__(self, item):
-        if self.transform is None:
-            return self.documents[item]
-        else:
-            r = self.transform(self.documents[item])
-            return r
+        return self.transform(self.documents[item])
 
 
-class MongoIterable(data.IterableDataset):
+class MongoIterable(data.IterableDataset):  # pragma: no cover
     def __init__(self, client, database, collection, transform=None, filter=None):
         super().__init__()
         self._client = client
@@ -71,39 +67,40 @@ class MongoIterable(data.IterableDataset):
 
 class QueryDataset(data.Dataset):
     def __init__(self, client, database, collection, filter=None, transform=None, download=False,
-                 splitter=None, features=None, projection=None):
+                 features=None, projection=None):
         super().__init__()
 
         self._client = client
         self._database = database
         self._collection = collection
-        self.splitter = splitter
         self.transform = transform
         self.filter = filter if filter is not None else {}
         self.download = download
         self.features = features
         self.projection = projection
 
-        from superduperdb.utils import Progress
+        from superduperdb.utils import progressbar
         if not self.download:
             cursor = self.collection.find(self.filter, {'_id': 1})
             self.ids = []
             print(f'downloading ids for {filter}')
-            docs = Progress()(cursor, total=len(self))
+            docs = progressbar(cursor, total=len(self))
             for r in docs:
                 self.ids.append(r['_id'])
         else:
             if projection is None:
                 cursor = self.collection.find(self.filter, features=self.features)
-            else:
+            else:  # pragma: no cover
                 cursor = self.collection.find(self.filter, self.projection, features=self.features)
             self.ids = []
             self.documents = {}
             print(f'downloading records for {filter}')
-            docs = Progress()(cursor, total=len(self))
+            docs = progressbar(cursor, total=len(self))
             for r in docs:
                 self.ids.append(r['_id'])
                 self.documents[r['_id']] = r
+
+            assert len(self) == len(self.ids)
 
     @property
     def client(self):
@@ -127,19 +124,15 @@ class QueryDataset(data.Dataset):
         else:
             if self.projection is None:
                 r = self.collection.find_one({'_id': self.ids[item]}, features=self.features)
-            else:
+            else:  # pragma: no cover
                 r = self.collection.find_one({'_id': self.ids[item]}, self.projection,
                                              features=self.features)
-
-        if self.splitter is not None:
-            r = self.splitter(r)
-
         if '_id' in r:
             del r['_id']
 
         if self.transform is not None:
             out = self.transform(r)
-        else:
+        else:  # pragma: no cover
             out = r
 
         return out

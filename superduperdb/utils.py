@@ -1,22 +1,35 @@
+import os
 from contextlib import contextmanager
-import importlib
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
-import os
 import requests
 import signal
 import sys
-from time import sleep
 import warnings
 
 import torch
 import torch.utils.data
-import tqdm
-
-from superduperdb.training.loading import BasicDataset
 
 
 class MongoStyleDict(dict):
+    """
+    Dictionary object mirroring how fields can be referred to and set in MongoDB.
+
+    >>> d = MongoStyleDict({'a': {'b': 1}})
+    >>> d['a.b']
+    1
+
+    Set deep fields directly with string keys:
+    >>> d['a.c'] = 2
+    >>> d
+    {'a': {'b': 1, 'c': 2}}
+
+    Parent keys should exist in order to set subfields:
+    >>> d['a.d.e'] = 3
+    Traceback (most recent call last):
+    ...
+    KeyError: 'd'
+    """
     def __getitem__(self, item):
         if '.' not in item:
             return super().__getitem__(item)
@@ -42,6 +55,17 @@ def create_batch(args):
     Create a singleton batch in a manner similar to the PyTorch dataloader
 
     :param args: single data point for batching
+
+    >>> create_batch(3.).shape
+    torch.Size([1])
+    >>> x, y = create_batch([torch.randn(5), torch.randn(3, 7)])
+    >>> x.shape
+    torch.Size([1, 5])
+    >>> y.shape
+    torch.Size([1, 3, 7])
+    >>> d = create_batch(({'a': torch.randn(4)}))
+    >>> d['a'].shape
+    torch.Size([1, 4])
     """
     if isinstance(args, (tuple, list)):
         return tuple([create_batch(x) for x in args])
@@ -51,7 +75,7 @@ def create_batch(args):
         return args.unsqueeze(0)
     if isinstance(args, (float, int)):
         return torch.tensor([args])
-    raise TypeError('only tensors and tuples of tensors recursively supported...')
+    raise TypeError('only tensors and tuples of tensors recursively supported...')  # pragma: no cover
 
 
 def unpack_batch(args):
@@ -92,66 +116,20 @@ def unpack_batch(args):
             tmp = {k: unpack_batch(v) for k, v in args.items()}
             batch_size = len(next(iter(tmp.values())))
             return [{k: v[i] for k, v in tmp.items()} for i in range(batch_size)]
-        else:
+        else: # pragma: no cover
             raise NotImplementedError
-
-
-def apply_model(model, args, single=True, verbose=False, **kwargs):
-    """
-    Apply model to args including pre-processing, forward pass and post-processing.
-
-    :param model: model object including methods *preprocess*, *forward* and *postprocess*
-    :param args: single or multiple data points over which to evaluate model
-    :param single: toggle to apply model to single or multiple (batched) datapoints.
-    :param verbose: display progress bar
-    :param kwargs: key, value pairs to be passed to dataloader
-    """
-    if single:
-        if hasattr(model, 'preprocess'):
-            args = model.preprocess(args)
-        if hasattr(model, 'forward'):
-            singleton_batch = create_batch(args)
-            output = model.forward(singleton_batch)
-            args = unpack_batch(output)[0]
-        if hasattr(model, 'postprocess'):
-            return model.postprocess(args)
-        return args
-    else:
-        if hasattr(model, 'preprocess'):
-            inputs = BasicDataset(args, model.preprocess)
-            loader = torch.utils.data.DataLoader(inputs, **kwargs)
-        else:
-            loader = torch.utils.data.DataLoader(args, **kwargs)
-        out = []
-        for batch in Progress()(loader, total=len(loader)):
-            if hasattr(model, 'forward'):
-                tmp = model.forward(batch)
-                tmp = unpack_batch(tmp)
-            else:
-                tmp = unpack_batch(batch)
-            if hasattr(model, 'postprocess'):
-                tmp = list(map(model.postprocess, tmp))
-            out.extend(tmp)
-        return out
-
-
-def import_object(path):
-    module = '.'.join(path.split('.')[:-1])
-    object_ = path.split('.')[-1]
-    module = importlib.import_module(module)
-    return getattr(module, object_)
 
 
 class TimeoutException(Exception):
     ...
 
 
-def timeout_handler(signum, frame):
+def timeout_handler(signum, frame):  # pragma: no cover
     raise TimeoutException()
 
 
 @contextmanager
-def timeout(seconds):
+def timeout(seconds):  # pragma: no cover
     old_handler = signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(seconds)
     try:
@@ -165,15 +143,16 @@ class Downloader:
     def __init__(
         self,
         urls,
-        files,
+        collection,
+        ids=None,
+        keys=None,
         n_workers=20,
         raises=True,
-        callback=None,
-        n_callback_workers=0,
         max_queue=10,
         headers=None,
         skip_existing=True,
         timeout=None,
+        update_db=True,
     ):
         """
         Parallel file downloader
@@ -184,19 +163,21 @@ class Downloader:
         :param max_queue: Maximum number of tasks in the multiprocessing queue.
         """
         self.urls = urls
-        self.files = files
+        self.ids = ids
+        self.keys = keys
+        self.collection = collection
         self.n_workers = n_workers
         self.raises = raises
-        self.callback = callback
-        self.callback_pool = None
-        self.n_callback_workers = n_callback_workers
         self.max_queue = max_queue
         self.failed = 0
         self.headers = headers
         self.skip_existing = skip_existing
         self.timeout = timeout
+        self.update_db = update_db
+        if not self.update_db:  # pragma: no cover
+            self.results = {}
 
-        assert len(files) == len(urls)
+        assert len(ids) == len(urls)
 
     def go(self):
         """
@@ -205,11 +186,11 @@ class Downloader:
                           connections.
         :param test: If *True* perform a test run.
         """
-        progress_bar = tqdm.tqdm(total=len(self.urls))
-        progress_bar.set_description('downloading from urls')
-        self.failed = 0
-        progress_bar.set_description("failed: 0")
         print(f'number of workers {self.n_workers}')
+        prog = progressbar(total=len(self.urls))
+        prog.prefix = 'downloading from urls'
+        self.failed = 0
+        prog.prefx = "failed: 0"
         request_session = requests.Session()
         request_adapter = requests.adapters.HTTPAdapter(
             max_retries=3,
@@ -220,23 +201,23 @@ class Downloader:
         request_session.mount("https://", request_adapter)
 
         def f(i):
-            progress_bar.update()
+            prog.update()
             try:
-                if self.timeout is not None:
+                if self.timeout is not None:  # pragma: no cover
                     with timeout(self.timeout):
                         self.download(i, request_session=request_session)
                 else:
                     self.download(i, request_session=request_session)
-            except TimeoutException:
+            except TimeoutException:  # pragma: no cover
                 print(f'timed out {i}')
             except KeyboardInterrupt:  # pragma: no cover
                 raise
-            except Exception as e:
-                if self.raises:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
+                if self.raises:
                     raise e
                 warnings.warn(str(e))
                 self.failed += 1
-                progress_bar.set_description(f"failed: {self.failed} [{e}]")
+                prog.prefix = f"failed: {self.failed} [{e}]"
 
         if self.n_workers == 0:
             self._sequential_go(f)
@@ -245,105 +226,93 @@ class Downloader:
         self._parallel_go(f)
 
     def _parallel_go(self, f):
-        if self.n_callback_workers > 0:
-            self.callback_pool = Pool(self.n_callback_workers)
-        else:
-            self.callback_pool = None
-
         pool = ThreadPool(self.n_workers)
         try:
             pool.map(f, range(len(self.urls)))
-        except KeyboardInterrupt:
+        except KeyboardInterrupt:  # pragma: no cover
             print("--keyboard interrupt--")
             pool.terminate()
             pool.join()
-            if self.callback_pool is not None:
-                self.callback_pool.terminate()
-                self.callback_pool.join()
-                self.callback_pool = None
             sys.exit(1)
 
         pool.close()
         pool.join()
-        if self.callback_pool is not None:
-            self.callback_pool.close()
-            self.callback_pool.join()
-            self.callback_pool = None
 
     def _sequential_go(self, f):
         for i in range(len(self.urls)):
             f(i)
 
-    def _async_apply_callback(self, args):
-        # this is to limit the size of the queue for the callback, without this, memory is filled quickly
-        while True:
-            if self.callback_pool._taskqueue.qsize() > self.max_queue:
-                sleep(0.1)
-            else:
-                break
-        self.callback_pool.apply_async(self.callback, args=args)
-
-    def download(self, i, request_session=None):
+    def download(self, i, request_session):
         """
         Download i-th url file
         """
         url = self.urls[i]
-        file_ = self.files[i]
-        if self.skip_existing and os.path.isfile(file_):  # pragma: no cover
-            return
+        _id = self.ids[i]
 
-        if "/" in file_:
-            dir_ = "/".join(file_.split("/")[:-1])
-            if not os.path.exists(dir_):
-                os.system(f"mkdir -p {dir_}")
-
-        if request_session is not None:
-            r = request_session.get(url, headers=self.headers)
-        else:
-            r = requests.get(url, headers=self.headers)
+        r = request_session.get(url, headers=self.headers)
 
         if r.status_code != 200:  # pragma: no cover
             raise Exception(f"Non-200 response. ({r.status_code})")
 
-        if self.callback is None:  # pragma: no cover
-            with open(file_, "wb") as f:
-                f.write(r.content)
-        else:
-            if self.callback_pool is not None:
-                self._async_apply_callback(args=(r.content, self.urls[i], self.files[i]))
-            else:  # pragma: no cover
-                self.callback(r.content, self.urls[i], self.files[i])
+        if self.update_db:
+            self.collection.update_one({'_id': self.ids[i]},
+                                       {'$set': {f'{self.keys[i]}._content.bytes': r.content}},
+                                       refresh=False)
+        else:  # pragma: no cover
+            self.results[self.ids[i]] = r.content
 
 
-def basic_progress(iterator, *args, total=None, n_chunks=10, **kwargs):
-    if total is None:
-        try:
-            total = len(iterator)
-        except AttributeError:
-            pass
-    if total is not None:
-        chunksize = int(total / n_chunks)
+class _UpdateableProgress:
+    def __init__(self, total, size=None, prefix='', file=sys.stdout):
+        self.total = total
+        if size is None:
+            try:
+                size = os.get_terminal_size().columns
+            except OSError as e:
+                size = 80
+        self.size = size
+        self.file = file
+        self.prefix = prefix
+        self.j = 0
+
+    def update(self, it=1):
+        self.j += it
+        ending = f'{self.j}/{self.total}'
+        current_size = self.size - len(ending) - 4 - len(self.prefix)
+        x = int(current_size * self.j / self.total)
+        beginning = f'{self.prefix} [{"#" * x}{"." * (current_size - x)}] '
+        print(beginning + ending, end='\r', file=self.file, flush=True)
+
+
+def progressbar(*args, **kwargs):
+    """
+    """
+    if args and args[0] is not None:
+        return _progressbar(*args, **kwargs)
     else:
-        chunksize = 10
-    if chunksize == 0:
-        chunksize = total
-    for i, item in enumerate(iterator):
-        if (i + 1) % chunksize == 0:
-            if total is not None:
-                print(f'({i + 1}/{total})')
-            else:
-                print(f'({i + 1}...)')
+        return _UpdateableProgress(*args, **kwargs)
+
+
+def _progressbar(it=None, prefix="", size=None, out=sys.stdout, total=None):
+    if size is None:
+        try:
+            size = os.get_terminal_size().columns
+        except OSError as e:
+            size = 80
+    if total is None:
+        total = len(it)
+
+    def show(j, end='\r'):
+        ending = f'{j}/{total}'
+        current_size = size - len(ending) - 4 - len(prefix)
+        x = int(current_size * j / total)
+        beginning = f'{prefix} [{"#" * x}{"." * (current_size - x)}] '
+        print(beginning + ending, end=end, file=out, flush=True)
+
+    show(0)
+    for i, item in enumerate(it):
         yield item
-
-
-class Progress:
-    style = 'tqdm'
-    n_chunks = 25
-
-    def __call__(self, *args, **kwargs):
-        if self.style == 'tqdm':
-            return tqdm.tqdm(*args, **kwargs)
-        elif self.style == 'basic':
-            return basic_progress(*args, n_chunks=self.n_chunks, **kwargs)
+        if i + 1 == total:
+            show(i + 1, end=None)
         else:
-            raise NotImplementedError(f'style of progress not implemented {self.style}')
+            show(i + 1)

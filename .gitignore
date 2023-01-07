@@ -155,3 +155,4 @@ dmypy.json
 # Meta
 /.jd
 /.syncignore
+/supervisord.conf

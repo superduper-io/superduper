@@ -1,0 +1,5 @@
+[report]
+omit = 
+    superduperdb/servers/*
+    superduperdb/jobs/*
+    superduperdb/requests/*

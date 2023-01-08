@@ -1,6 +1,12 @@
 SuperDuperDB Documentation
 ==========================
 
-.. autoclass:: collection.Collection
+.. autoclass:: superduperdb.client.SuperDuperClient
+  :members:
+
+.. autoclass:: superduperdb.database.Database
+  :members:
+
+.. autoclass:: superduperdb.collection.Collection
   :members:
 

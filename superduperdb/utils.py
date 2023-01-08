@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from contextlib import contextmanager
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
@@ -316,3 +317,10 @@ def _progressbar(it=None, prefix="", size=None, out=sys.stdout, total=None):
             show(i + 1, end=None)
         else:
             show(i + 1)
+
+
+class ArgumentDefaultDict(defaultdict):
+    def __getitem__(self, item):
+        if item not in self.keys():
+            self[item] = self.default_factory(item)
+        return super().__getitem__(item)

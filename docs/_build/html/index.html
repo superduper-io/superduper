@@ -40,41 +40,43 @@
               <!-- Local TOC -->
               <div class="local-toc"><ul>
 <li><a class="reference internal" href="#">SuperDuperDB Documentation</a><ul>
-<li><a class="reference internal" href="#collection.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a><ul>
-<li><a class="reference internal" href="#collection.Collection.create_converter"><code class="docutils literal notranslate"><span class="pre">Collection.create_converter()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.create_loss"><code class="docutils literal notranslate"><span class="pre">Collection.create_loss()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.create_measure"><code class="docutils literal notranslate"><span class="pre">Collection.create_measure()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.create_metric"><code class="docutils literal notranslate"><span class="pre">Collection.create_metric()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.create_model"><code class="docutils literal notranslate"><span class="pre">Collection.create_model()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.create_semantic_index"><code class="docutils literal notranslate"><span class="pre">Collection.create_semantic_index()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.create_splitter"><code class="docutils literal notranslate"><span class="pre">Collection.create_splitter()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.delete_converter"><code class="docutils literal notranslate"><span class="pre">Collection.delete_converter()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.delete_imputation"><code class="docutils literal notranslate"><span class="pre">Collection.delete_imputation()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.delete_loss"><code class="docutils literal notranslate"><span class="pre">Collection.delete_loss()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.delete_measure"><code class="docutils literal notranslate"><span class="pre">Collection.delete_measure()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.delete_metric"><code class="docutils literal notranslate"><span class="pre">Collection.delete_metric()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.delete_model"><code class="docutils literal notranslate"><span class="pre">Collection.delete_model()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.delete_neighbourhood"><code class="docutils literal notranslate"><span class="pre">Collection.delete_neighbourhood()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.delete_semantic_index"><code class="docutils literal notranslate"><span class="pre">Collection.delete_semantic_index()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.find"><code class="docutils literal notranslate"><span class="pre">Collection.find()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.find_one"><code class="docutils literal notranslate"><span class="pre">Collection.find_one()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.insert_many"><code class="docutils literal notranslate"><span class="pre">Collection.insert_many()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.insert_one"><code class="docutils literal notranslate"><span class="pre">Collection.insert_one()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_converters"><code class="docutils literal notranslate"><span class="pre">Collection.list_converters()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_imputations"><code class="docutils literal notranslate"><span class="pre">Collection.list_imputations()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_jobs"><code class="docutils literal notranslate"><span class="pre">Collection.list_jobs()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_losses"><code class="docutils literal notranslate"><span class="pre">Collection.list_losses()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_measures"><code class="docutils literal notranslate"><span class="pre">Collection.list_measures()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_metrics"><code class="docutils literal notranslate"><span class="pre">Collection.list_metrics()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_models"><code class="docutils literal notranslate"><span class="pre">Collection.list_models()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_neighbourhoods"><code class="docutils literal notranslate"><span class="pre">Collection.list_neighbourhoods()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_semantic_indexes"><code class="docutils literal notranslate"><span class="pre">Collection.list_semantic_indexes()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.list_splitters"><code class="docutils literal notranslate"><span class="pre">Collection.list_splitters()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.replace_one"><code class="docutils literal notranslate"><span class="pre">Collection.replace_one()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.unset_hash_set"><code class="docutils literal notranslate"><span class="pre">Collection.unset_hash_set()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.update_many"><code class="docutils literal notranslate"><span class="pre">Collection.update_many()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.update_one"><code class="docutils literal notranslate"><span class="pre">Collection.update_one()</span></code></a></li>
-<li><a class="reference internal" href="#collection.Collection.watch_job"><code class="docutils literal notranslate"><span class="pre">Collection.watch_job()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.client.SuperDuperClient"><code class="docutils literal notranslate"><span class="pre">SuperDuperClient</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.database.Database"><code class="docutils literal notranslate"><span class="pre">Database</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a><ul>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.create_converter"><code class="docutils literal notranslate"><span class="pre">Collection.create_converter()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.create_loss"><code class="docutils literal notranslate"><span class="pre">Collection.create_loss()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.create_measure"><code class="docutils literal notranslate"><span class="pre">Collection.create_measure()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.create_metric"><code class="docutils literal notranslate"><span class="pre">Collection.create_metric()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.create_model"><code class="docutils literal notranslate"><span class="pre">Collection.create_model()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.create_semantic_index"><code class="docutils literal notranslate"><span class="pre">Collection.create_semantic_index()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.create_splitter"><code class="docutils literal notranslate"><span class="pre">Collection.create_splitter()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.delete_converter"><code class="docutils literal notranslate"><span class="pre">Collection.delete_converter()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.delete_imputation"><code class="docutils literal notranslate"><span class="pre">Collection.delete_imputation()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.delete_loss"><code class="docutils literal notranslate"><span class="pre">Collection.delete_loss()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.delete_measure"><code class="docutils literal notranslate"><span class="pre">Collection.delete_measure()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.delete_metric"><code class="docutils literal notranslate"><span class="pre">Collection.delete_metric()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.delete_model"><code class="docutils literal notranslate"><span class="pre">Collection.delete_model()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.delete_neighbourhood"><code class="docutils literal notranslate"><span class="pre">Collection.delete_neighbourhood()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.delete_semantic_index"><code class="docutils literal notranslate"><span class="pre">Collection.delete_semantic_index()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.find"><code class="docutils literal notranslate"><span class="pre">Collection.find()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.find_one"><code class="docutils literal notranslate"><span class="pre">Collection.find_one()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.insert_many"><code class="docutils literal notranslate"><span class="pre">Collection.insert_many()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.insert_one"><code class="docutils literal notranslate"><span class="pre">Collection.insert_one()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_converters"><code class="docutils literal notranslate"><span class="pre">Collection.list_converters()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_imputations"><code class="docutils literal notranslate"><span class="pre">Collection.list_imputations()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_jobs"><code class="docutils literal notranslate"><span class="pre">Collection.list_jobs()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_losses"><code class="docutils literal notranslate"><span class="pre">Collection.list_losses()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_measures"><code class="docutils literal notranslate"><span class="pre">Collection.list_measures()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_metrics"><code class="docutils literal notranslate"><span class="pre">Collection.list_metrics()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_models"><code class="docutils literal notranslate"><span class="pre">Collection.list_models()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_neighbourhoods"><code class="docutils literal notranslate"><span class="pre">Collection.list_neighbourhoods()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_semantic_indexes"><code class="docutils literal notranslate"><span class="pre">Collection.list_semantic_indexes()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.list_splitters"><code class="docutils literal notranslate"><span class="pre">Collection.list_splitters()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.replace_one"><code class="docutils literal notranslate"><span class="pre">Collection.replace_one()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.unset_hash_set"><code class="docutils literal notranslate"><span class="pre">Collection.unset_hash_set()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.update_many"><code class="docutils literal notranslate"><span class="pre">Collection.update_many()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.update_one"><code class="docutils literal notranslate"><span class="pre">Collection.update_one()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.watch_job"><code class="docutils literal notranslate"><span class="pre">Collection.watch_job()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -108,8 +110,650 @@
   <section id="superduperdb-documentation">
 <h1>SuperDuperDB Documentation<a class="headerlink" href="#superduperdb-documentation" title="Permalink to this heading"></a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="collection.Collection">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">collection.</span></span><span class="sig-name descname"><span class="pre">Collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.client.SuperDuperClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">superduperdb.client.</span></span><span class="sig-name descname"><span class="pre">SuperDuperClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.client.SuperDuperClient" title="Permalink to this definition"></a></dt>
+<dd><p>Client building on top of <code class="code docutils literal notranslate"><span class="pre">pymongo.MongoClient</span></code>. Databases and collections in the
+client are SuperDuperDB objects.</p>
+<p>Client for a MongoDB instance, a replica set, or a set of mongoses.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Starting in PyMongo 4.0, <code class="docutils literal notranslate"><span class="pre">directConnection</span></code> now has a default value of
+False instead of None.
+For more details, see the relevant section of the PyMongo 4.x migration guide:
+<span class="xref std std-ref">pymongo4-migration-direct-connection</span>.</p>
+</div>
+<p>The client object is thread-safe and has connection-pooling built in.
+If an operation fails because of a network error,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ConnectionFailure</span></code> is raised and the client
+reconnects in the background. Application code should handle this
+exception (recognizing that the operation failed) and then continue to
+execute.</p>
+<p>The <cite>host</cite> parameter can be a full <a class="reference external" href="http://dochub.mongodb.org/core/connections">mongodb URI</a>, in addition to
+a simple hostname. It can also be a list of hostnames but no more
+than one URI. Any port specified in the host string(s) will override
+the <cite>port</cite> parameter. For username and
+passwords reserved characters like ‘:’, ‘/’, ‘+’ and ‘&#64;’ must be
+percent encoded following RFC 2396:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">quote_plus</span>
+
+<span class="n">uri</span> <span class="o">=</span> <span class="s2">&quot;mongodb://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">@</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+    <span class="n">quote_plus</span><span class="p">(</span><span class="n">user</span><span class="p">),</span> <span class="n">quote_plus</span><span class="p">(</span><span class="n">password</span><span class="p">),</span> <span class="n">host</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Unix domain sockets are also supported. The socket path must be percent
+encoded in the URI:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uri</span> <span class="o">=</span> <span class="s2">&quot;mongodb://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">@</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+    <span class="n">quote_plus</span><span class="p">(</span><span class="n">user</span><span class="p">),</span> <span class="n">quote_plus</span><span class="p">(</span><span class="n">password</span><span class="p">),</span> <span class="n">quote_plus</span><span class="p">(</span><span class="n">socket_path</span><span class="p">))</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>But not when passed as a simple hostname:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="s1">&#39;/tmp/mongodb-27017.sock&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Starting with version 3.6, PyMongo supports mongodb+srv:// URIs. The
+URI must include one, and only one, hostname. The hostname will be
+resolved to one or more DNS <a class="reference external" href="https://en.wikipedia.org/wiki/SRV_record">SRV records</a> which will be used
+as the seed list for connecting to the MongoDB deployment. When using
+SRV URIs, the <cite>authSource</cite> and <cite>replicaSet</cite> configuration options can
+be specified using <a class="reference external" href="https://en.wikipedia.org/wiki/TXT_record">TXT records</a>. See the
+<a class="reference external" href="https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery/initial-dns-seedlist-discovery.rst">Initial DNS Seedlist Discovery spec</a>
+for more details. Note that the use of SRV URIs implicitly enables
+TLS support. Pass tls=false in the URI to override.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>MongoClient creation will block waiting for answers from
+DNS when mongodb+srv:// URIs are used.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Starting with version 3.0 the <code class="xref py py-class docutils literal notranslate"><span class="pre">MongoClient</span></code>
+constructor no longer blocks while connecting to the server or
+servers, and it no longer raises
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ConnectionFailure</span></code> if they are
+unavailable, nor <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigurationError</span></code>
+if the user’s credentials are wrong. Instead, the constructor
+returns immediately and launches the connection process on
+background threads. You can check if the server is available
+like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pymongo.errors</span> <span class="kn">import</span> <span class="n">ConnectionFailure</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">()</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># The ping command is cheap and does not require auth.</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">admin</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;ping&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">ConnectionFailure</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Server not available&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>When using PyMongo in a multiprocessing context, please
+read <span class="xref std std-ref">multiprocessing</span> first.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Many of the following options can be passed using a MongoDB
+URI or keyword parameters. If the same option is passed in a URI and
+as a keyword parameter the keyword parameter takes precedence.</p>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><cite>host</cite> (optional): hostname or IP address or Unix domain socket
+path of a single mongod or mongos instance to connect to, or a
+mongodb URI, or a list of hostnames (but no more than one mongodb
+URI). If <cite>host</cite> is an IPv6 literal it must be enclosed in ‘[’
+and ‘]’ characters
+following the RFC2732 URL syntax (e.g. ‘[::1]’ for localhost).
+Multihomed and round robin DNS addresses are <strong>not</strong> supported.</p></li>
+<li><p><cite>port</cite> (optional): port number on which to connect</p></li>
+<li><p><cite>document_class</cite> (optional): default class to use for
+documents returned from queries on this client</p></li>
+<li><p><cite>tz_aware</cite> (optional): if <code class="docutils literal notranslate"><span class="pre">True</span></code>,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code> instances returned as values
+in a document by this <code class="xref py py-class docutils literal notranslate"><span class="pre">MongoClient</span></code> will be timezone
+aware (otherwise they will be naive)</p></li>
+<li><p><cite>connect</cite> (optional): if <code class="docutils literal notranslate"><span class="pre">True</span></code> (the default), immediately
+begin connecting to MongoDB in the background. Otherwise connect
+on the first operation.</p></li>
+<li><p><cite>type_registry</cite> (optional): instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeRegistry</span></code> to enable encoding
+and decoding of custom types.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><strong>Other optional parameters can be passed as keyword arguments:</strong></div>
+</div>
+<ul>
+<li><dl class="simple">
+<dt><cite>directConnection</cite> (optional): if <code class="docutils literal notranslate"><span class="pre">True</span></code>, forces this client to</dt><dd><p>connect directly to the specified MongoDB host as a standalone.
+If <code class="docutils literal notranslate"><span class="pre">false</span></code>, the client connects to the entire replica set of
+which the given MongoDB host(s) is a part. If this is <code class="docutils literal notranslate"><span class="pre">True</span></code>
+and a mongodb+srv:// URI or a URI containing multiple seeds is
+provided, an exception will be raised.</p>
+</dd>
+</dl>
+</li>
+<li><p><cite>maxPoolSize</cite> (optional): The maximum allowable number of
+concurrent connections to each connected server. Requests to a
+server will block if there are <cite>maxPoolSize</cite> outstanding
+connections to the requested server. Defaults to 100. Can be
+either 0 or None, in which case there is no limit on the number
+of concurrent connections.</p></li>
+<li><p><cite>minPoolSize</cite> (optional): The minimum required number of concurrent
+connections that the pool will maintain to each connected server.
+Default is 0.</p></li>
+<li><p><cite>maxIdleTimeMS</cite> (optional): The maximum number of milliseconds that
+a connection can remain idle in the pool before being removed and
+replaced. Defaults to <cite>None</cite> (no limit).</p></li>
+<li><p><cite>maxConnecting</cite> (optional): The maximum number of connections that
+each pool can establish concurrently. Defaults to <cite>2</cite>.</p></li>
+<li><p><cite>timeoutMS</cite>: (integer or None) Controls how long (in
+milliseconds) the driver will wait when executing an operation
+(including retry attempts) before raising a timeout error.
+<code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code> means no timeout.</p></li>
+<li><p><cite>socketTimeoutMS</cite>: (integer or None) Controls how long (in
+milliseconds) the driver will wait for a response after sending an
+ordinary (non-monitoring) database operation before concluding that
+a network error has occurred. <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code> means no timeout.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (no timeout).</p></li>
+<li><p><cite>connectTimeoutMS</cite>: (integer or None) Controls how long (in
+milliseconds) the driver will wait during server monitoring when
+connecting a new socket to a server before concluding the server
+is unavailable. <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code> means no timeout.
+Defaults to <code class="docutils literal notranslate"><span class="pre">20000</span></code> (20 seconds).</p></li>
+<li><p><cite>server_selector</cite>: (callable or None) Optional, user-provided
+function that augments server selection rules. The function should
+accept as an argument a list of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ServerDescription</span></code> objects and
+return a list of server descriptions that should be considered
+suitable for the desired operation.</p></li>
+<li><p><cite>serverSelectionTimeoutMS</cite>: (integer) Controls how long (in
+milliseconds) the driver will wait to find an available,
+appropriate server to carry out a database operation; while it is
+waiting, multiple server monitoring operations may be carried out,
+each controlled by <cite>connectTimeoutMS</cite>. Defaults to <code class="docutils literal notranslate"><span class="pre">30000</span></code> (30
+seconds).</p></li>
+<li><p><cite>waitQueueTimeoutMS</cite>: (integer or None) How long (in milliseconds)
+a thread will wait for a socket from the pool if the pool has no
+free sockets. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (no timeout).</p></li>
+<li><p><cite>heartbeatFrequencyMS</cite>: (optional) The number of milliseconds
+between periodic server checks, or None to accept the default
+frequency of 10 seconds.</p></li>
+<li><p><cite>appname</cite>: (string or None) The name of the application that
+created this MongoClient instance. The server will log this value
+upon establishing each connection. It is also recorded in the slow
+query log and profile collections.</p></li>
+<li><p><cite>driver</cite>: (pair or None) A driver implemented on top of PyMongo can
+pass a <code class="xref py py-class docutils literal notranslate"><span class="pre">DriverInfo</span></code> to add its name,
+version, and platform to the message printed in the server log when
+establishing a connection.</p></li>
+<li><p><cite>event_listeners</cite>: a list or tuple of event listeners. See
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">monitoring</span></code> for details.</p></li>
+<li><p><cite>retryWrites</cite>: (boolean) Whether supported write operations
+executed within this MongoClient will be retried once after a
+network error. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.
+The supported write operations are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">bulk_write()</span></code>, as long as
+<code class="xref py py-class docutils literal notranslate"><span class="pre">UpdateMany</span></code> or
+<code class="xref py py-class docutils literal notranslate"><span class="pre">DeleteMany</span></code> are not included.</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_one()</span></code></p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">insert_one()</span></code></p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">insert_many()</span></code></p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">replace_one()</span></code></p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">update_one()</span></code></p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">find_one_and_delete()</span></code></p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">find_one_and_replace()</span></code></p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">find_one_and_update()</span></code></p></li>
+</ul>
+</div></blockquote>
+<p>Unsupported write operations include, but are not limited to,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">aggregate()</span></code> using the <code class="docutils literal notranslate"><span class="pre">$out</span></code>
+pipeline operator and any operation with an unacknowledged write
+concern (e.g. {w: 0})). See
+<a class="reference external" href="https://github.com/mongodb/specifications/blob/master/source/retryable-writes/retryable-writes.rst">https://github.com/mongodb/specifications/blob/master/source/retryable-writes/retryable-writes.rst</a></p>
+</li>
+<li><p><cite>retryReads</cite>: (boolean) Whether supported read operations
+executed within this MongoClient will be retried once after a
+network error. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.
+The supported read operations are:
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">find()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">find_one()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">aggregate()</span></code> without <code class="docutils literal notranslate"><span class="pre">$out</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">distinct()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">count()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">estimated_document_count()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">count_documents()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">pymongo.collection.Collection.watch()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">list_indexes()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">pymongo.database.Database.watch()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">list_collections()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">pymongo.mongo_client.MongoClient.watch()</span></code>,
+and <code class="xref py py-meth docutils literal notranslate"><span class="pre">list_databases()</span></code>.</p>
+<p>Unsupported read operations include, but are not limited to
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">command()</span></code> and any getMore
+operation on a cursor.</p>
+<p>Enabling retryable reads makes applications more resilient to
+transient errors such as network failures, database upgrades, and
+replica set failovers. For an exact definition of which errors
+trigger a retry, see the <a class="reference external" href="https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst">retryable reads specification</a>.</p>
+</li>
+<li><p><cite>compressors</cite>: Comma separated list of compressors for wire
+protocol compression. The list is used to negotiate a compressor
+with the server. Currently supported options are “snappy”, “zlib”
+and “zstd”. Support for snappy requires the
+<a class="reference external" href="https://pypi.org/project/python-snappy/">python-snappy</a> package.
+zlib support requires the Python standard library zlib module. zstd
+requires the <a class="reference external" href="https://pypi.org/project/zstandard/">zstandard</a>
+package. By default no compression is used. Compression support
+must also be enabled on the server. MongoDB 3.6+ supports snappy
+and zlib compression. MongoDB 4.2+ adds support for zstd.</p></li>
+<li><p><cite>zlibCompressionLevel</cite>: (int) The zlib compression level to use
+when zlib is used as the wire protocol compressor. Supported values
+are -1 through 9. -1 tells the zlib library to use its default
+compression level (usually 6). 0 means no compression. 1 is best
+speed. 9 is best compression. Defaults to -1.</p></li>
+<li><p><cite>uuidRepresentation</cite>: The BSON representation to use when encoding
+from and decoding to instances of <code class="xref py py-class docutils literal notranslate"><span class="pre">UUID</span></code>. Valid
+values are the strings: “standard”, “pythonLegacy”, “javaLegacy”,
+“csharpLegacy”, and “unspecified” (the default). New applications
+should consider setting this to “standard” for cross language
+compatibility. See <span class="xref std std-ref">handling-uuid-data-example</span> for details.</p></li>
+<li><p><cite>unicode_decode_error_handler</cite>: The error handler to apply when
+a Unicode-related error occurs during BSON decoding that would
+otherwise raise <code class="xref py py-exc docutils literal notranslate"><span class="pre">UnicodeDecodeError</span></code>. Valid options include
+‘strict’, ‘replace’, ‘backslashreplace’, ‘surrogateescape’, and
+‘ignore’. Defaults to ‘strict’.</p></li>
+<li><p><cite>srvServiceName</cite>: (string) The SRV service name to use for
+“mongodb+srv://” URIs. Defaults to “mongodb”. Use it like so:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MongoClient</span><span class="p">(</span><span class="s2">&quot;mongodb+srv://example.com/?srvServiceName=customname&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<div class="line-block">
+<div class="line"><strong>Write Concern options:</strong></div>
+<div class="line">(Only set if passed. No default values.)</div>
+</div>
+<ul class="simple">
+<li><p><cite>w</cite>: (integer or string) If this is a replica set, write operations
+will block until they have been replicated to the specified number
+or tagged set of servers. <cite>w=&lt;int&gt;</cite> always includes the replica set
+primary (e.g. w=3 means write to the primary and wait until
+replicated to <strong>two</strong> secondaries). Passing w=0 <strong>disables write
+acknowledgement</strong> and all other write concern options.</p></li>
+<li><p><cite>wTimeoutMS</cite>: (integer) Used in conjunction with <cite>w</cite>. Specify a value
+in milliseconds to control how long to wait for write propagation
+to complete. If replication does not complete in the given
+timeframe, a timeout exception is raised. Passing wTimeoutMS=0
+will cause <strong>write operations to wait indefinitely</strong>.</p></li>
+<li><p><cite>journal</cite>: If <code class="docutils literal notranslate"><span class="pre">True</span></code> block until write operations have been
+committed to the journal. Cannot be used in combination with
+<cite>fsync</cite>. Write operations will fail with an exception if this
+option is used when the server is running without journaling.</p></li>
+<li><p><cite>fsync</cite>: If <code class="docutils literal notranslate"><span class="pre">True</span></code> and the server is running without journaling,
+blocks until the server has synced all data files to disk. If the
+server is running with journaling, this acts the same as the <cite>j</cite>
+option, blocking until write operations have been committed to the
+journal. Cannot be used in combination with <cite>j</cite>.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><strong>Replica set keyword arguments for connecting with a replica set
+- either directly or via a mongos:</strong></div>
+</div>
+<ul class="simple">
+<li><p><cite>replicaSet</cite>: (string or None) The name of the replica set to
+connect to. The driver will verify that all servers it connects to
+match this name. Implies that the hosts specified are a seed list
+and the driver should attempt to find all members of the set.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><strong>Read Preference:</strong></div>
+</div>
+<ul class="simple">
+<li><p><cite>readPreference</cite>: The replica set read preference for this client.
+One of <code class="docutils literal notranslate"><span class="pre">primary</span></code>, <code class="docutils literal notranslate"><span class="pre">primaryPreferred</span></code>, <code class="docutils literal notranslate"><span class="pre">secondary</span></code>,
+<code class="docutils literal notranslate"><span class="pre">secondaryPreferred</span></code>, or <code class="docutils literal notranslate"><span class="pre">nearest</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">primary</span></code>.</p></li>
+<li><p><cite>readPreferenceTags</cite>: Specifies a tag set as a comma-separated list
+of colon-separated key-value pairs. For example <code class="docutils literal notranslate"><span class="pre">dc:ny,rack:1</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><cite>maxStalenessSeconds</cite>: (integer) The maximum estimated
+length of time a replica set secondary can fall behind the primary
+in replication before it will no longer be selected for operations.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-1</span></code>, meaning no maximum. If maxStalenessSeconds
+is set, it must be a positive integer greater than or equal to
+90 seconds.</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><span class="xref std std-doc">/examples/server_selection</span></p>
+</div>
+<div class="line-block">
+<div class="line"><strong>Authentication:</strong></div>
+</div>
+<ul>
+<li><p><cite>username</cite>: A string.</p></li>
+<li><p><cite>password</cite>: A string.</p>
+<p>Although username and password must be percent-escaped in a MongoDB
+URI, they must not be percent-escaped when passed as parameters. In
+this example, both the space and slash special characters are passed
+as-is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MongoClient</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;user name&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;pass/word&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><cite>authSource</cite>: The database to authenticate on. Defaults to the
+database specified in the URI, if provided, or to “admin”.</p></li>
+<li><p><cite>authMechanism</cite>: See <code class="xref py py-data docutils literal notranslate"><span class="pre">MECHANISMS</span></code> for options.
+If no mechanism is specified, PyMongo automatically SCRAM-SHA-1
+when connected to MongoDB 3.6 and negotiates the mechanism to use
+(SCRAM-SHA-1 or SCRAM-SHA-256) when connected to MongoDB 4.0+.</p></li>
+<li><p><cite>authMechanismProperties</cite>: Used to specify authentication mechanism
+specific options. To specify the service name for GSSAPI
+authentication pass authMechanismProperties=’SERVICE_NAME:&lt;service
+name&gt;’.
+To specify the session token for MONGODB-AWS authentication pass
+<code class="docutils literal notranslate"><span class="pre">authMechanismProperties='AWS_SESSION_TOKEN:&lt;session</span> <span class="pre">token&gt;'</span></code>.</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><span class="xref std std-doc">/examples/authentication</span></p>
+</div>
+<div class="line-block">
+<div class="line"><strong>TLS/SSL configuration:</strong></div>
+</div>
+<ul class="simple">
+<li><p><cite>tls</cite>: (boolean) If <code class="docutils literal notranslate"><span class="pre">True</span></code>, create the connection to the server
+using transport layer security. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><cite>tlsInsecure</cite>: (boolean) Specify whether TLS constraints should be
+relaxed as much as possible. Setting <code class="docutils literal notranslate"><span class="pre">tlsInsecure=True</span></code> implies
+<code class="docutils literal notranslate"><span class="pre">tlsAllowInvalidCertificates=True</span></code> and
+<code class="docutils literal notranslate"><span class="pre">tlsAllowInvalidHostnames=True</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>. Think
+very carefully before setting this to <code class="docutils literal notranslate"><span class="pre">True</span></code> as it dramatically
+reduces the security of TLS.</p></li>
+<li><p><cite>tlsAllowInvalidCertificates</cite>: (boolean) If <code class="docutils literal notranslate"><span class="pre">True</span></code>, continues
+the TLS handshake regardless of the outcome of the certificate
+verification process. If this is <code class="docutils literal notranslate"><span class="pre">False</span></code>, and a value is not
+provided for <code class="docutils literal notranslate"><span class="pre">tlsCAFile</span></code>, PyMongo will attempt to load system
+provided CA certificates. If the python version in use does not
+support loading system CA certificates then the <code class="docutils literal notranslate"><span class="pre">tlsCAFile</span></code>
+parameter must point to a file of CA certificates.
+<code class="docutils literal notranslate"><span class="pre">tlsAllowInvalidCertificates=False</span></code> implies <code class="docutils literal notranslate"><span class="pre">tls=True</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>. Think very carefully before setting this
+to <code class="docutils literal notranslate"><span class="pre">True</span></code> as that could make your application vulnerable to
+on-path attackers.</p></li>
+<li><p><cite>tlsAllowInvalidHostnames</cite>: (boolean) If <code class="docutils literal notranslate"><span class="pre">True</span></code>, disables TLS
+hostname verification. <code class="docutils literal notranslate"><span class="pre">tlsAllowInvalidHostnames=False</span></code> implies
+<code class="docutils literal notranslate"><span class="pre">tls=True</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>. Think very carefully before
+setting this to <code class="docutils literal notranslate"><span class="pre">True</span></code> as that could make your application
+vulnerable to on-path attackers.</p></li>
+<li><p><cite>tlsCAFile</cite>: A file containing a single or a bundle of
+“certification authority” certificates, which are used to validate
+certificates passed from the other end of the connection.
+Implies <code class="docutils literal notranslate"><span class="pre">tls=True</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><cite>tlsCertificateKeyFile</cite>: A file containing the client certificate
+and private key. Implies <code class="docutils literal notranslate"><span class="pre">tls=True</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><cite>tlsCRLFile</cite>: A file containing a PEM or DER formatted
+certificate revocation list. Only supported by python 2.7.9+
+(pypy 2.5.1+). Implies <code class="docutils literal notranslate"><span class="pre">tls=True</span></code>. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><cite>tlsCertificateKeyFilePassword</cite>: The password or passphrase for
+decrypting the private key in <code class="docutils literal notranslate"><span class="pre">tlsCertificateKeyFile</span></code>. Only
+necessary if the private key is encrypted. Only supported by
+python 2.7.9+ (pypy 2.5.1+) and 3.3+. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><cite>tlsDisableOCSPEndpointCheck</cite>: (boolean) If <code class="docutils literal notranslate"><span class="pre">True</span></code>, disables
+certificate revocation status checking via the OCSP responder
+specified on the server certificate.
+<code class="docutils literal notranslate"><span class="pre">tlsDisableOCSPEndpointCheck=False</span></code> implies <code class="docutils literal notranslate"><span class="pre">tls=True</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><cite>ssl</cite>: (boolean) Alias for <code class="docutils literal notranslate"><span class="pre">tls</span></code>.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><strong>Read Concern options:</strong></div>
+<div class="line">(If not set explicitly, this will use the server default)</div>
+</div>
+<ul class="simple">
+<li><p><cite>readConcernLevel</cite>: (string) The read concern level specifies the
+level of isolation for read operations.  For example, a read
+operation using a read concern level of <code class="docutils literal notranslate"><span class="pre">majority</span></code> will only
+return data that has been written to a majority of nodes. If the
+level is left unspecified, the server default will be used.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><strong>Client side encryption options:</strong></div>
+<div class="line">(If not set explicitly, client side encryption will not be enabled.)</div>
+</div>
+<ul>
+<li><p><cite>auto_encryption_opts</cite>: A
+<code class="xref py py-class docutils literal notranslate"><span class="pre">AutoEncryptionOpts</span></code> which
+configures this client to automatically encrypt collection commands
+and automatically decrypt results. See
+<span class="xref std std-ref">automatic-client-side-encryption</span> for an example.
+If a <code class="xref py py-class docutils literal notranslate"><span class="pre">MongoClient</span></code> is configured with
+<code class="docutils literal notranslate"><span class="pre">auto_encryption_opts</span></code> and a non-None <code class="docutils literal notranslate"><span class="pre">maxPoolSize</span></code>, a
+separate internal <code class="docutils literal notranslate"><span class="pre">MongoClient</span></code> is created if any of the
+following are true:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>A <code class="docutils literal notranslate"><span class="pre">key_vault_client</span></code> is not passed to
+<code class="xref py py-class docutils literal notranslate"><span class="pre">AutoEncryptionOpts</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bypass_auto_encrpytion=False</span></code> is passed to
+<code class="xref py py-class docutils literal notranslate"><span class="pre">AutoEncryptionOpts</span></code></p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<div class="line-block">
+<div class="line"><strong>Stable API options:</strong></div>
+<div class="line">(If not set explicitly, Stable API will not be enabled.)</div>
+</div>
+<ul class="simple">
+<li><p><cite>server_api</cite>: A
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ServerApi</span></code> which configures this
+client to use Stable API. See <span class="xref std std-ref">versioned-api-ref</span> for
+details.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>The MongoDB documentation on <a class="reference external" href="https://dochub.mongodb.org/core/connections">connections</a>.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 4.2: </span>Added the <code class="docutils literal notranslate"><span class="pre">timeoutMS</span></code> keyword argument.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 4.0: </span></p>
+<ul class="simple">
+<li><p>Removed the fsync, unlock, is_locked, database_names, and
+close_cursor methods.
+See the <span class="xref std std-ref">pymongo4-migration-guide</span>.</p></li>
+<li><p>Removed the <code class="docutils literal notranslate"><span class="pre">waitQueueMultiple</span></code> and <code class="docutils literal notranslate"><span class="pre">socketKeepAlive</span></code>
+keyword arguments.</p></li>
+<li><p>The default for <cite>uuidRepresentation</cite> was changed from
+<code class="docutils literal notranslate"><span class="pre">pythonLegacy</span></code> to <code class="docutils literal notranslate"><span class="pre">unspecified</span></code>.</p></li>
+<li><p>Added the <code class="docutils literal notranslate"><span class="pre">srvServiceName</span></code> and <code class="docutils literal notranslate"><span class="pre">maxConnecting</span></code> URI and
+keyword argument.</p></li>
+</ul>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.12: </span>Added the <code class="docutils literal notranslate"><span class="pre">server_api</span></code> keyword argument.
+The following keyword arguments were deprecated:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ssl_certfile</span></code> and <code class="docutils literal notranslate"><span class="pre">ssl_keyfile</span></code> were deprecated in favor
+of <code class="docutils literal notranslate"><span class="pre">tlsCertificateKeyFile</span></code>.</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.11: </span>Added the following keyword arguments and URI options:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tlsDisableOCSPEndpointCheck</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">directConnection</span></code></p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.9: </span>Added the <code class="docutils literal notranslate"><span class="pre">retryReads</span></code> keyword argument and URI option.
+Added the <code class="docutils literal notranslate"><span class="pre">tlsInsecure</span></code> keyword argument and URI option.
+The following keyword arguments and URI options were deprecated:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">wTimeout</span></code> was deprecated in favor of <code class="docutils literal notranslate"><span class="pre">wTimeoutMS</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">j</span></code> was deprecated in favor of <code class="docutils literal notranslate"><span class="pre">journal</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ssl_cert_reqs</span></code> was deprecated in favor of
+<code class="docutils literal notranslate"><span class="pre">tlsAllowInvalidCertificates</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ssl_match_hostname</span></code> was deprecated in favor of
+<code class="docutils literal notranslate"><span class="pre">tlsAllowInvalidHostnames</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ssl_ca_certs</span></code> was deprecated in favor of <code class="docutils literal notranslate"><span class="pre">tlsCAFile</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ssl_certfile</span></code> was deprecated in favor of
+<code class="docutils literal notranslate"><span class="pre">tlsCertificateKeyFile</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ssl_crlfile</span></code> was deprecated in favor of <code class="docutils literal notranslate"><span class="pre">tlsCRLFile</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ssl_pem_passphrase</span></code> was deprecated in favor of
+<code class="docutils literal notranslate"><span class="pre">tlsCertificateKeyFilePassword</span></code>.</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.9: </span><code class="docutils literal notranslate"><span class="pre">retryWrites</span></code> now defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.8: </span>Added the <code class="docutils literal notranslate"><span class="pre">server_selector</span></code> keyword argument.
+Added the <code class="docutils literal notranslate"><span class="pre">type_registry</span></code> keyword argument.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.7: </span>Added the <code class="docutils literal notranslate"><span class="pre">driver</span></code> keyword argument.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.6: </span>Added support for mongodb+srv:// URIs.
+Added the <code class="docutils literal notranslate"><span class="pre">retryWrites</span></code> keyword argument and URI option.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.5: </span>Add <code class="docutils literal notranslate"><span class="pre">username</span></code> and <code class="docutils literal notranslate"><span class="pre">password</span></code> options. Document the
+<code class="docutils literal notranslate"><span class="pre">authSource</span></code>, <code class="docutils literal notranslate"><span class="pre">authMechanism</span></code>, and <code class="docutils literal notranslate"><span class="pre">authMechanismProperties</span></code>
+options.
+Deprecated the <code class="docutils literal notranslate"><span class="pre">socketKeepAlive</span></code> keyword argument and URI option.
+<code class="docutils literal notranslate"><span class="pre">socketKeepAlive</span></code> now defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.0: </span><code class="xref py py-class docutils literal notranslate"><span class="pre">MongoClient</span></code> is now the one and only
+client class for a standalone server, mongos, or replica set.
+It includes the functionality that had been split into
+<code class="xref py py-class docutils literal notranslate"><span class="pre">MongoReplicaSetClient</span></code>: it can connect
+to a replica set, discover all its members, and monitor the set for
+stepdowns, elections, and reconfigs.</p>
+<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">MongoClient</span></code> constructor no
+longer blocks while connecting to the server or servers, and it no
+longer raises <code class="xref py py-class docutils literal notranslate"><span class="pre">ConnectionFailure</span></code> if they
+are unavailable, nor <code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigurationError</span></code>
+if the user’s credentials are wrong. Instead, the constructor
+returns immediately and launches the connection process on
+background threads.</p>
+<p>Therefore the <code class="docutils literal notranslate"><span class="pre">alive</span></code> method is removed since it no longer
+provides meaningful information; even if the client is disconnected,
+it may discover a server in time to fulfill the next operation.</p>
+<p>In PyMongo 2.x, <code class="xref py py-class docutils literal notranslate"><span class="pre">MongoClient</span></code> accepted a list of
+standalone MongoDB servers and used the first it could connect to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MongoClient</span><span class="p">([</span><span class="s1">&#39;host1.com:27017&#39;</span><span class="p">,</span> <span class="s1">&#39;host2.com:27017&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>A list of multiple standalones is no longer supported; if multiple
+servers are listed they must be members of the same replica set, or
+mongoses in the same sharded cluster.</p>
+<p>The behavior for a list of mongoses is changed from “high
+availability” to “load balancing”. Before, the client connected to
+the lowest-latency mongos in the list, and used it until a network
+error prompted it to re-evaluate all mongoses’ latencies and
+reconnect to one of them. In PyMongo 3, the client monitors its
+network latency to all the mongoses continuously, and distributes
+operations evenly among those with the lowest latency. See
+<span class="xref std std-ref">mongos-load-balancing</span> for more information.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">connect</span></code> option is added.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">start_request</span></code>, <code class="docutils literal notranslate"><span class="pre">in_request</span></code>, and <code class="docutils literal notranslate"><span class="pre">end_request</span></code> methods
+are removed, as well as the <code class="docutils literal notranslate"><span class="pre">auto_start_request</span></code> option.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">copy_database</span></code> method is removed, see the
+<span class="xref std std-doc">copy_database examples</span> for alternatives.</p>
+<p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">MongoClient.disconnect()</span></code> method is removed; it was a
+synonym for <code class="xref py py-meth docutils literal notranslate"><span class="pre">close()</span></code>.</p>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">MongoClient</span></code> no longer returns an
+instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">Database</span></code> for attribute names
+with leading underscores. You must use dict-style lookups instead:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">client</span><span class="p">[</span><span class="s1">&#39;__my_database__&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Not:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">client</span><span class="o">.</span><span class="n">__my_database__</span>
+</pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="superduperdb.database.Database">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">superduperdb.database.</span></span><span class="sig-name descname"><span class="pre">Database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.database.Database" title="Permalink to this definition"></a></dt>
+<dd><p>Database building on top of <code class="code docutils literal notranslate"><span class="pre">pymongo.database.Database</span></code>. Collections in the
+database are SuperDuperDB objects <code class="code docutils literal notranslate"><span class="pre">superduperdb.collection.Collection</span></code>.</p>
+<p>Get a database by client and name.</p>
+<p>Raises <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeError</span></code> if <cite>name</cite> is not an instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">basestring</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> in python 3). Raises
+<code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidName</span></code> if <cite>name</cite> is not a valid
+database name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><cite>client</cite>: A <code class="xref py py-class docutils literal notranslate"><span class="pre">MongoClient</span></code> instance.</p></li>
+<li><p><cite>name</cite>: The database name.</p></li>
+<li><p><cite>codec_options</cite> (optional): An instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CodecOptions</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (the
+default) client.codec_options is used.</p></li>
+<li><p><cite>read_preference</cite> (optional): The read preference to use. If
+<code class="docutils literal notranslate"><span class="pre">None</span></code> (the default) client.read_preference is used.</p></li>
+<li><p><cite>write_concern</cite> (optional): An instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">WriteConcern</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (the
+default) client.write_concern is used.</p></li>
+<li><p><cite>read_concern</cite> (optional): An instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ReadConcern</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (the
+default) client.read_concern is used.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>The MongoDB documentation on <a class="reference external" href="https://dochub.mongodb.org/core/databases">databases</a>.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 4.0: </span>Removed the eval, system_js, error, last_status, previous_error,
+reset_error_history, authenticate, logout, collection_names,
+current_op, add_user, remove_user, profiling_level,
+set_profiling_level, and profiling_info methods.
+See the <span class="xref std std-ref">pymongo4-migration-guide</span>.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.2: </span>Added the read_concern option.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.0: </span>Added the codec_options, read_preference, and write_concern options.
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Database</span></code> no longer returns an instance
+of <code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code> for attribute names
+with leading underscores. You must use dict-style lookups instead::</p>
+<blockquote>
+<div><p>db[‘__my_collection__’]</p>
+</div></blockquote>
+<p>Not:</p>
+<blockquote>
+<div><p>db.__my_collection__</p>
+</div></blockquote>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="superduperdb.collection.Collection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">superduperdb.collection.</span></span><span class="sig-name descname"><span class="pre">Collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection" title="Permalink to this definition"></a></dt>
 <dd><p>SuperDuperDB collection type, subclassing <em>pymongo.collection.Collection</em>.
 Key methods are:</p>
 <p>Creating objects:</p>
@@ -251,8 +895,8 @@ instead::</p>
 <p>The MongoDB documentation on <a class="reference external" href="https://dochub.mongodb.org/core/collections">collections</a>.</p>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.create_converter">
-<span class="sig-name descname"><span class="pre">create_converter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.create_converter" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_converter">
+<span class="sig-name descname"><span class="pre">create_converter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_converter" title="Permalink to this definition"></a></dt>
 <dd><p>Create a converter directly from a Python object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -265,8 +909,8 @@ instead::</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.create_loss">
-<span class="sig-name descname"><span class="pre">create_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.create_loss" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_loss">
+<span class="sig-name descname"><span class="pre">create_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_loss" title="Permalink to this definition"></a></dt>
 <dd><p>Create a loss function directly from a Python object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -279,8 +923,8 @@ instead::</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.create_measure">
-<span class="sig-name descname"><span class="pre">create_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.create_measure" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_measure">
+<span class="sig-name descname"><span class="pre">create_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_measure" title="Permalink to this definition"></a></dt>
 <dd><p>Create a document measure directly from a Python object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -293,8 +937,8 @@ instead::</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.create_metric">
-<span class="sig-name descname"><span class="pre">create_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.create_metric" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_metric">
+<span class="sig-name descname"><span class="pre">create_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_metric" title="Permalink to this definition"></a></dt>
 <dd><p>Create a metric directly from a Python object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -307,8 +951,8 @@ instead::</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.create_model">
-<span class="sig-name descname"><span class="pre">create_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dependencies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_docs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.create_model" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_model">
+<span class="sig-name descname"><span class="pre">create_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dependencies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_docs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_model" title="Permalink to this definition"></a></dt>
 <dd><p>Create a model registered in the collection directly from a python session.
 The added model will then watch incoming records and add outputs computed on those
 records into the “_outputs” of the records. The model is then stored inside MongoDB and can
@@ -335,8 +979,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.create_semantic_index">
-<span class="sig-name descname"><span class="pre">create_semantic_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">splitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">trainer_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.create_semantic_index" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_semantic_index">
+<span class="sig-name descname"><span class="pre">create_semantic_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">splitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">trainer_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_semantic_index" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -356,8 +1000,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.create_splitter">
-<span class="sig-name descname"><span class="pre">create_splitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.create_splitter" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_splitter">
+<span class="sig-name descname"><span class="pre">create_splitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_splitter" title="Permalink to this definition"></a></dt>
 <dd><p>Create a document splitter directly from a Python object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -370,8 +1014,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.delete_converter">
-<span class="sig-name descname"><span class="pre">delete_converter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">converter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.delete_converter" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_converter">
+<span class="sig-name descname"><span class="pre">delete_converter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">converter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_converter" title="Permalink to this definition"></a></dt>
 <dd><p>Delete converter from collection</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -384,8 +1028,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.delete_imputation">
-<span class="sig-name descname"><span class="pre">delete_imputation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.delete_imputation" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_imputation">
+<span class="sig-name descname"><span class="pre">delete_imputation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_imputation" title="Permalink to this definition"></a></dt>
 <dd><p>Delete imputation from collection</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -398,8 +1042,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.delete_loss">
-<span class="sig-name descname"><span class="pre">delete_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.delete_loss" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_loss">
+<span class="sig-name descname"><span class="pre">delete_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_loss" title="Permalink to this definition"></a></dt>
 <dd><p>Delete loss from collection</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -412,8 +1056,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.delete_measure">
-<span class="sig-name descname"><span class="pre">delete_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.delete_measure" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_measure">
+<span class="sig-name descname"><span class="pre">delete_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_measure" title="Permalink to this definition"></a></dt>
 <dd><p>Delete measure from collection</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -426,8 +1070,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.delete_metric">
-<span class="sig-name descname"><span class="pre">delete_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.delete_metric" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_metric">
+<span class="sig-name descname"><span class="pre">delete_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_metric" title="Permalink to this definition"></a></dt>
 <dd><p>Delete metric from collection</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -440,8 +1084,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.delete_model">
-<span class="sig-name descname"><span class="pre">delete_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.delete_model" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_model">
+<span class="sig-name descname"><span class="pre">delete_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_model" title="Permalink to this definition"></a></dt>
 <dd><p>Delete model from collection</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -454,8 +1098,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.delete_neighbourhood">
-<span class="sig-name descname"><span class="pre">delete_neighbourhood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.delete_neighbourhood" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_neighbourhood">
+<span class="sig-name descname"><span class="pre">delete_neighbourhood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_neighbourhood" title="Permalink to this definition"></a></dt>
 <dd><p>Delete neighbourhood from collection documents.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -468,8 +1112,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.delete_semantic_index">
-<span class="sig-name descname"><span class="pre">delete_semantic_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.delete_semantic_index" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_semantic_index">
+<span class="sig-name descname"><span class="pre">delete_semantic_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_semantic_index" title="Permalink to this definition"></a></dt>
 <dd><p>Delete semantic index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -482,8 +1126,8 @@ be accessed using the <em>SddbClient</em>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.find">
-<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_join</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.find" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.find">
+<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_join</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.find" title="Permalink to this definition"></a></dt>
 <dd><p>Behaves like MongoDB <em>find</em> with exception of “$like” operator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -503,8 +1147,8 @@ apply filter to these things</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.find_one">
-<span class="sig-name descname"><span class="pre">find_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.find_one" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.find_one">
+<span class="sig-name descname"><span class="pre">find_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.find_one" title="Permalink to this definition"></a></dt>
 <dd><p>Behaves like MongoDB <em>find_one</em> with exception of “$like” operator.
 See <em>Collection.find</em> for more details.</p>
 <dl class="field-list simple">
@@ -518,8 +1162,8 @@ See <em>Collection.find</em> for more details.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.insert_many">
-<span class="sig-name descname"><span class="pre">insert_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.insert_many" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.insert_many">
+<span class="sig-name descname"><span class="pre">insert_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.insert_many" title="Permalink to this definition"></a></dt>
 <dd><p>Insert many documents into database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -534,8 +1178,8 @@ See <em>Collection.find</em> for more details.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.insert_one">
-<span class="sig-name descname"><span class="pre">insert_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.insert_one" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.insert_one">
+<span class="sig-name descname"><span class="pre">insert_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.insert_one" title="Permalink to this definition"></a></dt>
 <dd><p>Insert a document into database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -549,76 +1193,76 @@ See <em>Collection.find</em> for more details.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_converters">
-<span class="sig-name descname"><span class="pre">list_converters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_converters" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_converters">
+<span class="sig-name descname"><span class="pre">list_converters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_converters" title="Permalink to this definition"></a></dt>
 <dd><p>List converters
 :return: list of converters</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_imputations">
-<span class="sig-name descname"><span class="pre">list_imputations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_imputations" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_imputations">
+<span class="sig-name descname"><span class="pre">list_imputations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_imputations" title="Permalink to this definition"></a></dt>
 <dd><p>List imputations
 :return: list of imputations</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_jobs">
-<span class="sig-name descname"><span class="pre">list_jobs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_jobs" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_jobs">
+<span class="sig-name descname"><span class="pre">list_jobs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_jobs" title="Permalink to this definition"></a></dt>
 <dd><p>List jobs.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_losses">
-<span class="sig-name descname"><span class="pre">list_losses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_losses" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_losses">
+<span class="sig-name descname"><span class="pre">list_losses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_losses" title="Permalink to this definition"></a></dt>
 <dd><p>List losses
 :return: list of losses</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_measures">
-<span class="sig-name descname"><span class="pre">list_measures</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_measures" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_measures">
+<span class="sig-name descname"><span class="pre">list_measures</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_measures" title="Permalink to this definition"></a></dt>
 <dd><p>List measures
 :return: list of measures</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_metrics">
-<span class="sig-name descname"><span class="pre">list_metrics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_metrics" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_metrics">
+<span class="sig-name descname"><span class="pre">list_metrics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_metrics" title="Permalink to this definition"></a></dt>
 <dd><p>List metrics
 :return: list of metrics</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_models">
-<span class="sig-name descname"><span class="pre">list_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_models" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_models">
+<span class="sig-name descname"><span class="pre">list_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_models" title="Permalink to this definition"></a></dt>
 <dd><p>List models
 :return: list of models</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_neighbourhoods">
-<span class="sig-name descname"><span class="pre">list_neighbourhoods</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_neighbourhoods" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_neighbourhoods">
+<span class="sig-name descname"><span class="pre">list_neighbourhoods</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_neighbourhoods" title="Permalink to this definition"></a></dt>
 <dd><p>List neighbourhoods.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_semantic_indexes">
-<span class="sig-name descname"><span class="pre">list_semantic_indexes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_semantic_indexes" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_semantic_indexes">
+<span class="sig-name descname"><span class="pre">list_semantic_indexes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_semantic_indexes" title="Permalink to this definition"></a></dt>
 <dd><p>List semantic_indexes
 :return: list of semantic_indexes</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.list_splitters">
-<span class="sig-name descname"><span class="pre">list_splitters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.list_splitters" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_splitters">
+<span class="sig-name descname"><span class="pre">list_splitters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_splitters" title="Permalink to this definition"></a></dt>
 <dd><p>List splitters
 :return: list of splitters</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.replace_one">
-<span class="sig-name descname"><span class="pre">replace_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.replace_one" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.replace_one">
+<span class="sig-name descname"><span class="pre">replace_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.replace_one" title="Permalink to this definition"></a></dt>
 <dd><p>Replace a document in the database. The outputs of models will be refreshed for this
 document.</p>
 <dl class="field-list simple">
@@ -635,14 +1279,14 @@ document.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.unset_hash_set">
-<span class="sig-name descname"><span class="pre">unset_hash_set</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.unset_hash_set" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.unset_hash_set">
+<span class="sig-name descname"><span class="pre">unset_hash_set</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.unset_hash_set" title="Permalink to this definition"></a></dt>
 <dd><p>Drop the hash_set currently in-use.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.update_many">
-<span class="sig-name descname"><span class="pre">update_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.update_many" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.update_many">
+<span class="sig-name descname"><span class="pre">update_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.update_many" title="Permalink to this definition"></a></dt>
 <dd><p>Update the collection at the documents specified by the filter.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -660,8 +1304,8 @@ document.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.update_one">
-<span class="sig-name descname"><span class="pre">update_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.update_one" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.update_one">
+<span class="sig-name descname"><span class="pre">update_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.update_one" title="Permalink to this definition"></a></dt>
 <dd><p>Update a single document specified by the filter.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -679,8 +1323,8 @@ document.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="collection.Collection.watch_job">
-<span class="sig-name descname"><span class="pre">watch_job</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifier</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#collection.Collection.watch_job" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.watch_job">
+<span class="sig-name descname"><span class="pre">watch_job</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifier</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.watch_job" title="Permalink to this definition"></a></dt>
 <dd><p>Watch the standard output of a collection job.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

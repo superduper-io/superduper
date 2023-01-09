@@ -324,6 +324,8 @@ class ImputationTrainer(Trainer):
         ))
         if self.keys[0] != '_base':
             inputs_ = [r[self.keys[0]] for r in docs]
+        elif '_base' in self.features:
+            inputs_ = [r['_base'] for r in docs]
         else:  # pragma: no cover
             inputs_ = docs
 

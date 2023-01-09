@@ -101,7 +101,6 @@ class Collection(BaseCollection):
         self._hash_set = None
         self._all_hash_sets = ArgumentDefaultDict(self._load_hashes)
         self.remote = cf.get('remote', False)
-        self.download_timeout = None
         self._filesystem = None
         self._filesystem_name = f'_{self.database.name}:{self.name}:files'
         self._semantic_index = None
@@ -508,9 +507,16 @@ class Collection(BaseCollection):
         :param force: Toggle to :code:`True` to skip confirmation
         """
         info = self['_imputations'].find_one()
-        self.delete_model(info['model'], force=force)
-        self.delete_model(info['target'], force=force)
         self['_imputations'].delete_many({'name': name})
+        try:
+            self.delete_model(info['model'], force=force)
+        except TypeError:
+            pass
+
+        try:
+            self.delete_model(info['target'], force=force)
+        except TypeError:
+            pass
 
     def delete_loss(self, loss, force=False):
         """
@@ -616,14 +622,13 @@ class Collection(BaseCollection):
         return self._delete_objects('splitters', objects=[splitter], force=force)
 
     def _get_content_for_filter(self, filter):
-        assert '_id' not in filter
-        filter['_id'] = 0
+        if '_id' not in filter:
+            filter['_id'] = 0
         urls = self._gather_urls([filter])[0]
         if urls:
             filter = self._download_content(documents=[filter], download_folder='/tmp',
                                             timeout=None, raises=True)[0]
             filter = convert_types(filter, converters=self.converters)
-        del filter['_id']
         return filter
 
     def find(self, filter=None, *args, similar_first=False, raw=False,
@@ -646,6 +651,8 @@ class Collection(BaseCollection):
             filter = {}
         if download:
             filter = self._get_content_for_filter(filter)    # pragma: no cover
+            if '_id' in filter:
+                del filter['_id']
         like_place = self._find_like_operator(filter)
         assert (like_place is None or like_place == '_base')
         if like_place is not None:
@@ -862,7 +869,7 @@ class Collection(BaseCollection):
         for i in progressbar(range(0, len(ids), info['batch_size'])):
             sub = ids[i: i + info['batch_size']]
             results = h.find_nearest_from_ids(sub, n=info['n'])
-            similar_ids = [res['ids'] for res in results]
+            similar_ids = [res['_ids'] for res in results]
             self.bulk_write([
                 UpdateOne({'_id': id_}, {'$set': {f'_like.{name}': sids}})
                 for id_, sids in zip(sub, similar_ids)
@@ -926,8 +933,8 @@ class Collection(BaseCollection):
         sd = Collection._standardize_dict(d)
         return str(sd)
 
-    def _download_content(self, ids=None, documents=None, download_folder=None, timeout=-1,
-                          raises=True, n_download_workers=None):
+    def _download_content(self, ids=None, documents=None, timeout=None, raises=True,
+                          n_download_workers=None, headers=None):
         update_db = False
         if documents is None:
             update_db = True
@@ -936,12 +943,6 @@ class Collection(BaseCollection):
         urls, keys, place_ids = self._gather_urls(documents)
         if not urls:
             return
-        files = []
-
-        for url in urls:
-            files.append(
-                f'{download_folder}/{hashlib.sha1(url.encode("utf-8")).hexdigest()}'
-            )
 
         if n_download_workers is None:
             try:
@@ -949,14 +950,26 @@ class Collection(BaseCollection):
             except TypeError:
                 n_download_workers = 0
 
+        if headers is None:
+            try:
+                headers = self['_meta'].find_one({'key': 'headers'})['value']
+            except TypeError:
+                headers = 0
+
+        if timeout is None:
+            try:
+                timeout = self['_meta'].find_one({'key': 'download_timeout'})['value']
+            except TypeError:
+                timeout = None
+
         downloader = Downloader(
             urls=urls,
             ids=place_ids,
             keys=keys,
             collection=self,
             n_workers=n_download_workers,
-            timeout=self.download_timeout if timeout == -1  else timeout,
-            headers=self.headers,
+            timeout=timeout,
+            headers=headers,
             raises=raises,
             update_db=update_db,
         )
@@ -1039,7 +1052,7 @@ class Collection(BaseCollection):
         filter = {
             '$and': [
                 new_filter,
-                {'_id': {'$in': similar['ids']}}
+                {'_id': {'$in': similar['_ids']}}
             ]
         }
         if raw:
@@ -1050,7 +1063,7 @@ class Collection(BaseCollection):
                 filter,
                 *args,
                 features=features,
-                scores=dict(zip(similar['ids'], similar['scores'])),
+                scores=dict(zip(similar['_ids'], similar['scores'])),
                 **kwargs,
             )
 
@@ -1072,11 +1085,11 @@ class Collection(BaseCollection):
         else:  # pragma: no cover
             similar = self._find_nearest(filter)
         if raw:
-            return Cursor(self, {'_id': {'$in': similar['ids']}}, **kwargs) # pragma: no cover
+            return Cursor(self, {'_id': {'$in': similar['_ids']}}, **kwargs) # pragma: no cover
         else:
-            return SuperDuperCursor(self, {'_id': {'$in': similar['ids']}},
+            return SuperDuperCursor(self, {'_id': {'$in': similar['_ids']}},
                                     features=features,
-                                    scores=dict(zip(similar['ids'], similar['scores'])), **kwargs)
+                                    scores=dict(zip(similar['_ids'], similar['scores'])), **kwargs)
 
     def _gather_urls(self, documents):
         urls = []
@@ -1176,7 +1189,7 @@ class Collection(BaseCollection):
                         '$and': [{'_id': {'$in': ids}}, filter_lookup[filter_str]]
                     })
                 ]
-                lookup[filter_str] = {'ids': tmp_ids}
+                lookup[filter_str] = {'_ids': tmp_ids}
 
         G = self._create_plan()
         current = [model for model in self.list_models(active=True)
@@ -1186,7 +1199,7 @@ class Collection(BaseCollection):
             for model in current:
                 model_info = self['_models'].find_one({'name': model})
                 filter_str = self._dict_to_str(model_info.get('filter', {}))
-                sub_ids = lookup[filter_str]['ids']
+                sub_ids = lookup[filter_str]['_ids']
                 if not sub_ids:  # pragma: no cover
                     continue
 

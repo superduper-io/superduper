@@ -78,6 +78,10 @@ Getting started
                -1.1576,  0.3640,  0.2191, -0.6726,  0.3572,  1.3214, -0.1269,  0.5001,
                 0.0653,  0.6070, -0.0184, -0.4811,  0.2756, -0.0257, -0.5821,  0.7546])}}}
 
+
+Detailed documentation
+----------------------
+
 .. autoclass:: superduperdb.collection.Collection
   :members:
 

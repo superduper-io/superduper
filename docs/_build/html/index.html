@@ -40,6 +40,7 @@
               <!-- Local TOC -->
               <div class="local-toc"><ul>
 <li><a class="reference internal" href="#">SuperDuperDB Documentation</a><ul>
+<li><a class="reference internal" href="#getting-started">Getting started</a><ul>
 <li><a class="reference internal" href="#superduperdb.collection.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a><ul>
 <li><a class="reference internal" href="#superduperdb.collection.Collection.create_converter"><code class="docutils literal notranslate"><span class="pre">Collection.create_converter()</span></code></a></li>
 <li><a class="reference internal" href="#superduperdb.collection.Collection.create_loss"><code class="docutils literal notranslate"><span class="pre">Collection.create_loss()</span></code></a></li>
@@ -82,6 +83,8 @@
 </ul>
 </li>
 </ul>
+</li>
+</ul>
 </div>
         </div>
       </div>
@@ -109,6 +112,110 @@
              
   <section id="superduperdb-documentation">
 <h1>SuperDuperDB Documentation<a class="headerlink" href="#superduperdb-documentation" title="Permalink to this heading"></a></h1>
+<p>SuperDuperDB is:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>An AI-database management system</dt><dd><p>The AI data/ model workflow is highly complex with multiple interdependent steps where
+models and data repeatedly interface with one another.
+SuperDuperDB is exactly the right environment to bring the data and AI worlds together.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Shares all of the standard advantages of a database</dt><dd><ul>
+<li><p>Access control</p></li>
+<li><p>User groups</p></li>
+<li><p>Security</p></li>
+<li><p>Scalability</p></li>
+<li><p>Indexing</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Adds novel features to databases which are not possible without AI</dt><dd><ul>
+<li><p>Arbitrary data imputations</p></li>
+<li><p>Semantic indexing based on linear algebra</p></li>
+<li><p>Associating models directly with the data which trained them for transparent model lineage.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Integrates PyTorch models natively to the database</dt><dd><p>It allows users to work intuitively and efficiently with AI.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Is ready for the latest generation of AI models</dt><dd><p>New developments in AI imply that architectures such as <a class="reference external" href="https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens">Retro</a> and will
+need ready access to your data. SuperDuperDB allows users to build models which reference
+the database explicitly.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Is fully modular and allows users to</dt><dd><ul>
+<li><p>provide arbitrary PyTorch models</p></li>
+<li><p>apply arbitrary pre- and post-processing</p></li>
+<li><p>define custom data types, e.g. tensors, images, audio, video</p></li>
+<li><p>train models</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Allows you to train models directly on the database</dt><dd><p>SuperDuperDB has prebaked support for training semantic lookup tasks and imputation style
+learning tasks. User-defined training setups may also be
+supplied and stored in the database. The technology leverages data loaders which enable direct
+cross talk between MongoDB and PyTorch.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<section id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this heading"></a></h2>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">In <code class="code docutils literal notranslate"><span class="pre">my_module.py</span></code></span><a class="headerlink" href="#id1" title="Permalink to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FloatTensor</span><span class="p">:</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span>
+        <span class="k">return</span> <span class="nb">memoryview</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">bytes_</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">bytes_</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">array</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">Interactive session</span><a class="headerlink" href="#id2" title="Permalink to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">superduperdb.client</span> <span class="kn">import</span> <span class="n">SuperDuperClient</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_module</span> <span class="kn">import</span> <span class="n">FloatTensor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span> <span class="o">=</span> <span class="n">SuperDuperClient</span><span class="p">()</span><span class="o">.</span><span class="n">my_database</span><span class="o">.</span><span class="n">my_collection</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_converter</span><span class="p">(</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span> <span class="n">FloatTensor</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;linear_embedding&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">([{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_content&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;bytes&#39;</span><span class="p">:</span> <span class="n">FloatTensor</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1024</span><span class="p">))}}}</span>
+<span class="go">                      for _ in range(100)])</span>
+<span class="go">&lt;pymongo.results.InsertManyResult at 0x15bb2b100&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
+<span class="go">{&#39;_id&#39;: ObjectId(&#39;63bbe91425c3c66430781968&#39;),</span>
+<span class="go"> &#39;x&#39;: tensor([ 0.4183,  0.8675, -1.1050,  ..., -1.1262,  1.1444, -1.6189]),</span>
+<span class="go"> &#39;_fold&#39;: &#39;train&#39;,</span>
+<span class="go"> &#39;_outputs&#39;: {&#39;x&#39;: {&#39;linear_embedding&#39;: tensor([ 0.7209,  0.7174,  0.7313, -0.4618,  0.4003, -0.6236, -0.3384, -0.6447,</span>
+<span class="go">           -0.4203,  0.1753,  0.3884, -0.5631, -0.3746, -0.1693,  0.0548, -0.2126,</span>
+<span class="go">           -0.5200,  0.2948,  0.1011, -0.3713, -0.3350,  1.0404,  0.6277, -0.2002,</span>
+<span class="go">           -0.8467, -0.1751,  0.4663,  0.4029, -0.3137, -0.8392, -0.1933,  0.3132,</span>
+<span class="go">            0.1859,  0.1336,  0.0895, -0.0495, -0.0224,  0.2773, -0.2423, -0.1698,</span>
+<span class="go">           -1.1780, -0.3219, -0.7944, -0.0969, -0.1691,  0.3163,  0.0658,  0.4155,</span>
+<span class="go">           -1.1576,  0.3640,  0.2191, -0.6726,  0.3572,  1.3214, -0.1269,  0.5001,</span>
+<span class="go">            0.0653,  0.6070, -0.0184, -0.4811,  0.2756, -0.0257, -0.5821,  0.7546])}}}</span>
+</pre></div>
+</div>
+</div>
 <dl class="py class">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">superduperdb.collection.</span></span><span class="sig-name descname"><span class="pre">Collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection" title="Permalink to this definition"></a></dt>
@@ -1335,6 +1442,7 @@ with leading underscores. You must use dict-style lookups instead:</p>
 </div>
 </dd></dl>
 
+</section>
 </section>
 
 

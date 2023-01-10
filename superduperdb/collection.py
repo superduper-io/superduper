@@ -242,9 +242,9 @@ class Collection(BaseCollection):
         return self._create_object('metrics', name, object)
 
     def create_model(self, name, object=None, filter=None, converter=None, active=True,
-                     dependencies=None, key='_base', verbose=False, semantic_index=False,
+                     key='_base', verbose=False, semantic_index=False,
                      process_docs=True, loader_kwargs=None, max_chunk_size=5000, features=None,
-                     measure=None, requires=None):
+                     measure=None):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -256,7 +256,6 @@ class Collection(BaseCollection):
         :param filter: filter specifying which documents model acts on
         :param converter: converter for converting model outputs back and forth from bytes
         :param active: toggle to *False* if model should not actively process incoming data
-        :param dependencies: list of models on which model's inputs depend (executed prior)
         :param key: key in records on which model acts (default whole record "_base")
         :param verbose: toggle to *True* if processing on data is verbose
         :param semantic_index: toggle to *True*
@@ -284,18 +283,14 @@ class Collection(BaseCollection):
                     'filter': filter if filter else {},
                     'converter': converter,
                     'active': active,
-                    'dependencies': dependencies,
                     'key': key,
                     'loader_kwargs': loader_kwargs if loader_kwargs else {},
                     'max_chunk_size': max_chunk_size,
                     'verbose': verbose,
                     'features': features if features else {},
-                    'requires': requires,
                 }],
                 measure=measure,
             )
-        if dependencies is None:
-            dependencies = []
         assert name not in self['_models'].distinct('name'), \
             f'Model {name} already exists!'
         if converter and isinstance(converter, dict):  # pragma: no cover
@@ -314,13 +309,11 @@ class Collection(BaseCollection):
             'filter': filter if filter else {},
             'converter': converter,
             'active': active,
-            'dependencies': dependencies,
             'key': key,
             'loader_kwargs': loader_kwargs if loader_kwargs else {},
             'max_chunk_size': max_chunk_size,
             'features': features if features else {},
             'training': False,
-            'requires': requires,
         })
 
         if process_docs and active:
@@ -626,7 +619,7 @@ class Collection(BaseCollection):
             filter['_id'] = 0
         urls = self._gather_urls([filter])[0]
         if urls:
-            filter = self._download_content(documents=[filter], download_folder='/tmp',
+            filter = self._download_content(documents=[filter],
                                             timeout=None, raises=True)[0]
             filter = convert_types(filter, converters=self.converters)
         return filter
@@ -880,8 +873,8 @@ class Collection(BaseCollection):
         for model in self.list_models(active=True):
             G.add_node(model)
         for model in self.list_models():
-            info = self['_models'].find_one({'name': model})
-            for dep in info.get('dependencies', ()):
+            deps = self._get_dependencies_for_model(model)
+            for dep in deps:
                 G.add_edge(dep, model)
         assert networkx.is_directed_acyclic_graph(G)
         return G
@@ -1162,6 +1155,13 @@ class Collection(BaseCollection):
     def _load_pickled_file(self, file_id):
         return loading.load(file_id, filesystem=self.filesystem)
 
+    def _get_dependencies_for_model(self, model):
+        model_info = self['_models'].find_one({'name': model}, {'features': 1})
+        if model_info is None:
+            return []
+        model_features = model_info.get('features', {})
+        return list(model_features.values())
+
     def _process_documents(self, ids, verbose=False):
         if not self.remote:
             self._download_content(ids=ids)
@@ -1215,9 +1215,10 @@ class Collection(BaseCollection):
                     if iteration == 0:
                         dependencies = [download_id]
                     else:
+                        model_dependencies = self._get_dependencies_for_model(model)
                         dependencies = sum([
                             job_ids[dep]
-                            for dep in model_info.get('dependencies', [])
+                            for dep in model_dependencies
                         ], [])
                     process_id = superduper_requests.jobs.process(
                         self.database.name,
@@ -1263,18 +1264,13 @@ class Collection(BaseCollection):
                     model=model,
                 )
             return
-        print('getting requires')
-        if model_info.get('requires') is None:
-            filter = {'_id': {'$in': ids}}
-        else:
-            filter = {'_id': {'$in': ids},
-                      model_info['requires']: {'$exists': 1}}
 
         print('finding documents under filter')
         features = model_info.get('features', {})
         if features is None:
             features = {}    # pragma: no cover
-        documents = list(self.find(filter, features=features))
+        filter_ = model_info.get('filter', {})
+        documents = list(self.find(filter_, features=features))
         ids = [r['_id'] for r in documents]
         for r in documents:
             del r['_id']

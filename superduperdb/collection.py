@@ -626,7 +626,7 @@ class Collection(BaseCollection):
             filter['_id'] = 0
         urls = self._gather_urls([filter])[0]
         if urls:
-            filter = self._download_content(documents=[filter], download_folder='/tmp',
+            filter = self._download_content(documents=[filter],
                                             timeout=None, raises=True)[0]
             filter = convert_types(filter, converters=self.converters)
         return filter

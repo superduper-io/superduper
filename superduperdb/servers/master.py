@@ -33,8 +33,8 @@ def _find_nearest():
     from superduperdb.types.utils import convert_types
     filter = convert_types(filter, converters=collection.converters)
     result = collection._find_nearest(filter, ids=ids)
-    for i, _id in enumerate(result['ids']):
-        result['ids'][i] = str(_id)
+    for i, _id in enumerate(result['_ids']):
+        result['_ids'][i] = str(_id)
     return jsonify(result)
 
 

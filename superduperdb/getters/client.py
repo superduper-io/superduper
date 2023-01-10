@@ -22,7 +22,7 @@ def _find_nearest(database, collection, filter, ids=None):
         json=json_,
     )
     results = json.loads(response.text)
-    for i, id_ in enumerate(results['ids']):
-        results['ids'][i] = ObjectId(id_)
+    for i, id_ in enumerate(results['_ids']):
+        results['_ids'][i] = ObjectId(id_)
     print(results)
     return results

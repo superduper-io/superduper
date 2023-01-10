@@ -48,9 +48,7 @@ def random_vectors():
         converter='float_tensor',
         key='x',
         active=True,
-        dependencies=('linear',),
         features={'x': 'linear'},
-        requires='x',
         semantic_index=True,
         measure='css',
     )
@@ -90,7 +88,6 @@ def random_vectors():
         converter='float_tensor',
         key='x',
         active=True,
-        requires='x',
         loader_kwargs={'num_workers': 2},
     )
     yield coll

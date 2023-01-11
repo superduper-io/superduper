@@ -1,13 +1,14 @@
+**************************
 SuperDuperDB Documentation
-==========================
+**************************
 
 SuperDuperDB is:
 
 * An AI-database management system
     The AI data/ model workflow is highly complex with multiple interdependent steps where
     models and data repeatedly interface with one another.
-    SuperDuperDB is exactly the right environment to bring the data and AI worlds together.
-* Shares all of the standard advantages of a database
+    SuperDuperDB aims to be exactly the right environment to bring the data and AI worlds together.
+* Shares the standard advantages of a database
     * Access control
     * User groups
     * Security
@@ -20,14 +21,13 @@ SuperDuperDB is:
 * Integrates PyTorch models natively to the database
     It allows users to work intuitively and efficiently with AI.
 * Is ready for the latest generation of AI models
-    New developments in AI imply that architectures such as `Retro <https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens>`_ and will
-    need ready access to your data. SuperDuperDB allows users to build models which reference
+    New developments in AI imply that architectures such as `Retro <https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens>`_
+    will need ready access to your data. SuperDuperDB allows users to build models which reference
     the database explicitly.
 * Is fully modular and allows users to
     * provide arbitrary PyTorch models
     * apply arbitrary pre- and post-processing
     * define custom data types, e.g. tensors, images, audio, video
-    * train models
 * Allows you to train models directly on the database
     SuperDuperDB has prebaked support for training semantic lookup tasks and imputation style
     learning tasks. User-defined training setups may also be
@@ -35,7 +35,83 @@ SuperDuperDB is:
     cross talk between MongoDB and PyTorch.
 
 Getting started
----------------
+===============
+
+Prerequisites
+-------------
+
+We assume you are running a recent version of Python3:
+
+* Python3.9+
+
+SuperDuperDB requires access to working deployments of:
+
+* MongoDB
+* Redis
+
+The deployments can be existing deployments already running in your infrastructure, or
+bespoke deployments which you'll use specifically for SuperDuperDB.
+
+Here are instructions for 2 very popular systems:
+
+Ubuntu
+^^^^^^
+
+* `MongoDB installation <https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/>`_
+* `Redis installation <https://redis.io/docs/getting-started/installation/install-redis-on-linux/>`_
+
+Mac OSX
+^^^^^^^
+
+* `MongoDB installation <https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/>`_
+* `Redis installation <https://redis.io/docs/getting-started/installation/install-redis-on-mac-os/>`_
+
+Installation
+------------
+
+.. code-block:: bash
+
+    pip install superduperdb
+
+Configuration
+-------------
+
+SuperDuperDB looks for a configuration file by default in your working directory. Here's
+a minimal example with all components running on ``localhost``.
+
+.. code-block:: json
+
+    {
+      "remote": true,
+      "master": {
+        "host": "localhost",
+        "port": 5001
+      },
+      "jobs": {
+        "host": "localhost",
+        "port": 5002
+      },
+      "redis": {
+        "host": "localhost",
+        "port": 6379
+      },
+      "mongodb": {
+        "host": "localhost",
+        "port": 27017
+      }
+    }
+
+Minimum working example
+-----------------------
+
+Try this example to check everything is working as expected. For an explanation of the concepts
+and detailed usage of SuperDuperDB see the tutorials, concepts and examples.
+
+We register a model which has ``torch.FloatTensor`` outputs with SuperDuperDB and
+then upload some data which is automatically processed by the registered model.
+For this we need to define a class ``my_module.FloatTensor`` so that SuperDuperDB knows how to insert and
+extract the data. SuperDuperDB can handle any data type you might want to work with, provided that
+you can convert the objects you'd like back and forward to a ``bytes`` representation.
 
 .. code-block:: python
     :caption: In :code:`my_module.py`
@@ -77,6 +153,10 @@ Getting started
                -1.1780, -0.3219, -0.7944, -0.0969, -0.1691,  0.3163,  0.0658,  0.4155,
                -1.1576,  0.3640,  0.2191, -0.6726,  0.3572,  1.3214, -0.1269,  0.5001,
                 0.0653,  0.6070, -0.0184, -0.4811,  0.2756, -0.0257, -0.5821,  0.7546])}}}
+
+
+Detailed documentation
+----------------------
 
 .. autoclass:: superduperdb.collection.Collection
   :members:

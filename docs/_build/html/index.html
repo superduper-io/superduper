@@ -41,8 +41,18 @@
               <div class="local-toc"><ul>
 <li><a class="reference internal" href="#">SuperDuperDB Documentation</a><ul>
 <li><a class="reference internal" href="#getting-started">Getting started</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
+<li><a class="reference internal" href="#ubuntu">Ubuntu</a></li>
+<li><a class="reference internal" href="#mac-osx">Mac OSX</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
+<li><a class="reference internal" href="#minimum-working-example">Minimum working example</a></li>
+<li><a class="reference internal" href="#detailed-documentation">Detailed documentation</a><ul>
 <li><a class="reference internal" href="#superduperdb.collection.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a><ul>
 <li><a class="reference internal" href="#superduperdb.collection.Collection.create_converter"><code class="docutils literal notranslate"><span class="pre">Collection.create_converter()</span></code></a></li>
+<li><a class="reference internal" href="#superduperdb.collection.Collection.create_imputation"><code class="docutils literal notranslate"><span class="pre">Collection.create_imputation()</span></code></a></li>
 <li><a class="reference internal" href="#superduperdb.collection.Collection.create_loss"><code class="docutils literal notranslate"><span class="pre">Collection.create_loss()</span></code></a></li>
 <li><a class="reference internal" href="#superduperdb.collection.Collection.create_measure"><code class="docutils literal notranslate"><span class="pre">Collection.create_measure()</span></code></a></li>
 <li><a class="reference internal" href="#superduperdb.collection.Collection.create_metric"><code class="docutils literal notranslate"><span class="pre">Collection.create_metric()</span></code></a></li>
@@ -85,6 +95,8 @@
 </ul>
 </li>
 </ul>
+</li>
+</ul>
 </div>
         </div>
       </div>
@@ -117,12 +129,12 @@
 <li><dl class="simple">
 <dt>An AI-database management system</dt><dd><p>The AI data/ model workflow is highly complex with multiple interdependent steps where
 models and data repeatedly interface with one another.
-SuperDuperDB is exactly the right environment to bring the data and AI worlds together.</p>
+SuperDuperDB aims to be exactly the right environment to bring the data and AI worlds together.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Shares all of the standard advantages of a database</dt><dd><ul>
+<dt>Shares the standard advantages of a database</dt><dd><ul>
 <li><p>Access control</p></li>
 <li><p>User groups</p></li>
 <li><p>Security</p></li>
@@ -147,8 +159,8 @@ SuperDuperDB is exactly the right environment to bring the data and AI worlds to
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Is ready for the latest generation of AI models</dt><dd><p>New developments in AI imply that architectures such as <a class="reference external" href="https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens">Retro</a> and will
-need ready access to your data. SuperDuperDB allows users to build models which reference
+<dt>Is ready for the latest generation of AI models</dt><dd><p>New developments in AI imply that architectures such as <a class="reference external" href="https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens">Retro</a>
+will need ready access to your data. SuperDuperDB allows users to build models which reference
 the database explicitly.</p>
 </dd>
 </dl>
@@ -158,7 +170,6 @@ the database explicitly.</p>
 <li><p>provide arbitrary PyTorch models</p></li>
 <li><p>apply arbitrary pre- and post-processing</p></li>
 <li><p>define custom data types, e.g. tensors, images, audio, video</p></li>
-<li><p>train models</p></li>
 </ul>
 </dd>
 </dl>
@@ -174,8 +185,78 @@ cross talk between MongoDB and PyTorch.</p>
 </ul>
 <section id="getting-started">
 <h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this heading"></a></h2>
-<div class="literal-block-wrapper docutils container" id="id1">
-<div class="code-block-caption"><span class="caption-text">In <code class="code docutils literal notranslate"><span class="pre">my_module.py</span></code></span><a class="headerlink" href="#id1" title="Permalink to this code"></a></div>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h3>
+<p>We assume you are running a recent version of Python3:</p>
+<ul class="simple">
+<li><p>Python3.9+</p></li>
+</ul>
+<p>SuperDuperDB requires access to working deployments of:</p>
+<ul class="simple">
+<li><p>MongoDB</p></li>
+<li><p>Redis</p></li>
+</ul>
+<p>The deployments can be existing deployments already running in your infrastructure, or
+bespoke deployments which you’ll use specifically for SuperDuperDB.</p>
+<p>Here are instructions for 2 very popular systems:</p>
+<section id="ubuntu">
+<h4>Ubuntu<a class="headerlink" href="#ubuntu" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/">MongoDB installation</a></p></li>
+<li><p><a class="reference external" href="https://redis.io/docs/getting-started/installation/install-redis-on-linux/">Redis installation</a></p></li>
+</ul>
+</section>
+<section id="mac-osx">
+<h4>Mac OSX<a class="headerlink" href="#mac-osx" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/">MongoDB installation</a></p></li>
+<li><p><a class="reference external" href="https://redis.io/docs/getting-started/installation/install-redis-on-mac-os/">Redis installation</a></p></li>
+</ul>
+</section>
+</section>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install superduperdb
+</pre></div>
+</div>
+</section>
+<section id="configuration">
+<h3>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h3>
+<p>SuperDuperDB looks for a configuration file by default in your working directory. Here’s
+a minimal example with all components running on <code class="docutils literal notranslate"><span class="pre">localhost</span></code>.</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;remote&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;master&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5001</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;jobs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5002</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;redis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">6379</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;mongodb&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">27017</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</section>
+<section id="minimum-working-example">
+<h3>Minimum working example<a class="headerlink" href="#minimum-working-example" title="Permalink to this heading"></a></h3>
+<p>Try this example to check everything is working as expected. For an explanation of the concepts
+and detailed usage of SuperDuperDB see the tutorials, concepts and examples.</p>
+<p>We register a model which has <code class="docutils literal notranslate"><span class="pre">torch.FloatTensor</span></code> outputs with SuperDuperDB and
+then upload some data which is automatically processed by the registered model.
+For this we need to define a class <code class="docutils literal notranslate"><span class="pre">my_module.FloatTensor</span></code> so that SuperDuperDB knows how to insert and
+extract the data. SuperDuperDB can handle any data type you might want to work with, provided that
+you can convert the objects you’d like back and forward to a <code class="docutils literal notranslate"><span class="pre">bytes</span></code> representation.</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">In <code class="code docutils literal notranslate"><span class="pre">my_module.py</span></code></span><a class="headerlink" href="#id3" title="Permalink to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FloatTensor</span><span class="p">:</span>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
@@ -190,8 +271,8 @@ cross talk between MongoDB and PyTorch.</p>
 </pre></div>
 </div>
 </div>
-<div class="literal-block-wrapper docutils container" id="id2">
-<div class="code-block-caption"><span class="caption-text">Interactive session</span><a class="headerlink" href="#id2" title="Permalink to this code"></a></div>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">Interactive session</span><a class="headerlink" href="#id4" title="Permalink to this code"></a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">superduperdb.client</span> <span class="kn">import</span> <span class="n">SuperDuperClient</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_module</span> <span class="kn">import</span> <span class="n">FloatTensor</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
@@ -216,6 +297,9 @@ cross talk between MongoDB and PyTorch.</p>
 </pre></div>
 </div>
 </div>
+</section>
+<section id="detailed-documentation">
+<h3>Detailed documentation<a class="headerlink" href="#detailed-documentation" title="Permalink to this heading"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">superduperdb.collection.</span></span><span class="sig-name descname"><span class="pre">Collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection" title="Permalink to this definition"></a></dt>
@@ -248,12 +332,14 @@ Key methods are:</p>
 <li><p><em>find_one</em></p></li>
 <li><p><em>find</em></p></li>
 </ul>
-<p>Inserting and updating data:
-- <em>insert_many</em>
-- <em>insert_one</em>
-- <em>replace_one</em>
-- <em>update_one</em>
-- <em>update_many</em></p>
+<p>Inserting and updating data:</p>
+<ul class="simple">
+<li><p><em>insert_many</em></p></li>
+<li><p><em>insert_one</em></p></li>
+<li><p><em>replace_one</em></p></li>
+<li><p><em>update_one</em></p></li>
+<li><p><em>update_many</em></p></li>
+</ul>
 <p>Viewing meta-data</p>
 <ul class="simple">
 <li><p><em>list_models</em></p></li>
@@ -374,6 +460,31 @@ instead::</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_imputation">
+<span class="sig-name descname"><span class="pre">create_imputation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">trainer_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_imputation" title="Permalink to this definition"></a></dt>
+<dd><p>Create an imputation setup. This is any learning task where we have an input to the model
+compared to the target.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – Name of imputation</p></li>
+<li><p><strong>model</strong> – Model settings or model name</p></li>
+<li><p><strong>loss</strong> – Loss settings or loss</p></li>
+<li><p><strong>target</strong> – Target settings (input to <code class="docutils literal notranslate"><span class="pre">create_model</span></code>) or target name</p></li>
+<li><p><strong>metrics</strong> – List of metric settings or metric names</p></li>
+<li><p><strong>filter</strong> – Filter on which to train the imputation</p></li>
+<li><p><strong>projection</strong> – Projection of data to apply during training (use for efficiency)</p></li>
+<li><p><strong>n_epochs</strong> – Number of epochs to train</p></li>
+<li><p><strong>trainer_kwargs</strong> – Keyword-arguments to forward to <code class="docutils literal notranslate"><span class="pre">train_tools.ImputationTrainer</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>job_ids of jobs required to create the imputation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.create_loss">
 <span class="sig-name descname"><span class="pre">create_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_loss" title="Permalink to this definition"></a></dt>
 <dd><p>Create a loss function directly from a Python object.</p>
@@ -417,7 +528,7 @@ instead::</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.create_model">
-<span class="sig-name descname"><span class="pre">create_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dependencies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_docs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_model" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_docs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_model" title="Permalink to this definition"></a></dt>
 <dd><p>Create a model registered in the collection directly from a python session.
 The added model will then watch incoming records and add outputs computed on those
 records into the “_outputs” of the records. The model is then stored inside MongoDB and can
@@ -429,12 +540,11 @@ be accessed using the <em>SddbClient</em>.</p>
 <li><p><strong>object</strong> – if specified the model object (pickle-able) else None if model already exists</p></li>
 <li><p><strong>filter</strong> – filter specifying which documents model acts on</p></li>
 <li><p><strong>converter</strong> – converter for converting model outputs back and forth from bytes</p></li>
-<li><p><strong>active</strong> – toggle to <em>False</em> if model should not actively process incoming data</p></li>
-<li><p><strong>dependencies</strong> – list of models on which model’s inputs depend (executed prior)</p></li>
+<li><p><strong>active</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">False</span></code> if model should not actively process incoming data</p></li>
 <li><p><strong>key</strong> – key in records on which model acts (default whole record “_base”)</p></li>
-<li><p><strong>verbose</strong> – toggle to <em>True</em> if processing on data is verbose</p></li>
-<li><p><strong>semantic_index</strong> – toggle to <em>True</em></p></li>
-<li><p><strong>process_docs</strong> – toggle to <em>False</em> if documents not to be processed by models</p></li>
+<li><p><strong>verbose</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> if processing on data is verbose</p></li>
+<li><p><strong>semantic_index</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
+<li><p><strong>process_docs</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">False</span></code> if documents not to be processed by models</p></li>
 <li><p><strong>loader_kwargs</strong> – kwargs to be passed to dataloader for model in processing</p></li>
 <li><p><strong>max_chunk_size</strong> – maximum chunk size of documents to be held in memory simultaneously</p></li>
 <li><p><strong>features</strong> – dictionary of features to be substituted from model outputs to record</p></li>
@@ -450,16 +560,16 @@ be accessed using the <em>SddbClient</em>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of index</p></li>
-<li><p><strong>models</strong> – List of existing models, or parameters to <code class="code docutils literal notranslate"><span class="pre">Collection.create_model</span></code></p></li>
-<li><p><strong>measure</strong> – Measure name, or parameters to <code class="code docutils literal notranslate"><span class="pre">Collection.create_measure</span></code></p></li>
-<li><p><strong>metrics</strong> – List of existing metrics, or parameters to <code class="code docutils literal notranslate"><span class="pre">Collection.create_metric</span></code></p></li>
-<li><p><strong>loss</strong> – Loss name, or parameters to <code class="code docutils literal notranslate"><span class="pre">Collection.create_loss</span></code></p></li>
-<li><p><strong>splitter</strong> – Splitter name, or parameters to <code class="code docutils literal notranslate"><span class="pre">Collection.create_splitter</span></code></p></li>
-<li><p><strong>trainer_kwargs</strong> – Keyword arguments to be passed to <code class="code docutils literal notranslate"><span class="pre">training.train_tools.RepresentationTrainer</span></code></p></li>
+<li><p><strong>models</strong> – List of existing models, or parameters to <code class="docutils literal notranslate"><span class="pre">Collection.create_model</span></code></p></li>
+<li><p><strong>measure</strong> – Measure name, or parameters to <code class="docutils literal notranslate"><span class="pre">Collection.create_measure</span></code></p></li>
+<li><p><strong>metrics</strong> – List of existing metrics, or parameters to <code class="docutils literal notranslate"><span class="pre">Collection.create_metric</span></code></p></li>
+<li><p><strong>loss</strong> – Loss name, or parameters to <code class="docutils literal notranslate"><span class="pre">Collection.create_loss</span></code></p></li>
+<li><p><strong>splitter</strong> – Splitter name, or parameters to <code class="docutils literal notranslate"><span class="pre">Collection.create_splitter</span></code></p></li>
+<li><p><strong>trainer_kwargs</strong> – Keyword arguments to be passed to <code class="docutils literal notranslate"><span class="pre">training.train_tools.RepresentationTrainer</span></code></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>List of job identifiers if <code class="code docutils literal notranslate"><span class="pre">self.remote</span></code></p>
+<dd class="field-even"><p>List of job identifiers if <code class="docutils literal notranslate"><span class="pre">self.remote</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -486,7 +596,7 @@ be accessed using the <em>SddbClient</em>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of converter</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
+<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
 </dl>
@@ -500,7 +610,7 @@ be accessed using the <em>SddbClient</em>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of imputation</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
+<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
 </dl>
@@ -514,7 +624,7 @@ be accessed using the <em>SddbClient</em>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of loss</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
+<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
 </dl>
@@ -528,7 +638,7 @@ be accessed using the <em>SddbClient</em>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of measure</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
+<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
 </dl>
@@ -542,7 +652,7 @@ be accessed using the <em>SddbClient</em>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of metric</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
+<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
 </dl>
@@ -556,7 +666,7 @@ be accessed using the <em>SddbClient</em>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of model</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
+<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
 </dl>
@@ -570,7 +680,7 @@ be accessed using the <em>SddbClient</em>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of neighbourhood</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
+<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
 </dl>
@@ -584,7 +694,7 @@ be accessed using the <em>SddbClient</em>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of semantic index</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
+<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
 </dl>
@@ -593,17 +703,17 @@ be accessed using the <em>SddbClient</em>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.find">
 <span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_join</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.find" title="Permalink to this definition"></a></dt>
-<dd><p>Behaves like MongoDB <em>find</em> with exception of “$like” operator.</p>
+<dd><p>Behaves like MongoDB <code class="docutils literal notranslate"><span class="pre">find</span></code> with exception of <code class="docutils literal notranslate"><span class="pre">$like</span></code> operator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>filter</strong> – filter dictionary</p></li>
 <li><p><strong>args</strong> – args passed to super()</p></li>
-<li><p><strong>similar_first</strong> – toggle to <em>True</em> to first find similar things, and then
+<li><p><strong>similar_first</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to first find similar things, and then
 apply filter to these things</p></li>
-<li><p><strong>raw</strong> – toggle to <em>True</em> to not convert bytes to Python objects but return raw bytes</p></li>
+<li><p><strong>raw</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to not convert bytes to Python objects but return raw bytes</p></li>
 <li><p><strong>features</strong> – dictionary of model outputs to replace for dictionary elements</p></li>
-<li><p><strong>download</strong> – toggle to <em>True</em> in case query has downloadable “_content” components</p></li>
+<li><p><strong>download</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> in case query has downloadable “_content” components</p></li>
 <li><p><strong>similar_join</strong> – replace ids by documents</p></li>
 <li><p><strong>kwargs</strong> – kwargs to be passed to super()</p></li>
 </ul>
@@ -614,7 +724,7 @@ apply filter to these things</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.find_one">
 <span class="sig-name descname"><span class="pre">find_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.find_one" title="Permalink to this definition"></a></dt>
-<dd><p>Behaves like MongoDB <em>find_one</em> with exception of “$like” operator.
+<dd><p>Behaves like MongoDB <code class="docutils literal notranslate"><span class="pre">find_one</span></code> with exception of <code class="docutils literal notranslate"><span class="pre">$like</span></code> operator.
 See <em>Collection.find</em> for more details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -635,7 +745,7 @@ See <em>Collection.find</em> for more details.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>documents</strong> – list of documents</p></li>
 <li><p><strong>args</strong> – args to be passed to super()</p></li>
-<li><p><strong>verbose</strong> – toggle to <em>True</em> to display outputs during computation</p></li>
+<li><p><strong>verbose</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to display outputs during computation</p></li>
 <li><p><strong>kwargs</strong> – kwargs to be passed to super()</p></li>
 </ul>
 </dd>
@@ -757,13 +867,13 @@ document.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>filter</strong> – Filter dictionary selecting documents to be updated</p></li>
-<li><p><strong>args</strong> – Arguments to be passed to <code class="code docutils literal notranslate"><span class="pre">super()</span></code></p></li>
-<li><p><strong>refresh</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">False</span></code> to stop models being applied to updated documents</p></li>
-<li><p><strong>kwargs</strong> – Keyword arguments to be passed to <code class="code docutils literal notranslate"><span class="pre">super()</span></code></p></li>
+<li><p><strong>args</strong> – Arguments to be passed to <code class="docutils literal notranslate"><span class="pre">super()</span></code></p></li>
+<li><p><strong>refresh</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">False</span></code> to stop models being applied to updated documents</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments to be passed to <code class="docutils literal notranslate"><span class="pre">super()</span></code></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">result</span></code> or <code class="code docutils literal notranslate"><span class="pre">(result,</span> <span class="pre">job_ids)</span></code> depending on <code class="code docutils literal notranslate"><span class="pre">self.remote</span></code></p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">result</span></code> or <code class="docutils literal notranslate"><span class="pre">(result,</span> <span class="pre">job_ids)</span></code> depending on <code class="docutils literal notranslate"><span class="pre">self.remote</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -776,13 +886,13 @@ document.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>filter</strong> – Filter dictionary selecting documents to be updated</p></li>
-<li><p><strong>args</strong> – Arguments to be passed to <code class="code docutils literal notranslate"><span class="pre">super()</span></code></p></li>
-<li><p><strong>refresh</strong> – Toggle to <code class="code docutils literal notranslate"><span class="pre">False</span></code> to stop models being applied to updated documents</p></li>
-<li><p><strong>kwargs</strong> – Keyword arguments to be passed to <code class="code docutils literal notranslate"><span class="pre">super()</span></code></p></li>
+<li><p><strong>args</strong> – Arguments to be passed to <code class="docutils literal notranslate"><span class="pre">super()</span></code></p></li>
+<li><p><strong>refresh</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">False</span></code> to stop models being applied to updated documents</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments to be passed to <code class="docutils literal notranslate"><span class="pre">super()</span></code></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><code class="code docutils literal notranslate"><span class="pre">result</span></code> or <code class="code docutils literal notranslate"><span class="pre">(result,</span> <span class="pre">job_ids)</span></code> depending on <code class="code docutils literal notranslate"><span class="pre">self.remote</span></code></p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">result</span></code> or <code class="docutils literal notranslate"><span class="pre">(result,</span> <span class="pre">job_ids)</span></code> depending on <code class="docutils literal notranslate"><span class="pre">self.remote</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1442,6 +1552,7 @@ with leading underscores. You must use dict-style lookups instead:</p>
 </div>
 </dd></dl>
 
+</section>
 </section>
 </section>
 

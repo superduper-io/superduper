@@ -4,6 +4,40 @@ from superduperdb.training.loading import BasicDataset
 from superduperdb.utils import create_batch, unpack_batch, progressbar
 
 
+class Container(torch.nn.Module):
+    def __init__(self, preprocessor=None, forward=None, postprocessor=None):
+        super().__init__()
+        self._preprocess = preprocessor
+        self._forward = forward
+        self._postprocess = postprocessor
+
+    def preprocess(self, *args, **kwargs):
+        if self._preprocess is not None:
+            return self._preprocess(*args, **kwargs)
+
+    def forward(self, *args, **kwargs):
+        return self._forward(*args, **kwargs)
+
+    def postprocess(self, *args, **kwargs):
+        if self._postprocess is not None:
+            return self._postprocess(*args, **kwargs)
+
+
+class TrivialContainer:
+    def __init__(self, preprocess=None):
+        self.preprocess = preprocess
+
+
+def create_container(preprocess=None, forward=None, postprocess=None):
+    if forward is not None:
+        assert isinstance(forward, torch.nn.Module)
+    if postprocess is not None:
+        assert forward is not None
+    if forward is not None:
+        return TrivialContainer(preprocess)
+    return Container(preprocessor=preprocess, forward=forward, postprocessor=postprocess)
+
+
 def apply_model(model, args, single=True, **kwargs):
     """
     Apply model to args including pre-processing, forward pass and post-processing.

@@ -1,7 +1,9 @@
+import random
+
 import torch
 
 from tests.fixtures.collection import random_vectors, empty, with_urls
-from tests.material.converters import FloatTensor
+from tests.material.types import FloatTensor
 from tests.material.losses import ranking_loss
 from tests.material.metrics import accuracy, PatK
 from tests.material.models import BinaryClassifier, BinaryTarget
@@ -186,6 +188,38 @@ def test_create_list_get_delete_x(empty):
 
         # check that the objects have been deleted
         assert available == []
+
+
+def _f(x):
+    return x + 1
+
+
+def _g(x):
+    return x - 1
+
+
+def test_create_delete_model_parts(empty):
+    empty.create_model(
+        'my_parts',
+        preprocessor={'name': 'f', 'object': _f},
+        forward={'name': 'my_forward', 'object': torch.nn.Linear(32, 8)},
+        postprocessor={'name': 'g', 'object': _g},
+        converter={
+            'name': 'float_tensor',
+            'object': FloatTensor,
+        },
+        key='x',
+    )
+    m = empty.models['my_parts']
+    assert isinstance(m, torch.nn.Module)
+    from superduperdb.models.utils import apply_model
+    output = apply_model(m, torch.randn(32))
+    assert output.shape == torch.Size([8])
+
+    empty.delete_model('my_parts', force=True)
+    assert 'f' not in empty.list_preprocessors()
+    assert 'my_forward' not in empty.list_forwards()
+    assert 'g' not in empty.list_postprocessors()
 
 
 def test_create_delete_semantic_index(random_vectors):
@@ -379,6 +413,47 @@ def test_create_delete_neighbourhood(random_vectors):
 
     r = random_vectors.find_one()
     assert len(r['_like']['test_sim']) == 7
+
+    random_vectors.remote = False
+
+    # check that insert updates the neighbourhoods
+    data = []
+    for i in range(10):
+        data.append({
+            'update': True,
+            'x': {
+                '_content': {
+                    'bytes': FloatTensor.encode(torch.randn(32)),
+                    'type': 'float_tensor',
+                }
+            },
+            'y': {
+                '_content': {
+                    'bytes': FloatTensor.encode(torch.randn(32)),
+                    'type': 'float_tensor',
+                }
+            },
+            'label': 0 if i < 5 else 1,
+        })
+
+    random_vectors.unset_hash_set()
+    random_vectors.insert_many(data[:5])
+
+    r = random_vectors.find_one({'update': True, 'label': 0})
+
+    # test that the update includes the neighbourhood
+    assert len(r['_like']['test_sim']) == 7
+
+    random_vectors.remote = True
+
+    random_vectors.unset_hash_set()
+    result = random_vectors.insert_many(data[5:])
+    random_vectors.watch_job(result[1]['neighbourhoods', 'test_sim'][0])
+    r = random_vectors.find_one({'update': True, 'label': 1})
+
+    # test that the asynchronous computation works too
+    assert len(r['_like']['test_sim']) == 7
+
 
 
 def test_downloads(with_urls):

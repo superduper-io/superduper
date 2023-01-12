@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 ## Contributing
 
-SuperDuperDB is in *alpha*. That means expect:
+SuperDuperDB is in *alpha*. Please expect:
 
 - breaking changes
 - rough edges

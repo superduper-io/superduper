@@ -3,7 +3,6 @@ import time
 
 import click
 from collections import defaultdict
-import hashlib
 import multiprocessing
 
 import gridfs
@@ -38,7 +37,6 @@ class Collection(BaseCollection):
 
     Creating objects:
 
-    - *create_converter*
     - *create_imputation*
     - *create_loss*
     - *create_metric*
@@ -46,10 +44,10 @@ class Collection(BaseCollection):
     - *create_neighbourhood*
     - *create_semantic_index*
     - *create_splitter*
+    - *create_type*
 
     Deleting objects:
 
-    - *delete_converter*
     - *delete_imputation*
     - *delete_loss*
     - *delete_metric*
@@ -57,6 +55,7 @@ class Collection(BaseCollection):
     - *delete_neighbourhood*
     - *delete_semantic_index*
     - *delete_splitter*
+    - *delete_type*
 
     Accessing data:
 
@@ -76,9 +75,10 @@ class Collection(BaseCollection):
     - *list_models*
     - *list_semantic_indexes*
     - *list_imputations*
-    - *list_converters*
+    - *list_types*
     - *list_losss*
     - *list_metrics*
+    - *list_types*
 
     Watching jobs
 
@@ -86,7 +86,6 @@ class Collection(BaseCollection):
 
     Key properties:
 
-    - *converters* (dictionary of converters)
     - *hash_set* (in memory vectors for neighbourhood search)
     - *losses* (dictionary of losses)
     - *measures* (dictionary of measures)
@@ -94,6 +93,7 @@ class Collection(BaseCollection):
     - *models* (dictionary of models)
     - *remote* (whether the client sends requests in thread or to a server)
     - *splitters* (dictionary of splitters)
+    - *types* (dictionary of types)
 
     """
     def __init__(self, *args, **kwargs):
@@ -106,7 +106,6 @@ class Collection(BaseCollection):
         self._filesystem_name = f'_{self.database.name}:{self.name}:files'
         self._semantic_index = None
 
-        self.converters = ArgumentDefaultDict(lambda x: self._load_object('converters', x))
         self.forwards = ArgumentDefaultDict(lambda x: self._load_object('forwards', x))
         self.losses = ArgumentDefaultDict(lambda x: self._load_object('losses', x))
         self.measures = ArgumentDefaultDict(lambda x: self._load_object('measures', x))
@@ -115,6 +114,7 @@ class Collection(BaseCollection):
         self.postprocessors = ArgumentDefaultDict(lambda x: self._load_object('postprocessors', x))
         self.preprocessors = ArgumentDefaultDict(lambda x: self._load_object('preprocessors', x))
         self.splitters = ArgumentDefaultDict(lambda x: self._load_object('splitters', x))
+        self.types = ArgumentDefaultDict(lambda x: self._load_object('types', x))
 
         self.headers = None
 
@@ -147,14 +147,14 @@ class Collection(BaseCollection):
     def semantic_index(self, value):
         self._semantic_index = value
 
-    def create_converter(self, name, object):
+    def create_type(self, name, object):
         """
-        Create a converter directly from a Python object.
+        Create a type directly from a Python object.
 
-        :param name: name of converter
+        :param name: name of type
         :param object: Python object
         """
-        return self._create_object('converters', name, object)
+        return self._create_object('types', name, object)
 
     def create_forward(self, name, object):
         """
@@ -281,10 +281,10 @@ class Collection(BaseCollection):
         return self._create_object('metrics', name, object)
 
     def create_model(self, name, object=None, preprocessor=None, forward=None,
-                     postprocessor=None, filter=None, converter=None, active=True,
+                     postprocessor=None, filter=None, type=None, active=True,
                      key='_base', verbose=False, semantic_index=False,
                      process_docs=True, loader_kwargs=None, max_chunk_size=5000, features=None,
-                     measure=None):
+                     measure=None, neighbourboods=[]):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -297,7 +297,7 @@ class Collection(BaseCollection):
         :param forward: separate forward pass
         :param postprocessor: separate postprocessing
         :param filter: filter specifying which documents model acts on
-        :param converter: converter for converting model outputs back and forth from bytes
+        :param type: type for converting model outputs back and forth from bytes
         :param active: toggle to ``False`` if model should not actively process incoming data
         :param key: key in records on which model acts (default whole record "_base")
         :param verbose: toggle to ``True`` if processing on data is verbose
@@ -306,16 +306,23 @@ class Collection(BaseCollection):
         :param loader_kwargs: kwargs to be passed to dataloader for model in processing
         :param max_chunk_size: maximum chunk size of documents to be held in memory simultaneously
         :param features: dictionary of features to be substituted from model outputs to record
+        :param neighbourboods: neighbourhoods whose computation is required for model inputs
         """
         if loader_kwargs is None:
             loader_kwargs = {}
         created = {}
 
+        object_should_exist = object is None and preprocessor is None and forward is None \
+            and postprocessor is None
+
         if active and object is not None:
             assert hasattr(object, 'preprocess') or hasattr(object, 'forward')
-        if object is None or '.' in name:
-            assert object is None, 'if attribute of model used, can\'t respecify object'
-            assert '.' in name, 'already existing model can only be used, if an attribute of that model is referred to'
+
+        if not object_should_exist:
+            assert '.' not in name, 'already existing model can only be used, if an attribute of that model is referred to'
+
+        if object_should_exist:
+            assert '.' in name, 'can only reference attribute of existing model'
             assert name.split('.')[0] in self.list_models()
         if semantic_index:
             assert measure is not None
@@ -324,11 +331,11 @@ class Collection(BaseCollection):
                 models=[{
                     'name': name,
                     'object': object,
-                    'preprocess': preprocessor,
+                    'preprocessor': preprocessor,
                     'forward': forward,
-                    'postprocess': postprocessor,
+                    'postprocessor': postprocessor,
                     'filter': filter if filter else {},
-                    'converter': converter,
+                    'type': type,
                     'active': active,
                     'key': key,
                     'loader_kwargs': loader_kwargs if loader_kwargs else {},
@@ -340,12 +347,12 @@ class Collection(BaseCollection):
             )
         assert name not in self['_models'].distinct('name'), \
             f'Model {name} already exists!'
-        if converter and isinstance(converter, dict):  # pragma: no cover
-            self.create_converter(**converter)
-            converter = converter['name']
-        elif converter:  # pragma: no cover
-            assert isinstance(converter, str)
-            assert converter in self['_converters'].distinct('name')
+        if type and isinstance(type, dict):  # pragma: no cover
+            self.create_type(**type)
+            type = type['name']
+        elif type:  # pragma: no cover
+            assert isinstance(type, str)
+            assert type in self['_types'].distinct('name')
 
         if preprocessor is not None or forward is not None or postprocessor is not None:
             assert object is None
@@ -355,7 +362,7 @@ class Collection(BaseCollection):
             else:
                 created['preprocessor']  = True
                 self.create_preprocessor(**preprocessor)
-                preprocessor = preprocessor['object']
+                preprocessor = preprocessor['name']
 
             if isinstance(forward, str):
                 forward = self._forwards[forward]
@@ -363,7 +370,7 @@ class Collection(BaseCollection):
             else:
                 created['forward'] = True
                 self.create_forward(**forward)
-                forward = forward['object']
+                forward = forward['name']
 
             if isinstance(postprocessor, str):
                 postprocessor = self._postprocessors[postprocessor]
@@ -371,7 +378,7 @@ class Collection(BaseCollection):
             else:
                 created['postprocessor'] = True
                 self.create_postprocessor(**postprocessor)
-                postprocessor = postprocessor['object']
+                postprocessor = postprocessor['name']
 
             file_id = None
         else:
@@ -380,17 +387,24 @@ class Collection(BaseCollection):
             else:
                 file_id = self['_models'].find_one({'name': name.split('.')[0]})['object']
 
+            preprocessor = None
+            forward = None
+            postprocessor = None
+
         self['_models'].insert_one({
             'name': name,
             'object': file_id,
             'filter': filter if filter else {},
-            'converter': converter,
+            'type': type,
             'active': active,
             'key': key,
             'loader_kwargs': loader_kwargs if loader_kwargs else {},
             'max_chunk_size': max_chunk_size,
             'features': features if features else {},
             'training': False,
+            'preprocessor': preprocessor,
+            'forward': forward,
+            'postprocessor': postprocessor,
         })
 
         if process_docs and active:
@@ -475,7 +489,7 @@ class Collection(BaseCollection):
 
             self.create_model(**man, process_docs=False)
             models[i] = man['name']
-            created['models'][man].append(True)
+            created['models'].append(True)
 
         if metrics is not None:  # pragma: no cover
             created['metrics'] = []
@@ -586,14 +600,14 @@ class Collection(BaseCollection):
         """
         return self['_jobs'].distinct('identifier')
 
-    def delete_converter(self, converter, force=False):
+    def delete_type(self, type, force=False):
         """
-        Delete converter from collection
+        Delete type from collection
 
-        :param name: Name of converter
+        :param name: Name of type
         :param force: Toggle to ``True`` to skip confirmation
         """
-        return self._delete_objects('converters', objects=[converter], force=force)
+        return self._delete_objects('types', objects=[type], force=force)
 
     def delete_forward(self, forward, force=False):
         """
@@ -692,12 +706,12 @@ class Collection(BaseCollection):
 
         info = self['_models'].find_one({'name': name})
         if info['object'] is None:
-            if info['preprocessor'] is None:
-                self._delete_objects('preprocessors', info['preprocessor'], force=True)
-            if info['forward'] is None:
-                self._delete_objects('forwards', info['forward'], force=True)
-            if info['preprocess'] is None:
-                self._delete_objects('preprocessors', info['preprocessor'], force=True)
+            if info['preprocessor'] is not None:
+                self._delete_objects('preprocessors', [info['preprocessor']], force=True)
+            if info['forward'] is not None:
+                self._delete_objects('forwards', [info['forward']], force=True)
+            if info['postprocessor'] is not None:
+                self._delete_objects('postprocessors', [info['postprocessor']], force=True)
             self['_models'].delete_one({'name': name})
             return
 
@@ -800,7 +814,7 @@ class Collection(BaseCollection):
         if urls:
             filter = self._download_content(documents=[filter],
                                             timeout=None, raises=True)[0]
-            filter = convert_types(filter, converters=self.converters)
+            filter = convert_types(filter, converters=self.types)
         return filter
 
     def find(self, filter=None, *args, similar_first=False, raw=False,
@@ -889,12 +903,12 @@ class Collection(BaseCollection):
             return output
         return output, job_ids
 
-    def list_converters(self):
+    def list_types(self):
         """
-        List converters
-        :return: list of converters
+        List types
+        :return: list of types
         """
-        return self['_converters'].distinct('name')
+        return self['_types'].distinct('name')
 
     def list_forwards(self):
         """
@@ -1032,7 +1046,8 @@ class Collection(BaseCollection):
             status = 'pending'
             n_lines = 0
             while status in {'pending', 'running'}:
-                r = self['_jobs'].find_one({'identifier': identifier}, {'stdout': 1, 'status': 1})
+                r = self['_jobs'].find_one({'identifier': identifier},
+                                           {'stdout': 1, 'status': 1})
                 status = r['status']
                 if status == 'running':
                     if len(r['stdout']) > n_lines:
@@ -1057,9 +1072,12 @@ class Collection(BaseCollection):
         sys.path.insert(0, os.getcwd())
 
         info = self['_neighbourhoods'].find_one({'name': name})
+        print('getting hash set')
         h = self._all_hash_sets[info['semantic_index']]
+        print(h.shape)
         print(f'computing neighbours based on neighbour "{name}" and '
               f'index "{info["semantic_index"]}"')
+
         for i in progressbar(range(0, len(ids), info['batch_size'])):
             sub = ids[i: i + info['batch_size']]
             results = h.find_nearest_from_ids(sub, n=info['n'])
@@ -1072,11 +1090,14 @@ class Collection(BaseCollection):
     def _create_plan(self):
         G = networkx.DiGraph()
         for model in self.list_models(active=True):
-            G.add_node(model)
+            G.add_node(('models', model))
         for model in self.list_models():
             deps = self._get_dependencies_for_model(model)
             for dep in deps:
-                G.add_edge(dep, model)
+                G.add_edge(('models', dep), ('models', model))
+        for neigh in self.list_neighbourhoods():
+            model = self._get_model_for_neighbourhood(neigh)
+            G.add_edge(('models', model), ('neighbourhoods', neigh))
         assert networkx.is_directed_acyclic_graph(G)
         return G
 
@@ -1089,9 +1110,9 @@ class Collection(BaseCollection):
         return loading.save(object, filesystem=self.filesystem)
 
     def _test_type(self, item):
-        for c in self.list_converters():
-            if hasattr(self.converters[c], 'isinstance'):
-                if self.converters[c].isinstance(item):
+        for c in self.list_types():
+            if hasattr(self.types[c], 'isinstance'):
+                if self.types[c].isinstance(item):
                     return c
 
     def _convert_types(self, r):
@@ -1100,8 +1121,8 @@ class Collection(BaseCollection):
                 r[k] = self._convert_types(r[k])
             c = self._test_type(r[k])
             if c is not None:
-                r[k] = {'_content': {'bytes': self.converters[c].encode(r[k]),
-                                     'converter': c}}
+                r[k] = {'_content': {'bytes': self.types[c].encode(r[k]),
+                                     'type': c}}
         return r
 
     def _delete_objects(self, type, objects, force=False):
@@ -1382,6 +1403,11 @@ class Collection(BaseCollection):
         model_features = model_info.get('features', {})
         return list(model_features.values())
 
+    def _get_model_for_neighbourhood(self, neigh):
+        info = self['_neighbourhoods'].find_one({'name': neigh})
+        si = self['_semantic_indexes'].find_one({'name': info['semantic_index']})
+        return next(m for m in si['models'] if self['_models'].find_one({'name': m})['active'])
+
     def _process_documents(self, ids, verbose=False):
         if not self.remote:
             self._download_content(ids=ids)
@@ -1396,8 +1422,8 @@ class Collection(BaseCollection):
         if not self.list_models(active=True):
             return         # pragma: no cover
         filters = []
-        for model in self.list_models(active=True):
-            model_info = self['_models'].find_one({'name': model})
+        for item in self.list_models(active=True):
+            model_info = self['_models'].find_one({'name': item})
             filters.append(model_info.get('filter', {}))
         filter_lookup = {self._dict_to_str(f): f for f in filters}
         lookup = {}
@@ -1412,54 +1438,76 @@ class Collection(BaseCollection):
                 lookup[filter_str] = {'_ids': tmp_ids}
 
         G = self._create_plan()
-        current = [model for model in self.list_models(active=True)
-                   if not list(G.predecessors(model))]
+        current = [('models', model) for model in self.list_models(active=True)
+                   if not list(G.predecessors(('models', model)))]
+
         iteration = 0
         while current:
-            for model in current:
-                model_info = self['_models'].find_one({'name': model})
-                filter_str = self._dict_to_str(model_info.get('filter', {}))
-                sub_ids = lookup[filter_str]['_ids']
-                if not sub_ids:  # pragma: no cover
-                    continue
-
-                if not self.remote:
-                    self._process_documents_with_model(
-                        model_name=model, ids=sub_ids, verbose=verbose,
-                        max_chunk_size=model_info.get('max_chunk_size', 5000),
-                        **model_info.get('loader_kwargs', {}),
-                    )
-                    if model_info.get('download', False):  # pragma: no cover
-                        self._download_content(ids=sub_ids)
-                else:
-                    if iteration == 0:
-                        dependencies = [download_id]
+            for (type_, item) in current:
+                if type_ == 'models':
+                    model_info = self['_models'].find_one({'name': item})
+                    filter_str = self._dict_to_str(model_info.get('filter', {}))
+                    sub_ids = lookup[filter_str]['_ids']
+                    if not sub_ids:  # pragma: no cover
+                        continue
+                    if not self.remote:
+                        self._process_documents_with_model(
+                            model_name=item, ids=sub_ids, verbose=verbose,
+                            max_chunk_size=model_info.get('max_chunk_size', 5000),
+                            **model_info.get('loader_kwargs', {}),
+                        )
+                        if model_info.get('download', False):  # pragma: no cover
+                            self._download_content(ids=sub_ids)
                     else:
-                        model_dependencies = self._get_dependencies_for_model(model)
-                        dependencies = sum([
-                            job_ids[dep]
-                            for dep in model_dependencies
-                        ], [])
-                    process_id = superduper_requests.jobs.process(
-                        self.database.name,
-                        self.name,
-                        '_process_documents_with_model',
-                        model_name=model,
-                        ids=ids,
-                        verbose=verbose,
-                        dependencies=dependencies,
-                        **model_info.get('loader_kwargs', {}),
-                    )
-                    job_ids[model].append(process_id)
-                    if model_info.get('download', False):  # pragma: no cover
-                        download_id = superduper_requests.jobs.process(
+                        if iteration == 0:
+                            dependencies = [download_id]
+                        else:
+                            model_dependencies = self._get_dependencies_for_model(item)
+                            dependencies = sum([
+                                job_ids[('models', dep)]
+                                for dep in model_dependencies
+                            ], [])
+                        process_id = superduper_requests.jobs.process(
                             self.database.name,
                             self.name,
-                            '_download_content',
-                            ids=sub_ids,
-                            dependencies=(process_id,),
+                            '_process_documents_with_model',
+                            model_name=item,
+                            ids=ids,
+                            verbose=verbose,
+                            dependencies=dependencies,
+                            **model_info.get('loader_kwargs', {}),
                         )
-            current = sum([list(G.successors(model)) for model in current], [])
+                        job_ids[(type_, item)].append(process_id)
+                        if model_info.get('download', False):  # pragma: no cover
+                            download_id = superduper_requests.jobs.process(
+                                self.database.name,
+                                self.name,
+                                '_download_content',
+                                ids=sub_ids,
+                                dependencies=(process_id,),
+                            )
+                elif type_ == 'neighbourhoods':
+                    model = self._get_model_for_neighbourhood(item)
+                    model_info = self['_models'].find_one({'name': model})
+                    filter_str = self._dict_to_str(model_info.get('filter', {}))
+                    sub_ids = lookup[filter_str]['_ids']
+                    if not sub_ids:  # pragma: no cover
+                        continue
+                    if not self.remote:
+                        self._compute_neighbourhood(item, sub_ids)
+                    else:
+                        process_id = superduper_requests.jobs.process(
+                            self.database.name,
+                            self.name,
+                            '_compute_neighbourhood',
+                            name=item,
+                            ids=sub_ids,
+                            dependencies=job_ids[('models', model)]
+                        )
+                        job_ids[(type_, item)].append(process_id)
+                else:
+                    raise NotImplementedError(f'unknown type_ {type_}')
+            current = sum([list(G.successors((type_, item))) for (type_, item) in current], [])
             iteration += 1
         if self.remote:
             return dict(job_ids)
@@ -1540,13 +1588,13 @@ class Collection(BaseCollection):
                 for r in passed_docs:  # pragma: no cover
                     outputs.append(model.preprocess(r))
 
-        if model_info.get('converter'):
-            converter = self.converters[model_info['converter']]
+        if model_info.get('type'):
+            type = self.types[model_info['type']]
             tmp = [
                 {model_name: {
                     '_content': {
-                        'bytes': converter.encode(x),
-                        'converter': model_info['converter']
+                        'bytes': type.encode(x),
+                        'type': model_info['type']
                     }
                 }}
                 for x in outputs

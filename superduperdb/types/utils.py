@@ -5,7 +5,7 @@ def convert_types(r, converters=None):
     for k in r:
         if isinstance(r[k], dict):
             if '_content' in r[k]:
-                converter = converters[r[k]['_content']['converter']]
+                converter = converters[r[k]['_content']['type']]
                 r[k] = converter.decode(r[k]['_content']['bytes'])
             else:
                 convert_types(r[k], converters=converters)

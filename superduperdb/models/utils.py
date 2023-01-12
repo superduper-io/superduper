@@ -28,14 +28,14 @@ class TrivialContainer:
         self.preprocess = preprocess
 
 
-def create_container(preprocess=None, forward=None, postprocess=None):
+def create_container(preprocessor=None, forward=None, postprocessor=None):
     if forward is not None:
         assert isinstance(forward, torch.nn.Module)
-    if postprocess is not None:
+    if postprocessor is not None:
         assert forward is not None
-    if forward is not None:
-        return TrivialContainer(preprocess)
-    return Container(preprocessor=preprocess, forward=forward, postprocessor=postprocess)
+    if forward is None:
+        return TrivialContainer(preprocessor)
+    return Container(preprocessor=preprocessor, forward=forward, postprocessor=postprocessor)
 
 
 def apply_model(model, args, single=True, **kwargs):

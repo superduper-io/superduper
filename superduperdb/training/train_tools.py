@@ -86,7 +86,9 @@ class Trainer:
         if isinstance(self.keys, str):  # pragma: no cover
             self.keys = (self.keys,)
         if not isinstance(self.encoders, tuple) and not isinstance(self.encoders, list):  # pragma: no cover
-            self.encoders = (self.encoders,)
+            self.encoders = [self.encoders,]
+        self.encoders = list(self.encoders)
+        self._send_to_device()
         self.learn_fields = self.keys
         self.learn_encoders = self.encoders
         if len(self.keys) == 1:
@@ -107,6 +109,18 @@ class Trainer:
         self.save = save
         self.validation_interval = validation_interval
         self.no_improve_then_stop = no_improve_then_stop
+
+    def _send_to_device(self):
+        if not torch.cuda.is_available():
+            return
+        if torch.cuda.device_count() == 1:
+            for m in self.encoders:
+                if isinstance(m, torch.nn.Module):
+                    m.to('cuda')
+            return
+        for i, m in enumerate(self.encoders):
+            if isinstance(m, torch.nn.Module):
+                self.encoders[i] = torch.nn.DataParallel(m)
 
     def _early_stop(self):
         if self.watch == 'loss':

@@ -941,6 +941,7 @@ class Collection(BaseCollection):
             assert ids is not None
             documents = list(self.find({'_id': {'$in': ids}}, {'_outputs': 0}, raw=True))
         urls, keys, place_ids = self._gather_urls(documents)
+        print(f'found {len(urls)} urls')
         if not urls:
             return
 
@@ -1164,6 +1165,7 @@ class Collection(BaseCollection):
 
     def _process_documents(self, ids, verbose=False):
         if not self.remote:
+            print('downloading content from retrieved urls')
             self._download_content(ids=ids)
         else:
             job_ids = defaultdict(lambda: [])

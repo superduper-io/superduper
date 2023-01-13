@@ -20,7 +20,7 @@ SuperDuperDB is:
 * Integrates PyTorch models natively to the database
     It allows users to work intuitively and efficiently with AI.
 * Is ready for the latest generation of AI models
-    New developments in AI imply that architectures such as `Retro <https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens>`_ and will
+    New developments in AI imply that architectures such as `Retro <https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens>`_ will
     need ready access to your data. SuperDuperDB allows users to build models which reference
     the database explicitly.
 * Is fully modular and allows users to

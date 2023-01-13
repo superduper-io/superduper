@@ -38,61 +38,61 @@ class Collection(BaseCollection):
 
     Creating objects:
 
-    - *create_converter*
-    - *create_imputation*
-    - *create_loss*
-    - *create_metric*
-    - *create_model*
-    - *create_neighbourhood*
-    - *create_semantic_index*
-    - *create_splitter*
+    - ``create_converter``
+    - ``create_imputation``
+    - ``create_loss``
+    - ``create_metric``
+    - ``create_model``
+    - ``create_neighbourhood``
+    - ``create_semantic_index``
+    - ``create_splitter``
 
     Deleting objects:
 
-    - *delete_converter*
-    - *delete_imputation*
-    - *delete_loss*
-    - *delete_metric*
-    - *delete_model*
-    - *delete_neighbourhood*
-    - *delete_semantic_index*
-    - *delete_splitter*
+    - ``delete_converter``
+    - ``delete_imputation``
+    - ``delete_loss``
+    - ``delete_metric``
+    - ``delete_model``
+    - ``delete_neighbourhood``
+    - ``delete_semantic_index``
+    - ``delete_splitter``
 
     Accessing data:
 
-    - *find_one*
-    - *find*
+    - ``find_one``
+    - ``find``
 
     Inserting and updating data:
-    - *insert_many*
-    - *insert_one*
-    - *replace_one*
-    - *update_one*
-    - *update_many*
+    - ``insert_many``
+    - ``insert_one``
+    - ``replace_one``
+    - ``update_one``
+    - ``update_many``
 
     Viewing meta-data
 
-    - *list_models*
-    - *list_semantic_indexes*
-    - *list_imputations*
-    - *list_converters*
-    - *list_losss*
-    - *list_metrics*
+    - ``list_models``
+    - ``list_semantic_indexes``
+    - ``list_imputations``
+    - ``list_converters``
+    - ``list_losss``
+    - ``list_metrics``
 
     Watching jobs
 
-    - *watch_job*
+    - ``watch_job``
 
     Key properties:
 
-    - *converters* (dictionary of converters)
-    - *hash_set* (in memory vectors for neighbourhood search)
-    - *losses* (dictionary of losses)
-    - *measures* (dictionary of measures)
-    - *metrics* (dictionary of metrics)
-    - *models* (dictionary of models)
-    - *remote* (whether the client sends requests in thread or to a server)
-    - *splitters* (dictionary of splitters)
+    - ``converters`` (dictionary of converters)
+    - ``hash_set`` (in memory vectors for neighbourhood search)
+    - ``losses`` (dictionary of losses)
+    - ``measures`` (dictionary of measures)
+    - ``metrics`` (dictionary of metrics)
+    - ``models`` (dictionary of models)
+    - ``remote`` (whether the client sends requests in thread or to a server)
+    - ``splitters`` (dictionary of splitters)
 
     """
     def __init__(self, *args, **kwargs):

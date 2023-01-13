@@ -217,6 +217,86 @@ cross talk between MongoDB and PyTorch.</p>
 </pre></div>
 </div>
 </div>
+<p>If you’d like to run a local cluster to test the full range SuperDuperDB’s functionality, the following
+will do the trick. Place the <code class="docutils literal notranslate"><span class="pre">config.json</span></code> and <code class="docutils literal notranslate"><span class="pre">supervisord.conf</span></code> in your working directory.</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">config.json</span></code></span><a class="headerlink" href="#id3" title="Permalink to this code"></a></div>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;remote&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;master&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5001</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;jobs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5002</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;redis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">6379</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;mongodb&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">27017</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">supervisord.conf</span></code></span><a class="headerlink" href="#id4" title="Permalink to this code"></a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">supervisord</span><span class="p">]</span>
+
+<span class="n">logfile</span><span class="o">=/</span><span class="n">dev</span><span class="o">/</span><span class="n">null</span>
+<span class="n">logfile_maxbytes</span><span class="o">=</span><span class="mi">0</span>
+
+<span class="p">[</span><span class="n">program</span><span class="p">:</span><span class="n">master</span><span class="p">]</span>
+
+<span class="n">command</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;python3 -m superduperdb.servers.master $(cat config.json | jq .master.port)&quot;</span>
+<span class="n">process_name</span><span class="o">=%</span><span class="p">(</span><span class="n">program_name</span><span class="p">)</span><span class="n">s_</span><span class="o">%</span><span class="p">(</span><span class="n">process_num</span><span class="p">)</span><span class="n">s</span>
+<span class="n">numprocs</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">stdout_logfile</span><span class="o">=</span><span class="n">logs</span><span class="o">/</span><span class="n">master</span><span class="o">.</span><span class="n">out</span>
+<span class="n">stderr_logfile</span><span class="o">=</span><span class="n">logs</span><span class="o">/</span><span class="n">master</span><span class="o">.</span><span class="n">out</span>
+<span class="n">autorestart</span><span class="o">=</span><span class="n">false</span>
+<span class="n">startretries</span><span class="o">=</span><span class="mi">1</span>
+
+<span class="p">[</span><span class="n">program</span><span class="p">:</span><span class="n">jobs</span><span class="o">-</span><span class="n">master</span><span class="p">]</span>
+
+<span class="n">command</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;python3 -m superduperdb.servers.jobs $(cat config.json | jq .hash_set.port)&quot;</span>
+<span class="n">process_name</span><span class="o">=%</span><span class="p">(</span><span class="n">program_name</span><span class="p">)</span><span class="n">s_</span><span class="o">%</span><span class="p">(</span><span class="n">process_num</span><span class="p">)</span><span class="n">s</span>
+<span class="n">numprocs</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">stdout_logfile</span><span class="o">=</span><span class="n">logs</span><span class="o">/</span><span class="n">jobs</span><span class="o">-</span><span class="n">master</span><span class="o">.</span><span class="n">out</span>
+<span class="n">stderr_logfile</span><span class="o">=</span><span class="n">logs</span><span class="o">/</span><span class="n">jobs</span><span class="o">-</span><span class="n">master</span><span class="o">.</span><span class="n">out</span>
+<span class="n">autorestart</span><span class="o">=</span><span class="n">false</span>
+<span class="n">startretries</span><span class="o">=</span><span class="mi">1</span>
+
+<span class="p">[</span><span class="n">program</span><span class="p">:</span><span class="n">jobs</span><span class="o">-</span><span class="n">worker</span><span class="p">]</span>
+
+<span class="n">command</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;rq worker -v --url redis://:@localhost:$(cat config.json | jq .redis.port)&quot;</span>
+<span class="n">process_name</span><span class="o">=%</span><span class="p">(</span><span class="n">program_name</span><span class="p">)</span><span class="n">s_</span><span class="o">%</span><span class="p">(</span><span class="n">process_num</span><span class="p">)</span><span class="n">s</span>
+<span class="n">numprocs</span><span class="o">=</span><span class="mi">2</span>
+<span class="n">stdout_logfile</span><span class="o">=</span><span class="n">logs</span><span class="o">/</span><span class="n">jobs</span><span class="o">-</span><span class="n">worker</span><span class="o">.</span><span class="n">out</span>
+<span class="n">stderr_logfile</span><span class="o">=</span><span class="n">logs</span><span class="o">/</span><span class="n">jobs</span><span class="o">-</span><span class="n">worker</span><span class="o">.</span><span class="n">out</span>
+<span class="n">autorestart</span><span class="o">=</span><span class="n">false</span>
+<span class="n">startretries</span><span class="o">=</span><span class="mi">1</span>
+
+<span class="p">[</span><span class="n">program</span><span class="p">:</span><span class="n">redis</span><span class="p">]</span>
+
+<span class="n">command</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;redis-server --port $(cat config.json | jq .redis.port)&quot;</span>
+<span class="n">process_name</span><span class="o">=%</span><span class="p">(</span><span class="n">program_name</span><span class="p">)</span><span class="n">s_</span><span class="o">%</span><span class="p">(</span><span class="n">process_num</span><span class="p">)</span><span class="n">s</span>
+<span class="n">numprocs</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">stdout_logfile</span><span class="o">=</span><span class="n">logs</span><span class="o">/</span><span class="n">redis</span><span class="o">.</span><span class="n">out</span>
+<span class="n">stderr_logfile</span><span class="o">=</span><span class="n">logs</span><span class="o">/</span><span class="n">redis</span><span class="o">.</span><span class="n">out</span>
+<span class="n">autorestart</span><span class="o">=</span><span class="n">false</span>
+<span class="n">startretries</span><span class="o">=</span><span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+<p>To start the cluster run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">OBJC_DISABLE_INITIALIZE_FORK_SAFETY</span><span class="o">=</span><span class="n">YES</span>
+<span class="n">rm</span> <span class="o">-</span><span class="n">rf</span> <span class="n">logs</span><span class="o">/</span> <span class="o">&amp;&amp;</span> <span class="n">mkdir</span> <span class="n">logs</span> <span class="o">&amp;&amp;</span> <span class="n">supervisord</span> <span class="o">-</span><span class="n">n</span>
+</pre></div>
+</div>
 </section>
 <section id="detailed-documentation">
 <h2>Detailed documentation<a class="headerlink" href="#detailed-documentation" title="Permalink to this heading"></a></h2>
@@ -227,60 +307,60 @@ cross talk between MongoDB and PyTorch.</p>
 Key methods are:</p>
 <p>Creating objects:</p>
 <ul class="simple">
-<li><p><em>create_converter</em></p></li>
-<li><p><em>create_imputation</em></p></li>
-<li><p><em>create_loss</em></p></li>
-<li><p><em>create_metric</em></p></li>
-<li><p><em>create_model</em></p></li>
-<li><p><em>create_neighbourhood</em></p></li>
-<li><p><em>create_semantic_index</em></p></li>
-<li><p><em>create_splitter</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_converter</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_imputation</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_loss</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_metric</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_model</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_neighbourhood</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_semantic_index</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_splitter</span></code></p></li>
 </ul>
 <p>Deleting objects:</p>
 <ul class="simple">
-<li><p><em>delete_converter</em></p></li>
-<li><p><em>delete_imputation</em></p></li>
-<li><p><em>delete_loss</em></p></li>
-<li><p><em>delete_metric</em></p></li>
-<li><p><em>delete_model</em></p></li>
-<li><p><em>delete_neighbourhood</em></p></li>
-<li><p><em>delete_semantic_index</em></p></li>
-<li><p><em>delete_splitter</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_converter</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_imputation</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_loss</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_metric</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_model</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_neighbourhood</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_semantic_index</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_splitter</span></code></p></li>
 </ul>
 <p>Accessing data:</p>
 <ul class="simple">
-<li><p><em>find_one</em></p></li>
-<li><p><em>find</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">find_one</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">find</span></code></p></li>
 </ul>
 <p>Inserting and updating data:
-- <em>insert_many</em>
-- <em>insert_one</em>
-- <em>replace_one</em>
-- <em>update_one</em>
-- <em>update_many</em></p>
+- <code class="docutils literal notranslate"><span class="pre">insert_many</span></code>
+- <code class="docutils literal notranslate"><span class="pre">insert_one</span></code>
+- <code class="docutils literal notranslate"><span class="pre">replace_one</span></code>
+- <code class="docutils literal notranslate"><span class="pre">update_one</span></code>
+- <code class="docutils literal notranslate"><span class="pre">update_many</span></code></p>
 <p>Viewing meta-data</p>
 <ul class="simple">
-<li><p><em>list_models</em></p></li>
-<li><p><em>list_semantic_indexes</em></p></li>
-<li><p><em>list_imputations</em></p></li>
-<li><p><em>list_converters</em></p></li>
-<li><p><em>list_losss</em></p></li>
-<li><p><em>list_metrics</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list_models</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list_semantic_indexes</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list_imputations</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list_converters</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list_losss</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list_metrics</span></code></p></li>
 </ul>
 <p>Watching jobs</p>
 <ul class="simple">
-<li><p><em>watch_job</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">watch_job</span></code></p></li>
 </ul>
 <p>Key properties:</p>
 <ul class="simple">
-<li><p><em>converters</em> (dictionary of converters)</p></li>
-<li><p><em>hash_set</em> (in memory vectors for neighbourhood search)</p></li>
-<li><p><em>losses</em> (dictionary of losses)</p></li>
-<li><p><em>measures</em> (dictionary of measures)</p></li>
-<li><p><em>metrics</em> (dictionary of metrics)</p></li>
-<li><p><em>models</em> (dictionary of models)</p></li>
-<li><p><em>remote</em> (whether the client sends requests in thread or to a server)</p></li>
-<li><p><em>splitters</em> (dictionary of splitters)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">converters</span></code> (dictionary of converters)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hash_set</span></code> (in memory vectors for neighbourhood search)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">losses</span></code> (dictionary of losses)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">measures</span></code> (dictionary of measures)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">metrics</span></code> (dictionary of metrics)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">models</span></code> (dictionary of models)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">remote</span></code> (whether the client sends requests in thread or to a server)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">splitters</span></code> (dictionary of splitters)</p></li>
 </ul>
 <p>Get / create a Mongo collection.</p>
 <p>Raises <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeError</span></code> if <cite>name</cite> is not an instance of

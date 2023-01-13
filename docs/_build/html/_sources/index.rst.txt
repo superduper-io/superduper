@@ -78,6 +78,87 @@ Getting started
                -1.1576,  0.3640,  0.2191, -0.6726,  0.3572,  1.3214, -0.1269,  0.5001,
                 0.0653,  0.6070, -0.0184, -0.4811,  0.2756, -0.0257, -0.5821,  0.7546])}}}
 
+If you'd like to run a local cluster to test the full range SuperDuperDB's functionality, the following
+will do the trick. Place the ``config.json`` and ``supervisord.conf`` in your working directory.
+
+.. code-block:: json
+    :caption: ``config.json``
+
+    {
+      "remote": false,
+      "master": {
+        "host": "localhost",
+        "port": 5001
+      },
+      "jobs": {
+        "host": "localhost",
+        "port": 5002
+      },
+      "redis": {
+        "host": "localhost",
+        "port": 6379
+      },
+      "mongodb": {
+        "host": "localhost",
+        "port": 27017
+      }
+    }
+
+.. code-block::
+    :caption: ``supervisord.conf``
+
+    [supervisord]
+
+    logfile=/dev/null
+    logfile_maxbytes=0
+
+    [program:master]
+
+    command=/bin/bash -c "python3 -m superduperdb.servers.master $(cat config.json | jq .master.port)"
+    process_name=%(program_name)s_%(process_num)s
+    numprocs=1
+    stdout_logfile=logs/master.out
+    stderr_logfile=logs/master.out
+    autorestart=false
+    startretries=1
+
+    [program:jobs-master]
+
+    command=/bin/bash -c "python3 -m superduperdb.servers.jobs $(cat config.json | jq .hash_set.port)"
+    process_name=%(program_name)s_%(process_num)s
+    numprocs=1
+    stdout_logfile=logs/jobs-master.out
+    stderr_logfile=logs/jobs-master.out
+    autorestart=false
+    startretries=1
+
+    [program:jobs-worker]
+
+    command=/bin/bash -c "rq worker -v --url redis://:@localhost:$(cat config.json | jq .redis.port)"
+    process_name=%(program_name)s_%(process_num)s
+    numprocs=2
+    stdout_logfile=logs/jobs-worker.out
+    stderr_logfile=logs/jobs-worker.out
+    autorestart=false
+    startretries=1
+
+    [program:redis]
+
+    command=/bin/bash -c "redis-server --port $(cat config.json | jq .redis.port)"
+    process_name=%(program_name)s_%(process_num)s
+    numprocs=1
+    stdout_logfile=logs/redis.out
+    stderr_logfile=logs/redis.out
+    autorestart=false
+    startretries=1
+
+To start the cluster run:
+
+.. code-block::
+
+    export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+    rm -rf logs/ && mkdir logs && supervisord -n
+
 
 Detailed documentation
 ----------------------

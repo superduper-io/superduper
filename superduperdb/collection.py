@@ -37,63 +37,63 @@ class Collection(BaseCollection):
 
     Creating objects:
 
-    - *create_imputation*
-    - *create_loss*
-    - *create_metric*
-    - *create_model*
-    - *create_neighbourhood*
-    - *create_semantic_index*
-    - *create_splitter*
-    - *create_type*
+    - ``create_imputation``
+    - ``create_loss``
+    - ``create_metric``
+    - ``create_model``
+    - ``create_neighbourhood``
+    - ``create_semantic_index``
+    - ``create_splitter``
+    - ``create_type``
 
     Deleting objects:
 
-    - *delete_imputation*
-    - *delete_loss*
-    - *delete_metric*
-    - *delete_model*
-    - *delete_neighbourhood*
-    - *delete_semantic_index*
-    - *delete_splitter*
-    - *delete_type*
+    - ``delete_imputation``
+    - ``delete_loss``
+    - ``delete_metric``
+    - ``delete_model``
+    - ``delete_neighbourhood``
+    - ``delete_semantic_index``
+    - ``delete_splitter``
+    - ``delete_type``
 
     Accessing data:
 
-    - *find_one*
-    - *find*
+    - ``find_one``
+    - ``find``
 
     Inserting and updating data:
 
-    - *insert_many*
-    - *insert_one*
-    - *replace_one*
-    - *update_one*
-    - *update_many*
+    - ``insert_many``
+    - ``insert_one``
+    - ``replace_one``
+    - ``update_one``
+    - ``update_many``
 
     Viewing meta-data
 
-    - *list_models*
-    - *list_semantic_indexes*
-    - *list_imputations*
-    - *list_types*
-    - *list_losss*
-    - *list_metrics*
-    - *list_types*
+    - ``list_models``
+    - ``list_semantic_indexes``
+    - ``list_imputations``
+    - ``list_types``
+    - ``list_losses``
+    - ``list_metrics``
+    - ``list_types``
 
     Watching jobs
 
-    - *watch_job*
+    - ``watch_job``
 
     Key properties:
 
-    - *hash_set* (in memory vectors for neighbourhood search)
-    - *losses* (dictionary of losses)
-    - *measures* (dictionary of measures)
-    - *metrics* (dictionary of metrics)
-    - *models* (dictionary of models)
-    - *remote* (whether the client sends requests in thread or to a server)
-    - *splitters* (dictionary of splitters)
-    - *types* (dictionary of types)
+    - ``hash_set`` (in memory vectors for neighbourhood search)
+    - ``losses`` (dictionary of losses)
+    - ``measures`` (dictionary of measures)
+    - ``metrics`` (dictionary of metrics)
+    - ``models`` (dictionary of models)
+    - ``remote`` (whether the client sends requests in thread or to a server)
+    - ``splitters`` (dictionary of splitters)
+    - ``types`` (dictionary of types)
 
     """
     def __init__(self, *args, **kwargs):
@@ -105,6 +105,7 @@ class Collection(BaseCollection):
         self._filesystem = None
         self._filesystem_name = f'_{self.database.name}:{self.name}:files'
         self._semantic_index = None
+        self._type_lookup = None
 
         self.forwards = ArgumentDefaultDict(lambda x: self._load_object('forwards', x))
         self.losses = ArgumentDefaultDict(lambda x: self._load_object('losses', x))
@@ -146,6 +147,18 @@ class Collection(BaseCollection):
     @semantic_index.setter
     def semantic_index(self, value):
         self._semantic_index = value
+
+    @property
+    def type_lookup(self):
+        if self._type_lookup is None:
+            self._type_lookup = {}
+            for t in self.list_types():
+                try:
+                    for s in self.types[t].types:
+                        self._type_lookup[s] = t
+                except AttributeError:
+                    continue
+        return self._type_lookup
 
     def create_type(self, name, object):
         """
@@ -895,6 +908,7 @@ class Collection(BaseCollection):
                 valid_probability = 0.05
             if '_fold' not in document:
                 document['_fold'] = 'valid' if r < valid_probability else 'train'
+        documents = self._infer_types(documents)
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover
             return output
@@ -992,6 +1006,7 @@ class Collection(BaseCollection):
         :param kwargs: kwargs to be passed to super()
         """
         id_ = super().find_one(filter, *args, **kwargs)['_id']
+        replacement = self._convert_types(replacement)
         result = super().replace_one({'_id': id_}, replacement, *args, **kwargs)
         if refresh and self.list_models():
             self._process_documents([id_])
@@ -1010,6 +1025,9 @@ class Collection(BaseCollection):
         """
         if refresh and self.list_models():
             ids = [r['_id'] for r in super().find(filter, {'_id': 1})]
+        args = list(args)
+        args[1] = self._convert_types(args[1])
+        args = tuple(args)
         result = super().update_many(filter, *args, **kwargs)
         if refresh and self.list_models():
             job_ids = self._process_documents(ids)
@@ -1109,20 +1127,23 @@ class Collection(BaseCollection):
     def _create_pickled_file(self, object):
         return loading.save(object, filesystem=self.filesystem)
 
-    def _test_type(self, item):
-        for c in self.list_types():
-            if hasattr(self.types[c], 'isinstance'):
-                if self.types[c].isinstance(item):
-                    return c
-
     def _convert_types(self, r):
+        """
+        Convert non MongoDB types to bytes using types already registered with collection.
+
+        :param r: record in which to convert types
+        :return modified record
+        """
         for k in r:
             if isinstance(r[k], dict) and '_content' not in r[k]:
                 r[k] = self._convert_types(r[k])
-            c = self._test_type(r[k])
-            if c is not None:
-                r[k] = {'_content': {'bytes': self.types[c].encode(r[k]),
-                                     'type': c}}
+            try:
+                d = self.type_lookup
+                t = d[type(r[k])]
+            except KeyError:
+                t = None
+            if t is not None:
+                r[k] = {'_content': {'bytes': self.types[t].encode(r[k]), 'type': t}}
         return r
 
     def _delete_objects(self, type, objects, force=False):
@@ -1199,7 +1220,7 @@ class Collection(BaseCollection):
 
     def _find_nearest(self, filter, ids=None):
         if self.remote:
-            filter = self._convert_types(filter)
+            filter, _ = self._convert_types(filter)
             return superduper_requests.client._find_nearest(self.database.name, self.name, filter,
                                                             ids=ids)
         assert '$like' in filter
@@ -1341,6 +1362,11 @@ class Collection(BaseCollection):
                 urls.extend(sub_urls)
                 keys.extend([f'{k}.{key}' for key in sub_keys])
         return urls, keys
+
+    def _infer_types(self, documents):
+        for r in documents:
+            self._convert_types(r)
+        return documents
 
     def _load_model(self, name):
         manifest = self[f'_models'].find_one({'name': name})

@@ -3,6 +3,8 @@ import torch
 
 
 class FloatTensor:
+    types = [torch.FloatTensor, torch.Tensor]
+
     @staticmethod
     def isinstance(x):
         return isinstance(x, torch.Tensor)
@@ -20,6 +22,8 @@ class FloatTensor:
 
 
 class RawBytes:
+    types = [bytes]
+
     @staticmethod
     def encode(x):
         return x

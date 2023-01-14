@@ -134,7 +134,7 @@ dmypy.json
 /img/*.monopic
 
 # PyCharm
-/.idea
+.idea
 
 # Supervisord logs
 /logs
@@ -155,3 +155,4 @@ dmypy.json
 /.jd
 /.syncignore
 /supervisord.conf
+

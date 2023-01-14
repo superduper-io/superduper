@@ -1,0 +1,9 @@
+************************
+Overview of SuperDuperDB
+************************
+
+SuperDuperDB was born of use cases in which multiple models work in concert drawing on a set
+of base features encoded with certain key-models. Let's take a case study in e-Commerce:
+
+...
+

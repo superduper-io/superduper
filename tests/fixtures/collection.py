@@ -63,24 +63,9 @@ def random_vectors():
             label = 0
         else:
             x = torch.randn(32) + 1
-            y = torch.randn(32)  * eps + x
+            y = torch.randn(32) * eps + x
             label = 1
-        data.append({
-            'i': i,
-            'x': {
-                '_content': {
-                    'bytes': FloatTensor.encode(x),
-                    'type': 'float_tensor',
-                }
-            },
-            'y': {
-                '_content': {
-                    'bytes': FloatTensor.encode(y),
-                    'type': 'float_tensor',
-                }
-            },
-            'label': label,
-        })
+        data.append({'i': i, 'x': x, 'y': y, 'label': label})
     coll.insert_many(data)
     coll.create_model(
         'no_forward',

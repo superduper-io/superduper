@@ -147,12 +147,16 @@ class Trainer:
             self._weights_choices[i] = {}
             for p in sd:
                 if len(sd[p].shape) == 2:
-                    indexes = [(random.randrange(sd[p].shape[0]), random.randrange(sd[p].shape[1]))
-                                for _ in range(min(10, max(sd[p].shape[0], sd[p].shape[1])))]
+                    indexes = [
+                        (random.randrange(sd[p].shape[0]), random.randrange(sd[p].shape[1]))
+                        for _ in range(min(10, max(sd[p].shape[0], sd[p].shape[1])))
+                    ]
                 else:
                     assert len(sd[p].shape) == 1
-                    indexes = [(random.randrange(sd[p].shape[0]),)
-                               for _ in range(min(10, sd[p].shape[0]))]
+                    indexes = [
+                        (random.randrange(sd[p].shape[0]),)
+                        for _ in range(min(10, sd[p].shape[0]))
+                    ]
                 self._weights_choices[i][p] = indexes
 
     def log_weight_traces(self):

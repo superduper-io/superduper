@@ -17,14 +17,12 @@ models:
 * Semantic Indexes
 * Imputations
 * Jobs
-* Losses
-* Metrics
 
 Types
 =====
 
 A type is an Python object registered with a SuperDuperDB collection which manages how
-model outputs or database content is converted to and from ``bytes`` so that these may be
+model outputs or database content are converted to and from ``bytes`` so that these may be
 stored and retrieved from the database. Creating types is a prerequisite to adding models
 which have non-Jsonable outputs to a collection, as well as adding content to the database
 of a more sophisticated variety, such as images, tensors and so forth.
@@ -85,8 +83,8 @@ Equipped with this class, we can now register a type with the collection:
 
 
 
-Model
-=====
+Models
+======
 
 SuperDuperDB models leverage PyTorch for forward passes, but also can (optionally)
 include pre- and post-postprocessing. Here is a CNN classifier example, using the ``torchvision``
@@ -226,12 +224,33 @@ It's also possible to train a semantic-index end-2-end using the ``create_semant
 command. See the deep-dive for more information.
 
 
-Imputations
-===========
-
-Imputations follow a similar pattern to
-
-
 Jobs
 ====
 
+Whenever SuperDuperDB does any of the following:
+
+- Data insertion
+- Data updates
+- Model creation
+- Model training
+- Calculations
+
+then the engine is required to perform certain longer running computations.
+These computations are wrapped as "jobs" and the jobs are carried out asynchronously on
+a pool of parallel workers.
+
+When a command is executed which creates jobs, its output will contain the job ids of the jobs
+created. For example inserting data, leads to as many jobs as there are models in the database.
+Each of these jobs will compute outputs on those data for a single model. The order of the jobs
+is determined by which features are necessary for a given model. Those models with no necessary
+input features which result from another model go first.
+
+.. code-block:: python
+
+    >>> job_ids = docs.insert_many(data)[1]
+    >>> print(job_ids)
+    {'resnet': ['5ebf5272-95ac-11ed-9436-1e00f226d551'],
+     'visual_classifier': ['69d283c8-95ac-11ed-9436-1e00f226d551']}
+
+The standard output of these asynchronous jobs is logged to MongoDB. One may watch this
+output using, for example, ``docs.watch_job(job_ids['resnet'])``.

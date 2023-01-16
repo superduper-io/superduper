@@ -91,7 +91,7 @@ Models can be configured to injest various parts of or the
 whole document, and to have outputs of various types. The execution of the model I/O on the documents
 is automated in concert with the database updates and insertions which are made. Models
 are also allowed to injest the outputs of other models, enabling users to create systems
-with models working in collaboration with one another. For instance, in this case, the ``doc_embed`
+with models working in collaboration with one another. For instance, in this case, the ``doc_embed``
 model has injested the ``resnet`` features in addition to the ``brand`` and ``title`` fields
 in order to create a document embedding for the whole.
 
@@ -107,14 +107,14 @@ In SuperDuperDB such a query might look like this:
 .. code-block:: python
 
     >>> documents.find({
-        '$like': {
-            'document': {
-                'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361>
-            },
-            'n': 10
-        },
-        'brand': 'Adidas Originals'
-    })
+    ...    '$like': {
+    ...        'document': {
+    ...            'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361>
+    ...        },
+    ...        'n': 10
+    ...    },
+    ...    'brand': 'Adidas Originals'
+    ... })
     <superduperdb.cursor.SuperDuperCursor at 0x157f7a9b0>
 
 This query has two parts. The part under the ``$like`` operator refers to the current semantic

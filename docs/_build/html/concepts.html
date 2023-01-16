@@ -21,7 +21,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="High Level Usage" href="high_level_usage.html" />
+    <link rel="next" title="Setting up a SuperDuperDB cluster" href="cluster.html" />
     <link rel="prev" title="Overview of SuperDuperDB" href="overview.html" /> 
 </head>
 
@@ -45,13 +45,14 @@
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of SuperDuperDB</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">SuperDuperDB Concepts</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#types">Types</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#model">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#models">Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#semantic-indexes">Semantic Indexes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#imputations">Imputations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#jobs">Jobs</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="high_level_usage.html">High Level Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Deep dive on SuperDuperDB models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -94,13 +95,11 @@ models:</p>
 <li><p>Semantic Indexes</p></li>
 <li><p>Imputations</p></li>
 <li><p>Jobs</p></li>
-<li><p>Losses</p></li>
-<li><p>Metrics</p></li>
 </ul>
 <section id="types">
 <h2>Types<a class="headerlink" href="#types" title="Permalink to this heading"></a></h2>
 <p>A type is an Python object registered with a SuperDuperDB collection which manages how
-model outputs or database content is converted to and from <code class="docutils literal notranslate"><span class="pre">bytes</span></code> so that these may be
+model outputs or database content are converted to and from <code class="docutils literal notranslate"><span class="pre">bytes</span></code> so that these may be
 stored and retrieved from the database. Creating types is a prerequisite to adding models
 which have non-Jsonable outputs to a collection, as well as adding content to the database
 of a more sophisticated variety, such as images, tensors and so forth.</p>
@@ -154,8 +153,8 @@ Equipped with this class, we can now register a type with the collection:</p>
 </pre></div>
 </div>
 </section>
-<section id="model">
-<h2>Model<a class="headerlink" href="#model" title="Permalink to this heading"></a></h2>
+<section id="models">
+<h2>Models<a class="headerlink" href="#models" title="Permalink to this heading"></a></h2>
 <p>SuperDuperDB models leverage PyTorch for forward passes, but also can (optionally)
 include pre- and post-postprocessing. Here is a CNN classifier example, using the <code class="docutils literal notranslate"><span class="pre">torchvision</span></code>
 library. We define two models, the first a visual embedding model, and the second a classifier
@@ -280,12 +279,32 @@ contained in a MongoDB style query.</p>
 <p>It’s also possible to train a semantic-index end-2-end using the <code class="docutils literal notranslate"><span class="pre">create_semantic_index</span></code>
 command. See the deep-dive for more information.</p>
 </section>
-<section id="imputations">
-<h2>Imputations<a class="headerlink" href="#imputations" title="Permalink to this heading"></a></h2>
-<p>Imputations follow a similar pattern to</p>
-</section>
 <section id="jobs">
 <h2>Jobs<a class="headerlink" href="#jobs" title="Permalink to this heading"></a></h2>
+<p>Whenever SuperDuperDB does any of the following:</p>
+<ul class="simple">
+<li><p>Data insertion</p></li>
+<li><p>Data updates</p></li>
+<li><p>Model creation</p></li>
+<li><p>Model training</p></li>
+<li><p>Calculations</p></li>
+</ul>
+<p>then the engine is required to perform certain longer running computations.
+These computations are wrapped as “jobs” and the jobs are carried out asynchronously on
+a pool of parallel workers.</p>
+<p>When a command is executed which creates jobs, its output will contain the job ids of the jobs
+created. For example inserting data, leads to as many jobs as there are models in the database.
+Each of these jobs will compute outputs on those data for a single model. The order of the jobs
+is determined by which features are necessary for a given model. Those models with no necessary
+input features which result from another model go first.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">job_ids</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">job_ids</span><span class="p">)</span>
+<span class="go">{&#39;resnet&#39;: [&#39;5ebf5272-95ac-11ed-9436-1e00f226d551&#39;],</span>
+<span class="go"> &#39;visual_classifier&#39;: [&#39;69d283c8-95ac-11ed-9436-1e00f226d551&#39;]}</span>
+</pre></div>
+</div>
+<p>The standard output of these asynchronous jobs is logged to MongoDB. One may watch this
+output using, for example, <code class="docutils literal notranslate"><span class="pre">docs.watch_job(job_ids['resnet'])</span></code>.</p>
 </section>
 </section>
 
@@ -294,7 +313,7 @@ command. See the deep-dive for more information.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="overview.html" class="btn btn-neutral float-left" title="Overview of SuperDuperDB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="high_level_usage.html" class="btn btn-neutral float-right" title="High Level Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="cluster.html" class="btn btn-neutral float-right" title="Setting up a SuperDuperDB cluster" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -44,6 +44,8 @@ Documentation contents
     getting_started
     overview
     concepts
-    high_level_usage
+    cluster
+    models
+    training
     full_usage
 

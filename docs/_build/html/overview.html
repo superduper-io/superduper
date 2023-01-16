@@ -47,7 +47,9 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="high_level_usage.html">High Level Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Deep dive on SuperDuperDB models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -154,8 +156,8 @@ Models can be configured to injest various parts of or the
 whole document, and to have outputs of various types. The execution of the model I/O on the documents
 is automated in concert with the database updates and insertions which are made. Models
 are also allowed to injest the outputs of other models, enabling users to create systems
-with models working in collaboration with one another. For instance, in this case, the <code class="docutils literal notranslate"><span class="pre">doc_embed`</span>
-<span class="pre">model</span> <span class="pre">has</span> <span class="pre">injested</span> <span class="pre">the</span> <span class="pre">``resnet</span></code> features in addition to the <code class="docutils literal notranslate"><span class="pre">brand</span></code> and <code class="docutils literal notranslate"><span class="pre">title</span></code> fields
+with models working in collaboration with one another. For instance, in this case, the <code class="docutils literal notranslate"><span class="pre">doc_embed</span></code>
+model has injested the <code class="docutils literal notranslate"><span class="pre">resnet</span></code> features in addition to the <code class="docutils literal notranslate"><span class="pre">brand</span></code> and <code class="docutils literal notranslate"><span class="pre">title</span></code> fields
 in order to create a document embedding for the whole.</p>
 <p>Certain types of AI model occupy a special place in SuperDuperDB. These are models which
 act together to create a so-called “semantic-index”. A semantic index is a collection of vectors
@@ -165,14 +167,14 @@ considered part of a semantic index, since its outputs are vectors. If we have a
 such a semantic index with the database, we can use it for querying documents.</p>
 <p>In SuperDuperDB such a query might look like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">documents</span><span class="o">.</span><span class="n">find</span><span class="p">({</span>
-<span class="go">    &#39;$like&#39;: {</span>
-<span class="go">        &#39;document&#39;: {</span>
-<span class="go">            &#39;img&#39;: &lt;PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361&gt;</span>
-<span class="go">        },</span>
-<span class="go">        &#39;n&#39;: 10</span>
-<span class="go">    },</span>
-<span class="go">    &#39;brand&#39;: &#39;Adidas Originals&#39;</span>
-<span class="go">})</span>
+<span class="gp">... </span>   <span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span>
+<span class="gp">... </span>       <span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span>
+<span class="gp">... </span>           <span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">PIL</span><span class="o">.</span><span class="n">PngImagePlugin</span><span class="o">.</span><span class="n">PngImageFile</span> <span class="n">image</span> <span class="n">mode</span><span class="o">=</span><span class="n">RGB</span> <span class="n">size</span><span class="o">=</span><span class="mi">250</span><span class="n">x361</span><span class="o">&gt;</span>
+<span class="gp">... </span>       <span class="p">},</span>
+<span class="gp">... </span>       <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">10</span>
+<span class="gp">... </span>   <span class="p">},</span>
+<span class="gp">... </span>   <span class="s1">&#39;brand&#39;</span><span class="p">:</span> <span class="s1">&#39;Adidas Originals&#39;</span>
+<span class="gp">... </span><span class="p">})</span>
 <span class="go">&lt;superduperdb.cursor.SuperDuperCursor at 0x157f7a9b0&gt;</span>
 </pre></div>
 </div>

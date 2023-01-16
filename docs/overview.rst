@@ -107,14 +107,14 @@ In SuperDuperDB such a query might look like this:
 .. code-block:: python
 
     >>> documents.find({
-        '$like': {
-            'document': {
-                'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361>
-            },
-            'n': 10
-        },
-        'brand': 'Adidas Originals'
-    })
+    ...    '$like': {
+    ...        'document': {
+    ...            'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361>
+    ...        },
+    ...        'n': 10
+    ...    },
+    ...    'brand': 'Adidas Originals'
+    ... })
     <superduperdb.cursor.SuperDuperCursor at 0x157f7a9b0>
 
 This query has two parts. The part under the ``$like`` operator refers to the current semantic

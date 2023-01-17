@@ -297,7 +297,7 @@ class Collection(BaseCollection):
                      postprocessor=None, filter=None, type=None, active=True,
                      key='_base', verbose=False, semantic_index=False,
                      process_docs=True, loader_kwargs=None, max_chunk_size=5000, features=None,
-                     measure=None, neighbourboods=[]):
+                     measure=None, neighbourboods=()):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -355,6 +355,7 @@ class Collection(BaseCollection):
                     'max_chunk_size': max_chunk_size,
                     'verbose': verbose,
                     'features': features if features else {},
+                    'process_docs': process_docs,
                 }],
                 measure=measure,
             )
@@ -1026,7 +1027,7 @@ class Collection(BaseCollection):
         if refresh and self.list_models():
             ids = [r['_id'] for r in super().find(filter, {'_id': 1})]
         args = list(args)
-        args[1] = self._convert_types(args[1])
+        args[0] = self._convert_types(args[0])
         args = tuple(args)
         result = super().update_many(filter, *args, **kwargs)
         if refresh and self.list_models():

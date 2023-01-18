@@ -18,10 +18,11 @@
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Model training with SuperDuperDB" href="training.html" /> 
+    <link rel="prev" title="This is an example" href="examples/hello_world.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,7 +46,9 @@
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Deep dive into SuperDuperDB models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Deep dive into semantic indexes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training.html">Model training with SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Full usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#superduperdb.collection.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_forward"><code class="docutils literal notranslate"><span class="pre">Collection.create_forward()</span></code></a></li>
@@ -124,7 +127,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="full-usage">
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section id="full-usage">
 <h1>Full usage<a class="headerlink" href="#full-usage" title="Permalink to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection">
@@ -1495,7 +1522,7 @@ with leading underscores. You must use dict-style lookups instead:</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="training.html" class="btn btn-neutral float-left" title="Model training with SuperDuperDB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples/hello_world.html" class="btn btn-neutral float-left" title="This is an example" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

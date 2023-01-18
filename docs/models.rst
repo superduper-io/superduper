@@ -173,4 +173,12 @@ field over which they were computed:
 
 .. code-block:: python
 
-    >>> docs.find_one(features={'title': 'my_module'})
+    >>> docs.find_one(features={'title': 'my_module'}, {'_outputs': 0})
+    {'_id': ObjectId('6387bc38477124958d0b97d9'),
+     'title': 'BODYSUIT - Long sleeved top',
+     'img': tensor([ 0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253]),
+     '_fold': 'train',
+     '_outputs': {'title': {'my_module': tensor([ 0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253])}}}
+
+You can see that the model outputs for ``my_module`` have been substituted into the ``img`` field.
+This is a very useful feature, when models depend on one another, e.g. in transfer learning.

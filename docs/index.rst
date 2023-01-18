@@ -46,6 +46,8 @@ Documentation contents
     concepts
     cluster
     models
+    semantic_indexes
     training
+    examples/index
     full_usage
 

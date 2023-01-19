@@ -249,7 +249,15 @@ class Downloader:
         url = self.urls[i]
         _id = self.ids[i]
 
-        r = request_session.get(url, headers=self.headers)
+        if url.startswith('http'):
+            r = request_session.get(url, headers=self.headers)
+        elif url.startswith('file'):
+            with open(url.split('file://')[-1], 'rb') as f:
+                r = lambda: None
+                r.content = f.read()
+                r.status_code = 200
+        else:
+            raise NotImplementedError('unknown URL type...')
 
         if r.status_code != 200:  # pragma: no cover
             raise Exception(f"Non-200 response. ({r.status_code})")

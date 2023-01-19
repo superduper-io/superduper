@@ -155,4 +155,4 @@ dmypy.json
 /.jd
 /.syncignore
 /supervisord.conf
-
+/docs/examples/data

@@ -11,10 +11,12 @@ import networkx
 import random
 import warnings
 
+warnings.filterwarnings('ignore')
+
 from superduperdb.cursor import SuperDuperCursor
+from superduperdb.training.validation import validate_representations
 from superduperdb.types.utils import convert_types
 
-warnings.filterwarnings('ignore')
 from pymongo import UpdateOne
 from pymongo.collection import Collection as BaseCollection
 from pymongo.cursor import Cursor
@@ -119,6 +121,11 @@ class Collection(BaseCollection):
 
         self.headers = None
 
+    def __getitem__(self, item):
+        if item == '_validation_sets':
+            return self.database[f'{self.name}._validation_sets']
+        return super().__getitem__(item)
+
     @property
     def filesystem(self):
         if self._filesystem is None:
@@ -132,6 +139,14 @@ class Collection(BaseCollection):
         if self.semantic_index is None:
             raise Exception('No semantic index has been set!')  # pragma: no cover
         return self._all_hash_sets[self.semantic_index]
+
+    @property
+    def parent_if_appl(self):
+        collection = self
+        if self.name.endswith('_validation_sets'):
+            parent = '.'.join(self.name.split('.')[:-1])
+            collection = self.database[parent]
+        return collection
 
     @property
     def semantic_index(self):
@@ -159,15 +174,6 @@ class Collection(BaseCollection):
                 except AttributeError:
                     continue
         return self._type_lookup
-
-    def create_type(self, name, object):
-        """
-        Create a type directly from a Python object.
-
-        :param name: name of type
-        :param object: Python object
-        """
-        return self._create_object('types', name, object)
 
     def create_forward(self, name, object):
         """
@@ -297,7 +303,7 @@ class Collection(BaseCollection):
                      postprocessor=None, filter=None, type=None, active=True,
                      key='_base', verbose=False, semantic_index=False,
                      process_docs=True, loader_kwargs=None, max_chunk_size=5000, features=None,
-                     measure=None, neighbourboods=()):
+                     measure=None, neighbourboods=(), validation_sets=()):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -358,6 +364,7 @@ class Collection(BaseCollection):
                     'process_docs': process_docs,
                 }],
                 measure=measure,
+                validation_sets=validation_sets,
             )
         assert name not in self['_models'].distinct('name'), \
             f'Model {name} already exists!'
@@ -482,18 +489,21 @@ class Collection(BaseCollection):
         """
         return self._create_object('postprocessors', name, object)
 
-    def create_semantic_index(self, name, models, measure, metrics=None, loss=None,
-                              splitter=None, **trainer_kwargs):
+    def create_semantic_index(self, name, models, measure, validation_sets=(), metrics=(), loss=None,
+                              splitter=None, filter=None, **trainer_kwargs):
         """
         :param name: Name of index
         :param models: List of existing models, or parameters to ``Collection.create_model``
         :param measure: Measure name, or parameters to ``Collection.create_measure``
+        :param validation_sets: Name of immutable validation set to be used to evaluate performance
         :param metrics: List of existing metrics, or parameters to ``Collection.create_metric``
         :param loss: Loss name, or parameters to ``Collection.create_loss``
         :param splitter: Splitter name, or parameters to ``Collection.create_splitter``
         :param trainer_kwargs: Keyword arguments to be passed to ``training.train_tools.RepresentationTrainer``
         :return: List of job identifiers if ``self.remote``
         """
+        if filter is None:
+            filter = {}
         created = {'models': []}
         for i, man in enumerate(models):  # pragma: no cover
             if isinstance(man, str):
@@ -501,11 +511,11 @@ class Collection(BaseCollection):
                 created['models'].append(False)
                 continue
 
-            self.create_model(**man, process_docs=False)
+            self.create_model(**man, process_docs=loss is None)
             models[i] = man['name']
             created['models'].append(True)
 
-        if metrics is not None:  # pragma: no cover
+        if metrics:  # pragma: no cover
             created['metrics'] = []
             for i, man in enumerate(metrics):
                 if isinstance(man, str):
@@ -516,6 +526,25 @@ class Collection(BaseCollection):
                 metrics[i] = man['name']
                 created['metrics'].append(True)
 
+        if isinstance(measure, str):  # pragma: no cover
+            assert measure in self.list_measures()
+            created['measure'] = False
+        else:  # pragma: no cover
+            self.create_measure(**measure)
+            measure = measure['name']
+            created['measure'] = True
+
+        for i, validation_set in enumerate(validation_sets):
+            created['validation_sets'] = []
+            if isinstance(validation_set, str):  # pragma: no cover
+                assert validation_set in self.list_validation_sets()
+                created['validation_sets'].append(False)
+            else:  # pragma: no cover
+                validation_set['filter'] = filter
+                self.create_validation_set(**validation_set)
+                validation_sets[i] = validation_set['name']
+                created['validation_sets'].append(True)
+
         if splitter is not None:  # pragma: no cover
             if isinstance(splitter, str):
                 assert splitter in self.list_splitters()
@@ -524,14 +553,6 @@ class Collection(BaseCollection):
                 self.create_splitter(**splitter)
                 splitter = splitter['name']
                 created['splitter'] = True
-
-        if isinstance(measure, str):  # pragma: no cover
-            assert measure in self.list_measures()
-            created['measure'] = False
-        else:  # pragma: no cover
-            self.create_measure(**measure)
-            measure = measure['name']
-            created['measure'] = True
 
         if loss is not None:  # pragma: no cover
             if len(models) == 1:
@@ -555,20 +576,32 @@ class Collection(BaseCollection):
             'created': created,
         })
         if loss is None:
+            if self.remote and validation_sets:
+                return [superduper_requests.jobs.process(
+                    self.database.name,
+                    self.name,
+                    'validate_semantic_index',
+                    name,
+                    validation_sets,
+                    metrics,
+                )]
+            elif validation_sets:
+                return self.validate_semantic_index(name, validation_sets, metrics)
             return
 
-        active_model = self.list_models(**{'active': True, 'name': {'$in': models}})[0]
+        try:
+            active_model = self.list_models(**{'active': True, 'name': {'$in': models}})[0]
+        except IndexError:
+            print('no active models, returning...')
+            return
+
         filter_ = self['_models'].find_one({'name': active_model}, {'filter': 1})['filter']
-        filter_['_fold'] = 'valid'
-        self['_models'].update_one({'name': active_model}, {'$set': {'filter': filter_}})
 
         job_ids = []
         job_ids.append(self._train_semantic_index(name=name))
-
         active_models = self.list_models(**{'active': True, 'name': {'$in': models}})
         for model in active_models:
             model_info = self['_models'].find_one({'name': model})
-            self['_models'].update_one({'name': model}, {'$set': {'filter': filter_}})
             ids = [x['_id'] for x in self.find(filter_, {'_id': 1})]
             if not self.remote:
                 self._process_documents_with_model(
@@ -578,6 +611,7 @@ class Collection(BaseCollection):
                     **model_info.get('loader_kwargs', {}),
                     max_chunk_size=model_info.get('max_chunk_size'),
                 )
+                self.validate_semantic_index(name, validation_sets, metrics)
             else:
                 job_ids.append(superduper_requests.jobs.process(
                     self.database.name,
@@ -588,6 +622,14 @@ class Collection(BaseCollection):
                     verbose=True,
                     **model_info.get('loader_kwargs', {}),
                     max_chunk_size=model_info.get('max_chunk_size', 5000),
+                ))
+                job_ids.append(superduper_requests.jobs.process(
+                    self.database.name,
+                    self.name,
+                    'validate_semantic_index',
+                    name,
+                    validation_sets,
+                    metrics,
                 ))
         if not self.remote:
             return
@@ -602,17 +644,40 @@ class Collection(BaseCollection):
         """
         return self._create_object('splitters', name, object)
 
-    def list_neighbourhoods(self):
+    def create_type(self, name, object):
         """
-        List neighbourhoods.
-        """
-        return self['_neighbourhoods'].distinct('name')
+        Create a type directly from a Python object.
 
-    def list_jobs(self):
+        :param name: name of type
+        :param object: Python object
         """
-        List jobs.
+        return self._create_object('types', name, object)
+
+    def create_validation_set(self, name, filter, chunk_size=1000, splitter=None):
         """
-        return self['_jobs'].distinct('identifier')
+        :param filter: filter (not including {"_fold": "valid"}
+        """
+        existing = self.list_validation_sets()
+        if name in existing:
+            raise Exception(f'validation set {name} already exists!')
+        if isinstance(splitter, str):
+            splitter = self.splitters[splitter]
+        filter['_fold'] = 'valid'
+        cursor = self.find(filter, {'_id': 0}, raw=True)
+        it = 0
+        tmp = []
+        for r in progressbar(cursor, total=self.count_documents(filter)):
+            if splitter is not None:
+                r, other = splitter(r)
+                r['_other'] = other
+            r['_validation_set'] = name
+            tmp.append(r)
+            it += 1
+            if it % chunk_size == 0:
+                self['_validation_sets'].insert_many(tmp)
+                tmp = []
+        if tmp:
+            self['_validation_sets'].insert_many(tmp)
 
     def delete_type(self, type, force=False):
         """
@@ -739,6 +804,11 @@ class Collection(BaseCollection):
                 r.get('filter', {}),
                 {'$unset': {f'_outputs.{r["key"]}.{r["name"]}': 1}}
             )
+            self['_validation_sets'].update_many(
+                r.get('filter', {}),
+                {'$unset': {f'_outputs.{r["key"]}.{r["name"]}': 1}},
+                refresh=False,
+            )
 
     def delete_neighbourhood(self, name, force=False):
         """
@@ -784,7 +854,7 @@ class Collection(BaseCollection):
         :param name: Name of semantic index
         :param force: Toggle to ``True`` to skip confirmation
         """
-        info = self['_semantic_indexes'].find_one({'name': name}, {'models': 1})
+        info = self['_semantic_indexes'].find_one({'name': name})
         if info is None:  # pragma: no cover
             return
         active_models = self.list_models(**{'active': True, 'name': {'$in': info['models']}})
@@ -813,7 +883,7 @@ class Collection(BaseCollection):
             if item == 'loss':
                 self.delete_loss(info['loss'], force=True)
             if item == 'metrics':
-                for i, was_created in info['created']['metrics']:
+                for i, was_created in enumerate(info['created']['metrics']):
                     if not was_created:
                         continue
                     self.delete_metric(info['metrics'][i], force=True)
@@ -923,77 +993,96 @@ class Collection(BaseCollection):
         List types
         :return: list of types
         """
-        return self['_types'].distinct('name')
+        return self.parent_if_appl['_types'].distinct('name')
 
     def list_forwards(self):
         """
         List forwards
         :return: list of forwards
         """
-        return self['_forwards'].distinct('name')
+        return self.parent_if_appl['_forwards'].distinct('name')
 
     def list_imputations(self):
         """
         List imputations
         :return: list of imputations
         """
-        return self['_imputations'].distinct('name')
+        return self.parent_if_appl['_imputations'].distinct('name')
+
+    def list_jobs(self):
+        """
+        List jobs.
+        """
+        return self.parent_if_appl['_jobs'].distinct('identifier')
 
     def list_losses(self):
         """
         List losses
         :return: list of losses
         """
-        return self['_losses'].distinct('name')
+        return self.parent_if_appl['_losses'].distinct('name')
 
     def list_measures(self):
         """
         List measures
         :return: list of measures
         """
-        return self['_measures'].distinct('name')
+        return self.parent_if_appl['_measures'].distinct('name')
 
     def list_metrics(self):
         """
         List metrics
         :return: list of metrics
         """
-        return self['_metrics'].distinct('name')
+        return self.parent_if_appl['_metrics'].distinct('name')
 
     def list_models(self, **kwargs):
         """
         List models
         :return: list of models
         """
-        return self['_models'].distinct('name', kwargs)
+        return self.parent_if_appl['_models'].distinct('name', kwargs)
+
+    def list_neighbourhoods(self):
+        """
+        List neighbourhoods.
+        """
+        return self.parent_if_appl['_neighbourhoods'].distinct('name')
 
     def list_postprocessors(self):
         """
         List postprocessors
         :return: list of postprocessors
         """
-        return self['_postprocessors'].distinct('name')
+        return self.parent_if_appl['_postprocessors'].distinct('name')
 
     def list_preprocessors(self):
         """
         List preprocessors
         :return: list of preprocessors
         """
-        return self['_preprocessors'].distinct('name')
+        return self.parent_if_appl['_preprocessors'].distinct('name')
 
     def list_semantic_indexes(self):
         """
         List semantic_indexes
         :return: list of semantic_indexes
         """
-        return self['_semantic_indexes'].distinct('name')
+        return self.parent_if_appl['_semantic_indexes'].distinct('name')
 
     def list_splitters(self):
         """
         List splitters
         :return: list of splitters
         """
-        return self['_splitters'].distinct('name')
+        return self.parent_if_appl['_splitters'].distinct('name')
+
+    def list_validation_sets(self):
+        """
+        List validation sets
+        :return: list of validation sets
+        """
+        return self.parent_if_appl['_validation_sets'].distinct('_validation_set')
 
     def replace_one(self, filter, replacement, *args, refresh=True, **kwargs):
         """
@@ -1084,6 +1173,18 @@ class Collection(BaseCollection):
                 print(r['msg'])
         except KeyboardInterrupt: # pragma: no cover
             return
+
+    def validate_semantic_index(self, name, validation_sets, metrics):
+        results = {}
+        features = self['_semantic_indexes'].find_one({'name': name}).get('features')
+        for vs in validation_sets:
+            results[vs] = validate_representations(self, vs, name, metrics, features=features)
+        for vs in results:
+            for m in results[vs]:
+                self['_semantic_indexes'].update_one(
+                    {'name': name},
+                    {'$set': {f'final_metrics.{vs}.{m}': results[vs][m]}}
+                )
 
     def _compute_neighbourhood(self, name, ids):
 
@@ -1234,9 +1335,9 @@ class Collection(BaseCollection):
             return hash_set.find_nearest_from_id(filter['$like']['document']['_id'],
                                                  n=filter['$like']['n'])
         else:
-            models = self['_semantic_indexes'].find_one({'name': self.semantic_index})['models']
+            models = self.parent_if_appl['_semantic_indexes'].find_one({'name': self.semantic_index})['models']
             available_keys = list(filter['$like']['document'].keys()) + ['_base']
-            man = self['_models'].find_one({
+            man = self.parent_if_appl['_models'].find_one({
                 'key': {'$in': available_keys},
                 'name': {'$in': models},
             })
@@ -1244,7 +1345,7 @@ class Collection(BaseCollection):
             document = MongoStyleDict(filter['$like']['document'])
             if '_outputs' not in document:
                 document['_outputs'] = {}
-            info = self['_models'].find_one({'name': man['name']})
+            info = self.parent_if_appl['_models'].find_one({'name': man['name']})
             features = info.get('features', {})
             for key in features:
                 if key not in document['_outputs']:
@@ -1283,7 +1384,6 @@ class Collection(BaseCollection):
                             return f'{k}.{like_place}'
 
     def _find_similar_then_matches(self, filter, *args, raw=False, features=None, **kwargs):
-
         similar = self._find_nearest(filter)
         new_filter = self._remove_like_from_filter(filter)
         filter = {
@@ -1370,7 +1470,7 @@ class Collection(BaseCollection):
         return documents
 
     def _load_model(self, name):
-        manifest = self[f'_models'].find_one({'name': name})
+        manifest = self.parent_if_appl[f'_models'].find_one({'name': name})
         if manifest is None:
             raise Exception(f'No such object of type "model", "{name}" has been registered.') # pragma: no cover
         if manifest['object'] is not None:
@@ -1389,10 +1489,10 @@ class Collection(BaseCollection):
         return create_container(preprocessor, forward, postprocessor)
 
     def _load_object(self, type, name):
-        manifest = self[f'_{type}'].find_one({'name': name})
+        manifest = self.parent_if_appl[f'_{type}'].find_one({'name': name})
         if manifest is None:
             raise Exception(f'No such object of type "{type}", "{name}" has been registered.') # pragma: no cover
-        m = self._load_pickled_file(manifest['object'])
+        m = self.parent_if_appl._load_pickled_file(manifest['object'])
         if '.' in name:
             _, attribute = name.split('.')
             m = getattr(m, attribute)
@@ -1401,9 +1501,9 @@ class Collection(BaseCollection):
         return m
 
     def _load_hashes(self, name):
-        info = self['_semantic_indexes'].find_one({'name': name})
+        info = self.parent_if_appl['_semantic_indexes'].find_one({'name': name})
         model_name = self.list_models(**{'active': True, 'name': {'$in': info['models']}})[0]
-        model_info = self['_models'].find_one({'name': model_name})
+        model_info = self.parent_if_appl['_models'].find_one({'name': model_name})
         filter = model_info.get('filter', {})
         key = model_info.get('key', '_base')
         filter[f'_outputs.{key}.{model_name}'] = {'$exists': 1}
@@ -1450,8 +1550,8 @@ class Collection(BaseCollection):
             return         # pragma: no cover
         filters = []
         for item in self.list_models(active=True):
-            model_info = self['_models'].find_one({'name': item})
-            filters.append(model_info.get('filter', {}))
+            model_info = self.parent_if_appl['_models'].find_one({'name': item})
+            filters.append(model_info.get('filter') or {})
         filter_lookup = {self._dict_to_str(f): f for f in filters}
         lookup = {}
         for filter_str in filter_lookup:
@@ -1472,8 +1572,8 @@ class Collection(BaseCollection):
         while current:
             for (type_, item) in current:
                 if type_ == 'models':
-                    model_info = self['_models'].find_one({'name': item})
-                    filter_str = self._dict_to_str(model_info.get('filter', {}))
+                    model_info = self.parent_if_appl['_models'].find_one({'name': item})
+                    filter_str = self._dict_to_str(model_info.get('filter') or {})
                     sub_ids = lookup[filter_str]['_ids']
                     if not sub_ids:  # pragma: no cover
                         continue
@@ -1489,13 +1589,13 @@ class Collection(BaseCollection):
                         if iteration == 0:
                             dependencies = [download_id]
                         else:
-                            model_dependencies = self._get_dependencies_for_model(item)
+                            model_dependencies = self.parent_if_appl._get_dependencies_for_model(item)
                             dependencies = sum([
                                 job_ids[('models', dep)]
                                 for dep in model_dependencies
                             ], [])
                         process_id = superduper_requests.jobs.process(
-                            self.database.name,
+                            self.parent_if_appl.database.name,
                             self.name,
                             '_process_documents_with_model',
                             model_name=item,
@@ -1507,15 +1607,15 @@ class Collection(BaseCollection):
                         job_ids[(type_, item)].append(process_id)
                         if model_info.get('download', False):  # pragma: no cover
                             download_id = superduper_requests.jobs.process(
-                                self.database.name,
+                                self.parent_if_appl.database.name,
                                 self.name,
                                 '_download_content',
                                 ids=sub_ids,
                                 dependencies=(process_id,),
                             )
                 elif type_ == 'neighbourhoods':
-                    model = self._get_model_for_neighbourhood(item)
-                    model_info = self['_models'].find_one({'name': model})
+                    model = self.parent_if_appl._get_model_for_neighbourhood(item)
+                    model_info = self.parent_if_appl['_models'].find_one({'name': model})
                     filter_str = self._dict_to_str(model_info.get('filter', {}))
                     sub_ids = lookup[filter_str]['_ids']
                     if not sub_ids:  # pragma: no cover
@@ -1544,7 +1644,7 @@ class Collection(BaseCollection):
         import sys
         sys.path.insert(0, os.getcwd())
 
-        model_info = self['_models'].find_one({'name': model_name})
+        model_info = self.parent_if_appl['_models'].find_one({'name': model_name})
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
                 print('computing chunk '

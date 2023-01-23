@@ -27,11 +27,34 @@ class SuperDuperCursor(Cursor):
         self.similar_join = similar_join
         self._args = args
         self._kwargs = kwargs
+        if self.scores is not None:
+            self._results = []
+            while True:
+                try:
+                    self._results.append(super().next())
+                except StopIteration:
+                    break
+            self._results = sorted(self._results, key=lambda r: -self.scores[r['_id']])
+            self.it = 0
+
+    def limit(self, limit: int):
+        if self.scores is None:
+            return super().limit(limit)
+        self._results = self._results[:limit]
+        return self
 
     def next(self):
-        r = super().next()
+        if self.scores is not None:
+            try:
+                r = self._results[self.it]
+            except IndexError:
+                raise StopIteration
+            self.it += 1
+        else:
+            r = super().next()
         if self.scores is not None:
             r['_score'] = self.scores[r['_id']]
+
         if self.features is not None and self.features:
             r = MongoStyleDict(r)
             for k in self.features:

@@ -7,9 +7,10 @@ import pymongo
 import torch.utils.data
 
 from superduperdb import client
+from superduperdb.models.utils import apply_model
 from superduperdb.training.loading import QueryDataset
 from superduperdb.utils import MongoStyleDict, progressbar
-from superduperdb.models.utils import apply_model
+from superduperdb.training.validation import validate_representations
 
 
 class Trainer:
@@ -20,7 +21,8 @@ class Trainer:
                  collection,
                  models,
                  keys,
-                 save_names,
+                 model_names,
+                 validation_sets=(),
                  metrics=None,
                  loss=None,
                  batch_size=100,
@@ -57,6 +59,7 @@ class Trainer:
             r['_id'] for r in self.collection.find({**self.filter, '_fold': 'valid'},
                                                    {'_id': 1}).sort('_id', pymongo.ASCENDING)
         ]
+        self.validation_sets = validation_sets
         self.n_epochs = n_epochs
         self.n_iterations = n_iterations
         self.download = download
@@ -98,7 +101,7 @@ class Trainer:
             self._get_optimizer(encoder, lr) for encoder in self.encoders
             if isinstance(encoder, torch.nn.Module) and list(encoder.parameters())
         ]
-        self.save_names = save_names
+        self.model_names = model_names
         self.watch = watch
         self.metric_values = defaultdict(lambda: [])
         self.lr = lr
@@ -185,7 +188,7 @@ class Trainer:
         agg = min if self.watch == 'loss' else max
         if self.watch == 'loss' and self.metric_values['loss'][-1] == agg(self.metric_values['loss']):
             print('saving')
-            for sn, encoder in zip(self.save_names, self.encoders):
+            for sn, encoder in zip(self.model_names, self.encoders):
                 self.save(sn, encoder)
         else:  # pragma: no cover
             print('no best model found...')
@@ -255,22 +258,6 @@ class Trainer:
             self.log_weight_traces()
         return loss
 
-    def prepare_validation_set(self):
-        if self.splitter is not None:
-            _ids = []
-            for r in self.collection.find({**self.filter, '_fold': 'valid'}, raw=True):
-                r0, r1 = self.splitter(r)
-                if '_id' in r0:
-                    del r0['_id']
-                if '_id' in r1:  # pragma: no cover
-                    del r1['_id']
-                new_r = {**r0, '_other': r1}
-                new_r['_fold'] = 'temp'
-                new_r['_training_id'] = self.training_id
-                result = self.collection.insert_one(new_r, refresh=False)
-                _ids.append(result.inserted_ids[0])
-            self.split_valid_ids = _ids
-
     def validate_model(self, dataloader, model):
         raise NotImplementedError  # pragma: no cover
 
@@ -278,9 +265,6 @@ class Trainer:
 
         for encoder in self.encoders:
             self.calibrate(encoder)
-
-        if hasattr(self, 'splitter') and self.splitter is not None:
-            self.prepare_validation_set()
 
         it = 0
         epoch = 0
@@ -394,58 +378,18 @@ class RepresentationTrainer(Trainer):
         super().__init__(*args, **kwargs)
 
     def validate_model(self, data_loader, epoch):
-        for m in self.encoders:
-            if hasattr(m, 'eval'):
-                m.eval()
-        try:
-            self.collection.unset_hash_set()
-        except KeyError as e:  # pragma: no cover
-            if not 'semantic_index' in str(e):
-                raise e
-
-        self.collection.semantic_index = self.train_name
-        lookup = dict(zip(self.save_names, self.encoders))
-        _ids = self.valid_ids if self.splitter is None else self.split_valid_ids
-
-        for m in self.collection.list_models(**{'name': {'$in': self.save_names}, 'active': True}):
-            self.collection._process_documents_with_model(m, _ids, verbose=True, model=lookup[m])
-
-        anchors = progressbar(
-            self.collection.find({'_id': {'$in': _ids}},
-                                 self.projection,
-                                 features=self.features).sort('_id', pymongo.ASCENDING),
-            total=len(_ids),
-        )
-
-        metric_values = defaultdict(lambda: [])
-
-        active_model = \
-            self.collection.list_models(**{'active': True, 'name': {'$in': self.save_names}})[0]
-        key = self.collection['_models'].find_one({'name': active_model}, {'key': 1})['key']
-        for r in anchors:
-            _id = r['_id']
-            if self.splitter is not None:
-                r = r['_other']
-            if '_id' in r:
-                del r['_id']
-            if len(self.encoders) > 1:
-                del r[key]
-            result = list(self.collection.find({'$like': {'document': r, 'n': 100}}, {'_id': 1}))
-            result = sorted(result, key=lambda r: -r['_score'])
-            result = [r['_id'] for r in result]
-            for metric in self.metrics:
-                metric_values[metric].append(self.metrics[metric](result, _id))
-
-        for k in metric_values:
-            metric_values[k] = sum(metric_values[k]) / len(metric_values[k])
-
+        results = {}
+        for vs in self.validation_sets:
+            results[vs] = validate_representations(self.collection, self.validation_set, self.train_name,
+                                                   self.metrics, self.encoders, features=self.features,
+                                                   refresh=True)
         loss_values = []
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.learn_encoders)
             loss_values.append(self.loss(*outputs).item())
-        metric_values['loss'] = sum(loss_values) / len(loss_values)
+        results['loss'] = sum(loss_values) / len(loss_values)
         for m in self.encoders:
             if hasattr(m, 'train'):
                 m.train()
-        return metric_values
+        return results
 

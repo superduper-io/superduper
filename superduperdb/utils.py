@@ -9,6 +9,7 @@ import warnings
 
 import torch
 import torch.utils.data
+import tqdm
 
 
 class MongoStyleDict(dict):
@@ -282,14 +283,10 @@ class _UpdateableProgress:
         self.file = file
         self.prefix = prefix
         self.j = 0
+        self.progress = tqdm.tqdm(total=total)
 
     def update(self, it=1):
-        self.j += it
-        ending = f'{self.j}/{self.total}'
-        current_size = self.size - len(ending) - 4 - len(self.prefix)
-        x = int(current_size * self.j / self.total)
-        beginning = f'{self.prefix} [{"#" * x}{"." * (current_size - x)}] '
-        print(beginning + ending, end='\r', file=self.file, flush=True)
+        self.progress.update(it)
 
 
 def progressbar(*args, **kwargs):
@@ -302,28 +299,10 @@ def progressbar(*args, **kwargs):
 
 
 def _progressbar(it=None, prefix="", size=None, out=sys.stdout, total=None):
-    if size is None:
-        try:
-            size = os.get_terminal_size().columns
-        except OSError as e:
-            size = 80
-    if total is None:
-        total = len(it)
-
-    def show(j, end='\r'):
-        ending = f'{j}/{total}'
-        current_size = size - len(ending) - 4 - len(prefix)
-        x = int(current_size * j / total)
-        beginning = f'{prefix} [{"#" * x}{"." * (current_size - x)}] '
-        print(beginning + ending, end=end, file=out, flush=True)
-
-    show(0)
-    for i, item in enumerate(it):
-        yield item
-        if i + 1 == total:
-            show(i + 1, end=None)
-        else:
-            show(i + 1)
+    if it is not None:
+        return tqdm.tqdm(it, total=total)
+    else:
+        return tqdm.tqdm(total=total)
 
 
 class ArgumentDefaultDict(defaultdict):

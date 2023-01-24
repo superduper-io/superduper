@@ -303,7 +303,7 @@ class Collection(BaseCollection):
                      postprocessor=None, filter=None, type=None, active=True,
                      key='_base', verbose=False, semantic_index=False,
                      process_docs=True, loader_kwargs=None, max_chunk_size=5000, features=None,
-                     measure=None, neighbourboods=(), validation_sets=()):
+                     measure=None, validation_sets=()):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -343,6 +343,7 @@ class Collection(BaseCollection):
         if object_should_exist:
             assert '.' in name, 'can only reference attribute of existing model'
             assert name.split('.')[0] in self.list_models()
+
         if semantic_index:
             assert measure is not None
             return self.create_semantic_index(
@@ -490,7 +491,7 @@ class Collection(BaseCollection):
         return self._create_object('postprocessors', name, object)
 
     def create_semantic_index(self, name, models, measure, validation_sets=(), metrics=(), loss=None,
-                              splitter=None, filter=None, **trainer_kwargs):
+                              splitter=None, **trainer_kwargs):
         """
         :param name: Name of index
         :param models: List of existing models, or parameters to ``Collection.create_model``
@@ -502,68 +503,10 @@ class Collection(BaseCollection):
         :param trainer_kwargs: Keyword arguments to be passed to ``training.train_tools.RepresentationTrainer``
         :return: List of job identifiers if ``self.remote``
         """
-        if filter is None:
-            filter = {}
-        created = {'models': []}
-        for i, man in enumerate(models):  # pragma: no cover
-            if isinstance(man, str):
-                assert man in self.list_models()
-                created['models'].append(False)
-                continue
-
-            self.create_model(**man, process_docs=loss is None)
-            models[i] = man['name']
-            created['models'].append(True)
-
-        if metrics:  # pragma: no cover
-            created['metrics'] = []
-            for i, man in enumerate(metrics):
-                if isinstance(man, str):
-                    assert man in self.list_metrics()
-                    created['metrics'].append(False)
-                    continue
-                self.create_metric(**man)
-                metrics[i] = man['name']
-                created['metrics'].append(True)
-
-        if isinstance(measure, str):  # pragma: no cover
-            assert measure in self.list_measures()
-            created['measure'] = False
-        else:  # pragma: no cover
-            self.create_measure(**measure)
-            measure = measure['name']
-            created['measure'] = True
-
-        for i, validation_set in enumerate(validation_sets):
-            created['validation_sets'] = []
-            if isinstance(validation_set, str):  # pragma: no cover
-                assert validation_set in self.list_validation_sets()
-                created['validation_sets'].append(False)
-            else:  # pragma: no cover
-                validation_set['filter'] = filter
-                self.create_validation_set(**validation_set)
-                validation_sets[i] = validation_set['name']
-                created['validation_sets'].append(True)
-
-        if splitter is not None:  # pragma: no cover
-            if isinstance(splitter, str):
-                assert splitter in self.list_splitters()
-                created['splitter'] = False
-            else:
-                self.create_splitter(**splitter)
-                splitter = splitter['name']
-                created['splitter'] = True
 
         if loss is not None:  # pragma: no cover
             if len(models) == 1:
                 assert splitter is not None, 'need a splitter for self-supervised ranking...'
-            if isinstance(loss, str):
-                assert loss in self.list_losses()
-                created['loss'] = False
-            else:
-                self.create_loss(**loss)
-                loss = loss['name']
-                created['loss'] = True
 
         self['_semantic_indexes'].insert_one({
             'name': name,
@@ -572,8 +515,8 @@ class Collection(BaseCollection):
             'loss': loss,
             'measure': measure,
             'splitter': splitter,
+            'validation_sets': list(validation_sets),
             'trainer_kwargs': trainer_kwargs,
-            'created': created,
         })
         if loss is None:
             if self.remote and validation_sets:
@@ -857,36 +800,14 @@ class Collection(BaseCollection):
         info = self['_semantic_indexes'].find_one({'name': name})
         if info is None:  # pragma: no cover
             return
-        active_models = self.list_models(**{'active': True, 'name': {'$in': info['models']}})
-        filters_ = []
-        for m in active_models:
-            filters_.append(self['_models'].find_one({'name': m}, {'filter': 1})['filter'])
-        if not force: # pragma: no cover
-            n_documents = self.count_documents({'$and': filters_})
         do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete this semantic index: {name}; '
-                                  f'{n_documents} documents will be affected.'):
+        if force or click.confirm(f'Are you sure you want to delete this semantic index: {name}; '):
             do_delete = True
 
         if not do_delete:
             return
 
-        for item in info['created']:
-            if not info['created']:
-                continue
-            self['_semantic_indexes'].delete_one({'name': name})
-            if item == 'models':
-                for i, was_created in enumerate(info['created']['models']):
-                    if not was_created:
-                        continue
-                    self.delete_model(info['models'][i], force=True)
-            if item == 'loss':
-                self.delete_loss(info['loss'], force=True)
-            if item == 'metrics':
-                for i, was_created in enumerate(info['created']['metrics']):
-                    if not was_created:
-                        continue
-                    self.delete_metric(info['metrics'][i], force=True)
+        self['_semantic_indexes'].delete_one({'name': name})
 
     def delete_splitter(self, splitter=None, force=False):
         return self._delete_objects('splitters', objects=[splitter], force=force)
@@ -1836,11 +1757,11 @@ class Collection(BaseCollection):
                                                     '_train_semantic_index', name)
 
         info = self['_semantic_indexes'].find_one({'name': name})
-        save_names = info['models']
+        model_names = info['models']
         models = []
         keys = []
         features = {}
-        for save_name in save_names:
+        for save_name in model_names:
             r = self['_models'].find_one({'name': save_name})
             features.update(r.get('features', {}))
             keys.append(r['key'])
@@ -1855,7 +1776,7 @@ class Collection(BaseCollection):
         if splitter:
             splitter = self.splitters[info['splitter']]
 
-        active_model = self.list_models(**{'active': True, 'name': {'$in': save_names}})[0]
+        active_model = self.list_models(**{'active': True, 'name': {'$in': model_names}})[0]
         filter_ = self['_models'].find_one({'name': active_model}, {'filter': 1})['filter']
         if splitter is not None:
             filter_['_fold'] = 'temp'
@@ -1869,13 +1790,14 @@ class Collection(BaseCollection):
             self.name,
             models=models,
             keys=keys,
-            save_names=save_names,
+            model_names=model_names,
             splitter=splitter,
             loss=loss,
             save=self._replace_model,
             watch='loss',
             metrics=metrics,
             features=features,
+            validation_sets=info.get('validation_sets', ()),
             **info.get('trainer_kwargs', {}),
         )
 

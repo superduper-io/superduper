@@ -22,6 +22,7 @@ class Trainer:
                  models,
                  keys,
                  model_names,
+                 use_grads=None,
                  validation_sets=(),
                  metrics=None,
                  loss=None,
@@ -48,7 +49,16 @@ class Trainer:
         self._collection = collection
         self._collection_object = None
 
-        self.encoders = models
+        if use_grads is None:
+            self.use_grads = {mn: True for mn in model_names}
+        else:
+            self.use_grads = use_grads
+            for mn in model_names:
+                if mn not in use_grads:
+                    self.use_grads[mn] = True
+
+        self.models = models
+        self.model_names = model_names
         self.keys = keys
         self.loss = loss
         self.features = features
@@ -88,20 +98,20 @@ class Trainer:
         self.metrics = metrics if metrics is not None else {}
         if isinstance(self.keys, str):  # pragma: no cover
             self.keys = (self.keys,)
-        if not isinstance(self.encoders, tuple) and not isinstance(self.encoders, list):  # pragma: no cover
-            self.encoders = [self.encoders,]
-        self.encoders = list(self.encoders)
+        if not isinstance(self.models, tuple) and not isinstance(self.models, list):  # pragma: no cover
+            self.models = [self.models, ]
+        self.models = list(self.models)
         self._send_to_device()
         self.learn_fields = self.keys
-        self.learn_encoders = self.encoders
+        self.learn_encoders = self.models
         if len(self.keys) == 1:
             self.learn_fields = (self.keys[0], self.keys[0])
-            self.learn_encoders = (self.encoders[0], self.encoders[0])
+            self.learn_encoders = (self.models[0], self.models[0])
         self.optimizers = optimizers if optimizers else [
-            self._get_optimizer(encoder, lr) for encoder in self.encoders
-            if isinstance(encoder, torch.nn.Module) and list(encoder.parameters())
+            self._get_optimizer(model, lr) for model, mn in zip(self.models, self.model_names)
+            if isinstance(model, torch.nn.Module) and list(model.parameters())
+               and self.use_grads[mn]
         ]
-        self.model_names = model_names
         self.watch = watch
         self.metric_values = defaultdict(lambda: [])
         self.lr = lr
@@ -117,13 +127,13 @@ class Trainer:
         if not torch.cuda.is_available():
             return
         if torch.cuda.device_count() == 1:
-            for m in self.encoders:
+            for m in self.models:
                 if isinstance(m, torch.nn.Module):
                     m.to('cuda')
             return
-        for i, m in enumerate(self.encoders):
+        for i, m in enumerate(self.models):
             if isinstance(m, torch.nn.Module):
-                self.encoders[i] = torch.nn.DataParallel(m)
+                self.models[i] = torch.nn.DataParallel(m)
 
     def _early_stop(self):
         if self.watch == 'loss':
@@ -142,7 +152,7 @@ class Trainer:
         )
 
     def _init_weight_traces(self):
-        for i, e in enumerate(self.encoders):
+        for i, e in enumerate(self.models):
             try:
                 sd = e.state_dict()
             except AttributeError:
@@ -164,7 +174,7 @@ class Trainer:
 
     def log_weight_traces(self):
         for i, f in enumerate(self._weights_choices):
-            sd = self.encoders[i].state_dict()
+            sd = self.models[i].state_dict()
             for p in self._weights_choices[f]:
                 indexes = self._weights_choices[f][p]
                 tmp = []
@@ -188,7 +198,7 @@ class Trainer:
         agg = min if self.watch == 'loss' else max
         if self.watch == 'loss' and self.metric_values['loss'][-1] == agg(self.metric_values['loss']):
             print('saving')
-            for sn, encoder in zip(self.model_names, self.encoders):
+            for sn, encoder in zip(self.model_names, self.models):
                 self.save(sn, encoder)
         else:  # pragma: no cover
             print('no best model found...')
@@ -238,14 +248,21 @@ class Trainer:
     def log_progress(self, **kwargs):
         out = ''
         for k, v in kwargs.items():
-            out += f'{k}: {v}; '
+            if isinstance(v, dict):
+                for kk, vv in v.items():
+                    out += f'{k}/{kk}: {vv}; '
+            else:
+                out += f'{k}: {v}; '
         print(out)
 
     @staticmethod
     def apply_models_to_batch(batch, models):
         output = []
         for subbatch, model in list(zip(batch, models)):
-            output.append(model.forward(subbatch))
+            if isinstance(model, torch.nn.Module) or hasattr(model, 'forward'):
+                output.append(model.forward(subbatch))
+            else:
+                output.append(subbatch)
         return output
 
     def take_step(self, loss):
@@ -263,12 +280,12 @@ class Trainer:
 
     def train(self):
 
-        for encoder in self.encoders:
+        for encoder in self.models:
             self.calibrate(encoder)
 
         it = 0
         epoch = 0
-        for m in self.encoders:
+        for m in self.models:
             if hasattr(m, 'eval'):
                 m.eval()
 
@@ -278,7 +295,7 @@ class Trainer:
         self.log_progress(fold='VALID', iteration=it, epoch=epoch, **metrics)
 
         while True:
-            for m in self.encoders:
+            for m in self.models:
                 if hasattr(m, 'train'):
                     m.train()
 
@@ -314,10 +331,10 @@ class ImputationTrainer(Trainer):
 
     def __init__(self, *args, inference_model=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.inference_model = inference_model if inference_model is not None else self.encoders[0]
+        self.inference_model = inference_model if inference_model is not None else self.models[0]
 
     def validate_model(self, data_loader, *args, **kwargs):
-        for e in self.encoders:
+        for e in self.models:
             if hasattr(e, 'eval'):
                 e.eval()
         docs = list(self.collection.find(
@@ -347,12 +364,12 @@ class ImputationTrainer(Trainer):
             for metric in self.metrics:
                 metric_values[metric].append(self.metrics[metric](o, t))
         for batch in data_loader:
-            outputs = self.apply_models_to_batch(batch, self.encoders)
+            outputs = self.apply_models_to_batch(batch, self.models)
             metric_values['loss'].append(self.loss(*outputs).item())
 
         for k in metric_values:
             metric_values[k] = sum(metric_values[k]) / len(metric_values[k])
-        for e in self.encoders:
+        for e in self.models:
             if hasattr(e, 'train'):
                 e.train()
         return metric_values
@@ -380,15 +397,15 @@ class RepresentationTrainer(Trainer):
     def validate_model(self, data_loader, epoch):
         results = {}
         for vs in self.validation_sets:
-            results[vs] = validate_representations(self.collection, self.validation_set, self.train_name,
-                                                   self.metrics, self.encoders, features=self.features,
+            results[vs] = validate_representations(self.collection, vs, self.train_name,
+                                                   self.metrics, self.models, features=self.features,
                                                    refresh=True)
         loss_values = []
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.learn_encoders)
             loss_values.append(self.loss(*outputs).item())
         results['loss'] = sum(loss_values) / len(loss_values)
-        for m in self.encoders:
+        for m in self.models:
             if hasattr(m, 'train'):
                 m.train()
         return results

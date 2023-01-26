@@ -21,14 +21,13 @@ def random_vectors():
         torch.nn.Linear(32, 16),
         type='float_tensor',
         key='x',
-        semantic_index=True,
         active=True,
-        measure='css',
     )
     coll.create_model(
         'model_attributes',
         ModelAttributes(32, 8, 4),
         active=False,
+        type='float_tensor',
     )
     coll.create_model(
         'model_attributes.linear1',
@@ -49,8 +48,6 @@ def random_vectors():
         key='x',
         active=True,
         features={'x': 'linear'},
-        semantic_index=True,
-        measure='css',
     )
     coll['_meta'].insert_one({'key': 'semantic_index', 'value': 'linear'})
     data = []
@@ -75,6 +72,7 @@ def random_vectors():
         active=True,
         loader_kwargs={'num_workers': 2},
     )
+    coll.create_validation_set('valid', {})
     yield coll
     the_client.drop_database('test_db')
     the_client.drop_database('_test_db:documents:files')

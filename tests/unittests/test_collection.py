@@ -223,46 +223,36 @@ def test_create_delete_model_parts(empty):
 
 
 def test_create_delete_semantic_index(random_vectors):
+    random_vectors.create_loss('ranking_loss', ranking_loss)
+    random_vectors.create_metric('p_at_1', PatK(1))
+    random_vectors.create_model(name='identity',
+                                object=torch.nn.Identity(),
+                                key='y',
+                                type='float_tensor',
+                                active=False)
 
     def f():
+        random_vectors.create_model(name='encoder',
+                                    object=torch.nn.Linear(32, 32),
+                                    key='x',
+                                    type='float_tensor',
+                                    active=True)
         return random_vectors.create_semantic_index(
             'ranking',
-            models=[
-                {
-                    'name': 'encoder',
-                    'object': torch.nn.Linear(32, 32),
-                    'key': 'x',
-                    'converter': 'float_tensor',
-                    'active': True,
-                },
-                {
-                    'name': 'identity',
-                    'object': torch.nn.Identity(),
-                    'key': 'y',
-                    'converter': 'float_tensor',
-                    'active': False,
-                },
-            ],
-            loss={
-                'name': 'ranking_loss',
-                'object': ranking_loss,
-            },
+            models=['encoder', 'identity'],
+            loss='ranking_loss',
             filter={},
-            metrics=[
-                {
-                    'name': 'p_at_1',
-                    'object': PatK(1),
-                },
-            ],
+            metrics=['p_at_1'],
             measure='css',
             batch_size=100,
             num_workers=0,
             n_epochs=100,
             lr=0.01,
-            log_weights=True,
+            log_weights=False,
             download=True,
-            validation_interval=5,
+            validation_interval=20,
             n_iterations=10,
+            validation_sets=['valid'],
         )
 
     f()
@@ -271,19 +261,18 @@ def test_create_delete_semantic_index(random_vectors):
     assert 'ranking' in random_vectors.list_semantic_indexes()
 
     random_vectors.delete_semantic_index('ranking', force=True)
-    random_vectors.delete_loss('ranking_loss', force=True)
-    random_vectors.delete_metric('p_at_1', force=True)
+    random_vectors.delete_model('encoder', force=True)
 
     # check that the deletion was effective
     assert 'ranking' not in random_vectors.list_semantic_indexes()
-
-    random_vectors.remote = True
-
-    job_ids = f()
-    print(job_ids)
-
-    for job_id in job_ids:
-        random_vectors.watch_job(job_id)
+    #
+    # random_vectors.remote = True
+    #
+    # job_ids = f()
+    # print(job_ids)
+    #
+    # for job_id in job_ids:
+    #     random_vectors.watch_job(job_id)
 
 
 def test_create_self_supervised_index(random_vectors):

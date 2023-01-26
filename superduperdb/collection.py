@@ -301,9 +301,8 @@ class Collection(BaseCollection):
 
     def create_model(self, name, object=None, preprocessor=None, forward=None,
                      postprocessor=None, filter=None, type=None, active=True,
-                     key='_base', verbose=False, semantic_index=False,
-                     process_docs=True, loader_kwargs=None, max_chunk_size=5000, features=None,
-                     measure=None, validation_sets=()):
+                     key='_base', verbose=False,
+                     process_docs=True, loader_kwargs=None, max_chunk_size=5000, features=None):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -329,7 +328,6 @@ class Collection(BaseCollection):
         """
         if loader_kwargs is None:
             loader_kwargs = {}
-        created = {}
 
         object_should_exist = object is None and preprocessor is None and forward is None \
             and postprocessor is None
@@ -344,63 +342,17 @@ class Collection(BaseCollection):
             assert '.' in name, 'can only reference attribute of existing model'
             assert name.split('.')[0] in self.list_models()
 
-        if semantic_index:
-            assert measure is not None
-            return self.create_semantic_index(
-                name=name,
-                models=[{
-                    'name': name,
-                    'object': object,
-                    'preprocessor': preprocessor,
-                    'forward': forward,
-                    'postprocessor': postprocessor,
-                    'filter': filter if filter else {},
-                    'type': type,
-                    'active': active,
-                    'key': key,
-                    'loader_kwargs': loader_kwargs if loader_kwargs else {},
-                    'max_chunk_size': max_chunk_size,
-                    'verbose': verbose,
-                    'features': features if features else {},
-                    'process_docs': process_docs,
-                }],
-                measure=measure,
-                validation_sets=validation_sets,
-            )
         assert name not in self['_models'].distinct('name'), \
             f'Model {name} already exists!'
-        if type and isinstance(type, dict):  # pragma: no cover
-            self.create_type(**type)
-            type = type['name']
-        elif type:  # pragma: no cover
-            assert isinstance(type, str)
+
+        if type is not None:
             assert type in self['_types'].distinct('name')
 
         if preprocessor is not None or forward is not None or postprocessor is not None:
             assert object is None
-            if isinstance(preprocessor, str):
-                preprocessor = self._preprocessors[preprocessor]
-                created['preprocessor'] = False
-            else:
-                created['preprocessor']  = True
-                self.create_preprocessor(**preprocessor)
-                preprocessor = preprocessor['name']
-
-            if isinstance(forward, str):
-                forward = self._forwards[forward]
-                created['forward'] = False
-            else:
-                created['forward'] = True
-                self.create_forward(**forward)
-                forward = forward['name']
-
-            if isinstance(postprocessor, str):
-                postprocessor = self._postprocessors[postprocessor]
-                created['postprocessor'] = False
-            else:
-                created['postprocessor'] = True
-                self.create_postprocessor(**postprocessor)
-                postprocessor = postprocessor['name']
+            preprocessor = self._preprocessors[preprocessor]
+            forward = self._forwards[forward]
+            postprocessor = self._postprocessors[postprocessor]
 
             file_id = None
         else:
@@ -596,10 +548,11 @@ class Collection(BaseCollection):
         """
         return self._create_object('types', name, object)
 
-    def create_validation_set(self, name, filter, chunk_size=1000, splitter=None):
+    def create_validation_set(self, name, filter=None, chunk_size=1000, splitter=None):
         """
         :param filter: filter (not including {"_fold": "valid"}
         """
+        filter = filter or {}
         existing = self.list_validation_sets()
         if name in existing:
             raise Exception(f'validation set {name} already exists!')
@@ -1585,8 +1538,7 @@ class Collection(BaseCollection):
         features = model_info.get('features', {})
         if features is None:
             features = {}    # pragma: no cover
-        filter_ = model_info.get('filter', {})
-        documents = list(self.find(filter_, features=features))
+        documents = list(self.find({'_id': {'$in': ids}}, features=features))
         ids = [r['_id'] for r in documents]
         for r in documents:
             del r['_id']

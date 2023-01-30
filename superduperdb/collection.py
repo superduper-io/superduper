@@ -11,6 +11,8 @@ import networkx
 import random
 import warnings
 
+from numpy.random import permutation
+
 warnings.filterwarnings('ignore')
 
 from superduperdb.cursor import SuperDuperCursor
@@ -329,18 +331,14 @@ class Collection(BaseCollection):
         if loader_kwargs is None:
             loader_kwargs = {}
 
-        object_should_exist = object is None and preprocessor is None and forward is None \
-            and postprocessor is None
+        object_should_exist = False
+        if isinstance(object, str):
+            object_should_exist = True
+        elif preprocessor is not None or not forward is not None:
+            object_should_exist = True
 
         if active and object is not None:
             assert hasattr(object, 'preprocess') or hasattr(object, 'forward')
-
-        if not object_should_exist:
-            assert '.' not in name, 'already existing model can only be used, if an attribute of that model is referred to'
-
-        if object_should_exist:
-            assert '.' in name, 'can only reference attribute of existing model'
-            assert name.split('.')[0] in self.list_models()
 
         assert name not in self['_models'].distinct('name'), \
             f'Model {name} already exists!'
@@ -353,13 +351,12 @@ class Collection(BaseCollection):
             preprocessor = self._preprocessors[preprocessor]
             forward = self._forwards[forward]
             postprocessor = self._postprocessors[postprocessor]
-
             file_id = None
         else:
-            if object is not None:
+            if object is not None and not isinstance(object, str):
                 file_id = self._create_pickled_file(object)
-            else:
-                file_id = self['_models'].find_one({'name': name.split('.')[0]})['object']
+            elif isinstance(object, str):
+                file_id = object
 
             preprocessor = None
             forward = None
@@ -548,7 +545,8 @@ class Collection(BaseCollection):
         """
         return self._create_object('types', name, object)
 
-    def create_validation_set(self, name, filter=None, chunk_size=1000, splitter=None):
+    def create_validation_set(self, name, filter=None, chunk_size=1000, splitter=None,
+                              sample_size=None):
         """
         :param filter: filter (not including {"_fold": "valid"}
         """
@@ -559,10 +557,19 @@ class Collection(BaseCollection):
         if isinstance(splitter, str):
             splitter = self.splitters[splitter]
         filter['_fold'] = 'valid'
-        cursor = self.find(filter, {'_id': 0}, raw=True)
+        if sample_size is None:
+            cursor = self.find(filter, {'_id': 0}, raw=True)
+            total = self.count_documents(filter)
+        else:
+            assert isinstance(sample_size, int)
+            _ids = self.distinct('_id', filter)
+            if len(_ids) > sample_size:
+                _ids = [_ids[int(i)] for i in permutation(sample_size)]
+            cursor = self.find({'_id': {'$in': _ids}}, {'_id': 0}, raw=True)
+            total = sample_size
         it = 0
         tmp = []
-        for r in progressbar(cursor, total=self.count_documents(filter)):
+        for r in progressbar(cursor, total=total):
             if splitter is not None:
                 r, other = splitter(r)
                 r['_other'] = other
@@ -958,6 +965,11 @@ class Collection(BaseCollection):
         """
         return self.parent_if_appl['_validation_sets'].distinct('_validation_set')
 
+    def refresh_model(self, model_name):
+        info = self['_models'].find_one({'name': model_name})
+        ids = self.distinct('_id', info.get('filter') or {})
+        self._process_documents_with_model(model_name, ids=ids, **(info.get('loader_kwargs') or {}))
+
     def replace_one(self, filter, replacement, *args, refresh=True, **kwargs):
         """
         Replace a document in the database. The outputs of models will be refreshed for this
@@ -1347,8 +1359,14 @@ class Collection(BaseCollection):
         manifest = self.parent_if_appl[f'_models'].find_one({'name': name})
         if manifest is None:
             raise Exception(f'No such object of type "model", "{name}" has been registered.') # pragma: no cover
-        if manifest['object'] is not None:
+        if manifest['object'] is not None and not isinstance(manifest['object'], str):
             return self._load_object('models', name)
+        elif isinstance(manifest['object'], str) and '.'  in manifest['object']:
+            model_name, attr = manifest['object'].split('.')
+            model = self._load_object('models', model_name)
+            return getattr(model, str)
+        elif isinstance(manifest['object'], str):
+            return self._load_object('models', manifest['object'])
         assert manifest.get('preprocessor') is not None \
             or manifest.get('forward') is not None
         preprocessor = None
@@ -1367,9 +1385,6 @@ class Collection(BaseCollection):
         if manifest is None:
             raise Exception(f'No such object of type "{type}", "{name}" has been registered.') # pragma: no cover
         m = self.parent_if_appl._load_pickled_file(manifest['object'])
-        if '.' in name:
-            _, attribute = name.split('.')
-            m = getattr(m, attribute)
         if type == 'models' and isinstance(m, torch.nn.Module):
             m.eval()
         return m

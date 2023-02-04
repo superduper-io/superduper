@@ -7,10 +7,9 @@ import pymongo
 import torch.utils.data
 
 from superduperdb import client
-from superduperdb.models.utils import apply_model
 from superduperdb.training.loading import QueryDataset
-from superduperdb.utils import MongoStyleDict, progressbar
-from superduperdb.training.validation import validate_representations
+from superduperdb.utils import MongoStyleDict
+from superduperdb.training.validation import validate_representations, validate_imputation
 
 
 class Trainer:
@@ -113,7 +112,10 @@ class Trainer:
                and self.use_grads[mn]
         ]
         self.watch = watch
-        self.metric_values = defaultdict(lambda: [])
+        self.metric_values = {}
+        for ds in self.validation_sets:
+            self.metric_values[ds] = {me: [] for me in self.metrics}
+        self.metric_values['loss'] = []
         self.lr = lr
         self.weights_dict = defaultdict(lambda: [])
         self._weights_choices = {}
@@ -291,8 +293,13 @@ class Trainer:
 
         metrics = self.validate_model(self.data_loaders[1], -1)
         for k in metrics:
-            self.metric_values[k].append(metrics[k])
+            if k == 'loss':
+                self.metric_values[k].append(metrics['loss'])
+                continue
+            for me in metrics[k]:
+                self.metric_values[k][me].append(metrics[k][me])
         self.log_progress(fold='VALID', iteration=it, epoch=epoch, **metrics)
+        self._save_metrics()
 
         while True:
             for m in self.models:
@@ -307,9 +314,14 @@ class Trainer:
                 self.log_progress(fold='TRAIN', iteration=it, epoch=epoch, loss=l_.item())
                 it += 1
                 if it % self.validation_interval == 0:
+                    print('validating model...')
                     metrics = self.validate_model(valid_loader, epoch)
                     for k in metrics:
-                        self.metric_values[k].append(metrics[k])
+                        if k == 'loss':
+                            self.metric_values[k].append(metrics['loss'])
+                            continue
+                        for me in metrics[k]:
+                            self.metric_values[k][me].append(metrics[k][me])
                     self._save_weight_traces()
                     self._save_best_model()
                     self.log_progress(fold='VALID', iteration=it, epoch=epoch, **metrics)
@@ -337,42 +349,21 @@ class ImputationTrainer(Trainer):
         for e in self.models:
             if hasattr(e, 'eval'):
                 e.eval()
-        docs = list(self.collection.find(
-            {**self.filter, '_fold': 'valid'},
-            features=self.features,
-        ))
-        if self.keys[0] != '_base':
-            inputs_ = [r[self.keys[0]] for r in docs]
-        elif '_base' in self.features:
-            inputs_ = [r['_base'] for r in docs]
-        else:  # pragma: no cover
-            inputs_ = docs
-
-        if self.keys[1] != '_base':
-            targets = [r[self.keys[1]] for r in docs]
-        else:  # pragma: no cover
-            targets = docs
-        outputs = apply_model(
-            self.inference_model,
-            inputs_,
-            single=False,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-        )
-        metric_values = defaultdict(lambda: [])
-        for o, t in zip(outputs, targets):
-            for metric in self.metrics:
-                metric_values[metric].append(self.metrics[metric](o, t))
+        results = {}
+        for vs in self.validation_sets:
+            results[vs] = validate_imputation(self.collection, vs, self.train_name,
+                                              self.metrics, model=self.models[0],
+                                              features=self.features)
+        loss_values = []
         for batch in data_loader:
-            outputs = self.apply_models_to_batch(batch, self.models)
-            metric_values['loss'].append(self.loss(*outputs).item())
+            outputs = self.apply_models_to_batch(batch, self.learn_encoders)
+            loss_values.append(self.loss(*outputs).item())
+        results['loss'] = sum(loss_values) / len(loss_values)
 
-        for k in metric_values:
-            metric_values[k] = sum(metric_values[k]) / len(metric_values[k])
         for e in self.models:
             if hasattr(e, 'train'):
                 e.train()
-        return metric_values
+        return results
 
 
 class _Mapped:
@@ -395,6 +386,9 @@ class RepresentationTrainer(Trainer):
         super().__init__(*args, **kwargs)
 
     def validate_model(self, data_loader, epoch):
+        for m in self.models:
+            if hasattr(m, 'eval'):
+                m.eval()
         results = {}
         for vs in self.validation_sets:
             results[vs] = validate_representations(self.collection, vs, self.train_name,

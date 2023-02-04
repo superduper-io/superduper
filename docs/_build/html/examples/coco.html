@@ -459,6 +459,7 @@ div.rendered_html tbody tr:hover {
 
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">im</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw</span><span class="p">):</span>
     <span class="c1"># if image is already in memory, then add &#39;bytes&#39;: b&#39;...&#39; instead of &#39;url&#39;: &#39;...&#39;</span>
+    <span class="c1"># for content located on the web, use &#39;http://&#39; or &#39;https://&#39; instead of &#39;file://&#39;</span>
     <span class="n">im</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;_content&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;file://data/coco/images/</span><span class="si">{</span><span class="n">im</span><span class="p">[</span><span class="s2">&quot;file_name&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;image&#39;</span><span class="p">}</span>
     <span class="p">}</span>
@@ -470,7 +471,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
@@ -488,13 +489,13 @@ div.rendered_html tbody tr:hover {
 </div>
 <p>We’ll load the data and add most of it to the database. We’ll hold back some data so that we can see how to update the database later.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;data/coco/data.json&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
-<span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="mi">10000</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="mi">1000</span><span class="p">]),</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -518,35 +519,22 @@ div.rendered_html tbody tr:hover {
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_validation_set</span><span class="p">(</span>
     <span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">,</span>
     <span class="nb">filter</span><span class="o">=</span><span class="p">{},</span>
-    <span class="n">splitter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]},</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]]})</span>
+    <span class="n">splitter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]},</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]]}),</span>
+    <span class="n">sample_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <p>We can see what the data points in the validation set look like by querying:</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_validation_sets&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;_validation_set&#39;</span><span class="p">:</span> <span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">})</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-{&#39;_id&#39;: ObjectId(&#39;63cbd19ed0aef4d4214976e1&#39;),
- &#39;img&#39;: &lt;PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=224x150&gt;,
- &#39;_other&#39;: {&#39;captions&#39;: [&#39;Two people in a food truck, one looking at an order.&#39;]},
- &#39;_validation_set&#39;: &#39;text2image_retrieval&#39;,
- &#39;_fold&#39;: &#39;train&#39;,
- &#39;_outputs&#39;: {&#39;img&#39;: {&#39;clip&#39;: tensor([ 0.0026, -0.0045, -0.0543,  ..., -0.0518,  0.0234, -0.0133])}}}
-</pre></div></div>
-</div>
-<p>You can see that the sample “query” is split into the <code class="docutils literal notranslate"><span class="pre">_other</span></code> field.</p>
+<p>You can see that the sample “query” is split into the <code class="docutils literal notranslate"><span class="pre">_other</span></code> field. This is important when evaluating semantic indexes.</p>
 <p>Now let’s start adding a model to the collection. A nice open source model to test text-2-image retrieval is <a class="reference external" href="https://openai.com/blog/clip/">CLIP</a> which understands images and texts and embeds these in a common vector space.</p>
 <p>Note that we are specifying the type of the model output, so that the collection knows how to store the results, as well as “activating” the model with <code class="docutils literal notranslate"><span class="pre">active=True</span></code>. That means, whenever we add data which fall under the <code class="docutils literal notranslate"><span class="pre">filter</span></code>, then these will get processed by the model, and the outputs will be added to the collection documents.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">key</span></code> argument specifies which part of the document the model should act. If <code class="docutils literal notranslate"><span class="pre">key=&quot;_base&quot;</span></code> then the model takes the whole document as input. Since we’ll be encoding documents as images, then we’ll chose <code class="docutils literal notranslate"><span class="pre">key=&quot;img</span></code>.</p>
@@ -568,7 +556,7 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-<p>We’ll create a companion model which uses the same underlying object as the previous model. That’s specified by choosing the same name. In this case the model is not activated, since we’ll only be using it for querying the collection. We don’t need to specify a <code class="docutils literal notranslate"><span class="pre">type</span></code> since that was done in the last step.</p>
+<p>We’ll create a companion model which uses the same underlying object as the previous model. That’s specified by adding the name instead of the object in the <code class="docutils literal notranslate"><span class="pre">object</span></code> argument. In this case the model is not <code class="docutils literal notranslate"><span class="pre">active</span></code>, since we’ll only be using it for querying the collection. We don’t need to specify a <code class="docutils literal notranslate"><span class="pre">type</span></code> since that was done in the last step.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -613,128 +601,1028 @@ div.rendered_html tbody tr:hover {
 
 <span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
     <span class="s1">&#39;clip&#39;</span><span class="p">,</span>
-    <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="s1">&#39;clip_text&#39;</span><span class="p">]</span>
+    <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="s1">&#39;clip_text&#39;</span><span class="p">],</span>
     <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;css&#39;</span><span class="p">,</span>
-    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">]</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">],</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<p>Let’s now evaluate the quality of this semantic index</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">bson</span> <span class="kn">import</span> <span class="n">ObjectId</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">semantic_index</span> <span class="o">=</span> <span class="s1">&#39;clip&#39;</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">ObjectId</span><span class="p">(</span><span class="s1">&#39;63d27372745cc274ef3518f2&#39;</span><span class="p">)},</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">}}):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s now evaluate the quality of this semantic index</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">validate_semantic_index</span><span class="p">(</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
-<p>We can see that we can get nice meaningful retrievals using the CLIP model from short descriptive pieces of text. This is very useful, since the model is now deployed to the database, listening from incoming queries.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
-</pre></div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
-
-<span class="n">docs</span><span class="o">.</span><span class="n">semantic_index</span> <span class="o">=</span> <span class="s1">&#39;clip&#39;</span>
-<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Man is served with cake.&#39;</span><span class="p">]},</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}}):</span>
-    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
-</pre></div>
-</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  0%|                                                                                                                                                                  | 0/1000 [00:00&lt;?, ?it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1250/1250 [00:00&lt;00:00, 27645.76it/s]
+</pre></div></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/examples_coco_32_0.png" src="../_images/examples_coco_32_0.png" />
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/examples_coco_32_1.png" src="../_images/examples_coco_32_1.png" />
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/examples_coco_32_2.png" src="../_images/examples_coco_32_2.png" />
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/examples_coco_32_3.png" src="../_images/examples_coco_32_3.png" />
-</div>
+<div class="highlight"><pre>
+loading hashes: &#34;clip&#34;
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
-<img alt="../_images/examples_coco_32_4.png" src="../_images/examples_coco_32_4.png" />
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [27:54&lt;00:00,  1.67s/it]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_semantic_indexes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>We can see that we can get nice meaningful retrievals using the CLIP model from short descriptive pieces of text. This is very useful, since the model is now deployed to the database, listening for incoming queries.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_semantic_indexes</span><span class="p">()</span>
+</pre></div>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">architectures.metrics</span> <span class="kn">import</span> <span class="n">PatK</span>
-<span class="kn">from</span> <span class="nn">architectures.losses</span> <span class="kn">import</span> <span class="n">ranking_loss</span>
-<span class="kn">from</span> <span class="nn">architectures.measures</span> <span class="kn">import</span> <span class="n">dot</span><span class="p">,</span> <span class="n">css</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">semantic_index</span> <span class="o">=</span> <span class="s1">&#39;clip&#39;</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Dog catches a frisbee&#39;</span><span class="p">]},</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}}):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>In the next section of this example, let us train our own model from scratch. The model will be much simpler than the clip model, but will yield faster retrievals. It will be interesting to see how this compares to CLIP, and show-case SuperDuperDB as a framework for easily integrating and benchmarking AI models, in particular for retrieval.</p>
+<p>First we will implement a simpler sentence embedding, using a simple word-embedding approach based around Glove. Please look at the model in <code class="docutils literal notranslate"><span class="pre">examples.models.AverageOfGloves</span></code>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>curl https://nlp.stanford.edu/data/glove.6B.zip -o data/glove.6B.zip
+<span class="o">!</span>unzip data/glove.6B.zip
+</pre></div>
+</div>
+</div>
+<p>We may register this model to the collection in the same way we did for the textual part of CLIP:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">AverageOfGloves</span>
 
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;data/glove.6B/glove.6B.50d.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
-    <span class="s1">&#39;text2image_search&#39;</span><span class="p">,</span>
-    <span class="n">models</span><span class="o">=</span><span class="p">[</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;image_encoder&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2048</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span>
-            <span class="s1">&#39;features&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="s1">&#39;resnet&#39;</span><span class="p">},</span>
-            <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;image&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;converter&#39;</span><span class="p">:</span> <span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;active&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;text_encoder&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">(),</span>
-            <span class="s1">&#39;features&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="s1">&#39;average_glove&#39;</span><span class="p">},</span>
-            <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;captions&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;converter&#39;</span><span class="p">:</span> <span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;active&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="p">},</span>
-    <span class="p">],</span>
-    <span class="n">loss</span><span class="o">=</span><span class="p">{</span>
-        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;ranking_loss&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="n">ranking_loss</span><span class="p">,</span>
-    <span class="p">},</span>
+<span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+<span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+<span class="n">vectors</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+<span class="n">vectors</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span>
+
+<span class="n">glove</span> <span class="o">=</span> <span class="n">AverageOfGloves</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">),</span> <span class="n">index</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
+    <span class="s1">&#39;average_glove&#39;</span><span class="p">,</span>
+    <span class="nb">object</span><span class="o">=</span><span class="n">glove</span><span class="p">,</span>
+    <span class="n">key</span><span class="o">=</span><span class="s1">&#39;captions&#39;</span><span class="p">,</span>
+    <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
+    <span class="s1">&#39;clip_projection&#39;</span><span class="p">,</span>
+    <span class="nb">object</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span>
+    <span class="n">active</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="s1">&#39;clip&#39;</span><span class="p">},</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s also create a loss function, in order to be able to perform the learning task:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.losses</span> <span class="kn">import</span> <span class="n">ranking_loss</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_loss</span><span class="p">(</span><span class="s1">&#39;ranking_loss&#39;</span><span class="p">,</span> <span class="n">ranking_loss</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>A semantic index training requires:</p>
+<ul class="simple">
+<li><p>1 or more models</p></li>
+<li><p>A measure function to measure similarity between model outputs</p></li>
+<li><p>A loss function</p></li>
+<li><p>One or more validation sets</p></li>
+<li><p>One or more metrics to measure performance</p></li>
+</ul>
+<p>We now have all of these things ready and registered with the database, so we can start the training:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
+    <span class="s1">&#39;simple_image_search&#39;</span><span class="p">,</span>
+    <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clip_projection&#39;</span><span class="p">,</span> <span class="s1">&#39;average_glove&#39;</span><span class="p">],</span>
+    <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;ranking_loss&#39;</span><span class="p">,</span>
     <span class="nb">filter</span><span class="o">=</span><span class="p">{},</span>
     <span class="n">projection</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;_like&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
-    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;p_at_1&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="n">PatK</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
-        <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;p_at_10&#39;</span><span class="p">,</span>
-            <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="n">PatK</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span>
-        <span class="p">}</span>
-    <span class="p">],</span>
-    <span class="n">measure</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;css&#39;</span><span class="p">,</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="n">css</span><span class="p">},</span>
-    <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="s1">&#39;average_glove&#39;</span><span class="p">,</span> <span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="s1">&#39;resnet&#39;</span><span class="p">},</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">],</span>
+    <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;css&#39;</span><span class="p">,</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
     <span class="n">num_workers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-    <span class="n">n_epochs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">n_epochs</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
     <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
     <span class="n">log_weights</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">validation_interval</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
     <span class="n">no_improve_then_stop</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="n">n_iterations</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">n_iterations</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+    <span class="n">use_grads</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;clip_projection&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;average_glove&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
 <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We now can see that we’ve set and trained our own semantic index. Let’s take a look:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_semantic_indexes</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;clip&#39;, &#39;simple_image_search&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="n">info</span> <span class="o">=</span> <span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_semantic_indexes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;simple_image_search&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;loss&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;loss&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">continue</span>
+    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">]:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="n">result</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[5.5196005877326515, 5.322906269746668, 5.316055550294764, 5.31398167329676, 5.313264734604779, 5.312547767863554, 5.312497110927806, 5.312019011553596, 5.311930375940659, 5.311640683342429, 5.311742137460148]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_50_1.png" src="../_images/examples_coco_50_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_50_2.png" src="../_images/examples_coco_50_2.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">parameter</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">][</span><span class="n">parameter</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_51_0.png" src="../_images/examples_coco_51_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_51_1.png" src="../_images/examples_coco_51_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_models</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;attribute_predictor&#39;,
+ &#39;average_glove&#39;,
+ &#39;clip&#39;,
+ &#39;clip_projection&#39;,
+ &#39;clip_text&#39;,
+ &#39;noun_words&#39;,
+ &#39;nouns_to_few_hot&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">refresh_model</span><span class="p">(</span><span class="s1">&#39;clip_projection&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">semantic_index</span> <span class="o">=</span> <span class="s1">&#39;simple_image_search&#39;</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Dog catches frisbee&#39;</span><span class="p">]},</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}}):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">NounWords</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;noun_words&#39;</span><span class="p">,</span> <span class="n">NounWords</span><span class="p">(),</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;captions&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_validation_set</span><span class="p">(</span><span class="s1">&#39;attribute_prediction&#39;</span><span class="p">,</span> <span class="n">sample_size</span><span class="o">=</span><span class="mi">250</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">tqdm</span>
+<span class="n">all_nouns</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;_outputs.captions.noun_words&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span> <span class="n">total</span><span class="o">=</span><span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({})):</span>
+    <span class="n">all_nouns</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;_outputs&#39;</span><span class="p">][</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="s1">&#39;noun_words&#39;</span><span class="p">])</span>
+
+<span class="n">counts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">Counter</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">))</span>
+<span class="n">all_nouns</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">counts</span> <span class="k">if</span> <span class="n">counts</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">30</span><span class="p">]</span>
+<span class="n">total</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({})</span>
+<span class="n">pos_weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">counts</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="o">/</span> <span class="n">total</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">all_nouns</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">FewHot</span><span class="p">,</span> <span class="n">TopK</span>
+<span class="kn">from</span> <span class="nn">examples.metrics</span> <span class="kn">import</span> <span class="n">jacquard_index</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;nouns_to_few_hot&#39;</span><span class="p">,</span> <span class="n">FewHot</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">))</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_postprocessor</span><span class="p">(</span><span class="s1">&#39;top_5&#39;</span><span class="p">,</span> <span class="n">TopK</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_forward</span><span class="p">(</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">)))</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_loss</span><span class="p">(</span><span class="s1">&#39;nouns_loss&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">(</span><span class="n">pos_weight</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">pos_weights</span><span class="p">)))</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;jacquard_index&#39;</span><span class="p">,</span> <span class="n">jacquard_index</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">FewHot</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;nouns_to_few_hot&#39;</span><span class="p">,</span> <span class="n">FewHot</span><span class="p">(</span><span class="n">post</span><span class="o">.</span><span class="n">tokens</span><span class="p">),</span> <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">key</span><span class="o">=</span><span class="s1">&#39;_outputs.captions.noun_words&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">forward</span><span class="o">=</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">postprocessor</span><span class="o">=</span><span class="s1">&#39;top_5&#39;</span><span class="p">,</span>
+                  <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="s1">&#39;clip&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s test the model, using the <code class="docutils literal notranslate"><span class="pre">apply_model</span></code> method:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">apply_model</span><span class="p">(</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;dishwasher&#39;, &#39;mask&#39;, &#39;containers&#39;, &#39;car&#39;, &#39;stall&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_imputation</span><span class="p">(</span>
+    <span class="s1">&#39;noun_prediction&#39;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;nouns_to_few_hot&#39;</span><span class="p">,</span>
+    <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;nouns_loss&#39;</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;jacquard_index&#39;</span><span class="p">],</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;attribute_prediction&#39;</span><span class="p">],</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">validation_interval</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">n_iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+downloading ids for {&#39;_fold&#39;: &#39;train&#39;}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 78560/78560 [00:00&lt;00:00, 199309.31it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+downloading records for {&#39;_fold&#39;: &#39;valid&#39;}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4223/4223 [00:00&lt;00:00, 14431.88it/s]
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 250/250 [00:00&lt;00:00, 3411.61it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+fold: VALID; iteration: 0; epoch: 0; attribute_prediction/jacquard_index: 0.0015047619047619048; loss: 0.6905487082725348;
+fold: TRAIN; iteration: 0; epoch: 0; loss: 0.6904535293579102;
+fold: TRAIN; iteration: 1; epoch: 0; loss: 0.6813770532608032;
+fold: TRAIN; iteration: 2; epoch: 0; loss: 0.6711997389793396;
+fold: TRAIN; iteration: 3; epoch: 0; loss: 0.6628069281578064;
+fold: TRAIN; iteration: 4; epoch: 0; loss: 0.6539110541343689;
+fold: TRAIN; iteration: 5; epoch: 0; loss: 0.6436232328414917;
+fold: TRAIN; iteration: 6; epoch: 0; loss: 0.6362203359603882;
+fold: TRAIN; iteration: 7; epoch: 0; loss: 0.6260425448417664;
+fold: TRAIN; iteration: 8; epoch: 0; loss: 0.6195974946022034;
+fold: TRAIN; iteration: 9; epoch: 0; loss: 0.6111948490142822;
+validating model...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 250/250 [00:00&lt;00:00, 3727.13it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+saving
+fold: VALID; iteration: 10; epoch: 0; attribute_prediction/jacquard_index: 0.0015047619047619048; loss: 0.6013520692670068;
+fold: TRAIN; iteration: 10; epoch: 0; loss: 0.6021795272827148;
+fold: TRAIN; iteration: 11; epoch: 0; loss: 0.5946300625801086;
+fold: TRAIN; iteration: 12; epoch: 0; loss: 0.5849574208259583;
+fold: TRAIN; iteration: 13; epoch: 0; loss: 0.5744298100471497;
+fold: TRAIN; iteration: 14; epoch: 0; loss: 0.5716163516044617;
+fold: TRAIN; iteration: 15; epoch: 0; loss: 0.5610750913619995;
+fold: TRAIN; iteration: 16; epoch: 0; loss: 0.5524094700813293;
+fold: TRAIN; iteration: 17; epoch: 0; loss: 0.546725869178772;
+fold: TRAIN; iteration: 18; epoch: 0; loss: 0.5377270579338074;
+fold: TRAIN; iteration: 19; epoch: 0; loss: 0.5251182317733765;
+validating model...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 250/250 [00:00&lt;00:00, 3220.40it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+saving
+fold: VALID; iteration: 20; epoch: 0; attribute_prediction/jacquard_index: 0.0024047619047619048; loss: 0.5229771178822185;
+computing chunk (1/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 831.59it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (2/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 847.93it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (3/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 839.70it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (4/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 665.87it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (5/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 814.84it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (6/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 873.22it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (7/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 900.53it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (8/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 845.29it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (9/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 833.58it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (10/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 861.05it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (11/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 840.35it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (12/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 874.56it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (13/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 807.13it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (14/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 872.05it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (15/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 852.42it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (16/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 799.62it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (17/17)
+finding documents under filter
+done.
+processing with attribute_predictor
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 279/279 [00:00&lt;00:00, 846.52it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<p>We can view the results of learning (metrics, loss etc.) by looking in the <code class="docutils literal notranslate"><span class="pre">_imputations</span></code> subcollection:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_imputations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;_id&#39;: ObjectId(&#39;63d9ae67735fd2f6b8df9b44&#39;),
+ &#39;name&#39;: &#39;noun_prediction&#39;,
+ &#39;model&#39;: &#39;attribute_predictor&#39;,
+ &#39;target&#39;: &#39;nouns_to_few_hot&#39;,
+ &#39;metrics&#39;: [&#39;jacquard_index&#39;],
+ &#39;loss&#39;: &#39;nouns_loss&#39;,
+ &#39;projection&#39;: None,
+ &#39;filter&#39;: None,
+ &#39;n_epochs&#39;: 20,
+ &#39;trainer_kwargs&#39;: {&#39;validation_sets&#39;: [&#39;attribute_prediction&#39;],
+  &#39;lr&#39;: 0.001,
+  &#39;validation_interval&#39;: 10,
+  &#39;n_iterations&#39;: 20},
+ &#39;metric_values&#39;: {&#39;attribute_prediction&#39;: {&#39;jacquard_index&#39;: [0.0015047619047619048,
+    0.0015047619047619048,
+    0.0024047619047619048]},
+  &#39;loss&#39;: [0.6905487082725348, 0.6013520692670068, 0.5229771178822185]},
+ &#39;weights&#39;: {}}
+</pre></div></div>
+</div>
+<p>Now we have trained and evaluated several models of various types. This includes multiple interacting models with mutual dependencies. In the case of our own efficient semantic search, and also the attribute predictor, these models are downstream of the image clip model, in the sense that at inference time, clip must be present in order to be able to execute these models. In the case of attribute prediction, the training task was downstream from the spacy pipeline for part-of-speech tagging;
+these tags were used to produce targets for training. However at run-time, the spacy pipeline won’t be necessary.</p>
+<p>The models which we’ve added and trained are now ready to go, and when new data is added or updated to the collection, they will automatically process this data, and insert the model outputs into the collection documents.</p>
+<p>Here is the complete set of models which exist in the collection:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_models</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;attribute_predictor&#39;,
+ &#39;average_glove&#39;,
+ &#39;clip&#39;,
+ &#39;clip_projection&#39;,
+ &#39;clip_text&#39;,
+ &#39;noun_words&#39;,
+ &#39;nouns_to_few_hot&#39;]
+</pre></div></div>
+</div>
+<p>Not all of these respond to incoming data, for that we need to specify the <code class="docutils literal notranslate"><span class="pre">active</span></code> argument:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_models</span><span class="p">(</span><span class="n">active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;attribute_predictor&#39;, &#39;clip&#39;, &#39;clip_projection&#39;, &#39;noun_words&#39;]
+</pre></div></div>
+</div>
+<p>We can see that these models have processed all documents and their outputs saved:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;_id&#39;: ObjectId(&#39;63d27372745cc274ef3518f2&#39;),
+ &#39;captions&#39;: [&#39;A restaurant has modern wooden tables and chairs.&#39;,
+  &#39;A long restaurant table with rattan rounded back chairs.&#39;,
+  &#39;a long table with a plant on top of it surrounded with wooden chairs &#39;,
+  &#39;A long table with a flower arrangement in the middle for meetings&#39;,
+  &#39;A table is adorned with wooden chairs with blue accents.&#39;],
+ &#39;img&#39;: &lt;PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=224x168&gt;,
+ &#39;_fold&#39;: &#39;train&#39;,
+ &#39;_outputs&#39;: {&#39;img&#39;: {&#39;clip&#39;: tensor([ 0.0203,  0.0837,  0.0035,  ..., -0.0788,  0.0529, -0.1146]),
+   &#39;clip_projection&#39;: tensor([ 0.0276,  0.0818, -0.0482, -0.0414,  0.0886, -0.0940,  0.0234, -0.0745,
+           -0.1247, -0.0518, -0.0856, -0.0426,  0.0444,  0.0320,  0.0247,  0.0495,
+           -0.0079, -0.0169,  0.1407, -0.1423,  0.1019, -0.0112, -0.0730, -0.0060,
+           -0.0891,  0.1499, -0.0039,  0.0558, -0.0639,  0.0555,  0.0299, -0.0312,
+            0.0298, -0.0540,  0.0155,  0.0800,  0.0311,  0.0915,  0.0415,  0.0481,
+            0.0284,  0.0069,  0.0161,  0.0645, -0.0368,  0.1177, -0.0357, -0.0539,
+           -0.0467, -0.0735]),
+   &#39;attribute_predictor&#39;: [&#39;dishwasher&#39;,
+    &#39;mask&#39;,
+    &#39;containers&#39;,
+    &#39;car&#39;,
+    &#39;stall&#39;]},
+  &#39;_base&#39;: {},
+  &#39;captions&#39;: {&#39;noun_words&#39;: [&#39;accents&#39;,
+    &#39;arrangement&#39;,
+    &#39;chairs&#39;,
+    &#39;flower&#39;,
+    &#39;meetings&#39;,
+    &#39;middle&#39;,
+    &#39;plant&#39;,
+    &#39;restaurant&#39;,
+    &#39;table&#39;,
+    &#39;tables&#39;,
+    &#39;top&#39;]}}}
+</pre></div></div>
+</div>
+<p>Now, let’s test what happens when we add new data to the collection, by adding the remaining data points from the CoCo data set:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">update</span> <span class="o">=</span> <span class="p">[{</span><span class="o">**</span><span class="n">r</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:]]</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">update</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

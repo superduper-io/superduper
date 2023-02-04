@@ -11,6 +11,7 @@ import networkx
 import random
 import warnings
 
+from bson import ObjectId
 from numpy.random import permutation
 
 warnings.filterwarnings('ignore')
@@ -177,6 +178,33 @@ class Collection(BaseCollection):
                     continue
         return self._type_lookup
 
+    def apply_model(self, name, r):
+        if self.remote:
+            return superduper_requests.client.apply_model(name, r)
+        model = self.models[name]
+        info = self['_models'].find_one({'name': name})
+        key = info['key']
+        if isinstance(r, dict):
+            if info['features']:
+                r = MongoStyleDict(r)
+                for k in info['features']:
+                    r[k] = r[f'_outputs.{k}.{info["features"][k]}']
+            if key == '_base':
+                return apply_model(model, r, single=True)
+            else:
+                return apply_model(model, MongoStyleDict(r)[key], single=True)
+        else:
+            assert isinstance(r, list)
+            if info['features']:
+                for i, rr in enumerate(r):
+                    r[i] = MongoStyleDict(rr)
+                    for k in info['features']:
+                        r[i][k] = r[i][f'_outputs.{k}.{info["features"][k]}']
+            if key == '_base':
+                return apply_model(model, r, single=True)
+            else:
+                return apply_model(model, [MongoStyleDict(rr)[key] for rr in r], single=False)
+
     def create_forward(self, name, object):
         """
         Create a forward directly from a Python object.
@@ -204,70 +232,39 @@ class Collection(BaseCollection):
         :return: job_ids of jobs required to create the imputation
         """
 
-        created = {}
-        if target is not None and isinstance(target, dict):  # pragma: no cover
-            self.create_model(**target, active=False)
-            target_name = target['name']
-            created['target'] = True
-        else: # pragma: no cover
-            assert target in self.list_models()
-            target_name = target
-            created['target'] = False
-
-        if isinstance(model, dict):  # pragma: no cover
-            self.create_model(**model, process_docs=False)
-            model_name = model['name']
-            created['model'] = True
-        else: # pragma: no cover
-            assert model in self.list_models()
-            model_name = model
-            created['model'] = False
-
-        if not isinstance(loss, str):  # pragma: no cover
-            self.create_loss(**loss)
-            loss = loss['name']
-            created['loss'] = True
-        else: # pragma: no cover
-            assert loss in self.list_losses()
-            created['loss'] = False
-
-        created['metrics'] = []
-        if metrics is not None:  # pragma: no cover
-            for i, metric in enumerate(metrics):
-                if isinstance(metric, str):
-                    created['metrics'].append(False)
-                if isinstance(metric, dict):
-                    self.create_metric(metric['name'], metric['object'])
-                    metrics[i] = metric['name']
-                    created['metrics'].append(True)
+        assert target in self.list_models()
+        assert model in self.list_models()
+        assert loss in self.list_losses()
+        for metric in metrics:
+            assert metric in self.list_metrics()
 
         self['_imputations'].insert_one({
             'name': name,
-            'model': model_name,
-            'target': target_name,
+            'model': model,
+            'target': target,
             'metrics': metrics,
             'loss': loss,
             'projection': projection,
             'filter': filter,
             'n_epochs': n_epochs,
             'trainer_kwargs': trainer_kwargs,
-            'created': created,
         })
+
         job_id = self._train_imputation(name)
 
-        self['_models'].update_one({'name': model_name}, {'$set': {'training': False}})
-        r = self['_models'].find_one({'name': model_name})
+        # TODO - optional filter to train on (shouldn't be simply the filter of the models)
+        r = self['_models'].find_one({'name': model})
         ids = [r['_id'] for r in self.find(r.get('filter', {}), {'_id': 1})]
 
         if not self.remote:
-            self._process_documents_with_model(model_name, ids, **r.get('loader_kwargs', {}),
+            self._process_documents_with_model(model, ids, **r.get('loader_kwargs', {}),
                                                verbose=True)
         else:
             return [job_id, superduper_requests.jobs.process(
                 self.database.name,
                 self.name,
                 '_process_documents_with_model',
-                model_name=model_name,
+                model_name=model,
                 ids=ids,
                 **r.get('loader_kwargs', {}),
                 dependencies=(job_id,),
@@ -331,12 +328,6 @@ class Collection(BaseCollection):
         if loader_kwargs is None:
             loader_kwargs = {}
 
-        object_should_exist = False
-        if isinstance(object, str):
-            object_should_exist = True
-        elif preprocessor is not None or not forward is not None:
-            object_should_exist = True
-
         if active and object is not None:
             assert hasattr(object, 'preprocess') or hasattr(object, 'forward')
 
@@ -348,9 +339,6 @@ class Collection(BaseCollection):
 
         if preprocessor is not None or forward is not None or postprocessor is not None:
             assert object is None
-            preprocessor = self._preprocessors[preprocessor]
-            forward = self._forwards[forward]
-            postprocessor = self._postprocessors[postprocessor]
             file_id = None
         else:
             if object is not None and not isinstance(object, str):
@@ -490,6 +478,7 @@ class Collection(BaseCollection):
         filter_ = self['_models'].find_one({'name': active_model}, {'filter': 1})['filter']
 
         job_ids = []
+        # TODO - put the job queuing all on the same nesting level (not inside def _train_sema...)
         job_ids.append(self._train_semantic_index(name=name))
         active_models = self.list_models(**{'active': True, 'name': {'$in': models}})
         for model in active_models:
@@ -614,24 +603,7 @@ class Collection(BaseCollection):
         if not do_delete:
             return
 
-        info = self['_imputations'].find_one()
-
         self['_imputations'].delete_one({'name': name})
-
-        for item in info['created']:
-            if not info['created']:
-                continue
-            if item == 'model':
-                self.delete_model(info['model'], force=True)
-            if item == 'target':
-                self.delete_model(info['target'], force=True)
-            if item == 'loss':
-                self.delete_loss(info['loss'], force=True)
-            if item == 'metrics':
-                for i, was_created in info['created']['metrics']:
-                    if not was_created:
-                        continue
-                    self.delete_metric(info['metrics'][i], force=True)
 
     def delete_loss(self, loss, force=False):
         """
@@ -667,19 +639,11 @@ class Collection(BaseCollection):
         :param name: Name of model
         :param force: Toggle to ``True`` to skip confirmation
         """
-        all_models = self.list_models()
-        if '.' in name:  # pragma: no cover
-            raise Exception('must delete parent model in order to delete <model>.<attribute>')
-        models = [name]
-        children = [y for y in all_models if y.startswith(f'{name}.')]
-        models.extend(children)
+        info = self['_models'].find_one({'name': name}, {'filter': 1})
         if not force: # pragma: no cover
-            filters_ = []
-            for m in models:
-                filters_.append(self['_models'].find_one({'name': m})['filter'])
-            n_documents = self.count_documents({'$and': filters_})
+            n_documents = self.count_documents(info.get('filter') or {})
         do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete these models: {models}; '
+        if force or click.confirm(f'Are you sure you want to delete this model: {name}; '
                                   f'{n_documents} documents will be affected.',
                                   default=False):
             do_delete = True
@@ -687,31 +651,22 @@ class Collection(BaseCollection):
             return
 
         info = self['_models'].find_one({'name': name})
-        if info['object'] is None:
-            if info['preprocessor'] is not None:
-                self._delete_objects('preprocessors', [info['preprocessor']], force=True)
-            if info['forward'] is not None:
-                self._delete_objects('forwards', [info['forward']], force=True)
-            if info['postprocessor'] is not None:
-                self._delete_objects('postprocessors', [info['postprocessor']], force=True)
-            self['_models'].delete_one({'name': name})
-            return
+        self['_models'].delete_one({'name': name})
 
-        deleted_info = [self['_models'].find_one({'name': m}) for m in models]
-        _ = self._delete_objects(
-            'models', objects=[x for x in models if '.' not in x], force=True
+        if isinstance(info['object'], ObjectId):
+            _ = self._delete_objects(
+                'models', objects=[info['object']]
+            )
+        print(f'unsetting output field _outputs.{info["key"]}.{info["name"]}')
+        super().update_many(
+            info.get('filter') or {},
+            {'$unset': {f'_outputs.{info["key"]}.{info["name"]}': 1}}
         )
-        for r in deleted_info:
-            print(f'unsetting output field _outputs.{r["key"]}.{r["name"]}')
-            super().update_many(
-                r.get('filter', {}),
-                {'$unset': {f'_outputs.{r["key"]}.{r["name"]}': 1}}
-            )
-            self['_validation_sets'].update_many(
-                r.get('filter', {}),
-                {'$unset': {f'_outputs.{r["key"]}.{r["name"]}': 1}},
-                refresh=False,
-            )
+        self['_validation_sets'].update_many(
+            info.get('filter') or {},
+            {'$unset': {f'_outputs.{info["key"]}.{info["name"]}': 1}},
+            refresh=False,
+        )
 
     def delete_neighbourhood(self, name, force=False):
         """
@@ -732,23 +687,23 @@ class Collection(BaseCollection):
         else:
             print('aborting') # pragma: no cover
 
-    def delete_postprocess(self, postprocess, force=False):
+    def delete_postprocessor(self, postprocessor, force=False):
         """
         Delete postprocess from collection
 
         :param name: Name of postprocess
         :param force: Toggle to ``True`` to skip confirmation
         """
-        return self._delete_objects('postprocesss', objects=[postprocess], force=force)
+        return self._delete_objects('postprocessors', objects=[postprocessor], force=force)
 
-    def delete_preprocess(self, preprocess, force=False):
+    def delete_preprocessor(self, preprocessor, force=False):
         """
         Delete preprocess from collection
 
         :param name: Name of preprocess
         :param force: Toggle to ``True`` to skip confirmation
         """
-        return self._delete_objects('preprocesss', objects=[preprocess], force=force)
+        return self._delete_objects('preprocessors', objects=[preprocessor], force=force)
 
     def delete_semantic_index(self, name, force=False):
         """
@@ -966,7 +921,7 @@ class Collection(BaseCollection):
         return self.parent_if_appl['_validation_sets'].distinct('_validation_set')
 
     def refresh_model(self, model_name):
-        info = self['_models'].find_one({'name': model_name})
+        info = self.parent_if_appl['_models'].find_one({'name': model_name})
         ids = self.distinct('_id', info.get('filter') or {})
         self._process_documents_with_model(model_name, ids=ids, **(info.get('loader_kwargs') or {}))
 
@@ -1642,9 +1597,31 @@ class Collection(BaseCollection):
     def _replace_model(self, name, object):
         r = self['_models'].find_one({'name': name})
         assert name in self.list_models(), 'model doesn\'t exist to replace'
-        file_id = self._create_pickled_file(object)
-        self.filesystem.delete(r['object'])
-        self['_models'].update_one({'name': name}, {'$set': {'object': file_id}})
+        if isinstance(r['object'], ObjectId):
+            file_id = self._create_pickled_file(object)
+            self.filesystem.delete(r['object'])
+            self['_models'].update_one({'name': name}, {'$set': {'object': file_id}})
+        elif isinstance(r['object'], str):
+            self._replace_model(r['object'], object)
+        else:
+            assert r['object'] is None
+            if isinstance(r['preprocessor'], str):
+                file_id = self._create_pickled_file(object._preprocess)
+                pre_info = self['_preprocessors'].find_one({'name': r['preprocessor']})
+                self.filesystem.delete(pre_info['object'])
+                self['_preprocessors'].update_one({'name': r['preprocessor']}, {'$set': {'object': file_id}})
+
+            if isinstance(r['forward'], str):
+                file_id = self._create_pickled_file(object._forward)
+                forward_info = self['_forwards'].find_one({'name': r['forward']})
+                self.filesystem.delete(forward_info['object'])
+                self['_forwards'].update_one({'name': r['forward']}, {'$set': {'object': file_id}})
+
+            if isinstance(r['postprocessor'], str):
+                file_id = self._create_pickled_file(object._postprocess)
+                post_info = self['_postprocessors'].find_one({'name': r['postprocessor']})
+                self.filesystem.delete(post_info['object'])
+                self['_postprocessors'].update_one({'name': r['postprocessor']}, {'$set': {'object': file_id}})
 
     @staticmethod
     def _standardize_dict(d):  # pragma: no cover
@@ -1703,7 +1680,7 @@ class Collection(BaseCollection):
             self.name,
             models=(model, target),
             keys=keys,
-            save_names=(info['model'], info['target']),
+            model_names=(info['model'], info['target']),
             loss=loss,
             metrics=metrics,
             **info['trainer_kwargs'],

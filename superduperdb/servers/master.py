@@ -31,7 +31,7 @@ def _find_nearest():
     collection.remote = False
     collection.single_thread = True
     from superduperdb.types.utils import convert_types
-    filter = convert_types(filter, converters=collection.converters)
+    filter = convert_types(filter, converters=collection.types)
     result = collection._find_nearest(filter, ids=ids)
     for i, _id in enumerate(result['_ids']):
         result['_ids'][i] = str(_id)

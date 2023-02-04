@@ -19,14 +19,18 @@ Then install the python requirements
 pip install -r requirements.txt
 ```
 
-## Architecture
+## Contributing
 
-![](https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/img/architecture.png)
+SuperDuperDB is in *alpha*. Please expect:
 
-1. Client - run on client to send off requests to various work horses.
-1. MongoDB - standard mongo deployment.
-1. Vector lookup - deployment of sddb with faiss/ scaNN.
-1. Job master - master node for job cluster, sends messages to redis (rq)
-1. Redis database - database instance for rq master
-1. Job worker - worker node(s) for jobs, computes vectors, and performs model trainings.
-   Retrieves jobs from redis.
+- breaking changes
+- rough edges
+- fast pace of new feature development
+
+If you'd like to contribute to the project we need help in many places:
+
+- Trying out the features and commenting on the issues boards
+- Adding additional unittests and doctests
+- Augmenting doc-strings to make the usage patterns clearer for the uninitiated
+- Expanding the documentation, tutorials and examples
+

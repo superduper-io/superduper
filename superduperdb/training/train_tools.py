@@ -8,8 +8,8 @@ import torch.utils.data
 
 from superduperdb import client
 from superduperdb.training.loading import QueryDataset
-from superduperdb.utils import MongoStyleDict, progressbar
-from superduperdb.models.utils import apply_model
+from superduperdb.utils import MongoStyleDict
+from superduperdb.training.validation import validate_representations, validate_imputation
 
 
 class Trainer:
@@ -20,7 +20,9 @@ class Trainer:
                  collection,
                  models,
                  keys,
-                 save_names,
+                 model_names,
+                 use_grads=None,
+                 validation_sets=(),
                  metrics=None,
                  loss=None,
                  batch_size=100,
@@ -46,7 +48,16 @@ class Trainer:
         self._collection = collection
         self._collection_object = None
 
-        self.encoders = models
+        if use_grads is None:
+            self.use_grads = {mn: True for mn in model_names}
+        else:
+            self.use_grads = use_grads
+            for mn in model_names:
+                if mn not in use_grads:
+                    self.use_grads[mn] = True
+
+        self.models = models
+        self.model_names = model_names
         self.keys = keys
         self.loss = loss
         self.features = features
@@ -57,6 +68,7 @@ class Trainer:
             r['_id'] for r in self.collection.find({**self.filter, '_fold': 'valid'},
                                                    {'_id': 1}).sort('_id', pymongo.ASCENDING)
         ]
+        self.validation_sets = validation_sets
         self.n_epochs = n_epochs
         self.n_iterations = n_iterations
         self.download = download
@@ -85,20 +97,25 @@ class Trainer:
         self.metrics = metrics if metrics is not None else {}
         if isinstance(self.keys, str):  # pragma: no cover
             self.keys = (self.keys,)
-        if not isinstance(self.encoders, tuple) and not isinstance(self.encoders, list):  # pragma: no cover
-            self.encoders = (self.encoders,)
+        if not isinstance(self.models, tuple) and not isinstance(self.models, list):  # pragma: no cover
+            self.models = [self.models, ]
+        self.models = list(self.models)
+        self._send_to_device()
         self.learn_fields = self.keys
-        self.learn_encoders = self.encoders
+        self.learn_encoders = self.models
         if len(self.keys) == 1:
             self.learn_fields = (self.keys[0], self.keys[0])
-            self.learn_encoders = (self.encoders[0], self.encoders[0])
+            self.learn_encoders = (self.models[0], self.models[0])
         self.optimizers = optimizers if optimizers else [
-            self._get_optimizer(encoder, lr) for encoder in self.encoders
-            if isinstance(encoder, torch.nn.Module) and list(encoder.parameters())
+            self._get_optimizer(model, lr) for model, mn in zip(self.models, self.model_names)
+            if isinstance(model, torch.nn.Module) and list(model.parameters())
+               and self.use_grads[mn]
         ]
-        self.save_names = save_names
         self.watch = watch
-        self.metric_values = defaultdict(lambda: [])
+        self.metric_values = {}
+        for ds in self.validation_sets:
+            self.metric_values[ds] = {me: [] for me in self.metrics}
+        self.metric_values['loss'] = []
         self.lr = lr
         self.weights_dict = defaultdict(lambda: [])
         self._weights_choices = {}
@@ -107,6 +124,18 @@ class Trainer:
         self.save = save
         self.validation_interval = validation_interval
         self.no_improve_then_stop = no_improve_then_stop
+
+    def _send_to_device(self):
+        if not torch.cuda.is_available():
+            return
+        if torch.cuda.device_count() == 1:
+            for m in self.models:
+                if isinstance(m, torch.nn.Module):
+                    m.to('cuda')
+            return
+        for i, m in enumerate(self.models):
+            if isinstance(m, torch.nn.Module):
+                self.models[i] = torch.nn.DataParallel(m)
 
     def _early_stop(self):
         if self.watch == 'loss':
@@ -125,7 +154,7 @@ class Trainer:
         )
 
     def _init_weight_traces(self):
-        for i, e in enumerate(self.encoders):
+        for i, e in enumerate(self.models):
             try:
                 sd = e.state_dict()
             except AttributeError:
@@ -133,17 +162,21 @@ class Trainer:
             self._weights_choices[i] = {}
             for p in sd:
                 if len(sd[p].shape) == 2:
-                    indexes = [(random.randrange(sd[p].shape[0]), random.randrange(sd[p].shape[1]))
-                                for _ in range(min(10, max(sd[p].shape[0], sd[p].shape[1])))]
+                    indexes = [
+                        (random.randrange(sd[p].shape[0]), random.randrange(sd[p].shape[1]))
+                        for _ in range(min(10, max(sd[p].shape[0], sd[p].shape[1])))
+                    ]
                 else:
                     assert len(sd[p].shape) == 1
-                    indexes = [(random.randrange(sd[p].shape[0]),)
-                               for _ in range(min(10, sd[p].shape[0]))]
+                    indexes = [
+                        (random.randrange(sd[p].shape[0]),)
+                        for _ in range(min(10, sd[p].shape[0]))
+                    ]
                 self._weights_choices[i][p] = indexes
 
     def log_weight_traces(self):
         for i, f in enumerate(self._weights_choices):
-            sd = self.encoders[i].state_dict()
+            sd = self.models[i].state_dict()
             for p in self._weights_choices[f]:
                 indexes = self._weights_choices[f][p]
                 tmp = []
@@ -167,7 +200,7 @@ class Trainer:
         agg = min if self.watch == 'loss' else max
         if self.watch == 'loss' and self.metric_values['loss'][-1] == agg(self.metric_values['loss']):
             print('saving')
-            for sn, encoder in zip(self.save_names, self.encoders):
+            for sn, encoder in zip(self.model_names, self.models):
                 self.save(sn, encoder)
         else:  # pragma: no cover
             print('no best model found...')
@@ -217,14 +250,21 @@ class Trainer:
     def log_progress(self, **kwargs):
         out = ''
         for k, v in kwargs.items():
-            out += f'{k}: {v}; '
+            if isinstance(v, dict):
+                for kk, vv in v.items():
+                    out += f'{k}/{kk}: {vv}; '
+            else:
+                out += f'{k}: {v}; '
         print(out)
 
     @staticmethod
     def apply_models_to_batch(batch, models):
         output = []
         for subbatch, model in list(zip(batch, models)):
-            output.append(model.forward(subbatch))
+            if isinstance(model, torch.nn.Module) or hasattr(model, 'forward'):
+                output.append(model.forward(subbatch))
+            else:
+                output.append(subbatch)
         return output
 
     def take_step(self, loss):
@@ -237,46 +277,32 @@ class Trainer:
             self.log_weight_traces()
         return loss
 
-    def prepare_validation_set(self):
-        if self.splitter is not None:
-            _ids = []
-            for r in self.collection.find({**self.filter, '_fold': 'valid'}, raw=True):
-                r0, r1 = self.splitter(r)
-                if '_id' in r0:
-                    del r0['_id']
-                if '_id' in r1:  # pragma: no cover
-                    del r1['_id']
-                new_r = {**r0, '_other': r1}
-                new_r['_fold'] = 'temp'
-                new_r['_training_id'] = self.training_id
-                result = self.collection.insert_one(new_r, refresh=False)
-                _ids.append(result.inserted_ids[0])
-            self.split_valid_ids = _ids
-
     def validate_model(self, dataloader, model):
         raise NotImplementedError  # pragma: no cover
 
     def train(self):
 
-        for encoder in self.encoders:
+        for encoder in self.models:
             self.calibrate(encoder)
-
-        if hasattr(self, 'splitter') and self.splitter is not None:
-            self.prepare_validation_set()
 
         it = 0
         epoch = 0
-        for m in self.encoders:
+        for m in self.models:
             if hasattr(m, 'eval'):
                 m.eval()
 
         metrics = self.validate_model(self.data_loaders[1], -1)
         for k in metrics:
-            self.metric_values[k].append(metrics[k])
+            if k == 'loss':
+                self.metric_values[k].append(metrics['loss'])
+                continue
+            for me in metrics[k]:
+                self.metric_values[k][me].append(metrics[k][me])
         self.log_progress(fold='VALID', iteration=it, epoch=epoch, **metrics)
+        self._save_metrics()
 
         while True:
-            for m in self.encoders:
+            for m in self.models:
                 if hasattr(m, 'train'):
                     m.train()
 
@@ -288,9 +314,14 @@ class Trainer:
                 self.log_progress(fold='TRAIN', iteration=it, epoch=epoch, loss=l_.item())
                 it += 1
                 if it % self.validation_interval == 0:
+                    print('validating model...')
                     metrics = self.validate_model(valid_loader, epoch)
                     for k in metrics:
-                        self.metric_values[k].append(metrics[k])
+                        if k == 'loss':
+                            self.metric_values[k].append(metrics['loss'])
+                            continue
+                        for me in metrics[k]:
+                            self.metric_values[k][me].append(metrics[k][me])
                     self._save_weight_traces()
                     self._save_best_model()
                     self.log_progress(fold='VALID', iteration=it, epoch=epoch, **metrics)
@@ -312,48 +343,27 @@ class ImputationTrainer(Trainer):
 
     def __init__(self, *args, inference_model=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.inference_model = inference_model if inference_model is not None else self.encoders[0]
+        self.inference_model = inference_model if inference_model is not None else self.models[0]
 
     def validate_model(self, data_loader, *args, **kwargs):
-        for e in self.encoders:
+        for e in self.models:
             if hasattr(e, 'eval'):
                 e.eval()
-        docs = list(self.collection.find(
-            {**self.filter, '_fold': 'valid'},
-            features=self.features,
-        ))
-        if self.keys[0] != '_base':
-            inputs_ = [r[self.keys[0]] for r in docs]
-        elif '_base' in self.features:
-            inputs_ = [r['_base'] for r in docs]
-        else:  # pragma: no cover
-            inputs_ = docs
-
-        if self.keys[1] != '_base':
-            targets = [r[self.keys[1]] for r in docs]
-        else:  # pragma: no cover
-            targets = docs
-        outputs = apply_model(
-            self.inference_model,
-            inputs_,
-            single=False,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-        )
-        metric_values = defaultdict(lambda: [])
-        for o, t in zip(outputs, targets):
-            for metric in self.metrics:
-                metric_values[metric].append(self.metrics[metric](o, t))
+        results = {}
+        for vs in self.validation_sets:
+            results[vs] = validate_imputation(self.collection, vs, self.train_name,
+                                              self.metrics, model=self.models[0],
+                                              features=self.features)
+        loss_values = []
         for batch in data_loader:
-            outputs = self.apply_models_to_batch(batch, self.encoders)
-            metric_values['loss'].append(self.loss(*outputs).item())
+            outputs = self.apply_models_to_batch(batch, self.learn_encoders)
+            loss_values.append(self.loss(*outputs).item())
+        results['loss'] = sum(loss_values) / len(loss_values)
 
-        for k in metric_values:
-            metric_values[k] = sum(metric_values[k]) / len(metric_values[k])
-        for e in self.encoders:
+        for e in self.models:
             if hasattr(e, 'train'):
                 e.train()
-        return metric_values
+        return results
 
 
 class _Mapped:
@@ -376,58 +386,21 @@ class RepresentationTrainer(Trainer):
         super().__init__(*args, **kwargs)
 
     def validate_model(self, data_loader, epoch):
-        for m in self.encoders:
+        for m in self.models:
             if hasattr(m, 'eval'):
                 m.eval()
-        try:
-            self.collection.unset_hash_set()
-        except KeyError as e:  # pragma: no cover
-            if not 'semantic_index' in str(e):
-                raise e
-
-        self.collection.semantic_index = self.train_name
-        lookup = dict(zip(self.save_names, self.encoders))
-        _ids = self.valid_ids if self.splitter is None else self.split_valid_ids
-
-        for m in self.collection.list_models(**{'name': {'$in': self.save_names}, 'active': True}):
-            self.collection._process_documents_with_model(m, _ids, verbose=True, model=lookup[m])
-
-        anchors = progressbar(
-            self.collection.find({'_id': {'$in': _ids}},
-                                 self.projection,
-                                 features=self.features).sort('_id', pymongo.ASCENDING),
-            total=len(_ids),
-        )
-
-        metric_values = defaultdict(lambda: [])
-
-        active_model = \
-            self.collection.list_models(**{'active': True, 'name': {'$in': self.save_names}})[0]
-        key = self.collection['_models'].find_one({'name': active_model}, {'key': 1})['key']
-        for r in anchors:
-            _id = r['_id']
-            if self.splitter is not None:
-                r = r['_other']
-            if '_id' in r:
-                del r['_id']
-            if len(self.encoders) > 1:
-                del r[key]
-            result = list(self.collection.find({'$like': {'document': r, 'n': 100}}, {'_id': 1}))
-            result = sorted(result, key=lambda r: -r['_score'])
-            result = [r['_id'] for r in result]
-            for metric in self.metrics:
-                metric_values[metric].append(self.metrics[metric](result, _id))
-
-        for k in metric_values:
-            metric_values[k] = sum(metric_values[k]) / len(metric_values[k])
-
+        results = {}
+        for vs in self.validation_sets:
+            results[vs] = validate_representations(self.collection, vs, self.train_name,
+                                                   self.metrics, self.models, features=self.features,
+                                                   refresh=True)
         loss_values = []
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.learn_encoders)
             loss_values.append(self.loss(*outputs).item())
-        metric_values['loss'] = sum(loss_values) / len(loss_values)
-        for m in self.encoders:
+        results['loss'] = sum(loss_values) / len(loss_values)
+        for m in self.models:
             if hasattr(m, 'train'):
                 m.train()
-        return metric_values
+        return results
 

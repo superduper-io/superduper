@@ -35,6 +35,11 @@ def create_container(preprocessor=None, forward=None, postprocessor=None):
         assert forward is not None
     if forward is None:
         return TrivialContainer(preprocessor)
+
+    if preprocessor is None:
+        preprocessor = lambda x: x
+    if postprocessor is None:
+        postprocessor = lambda x: x
     return Container(preprocessor=preprocessor, forward=forward, postprocessor=postprocessor)
 
 

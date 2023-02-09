@@ -91,12 +91,19 @@ class SimpleTokenizer:
         self.dictionary = {k: i for i, k in enumerate(tokens)}
         self.max_length = max_length
 
-    def __call__(self, sentence, pad=True):
+    def __len__(self):
+        return len(self.tokens)
+
+    def preprocess(self, sentence, pad=True):
         sentence = re.sub('[^a-z]]', '', sentence.lower()).strip()
-        words = [x for x in sentence.split(' ') if x]
+        words = [x for x in sentence.split(' ') if x and x in self.tokens]
         if pad:
             words = words + ['</s>' for _ in range(len(words) - self.max_length)]
+        words = words[:self.max_length]
         return torch.tensor(list(map(self.lookup.__getitem__, words)))
+
+    def check(self, tensor_):
+        return ' '.join(list(map(self.tokens.__getitem__, tensor_.tolist())))
 
 
 class ConditionalLM(torch.nn.Module):
@@ -105,22 +112,17 @@ class ConditionalLM(torch.nn.Module):
 
         self.tokenizer = tokenizer
         self.n_hidden = n_hidden
-        self.embedding = torch.nn.Embedding(len(self.tokens), self.n_hidden)
+        self.embedding = torch.nn.Embedding(len(self.tokenizer), self.n_hidden)
         self.conditioning_linear = torch.nn.Linear(n_condition, self.n_hidden)
         self.rnn = torch.nn.GRU(self.n_hidden, self.n_hidden, batch_first=True)
-        self.prediction = torch.nn.Linear(self.n_hidden, len(self.tokens))
-        self.max_length = max_length
-
-    def tokenize(self, sentence):
-        sentence = re.sub('[^a-z]]', '', sentence.lower()).strip()
-        return [x for x in sentence.split(' ') if x]
+        self.prediction = torch.nn.Linear(self.n_hidden, len(self.tokenizer))
 
     def preprocess(self, r):
         out = {}
         if 'caption' in r:
-            out['caption'] = self.tokenizer('<s> ' + r['caption'])
+            out['caption'] = self.tokenizer.preprocess('<s> ' + r['caption'])
         else:
-            out['caption'] = self.tokenizer('<s>', pad=False)
+            out['caption'] = self.tokenizer.preprocess('<s>', pad=False)
         if 'img' in r:
             out['img'] = r['img']
         return out
@@ -136,8 +138,8 @@ class ConditionalLM(torch.nn.Module):
         input_ = self.embedding(r['caption'])
         img_vectors = self.conditioning_linear(r['img'])
         rnn_outputs = self.rnn(input_, img_vectors.unsqueeze(0))[0][:, -1, :]
-        predictions = torch.zeros(input_.shape[0], self.max_length).type(torch.long)
-        for i in range(self.max_length):
+        predictions = torch.zeros(input_.shape[0], self.tokenizer.max_length).type(torch.long)
+        for i in range(self.tokenizer.max_length):
             logits = self.prediction(rnn_outputs)
             best = logits.topk(1, dim=1)[1][:, 0].type(torch.long)
             predictions[:, i] = best
@@ -148,9 +150,9 @@ class ConditionalLM(torch.nn.Module):
     def postprocess(self, output):
         output = output.tolist()
         try:
-            first_end_token = next(x for x in output if x == self.lookup['</s>'])
+            first_end_token = next(x for x in output if x == self.tokenizer.lookup['</s>'])
             output = output[:first_end_token]
         except StopIteration:
             pass
-        return ' '.join(list(map(self.tokens.__getitem__, output)))
+        return ' '.join(list(map(self.tokenizer.tokens.__getitem__, output)))
 

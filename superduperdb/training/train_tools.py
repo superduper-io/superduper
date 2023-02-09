@@ -22,6 +22,7 @@ class Trainer:
                  keys,
                  model_names,
                  use_grads=None,
+                 splitter=None,
                  validation_sets=(),
                  metrics=None,
                  loss=None,
@@ -56,6 +57,7 @@ class Trainer:
                 if mn not in use_grads:
                     self.use_grads[mn] = True
 
+        self.splitter = splitter
         self.models = models
         self.model_names = model_names
         self.keys = keys
@@ -261,8 +263,10 @@ class Trainer:
     def apply_models_to_batch(batch, models):
         output = []
         for subbatch, model in list(zip(batch, models)):
-            if isinstance(model, torch.nn.Module) or hasattr(model, 'forward'):
+            if isinstance(model, torch.nn.Module) and hasattr(model, 'train_forward'):
                 output.append(model.forward(subbatch))
+            elif isinstance(model, torch.nn.Module):
+                output.append(model(subbatch))
             else:
                 output.append(subbatch)
         return output
@@ -380,9 +384,8 @@ class _Mapped:
 class RepresentationTrainer(Trainer):
     sub_collection = '_semantic_indexes'
 
-    def __init__(self, *args, n_retrieve=100, splitter=None, **kwargs):
+    def __init__(self, *args, n_retrieve=100, **kwargs):
         self.n_retrieve = n_retrieve
-        self.splitter = splitter
         super().__init__(*args, **kwargs)
 
     def validate_model(self, data_loader, epoch):

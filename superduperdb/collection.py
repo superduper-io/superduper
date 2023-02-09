@@ -177,9 +177,9 @@ class Collection(BaseCollection):
                     continue
         return self._type_lookup
 
-    def apply_model(self, name, r):
+    def apply_model(self, name, r, **kwargs):
         if self.remote:
-            return superduper_requests.client.apply_model(name, r)
+            return superduper_requests.client.apply_model(name, r, **kwargs)
         model = self.models[name]
         info = self['_models'].find_one({'name': name})
         key = info['key']
@@ -189,9 +189,9 @@ class Collection(BaseCollection):
                 for k in info['features']:
                     r[k] = r[f'_outputs.{k}.{info["features"][k]}']
             if key == '_base':
-                return apply_model(model, r, single=True)
+                return apply_model(model, r, single=True, **kwargs)
             else:
-                return apply_model(model, MongoStyleDict(r)[key], single=True)
+                return apply_model(model, MongoStyleDict(r)[key], single=True, **kwargs)
         else:
             assert isinstance(r, list)
             if info['features']:
@@ -200,9 +200,10 @@ class Collection(BaseCollection):
                     for k in info['features']:
                         r[i][k] = r[i][f'_outputs.{k}.{info["features"][k]}']
             if key == '_base':
-                return apply_model(model, r, single=True)
+                return apply_model(model, r, single=True, **kwargs)
             else:
-                return apply_model(model, [MongoStyleDict(rr)[key] for rr in r], single=False)
+                return apply_model(model, [MongoStyleDict(rr)[key] for rr in r], single=False,
+                                   **kwargs)
 
     def create_forward(self, name, object):
         """

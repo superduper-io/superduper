@@ -79,52 +79,76 @@ class AverageOfGloves:
         return vectors.mean(0)
 
 
-class ConditionalLM(torch.nn.Module):
-    def __init__(self, tokens, n_hidden=512, max_length=15):
-        super().__init__()
-
+class SimpleTokenizer:
+    def __init__(self, tokens, max_length=15):
         if '<s>' not in tokens:
             tokens.append('<s>')
         if '</s>' not in tokens:
             tokens.append('</s>')
         self.tokens = tokens
+        self._set_tokens = set(self.tokens)
+        self.lookup = dict(zip(self.tokens, range(len(self.tokens))))
         self.dictionary = {k: i for i, k in enumerate(tokens)}
+        self.max_length = max_length
 
+    def __call__(self, sentence, pad=True):
+        sentence = re.sub('[^a-z]]', '', sentence.lower()).strip()
+        words = [x for x in sentence.split(' ') if x]
+        if pad:
+            words = words + ['</s>' for _ in range(len(words) - self.max_length)]
+        return torch.tensor(list(map(self.lookup.__getitem__, words)))
+
+
+class ConditionalLM(torch.nn.Module):
+    def __init__(self, tokenizer, n_hidden=512, max_length=15, n_condition=2048):
+        super().__init__()
+
+        self.tokenizer = tokenizer
         self.n_hidden = n_hidden
         self.embedding = torch.nn.Embedding(len(self.tokens), self.n_hidden)
-        self.rnn = torch.nn.GRU(self.n_hidden, self.n_hidden)
+        self.conditioning_linear = torch.nn.Linear(n_condition, self.n_hidden)
+        self.rnn = torch.nn.GRU(self.n_hidden, self.n_hidden, batch_first=True)
         self.prediction = torch.nn.Linear(self.n_hidden, len(self.tokens))
         self.max_length = max_length
+
+    def tokenize(self, sentence):
+        sentence = re.sub('[^a-z]]', '', sentence.lower()).strip()
+        return [x for x in sentence.split(' ') if x]
 
     def preprocess(self, r):
         out = {}
         if 'caption' in r:
-            out['caption'] = [self.start] + self.tokenize(r['caption'])
+            out['caption'] = self.tokenizer('<s> ' + r['caption'])
         else:
-            out['caption'] = [self.start]
-        out['caption'] = out['caption'][:self.max_length]
-        out['img'] = r['img']
+            out['caption'] = self.tokenizer('<s>', pad=False)
+        if 'img' in r:
+            out['img'] = r['img']
         return out
 
     def train_forward(self, r):
         input_ = self.embedding(r['caption'])
-        rnn_outputs = self.rnn(input_, r['img'])[0]
+        img_vectors = self.conditioning_linear(r['img']).unsqueeze(1)
+        rnn_outputs = self.rnn(input_, img_vectors)[0]
         return rnn_outputs
 
     def forward(self, r):
+        assert len(r['caption'][0, :]) == 1
         input_ = self.embedding(r['caption'])
-        rnn_outputs = self.rnn(input_, r['img'])[0][:, -1, :]
-        predictions = torch.zeros(input_.shape[0], self.max_length)
+        img_vectors = self.conditioning_linear(r['img'])
+        rnn_outputs = self.rnn(input_, img_vectors.unsqueeze(0))[0][:, -1, :]
+        predictions = torch.zeros(input_.shape[0], self.max_length).type(torch.long)
         for i in range(self.max_length):
             logits = self.prediction(rnn_outputs)
-            best = logits.topk(1, dim=1)[1]
+            best = logits.topk(1, dim=1)[1][:, 0].type(torch.long)
             predictions[:, i] = best
+            input_ = self.embedding(predictions[:, -1].unsqueeze(1))
+            rnn_outputs = self.rnn(input_, rnn_outputs.unsqueeze(0))[0][:, -1, :]
         return predictions
 
     def postprocess(self, output):
         output = output.tolist()
         try:
-            first_end_token = next(x for x in output if x == self.end_token)
+            first_end_token = next(x for x in output if x == self.lookup['</s>'])
             output = output[:first_end_token]
         except StopIteration:
             pass

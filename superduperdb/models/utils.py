@@ -43,7 +43,7 @@ def create_container(preprocessor=None, forward=None, postprocessor=None):
     return Container(preprocessor=preprocessor, forward=forward, postprocessor=postprocessor)
 
 
-def apply_model(model, args, single=True, **kwargs):
+def apply_model(model, args, single=True, forward='forward', postprocess=True, **kwargs):
     """
     Apply model to args including pre-processing, forward pass and post-processing.
 
@@ -88,11 +88,11 @@ def apply_model(model, args, single=True, **kwargs):
     if single:
         if hasattr(model, 'preprocess'):
             args = model.preprocess(args)
-        if hasattr(model, 'forward'):
+        if hasattr(model, forward):
             singleton_batch = create_batch(args)
-            output = model.forward(singleton_batch)
+            output = getattr(model, forward)(singleton_batch)
             args = unpack_batch(output)[0]
-        if hasattr(model, 'postprocess'):
+        if postprocess and hasattr(model, 'postprocess'):
             args = model.postprocess(args)
         return args
     else:
@@ -103,12 +103,12 @@ def apply_model(model, args, single=True, **kwargs):
             loader = torch.utils.data.DataLoader(args, **kwargs)
         out = []
         for batch in progressbar(loader, total=len(loader)):
-            if hasattr(model, 'forward'):
-                tmp = model.forward(batch)
+            if hasattr(model, forward):
+                tmp = getattr(model, forward)(batch)
                 tmp = unpack_batch(tmp)
             else:
                 tmp = unpack_batch(batch)
-            if hasattr(model, 'postprocess'):
+            if postprocess and hasattr(model, 'postprocess'):
                 tmp = list(map(model.postprocess, tmp))
             out.extend(tmp)
         return out

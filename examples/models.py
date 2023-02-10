@@ -81,10 +81,6 @@ class AverageOfGloves:
 
 class SimpleTokenizer:
     def __init__(self, tokens, max_length=15):
-        if '<s>' not in tokens:
-            tokens.append('<s>')
-        if '</s>' not in tokens:
-            tokens.append('</s>')
         self.tokens = tokens
         self._set_tokens = set(self.tokens)
         self.lookup = dict(zip(self.tokens, range(len(self.tokens))))
@@ -100,10 +96,9 @@ class SimpleTokenizer:
         if pad:
             words = words + ['</s>' for _ in range(len(words) - self.max_length)]
         words = words[:self.max_length]
-        return torch.tensor(list(map(self.lookup.__getitem__, words)))
-
-    def check(self, tensor_):
-        return ' '.join(list(map(self.tokens.__getitem__, tensor_.tolist())))
+        tokenized = list(map(self.lookup.__getitem__, words))
+        tokenized = tokenized + [len(self) + 1 for _ in range(self.max_length - len(words))]
+        return torch.tensor(tokenized)
 
 
 class ConditionalLM(torch.nn.Module):
@@ -116,13 +111,15 @@ class ConditionalLM(torch.nn.Module):
         self.conditioning_linear = torch.nn.Linear(n_condition, self.n_hidden)
         self.rnn = torch.nn.GRU(self.n_hidden, self.n_hidden, batch_first=True)
         self.prediction = torch.nn.Linear(self.n_hidden, len(self.tokenizer))
+        self.max_length = max_length
 
     def preprocess(self, r):
         out = {}
         if 'caption' in r:
-            out['caption'] = self.tokenizer.preprocess('<s> ' + r['caption'])
+            out['caption'] = [len(self.tokenizer)]  + self.tokenizer.preprocess(r['caption']).tolist()[:-1]
         else:
-            out['caption'] = self.tokenizer.preprocess('<s>', pad=False)
+            out['caption'] = [len(self.tokenizer)]
+        out['caption'] = torch.tensor(out['caption'])
         if 'img' in r:
             out['img'] = r['img']
         return out
@@ -138,8 +135,8 @@ class ConditionalLM(torch.nn.Module):
         input_ = self.embedding(r['caption'])
         img_vectors = self.conditioning_linear(r['img'])
         rnn_outputs = self.rnn(input_, img_vectors.unsqueeze(0))[0][:, -1, :]
-        predictions = torch.zeros(input_.shape[0], self.tokenizer.max_length).type(torch.long)
-        for i in range(self.tokenizer.max_length):
+        predictions = torch.zeros(input_.shape[0], len(self.tokenizer) + 2).type(torch.long)
+        for i in range(self.max_length):
             logits = self.prediction(rnn_outputs)
             best = logits.topk(1, dim=1)[1][:, 0].type(torch.long)
             predictions[:, i] = best

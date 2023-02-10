@@ -3,8 +3,8 @@ import random
 
 def captioning_splitter(r):
     index = random.randrange(len(r['captions']))
-    caption = '<s> ' + r['captions'][index].strip()
     target = {}
-    target['caption'] = caption
+    target['caption'] = r['captions'][index]
+    r['caption'] = r['captions'][index]
     return r, target
 

@@ -264,7 +264,7 @@ class Trainer:
         output = []
         for subbatch, model in list(zip(batch, models)):
             if isinstance(model, torch.nn.Module) and hasattr(model, 'train_forward'):
-                output.append(model.forward(subbatch))
+                output.append(model.train_forward(subbatch))
             elif isinstance(model, torch.nn.Module):
                 output.append(model(subbatch))
             else:
@@ -354,10 +354,11 @@ class ImputationTrainer(Trainer):
             if hasattr(e, 'eval'):
                 e.eval()
         results = {}
-        for vs in self.validation_sets:
-            results[vs] = validate_imputation(self.collection, vs, self.train_name,
-                                              self.metrics, model=self.models[0],
-                                              features=self.features)
+        if self.metrics:
+            for vs in self.validation_sets:
+                results[vs] = validate_imputation(self.collection, vs, self.train_name,
+                                                  self.metrics, model=self.models[0],
+                                                  features=self.features)
         loss_values = []
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.learn_encoders)
@@ -377,11 +378,11 @@ class _Mapped:
 
     def __call__(self, args):
         args = [MongoStyleDict(r) for r in args]
-        inputs = [r[k] for r, k in zip(args, self.keys)]
+        inputs = [r[k] if k != '_base' else r for r, k in zip(args, self.keys)]
         return [f(i) for i, f in zip(inputs, self.functions)]
 
 
-class RepresentationTrainer(Trainer):
+class SemanticIndexTrainer(Trainer):
     sub_collection = '_semantic_indexes'
 
     def __init__(self, *args, n_retrieve=100, **kwargs):
@@ -393,10 +394,11 @@ class RepresentationTrainer(Trainer):
             if hasattr(m, 'eval'):
                 m.eval()
         results = {}
-        for vs in self.validation_sets:
-            results[vs] = validate_representations(self.collection, vs, self.train_name,
-                                                   self.metrics, self.models, features=self.features,
-                                                   refresh=True)
+        if self.metrics:
+            for vs in self.validation_sets:
+                results[vs] = validate_representations(self.collection, vs, self.train_name,
+                                                       self.metrics, self.models, features=self.features,
+                                                       refresh=True)
         loss_values = []
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.learn_encoders)

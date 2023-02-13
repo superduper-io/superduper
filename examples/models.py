@@ -102,15 +102,15 @@ class SimpleTokenizer:
 
 
 class ConditionalLM(torch.nn.Module):
-    def __init__(self, tokenizer, n_hidden=512, max_length=15, n_condition=2048):
+    def __init__(self, tokenizer, n_hidden=512, max_length=15, n_condition=1024):
         super().__init__()
 
         self.tokenizer = tokenizer
         self.n_hidden = n_hidden
-        self.embedding = torch.nn.Embedding(len(self.tokenizer), self.n_hidden)
+        self.embedding = torch.nn.Embedding(len(self.tokenizer) + 2, self.n_hidden)
         self.conditioning_linear = torch.nn.Linear(n_condition, self.n_hidden)
         self.rnn = torch.nn.GRU(self.n_hidden, self.n_hidden, batch_first=True)
-        self.prediction = torch.nn.Linear(self.n_hidden, len(self.tokenizer))
+        self.prediction = torch.nn.Linear(self.n_hidden, len(self.tokenizer) + 2)
         self.max_length = max_length
 
     def preprocess(self, r):
@@ -126,30 +126,32 @@ class ConditionalLM(torch.nn.Module):
 
     def train_forward(self, r):
         input_ = self.embedding(r['caption'])
-        img_vectors = self.conditioning_linear(r['img']).unsqueeze(1)
+        img_vectors = self.conditioning_linear(r['img']).unsqueeze(0)
         rnn_outputs = self.rnn(input_, img_vectors)[0]
-        return rnn_outputs
+        return self.prediction(rnn_outputs)
 
     def forward(self, r):
         assert len(r['caption'][0, :]) == 1
         input_ = self.embedding(r['caption'])
         img_vectors = self.conditioning_linear(r['img'])
         rnn_outputs = self.rnn(input_, img_vectors.unsqueeze(0))[0][:, -1, :]
-        predictions = torch.zeros(input_.shape[0], len(self.tokenizer) + 2).type(torch.long)
+        predictions = torch.zeros(input_.shape[0], self.max_length).type(torch.long)
         for i in range(self.max_length):
             logits = self.prediction(rnn_outputs)
             best = logits.topk(1, dim=1)[1][:, 0].type(torch.long)
             predictions[:, i] = best
-            input_ = self.embedding(predictions[:, -1].unsqueeze(1))
-            rnn_outputs = self.rnn(input_, rnn_outputs.unsqueeze(0))[0][:, -1, :]
+            if i < self.max_length - 1:
+                input_ = self.embedding(predictions[:, -1].unsqueeze(1))
+                rnn_outputs = self.rnn(input_, rnn_outputs.unsqueeze(0))[0][:, -1, :]
         return predictions
 
     def postprocess(self, output):
         output = output.tolist()
         try:
-            first_end_token = next(x for x in output if x == self.tokenizer.lookup['</s>'])
+            first_end_token = next(x for x in output if x == len(self.tokenizer) + 2)
             output = output[:first_end_token]
         except StopIteration:
             pass
+        output = [x for x in output if x < len(self.tokenizer)]
         return ' '.join(list(map(self.tokenizer.tokens.__getitem__, output)))
 

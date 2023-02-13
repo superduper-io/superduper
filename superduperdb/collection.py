@@ -215,7 +215,7 @@ class Collection(BaseCollection):
         return self._create_object('forwards', name, object)
 
     def create_imputation(self, name, model, loss, target, metrics=None, filter=None, projection=None,
-                          n_epochs=20, **trainer_kwargs):
+                          splitter=None, **trainer_kwargs):
         """
         Create an imputation setup. This is any learning task where we have an input to the model
         compared to the target.
@@ -227,7 +227,6 @@ class Collection(BaseCollection):
         :param metrics: List of metric settings or metric names
         :param filter: Filter on which to train the imputation
         :param projection: Projection of data to apply during training (use for efficiency)
-        :param n_epochs: Number of epochs to train
         :param trainer_kwargs: Keyword-arguments to forward to ``train_tools.ImputationTrainer``
         :return: job_ids of jobs required to create the imputation
         """
@@ -235,18 +234,19 @@ class Collection(BaseCollection):
         assert target in self.list_models()
         assert model in self.list_models()
         assert loss in self.list_losses()
-        for metric in metrics:
-            assert metric in self.list_metrics()
+        if metrics:
+            for metric in metrics:
+                assert metric in self.list_metrics()
 
         self['_imputations'].insert_one({
             'name': name,
             'model': model,
             'target': target,
-            'metrics': metrics,
+            'metrics': metrics or [],
             'loss': loss,
             'projection': projection,
             'filter': filter,
-            'n_epochs': n_epochs,
+            'splitter': splitter,
             'trainer_kwargs': trainer_kwargs,
         })
 
@@ -1664,6 +1664,9 @@ class Collection(BaseCollection):
 
         info = self['_imputations'].find_one({'name': name})
         self['_models'].update_one({'name': info['name']}, {'$set': {'training': True}})
+        splitter = None
+        if info.get('splitter'):
+            splitter = self.splitters[info['splitter']]
 
         model = self.models[info['model']]
         target = self.models[info['target']]
@@ -1690,7 +1693,7 @@ class Collection(BaseCollection):
             features=model_info.get('features', {}),
             filter=info['filter'],
             projection=info['projection'],
-            n_epochs=info['n_epochs'],
+            splitter=splitter,
         ).train()
 
     def _train_semantic_index(self, name):
@@ -1724,12 +1727,8 @@ class Collection(BaseCollection):
 
         active_model = self.list_models(**{'active': True, 'name': {'$in': model_names}})[0]
         filter_ = self['_models'].find_one({'name': active_model}, {'filter': 1})['filter']
-        if splitter is not None:
-            filter_['_fold'] = 'temp'
-        else:
-            filter_['_fold'] = 'valid'
 
-        t = training.train_tools.RepresentationTrainer(
+        t = training.train_tools.SemanticIndexTrainer(
             name,
             cf['mongodb'],
             self.database.name,
@@ -1746,17 +1745,4 @@ class Collection(BaseCollection):
             validation_sets=info.get('validation_sets', ()),
             **info.get('trainer_kwargs', {}),
         )
-
-        if splitter is not None:
-            filter_['_training_id'] = t.training_id
-            self['_models'].update_one({'name': active_model}, {'$set': {'filter': filter_}})
-
         t.train()
-
-        del filter_['_fold']
-        # TODO create training_id the moment the semantic index function is called not down here
-        if '_training_id' in filter_:
-            del filter_['_training_id']
-
-        self['_models'].update_one({'name': active_model}, {'$set': {'filter': filter_}})
-

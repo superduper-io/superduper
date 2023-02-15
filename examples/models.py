@@ -82,6 +82,8 @@ class AverageOfGloves:
 class SimpleTokenizer:
     def __init__(self, tokens, max_length=15):
         self.tokens = tokens
+        if '<unk>' not in tokens:
+            tokens.append('<unk>')
         self._set_tokens = set(self.tokens)
         self.lookup = dict(zip(self.tokens, range(len(self.tokens))))
         self.dictionary = {k: i for i, k in enumerate(tokens)}
@@ -90,11 +92,10 @@ class SimpleTokenizer:
     def __len__(self):
         return len(self.tokens)
 
-    def preprocess(self, sentence, pad=True):
+    def preprocess(self, sentence):
         sentence = re.sub('[^a-z]]', '', sentence.lower()).strip()
-        words = [x for x in sentence.split(' ') if x and x in self.tokens]
-        if pad:
-            words = words + ['</s>' for _ in range(len(words) - self.max_length)]
+        words = [x for x in sentence.split(' ') if x]
+        words = [x if x in self.tokens else '<unk>' for x in words]
         words = words[:self.max_length]
         tokenized = list(map(self.lookup.__getitem__, words))
         tokenized = tokenized + [len(self) + 1 for _ in range(self.max_length - len(words))]
@@ -131,18 +132,15 @@ class ConditionalLM(torch.nn.Module):
         return self.prediction(rnn_outputs)
 
     def forward(self, r):
-        assert len(r['caption'][0, :]) == 1
-        input_ = self.embedding(r['caption'])
-        img_vectors = self.conditioning_linear(r['img'])
-        rnn_outputs = self.rnn(input_, img_vectors.unsqueeze(0))[0][:, -1, :]
-        predictions = torch.zeros(input_.shape[0], self.max_length).type(torch.long)
-        for i in range(self.max_length):
-            logits = self.prediction(rnn_outputs)
-            best = logits.topk(1, dim=1)[1][:, 0].type(torch.long)
-            predictions[:, i] = best
-            if i < self.max_length - 1:
-                input_ = self.embedding(predictions[:, -1].unsqueeze(1))
-                rnn_outputs = self.rnn(input_, rnn_outputs.unsqueeze(0))[0][:, -1, :]
+        hidden_states = self.conditioning_linear(r['img']).unsqueeze(1)
+        predictions = \
+            torch.zeros(r['caption'].shape[0], self.max_length).to(r['caption'].device).type(torch.long)
+        predictions[:, 0] = r['caption']
+        for i in range(self.max_length - 1):
+            rnn_outputs, hidden_states = self.rnn(self.embedding(predictions[:, i].unsqueeze(0)),
+                                                  hidden_states)
+            logits = self.prediction(rnn_outputs)[:, 0, :]
+            predictions[:, i + 1] = logits.topk(1, dim=1)[1][:, 0].type(torch.long).unsqueeze(1)
         return predictions
 
     def postprocess(self, output):

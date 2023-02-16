@@ -200,7 +200,7 @@ class Collection(BaseCollection):
                     for k in info['features']:
                         r[i][k] = r[i][f'_outputs.{k}.{info["features"][k]}']
             if key == '_base':
-                return apply_model(model, r, single=True, **kwargs)
+                return apply_model(model, r, single=False, **kwargs)
             else:
                 return apply_model(model, [MongoStyleDict(rr)[key] for rr in r], single=False,
                                    **kwargs)
@@ -1611,7 +1611,10 @@ class Collection(BaseCollection):
                 file_id = self._create_pickled_file(object._preprocess)
                 pre_info = self['_preprocessors'].find_one({'name': r['preprocessor']})
                 self.filesystem.delete(pre_info['object'])
-                self['_preprocessors'].update_one({'name': r['preprocessor']}, {'$set': {'object': file_id}})
+                self['_preprocessors'].update_one(
+                    {'name': r['preprocessor']},
+                    {'$set': {'object': file_id}}
+                )
 
             if isinstance(r['forward'], str):
                 file_id = self._create_pickled_file(object._forward)
@@ -1623,7 +1626,8 @@ class Collection(BaseCollection):
                 file_id = self._create_pickled_file(object._postprocess)
                 post_info = self['_postprocessors'].find_one({'name': r['postprocessor']})
                 self.filesystem.delete(post_info['object'])
-                self['_postprocessors'].update_one({'name': r['postprocessor']}, {'$set': {'object': file_id}})
+                self['_postprocessors'].update_one({'name': r['postprocessor']},
+                                                   {'$set': {'object': file_id}})
 
     @staticmethod
     def _standardize_dict(d):  # pragma: no cover

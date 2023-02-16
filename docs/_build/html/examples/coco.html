@@ -52,7 +52,17 @@
 <li class="toctree-l1"><a class="reference internal" href="../semantic_indexes.html">Deep dive into semantic indexes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Notebook examples</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Image retrieval, captioning and classification with CoCo</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Image retrieval, captioning and classification with CoCo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Setting-up-the-data-and-installing-requirements">Setting up the data and installing requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Preparing-the-data-for-injestion">Preparing the data for injestion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Inserting-the-data-and-retrieving-data">Inserting the data and retrieving data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Text-2-image-retrieval-with-pre-trained-model">Text-2-image retrieval with pre-trained model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Bespoke-text-2-image-retriever-using-custom-PyTorch-model">Bespoke text-2-image retriever using custom PyTorch model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Attribute-prediction-using-“imputations”;-transfer-learning,-preparation-using-SpaCy-and-simple-PyTorch-linear-predictor">Attribute prediction using “imputations”; transfer learning, preparation using SpaCy and simple PyTorch linear predictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Image-captioning-using-recurrent-language-modelling-and-transfer-learning-based-on-CLIP">Image captioning using recurrent language modelling and transfer learning based on CLIP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Conclusion-and-next-steps">Conclusion and next steps</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../full_usage.html">Full usage</a></li>
@@ -373,6 +383,8 @@ div.rendered_html tbody tr:hover {
 <li><p>Define a searchable semantic index based on existing models</p></li>
 <li><p>Train a semantic index from scratch</p></li>
 </ul>
+<section id="Setting-up-the-data-and-installing-requirements">
+<h2>Setting up the data and installing requirements<a class="headerlink" href="#Setting-up-the-data-and-installing-requirements" title="Permalink to this heading"></a></h2>
 <p>If you haven’t downloaded the data already, execute the lines of bash below. We’ve tried to keep it clean, and for reasons of efficiency have resized the images using imagemagick.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -418,6 +430,9 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
+</section>
+<section id="Preparing-the-data-for-injestion">
+<h2>Preparing the data for injestion<a class="headerlink" href="#Preparing-the-data-for-injestion" title="Permalink to this heading"></a></h2>
 <p>SuperDuperDB can handle data in any format, including images. The documents in the database are MongoDB <code class="docutils literal notranslate"><span class="pre">bson</span></code> documents, which mix <code class="docutils literal notranslate"><span class="pre">json</span></code> with raw bytes and <code class="docutils literal notranslate"><span class="pre">ObjectId</span></code> objects. SuperDuperDB takes advantage of this by serializing more sophisticated objects to bytes, and reinstantiating the objects in memory, when data is queried.</p>
 <p>In order to tell SuperDuperDB what type an object has, one specifies this with a subdocument of the form:</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span>{
@@ -470,6 +485,9 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
+</section>
+<section id="Inserting-the-data-and-retrieving-data">
+<h2>Inserting the data and retrieving data<a class="headerlink" href="#Inserting-the-data-and-retrieving-data" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -489,7 +507,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <p>We’ll load the data and add most of it to the database. We’ll hold back some data so that we can see how to update the database later.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;data/coco/data.json&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -511,6 +529,9 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
+</section>
+<section id="Text-2-image-retrieval-with-pre-trained-model">
+<h2>Text-2-image retrieval with pre-trained model<a class="headerlink" href="#Text-2-image-retrieval-with-pre-trained-model" title="Permalink to this heading"></a></h2>
 <p>In the first AI task which we implement for the <code class="docutils literal notranslate"><span class="pre">docs</span></code> collection, we’ll be setting up a model to retrieve relevant images using provided text. For this data, that means the <code class="docutils literal notranslate"><span class="pre">captions</span></code> field being used to retrieve the <code class="docutils literal notranslate"><span class="pre">img</span></code> field. In order to be able to keep an objective record of performance, we can set up an immutable validation dataset from the collection. We use a <strong>splitter</strong> to define how we’d like to test retrieval. This splits the documents into query and retrieved document.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -608,6 +629,8 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
+<p>Now the semantic index has been created, we can search through the data using that index.</p>
+<p>We can see that we can get nice meaningful retrievals using the CLIP model from short descriptive pieces of text. This is very useful, since the model is now deployed to the database, listening for incoming queries.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -616,75 +639,30 @@ div.rendered_html tbody tr:hover {
 <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
 
 <span class="n">docs</span><span class="o">.</span><span class="n">semantic_index</span> <span class="o">=</span> <span class="s1">&#39;clip&#39;</span>
+
+<span class="c1"># example using item id directly</span>
 <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">ObjectId</span><span class="p">(</span><span class="s1">&#39;63d27372745cc274ef3518f2&#39;</span><span class="p">)},</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">}}):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+
+<span class="c1"># or a query which is interpreted by the CLIP model</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Dog catches a frisbee&#39;</span><span class="p">]},</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}}):</span>
     <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
 <p>Let’s now evaluate the quality of this semantic index</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">validate_semantic_index</span><span class="p">(</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-  0%|                                                                                                                                                                  | 0/1000 [00:00&lt;?, ?it/s]
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1250/1250 [00:00&lt;00:00, 27645.76it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-loading hashes: &#34;clip&#34;
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [27:54&lt;00:00,  1.67s/it]
-</pre></div></div>
-</div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_semantic_indexes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<p>We can see that we can get nice meaningful retrievals using the CLIP model from short descriptive pieces of text. This is very useful, since the model is now deployed to the database, listening for incoming queries.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_semantic_indexes</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
-
-<span class="n">docs</span><span class="o">.</span><span class="n">semantic_index</span> <span class="o">=</span> <span class="s1">&#39;clip&#39;</span>
-<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Dog catches a frisbee&#39;</span><span class="p">]},</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}}):</span>
-    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
-</pre></div>
-</div>
-</div>
 <p>In the next section of this example, let us train our own model from scratch. The model will be much simpler than the clip model, but will yield faster retrievals. It will be interesting to see how this compares to CLIP, and show-case SuperDuperDB as a framework for easily integrating and benchmarking AI models, in particular for retrieval.</p>
+</section>
+<section id="Bespoke-text-2-image-retriever-using-custom-PyTorch-model">
+<h2>Bespoke text-2-image retriever using custom PyTorch model<a class="headerlink" href="#Bespoke-text-2-image-retriever-using-custom-PyTorch-model" title="Permalink to this heading"></a></h2>
 <p>First we will implement a simpler sentence embedding, using a simple word-embedding approach based around Glove. Please look at the model in <code class="docutils literal notranslate"><span class="pre">examples.models.AverageOfGloves</span></code>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -713,14 +691,8 @@ loading hashes: &#34;clip&#34;
 <span class="n">vectors</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span>
 
 <span class="n">glove</span> <span class="o">=</span> <span class="n">AverageOfGloves</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">),</span> <span class="n">index</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
     <span class="s1">&#39;average_glove&#39;</span><span class="p">,</span>
     <span class="nb">object</span><span class="o">=</span><span class="n">glove</span><span class="p">,</span>
     <span class="n">key</span><span class="o">=</span><span class="s1">&#39;captions&#39;</span><span class="p">,</span>
@@ -729,6 +701,7 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
+<p>We also need to create a projection layer, which takes the CLIP outputs, and projects them to the same dimensionality as our <code class="docutils literal notranslate"><span class="pre">average_glove</span></code> model:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -792,26 +765,9 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
-<p>We now can see that we’ve set and trained our own semantic index. Let’s take a look:</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_semantic_indexes</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-[&#39;clip&#39;, &#39;simple_image_search&#39;]
-</pre></div></div>
-</div>
+<p>We now can see that we’ve set and trained our own semantic index. Let’s take a look at the results of the training:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
@@ -819,8 +775,9 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<p>We can visualize the improvement of metrics during training using standard functionality from the scientific Python ecosystem. No need for Tensorboards or special visualization interfaces!</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">]:</span>
@@ -838,30 +795,9 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-[5.5196005877326515, 5.322906269746668, 5.316055550294764, 5.31398167329676, 5.313264734604779, 5.312547767863554, 5.312497110927806, 5.312019011553596, 5.311930375940659, 5.311640683342429, 5.311742137460148]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/examples_coco_50_1.png" src="../_images/examples_coco_50_1.png" />
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/examples_coco_50_2.png" src="../_images/examples_coco_50_2.png" />
-</div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<p>The same can be done for the progression of weights during training:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]:</span>
@@ -871,43 +807,6 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/examples_coco_51_0.png" src="../_images/examples_coco_51_0.png" />
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<img alt="../_images/examples_coco_51_1.png" src="../_images/examples_coco_51_1.png" />
-</div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_models</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-[&#39;attribute_predictor&#39;,
- &#39;average_glove&#39;,
- &#39;clip&#39;,
- &#39;clip_projection&#39;,
- &#39;clip_text&#39;,
- &#39;noun_words&#39;,
- &#39;nouns_to_few_hot&#39;]
-</pre></div></div>
-</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -916,6 +815,7 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
+<p>We see that our model provides quick retrievals using its simpler architecture, and we succeeded in doing this with a very small resource footprint:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -928,6 +828,21 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
+<p>Let’s see how well our model has done:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">validate_semantic_index</span><span class="p">(</span><span class="s1">&#39;simple_image_search&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Attribute-prediction-using-“imputations”;-transfer-learning,-preparation-using-SpaCy-and-simple-PyTorch-linear-predictor">
+<h2>Attribute prediction using “imputations”; transfer learning, preparation using SpaCy and simple PyTorch linear predictor<a class="headerlink" href="#Attribute-prediction-using-“imputations”;-transfer-learning,-preparation-using-SpaCy-and-simple-PyTorch-linear-predictor" title="Permalink to this heading"></a></h2>
+<p>Now we’re going to train a different type of model, using a meta-class of machine learning problems we call “imputation”. The basic idea is to generate tags, by using as training data the noun words extracted from the sentences attached to each image. For this we’ll need one model to prepare the data, by extracting these noun words, and another model to predict the tags. Imputations aren’t restricted to this however. We can handle any machine learning problem which involves predicting one thing
+from another thing. This subsumes classification, attribute prediction, generative adversarial learning, language modelling and more.</p>
+<p>For the noun extraction, we’ll use an external library <code class="docutils literal notranslate"><span class="pre">spacy</span></code>. You can see this in the source code <code class="docutils literal notranslate"><span class="pre">examples.models.NounWords</span></code>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -937,6 +852,7 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
+<p>We’ll also need a simple validation set:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -945,6 +861,7 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
+<p>Let’s prepare the tag set we’d like to train on in the next few cells:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -952,7 +869,8 @@ loading hashes: &#34;clip&#34;
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">import</span> <span class="nn">tqdm</span>
 <span class="n">all_nouns</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;_outputs.captions.noun_words&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span> <span class="n">total</span><span class="o">=</span><span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({})):</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;_outputs.captions.noun_words&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+                   <span class="n">total</span><span class="o">=</span><span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({})):</span>
     <span class="n">all_nouns</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;_outputs&#39;</span><span class="p">][</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="s1">&#39;noun_words&#39;</span><span class="p">])</span>
 
 <span class="n">counts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">Counter</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">))</span>
@@ -962,6 +880,7 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
+<p>Now we’ve got our tag set ready, we can create the items necessary to train the model:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -977,16 +896,7 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">FewHot</span>
-<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;nouns_to_few_hot&#39;</span><span class="p">,</span> <span class="n">FewHot</span><span class="p">(</span><span class="n">post</span><span class="o">.</span><span class="n">tokens</span><span class="p">),</span> <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">key</span><span class="o">=</span><span class="s1">&#39;_outputs.captions.noun_words&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
+<p>We demonstrate a different way of creating a model. Instead of using a class with <code class="docutils literal notranslate"><span class="pre">preprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">forward</span></code> and <code class="docutils literal notranslate"><span class="pre">postprocess</span></code> methods, we supply these separately. Sometimes this is advantageous when it comes to sharing aspects between models.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -997,25 +907,17 @@ loading hashes: &#34;clip&#34;
 </div>
 </div>
 <p>Let’s test the model, using the <code class="docutils literal notranslate"><span class="pre">apply_model</span></code> method:</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">apply_model</span><span class="p">(</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-[&#39;dishwasher&#39;, &#39;mask&#39;, &#39;containers&#39;, &#39;car&#39;, &#39;stall&#39;]
-</pre></div></div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<p>Now let’s train the model:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_imputation</span><span class="p">(</span>
@@ -1032,493 +934,427 @@ loading hashes: &#34;clip&#34;
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-downloading ids for {&#39;_fold&#39;: &#39;train&#39;}
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 78560/78560 [00:00&lt;00:00, 199309.31it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-downloading records for {&#39;_fold&#39;: &#39;valid&#39;}
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4223/4223 [00:00&lt;00:00, 14431.88it/s]
-100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 250/250 [00:00&lt;00:00, 3411.61it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-fold: VALID; iteration: 0; epoch: 0; attribute_prediction/jacquard_index: 0.0015047619047619048; loss: 0.6905487082725348;
-fold: TRAIN; iteration: 0; epoch: 0; loss: 0.6904535293579102;
-fold: TRAIN; iteration: 1; epoch: 0; loss: 0.6813770532608032;
-fold: TRAIN; iteration: 2; epoch: 0; loss: 0.6711997389793396;
-fold: TRAIN; iteration: 3; epoch: 0; loss: 0.6628069281578064;
-fold: TRAIN; iteration: 4; epoch: 0; loss: 0.6539110541343689;
-fold: TRAIN; iteration: 5; epoch: 0; loss: 0.6436232328414917;
-fold: TRAIN; iteration: 6; epoch: 0; loss: 0.6362203359603882;
-fold: TRAIN; iteration: 7; epoch: 0; loss: 0.6260425448417664;
-fold: TRAIN; iteration: 8; epoch: 0; loss: 0.6195974946022034;
-fold: TRAIN; iteration: 9; epoch: 0; loss: 0.6111948490142822;
-validating model...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 250/250 [00:00&lt;00:00, 3727.13it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-saving
-fold: VALID; iteration: 10; epoch: 0; attribute_prediction/jacquard_index: 0.0015047619047619048; loss: 0.6013520692670068;
-fold: TRAIN; iteration: 10; epoch: 0; loss: 0.6021795272827148;
-fold: TRAIN; iteration: 11; epoch: 0; loss: 0.5946300625801086;
-fold: TRAIN; iteration: 12; epoch: 0; loss: 0.5849574208259583;
-fold: TRAIN; iteration: 13; epoch: 0; loss: 0.5744298100471497;
-fold: TRAIN; iteration: 14; epoch: 0; loss: 0.5716163516044617;
-fold: TRAIN; iteration: 15; epoch: 0; loss: 0.5610750913619995;
-fold: TRAIN; iteration: 16; epoch: 0; loss: 0.5524094700813293;
-fold: TRAIN; iteration: 17; epoch: 0; loss: 0.546725869178772;
-fold: TRAIN; iteration: 18; epoch: 0; loss: 0.5377270579338074;
-fold: TRAIN; iteration: 19; epoch: 0; loss: 0.5251182317733765;
-validating model...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 250/250 [00:00&lt;00:00, 3220.40it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-saving
-fold: VALID; iteration: 20; epoch: 0; attribute_prediction/jacquard_index: 0.0024047619047619048; loss: 0.5229771178822185;
-computing chunk (1/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 831.59it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (2/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 847.93it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (3/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 839.70it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (4/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 665.87it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (5/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 814.84it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (6/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 873.22it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (7/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 900.53it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (8/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 845.29it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (9/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 833.58it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (10/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 861.05it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (11/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 840.35it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (12/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 874.56it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (13/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 807.13it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (14/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 872.05it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (15/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 852.42it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (16/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [00:00&lt;00:00, 799.62it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (17/17)
-finding documents under filter
-done.
-processing with attribute_predictor
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 279/279 [00:00&lt;00:00, 846.52it/s]
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-</pre></div></div>
-</div>
 <p>We can view the results of learning (metrics, loss etc.) by looking in the <code class="docutils literal notranslate"><span class="pre">_imputations</span></code> subcollection:</p>
+</section>
+<section id="Image-captioning-using-recurrent-language-modelling-and-transfer-learning-based-on-CLIP">
+<h2>Image captioning using recurrent language modelling and transfer learning based on CLIP<a class="headerlink" href="#Image-captioning-using-recurrent-language-modelling-and-transfer-learning-based-on-CLIP" title="Permalink to this heading"></a></h2>
+<p>In the final modelling part of this tutorial, we show that a radically different type of model can be created but which also leverages the <code class="docutils literal notranslate"><span class="pre">create_imputation</span></code> functionality. This is possible, because we utilize a different loss, target, and also use a model which has a different inference <code class="docutils literal notranslate"><span class="pre">forward</span></code> pass than training <code class="docutils literal notranslate"><span class="pre">forward</span></code> pass. This is a very common occurrence, in AI, especially when doing, for example, autoregressive training.</p>
+<p>The model we create, will be input an image, and will write out a sentence describing that image in unconstrained English. This task is known as “captioning” in AI speak.</p>
+<p>This model will leverage a fixed vocabulary of “allowed” words. Let us first create this quickly in the following cell:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tqdm</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="n">all_captions</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">})</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm_notebook</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}),</span> <span class="n">total</span><span class="o">=</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">all_captions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">])</span>
+
+<span class="n">all_captions</span> <span class="o">=</span> <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[^a-z ]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">all_captions</span><span class="p">]</span>
+<span class="n">words</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">all_captions</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">Counter</span><span class="p">(</span><span class="n">words</span><span class="p">))</span>
+<span class="n">vocab</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">counts</span> <span class="k">if</span> <span class="n">counts</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="ow">and</span> <span class="n">w</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>Now we can create the model - it utilizes a “tokenizer” for preprocessing the captioning data.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">ConditionalLM</span><span class="p">,</span> <span class="n">SimpleTokenizer</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">SimpleTokenizer</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConditionalLM</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Let us know create the required models necessary for training this model. One of the models is fairly trivial, only used to create the prediction target for the learning task:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="s1">&#39;clip&#39;</span><span class="p">},</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;_base&#39;</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;captioning_tokenizer&#39;</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;caption&#39;</span><span class="p">,</span> <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We’ll use a standard autoregressive loss, of the sort used as a matter of course in language modelling tasks.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.losses</span> <span class="kn">import</span> <span class="n">auto_regressive_loss</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_loss</span><span class="p">(</span><span class="s1">&#39;autoregressive_loss&#39;</span><span class="p">,</span> <span class="n">auto_regressive_loss</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Since each record in the database has several captions per image, we’ll need to use a so-called “splitter”, to align the prediction model and prediction target during training. You can see that the splitter randomly chooses one of the captions to train on for an iteration:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.splitters</span> <span class="kn">import</span> <span class="n">captioning_splitter</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_splitter</span><span class="p">(</span><span class="s1">&#39;captioning_splitter&#39;</span><span class="p">,</span> <span class="n">captioning_splitter</span><span class="p">)</span>
+
+<span class="n">captioning_splitter</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p>Since we have this new splitter, we need to create a new validation data set</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_validation_set</span><span class="p">(</span><span class="s1">&#39;captioning&#39;</span><span class="p">,</span> <span class="n">splitter</span><span class="o">=</span><span class="n">docs</span><span class="o">.</span><span class="n">splitters</span><span class="p">[</span><span class="s1">&#39;captioning_splitter&#39;</span><span class="p">],</span>
+                           <span class="n">sample_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now we’re ready to start the training:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_imputation</span><span class="p">(</span>
+    <span class="s1">&#39;image_captioner&#39;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span>
+    <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;autoregressive_loss&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;captioning_tokenizer&#39;</span><span class="p">,</span>
+    <span class="n">splitter</span><span class="o">=</span><span class="s1">&#39;captioning_splitter&#39;</span><span class="p">,</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;captioning&#39;</span><span class="p">],</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s test the model on a sample data point:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_imputations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">test_docs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+<span class="n">images</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({},</span> <span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">apply_model</span><span class="p">(</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span> <span class="n">test_docs</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
-</pre></div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00&lt;00:00, 18.98it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_1.png" src="../_images/examples_coco_93_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;_id&#39;: ObjectId(&#39;63d9ae67735fd2f6b8df9b44&#39;),
- &#39;name&#39;: &#39;noun_prediction&#39;,
- &#39;model&#39;: &#39;attribute_predictor&#39;,
- &#39;target&#39;: &#39;nouns_to_few_hot&#39;,
- &#39;metrics&#39;: [&#39;jacquard_index&#39;],
- &#39;loss&#39;: &#39;nouns_loss&#39;,
- &#39;projection&#39;: None,
- &#39;filter&#39;: None,
- &#39;n_epochs&#39;: 20,
- &#39;trainer_kwargs&#39;: {&#39;validation_sets&#39;: [&#39;attribute_prediction&#39;],
-  &#39;lr&#39;: 0.001,
-  &#39;validation_interval&#39;: 10,
-  &#39;n_iterations&#39;: 20},
- &#39;metric_values&#39;: {&#39;attribute_prediction&#39;: {&#39;jacquard_index&#39;: [0.0015047619047619048,
-    0.0015047619047619048,
-    0.0024047619047619048]},
-  &#39;loss&#39;: [0.6905487082725348, 0.6013520692670068, 0.5229771178822185]},
- &#39;weights&#39;: {}}
+a dining room with a table and chairs in front of a &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_3.png" src="../_images/examples_coco_93_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a person is cutting into a cake with a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_5.png" src="../_images/examples_coco_93_5.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man standing next to a red and white &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_7.png" src="../_images/examples_coco_93_7.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a kitchen with a &lt;unk&gt; &lt;unk&gt; and other &lt;unk&gt; &lt;unk&gt; and &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_9.png" src="../_images/examples_coco_93_9.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man and a woman are standing in a kitchen &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_11.png" src="../_images/examples_coco_93_11.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man wearing a suit and tie in front of a &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_13.png" src="../_images/examples_coco_93_13.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a wooden table with a &lt;unk&gt; &lt;unk&gt; and a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_15.png" src="../_images/examples_coco_93_15.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a group of people walking down a street with a &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_17.png" src="../_images/examples_coco_93_17.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a bicycle is parked next to a bicycle &lt;unk&gt; and &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_19.png" src="../_images/examples_coco_93_19.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man is working on a kitchen counter &lt;unk&gt; into a &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_21.png" src="../_images/examples_coco_93_21.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man in a white kitchen with a white &lt;unk&gt; &lt;unk&gt; and
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_23.png" src="../_images/examples_coco_93_23.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man is preparing food in a &lt;unk&gt; &lt;unk&gt; and &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_25.png" src="../_images/examples_coco_93_25.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a kitchen with a &lt;unk&gt; &lt;unk&gt; and &lt;unk&gt; &lt;unk&gt; &lt;unk&gt; and
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_27.png" src="../_images/examples_coco_93_27.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a kitchen with a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt; and &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_29.png" src="../_images/examples_coco_93_29.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man is preparing food in a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_31.png" src="../_images/examples_coco_93_31.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man sitting on a laptop with a &lt;unk&gt; &lt;unk&gt; on his
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_33.png" src="../_images/examples_coco_93_33.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a group of people are standing around a &lt;unk&gt; &lt;unk&gt; and &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_35.png" src="../_images/examples_coco_93_35.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man cutting a pizza on a &lt;unk&gt; &lt;unk&gt; in a &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_37.png" src="../_images/examples_coco_93_37.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a large display of a &lt;unk&gt; &lt;unk&gt; and &lt;unk&gt; and &lt;unk&gt; in
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_coco_93_39.png" src="../_images/examples_coco_93_39.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a room with a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt; and &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
 </pre></div></div>
 </div>
 <p>Now we have trained and evaluated several models of various types. This includes multiple interacting models with mutual dependencies. In the case of our own efficient semantic search, and also the attribute predictor, these models are downstream of the image clip model, in the sense that at inference time, clip must be present in order to be able to execute these models. In the case of attribute prediction, the training task was downstream from the spacy pipeline for part-of-speech tagging;
@@ -1526,7 +1362,7 @@ these tags were used to produce targets for training. However at run-time, the s
 <p>The models which we’ve added and trained are now ready to go, and when new data is added or updated to the collection, they will automatically process this data, and insert the model outputs into the collection documents.</p>
 <p>Here is the complete set of models which exist in the collection:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_models</span><span class="p">()</span>
@@ -1534,23 +1370,25 @@ these tags were used to produce targets for training. However at run-time, the s
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 [&#39;attribute_predictor&#39;,
  &#39;average_glove&#39;,
+ &#39;captioning_tokenizer&#39;,
  &#39;clip&#39;,
  &#39;clip_projection&#39;,
  &#39;clip_text&#39;,
+ &#39;conditional_lm&#39;,
  &#39;noun_words&#39;,
  &#39;nouns_to_few_hot&#39;]
 </pre></div></div>
 </div>
 <p>Not all of these respond to incoming data, for that we need to specify the <code class="docutils literal notranslate"><span class="pre">active</span></code> argument:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_models</span><span class="p">(</span><span class="n">active</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1558,7 +1396,7 @@ these tags were used to produce targets for training. However at run-time, the s
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1568,7 +1406,7 @@ these tags were used to produce targets for training. However at run-time, the s
 </div>
 <p>We can see that these models have processed all documents and their outputs saved:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
@@ -1576,7 +1414,7 @@ these tags were used to produce targets for training. However at run-time, the s
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -1616,16 +1454,11 @@ these tags were used to produce targets for training. However at run-time, the s
     &#39;top&#39;]}}}
 </pre></div></div>
 </div>
-<p>Now, let’s test what happens when we add new data to the collection, by adding the remaining data points from the CoCo data set:</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">update</span> <span class="o">=</span> <span class="p">[{</span><span class="o">**</span><span class="n">r</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:]]</span>
-<span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">update</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
+</section>
+<section id="Conclusion-and-next-steps">
+<h2>Conclusion and next steps<a class="headerlink" href="#Conclusion-and-next-steps" title="Permalink to this heading"></a></h2>
+<p>In this tutorial we showed how to deploy interdependent open source, and user supplied PyTorch models on a collection of records, containing image and text. SuperDuperDB can be used on arbitrary data types, and allows users to supply arbitrary PyTorch models. These may additionally be trained or fine-tuned on the data at hand.</p>
+</section>
 </section>
 
 

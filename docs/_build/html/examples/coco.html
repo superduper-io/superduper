@@ -732,7 +732,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <p>We may register this model to the collection in the same way we did for the textual part of CLIP. We quote the full code from the <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory here for completeness:</p>
-<p>In <strong>``examples.models``</strong>:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.models</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">AverageOfGloves</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="o">=</span> <span class="n">embeddings</span>
@@ -798,7 +798,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <p>Let’s also create a loss function, in order to be able to perform the learning task. Here’s the code in full:</p>
-<p>In <strong>``examples.losses``</strong>:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.losses</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
 
 
@@ -933,7 +933,7 @@ div.rendered_html tbody tr:hover {
 <p>Now we’re going to train a different type of model, using a meta-class of machine learning problems we call “imputation”. The basic idea is to generate tags, by using as training data the noun words extracted from the sentences attached to each image. For this we’ll need one model to prepare the data, by extracting these noun words, and another model to predict the tags. Imputations aren’t restricted to this however. We can handle any machine learning problem which involves predicting one thing
 from another thing. This subsumes classification, attribute prediction, generative adversarial learning, language modelling and more.</p>
 <p>For the noun extraction, we’ll use an external library <code class="docutils literal notranslate"><span class="pre">spacy</span></code>. You can see this in the source code <code class="docutils literal notranslate"><span class="pre">examples.models.NounWords</span></code>.</p>
-<p>In <strong>``examples.models``</strong>:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.models</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NounWords</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;en_core_web_sm&#39;</span><span class="p">)</span>
@@ -986,7 +986,7 @@ from another thing. This subsumes classification, attribute prediction, generati
 </div>
 </div>
 <p>Now we’ve got our tag set ready, we can create the items necessary to train the model.</p>
-<p>In <strong>``examples.models``</strong>:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.models</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
 
 
@@ -1013,7 +1013,7 @@ from another thing. This subsumes classification, attribute prediction, generati
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pred</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>In <strong>``examples.metrics``</strong>:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.metrics</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">jacquard_index</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
 </pre></div>
@@ -1099,7 +1099,7 @@ from another thing. This subsumes classification, attribute prediction, generati
 </div>
 </div>
 <p>Now we can create the model - it utilizes a “tokenizer” for preprocessing the captioning data.</p>
-<p>In <strong>``examples.models``</strong>:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.models</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SimpleTokenizer</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span>

@@ -132,15 +132,15 @@ class ConditionalLM(torch.nn.Module):
         return self.prediction(rnn_outputs)
 
     def forward(self, r):
-        hidden_states = self.conditioning_linear(r['img']).unsqueeze(1)
+        hidden_states = self.conditioning_linear(r['img']).unsqueeze(0)
         predictions = \
             torch.zeros(r['caption'].shape[0], self.max_length).to(r['caption'].device).type(torch.long)
-        predictions[:, 0] = r['caption']
+        predictions[:, 0] = r['caption'][:, 0]
         for i in range(self.max_length - 1):
-            rnn_outputs, hidden_states = self.rnn(self.embedding(predictions[:, i].unsqueeze(0)),
+            rnn_outputs, hidden_states = self.rnn(self.embedding(predictions[:, i]).unsqueeze(1),
                                                   hidden_states)
             logits = self.prediction(rnn_outputs)[:, 0, :]
-            predictions[:, i + 1] = logits.topk(1, dim=1)[1][:, 0].type(torch.long).unsqueeze(1)
+            predictions[:, i + 1] = logits.topk(1, dim=1)[1][:, 0].type(torch.long)
         return predictions
 
     def postprocess(self, output):

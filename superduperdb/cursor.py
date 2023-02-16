@@ -43,6 +43,21 @@ class SuperDuperCursor(Cursor):
         self._results = self._results[:limit]
         return self
 
+    def __getitem__(self, item):
+        r = super().__getitem__(item)
+        if self.features is not None and self.features:
+            r = self._add_features(r)
+        return r
+
+    def _add_features(self, r):
+        r = MongoStyleDict(r)
+        for k in self.features:
+            r[k] = r['_outputs'][k][self.features[k]]
+        if '_other' in r:
+            for k in self.features:
+                r['_other'][k] = r['_outputs'][k][self.features[k]]
+        return r
+
     def next(self):
         if self.scores is not None:
             try:
@@ -56,12 +71,7 @@ class SuperDuperCursor(Cursor):
             r['_score'] = self.scores[r['_id']]
 
         if self.features is not None and self.features:
-            r = MongoStyleDict(r)
-            for k in self.features:
-                r[k] =  r['_outputs'][k][self.features[k]]
-            if '_other' in r:
-                for k in self.features:
-                    r['_other'][k] = r['_outputs'][k][self.features[k]]
+            r = self._add_features(r)
 
         if self.similar_join is not None:
             if self.similar_join in r.get('_like', {}):

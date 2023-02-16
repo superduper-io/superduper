@@ -650,6 +650,17 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <p>We’ll also create a measure which tests how similar to each other two outputs might be. Since CLIP was trained with cosine-similarity we’ll use that here too.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.measures</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">css</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -661,6 +672,15 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <p>In order to be able to measure performance on the validation set, we’ll add a <strong>metric</strong>.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.metrics</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">PatK</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">]</span>
+</pre></div>
+</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -1196,6 +1216,19 @@ from another thing. This subsumes classification, attribute prediction, generati
 </div>
 </div>
 <p>We’ll use a standard autoregressive loss, of the sort used as a matter of course in language modelling tasks.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.losses</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">auto_regressive_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="c1"># start token = x.shape[2] - 2, stop_token = x.shape[2] - 1 (by convention)</span>
+    <span class="n">stop_token</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">losses</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">cross_entropy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">reduce</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">not_stops</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
+    <span class="n">not_stops</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">stop_token</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+    <span class="n">normalizing_factors</span> <span class="o">=</span> <span class="n">not_stops</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">av_loss_per_row</span> <span class="o">=</span> <span class="p">(</span><span class="n">losses</span> <span class="o">*</span> <span class="n">not_stops</span><span class="p">)</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">normalizing_factors</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">av_loss_per_row</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</pre></div>
+</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -1205,7 +1238,19 @@ from another thing. This subsumes classification, attribute prediction, generati
 </pre></div>
 </div>
 </div>
-<p>Since each record in the database has several captions per image, we’ll need to use a so-called “splitter”, to align the prediction model and prediction target during training. You can see that the splitter randomly chooses one of the captions to train on for an iteration:</p>
+<p>Since each record in the database has several captions per image, we’ll need to use a so-called “splitter”, to align the prediction model and prediction target during training. You can see that the splitter randomly chooses one of the captions to train on for an iteration.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.splitters</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
+
+
+<span class="k">def</span> <span class="nf">captioning_splitter</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">]))</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">target</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+    <span class="n">r</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">r</span><span class="p">,</span> <span class="n">target</span>
+</pre></div>
+</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -1670,7 +1715,7 @@ these tags were used to produce targets for training. However at run-time, the s
 </section>
 <section id="Conclusion-and-next-steps">
 <h2>Conclusion and next steps<a class="headerlink" href="#Conclusion-and-next-steps" title="Permalink to this heading"></a></h2>
-<p>In this tutorial we showed how to deploy interdependent open source, and user supplied PyTorch models on a collection of records, containing image and text. SuperDuperDB can be used on arbitrary data types, and allows users to supply arbitrary PyTorch models. These may additionally be trained or fine-tuned on the data at hand.</p>
+<p>In this tutorial we showed how to deploy interdependent open source, and user supplied PyTorch models on a collection of records, containing image and text. SuperDuperDB can be used on arbitrary data types, and allows users to define their own models. These models can be set up, so that they are interdependent with one another. For example, we applied multiple models in this tutorial which were downstream of the CLIP model. These may additionally be trained or fine-tuned on the data at hand.</p>
 </section>
 </section>
 

@@ -214,8 +214,8 @@ class Collection(BaseCollection):
         """
         return self._create_object('forwards', name, object)
 
-    def create_imputation(self, name, model, loss, target, metrics=None, filter=None, projection=None,
-                          splitter=None, **trainer_kwargs):
+    def create_imputation(self, name, model, loss, target, metrics=None, filter=None,
+                          projection=None, splitter=None, **trainer_kwargs):
         """
         Create an imputation setup. This is any learning task where we have an input to the model
         compared to the target.
@@ -227,6 +227,7 @@ class Collection(BaseCollection):
         :param metrics: List of metric settings or metric names
         :param filter: Filter on which to train the imputation
         :param projection: Projection of data to apply during training (use for efficiency)
+        :param splitter: Splitter name to use to prepare data points for insertion to model
         :param trainer_kwargs: Keyword-arguments to forward to ``train_tools.ImputationTrainer``
         :return: job_ids of jobs required to create the imputation
         """
@@ -237,6 +238,9 @@ class Collection(BaseCollection):
         if metrics:
             for metric in metrics:
                 assert metric in self.list_metrics()
+
+        if filter is None:
+            filter = self['_models'].find_one({'name': model}, {'filter': 1})['filter']
 
         self['_imputations'].insert_one({
             'name': name,
@@ -251,8 +255,6 @@ class Collection(BaseCollection):
         })
 
         job_id = self._train_imputation(name)
-
-        # TODO - optional filter to train on (shouldn't be simply the filter of the models)
         r = self['_models'].find_one({'name': model})
         ids = [r['_id'] for r in self.find(r.get('filter', {}), {'_id': 1})]
 
@@ -428,15 +430,16 @@ class Collection(BaseCollection):
         return self._create_object('postprocessors', name, object)
 
     def create_semantic_index(self, name, models, measure, validation_sets=(), metrics=(), loss=None,
-                              splitter=None, **trainer_kwargs):
+                              splitter=None, filter=None, **trainer_kwargs):
         """
         :param name: Name of index
-        :param models: List of existing models, or parameters to ``Collection.create_model``
-        :param measure: Measure name, or parameters to ``Collection.create_measure``
+        :param models: List of existing models
+        :param measure: Measure name
         :param validation_sets: Name of immutable validation set to be used to evaluate performance
-        :param metrics: List of existing metrics, or parameters to ``Collection.create_metric``
-        :param loss: Loss name, or parameters to ``Collection.create_loss``
-        :param splitter: Splitter name, or parameters to ``Collection.create_splitter``
+        :param metrics: List of existing metrics,
+        :param loss: Loss name
+        :param splitter: Splitter name
+        :param filter: Filter on which to train
         :param trainer_kwargs: Keyword arguments to be passed to ``training.train_tools.RepresentationTrainer``
         :return: List of job identifiers if ``self.remote``
         """
@@ -452,6 +455,7 @@ class Collection(BaseCollection):
             'loss': loss,
             'measure': measure,
             'splitter': splitter,
+            'filter': filter or {},
             'validation_sets': list(validation_sets),
             'trainer_kwargs': trainer_kwargs,
         })
@@ -478,7 +482,6 @@ class Collection(BaseCollection):
         filter_ = self['_models'].find_one({'name': active_model}, {'filter': 1})['filter']
 
         job_ids = []
-        # TODO - put the job queuing all on the same nesting level (not inside def _train_sema...)
         job_ids.append(self._train_semantic_index(name=name))
         active_models = self.list_models(**{'active': True, 'name': {'$in': models}})
         for model in active_models:
@@ -1380,7 +1383,124 @@ class Collection(BaseCollection):
         si = self['_semantic_indexes'].find_one({'name': info['semantic_index']})
         return next(m for m in si['models'] if self['_models'].find_one({'name': m})['active'])
 
+    def _submit_process_documents_with_model(self, model_name, sub_ids, dependencies, verbose=True):
+        model_info = self.parent_if_appl['_models'].find_one({'name': model_name})
+        if not self.remote:
+            self._process_documents_with_model(
+                model_name=model_name, ids=sub_ids, verbose=verbose,
+                max_chunk_size=model_info.get('max_chunk_size', 5000),
+                **model_info.get('loader_kwargs', {}),
+            )
+            if model_info.get('download', False):  # pragma: no cover
+                self._download_content(ids=sub_ids)
+        else:
+            return superduper_requests.jobs.process(
+                self.parent_if_appl.database.name,
+                self.name,
+                '_process_documents_with_model',
+                model_name=model_name,
+                ids=sub_ids,
+                verbose=verbose,
+                dependencies=dependencies,
+                **model_info.get('loader_kwargs', {}),
+            )
+
+    def _create_filter_lookup(self, ids):
+        filters = []
+        for item in self.list_models(active=True):
+            model_info = self.parent_if_appl['_models'].find_one({'name': item})
+            filters.append(model_info.get('filter') or {})
+        filter_lookup = {self._dict_to_str(f): f for f in filters}
+        lookup = {}
+        for filter_str in filter_lookup:
+            if filter_str not in lookup:
+                tmp_ids = [
+                    r['_id']
+                    for r in super().find({
+                        '$and': [{'_id': {'$in': ids}}, filter_lookup[filter_str]]
+                    })
+                ]
+                lookup[filter_str] = {'_ids': tmp_ids}
+        return lookup
+
+    def _submit_download_content(self, ids):
+        if not self.remote:
+            print('downloading content from retrieved urls')
+            self._download_content(ids=ids)
+        else:
+            return superduper_requests.jobs.process(
+                self.database.name,
+                self.name,
+                '_download_content',
+                ids=ids,
+            )
+
+    def _submit_compute_neighbourhood(self, item, sub_ids, dependencies):
+        if not self.remote:
+            self._compute_neighbourhood(item, sub_ids)
+        else:
+            return superduper_requests.jobs.process(
+                self.database.name,
+                self.name,
+                '_compute_neighbourhood',
+                name=item,
+                ids=sub_ids,
+                dependencies=dependencies
+            )
+
+    def _process_single_item(self, type_, item, iteration, lookup, job_ids, download_id,
+                             verbose=True):
+        if type_ == 'models':
+            model_info = self.parent_if_appl['_models'].find_one({'name': item})
+            if iteration == 0:
+                dependencies = [download_id]
+            else:
+                model_dependencies = \
+                    self.parent_if_appl._get_dependencies_for_model(item)
+                dependencies = sum([
+                    job_ids[('models', dep)]
+                    for dep in model_dependencies
+                ], [])
+            filter_str = self._dict_to_str(model_info.get('filter') or {})
+            sub_ids = lookup[filter_str]['_ids']
+            process_id = \
+                self._submit_process_documents_with_model(item, sub_ids, dependencies,
+                                                          verbose=verbose)
+            job_ids[(type_, item)].append(process_id)
+            if model_info.get('download', False):  # pragma: no cover
+                download_id = superduper_requests.jobs.process(
+                    self.parent_if_appl.database.name,
+                    self.name,
+                    '_download_content',
+                    ids=sub_ids,
+                    dependencies=(process_id,),
+                )
+                job_ids[(type_, item)].append(download_id)
+        elif type_ == 'neighbourhood':
+            model = self.parent_if_appl._get_model_for_neighbourhood(item)
+            dependencies = job_ids[('models', model)]
+            process_id = self._submit_compute_with_neighbourhood(item, dependencies)
+            job_ids[(type_, item)].append(process_id)
+        return job_ids
+
     def _process_documents(self, ids, verbose=False):
+        job_ids = defaultdict(lambda: [])
+        download_id = self._submit_download_content(ids=ids)
+        if not self.list_models(active=True):
+            return
+        lookup = self._create_filter_lookup(ids)
+        G = self._create_plan()
+        current = [('models', model) for model in self.list_models(active=True)
+                   if not list(G.predecessors(('models', model)))]
+        iteration = 0
+        while current:
+            for (type_, item) in current:
+                self._process_single_item(type_, item, iteration, lookup, job_ids, download_id,
+                                          verbose=verbose)
+                current = sum([list(G.successors((type_, item))) for (type_, item) in current], [])
+                iteration += 1
+
+    def _process_documents_old(self, ids, verbose=False):
         if not self.remote:
             print('downloading content from retrieved urls')
             self._download_content(ids=ids)
@@ -1409,11 +1529,9 @@ class Collection(BaseCollection):
                     })
                 ]
                 lookup[filter_str] = {'_ids': tmp_ids}
-
         G = self._create_plan()
         current = [('models', model) for model in self.list_models(active=True)
                    if not list(G.predecessors(('models', model)))]
-
         iteration = 0
         while current:
             for (type_, item) in current:
@@ -1435,7 +1553,8 @@ class Collection(BaseCollection):
                         if iteration == 0:
                             dependencies = [download_id]
                         else:
-                            model_dependencies = self.parent_if_appl._get_dependencies_for_model(item)
+                            model_dependencies = \
+                                self.parent_if_appl._get_dependencies_for_model(item)
                             dependencies = sum([
                                 job_ids[('models', dep)]
                                 for dep in model_dependencies

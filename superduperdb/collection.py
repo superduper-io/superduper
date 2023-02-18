@@ -330,7 +330,7 @@ class Collection(BaseCollection):
         if loader_kwargs is None:
             loader_kwargs = {}
 
-        if active and object is not None:
+        if active and object is not None and not isinstance(object, str):
             assert hasattr(object, 'preprocess') or hasattr(object, 'forward')
 
         assert name not in self['_models'].distinct('name'), \
@@ -1323,7 +1323,7 @@ class Collection(BaseCollection):
         elif isinstance(manifest['object'], str) and '.'  in manifest['object']:
             model_name, attr = manifest['object'].split('.')
             model = self._load_object('models', model_name)
-            return getattr(model, str)
+            return getattr(model, attr)
         elif isinstance(manifest['object'], str):
             return self._load_object('models', manifest['object'])
         assert manifest.get('preprocessor') is not None \
@@ -1495,160 +1495,36 @@ class Collection(BaseCollection):
         iteration = 0
         while current:
             for (type_, item) in current:
-                self._process_single_item(type_, item, iteration, lookup, job_ids, download_id,
-                                          verbose=verbose)
-                current = sum([list(G.successors((type_, item))) for (type_, item) in current], [])
-                iteration += 1
-
-    def _process_documents_old(self, ids, verbose=False):
-        if not self.remote:
-            print('downloading content from retrieved urls')
-            self._download_content(ids=ids)
-        else:
-            job_ids = defaultdict(lambda: [])
-            download_id = superduper_requests.jobs.process(
-                self.database.name,
-                self.name,
-                '_download_content',
-                ids=ids,
-            )
-        if not self.list_models(active=True):
-            return         # pragma: no cover
-        filters = []
-        for item in self.list_models(active=True):
-            model_info = self.parent_if_appl['_models'].find_one({'name': item})
-            filters.append(model_info.get('filter') or {})
-        filter_lookup = {self._dict_to_str(f): f for f in filters}
-        lookup = {}
-        for filter_str in filter_lookup:
-            if filter_str not in lookup:
-                tmp_ids = [
-                    r['_id']
-                    for r in super().find({
-                        '$and': [{'_id': {'$in': ids}}, filter_lookup[filter_str]]
-                    })
-                ]
-                lookup[filter_str] = {'_ids': tmp_ids}
-        G = self._create_plan()
-        current = [('models', model) for model in self.list_models(active=True)
-                   if not list(G.predecessors(('models', model)))]
-        iteration = 0
-        while current:
-            for (type_, item) in current:
-                if type_ == 'models':
-                    model_info = self.parent_if_appl['_models'].find_one({'name': item})
-                    filter_str = self._dict_to_str(model_info.get('filter') or {})
-                    sub_ids = lookup[filter_str]['_ids']
-                    if not sub_ids:  # pragma: no cover
-                        continue
-                    if not self.remote:
-                        self._process_documents_with_model(
-                            model_name=item, ids=sub_ids, verbose=verbose,
-                            max_chunk_size=model_info.get('max_chunk_size', 5000),
-                            **model_info.get('loader_kwargs', {}),
-                        )
-                        if model_info.get('download', False):  # pragma: no cover
-                            self._download_content(ids=sub_ids)
-                    else:
-                        if iteration == 0:
-                            dependencies = [download_id]
-                        else:
-                            model_dependencies = \
-                                self.parent_if_appl._get_dependencies_for_model(item)
-                            dependencies = sum([
-                                job_ids[('models', dep)]
-                                for dep in model_dependencies
-                            ], [])
-                        process_id = superduper_requests.jobs.process(
-                            self.parent_if_appl.database.name,
-                            self.name,
-                            '_process_documents_with_model',
-                            model_name=item,
-                            ids=ids,
-                            verbose=verbose,
-                            dependencies=dependencies,
-                            **model_info.get('loader_kwargs', {}),
-                        )
-                        job_ids[(type_, item)].append(process_id)
-                        if model_info.get('download', False):  # pragma: no cover
-                            download_id = superduper_requests.jobs.process(
-                                self.parent_if_appl.database.name,
-                                self.name,
-                                '_download_content',
-                                ids=sub_ids,
-                                dependencies=(process_id,),
-                            )
-                elif type_ == 'neighbourhoods':
-                    model = self.parent_if_appl._get_model_for_neighbourhood(item)
-                    model_info = self.parent_if_appl['_models'].find_one({'name': model})
-                    filter_str = self._dict_to_str(model_info.get('filter', {}))
-                    sub_ids = lookup[filter_str]['_ids']
-                    if not sub_ids:  # pragma: no cover
-                        continue
-                    if not self.remote:
-                        self._compute_neighbourhood(item, sub_ids)
-                    else:
-                        process_id = superduper_requests.jobs.process(
-                            self.database.name,
-                            self.name,
-                            '_compute_neighbourhood',
-                            name=item,
-                            ids=sub_ids,
-                            dependencies=job_ids[('models', model)]
-                        )
-                        job_ids[(type_, item)].append(process_id)
-                else:
-                    raise NotImplementedError(f'unknown type_ {type_}')
+                job_ids = self._process_single_item(type_, item, iteration, lookup, job_ids, download_id,
+                                                    verbose=verbose)
             current = sum([list(G.successors((type_, item))) for (type_, item) in current], [])
             iteration += 1
-        if self.remote:
-            return dict(job_ids)
+        return job_ids
 
-    def _process_documents_with_model(self, model_name, ids, batch_size=10, verbose=False,
-                                      max_chunk_size=5000, num_workers=0, model=None):
-        import sys
-        sys.path.insert(0, os.getcwd())
-
-        model_info = self.parent_if_appl['_models'].find_one({'name': model_name})
-        if max_chunk_size is not None:
-            for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                print('computing chunk '
-                      f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
-                self._process_documents_with_model(
-                    model_name,
-                    ids=ids[i: i + max_chunk_size],
-                    batch_size=batch_size,
-                    verbose=verbose,
-                    num_workers=num_workers,
-                    max_chunk_size=None,
-                    model=model,
-                )
-            return
-
+    def _compute_model_outputs(self, ids, model_info, model=None, verbose=True):
         print('finding documents under filter')
+        model_name = model_info['name']
         features = model_info.get('features', {})
         if features is None:
-            features = {}    # pragma: no cover
+            features = {}  # pragma: no cover
         documents = list(self.find({'_id': {'$in': ids}}, features=features))
-        ids = [r['_id'] for r in documents]
+        ids = [r['_id'] for r in documents]  # find statement messes with the ordering
         for r in documents:
-            del r['_id']
+            del r['_id'] # _id can't be handled by dataloader
         print('done.')
         key = model_info.get('key', '_base')
         if key != '_base' or '_base' in features:
             passed_docs = [r[key] for r in documents]
         else:  # pragma: no cover
             passed_docs = documents
-        if model is None:
+        if model is None:  # model is not None during training, since a suboptimal model may be in need of validation
             model = self.models[model_name]
         inputs = training.loading.BasicDataset(
             passed_docs,
             model.preprocess if hasattr(model, 'preprocess') else lambda x: x
         )
         loader_kwargs = model_info.get('loader_kwargs', {})
-        if hasattr(model, 'forward'):
-            if 'batch_size' not in loader_kwargs:
-                loader_kwargs['batch_size'] = batch_size
+        if isinstance(model, torch.nn.Module):
             loader = torch.utils.data.DataLoader(
                 inputs,
                 **loader_kwargs,
@@ -1678,38 +1554,64 @@ class Collection(BaseCollection):
             else:
                 for r in passed_docs:  # pragma: no cover
                     outputs.append(model.preprocess(r))
+        return outputs, ids
+
+    def _process_documents_with_model(self, model_name, ids, verbose=False,
+                                      max_chunk_size=5000, num_workers=0, model=None):
+        import sys
+        sys.path.insert(0, os.getcwd())
+
+        model_info = self.parent_if_appl['_models'].find_one({'name': model_name})
+        if max_chunk_size is not None:
+            for it, i in enumerate(range(0, len(ids), max_chunk_size)):
+                print('computing chunk '
+                      f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
+                self._process_documents_with_model(
+                    model_name,
+                    ids=ids[i: i + max_chunk_size],
+                    verbose=verbose,
+                    num_workers=num_workers,
+                    max_chunk_size=None,
+                    model=model,
+                )
+            return
+
+        outputs, ids = self._compute_model_outputs(ids, model_info, model=model, verbose=verbose)
 
         if model_info.get('type'):
             type = self.types[model_info['type']]
-            tmp = [
-                {model_name: {
+            outputs = [
+                {
                     '_content': {
                         'bytes': type.encode(x),
                         'type': model_info['type']
                     }
-                }}
+                }
                 for x in outputs
             ]
-        else:
-            tmp = [{model_name: out} for out in outputs]
+
+        self._write_model_outputs(outputs, ids, model_info)
+        return outputs
+
+    def _write_model_outputs(self, outputs, ids, model_info):
         key = model_info.get('key', '_base')
+        model_name = model_info['name']
         print('bulk writing...')
         if 'target' not in model_info:
             self.bulk_write([
                 UpdateOne({'_id': id},
-                          {'$set': {f'_outputs.{key}.{model_name}': tmp[i][model_name]}})
+                          {'$set': {f'_outputs.{key}.{model_name}': outputs[i]}})
                 for i, id in enumerate(ids)
             ])
         else:  # pragma: no cover
             self.bulk_write([
                 UpdateOne({'_id': id},
                           {'$set': {
-                              model_info['target']: tmp[i][model_name]
+                              model_info['target']: outputs[i]
                           }})
                 for i, id in enumerate(ids)
             ])
         print('done.')
-        return tmp
 
     @staticmethod
     def _remove_like_from_filter(r):

@@ -30,12 +30,14 @@ def random_vectors():
         type='float_tensor',
     )
     coll.create_model(
+        'ma_linear_part_1',
         'model_attributes.linear1',
         active=True,
         type='float_tensor',
         key='x',
     )
     coll.create_model(
+        'ma_linear_part_2',
         'model_attributes.linear2',
         active=True,
         type='float_tensor',

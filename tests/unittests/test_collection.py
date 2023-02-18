@@ -13,7 +13,7 @@ from tests.material.splitters import trivial_splitter
 def test_filter_content(random_vectors):
     filter_ = \
         {'item': {'_content': {'url': 'https://www.superduperdb.com/logos/white.png',
-                               'converter': 'raw_bytes'}}}
+                               'type': 'raw_bytes'}}}
     filter_ = random_vectors._get_content_for_filter(filter_)
 
     # check that "_content" in the filter has been downloaded
@@ -79,13 +79,13 @@ def test_insert(random_vectors):
             'x': {
                 '_content': {
                     'bytes': FloatTensor.encode(x),
-                    'converter': 'float_tensor',
+                    'type': 'float_tensor',
                 }
             },
             'y': {
                 '_content': {
                     'bytes': FloatTensor.encode(y),
-                    'converter': 'float_tensor',
+                    'type': 'float_tensor',
                 }
             },
         })
@@ -102,18 +102,18 @@ def test_insert(random_vectors):
         'x': {
             '_content': {
                 'bytes': FloatTensor.encode(x),
-                'converter': 'float_tensor',
+                'type': 'float_tensor',
             }
         },
         'y': {
             '_content': {
                 'bytes': FloatTensor.encode(y),
-                'converter': 'float_tensor',
+                'type': 'float_tensor',
             }
         },
     })[1]
 
-    # this blocks the program so that cleanup doesn't take place
+    # this blocks the program so that cleanup part of fixture doesn't take place
     for model in job_ids:
         print(f'PROCESSING {model}...')
         for id_ in job_ids[model]:
@@ -122,7 +122,7 @@ def test_insert(random_vectors):
     r = random_vectors.find_one({'i': 2001})
 
     # check that all models have been applied to the document
-    assert len(r['_outputs']['x']) == 4
+    assert len(r['_outputs']['x']) == 5
 
 
 def test_update(random_vectors):
@@ -135,7 +135,7 @@ def test_update(random_vectors):
         {'$set': {'x': {
             '_content': {
                 'bytes': FloatTensor.encode(torch.randn(32)),
-                'converter': 'float_tensor',
+                'type': 'float_tensor',
             }
         }}}
     )
@@ -154,7 +154,7 @@ def func_(x):
 
 def test_create_list_get_delete_x(empty):
 
-    types_ = ['converter', 'loss', 'measure', 'metric', 'splitter']
+    types_ = ['type', 'loss', 'measure', 'metric', 'splitter']
 
     for type_ in types_:
         method = getattr(empty, f'create_{type_}')
@@ -284,7 +284,7 @@ def test_create_self_supervised_index(random_vectors):
                 'name': 'encoder_self',
                 'object': torch.nn.Linear(16, 16),
                 'key': 'x',
-                'converter': 'float_tensor',
+                'type': 'float_tensor',
                 'active': True,
                 'features': {'x': 'linear'},
             },

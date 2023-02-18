@@ -658,7 +658,7 @@ class Collection(BaseCollection):
 
         if isinstance(info['object'], ObjectId):
             _ = self._delete_objects(
-                'models', objects=[info['object']]
+                'models', objects=[info['object']], force=True,
             )
         print(f'unsetting output field _outputs.{info["key"]}.{info["name"]}')
         super().update_many(

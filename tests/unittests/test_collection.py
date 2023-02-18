@@ -444,7 +444,6 @@ def test_create_delete_neighbourhood(random_vectors):
     assert len(r['_like']['test_sim']) == 7
 
 
-
 def test_downloads(with_urls):
     r = with_urls.find_one(raw=True)
 

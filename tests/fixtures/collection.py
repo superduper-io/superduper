@@ -23,6 +23,11 @@ def random_vectors():
         key='x',
         active=True,
     )
+    coll.create_semantic_index('linear', ['linear'], measure='css')
+    coll['_meta'].replace_one({'key': 'semantic_index'},
+                              {'key': 'semantic_index', 'value': 'linear'},
+                              upsert=True)
+    coll.semantic_index = 'linear'
     coll.create_model(
         'model_attributes',
         ModelAttributes(32, 8, 4),
@@ -51,7 +56,7 @@ def random_vectors():
         active=True,
         features={'x': 'linear'},
     )
-    coll['_meta'].insert_one({'key': 'semantic_index', 'value': 'linear'})
+    coll.create_semantic_index('other_linear', ['other_linear'], measure='css')
     data = []
     eps = 0.01
     N = 500

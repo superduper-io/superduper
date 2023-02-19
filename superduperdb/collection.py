@@ -1167,7 +1167,7 @@ class Collection(BaseCollection):
 
     def _find_nearest(self, filter, ids=None):
         if self.remote:
-            filter, _ = self._convert_types(filter)
+            filter = self._convert_types(filter)
             return superduper_requests.client._find_nearest(self.database.name, self.name, filter,
                                                             ids=ids)
         assert '$like' in filter
@@ -1476,10 +1476,13 @@ class Collection(BaseCollection):
                     dependencies=(process_id,),
                 )
                 job_ids[(type_, item)].append(download_id)
-        elif type_ == 'neighbourhood':
+        elif type_ == 'neighbourhoods':
             model = self.parent_if_appl._get_model_for_neighbourhood(item)
+            model_info = self.parent_if_appl['_models'].find_one({'name': model})
+            filter_str = self._dict_to_str(model_info.get('filter') or {})
+            sub_ids = lookup[filter_str]['_ids']
             dependencies = job_ids[('models', model)]
-            process_id = self._submit_compute_with_neighbourhood(item, dependencies)
+            process_id = self._submit_compute_neighbourhood(item, sub_ids, dependencies)
             job_ids[(type_, item)].append(process_id)
         return job_ids
 
@@ -1492,6 +1495,7 @@ class Collection(BaseCollection):
         G = self._create_plan()
         current = [('models', model) for model in self.list_models(active=True)
                    if not list(G.predecessors(('models', model)))]
+
         iteration = 0
         while current:
             for (type_, item) in current:

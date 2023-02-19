@@ -28,9 +28,7 @@ def test_find_some(random_vectors):
     # check that the model has been used on new data to get outputs
     assert 'linear' in r['_outputs']['x']
     assert 'other_linear' in r['_outputs']['x']
-    assert 'model_attributes' in r['_outputs']['x']
-    assert 'linear1' in r['_outputs']['x']['model_attributes']  # consider changing to `model_attributes/linear1`
-    assert 'linear2' in r['_outputs']['x']['model_attributes']
+    assert 'ma_linear_part_1' in r['_outputs']['x']
 
 
 def test_find_like(random_vectors):
@@ -199,15 +197,16 @@ def _g(x):
 
 
 def test_create_delete_model_parts(empty):
+    empty.create_type(name='float_tensor', object=FloatTensor())
+    empty.create_postprocessor(name='g', object=_g)
+    empty.create_preprocessor(name='f', object=_f)
+    empty.create_forward(name='my_forward', object=torch.nn.Linear(32, 8))
     empty.create_model(
         'my_parts',
-        preprocessor={'name': 'f', 'object': _f},
-        forward={'name': 'my_forward', 'object': torch.nn.Linear(32, 8)},
-        postprocessor={'name': 'g', 'object': _g},
-        converter={
-            'name': 'float_tensor',
-            'object': FloatTensor,
-        },
+        preprocessor='f',
+        forward='my_forward',
+        postprocessor='g',
+        type='float_tensor',
         key='x',
     )
     m = empty.models['my_parts']
@@ -217,9 +216,7 @@ def test_create_delete_model_parts(empty):
     assert output.shape == torch.Size([8])
 
     empty.delete_model('my_parts', force=True)
-    assert 'f' not in empty.list_preprocessors()
-    assert 'my_forward' not in empty.list_forwards()
-    assert 'g' not in empty.list_postprocessors()
+    assert 'my_parts' not in empty.list_models()
 
 
 def test_create_delete_semantic_index(random_vectors):
@@ -277,31 +274,25 @@ def test_create_delete_semantic_index(random_vectors):
 
 def test_create_self_supervised_index(random_vectors):
 
+    random_vectors.create_model(
+        name='encoder_self',
+        object=torch.nn.Linear(16, 16),
+        key='x',
+        type='float_tensor',
+        active=True,
+        features={'x': 'linear'}
+    )
+    random_vectors.create_metric(name='p_at_1', object=PatK(1))
+    random_vectors.create_loss(name='ranking_loss', object=ranking_loss)
+    random_vectors.create_splitter(name='trivial_splitter', object=trivial_splitter)
     random_vectors.create_semantic_index(
         'ranking',
-        models=[
-            {
-                'name': 'encoder_self',
-                'object': torch.nn.Linear(16, 16),
-                'key': 'x',
-                'type': 'float_tensor',
-                'active': True,
-                'features': {'x': 'linear'},
-            },
-        ],
-        loss={
-            'name': 'ranking_loss',
-            'object': ranking_loss,
-        },
+        models=['encoder_self'],
+        loss='ranking_loss',
         filter={},
-        metrics=[
-            {
-                'name': 'p_at_1',
-                'object': PatK(1),
-            },
-        ],
+        metrics=['p_at_1'],
         measure='css',
-        splitter={'name': 'trivial', 'object': trivial_splitter},
+        splitter='trivial_splitter',
         batch_size=100,
         num_workers=0,
         n_epochs=100,
@@ -314,28 +305,28 @@ def test_create_self_supervised_index(random_vectors):
 
 
 def test_create_delete_imputation(random_vectors):
+    random_vectors.create_model(
+        name='classifier',
+        object=BinaryClassifier(32),
+        key='x',
+        active=False,
+    )
+    random_vectors.create_model(
+        name='label',
+        object=BinaryTarget(),
+        key='label',
+        active=False,
+    )
+    random_vectors.create_loss(name='binary_loss', object=torch.nn.BCEWithLogitsLoss())
+    random_vectors.create_metric(name='accuracy', object='accuracy')
 
     def f():
         return random_vectors.create_imputation(
             'classifier',
-            model={
-                'name': 'classifier',
-                'object': BinaryClassifier(32),
-                'key': 'x',
-            },
-            loss={
-                'name': 'binary_loss',
-                'object': torch.nn.BCEWithLogitsLoss(),
-            },
-            target={
-                'name': 'label',
-                'object': BinaryTarget(),
-                'key': 'label'
-            },
-            metrics=[{
-                'name': 'accuracy',
-                'object': accuracy
-            }],
+            model='classifier',
+            loss='binary_loss',
+            target='label',
+            metrics=['accuracy'],
             batch_size=20,
             num_workers=0,
             n_epochs=10,
@@ -350,8 +341,6 @@ def test_create_delete_imputation(random_vectors):
     assert 'classifier' in random_vectors.list_imputations()
 
     random_vectors.delete_imputation('classifier', force=True)
-    random_vectors.delete_loss('binary_loss', force=True)
-    random_vectors.delete_metric('accuracy', force=True)
 
     # check that deleting works
     assert 'classifier' not in random_vectors.list_imputations()

@@ -1,11 +1,9 @@
-import random
-
 import torch
 
 
-class BinaryTarget:
-    def eval(self):
-        pass
+class BinaryTarget(torch.nn.Module):
+    def preprocess(self, x):
+        return x
 
     def forward(self, x):
         return x.type(torch.float)
@@ -17,7 +15,8 @@ class BinaryClassifier(torch.nn.Module):
         self.linear = torch.nn.Linear(input_size, 1)
 
     def forward(self, x):
-        return self.linear(x)[:, 0]
+        out = self.linear(x)[:, 0]
+        return out
 
     def postprocess(self, x):
         return (x > 0.5).type(torch.float).item()

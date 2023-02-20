@@ -156,3 +156,5 @@ dmypy.json
 /.syncignore
 /supervisord.conf
 /docs/examples/data
+/cloudformation
+/*jd*

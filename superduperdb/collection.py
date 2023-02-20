@@ -816,6 +816,8 @@ class Collection(BaseCollection):
                 valid_probability = self['_meta'].find_one({'key': 'valid_probability'})['value']
             except TypeError:
                 valid_probability = 0.05
+
+            import pdb; pdb.set_trace()
             if '_fold' not in document:
                 document['_fold'] = 'valid' if r < valid_probability else 'train'
         documents = self._infer_types(documents)

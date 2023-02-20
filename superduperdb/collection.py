@@ -820,6 +820,7 @@ class Collection(BaseCollection):
             import pdb; pdb.set_trace()
             if '_fold' not in document:
                 document['_fold'] = 'valid' if r < valid_probability else 'train'
+        import pdb; pdb.set_trace()
         documents = self._infer_types(documents)
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover

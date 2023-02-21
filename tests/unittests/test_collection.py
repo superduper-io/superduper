@@ -38,8 +38,7 @@ def test_find_like(random_vectors):
     assert r_anchor['_id'] == r_found['_id']
 
     # retrieve same document with exact match
-    r_found = random_vectors.find_one({'$like': {'document': {'x': r_anchor['x']}, 'n': 10},
-                                       'label': r_anchor['label']})
+    r_found = random_vectors.find_one({'label': r_anchor['label']}, like={'x': r_anchor['x']}, n=10)
     assert r_anchor['_id'] == r_found['_id']
 
     # retrieve same document also finding similar first

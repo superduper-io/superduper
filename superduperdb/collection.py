@@ -301,9 +301,9 @@ class Collection(BaseCollection):
         return self._create_object('metrics', name, object)
 
     def create_model(self, name, object=None, preprocessor=None, forward=None,
-                     postprocessor=None, filter=None, type=None, active=True,
-                     key='_base', verbose=False,
-                     process_docs=True, loader_kwargs=None, max_chunk_size=5000, features=None):
+                     postprocessor=None, filter=None, type=None, active=True, key='_base',
+                     verbose=False, process_docs=True, loader_kwargs=None, max_chunk_size=5000,
+                     features=None):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -565,6 +565,7 @@ class Collection(BaseCollection):
             if splitter is not None:
                 r, other = splitter(r)
                 r['_other'] = other
+                r['_fold'] = 'valid'
             r['_validation_set'] = name
             tmp.append(r)
             it += 1
@@ -654,6 +655,9 @@ class Collection(BaseCollection):
             return
 
         info = self['_models'].find_one({'name': name})
+        if info is None:
+            return
+
         self['_models'].delete_one({'name': name})
 
         if isinstance(info['object'], ObjectId):
@@ -740,13 +744,14 @@ class Collection(BaseCollection):
             filter = convert_types(filter, converters=self.types)
         return filter
 
-    def find(self, filter=None, *args, similar_first=False, raw=False,
+    def find(self, filter=None, *args, like=None, similar_first=False, raw=False,
              features=None, download=False, similar_join=None, **kwargs):
         """
         Behaves like MongoDB ``find`` with exception of ``$like`` operator.
 
         :param filter: filter dictionary
         :param args: args passed to super()
+        :param like: item to which the results of the find should be similar
         :param similar_first: toggle to ``True`` to first find similar things, and then
                               apply filter to these things
         :param raw: toggle to ``True`` to not convert bytes to Python objects but return raw bytes
@@ -758,20 +763,17 @@ class Collection(BaseCollection):
 
         if filter is None:
             filter = {}
-        if download:
-            filter = self._get_content_for_filter(filter)    # pragma: no cover
-            if '_id' in filter:
-                del filter['_id']
-        like_place = self._find_like_operator(filter)
-        assert (like_place is None or like_place == '_base')
-        if like_place is not None:
-            filter = MongoStyleDict(filter)
+        if download and like is not None:
+            like = self._get_content_for_filter(like)    # pragma: no cover
+            if '_id' in like:
+                del like['_id']
+        if like is not None:
             if similar_first:
                 return self._find_similar_then_matches(filter, *args, raw=raw,
-                                                       features=features, **kwargs)
+                                                       features=features, like=like, **kwargs)
             else:
                 return self._find_matches_then_similar(filter, *args, raw=raw,
-                                                       features=features, **kwargs)
+                                                       features=features, like=like, **kwargs)
         else:
             if raw:
                 return Cursor(self, filter, *args, **kwargs)
@@ -816,11 +818,8 @@ class Collection(BaseCollection):
                 valid_probability = self['_meta'].find_one({'key': 'valid_probability'})['value']
             except TypeError:
                 valid_probability = 0.05
-
-            import pdb; pdb.set_trace()
             if '_fold' not in document:
                 document['_fold'] = 'valid' if r < valid_probability else 'train'
-        import pdb; pdb.set_trace()
         documents = self._infer_types(documents)
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover
@@ -1168,29 +1167,30 @@ class Collection(BaseCollection):
             documents[id_][f'{key}._content.bytes'] = downloader.results[id_]
         return documents
 
-    def _find_nearest(self, filter, ids=None):
+    def _find_nearest(self, like, ids=None, n=10):
         if self.remote:
-            filter = self._convert_types(filter)
-            return superduper_requests.client._find_nearest(self.database.name, self.name, filter,
+            like = self._convert_types(like)
+            return superduper_requests.client._find_nearest(self.database.name, self.name, like,
                                                             ids=ids)
-        assert '$like' in filter
         if ids is None:
             hash_set = self.hash_set
         else:  # pragma: no cover
             hash_set = self.hash_set[ids]
 
-        if '_id' in filter['$like']['document']:
-            return hash_set.find_nearest_from_id(filter['$like']['document']['_id'],
-                                                 n=filter['$like']['n'])
+        if '_id' in like:
+            return hash_set.find_nearest_from_id(like['_id'],
+                                                 n=n)
         else:
-            models = self.parent_if_appl['_semantic_indexes'].find_one({'name': self.semantic_index})['models']
-            available_keys = list(filter['$like']['document'].keys()) + ['_base']
+            models = self.parent_if_appl['_semantic_indexes'].find_one(
+                {'name': self.semantic_index}
+            )['models']
+            available_keys = list(like.keys()) + ['_base']
             man = self.parent_if_appl['_models'].find_one({
                 'key': {'$in': available_keys},
                 'name': {'$in': models},
             })
             model = self.models[man['name']]
-            document = MongoStyleDict(filter['$like']['document'])
+            document = MongoStyleDict(like)
             if '_outputs' not in document:
                 document['_outputs'] = {}
             info = self.parent_if_appl['_models'].find_one({'name': man['name']})
@@ -1205,43 +1205,19 @@ class Collection(BaseCollection):
             model_input = document[man['key']] if man['key'] != '_base' else document
             with torch.no_grad():
                 h = apply_model(model, model_input, True)
-        return hash_set.find_nearest_from_hash(h, n=filter['$like']['n'])
+        return hash_set.find_nearest_from_hash(h, n=n)
 
-    @staticmethod
-    def _find_like_operator(r):  # pragma: no cover
-        """
-
-        >>> Collection._find_like_operator({'$like': 1})
-        '_base'
-        >>> Collection._find_like_operator({'a': {'$like': 1}})
-        'a'
-        >>> Collection._find_like_operator({'a': {'b': {'$like': 1}}})
-        'a.b'
-
-        """
-        if '$like' in r:
-            return '_base'
-        else:
-            for k in r:
-                if isinstance(r[k], dict):
-                    like_place = Collection._find_like_operator(r[k])
-                    if like_place is not None:
-                        if like_place == '_base':
-                            return k
-                        else:
-                            return f'{k}.{like_place}'
-
-    def _find_similar_then_matches(self, filter, *args, raw=False, features=None, **kwargs):
-        similar = self._find_nearest(filter)
-        new_filter = self._remove_like_from_filter(filter)
+    def _find_similar_then_matches(self, filter, like, *args, raw=False, features=None, n=10,
+                                   **kwargs):
+        similar = self._find_nearest(like, n=n)
         filter = {
             '$and': [
-                new_filter,
+                filter,
                 {'_id': {'$in': similar['_ids']}}
             ]
         }
         if raw:
-            return Cursor(self, filter, *args, **kwargs) # pragma: no cover
+            return Cursor(self, filter, *args, **kwargs)  # pragma: no cover
         else:
             return SuperDuperCursor(
                 self,
@@ -1252,25 +1228,23 @@ class Collection(BaseCollection):
                 **kwargs,
             )
 
-    def _find_matches_then_similar(self, filter, *args, raw=False, features=None, **kwargs):
-
-        only_like = self._test_only_like(filter)
-        if not only_like:
-            new_filter = self._remove_like_from_filter(filter)
+    def _find_matches_then_similar(self, filter, like, *args, raw=False, features=None, n=10,
+                                   **kwargs):
+        if filter:
             matches_cursor = SuperDuperCursor(
                 self,
-                new_filter,
+                filter,
                 {'_id': 1},
                 *args[1:],
                 features=features,
                 **kwargs,
             )
             ids = [x['_id'] for x in matches_cursor]
-            similar = self._find_nearest(filter, ids=ids)
+            similar = self._find_nearest(like, ids=ids, n=n)
         else:  # pragma: no cover
-            similar = self._find_nearest(filter)
+            similar = self._find_nearest(like, n=n)
         if raw:
-            return Cursor(self, {'_id': {'$in': similar['_ids']}}, **kwargs) # pragma: no cover
+            return Cursor(self, {'_id': {'$in': similar['_ids']}}, **kwargs)  # pragma: no cover
         else:
             return SuperDuperCursor(self, {'_id': {'$in': similar['_ids']}},
                                     features=features,
@@ -1329,6 +1303,7 @@ class Collection(BaseCollection):
             return getattr(model, attr)
         elif isinstance(manifest['object'], str):
             return self._load_object('models', manifest['object'])
+
         assert manifest.get('preprocessor') is not None \
             or manifest.get('forward') is not None
         preprocessor = None

@@ -158,3 +158,5 @@ dmypy.json
 /docs/examples/data
 /cloudformation
 /*jd*
+/docs/examples/annotations
+/docs/examples/*.zip

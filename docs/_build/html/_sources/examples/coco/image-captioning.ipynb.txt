@@ -23,7 +23,7 @@
   {
    "cell_type": "code",
    "execution_count": 11,
-   "id": "c1cde713",
+   "id": "21f543d5",
    "metadata": {},
    "outputs": [
     {
@@ -2597,15 +2597,6 @@
     "for r, res in zip(images, results):\n",
     "    display(r['img'])\n",
     "    print(res)"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "id": "b8de1319",
-   "metadata": {},
-   "source": [
-    "Now we have trained and evaluated several models of various types. This includes multiple interacting models with mutual dependencies. In the case of our own efficient semantic search, and also the attribute predictor, these models are downstream of the image clip model, in the sense that at inference time, clip must be present in order to be able to execute these models. In the case of attribute prediction, the training task was downstream from the \n",
-    "spacy pipeline for part-of-speech tagging; these tags were used to produce targets for training. However at run-time, the spacy pipeline won't be necessary."
    ]
   }
  ],

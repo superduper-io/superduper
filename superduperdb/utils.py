@@ -272,6 +272,8 @@ class Downloader:
 
 
 class _UpdateableProgress:
+    type_ = 'tqdm'
+
     def __init__(self, total, size=None, prefix='', file=sys.stdout):
         self.total = total
         if size is None:
@@ -283,15 +285,19 @@ class _UpdateableProgress:
         self.file = file
         self.prefix = prefix
         self.j = 0
-        self.progress = tqdm.tqdm(total=total)
+
+        if self.type_ == 'tqdm':
+            self.progress = tqdm.tqdm(total=total)
+        elif self.type_ == 'tqdm_notebook':
+            self.progress = tqdm.tqdm_notebook(total=total)
+        else:
+            raise NotImplementedError
 
     def update(self, it=1):
         self.progress.update(it)
 
 
 def progressbar(*args, **kwargs):
-    """
-    """
     if args and args[0] is not None:
         return _progressbar(*args, **kwargs)
     else:

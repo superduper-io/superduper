@@ -2757,8 +2757,6 @@ a large group of people standing around a &lt;unk&gt;
 a living room with a large &lt;unk&gt; &lt;unk&gt; and &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
 </pre></div></div>
 </div>
-<p>Now we have trained and evaluated several models of various types. This includes multiple interacting models with mutual dependencies. In the case of our own efficient semantic search, and also the attribute predictor, these models are downstream of the image clip model, in the sense that at inference time, clip must be present in order to be able to execute these models. In the case of attribute prediction, the training task was downstream from the spacy pipeline for part-of-speech tagging;
-these tags were used to produce targets for training. However at run-time, the spacy pipeline won’t be necessary.</p>
 </section>
 
 

@@ -10,3 +10,4 @@ CoCo Dataset
     text-2-image-retrieval-with-clip.ipynb
     bespoke-retriever-using-clip-embeddings.ipynb
     attribute-prediction.ipynb
+    image-captioning.ipynb

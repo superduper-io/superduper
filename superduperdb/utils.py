@@ -271,7 +271,7 @@ class Downloader:
             self.results[self.ids[i]] = r.content
 
 
-class _UpdateableProgress:
+class UpdateableProgress:
     type_ = 'tqdm'
 
     def __init__(self, total, size=None, prefix='', file=sys.stdout):
@@ -301,7 +301,7 @@ def progressbar(*args, **kwargs):
     if args and args[0] is not None:
         return _progressbar(*args, **kwargs)
     else:
-        return _UpdateableProgress(*args, **kwargs)
+        return UpdateableProgress(*args, **kwargs)
 
 
 def _progressbar(it=None, prefix="", size=None, out=sys.stdout, total=None):

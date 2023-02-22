@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Coco: inserting and getting data &mdash; SuperDuperDB  documentation</title>
+  <title>Inserting and getting data &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -25,7 +25,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Text-2-Image document retrieval using pretrained CLIP" href="text-2-image-retrieval-with-clip.html" />
-    <link rel="prev" title="CoCo dataset: setup and installation" href="setup-and-installation.html" /> 
+    <link rel="prev" title="Setup and installation" href="setup-and-installation.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -53,11 +53,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">Notebook examples</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo Dataset</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="setup-and-installation.html">CoCo dataset: setup and installation</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Coco: inserting and getting data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="setup-and-installation.html">Setup and installation</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Inserting and getting data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="text-2-image-retrieval-with-clip.html">Text-2-Image document retrieval using pretrained CLIP</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bespoke-retriever-using-clip-embeddings.html">Bespoke retrieval based on CLIP embedding vectors</a></li>
-<li class="toctree-l3"><a class="reference internal" href="attribute-prediction.html">Attribute prediction using “imputations”; transfer learning, preparation using SpaCy and simple PyTorch linear predictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="attribute-prediction.html">Attribute prediction using “imputations” with preparation in SpaCy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="image-captioning.html">Image captioning using recurrent language modelling and transfer learning based on CLIP</a></li>
 </ul>
 </li>
 </ul>
@@ -81,7 +82,7 @@
       <li><a href="../../index.html" class="icon icon-home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Notebook examples</a></li>
           <li class="breadcrumb-item"><a href="index.html">CoCo Dataset</a></li>
-      <li class="breadcrumb-item active">Coco: inserting and getting data</li>
+      <li class="breadcrumb-item active">Inserting and getting data</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/examples/coco/inserting-and-getting-data.ipynb.txt" rel="nofollow"> View page source</a>
       </li>
@@ -370,8 +371,8 @@ div.rendered_html tbody tr:hover {
     text-align: unset;
 }
 </style>
-<section id="Coco:-inserting-and-getting-data">
-<h1>Coco: inserting and getting data<a class="headerlink" href="#Coco:-inserting-and-getting-data" title="Permalink to this heading"></a></h1>
+<section id="Inserting-and-getting-data">
+<h1>Inserting and getting data<a class="headerlink" href="#Inserting-and-getting-data" title="Permalink to this heading"></a></h1>
 <p>Importing a collection with SuperDuperDB is exactly like importing a collection with PyMongo.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -594,7 +595,7 @@ number of workers 0
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="setup-and-installation.html" class="btn btn-neutral float-left" title="CoCo dataset: setup and installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="setup-and-installation.html" class="btn btn-neutral float-left" title="Setup and installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="text-2-image-retrieval-with-clip.html" class="btn btn-neutral float-right" title="Text-2-Image document retrieval using pretrained CLIP" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

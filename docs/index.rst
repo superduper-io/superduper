@@ -39,7 +39,7 @@ Documentation contents
 ======================
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     getting_started
     overview

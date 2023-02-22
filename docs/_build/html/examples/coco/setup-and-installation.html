@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CoCo dataset: setup and installation &mdash; SuperDuperDB  documentation</title>
+  <title>Setup and installation &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Coco: inserting and getting data" href="inserting-and-getting-data.html" />
+    <link rel="next" title="Inserting and getting data" href="inserting-and-getting-data.html" />
     <link rel="prev" title="CoCo Dataset" href="index.html" /> 
 </head>
 
@@ -53,14 +53,15 @@
 <li class="toctree-l1"><a class="reference internal" href="../../training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">Notebook examples</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo Dataset</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#">CoCo dataset: setup and installation</a><ul>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Setup and installation</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#Preparing-the-data-for-injestion">Preparing the data for injestion</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="inserting-and-getting-data.html">Coco: inserting and getting data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="inserting-and-getting-data.html">Inserting and getting data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="text-2-image-retrieval-with-clip.html">Text-2-Image document retrieval using pretrained CLIP</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bespoke-retriever-using-clip-embeddings.html">Bespoke retrieval based on CLIP embedding vectors</a></li>
-<li class="toctree-l3"><a class="reference internal" href="attribute-prediction.html">Attribute prediction using “imputations”; transfer learning, preparation using SpaCy and simple PyTorch linear predictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="attribute-prediction.html">Attribute prediction using “imputations” with preparation in SpaCy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="image-captioning.html">Image captioning using recurrent language modelling and transfer learning based on CLIP</a></li>
 </ul>
 </li>
 </ul>
@@ -84,7 +85,7 @@
       <li><a href="../../index.html" class="icon icon-home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Notebook examples</a></li>
           <li class="breadcrumb-item"><a href="index.html">CoCo Dataset</a></li>
-      <li class="breadcrumb-item active">CoCo dataset: setup and installation</li>
+      <li class="breadcrumb-item active">Setup and installation</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/examples/coco/setup-and-installation.ipynb.txt" rel="nofollow"> View page source</a>
       </li>
@@ -373,8 +374,8 @@ div.rendered_html tbody tr:hover {
     text-align: unset;
 }
 </style>
-<section id="CoCo-dataset:-setup-and-installation">
-<h1>CoCo dataset: setup and installation<a class="headerlink" href="#CoCo-dataset:-setup-and-installation" title="Permalink to this heading"></a></h1>
+<section id="Setup-and-installation">
+<h1>Setup and installation<a class="headerlink" href="#Setup-and-installation" title="Permalink to this heading"></a></h1>
 <p>SuperDuperDB uses MongoDB for data storage. If you haven’t done so already, install it using the following lines of bash.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc <span class="p">|</span> sudo apt-key add -
 sudo apt-get install gnupg
@@ -515,7 +516,7 @@ pip install -r ../../requirements.txt
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="CoCo Dataset" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="inserting-and-getting-data.html" class="btn btn-neutral float-right" title="Coco: inserting and getting data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="inserting-and-getting-data.html" class="btn btn-neutral float-right" title="Inserting and getting data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

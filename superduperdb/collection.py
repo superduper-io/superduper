@@ -262,6 +262,8 @@ class Collection(BaseCollection):
             print('aborting training early...')
         r = self['_models'].find_one({'name': model})
         ids = [r['_id'] for r in self.find(r.get('filter', {}), {'_id': 1})]
+        if not r.get('active', True):
+            return
 
         if not self.remote:
             self._process_documents_with_model(model, ids, **r.get('loader_kwargs', {}),

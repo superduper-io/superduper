@@ -232,6 +232,8 @@ class Collection(BaseCollection):
         :return: job_ids of jobs required to create the imputation
         """
 
+        assert name not in self.list_imputations()
+
         assert target in self.list_models()
         assert model in self.list_models()
         assert loss in self.list_losses()
@@ -254,7 +256,10 @@ class Collection(BaseCollection):
             'trainer_kwargs': trainer_kwargs,
         })
 
-        job_id = self._train_imputation(name)
+        try:
+            job_id = self._train_imputation(name)
+        except KeyboardInterrupt:
+            print('aborting training early...')
         r = self['_models'].find_one({'name': model})
         ids = [r['_id'] for r in self.find(r.get('filter', {}), {'_id': 1})]
 
@@ -460,17 +465,6 @@ class Collection(BaseCollection):
             'trainer_kwargs': trainer_kwargs,
         })
         if loss is None:
-            if self.remote and validation_sets:
-                return [superduper_requests.jobs.process(
-                    self.database.name,
-                    self.name,
-                    'validate_semantic_index',
-                    name,
-                    validation_sets,
-                    metrics,
-                )]
-            elif validation_sets:
-                return self.validate_semantic_index(name, validation_sets, metrics)
             return
 
         try:
@@ -482,7 +476,10 @@ class Collection(BaseCollection):
         filter_ = self['_models'].find_one({'name': active_model}, {'filter': 1})['filter']
 
         job_ids = []
-        job_ids.append(self._train_semantic_index(name=name))
+        try:
+            job_ids.append(self._train_semantic_index(name=name))
+        except KeyboardInterrupt:
+            print('aborting training...')
         active_models = self.list_models(**{'active': True, 'name': {'$in': models}})
         for model in active_models:
             model_info = self['_models'].find_one({'name': model})
@@ -644,6 +641,10 @@ class Collection(BaseCollection):
         :param force: Toggle to ``True`` to skip confirmation
         """
         info = self['_models'].find_one({'name': name}, {'filter': 1})
+        try:
+            del self.models[name]
+        except KeyError:
+            pass
         if not force: # pragma: no cover
             n_documents = self.count_documents(info.get('filter') or {})
         do_delete = False
@@ -769,11 +770,11 @@ class Collection(BaseCollection):
                 del like['_id']
         if like is not None:
             if similar_first:
-                return self._find_similar_then_matches(filter, *args, raw=raw,
+                return self._find_similar_then_matches(filter, like, *args, raw=raw,
                                                        features=features, like=like, **kwargs)
             else:
-                return self._find_matches_then_similar(filter, *args, raw=raw,
-                                                       features=features, like=like, **kwargs)
+                return self._find_matches_then_similar(filter, like, *args, raw=raw,
+                                                       features=features, **kwargs)
         else:
             if raw:
                 return Cursor(self, filter, *args, **kwargs)
@@ -1366,8 +1367,6 @@ class Collection(BaseCollection):
         if not self.remote:
             self._process_documents_with_model(
                 model_name=model_name, ids=sub_ids, verbose=verbose,
-                max_chunk_size=model_info.get('max_chunk_size', 5000),
-                **model_info.get('loader_kwargs', {}),
             )
             if model_info.get('download', False):  # pragma: no cover
                 self._download_content(ids=sub_ids)
@@ -1380,7 +1379,6 @@ class Collection(BaseCollection):
                 ids=sub_ids,
                 verbose=verbose,
                 dependencies=dependencies,
-                **model_info.get('loader_kwargs', {}),
             )
 
     def _create_filter_lookup(self, ids):

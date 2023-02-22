@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bespoke retrieval based on CLIP embedding vectors &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Attribute prediction using “imputations”; transfer learning, preparation using SpaCy and simple PyTorch linear predictor" href="attribute-prediction.html" />
+    <link rel="prev" title="Text-2-Image document retrieval using pretrained CLIP" href="text-2-image-retrieval-with-clip.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Overview of SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">SuperDuperDB Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cluster.html">Setting up a SuperDuperDB cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Deep dive into SuperDuperDB models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../semantic_indexes.html">Deep dive into semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../training.html">Model training with SuperDuperDB</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Notebook examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo Dataset</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="setup-and-installation.html">CoCo dataset: setup and installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="inserting-and-getting-data.html">Coco: inserting and getting data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="text-2-image-retrieval-with-clip.html">Text-2-Image document retrieval using pretrained CLIP</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Bespoke retrieval based on CLIP embedding vectors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="attribute-prediction.html">Attribute prediction using “imputations”; transfer learning, preparation using SpaCy and simple PyTorch linear predictor</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../full_usage.html">Full usage</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Notebook examples</a></li>
+          <li class="breadcrumb-item"><a href="index.html">CoCo Dataset</a></li>
+      <li class="breadcrumb-item active">Bespoke retrieval based on CLIP embedding vectors</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/examples/coco/bespoke-retriever-using-clip-embeddings.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars and line breaks on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+    white-space: pre;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.jp-RenderedHTMLCommon thead,
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+.jp-RenderedHTMLCommon th,
+div.rendered_html th {
+  font-weight: bold;
+}
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.jp-RenderedHTMLCommon tbody tr:hover,
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section id="Bespoke-retrieval-based-on-CLIP-embedding-vectors">
+<h1>Bespoke retrieval based on CLIP embedding vectors<a class="headerlink" href="#Bespoke-retrieval-based-on-CLIP-embedding-vectors" title="Permalink to this heading"></a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.client</span> <span class="kn">import</span> <span class="n">the_client</span>
+
+<span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">coco</span><span class="o">.</span><span class="n">documents</span>
+</pre></div>
+</div>
+</div>
+<p>In the notebook from the previous chapter we implemented retrieval based on a pretrained CLIP model from open-source. In this notebook we will train our own model based on a simpler architecture, but which has the upside of increased efficiency compared to the original model.</p>
+<p>To this end we will first implement a simpler sentence embedding, using a simple word-embedding approach based around Glove. Please look at the model in <code class="docutils literal notranslate"><span class="pre">examples.models.AverageOfGloves</span></code>.</p>
+<p>Get the embeddings first if you haven’t already:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>curl https://downloads.cs.stanford.edu/nlp/data/glove.6B.zip -o data/glove.6B.zip
+<span class="o">!</span>unzip data/glove.6B.zip
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  822M  100  822M    0     0  5275k      0  0:02:39  0:02:39 --:--:-- 5128k  5679k      0  0:02:28  0:00:36  0:01:52 5225k 5655k      0  0:02:28  0:00:38  0:01:50 5226k      0  0:02:29  0:00:39  0:01:50 5233k80k      0  0:02:30  0:00:46  0:01:44 5220k 5466k      0  0:02:34  0:01:07  0:01:27 5208k40k      0  0:02:34  0:01:15  0:01:19 5225k6k      0  0:02:36  0:01:40  0:00:56 5120k  0  5304k      0  0:02:38  0:02:14  0:00:24 5120k
+Archive:  data/glove.6B.zip
+  inflating: glove.6B.50d.txt
+  inflating: glove.6B.100d.txt
+  inflating: glove.6B.200d.txt
+  inflating: glove.6B.300d.txt
+</pre></div></div>
+</div>
+<p>We quote the full code from the <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory here for completeness:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.models</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">AverageOfGloves</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="o">=</span> <span class="n">embeddings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lookup</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">))))</span>
+
+    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sentence</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">sentence</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span>
+        <span class="n">cleaned</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[^a-z0-9 ]&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span>  <span class="n">sentence</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="n">cleaned</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[ ]+&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span>  <span class="n">cleaned</span><span class="p">)</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">cleaned</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">words</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">words</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="n">ix</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookup</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">,</span> <span class="n">words</span><span class="p">))</span>
+        <span class="n">vectors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">return</span> <span class="n">vectors</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">AverageOfGloves</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;glove.6B.50d.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+<span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+<span class="n">vectors</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+<span class="n">vectors</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span>
+
+<span class="n">glove</span> <span class="o">=</span> <span class="n">AverageOfGloves</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">),</span> <span class="n">index</span><span class="p">)</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
+    <span class="s1">&#39;average_glove&#39;</span><span class="p">,</span>
+    <span class="nb">object</span><span class="o">=</span><span class="n">glove</span><span class="p">,</span>
+    <span class="n">key</span><span class="o">=</span><span class="s1">&#39;captions&#39;</span><span class="p">,</span>
+    <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Since the glove vectors are smaller than the output of the CLIP model, we will create a linear projection of the CLIP embeddings so that the outputs over image inputs have the same size as the glove embeddings.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
+    <span class="s1">&#39;clip_projection&#39;</span><span class="p">,</span>
+    <span class="nb">object</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span>
+    <span class="n">active</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="s1">&#39;clip&#39;</span><span class="p">},</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+computing chunk (1/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 15849.46it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (2/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 18473.02it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (3/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 17227.97it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (4/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 15385.28it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (5/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 14218.32it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (6/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 19713.69it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (7/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 19523.08it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (8/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 19427.59it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (9/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 17623.69it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (10/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 17361.48it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (11/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 17342.51it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (12/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 18930.44it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (13/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 19075.30it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (14/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 18700.83it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (15/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 14474.63it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (16/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 18408.83it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (17/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1783/1783 [00:00&lt;00:00, 16340.58it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<p>Let’s also create a loss function, in order to be able to perform the learning task. Here’s the code in full:</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">examples.losses</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="k">def</span> <span class="nf">ranking_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">similarities</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">similarities</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.losses</span> <span class="kn">import</span> <span class="n">ranking_loss</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_loss</span><span class="p">(</span><span class="s1">&#39;ranking_loss&#39;</span><span class="p">,</span> <span class="n">ranking_loss</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>A semantic index training requires:</p>
+<ul class="simple">
+<li><p>1 or more models</p></li>
+<li><p>A measure function to measure similarity between model outputs</p></li>
+<li><p>A loss function</p></li>
+<li><p>One or more validation sets</p></li>
+<li><p>One or more metrics to measure performance</p></li>
+</ul>
+<p>We now have all of these things ready and registered with the database, so we can start the training:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
+    <span class="s1">&#39;simple_image_search&#39;</span><span class="p">,</span>
+    <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clip_projection&#39;</span><span class="p">,</span> <span class="s1">&#39;average_glove&#39;</span><span class="p">],</span>
+    <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;ranking_loss&#39;</span><span class="p">,</span>
+    <span class="nb">filter</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">projection</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;_like&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">],</span>
+    <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;css&#39;</span><span class="p">,</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">n_epochs</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">log_weights</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">validation_interval</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">no_improve_then_stop</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">n_iterations</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+    <span class="n">use_grads</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;clip_projection&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;average_glove&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+downloading ids for {&#39;_fold&#39;: &#39;train&#39;}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 77716/77716 [00:00&lt;00:00, 226470.26it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+downloading records for {&#39;_fold&#39;: &#39;valid&#39;}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4067/4067 [00:00&lt;00:00, 6417.83it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00&lt;00:00, 15385.34it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  0%|                                                                                                                                                                  | 0/1000 [00:00&lt;?, ?it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00&lt;00:00, 59143.84it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:17&lt;00:00, 56.34it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+fold: VALID; iteration: 0; epoch: 0; text2image_retrieval/p_at_10: 0.356; loss: 5.240744029774385;
+fold: TRAIN; iteration: 0; epoch: 0; loss: 5.316588878631592;
+fold: TRAIN; iteration: 1; epoch: 0; loss: 5.3261027336120605;
+fold: TRAIN; iteration: 2; epoch: 0; loss: 5.3142170906066895;
+fold: TRAIN; iteration: 3; epoch: 0; loss: 5.318691253662109;
+fold: TRAIN; iteration: 4; epoch: 0; loss: 5.321549892425537;
+fold: TRAIN; iteration: 5; epoch: 0; loss: 5.317481517791748;
+fold: TRAIN; iteration: 6; epoch: 0; loss: 5.315903186798096;
+fold: TRAIN; iteration: 7; epoch: 0; loss: 5.322670936584473;
+fold: TRAIN; iteration: 8; epoch: 0; loss: 5.313449382781982;
+fold: TRAIN; iteration: 9; epoch: 0; loss: 5.308677673339844;
+fold: TRAIN; iteration: 10; epoch: 0; loss: 5.321168899536133;
+fold: TRAIN; iteration: 11; epoch: 0; loss: 5.319817543029785;
+fold: TRAIN; iteration: 12; epoch: 0; loss: 5.310636043548584;
+fold: TRAIN; iteration: 13; epoch: 0; loss: 5.319171905517578;
+fold: TRAIN; iteration: 14; epoch: 0; loss: 5.318215370178223;
+fold: TRAIN; iteration: 15; epoch: 0; loss: 5.312633991241455;
+fold: TRAIN; iteration: 16; epoch: 0; loss: 5.323750019073486;
+fold: TRAIN; iteration: 17; epoch: 0; loss: 5.316975116729736;
+fold: TRAIN; iteration: 18; epoch: 0; loss: 5.320716857910156;
+fold: TRAIN; iteration: 19; epoch: 0; loss: 5.317598819732666;
+fold: TRAIN; iteration: 20; epoch: 0; loss: 5.314947128295898;
+fold: TRAIN; iteration: 21; epoch: 0; loss: 5.321103096008301;
+fold: TRAIN; iteration: 22; epoch: 0; loss: 5.320515155792236;
+fold: TRAIN; iteration: 23; epoch: 0; loss: 5.311622142791748;
+fold: TRAIN; iteration: 24; epoch: 0; loss: 5.319619178771973;
+fold: TRAIN; iteration: 25; epoch: 0; loss: 5.319243907928467;
+fold: TRAIN; iteration: 26; epoch: 0; loss: 5.3173699378967285;
+fold: TRAIN; iteration: 27; epoch: 0; loss: 5.321239471435547;
+fold: TRAIN; iteration: 28; epoch: 0; loss: 5.322047710418701;
+fold: TRAIN; iteration: 29; epoch: 0; loss: 5.316872596740723;
+fold: TRAIN; iteration: 30; epoch: 0; loss: 5.321576118469238;
+fold: TRAIN; iteration: 31; epoch: 0; loss: 5.312963485717773;
+fold: TRAIN; iteration: 32; epoch: 0; loss: 5.313578128814697;
+fold: TRAIN; iteration: 33; epoch: 0; loss: 5.321793556213379;
+fold: TRAIN; iteration: 34; epoch: 0; loss: 5.320472717285156;
+fold: TRAIN; iteration: 35; epoch: 0; loss: 5.324222087860107;
+fold: TRAIN; iteration: 36; epoch: 0; loss: 5.319289207458496;
+fold: TRAIN; iteration: 37; epoch: 0; loss: 5.314582347869873;
+fold: TRAIN; iteration: 38; epoch: 0; loss: 5.314362049102783;
+fold: TRAIN; iteration: 39; epoch: 0; loss: 5.315695285797119;
+fold: TRAIN; iteration: 40; epoch: 0; loss: 5.316107749938965;
+fold: TRAIN; iteration: 41; epoch: 0; loss: 5.314114093780518;
+fold: TRAIN; iteration: 42; epoch: 0; loss: 5.318187236785889;
+fold: TRAIN; iteration: 43; epoch: 0; loss: 5.312407493591309;
+fold: TRAIN; iteration: 44; epoch: 0; loss: 5.316751956939697;
+fold: TRAIN; iteration: 45; epoch: 0; loss: 5.317948341369629;
+fold: TRAIN; iteration: 46; epoch: 0; loss: 5.314014911651611;
+fold: TRAIN; iteration: 47; epoch: 0; loss: 5.31089448928833;
+fold: TRAIN; iteration: 48; epoch: 0; loss: 5.314859390258789;
+fold: TRAIN; iteration: 49; epoch: 0; loss: 5.316694259643555;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00&lt;00:00, 14100.02it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  0%|                                                                                                                                                                  | 0/1000 [00:00&lt;?, ?it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00&lt;00:00, 55735.30it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:16&lt;00:00, 60.10it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+no best model found...
+fold: VALID; iteration: 50; epoch: 0; text2image_retrieval/p_at_10: 0.349; loss: 5.241150463328642;
+fold: TRAIN; iteration: 50; epoch: 0; loss: 5.3170623779296875;
+fold: TRAIN; iteration: 51; epoch: 0; loss: 5.315185546875;
+fold: TRAIN; iteration: 52; epoch: 0; loss: 5.32337760925293;
+fold: TRAIN; iteration: 53; epoch: 0; loss: 5.320399761199951;
+fold: TRAIN; iteration: 54; epoch: 0; loss: 5.3180084228515625;
+fold: TRAIN; iteration: 55; epoch: 0; loss: 5.320443630218506;
+fold: TRAIN; iteration: 56; epoch: 0; loss: 5.309638500213623;
+aborting training...
+computing chunk (1/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 16845.00it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (2/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 18970.30it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (3/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 18737.05it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (4/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 10851.47it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (5/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 19068.61it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (6/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 12997.82it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (7/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 18365.88it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (8/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 11488.52it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (9/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 20034.79it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (10/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 14414.82it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (11/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 12019.75it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (12/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 19780.27it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (13/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 10905.39it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (14/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 20253.49it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (15/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 11924.41it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (16/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:00&lt;00:00, 11519.36it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+computing chunk (17/17)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1783/1783 [00:00&lt;00:00, 17801.54it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  0%|                                                                                                                                                                  | 0/1000 [00:00&lt;?, ?it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00&lt;00:00, 60216.27it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:15&lt;00:00, 66.51it/s]
+</pre></div></div>
+</div>
+<p>We now can see that we’ve set and trained our own semantic index. Let’s take a look at the results of the training:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="n">info</span> <span class="o">=</span> <span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_semantic_indexes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;simple_image_search&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<p>We can visualize the improvement of metrics during training using standard functionality from the scientific Python ecosystem. No need for Tensorboards or special visualization interfaces!</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;loss&#39;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;loss&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">continue</span>
+    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">]:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="n">result</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[5.240744029774385, 5.241150463328642]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_15_1.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_15_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_15_2.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_15_2.png" />
+</div>
+</div>
+<p>The same can be done for the progression of weights during training:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">parameter</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">][</span><span class="n">parameter</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_17_0.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_17_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_17_1.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_17_1.png" />
+</div>
+</div>
+<p>We see that our model provides quick retrievals using its simpler architecture, and we succeeded in doing this with a very small resource footprint:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">semantic_index</span> <span class="o">=</span> <span class="s1">&#39;simple_image_search&#39;</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Dog catches frisbee&#39;</span><span class="p">]},</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  0%|                                                                                                                                                                 | 0/81783 [00:00&lt;?, ?it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 81783/81783 [00:01&lt;00:00, 60240.68it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_3.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_4.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_4.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_5.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_5.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_6.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_6.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_7.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_19_7.png" />
+</div>
+</div>
+<p>Let’s see how well our model has done:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">validate_semantic_index</span><span class="p">(</span><span class="s1">&#39;simple_image_search&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">])</span>
+<span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_semantic_indexes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;simple_image_search&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;final_metrics&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  0%|                                                                                                                                                                  | 0/1000 [00:00&lt;?, ?it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00&lt;00:00, 27014.54it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:15&lt;00:00, 65.81it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;_id&#39;: ObjectId(&#39;63f5655f64f2eea2884cf55b&#39;),
+ &#39;final_metrics&#39;: {&#39;text2image_retrieval&#39;: {&#39;p_at_10&#39;: 0.349}}}
+</pre></div></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="text-2-image-retrieval-with-clip.html" class="btn btn-neutral float-left" title="Text-2-Image document retrieval using pretrained CLIP" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="attribute-prediction.html" class="btn btn-neutral float-right" title="Attribute prediction using “imputations”; transfer learning, preparation using SpaCy and simple PyTorch linear predictor" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Duncan Blythe duncan@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -113,7 +113,7 @@ def validate_representations(collection, validation_set, semantic_index,
             r = r['_other']
         if '_id' in r:
             del r['_id']
-        result = list(valid_coll.find({'$like': {'document': r, 'n': 100}}, {'_id': 1}))
+        result = list(valid_coll.find({}, {'_id': 1}, like=r, n=100))
         result = sorted(result, key=lambda r: -r['_score'])
         result = [r['_id'] for r in result]
         for metric in metrics:

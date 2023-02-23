@@ -2,38 +2,38 @@
 SuperDuperDB Documentation
 **************************
 
-SuperDuperDB is:
++++++++++++++++++++++
+What is SuperDuperDB?
++++++++++++++++++++++
 
-* An AI-database management system
-    The AI data/ model workflow is highly complex with multiple interdependent steps where
-    models and data repeatedly interface with one another.
-    SuperDuperDB aims to be exactly the right environment to bring the data and AI worlds together.
-* Shares the standard advantages of a database
-    * Access control
-    * User groups
-    * Security
-    * Scalability
-    * Indexing
-* Adds novel features to databases which are not possible without AI
-    * Arbitrary data imputations
-    * Semantic indexing based on linear algebra
-    * Associating AI models directly with the data which trained them for transparent model lineage.
-    * Allowing AI models to reference items from the database in flexible ways (e.g. the most similar items to the current data point)
-* Integrates PyTorch models natively to the database
-    Allowing users to work intuitively and efficiently with AI.
-* Is ready for the latest generation of AI models
-    New developments in AI imply that architectures such as `Retro <https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens>`_
-    will need ready access to your data. SuperDuperDB allows users to build models which reference
-    the database explicitly.
-* Is fully modular and allows users to
-    * provide arbitrary PyTorch models
-    * apply arbitrary pre- and post-processing
-    * define custom data types, e.g. tensors, images, audio, video
-* Enables training models directly on the database
-    SuperDuperDB has prebaked support for training semantic lookup tasks and imputation style
-    learning tasks. User-defined training setups may also be
-    supplied and stored in the database. The technology leverages data loaders which enable direct
-    cross talk between MongoDB and PyTorch.
+The SuperDuperDB project aims to provide a unified environment for open-source AI model development
+and production together with PyTorch and MongoDB.
+
+That means:
+
+* SuperDuperDB allows users to integrate PyTorch models into MongoDB.
+* Arbitrary PyTorch models can be configured to save their outputs directly in the database alongside the inputs used to compute them.
+* Model outputs can be used in database queries, for example, enabling queries which use linear algebra.
+* SuperDuperDB can handle models with outputs of various types - anything which can be converted from a Python object to raw bytes and back.
+* SuperDuperDB allows users to train their models directly with the database, without the need for intermediate data caching or preparation steps.
+
++++++++++++++++++++++++++++
+What is SuperDuperDB not?
++++++++++++++++++++++++++++
+
+* SuperDuperDB is **not** a database (despite the name) - it makes your database super-duper.
+* SuperDuperDB doesn't perform AutoML (like MindsDB). We think it's good to offer users the opportunity to choose their own models.
+* SuperDuperDB is not a pure vector search database - it leverages open-source vector search components, which allow certain types of data querying. However SuperDuperDB does not reinvent the wheel there.
+
++++++++++++++++++++++++++++++++++++++++++++++++++++
+What types of use-cases does SuperDuperDB excel at?
++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+* If model outputs need to be kept up-to-date when new data comes in.
+* Transfer learning - downstream models injest the outputs of other models as inputs.
+* Managing multiple model variants and versions which potentially listen to different sets of data.
+* Multimodal branching models which injest JSON type data points as inputs.
+* AI involving data types not supported by standard data bases, such as images.
 
 Documentation contents
 ======================
@@ -42,7 +42,6 @@ Documentation contents
     :maxdepth: 2
 
     getting_started
-    overview
     concepts
     cluster
     models

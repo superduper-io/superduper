@@ -17,7 +17,7 @@ Components
 
 The basic topology of a SuperDuperDB cluster is given in the graphic below:
 
-.. image:: img/architecture.png
+.. image:: img/architecture_detailed.png
     :width: 80%
 
 Client

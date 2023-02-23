@@ -2,3 +2,7 @@
 Model training with SuperDuperDB
 ********************************
 
+There are currently two ways to train a model in SuperDuperDB.
+The first way uses ``superduperdb.collection.Collection.create_semantic_index``
+and the second way uses ``superduperdb.collection.Collection.create_imputation``.
+

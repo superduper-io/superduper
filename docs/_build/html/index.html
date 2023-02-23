@@ -46,7 +46,6 @@
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Deep dive into SuperDuperDB models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Deep dive into semantic indexes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
@@ -120,12 +119,14 @@ and production together with PyTorch and MongoDB.</p>
 <li><p>SuperDuperDB is <strong>not</strong> a database (despite the name) - it <em>makes</em> your database super-duper.</p></li>
 <li><p>SuperDuperDB doesn’t perform AutoML. We think it’s good to offer users the opportunity to choose their own models.</p></li>
 <li><p>SuperDuperDB is not a pure vector search database - it leverages open-source vector search components, which allow certain types of data querying. However SuperDuperDB does not reinvent the wheel there.</p></li>
+<li><p>SuperDuperDB does not try to hack or create dialects of query languages such as the MongoDB query API or SQL. These languages do their job well already.</p></li>
 </ul>
 </section>
 <section id="what-types-of-use-cases-does-superduperdb-excel-at">
 <h2>What types of use-cases does SuperDuperDB excel at?<a class="headerlink" href="#what-types-of-use-cases-does-superduperdb-excel-at" title="Permalink to this heading"></a></h2>
 <ul class="simple">
 <li><p>If model outputs need to be kept up-to-date when new data comes in.</p></li>
+<li><p>If training and/ or deployment data already sits in a MongoDB cluster.</p></li>
 <li><p>Transfer learning - downstream models injest the outputs of other models as inputs.</p></li>
 <li><p>Managing multiple model variants and versions which potentially listen to different sets of data.</p></li>
 <li><p>Multimodal branching models which injest JSON type data points as inputs.</p></li>
@@ -148,7 +149,7 @@ and production together with PyTorch and MongoDB.</p>
 <ul class="simple">
 <li><p>MindsDB supports AutoML. For large PyTorch AI models, this can get very expensive, so we have chosen not to add this support.</p></li>
 <li><p>MindsDB supports SQL as a priority. We may add support for structured data bases later.</p></li>
-<li><p>MindsDB offers a user interface. We believe that Python is the right way to do AI and data science.</p></li>
+<li><p>MindsDB offers a user interface. We believe that Python is the right way to do AI and data science, so don’t offer a UI.</p></li>
 <li><p>MindsDB offers many data connectors. With SuperDuperDB, you can combine the Python ecosystem with SuperDuperDB for data injestion.</p></li>
 </ul>
 <section id="documentation-contents">
@@ -166,6 +167,7 @@ and production together with PyTorch and MongoDB.</p>
 <li class="toctree-l2"><a class="reference internal" href="concepts.html#types">Types</a></li>
 <li class="toctree-l2"><a class="reference internal" href="concepts.html#models">Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="concepts.html#semantic-indexes">Semantic Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#imputations">Imputations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="concepts.html#jobs">Jobs</a></li>
 </ul>
 </li>
@@ -179,10 +181,6 @@ and production together with PyTorch and MongoDB.</p>
 <li class="toctree-l2"><a class="reference internal" href="semantic_indexes.html#defining-your-own-semantic-index">Defining your own semantic index</a></li>
 <li class="toctree-l2"><a class="reference internal" href="semantic_indexes.html#using-a-semantic-index">Using a semantic index</a></li>
 <li class="toctree-l2"><a class="reference internal" href="semantic_indexes.html#creating-a-neighbourhood">Creating a neighbourhood</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="training.html">Model training with SuperDuperDB</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="training.html#components">Components</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a><ul>

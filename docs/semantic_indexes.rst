@@ -59,22 +59,13 @@ To set a default index, update ``docs['_meta']``:
 
 To set an index for a query, set the property ``docs.semantic_index = 'my_semantic_index'``.
 
-The syntax for using ``$like`` is:
+To use a semantic index, use the ``like`` keyword in ``Collection.find`` or ``Collection.find_one``:
 
 .. code-block:: python
 
-    >>> docs.find({
-    ...     '$like': {
-    ...         'document': {
-    ...             **doc_contents
-    ...         },
-    ...         'n': n  # number of similar items to search for
-    ...     },
-    ...     **exact_part,
-    ... })
+    >>> docs.find(exact_filter, like=doc_contents, n=n)
 
-The SuperDuperDB client separates the ``$like`` part from the ``exact_part``. The ``document``
-subfield is passed to one of the models registered during the ``create_semantic_index`` call,
+The ``like`` keyword is passed to one of the models registered during the ``create_semantic_index`` call,
 and encoded as a vector. This vector is compared using the ``measure`` argument with the
 vectors which have pre-computed using the ``active=True`` model in the *semantic index*.
 Which of the models is used to encode the ``document`` is determined by the ``key`` argument of
@@ -82,7 +73,7 @@ the ``create_model`` call. SuperDuperDB takes the first model in the *semantic_i
 is in the ``document`` subfield of the query. The ``exact_part`` of the query is executed as a
 standard MongoDB query, and the results are merged with the results of the ``$like`` part.
 
-This procedure allows for very sophisticated document filtering using a combination of logic
+This functionality allows for very sophisticated document filtering using a combination of logic
 and AI.
 
 Creating a neighbourhood

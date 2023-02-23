@@ -214,7 +214,7 @@ class Collection(BaseCollection):
         """
         return self._create_object('forwards', name, object)
 
-    def create_imputation(self, name, model, loss, target, metrics=None, filter=None,
+    def create_imputation(self, name, model, target, loss=None, metrics=None, filter=None,
                           projection=None, splitter=None, **trainer_kwargs):
         """
         Create an imputation setup. This is any learning task where we have an input to the model
@@ -236,7 +236,8 @@ class Collection(BaseCollection):
 
         assert target in self.list_models()
         assert model in self.list_models()
-        assert loss in self.list_losses()
+        if loss is not None:
+            assert loss in self.list_losses()
         if metrics:
             for metric in metrics:
                 assert metric in self.list_metrics()
@@ -255,6 +256,9 @@ class Collection(BaseCollection):
             'splitter': splitter,
             'trainer_kwargs': trainer_kwargs,
         })
+
+        if loss is None:
+            return
 
         try:
             job_id = self._train_imputation(name)

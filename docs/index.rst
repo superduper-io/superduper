@@ -24,12 +24,14 @@ What is SuperDuperDB not?
 * SuperDuperDB is **not** a database (despite the name) - it *makes* your database super-duper.
 * SuperDuperDB doesn't perform AutoML. We think it's good to offer users the opportunity to choose their own models.
 * SuperDuperDB is not a pure vector search database - it leverages open-source vector search components, which allow certain types of data querying. However SuperDuperDB does not reinvent the wheel there.
+* SuperDuperDB does not try to hack or create dialects of query languages such as the MongoDB query API or SQL. These languages do their job well already.
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 What types of use-cases does SuperDuperDB excel at?
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
 * If model outputs need to be kept up-to-date when new data comes in.
+* If training and/ or deployment data already sits in a MongoDB cluster.
 * Transfer learning - downstream models injest the outputs of other models as inputs.
 * Managing multiple model variants and versions which potentially listen to different sets of data.
 * Multimodal branching models which injest JSON type data points as inputs.
@@ -54,7 +56,7 @@ MindsDB is an `open source project <https://github.com/mindsdb/mindsdb>`_ which 
 
 * MindsDB supports AutoML. For large PyTorch AI models, this can get very expensive, so we have chosen not to add this support.
 * MindsDB supports SQL as a priority. We may add support for structured data bases later.
-* MindsDB offers a user interface. We believe that Python is the right way to do AI and data science.
+* MindsDB offers a user interface. We believe that Python is the right way to do AI and data science, so don't offer a UI.
 * MindsDB offers many data connectors. With SuperDuperDB, you can combine the Python ecosystem with SuperDuperDB for data injestion.
 
 Documentation contents

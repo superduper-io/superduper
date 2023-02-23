@@ -47,6 +47,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#types">Types</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#models">Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#semantic-indexes">Semantic Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#imputations">Imputations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#jobs">Jobs</a></li>
 </ul>
 </li>
@@ -280,29 +281,104 @@ which will be used to compare tensor outputs of the contained models:</p>
 </div>
 <p>Equipped with this measure function, we are able to register the semantic index to
 SuperDuperDB, using already existing models (models may also be created in-line).
-Once the semantic index has been created, it may be searched using the <code class="docutils literal notranslate"><span class="pre">$like</span></code> operator
-contained in a MongoDB style query.</p>
+Once the semantic index has been created, it may be searched using the <code class="docutils literal notranslate"><span class="pre">like</span></code> keyword
+in a MongoDB style query.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_package.measures</span> <span class="kn">import</span> <span class="n">css</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_measure</span><span class="p">(</span><span class="s1">&#39;dot&#39;</span><span class="p">,</span> <span class="n">dot</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span><span class="s1">&#39;resnet-index&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;resnet&#39;</span><span class="p">],</span> <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;dot&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span>
-<span class="gp">... </span>    <span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span>
-<span class="gp">... </span>        <span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">ObjectId</span><span class="p">(</span><span class="s1">&#39;6387bc38477124958d0b97d9&#39;</span><span class="p">)},</span>
-<span class="gp">... </span>        <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">1</span>
-<span class="gp">... </span>    <span class="p">}</span>
-<span class="gp">... </span><span class="p">})[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">ObjectId</span><span class="p">(</span><span class="s1">&#39;6387bc38477124958d0b97d9&#39;</span><span class="p">)},</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="go">ObjectId(&#39;6387bc38477124958d0b97d9&#39;)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span>
-<span class="gp">... </span>    <span class="s1">&#39;$like&#39;</span><span class="p">:</span> <span class="p">{</span>
-<span class="gp">... </span>        <span class="s1">&#39;document&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">PIL</span><span class="o">.</span><span class="n">PngImagePlugin</span><span class="o">.</span><span class="n">PngImageFile</span> <span class="n">image</span> <span class="n">mode</span><span class="o">=</span><span class="n">RGB</span> <span class="n">size</span><span class="o">=</span><span class="mi">250</span><span class="n">x361</span><span class="o">&gt;</span><span class="p">},</span>
-<span class="gp">... </span>        <span class="s1">&#39;n&#39;</span><span class="p">:</span> <span class="mi">1</span>
-<span class="gp">... </span>    <span class="p">}</span>
-<span class="gp">... </span><span class="p">})[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">like</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">PIL</span><span class="o">.</span><span class="n">PngImagePlugin</span><span class="o">.</span><span class="n">PngImageFile</span> <span class="n">image</span> <span class="n">mode</span><span class="o">=</span><span class="n">RGB</span> <span class="n">size</span><span class="o">=</span><span class="mi">250</span><span class="n">x361</span><span class="o">&gt;</span><span class="p">},</span>
+<span class="gp">... </span>    <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
 <span class="go">ObjectId(&#39;6387bc38477124958d0b97d9&#39;)</span>
 </pre></div>
 </div>
-<p>It’s also possible to train a semantic-index end-2-end using the <code class="docutils literal notranslate"><span class="pre">create_semantic_index</span></code>
-command. See the deep-dive for more information.</p>
+<p>It’s also possible to train a semantic-index end-2-end using the <code class="docutils literal notranslate"><span class="pre">create_semantic_index</span></code> command.
+For this it’s necessary to define additionally:
+- a <strong>splitter</strong>, which divides a document into a query and retrieved item pair
+- a <strong>loss</strong> function, which measures the quality of retrievals quantitatively, and is used for backpropagation.
+- zero or more <strong>metrics</strong>, which measure the quality of retrieval in an interpretable way.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">split_images</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;images&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]]},</span> <span class="p">{</span><span class="s1">&#39;images&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">*</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">][:</span><span class="n">index</span><span class="p">],</span> <span class="o">*</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">:]]}</span>
+
+<span class="k">def</span> <span class="nf">ranking_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">similarities</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">similarities</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">r_at_1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">y</span> <span class="o">==</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_package.utils</span> <span class="kn">import</span> <span class="n">r_at_1</span><span class="p">,</span> <span class="n">ranking_loss</span><span class="p">,</span> <span class="n">split_images</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;r@1&#39;</span><span class="p">,</span> <span class="n">r_at_1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_loss</span><span class="p">(</span><span class="s1">&#39;ranking&#39;</span><span class="p">,</span> <span class="n">ranking_loss</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span><span class="s1">&#39;my_index&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;resnet&#39;</span><span class="p">],</span> <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;dot&#39;</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;ranking&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;r@1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="imputations">
+<h2>Imputations<a class="headerlink" href="#imputations" title="Permalink to this heading"></a></h2>
+<p>An imputation is a pair of models, where one model is used to predict the output of the other model.
+This subsumes many use cases:</p>
+<ul class="simple">
+<li><p>Classification</p></li>
+<li><p>Regression</p></li>
+<li><p>Autoregressive modelling (language modelling, time-series modelling, …)</p></li>
+<li><p>Generative adversarial learning</p></li>
+<li><p>Image segmentation</p></li>
+<li><p>Bounding box regression</p></li>
+<li><p>… (there are many possibilities)</p></li>
+</ul>
+<p>Here is what a basic classification example might look like. First we define the model and
+the target:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="k">class</span> <span class="nc">MyTarget</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lookup</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">))))</span>
+
+    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookup</span><span class="p">[</span><span class="n">label</span><span class="p">])</span>
+
+
+<span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+        <span class="n">estimate</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">estimate</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">accuracy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>
+</pre></div>
+</div>
+<p>Now we can train the model. The models are modified in place, and after training, assuming
+the learning problem is feasible, <code class="docutils literal notranslate"><span class="pre">my_model</span></code> will be able to estimate missing fields in
+the <code class="docutils literal notranslate"><span class="pre">y</span></code> key, if the <code class="docutils literal notranslate"><span class="pre">x</span></code> field contains a tensor of the right dimensionality.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_package.models</span> <span class="kn">import</span> <span class="n">MyTarget</span><span class="p">,</span> <span class="n">MyModel</span><span class="p">,</span> <span class="n">accuracy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;my_target&#39;</span><span class="p">,</span> <span class="n">MyTarget</span><span class="p">(),</span> <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;my_model&#39;</span><span class="p">,</span> <span class="n">MyModel</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_loss</span><span class="p">(</span><span class="s1">&#39;classification_loss&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropy</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_imputation</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">model</span><span class="o">=</span><span class="s1">&#39;my_model&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;my_target&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;classification_loss&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="jobs">
 <h2>Jobs<a class="headerlink" href="#jobs" title="Permalink to this heading"></a></h2>

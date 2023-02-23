@@ -42,7 +42,6 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Deep dive into SuperDuperDB models</a></li>
@@ -102,68 +101,38 @@
 </style>
 <section id="superduperdb-documentation">
 <h1>SuperDuperDB Documentation<a class="headerlink" href="#superduperdb-documentation" title="Permalink to this heading"></a></h1>
-<p>SuperDuperDB is:</p>
+<section id="what-is-superduperdb">
+<h2>What is SuperDuperDB?<a class="headerlink" href="#what-is-superduperdb" title="Permalink to this heading"></a></h2>
+<p>The SuperDuperDB project aims to provide a unified environment for open-source AI model development
+and production together with PyTorch and MongoDB.</p>
+<p>That means:</p>
 <ul class="simple">
-<li><dl class="simple">
-<dt>An AI-database management system</dt><dd><p>The AI data/ model workflow is highly complex with multiple interdependent steps where
-models and data repeatedly interface with one another.
-SuperDuperDB aims to be exactly the right environment to bring the data and AI worlds together.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Shares the standard advantages of a database</dt><dd><ul>
-<li><p>Access control</p></li>
-<li><p>User groups</p></li>
-<li><p>Security</p></li>
-<li><p>Scalability</p></li>
-<li><p>Indexing</p></li>
+<li><p>SuperDuperDB allows users to integrate PyTorch models into MongoDB.</p></li>
+<li><p>Arbitrary PyTorch models can be configured to save their outputs directly in the database alongside the inputs used to compute them.</p></li>
+<li><p>Model outputs can be used in database queries, for example, enabling queries which use linear algebra.</p></li>
+<li><p>SuperDuperDB can handle models with outputs of various types - anything which can be converted from a Python object to raw bytes and back.</p></li>
+<li><p>SuperDuperDB allows users to train their models directly with the database, without the need for intermediate data caching or preparation steps.</p></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Adds novel features to databases which are not possible without AI</dt><dd><ul>
-<li><p>Arbitrary data imputations</p></li>
-<li><p>Semantic indexing based on linear algebra</p></li>
-<li><p>Associating AI models directly with the data which trained them for transparent model lineage.</p></li>
-<li><p>Allowing AI models to reference items from the database in flexible ways (e.g. the most similar items to the current data point)</p></li>
+</section>
+<section id="what-is-superduperdb-not">
+<h2>What is SuperDuperDB not?<a class="headerlink" href="#what-is-superduperdb-not" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>SuperDuperDB is <strong>not</strong> a database (despite the name) - it makes your database super-duper.</p></li>
+<li><p>SuperDuperDB doesn’t perform AutoML (like MindsDB). We think it’s good to offer users the opportunity to choose their own models.</p></li>
+<li><p>SuperDuperDB is not a pure vector search database - it leverages open-source vector search components, which allow certain types of data querying. However SuperDuperDB does not reinvent the wheel there.</p></li>
 </ul>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Integrates PyTorch models natively to the database</dt><dd><p>Allowing users to work intuitively and efficiently with AI.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Is ready for the latest generation of AI models</dt><dd><p>New developments in AI imply that architectures such as <a class="reference external" href="https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens">Retro</a>
-will need ready access to your data. SuperDuperDB allows users to build models which reference
-the database explicitly.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Is fully modular and allows users to</dt><dd><ul>
-<li><p>provide arbitrary PyTorch models</p></li>
-<li><p>apply arbitrary pre- and post-processing</p></li>
-<li><p>define custom data types, e.g. tensors, images, audio, video</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Enables training models directly on the database</dt><dd><p>SuperDuperDB has prebaked support for training semantic lookup tasks and imputation style
-learning tasks. User-defined training setups may also be
-supplied and stored in the database. The technology leverages data loaders which enable direct
-cross talk between MongoDB and PyTorch.</p>
-</dd>
-</dl>
-</li>
+</section>
+<section id="what-types-of-use-cases-does-superduperdb-excel-at">
+<h2>What types of use-cases does SuperDuperDB excel at?<a class="headerlink" href="#what-types-of-use-cases-does-superduperdb-excel-at" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>If model outputs need to be kept up-to-date when new data comes in.</p></li>
+<li><p>Transfer learning - downstream models injest the outputs of other models as inputs.</p></li>
+<li><p>Managing multiple model variants and versions which potentially listen to different sets of data.</p></li>
+<li><p>Multimodal branching models which injest JSON type data points as inputs.</p></li>
+<li><p>AI involving data types not supported by standard data bases, such as images.</p></li>
 </ul>
 <section id="documentation-contents">
-<h2>Documentation contents<a class="headerlink" href="#documentation-contents" title="Permalink to this heading"></a></h2>
+<h3>Documentation contents<a class="headerlink" href="#documentation-contents" title="Permalink to this heading"></a></h3>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a><ul>
@@ -171,10 +140,6 @@ cross talk between MongoDB and PyTorch.</p>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#configuration">Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#minimum-working-example">Minimum working example</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview of SuperDuperDB</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="overview.html#e-commerce-example">e-Commerce example</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a><ul>
@@ -209,6 +174,7 @@ cross talk between MongoDB and PyTorch.</p>
 </li>
 </ul>
 </div>
+</section>
 </section>
 </section>
 

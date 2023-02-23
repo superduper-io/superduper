@@ -2,8 +2,6 @@
 SuperDuperDB Concepts
 *********************
 
-**Note: this articles assumes familiarity with MongoDB and its basic concepts.**
-
 Content in SuperDuperDB is divided into databases and collections just as in MongoDB.
 The key object is ``superduperdb.collection.Collection`` which subclasses ``pymongo.collection.Collection``.
 This means that all standard MongoDB collection functionality is also available for a

@@ -47,7 +47,10 @@
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Deep dive into SuperDuperDB models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Deep dive into semantic indexes</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Model training with SuperDuperDB</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Model training with SuperDuperDB</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#components">Components</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
@@ -104,7 +107,20 @@
 <h1>Model training with SuperDuperDB<a class="headerlink" href="#model-training-with-superduperdb" title="Permalink to this heading"></a></h1>
 <p>There are currently two ways to train a model in SuperDuperDB.
 The first way uses <code class="docutils literal notranslate"><span class="pre">superduperdb.collection.Collection.create_semantic_index</span></code>
-and the second way uses <code class="docutils literal notranslate"><span class="pre">superduperdb.collection.Collection.create_imputation</span></code>.</p>
+and the second way uses <code class="docutils literal notranslate"><span class="pre">superduperdb.collection.Collection.create_imputation</span></code>.
+These are very generic wrappers for respectively representation training, and tasks
+which involving predicting something from something else.</p>
+<section id="components">
+<h2>Components<a class="headerlink" href="#components" title="Permalink to this heading"></a></h2>
+<p>Training your own semantic index requires a few more components than using pre-trained models.
+For training we need these things:</p>
+<ul class="simple">
+<li><p>One or more <strong>models</strong></p></li>
+<li><p>A <strong>loss</strong> function</p></li>
+<li><p>One or more <strong>metrics</strong></p></li>
+<li><p>…</p></li>
+</ul>
+</section>
 </section>
 
 

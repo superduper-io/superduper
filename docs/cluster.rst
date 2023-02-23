@@ -2,7 +2,7 @@
 Setting up a SuperDuperDB cluster
 *********************************
 
-The exact setup of your SuperDuperDB cluster will depend on the requires of the use-cases you
+The exact setup of your SuperDuperDB cluster will depend on the use-cases you
 plan to execute with the cluster. Factors to consider will be:
 
 - Latency
@@ -17,7 +17,7 @@ Components
 
 The basic topology of a SuperDuperDB cluster is given in the graphic below:
 
-.. image:: img/architecture.png
+.. image:: img/architecture_detailed.png
     :width: 80%
 
 Client

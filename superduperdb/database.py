@@ -12,3 +12,4 @@ class Database(BaseDatabase):
 
     def __getitem__(self, name: str):
         return superduperdb.collection.Collection(self, name)
+

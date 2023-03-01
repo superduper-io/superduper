@@ -67,10 +67,13 @@ Documentation contents
 
     getting_started
     concepts
-    cluster
+    types
+    content
     models
+    watchers
     semantic_indexes
-    training
+    imputations
+    cluster
     examples/index
     full_usage
 

@@ -25,7 +25,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Inserting and getting data" href="inserting-and-getting-data.html" />
-    <link rel="prev" title="CoCo Dataset" href="index.html" /> 
+    <link rel="prev" title="CoCo (Common Objects in Context) Dataset" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,16 +46,16 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../concepts.html">SuperDuperDB Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../types.html">Types in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models - an extension of PyTorch models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchers.html">Watchers in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../imputations.html">Imputations for filling in data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../models.html">Deep dive into SuperDuperDB models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../semantic_indexes.html">Deep dive into semantic indexes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">Notebook examples</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo Dataset</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Setup and installation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#Preparing-the-data-for-injestion">Preparing the data for injestion</a></li>
-</ul>
-</li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo (Common Objects in Context) Dataset</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Setup and installation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="inserting-and-getting-data.html">Inserting and getting data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="text-2-image-retrieval-with-clip.html">Text-2-Image document retrieval using pretrained CLIP</a></li>
 <li class="toctree-l3"><a class="reference internal" href="bespoke-retriever-using-clip-embeddings.html">Bespoke retrieval based on CLIP embedding vectors</a></li>
@@ -83,7 +83,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Notebook examples</a></li>
-          <li class="breadcrumb-item"><a href="index.html">CoCo Dataset</a></li>
+          <li class="breadcrumb-item"><a href="index.html">CoCo (Common Objects in Context) Dataset</a></li>
       <li class="breadcrumb-item active">Setup and installation</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/examples/coco/setup-and-installation.ipynb.txt" rel="nofollow"> View page source</a>
@@ -405,8 +405,6 @@ pip install torch
 pip install -r ../../requirements.txt
 </pre></div>
 </div>
-<section id="Preparing-the-data-for-injestion">
-<h2>Preparing the data for injestion<a class="headerlink" href="#Preparing-the-data-for-injestion" title="Permalink to this heading"></a></h2>
 <p>SuperDuperDB can handle data in any format, including images. The documents in the database are MongoDB <code class="docutils literal notranslate"><span class="pre">bson</span></code> documents, which mix <code class="docutils literal notranslate"><span class="pre">json</span></code> with raw bytes and <code class="docutils literal notranslate"><span class="pre">ObjectId</span></code> objects. SuperDuperDB takes advantage of this by serializing more sophisticated objects to bytes, and reinstantiating the objects in memory, when data is queried.</p>
 <p>In order to tell SuperDuperDB what type an object has, one specifies this with a subdocument of the form:</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span>{
@@ -508,13 +506,12 @@ pip install -r ../../requirements.txt
 </div>
 </div>
 </section>
-</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="CoCo Dataset" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral float-left" title="CoCo (Common Objects in Context) Dataset" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="inserting-and-getting-data.html" class="btn btn-neutral float-right" title="Inserting and getting data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

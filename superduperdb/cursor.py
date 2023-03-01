@@ -55,7 +55,8 @@ class SuperDuperCursor(Cursor):
             r[k] = r['_outputs'][k][self.features[k]]
         if '_other' in r:
             for k in self.features:
-                r['_other'][k] = r['_outputs'][k][self.features[k]]
+                if k in r['_other']:
+                    r['_other'][k] = r['_outputs'][k][self.features[k]]
         return r
 
     def next(self):

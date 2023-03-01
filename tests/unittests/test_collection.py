@@ -1,449 +1,48 @@
-import random
-
+from tests.fixtures.collection import (
+    float_tensors, empty, a_model, b_model, c_model, random_data,
+    si_validation, measure, metric, my_rank_obj, a_classifier, a_target, accuracy_metric,
+    my_class_obj, imputation_validation
+)
 import torch
 
-from tests.fixtures.collection import random_vectors, empty, with_urls
-from tests.material.types import FloatTensor
-from tests.material.losses import ranking_loss
-from tests.material.metrics import accuracy, PatK
-from tests.material.models import BinaryClassifier, BinaryTarget
-from tests.material.splitters import trivial_splitter
 
+def test_watcher(random_data, a_model, b_model):
 
-def test_filter_content(random_vectors):
-    filter_ = \
-        {'item': {'_content': {'url': 'https://www.superduperdb.com/logos/white.png',
-                               'type': 'raw_bytes'}}}
-    filter_ = random_vectors._get_content_for_filter(filter_)
+    random_data.create_watcher('linear_a', key='x')
+    assert 'linear_a' in random_data.find_one()['_outputs']['x']
 
-    # check that "_content" in the filter has been downloaded
-    assert isinstance(filter_['item'], bytes)
+    random_data.insert_many([{'x': torch.randn(32), 'update': True}
+                            for _ in range(5)])
+    assert 'linear_a' in random_data.find_one({'update': True})['_outputs']['x']
 
+    random_data.create_watcher('linear_b', key='x', features={'x': 'linear_a'})
+    assert 'linear_b' in random_data.find_one()['_outputs']['x']
 
-def test_find_some(random_vectors):
 
-    r = random_vectors.find_one()
-    print(r)
+def test_create_semantic_index(si_validation, a_model, c_model, measure, metric, my_rank_obj):
 
-    # check that the model has been used on new data to get outputs
-    assert 'linear' in r['_outputs']['x']
-    assert 'other_linear' in r['_outputs']['x']
-    assert 'ma_linear_part_1' in r['_outputs']['x']
+    si_validation.create_semantic_index('my_index',
+                                        models=['linear_a', 'linear_c'],
+                                        measure='css',
+                                        keys=['x', 'z'],
+                                        metrics=['p_at_1'],
+                                        objective='rank_obj',
+                                        validation_sets=('my_valid',),
+                                        n_iterations=4,
+                                        validation_interval=2)
 
 
-def test_find_like(random_vectors):
-    r_anchor = random_vectors.find_one()
-    # retrieve same document with content
-    r_found = random_vectors.find_one({'$like': {'document': {'x': r_anchor['x']}, 'n': 10}})
-    assert r_anchor['_id'] == r_found['_id']
+def test_create_imputation(imputation_validation, a_classifier, a_target, my_class_obj,
+                           accuracy_metric):
 
-    # retrieve same document with exact match
-    r_found = random_vectors.find_one({'label': r_anchor['label']}, like={'x': r_anchor['x']}, n=10)
-    assert r_anchor['_id'] == r_found['_id']
-
-    # retrieve same document also finding similar first
-    r_found = random_vectors.find_one({'$like': {'document': {'x': r_anchor['x']}, 'n': 10},
-                                       'label': r_anchor['label']},
-                                      similar_first=True)
-    assert r_anchor['_id'] == r_found['_id']
-
-    # retrieve same document with id
-    r_found = random_vectors.find_one({'$like': {'document': {'_id': r_anchor['_id']}, 'n': 10}})
-    assert r_anchor['_id'] == r_found['_id']
-
-    random_vectors.semantic_index = 'other_linear'
-    # test another semantic index with feature dependencies
-    _ = random_vectors.find_one({'$like': {'document': {'x': r_anchor['x']}, 'n': 10}})
-
-    random_vectors.remote = True
-    # test that sending request to remote feature store works
-    _ = random_vectors.find_one({'$like': {'document': {'x': r_anchor['x']}, 'n': 10}})
-
-
-def test_replace(random_vectors):
-    r = random_vectors.find_one(raw=True)
-    r['a'] = 2
-    random_vectors.replace_one({'_id': r['_id']}, r)
-
-
-def test_insert(random_vectors):
-    eps = 0.01
-    x = torch.randn(32)
-    y = torch.randn(32) * eps + x
-    random_vectors.insert_one({
-            'update': True,
-            'i': 2000,
-            'x': {
-                '_content': {
-                    'bytes': FloatTensor.encode(x),
-                    'type': 'float_tensor',
-                }
-            },
-            'y': {
-                '_content': {
-                    'bytes': FloatTensor.encode(y),
-                    'type': 'float_tensor',
-                }
-            },
-        })
-
-    r = random_vectors.find_one({'update': True})
-
-    # check that the model has been applied to the new datapoints
-    assert 'linear' in r['_outputs']['x']
-
-    random_vectors.remote = True
-    job_ids = random_vectors.insert_one({
-        'update': True,
-        'i': 2001,
-        'x': {
-            '_content': {
-                'bytes': FloatTensor.encode(x),
-                'type': 'float_tensor',
-            }
-        },
-        'y': {
-            '_content': {
-                'bytes': FloatTensor.encode(y),
-                'type': 'float_tensor',
-            }
-        },
-    })[1]
-
-    # this blocks the program so that cleanup part of fixture doesn't take place
-    for model in job_ids:
-        print(f'PROCESSING {model}...')
-        for id_ in job_ids[model]:
-            random_vectors.watch_job(id_)
-
-    r = random_vectors.find_one({'i': 2001})
-
-    # check that all models have been applied to the document
-    assert len(r['_outputs']['x']) == 5
-
-
-def test_update(random_vectors):
-
-    r0 = random_vectors.find_one({'i': 0}, features={'x': 'linear'})
-    r1 = random_vectors.find_one({'i': 1}, features={'x': 'linear'})
-
-    random_vectors.update_one(
-        {'i': 0},
-        {'$set': {'x': {
-            '_content': {
-                'bytes': FloatTensor.encode(torch.randn(32)),
-                'type': 'float_tensor',
-            }
-        }}}
-    )
-
-    # check that the targeted documents were updated
-    assert random_vectors.find_one({'i': 0},
-                                   features={'x': 'linear'})['x'][0] != r0['x'][0]
-
-    # check that other documents were not affected
-    assert random_vectors.find_one({'i': 1},
-                                   features={'x': 'linear'})['x'][0] == r1['x'][0]
-
-def func_(x):
-    return x + 2
-
-
-def test_create_list_get_delete_x(empty):
-
-    types_ = ['type', 'loss', 'measure', 'metric', 'splitter']
-
-    for type_ in types_:
-        method = getattr(empty, f'create_{type_}')
-        method(f'my_{type_}', func_)
-
-    for type_ in types_:
-        if type_ == 'loss':
-            available = getattr(empty, 'list_losses')()
-        else:
-            available = getattr(empty, f'list_{type_}s')()
-        assert available == [f'my_{type_}']
-
-    for type_ in types_:
-        if type_ == 'loss':
-            m = getattr(empty, 'losses')['my_loss']
-        else:
-            m = getattr(empty, f'{type_}s')[f'my_{type_}']
-
-        # test that the retrieved object is the same
-        assert m == func_
-
-    for type_ in types_:
-        method = getattr(empty, f'delete_{type_}')
-        method(f'my_{type_}', force=True)
-
-    for type_ in types_:
-        if type_ == 'loss':
-            available = getattr(empty, 'list_losses')()
-        else:
-            available = getattr(empty, f'list_{type_}s')()
-
-        # check that the objects have been deleted
-        assert available == []
-
-
-def _f(x):
-    return x + 1
-
-
-def _g(x):
-    return x - 1
-
-
-def test_create_delete_model_parts(empty):
-    empty.create_type(name='float_tensor', object=FloatTensor())
-    empty.create_postprocessor(name='g', object=_g)
-    empty.create_preprocessor(name='f', object=_f)
-    empty.create_forward(name='my_forward', object=torch.nn.Linear(32, 8))
-    empty.create_model(
-        'my_parts',
-        preprocessor='f',
-        forward='my_forward',
-        postprocessor='g',
-        type='float_tensor',
-        key='x',
-    )
-    m = empty.models['my_parts']
-    assert isinstance(m, torch.nn.Module)
-    from superduperdb.models.utils import apply_model
-    output = apply_model(m, torch.randn(32))
-    assert output.shape == torch.Size([8])
-
-    empty.delete_model('my_parts', force=True)
-    assert 'my_parts' not in empty.list_models()
-
-
-def test_create_delete_semantic_index(random_vectors):
-    random_vectors.create_loss('ranking_loss', ranking_loss)
-    random_vectors.create_metric('p_at_1', PatK(1))
-    random_vectors.create_model(name='identity',
-                                object=torch.nn.Identity(),
-                                key='y',
-                                type='float_tensor',
-                                active=False)
-
-    def f():
-        random_vectors.create_model(name='encoder',
-                                    object=torch.nn.Linear(32, 32),
-                                    key='x',
-                                    type='float_tensor',
-                                    active=True)
-        return random_vectors.create_semantic_index(
-            'ranking',
-            models=['encoder', 'identity'],
-            loss='ranking_loss',
-            filter={},
-            metrics=['p_at_1'],
-            measure='css',
-            batch_size=100,
-            num_workers=0,
-            n_epochs=100,
-            lr=0.01,
-            log_weights=False,
-            download=True,
-            validation_interval=20,
-            n_iterations=10,
-            validation_sets=['valid'],
-        )
-
-    f()
-
-    # check that the index has been registered
-    assert 'ranking' in random_vectors.list_semantic_indexes()
-
-    random_vectors.delete_semantic_index('ranking', force=True)
-    random_vectors.delete_model('encoder', force=True)
-
-    # check that the deletion was effective
-    assert 'ranking' not in random_vectors.list_semantic_indexes()
-
-    random_vectors.remote = True
-
-    job_ids = f()
-    print(job_ids)
-
-    for job_id in job_ids:
-        random_vectors.watch_job(job_id)
-
-
-def test_create_self_supervised_index(random_vectors):
-
-    random_vectors.create_model(
-        name='encoder_self',
-        object=torch.nn.Linear(16, 16),
-        key='x',
-        type='float_tensor',
-        active=True,
-        features={'x': 'linear'}
-    )
-    random_vectors.create_metric(name='p_at_1', object=PatK(1))
-    random_vectors.create_loss(name='ranking_loss', object=ranking_loss)
-    random_vectors.create_splitter(name='trivial_splitter', object=trivial_splitter)
-    random_vectors.create_semantic_index(
-        'ranking',
-        models=['encoder_self'],
-        loss='ranking_loss',
-        filter={},
-        metrics=['p_at_1'],
-        measure='css',
-        splitter='trivial_splitter',
-        batch_size=100,
-        num_workers=0,
-        n_epochs=100,
-        lr=0.01,
-        log_weights=True,
-        download=True,
-        validation_interval=10,
-        n_iterations=2,
-    )
-
-
-def test_create_delete_imputation(random_vectors):
-    random_vectors.create_model(
-        name='classifier',
-        object=BinaryClassifier(32),
-        key='x',
-        active=False,
-    )
-    random_vectors.create_model(
-        name='label',
-        object=BinaryTarget(),
-        key='label',
-        active=False,
-    )
-    random_vectors.create_loss(name='binary_loss', object=torch.nn.BCEWithLogitsLoss())
-    random_vectors.create_metric(name='accuracy', object='accuracy')
-
-    def f():
-        return random_vectors.create_imputation(
-            'classifier',
-            model='classifier',
-            loss='binary_loss',
-            target='label',
-            metrics=['accuracy'],
-            batch_size=20,
-            num_workers=0,
-            n_epochs=10,
-            lr=0.001,
-            validation_interval=5,
-            n_iterations=10,
-        )
-
-    f()
-
-    # check that the index has been registered
-    assert 'classifier' in random_vectors.list_imputations()
-
-    random_vectors.delete_imputation('classifier', force=True)
-
-    # check that deleting works
-    assert 'classifier' not in random_vectors.list_imputations()
-
-    random_vectors.remote = True
-
-    job_ids = f()
-
-    # test that the listing of jobs works
-    assert set(random_vectors.list_jobs()) == set(job_ids)
-
-    random_vectors.watch_job(job_ids[0])
-    random_vectors.watch_job(job_ids[1])
-
-    # check that the model has been registered
-    assert 'classifier' in random_vectors.list_imputations()
-
-
-def test_create_delete_neighbourhood(random_vectors):
-    random_vectors.create_neighbourhood('test_sim', n=10)
-
-    r = random_vectors.find_one()
-    print(r)
-
-    # test that similarities are in the record
-    assert 'test_sim' in r.get('_like', {})
-    assert len(r['_like']['test_sim']) == 10
-
-    assert 'test_sim' in random_vectors.list_neighbourhoods()
-
-    r = random_vectors.find_one(similar_join='test_sim')
-    # test that joining the documents from the neighbourhood works
-    assert isinstance(r['_like']['test_sim'][0], dict)
-
-    random_vectors.delete_neighbourhood('test_sim', force=True)
-
-    assert 'test_sim' not in random_vectors.list_neighbourhoods()
-
-    r = random_vectors.find_one()
-    print(r)
-    assert 'test_sim' not in r.get('_like', {})
-
-    random_vectors.remote = True
-
-    job_id = random_vectors.create_neighbourhood('test_sim', n=7)
-
-    random_vectors.watch_job(job_id)
-
-    r = random_vectors.find_one()
-    assert len(r['_like']['test_sim']) == 7
-
-    random_vectors.remote = False
-
-    # check that insert updates the neighbourhoods
-    data = []
-    for i in range(10):
-        data.append({
-            'update': True,
-            'x': {
-                '_content': {
-                    'bytes': FloatTensor.encode(torch.randn(32)),
-                    'type': 'float_tensor',
-                }
-            },
-            'y': {
-                '_content': {
-                    'bytes': FloatTensor.encode(torch.randn(32)),
-                    'type': 'float_tensor',
-                }
-            },
-            'label': 0 if i < 5 else 1,
-        })
-
-    random_vectors.unset_hash_set()
-    random_vectors.insert_many(data[:5])
-
-    r = random_vectors.find_one({'update': True, 'label': 0})
-
-    # test that the update includes the neighbourhood
-    assert len(r['_like']['test_sim']) == 7
-
-    random_vectors.remote = True
-
-    random_vectors.unset_hash_set()
-    result = random_vectors.insert_many(data[5:])
-    random_vectors.watch_job(result[1]['neighbourhoods', 'test_sim'][0])
-    r = random_vectors.find_one({'update': True, 'label': 1})
-
-    # test that the asynchronous computation works too
-    assert len(r['_like']['test_sim']) == 7
-
-
-def test_downloads(with_urls):
-    r = with_urls.find_one(raw=True)
-
-    # check that the files/ content has been downloaded
-    assert 'bytes' in r['item']['_content']
-
-
-def test__convert_types(random_vectors):
-    r = random_vectors._convert_types({
-        'my_tensor': torch.randn(32)
-    })
-
-    # check that tensor has been converted to bytes
-    assert isinstance(r['my_tensor']['_content']['bytes'], bytes)
+    imputation_validation.create_imputation('my_imputation',
+                                            model='classifier',
+                                            model_key='x',
+                                            target='target',
+                                            target_key='y',
+                                            metrics=['accuracy_metric'],
+                                            objective='class_obj',
+                                            validation_sets=('my_imputation_valid',),
+                                            n_iterations=4,
+                                            validation_interval=2)
 

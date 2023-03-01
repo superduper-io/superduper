@@ -1,6 +1,5 @@
-**********************************
-Deep dive into SuperDuperDB models
-**********************************
+Models - an extension of PyTorch models
+=======================================
 
 Models in SuperDuperDB extend the notion of PyTorch models
 by including pre-processing and post-processing. These are necessary
@@ -53,9 +52,6 @@ model:
     def preprocess(*args, **kwargs):
         ...
 
-    def forward(*args, **kwargs):
-        ...
-
     def postprocess(*args, **kwargs):
         ...
 
@@ -65,120 +61,111 @@ This approach has the advantage of the methods being able to share data from the
 .. code-block:: python
 
     >>> from my_package import preprocess, postprocess
-    >>> docs.create_model('my_model', preprocess={'my_preprocess': preprocess},
-    ...                   forward=torch.nn.Linear(n_input, n_output),
-    ...                   postprocess={'my_postprocess': postprocess})
+    >>> docs.create_preprocessor('my_preprocess', preprocess)
+    >>> docs.create_postprocessor('my_postprocess', postprocess)
+    >>> docs.create_model('my_model', torch.nn.Linear(n_input, n_output),
+    ...                   preprocess='my_preprocess',
+    ...                   postprocess='my_postprocess',
+    ...                   type='image')
 
 This has the advantage of modularity as the pre- and postprocessing parts can be shared between
 models more easily.
 
-In direct analogy to ``pymongo.collection.Collection.create_index``, it's possible to supply
-a filter (query) which selects which documents a model is applied to.
+The ``type`` key-word is only necessary if the output type of the postprocess is not supported 
+by MongoDB. Read more about types here ``Types in SuperDuperDB``.
 
-For example, suppose that our model requires a certain field ``img`` to exist, in order to be applicable.
-Then the following command would do the trick, and would restrict the model to the documents
-selected by the filter:
+CNN example
+-----------
 
-.. code-block:: python
-
-    >>> from my_package import MyModule
-    >>> docs = the_client.my_database.my_collection
-    >>> docs.create_model('my_model', object=MyModule(), filter={'img': {'$exists': 1}})
-
-If our model has particular outputs not supported directly by MongoDB, then it's necessary
-to provide a "type" which handles the conversion to and from ``bytes``. That will allow the
-outputs of the model to be saved to the database.
+Here is a CNN classifier example, using the ``torchvision``
+library. 
 
 .. code-block:: python
 
-    class MyType:
-        types = (Type1, Type2, ...)
+    from torchvision import models as visionmodels
+    from torchvision import transforms
+    from torchvision.transforms.functional import pad
+    from torch import nn
 
-        def encode(self, x):
-            ...
-            return my_bytes_string
 
-        def decode(self, my_bytes_string):
-            ...
+    class CNN(nn.Module):
+        def __init__(self, width=224, height=224):
+            super().__init__()
+
+            resnet = visionmodels.resnet50(pretrained=True)
+            modules = list(resnet.children())[:-1]
+            self.resnet = nn.Sequential(*modules)
+
+            self.normalize_values = \
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            self.width = width
+            self.height = height
+            self.to_tensor = transforms.ToTensor()
+            self.labels = labels
+
+        def normalize_size(self, image):
+            width_ratio = self.width / image.width
+            height_ratio = self.height / image.height
+            ratio = min(width_ratio, height_ratio)
+            image = image.resize((math.floor(ratio * image.width), math.floor(ratio * image.height)))
+
+            p_top = math.floor((self.height - image.height) / 2)
+            p_bottom = math.ceil((self.height - image.height) / 2)
+            p_left = math.floor((self.width - image.width) / 2)
+            p_right = math.ceil((self.width - image.width) / 2)
+            image = pad(image,
+                        [p_left, p_top, p_right, p_bottom],
+                        fill=0,
+                        padding_mode='edge')
+            return image
+
+        def forward(self, x):
+            return self.resnet(x)[:, :, 0, 0]
+
+        def preprocess(self, image):
+            image = image.convert("RGB")
+            image = self.normalize_size(image)
+            image = self.to_tensor(image)
+            return self.normalize_values(image)
+
+
+    class VisualClassifier(torch.nn.Module):
+        def __init__(self, labels):
+            super().__init__()
+
+            self.linear = torch.nn.Linear(2048, len(labels))
+            self.labels = labels
+
+        def preprocess(self, x):
             return x
 
-An instance of this type is no supplied to the ``create_model`` method.
+        def forward(self, x):
+            return self.linear(x)
+
+        def postprocess(self, prediction)
+            return self.labels[prediction.topk(1)[1].item()]
+
+
+In order to register these models with SuperDuperDB, we do the following:
+
 
 .. code-block:: python
 
-    >>> from my_package import MyModule, MyType
-    >>> docs = the_client.my_database.my_collection
-    >>> docs.create_type('my_type', MyType())
-    >>> docs.create_model('my_model', object=MyModule(), filter={'img': {'$exists': 1}}, type='my_type')
-
-Once a model has been created, the documents selected by the ``filter`` are wrapped in a
-``torch.utils.data.DataLoader`` and outputs are computed. For this, the utility function
-``superduperdb.models.utils.apply_model`` is applied.
-The basic logic of this function is that the ``preprocess`` part is wrapped in a
-``torch.utils.data.DataSet`` object and the outputs of this are batched together using a dataloader
-and passed to the ``forward`` part of the model.
-Finally the batched outputs of the ``forward`` part are unpacked, and the ``postprocess`` part
-is applied to the "rows" of the batch.
-
-Exactly what your batches of data will look like inside this process, is illustrated by the following
-lines of code:
-
-.. code-block:: python
-
-    >>> import torch.utils.data, torch
-    >>> datapoints = [
-    ...   [{'a': {'b': 1}, 'c': 2}, [0, 0]] for _ in range(10)
-    ... ]
-    >>> dataloader = torch.utils.data.DataLoader(datapoints, batch_size=2)
-    >>> for batch in dataloader:
-    ...     print(batch)
-    [{'a': {'b': tensor([1, 1])}, 'c': tensor([2, 2])}, tensor([[0, 0], [0, 0]])]
-    [{'a': {'b': tensor([1, 1])}, 'c': tensor([2, 2])}, tensor([[0, 0], [0, 0]])]
-    [{'a': {'b': tensor([1, 1])}, 'c': tensor([2, 2])}, tensor([[0, 0], [0, 0]])]
-    [{'a': {'b': tensor([1, 1])}, 'c': tensor([2, 2])}, tensor([[0, 0], [0, 0]])]
-    [{'a': {'b': tensor([1, 1])}, 'c': tensor([2, 2])}, tensor([[0, 0], [0, 0]])]
-
-You can see the ``DataLoader`` class drilling down into the “leaf” nodes of the individual data points,
-and batching at the level of those leaves. For nested MongoDB documents, this is rather convenient,
-since the nested structure of the records may be easily handled in using the standard
-``torch.utils.data.DataLoader``.
-
-By default, the arguments of the ``preprocess`` part of a model, is always an entire MongoDB
-record. Optionally, however, models can act on certain sub-documents or fields, by specifying
-the ``key`` parameter in creating the model:
-
-.. code-block:: python
-
+    >>> from my_packages.models import CNN
+    >>> docs.create_model('resnet', CNN(), filter={'img': {'$exists': 1}}, key='img')
+    >>> docs.create_model('visual_classifier': VisualClassifier(my_labels),
+    ...                   filter={'img': {'$exists': 1},
+    ...                   features={'img': 'resnet'}, key='img')
+    # wait a bit...
     >>> docs.find_one()
     {'_id': ObjectId('6387bc38477124958d0b97d9'),
-     'title': 'BODYSUIT - Long sleeved top',
      'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361>,
-     '_fold': 'train'}
-    >>> docs.create_model('my_model', object=MyModule(), filter={'img': {'$exists': 1}},
-                          type='my_type', key='title')
-    # wait a bit
-    >>> docs.find_one()
-    {'_id': ObjectId('6387bc38477124958d0b97d9'),
-     'title': 'BODYSUIT - Long sleeved top',
-     'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361>,
-     '_fold': 'train',
-     '_outputs': {'title': {'my_module': tensor([ 0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253])}}}
+     '_outputs': {'img': {'resnet': tensor([0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253])},
+                          'visual_classifier': 'dark-lighting'}}
 
-You can see that the outputs of the model are saved in the ``_outputs.title.my_module`` field.
-By specifying the ``key`` field, you avoid the necessity of having to delve into the depth
-of the records inside your model, which makes your setup more flexible and easier to understand.
 
-Now that the outputs are saved in the documents, they can be used to "featurize" the same
-field over which they were computed:
-
-.. code-block:: python
-
-    >>> docs.find_one(features={'title': 'my_module'}, {'_outputs': 0})
-    {'_id': ObjectId('6387bc38477124958d0b97d9'),
-     'title': 'BODYSUIT - Long sleeved top',
-     'img': tensor([ 0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253]),
-     '_fold': 'train',
-     '_outputs': {'title': {'my_module': tensor([ 0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253])}}}
-
-You can see that the model outputs for ``my_module`` have been substituted into the ``img`` field.
-This is a very useful feature, when models depend on one another, e.g. in transfer learning.
+The ``create_model`` command saves the ``CNN()`` and ``VisualClassifier`` objects to the MongoDB
+filesystem and also applies the model to all of the documents which are selected by the ``filter``
+parameter (default ``{}`` - all). The second model depends for its input features on the first
+model. This is configured via the ``features={...}`` key-word. The fields in the dictionary
+are substituted with the model-outputs defined there.

@@ -46,12 +46,15 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../concepts.html">SuperDuperDB Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../types.html">Types in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models - an extension of PyTorch models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchers.html">Watchers in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../imputations.html">Imputations for filling in data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../models.html">Deep dive into SuperDuperDB models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../semantic_indexes.html">Deep dive into semantic indexes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">Notebook examples</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo Dataset</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo (Common Objects in Context) Dataset</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="setup-and-installation.html">Setup and installation</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Inserting and getting data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="text-2-image-retrieval-with-clip.html">Text-2-Image document retrieval using pretrained CLIP</a></li>
@@ -80,7 +83,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Notebook examples</a></li>
-          <li class="breadcrumb-item"><a href="index.html">CoCo Dataset</a></li>
+          <li class="breadcrumb-item"><a href="index.html">CoCo (Common Objects in Context) Dataset</a></li>
       <li class="breadcrumb-item active">Inserting and getting data</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/examples/coco/inserting-and-getting-data.ipynb.txt" rel="nofollow"> View page source</a>
@@ -385,10 +388,11 @@ div.rendered_html tbody tr:hover {
 </div>
 <p>We’ll load the data and add most of it to the database. We’ll hold back some data so that we can see how to update the database later.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;data/coco/data.json&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;../data/coco/data.json&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
 <span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="mi">1000</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -408,23 +412,21 @@ number of workers 0
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 81783/81783 [05:01&lt;00:00, 271.01it/s]
-</pre></div></div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "25b1e07a8aa2491b88432ca383d4aeb9", "version_major": 2, "version_minor": 0}</script></div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;pymongo.results.InsertManyResult at 0x10cec0a30&gt;
+&lt;pymongo.results.InsertManyResult at 0x174cb2b00&gt;
 </pre></div></div>
 </div>
 <p>Now that we’ve added the data to the collection we can retrieve the raw documents. You’ll see that the image field contains the raw bytes of the images:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -432,12 +434,12 @@ number of workers 0
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;_id&#39;: ObjectId(&#39;63f4d31b99e15ed933e61fcd&#39;),
+{&#39;_id&#39;: ObjectId(&#39;63fca4325d2a192e05fe154a&#39;),
  &#39;captions&#39;: [&#39;A restaurant has modern wooden tables and chairs.&#39;,
   &#39;A long restaurant table with rattan rounded back chairs.&#39;,
   &#39;a long table with a plant on top of it surrounded with wooden chairs &#39;,
@@ -487,7 +489,7 @@ number of workers 0
 </pre></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.types</span> <span class="kn">import</span> <span class="n">FloatTensor</span><span class="p">,</span> <span class="n">Image</span>
@@ -499,7 +501,7 @@ number of workers 0
 </div>
 <p>We can view the available <code class="docutils literal notranslate"><span class="pre">types</span></code> with the <code class="docutils literal notranslate"><span class="pre">list_types</span></code> method:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_types</span><span class="p">()</span>
@@ -507,7 +509,7 @@ number of workers 0
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -517,7 +519,7 @@ number of workers 0
 </div>
 <p>We can retrieve the Python object with:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">types</span><span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">]</span>
@@ -525,17 +527,17 @@ number of workers 0
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;examples.types.Image at 0x166b7c6a0&gt;
+&lt;examples.types.Image at 0x18af44c40&gt;
 </pre></div></div>
 </div>
 <p>Once we have added the raw data, we can retrieve the images directly instantiated as Python objects:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
@@ -543,12 +545,12 @@ number of workers 0
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;_id&#39;: ObjectId(&#39;63f4d31b99e15ed933e61fcd&#39;),
+{&#39;_id&#39;: ObjectId(&#39;63fca4325d2a192e05fe154a&#39;),
  &#39;captions&#39;: [&#39;A restaurant has modern wooden tables and chairs.&#39;,
   &#39;A long restaurant table with rattan rounded back chairs.&#39;,
   &#39;a long table with a plant on top of it surrounded with wooden chairs &#39;,
@@ -559,7 +561,7 @@ number of workers 0
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>

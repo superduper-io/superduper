@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Deep dive into semantic indexes &mdash; SuperDuperDB  documentation</title>
+  <title>Semantic indexes for flexibly searching data &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -22,7 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Deep dive into SuperDuperDB models" href="models.html" /> 
+    <link rel="next" title="Imputations for filling in data" href="imputations.html" />
+    <link rel="prev" title="Watchers in SuperDuperDB" href="watchers.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -43,14 +44,18 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Deep dive into SuperDuperDB models</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Deep dive into semantic indexes</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Semantic indexes for flexibly searching data</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#defining-your-own-semantic-index">Defining your own semantic index</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#using-a-semantic-index">Using a semantic index</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#creating-a-neighbourhood">Creating a neighbourhood</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
@@ -69,7 +74,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">Deep dive into semantic indexes</li>
+      <li class="breadcrumb-item active">Semantic indexes for flexibly searching data</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/semantic_indexes.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -103,8 +108,60 @@
     text-align: unset;
 }
 </style>
-<section id="deep-dive-into-semantic-indexes">
-<h1>Deep dive into semantic indexes<a class="headerlink" href="#deep-dive-into-semantic-indexes" title="Permalink to this heading"></a></h1>
+<section id="semantic-indexes-for-flexibly-searching-data">
+<h1>Semantic indexes for flexibly searching data<a class="headerlink" href="#semantic-indexes-for-flexibly-searching-data" title="Permalink to this heading"></a></h1>
+<p>When you’ve created one or more models in SuperDuperDB which have tensor outputs,
+SuperDuperDB may be used to search through the data, on the basis of input which
+may be accepted by those models.</p>
+<p>For example, continuing the example begun <a class="reference internal" href="models.html#cnn-example"><span class="std std-ref">here</span></a>,
+let’s make a semantic index on the basis of the <code class="docutils literal notranslate"><span class="pre">img</span></code> field ,
+utilizing the <code class="docutils literal notranslate"><span class="pre">resnet</span></code> model from before. We first need to create a measure function
+which will be used to compare tensor outputs of the contained models:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Equipped with this measure function, we are able to register the semantic index to
+SuperDuperDB, using already existing models.
+Once the semantic index has been created, it may be searched using the <code class="docutils literal notranslate"><span class="pre">like</span></code> keyword
+in a MongoDB style query.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_package.measures</span> <span class="kn">import</span> <span class="n">css</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_measure</span><span class="p">(</span><span class="s1">&#39;dot&#39;</span><span class="p">,</span> <span class="n">dot</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span><span class="s1">&#39;resnet-index&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;resnet&#39;</span><span class="p">],</span> <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;dot&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">ObjectId</span><span class="p">(</span><span class="s1">&#39;6387bc38477124958d0b97d9&#39;</span><span class="p">)},</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">ObjectId(&#39;6387bc38477124958d0b97d9&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">like</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">PIL</span><span class="o">.</span><span class="n">PngImagePlugin</span><span class="o">.</span><span class="n">PngImageFile</span> <span class="n">image</span> <span class="n">mode</span><span class="o">=</span><span class="n">RGB</span> <span class="n">size</span><span class="o">=</span><span class="mi">250</span><span class="n">x361</span><span class="o">&gt;</span><span class="p">},</span>
+<span class="gp">... </span>    <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+<span class="go">ObjectId(&#39;6387bc38477124958d0b97d9&#39;)</span>
+</pre></div>
+</div>
+<p>It’s also possible to train a semantic-index end-2-end using the <code class="docutils literal notranslate"><span class="pre">create_semantic_index</span></code> command.
+For this it’s necessary to define additionally:
+- a <strong>splitter</strong>, which divides a document into a query and retrieved item pair
+- a <strong>loss</strong> function, which measures the quality of retrievals quantitatively, and is used for backpropagation.
+- optionally <strong>metrics</strong>, which measure the quality of retrieval in an interpretable way.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">split_images</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;images&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]]},</span> <span class="p">{</span><span class="s1">&#39;images&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">*</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">][:</span><span class="n">index</span><span class="p">],</span> <span class="o">*</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">:]]}</span>
+
+<span class="k">def</span> <span class="nf">ranking_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">similarities</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">similarities</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">r_at_1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">y</span> <span class="o">==</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_package.utils</span> <span class="kn">import</span> <span class="n">r_at_1</span><span class="p">,</span> <span class="n">ranking_loss</span><span class="p">,</span> <span class="n">split_images</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;r@1&#39;</span><span class="p">,</span> <span class="n">r_at_1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_loss</span><span class="p">(</span><span class="s1">&#39;ranking&#39;</span><span class="p">,</span> <span class="n">ranking_loss</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span><span class="s1">&#39;my_index&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;resnet&#39;</span><span class="p">],</span> <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;dot&#39;</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;ranking&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;r@1&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
 <p>SuperDuperDB is the most natural environment to implement and deploy semantic search and
 models such as
 <a class="reference external" href="https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens">Retro</a>
@@ -127,30 +184,17 @@ existing models as follows:</p>
 <span class="gp">... </span><span class="p">)</span>
 </pre></div>
 </div>
-<p>If the models don’t exist, and only make sense within the semantic index, then it’s possible to
-create them in line with:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
-<span class="gp">... </span>   <span class="s1">&#39;my_semantic_index&#39;</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="n">kwargs_1</span><span class="p">,</span> <span class="n">kwargs_2</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
-<span class="gp">... </span>    <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;css&#39;</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The <code class="docutils literal notranslate"><span class="pre">kwargs_&lt;i&gt;</span></code> are passed onto <code class="docutils literal notranslate"><span class="pre">docs.create_model</span></code>.</p>
 </section>
 <section id="using-a-semantic-index">
 <h2>Using a semantic index<a class="headerlink" href="#using-a-semantic-index" title="Permalink to this heading"></a></h2>
-<p>SuperDuperDB comes with a dialect of the MongoDB query language, augmenting the standard <code class="docutils literal notranslate"><span class="pre">dict</span></code>
-based syntax with an additional operator <code class="docutils literal notranslate"><span class="pre">$like</span></code>. In order to use <code class="docutils literal notranslate"><span class="pre">$like</span></code> in a query,
-a default <em>semantic index</em> for the collection or for the particular query must be set.</p>
 <p>To set a default index, update <code class="docutils literal notranslate"><span class="pre">docs['_meta']</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_meta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update_one</span><span class="p">({</span><span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;semantic_index&#39;</span><span class="p">},</span>
 <span class="gp">... </span>                         <span class="p">{</span><span class="s1">&#39;$set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="s1">&#39;my_semantic_index&#39;</span><span class="p">}},</span>
 <span class="gp">... </span>                         <span class="n">upsert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>To set an index for a query, set the property <code class="docutils literal notranslate"><span class="pre">docs.semantic_index</span> <span class="pre">=</span> <span class="pre">'my_semantic_index'</span></code>.</p>
-<p>To use a semantic index, use the <code class="docutils literal notranslate"><span class="pre">like</span></code> keyword in <code class="docutils literal notranslate"><span class="pre">Collection.find</span></code> or <code class="docutils literal notranslate"><span class="pre">Collection.find_one</span></code>:</p>
+<p>To set an index for a query, set the property <code class="docutils literal notranslate"><span class="pre">docs.semantic_index</span> <span class="pre">=</span> <span class="pre">'my_semantic_index'</span></code>.
+To use a semantic index, use the <code class="docutils literal notranslate"><span class="pre">like</span></code> keyword in <code class="docutils literal notranslate"><span class="pre">Collection.find</span></code> or <code class="docutils literal notranslate"><span class="pre">Collection.find_one</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">exact_filter</span><span class="p">,</span> <span class="n">like</span><span class="o">=</span><span class="n">doc_contents</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -196,7 +240,8 @@ very low latency.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="models.html" class="btn btn-neutral float-left" title="Deep dive into SuperDuperDB models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="watchers.html" class="btn btn-neutral float-left" title="Watchers in SuperDuperDB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="imputations.html" class="btn btn-neutral float-right" title="Imputations for filling in data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

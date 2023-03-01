@@ -57,8 +57,6 @@
    "id": "d0e1e6e1",
    "metadata": {},
    "source": [
-    "## Preparing the data for injestion\n",
-    "\n",
     "SuperDuperDB can handle data in any format, including images. The documents in the database are MongoDB `bson` documents, which mix `json` with raw bytes and `ObjectId` objects. SuperDuperDB takes advantage of this by \n",
     "serializing more sophisticated objects to bytes, and reinstantiating the objects in memory, when data is queried.\n",
     "\n",

@@ -6,15 +6,13 @@ from superduperdb.models.utils import apply_model
 from superduperdb.utils import progressbar
 
 
-def validate_imputation(collection, validation_set, imputation,
-                        metrics, model=None,
-                        features=None):
+def validate_imputation(collection, validation_set, imputation, metrics, model=None, features=None):
 
-    info = collection['_imputations'].find_one({'name': imputation})
+    info = collection['_objects'].find_one({'name': imputation, 'varieties': 'imputation'})
     if model is None:
         model = collection.models[info['model']]
-    key = collection['_models'].find_one({'name': info['model']})['key']
-    target = collection['_models'].find_one({'name': info['target']})['key']
+    model_key = info['model_key']
+    target_key = info['target_key']
     loader_kwargs = info.get('loader_kwargs') or {}
 
     if isinstance(metrics, list):
@@ -27,15 +25,15 @@ def validate_imputation(collection, validation_set, imputation,
         {'_validation_set': validation_set},
         features=features,
     ))
-    if key != '_base':
-        inputs_ = [r[key] for r in docs]
+    if model_key != '_base':
+        inputs_ = [r[model_key] for r in docs]
     elif '_base' in features:
         inputs_ = [r['_base'] for r in docs]
     else:  # pragma: no cover
         inputs_ = docs
 
-    if target != '_base':
-        targets = [r[target] for r in docs]
+    if target_key != '_base':
+        targets = [r[target_key] for r in docs]
     else:  # pragma: no cover
         targets = docs
 
@@ -58,7 +56,7 @@ def validate_representations(collection, validation_set, semantic_index,
                              metrics, encoders=None,
                              features=None, refresh=False):
 
-    info = collection['_semantic_indexes'].find_one({'name': semantic_index})
+    info = collection['_objects'].find_one({'name': semantic_index, 'varieties': 'semantic_index'})
     encoder_names = info['models']
     projection = info.get('projection', {})
     if encoders is None:
@@ -78,25 +76,21 @@ def validate_representations(collection, validation_set, semantic_index,
         if not 'semantic_index' in str(e):
             raise e
 
-    active_model = \
-        collection.list_models(**{'active': True, 'name': {'$in': encoder_names}})[0]
-    key = collection['_models'].find_one({'name': active_model}, {'key': 1})['key']
-
     if refresh:
         _ids = collection['_validation_sets'].distinct('_id', {'_validation_set': validation_set})
     else:
         _ids = collection['_validation_sets'].distinct(
             '_id',
-            {'_validation_set': validation_set, f'_outputs.{key}.{active_model}': {'$exists': 0}}
+            {'_validation_set': validation_set, f'_outputs.{info["keys"][0]}.{encoder_names[0]}':
+                {'$exists': 0}
+            }
         )
 
     collection.remote = False
-    for i, m in enumerate(collection.list_models(
-        **{'name': {'$in': encoder_names}, 'active': True}
-    )):
-        collection['_validation_sets']._process_documents_with_model(
-            m, _ids, verbose=True, model=encoders[i],
-        )
+    collection['_validation_sets']._process_documents_with_watcher(
+        encoder_names[0], info['keys'][0], _ids, verbose=True, model=encoders[0],
+        recompute=True,
+    )
     valid_coll = collection['_validation_sets']
     valid_coll.semantic_index = semantic_index
     anchors = progressbar(

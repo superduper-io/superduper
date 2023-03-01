@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Deep dive into SuperDuperDB models &mdash; SuperDuperDB  documentation</title>
+  <title>Models - an extension of PyTorch models &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -22,8 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Deep dive into semantic indexes" href="semantic_indexes.html" />
-    <link rel="prev" title="Setting up a SuperDuperDB cluster" href="cluster.html" /> 
+    <link rel="next" title="Watchers in SuperDuperDB" href="watchers.html" />
+    <link rel="prev" title="Adding content to SuperDuperDB" href="content.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -44,10 +44,16 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Models - an extension of PyTorch models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cnn-example">CNN example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Deep dive into SuperDuperDB models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Deep dive into semantic indexes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
@@ -66,7 +72,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">Deep dive into SuperDuperDB models</li>
+      <li class="breadcrumb-item active">Models - an extension of PyTorch models</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/models.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -100,8 +106,8 @@
     text-align: unset;
 }
 </style>
-<section id="deep-dive-into-superduperdb-models">
-<h1>Deep dive into SuperDuperDB models<a class="headerlink" href="#deep-dive-into-superduperdb-models" title="Permalink to this heading"></a></h1>
+<section id="models-an-extension-of-pytorch-models">
+<h1>Models - an extension of PyTorch models<a class="headerlink" href="#models-an-extension-of-pytorch-models" title="Permalink to this heading"></a></h1>
 <p>Models in SuperDuperDB extend the notion of PyTorch models
 by including pre-processing and post-processing. These are necessary
 since the data in the database aren’t necessarily in tensor format
@@ -144,9 +150,6 @@ model:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="o">...</span>
 
-<span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="o">...</span>
-
 <span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="o">...</span>
 </pre></div>
@@ -154,115 +157,114 @@ model:</p>
 <p>This approach has the advantage of the methods being able to share data from the class’s
 <code class="docutils literal notranslate"><span class="pre">__init__</span></code> signature.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_package</span> <span class="kn">import</span> <span class="n">preprocess</span><span class="p">,</span> <span class="n">postprocess</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;my_model&#39;</span><span class="p">,</span> <span class="n">preprocess</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;my_preprocess&#39;</span><span class="p">:</span> <span class="n">preprocess</span><span class="p">},</span>
-<span class="gp">... </span>                  <span class="n">forward</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_input</span><span class="p">,</span> <span class="n">n_output</span><span class="p">),</span>
-<span class="gp">... </span>                  <span class="n">postprocess</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;my_postprocess&#39;</span><span class="p">:</span> <span class="n">postprocess</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_preprocessor</span><span class="p">(</span><span class="s1">&#39;my_preprocess&#39;</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_postprocessor</span><span class="p">(</span><span class="s1">&#39;my_postprocess&#39;</span><span class="p">,</span> <span class="n">postprocess</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;my_model&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_input</span><span class="p">,</span> <span class="n">n_output</span><span class="p">),</span>
+<span class="gp">... </span>                  <span class="n">preprocess</span><span class="o">=</span><span class="s1">&#39;my_preprocess&#39;</span><span class="p">,</span>
+<span class="gp">... </span>                  <span class="n">postprocess</span><span class="o">=</span><span class="s1">&#39;my_postprocess&#39;</span><span class="p">,</span>
+<span class="gp">... </span>                  <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;image&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This has the advantage of modularity as the pre- and postprocessing parts can be shared between
 models more easily.</p>
-<p>In direct analogy to <code class="docutils literal notranslate"><span class="pre">pymongo.collection.Collection.create_index</span></code>, it’s possible to supply
-a filter (query) which selects which documents a model is applied to.</p>
-<p>For example, suppose that our model requires a certain field <code class="docutils literal notranslate"><span class="pre">img</span></code> to exist, in order to be applicable.
-Then the following command would do the trick, and would restrict the model to the documents
-selected by the filter:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_package</span> <span class="kn">import</span> <span class="n">MyModule</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">my_database</span><span class="o">.</span><span class="n">my_collection</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;my_model&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="o">=</span><span class="n">MyModule</span><span class="p">(),</span> <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$exists&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}})</span>
-</pre></div>
-</div>
-<p>If our model has particular outputs not supported directly by MongoDB, then it’s necessary
-to provide a “type” which handles the conversion to and from <code class="docutils literal notranslate"><span class="pre">bytes</span></code>. That will allow the
-outputs of the model to be saved to the database.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyType</span><span class="p">:</span>
-    <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="n">Type1</span><span class="p">,</span> <span class="n">Type2</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<p>The <code class="docutils literal notranslate"><span class="pre">type</span></code> key-word is only necessary if the output type of the postprocess is not supported
+by MongoDB. Read more about types here <code class="docutils literal notranslate"><span class="pre">Types</span> <span class="pre">in</span> <span class="pre">SuperDuperDB</span></code>.</p>
+<section id="cnn-example">
+<h2>CNN example<a class="headerlink" href="#cnn-example" title="Permalink to this heading"></a></h2>
+<p>Here is a CNN classifier example, using the <code class="docutils literal notranslate"><span class="pre">torchvision</span></code>
+library.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">models</span> <span class="k">as</span> <span class="n">visionmodels</span>
+<span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">transforms</span>
+<span class="kn">from</span> <span class="nn">torchvision.transforms.functional</span> <span class="kn">import</span> <span class="n">pad</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
 
-    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="o">...</span>
-        <span class="k">return</span> <span class="n">my_bytes_string</span>
 
-    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">my_bytes_string</span><span class="p">):</span>
-        <span class="o">...</span>
+<span class="k">class</span> <span class="nc">CNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">224</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">224</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="n">resnet</span> <span class="o">=</span> <span class="n">visionmodels</span><span class="o">.</span><span class="n">resnet50</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">modules</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">resnet</span><span class="o">.</span><span class="n">children</span><span class="p">())[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resnet</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">modules</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalize_values</span> <span class="o">=</span> \
+            <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="p">[</span><span class="mf">0.485</span><span class="p">,</span> <span class="mf">0.456</span><span class="p">,</span> <span class="mf">0.406</span><span class="p">],</span> <span class="n">std</span><span class="o">=</span><span class="p">[</span><span class="mf">0.229</span><span class="p">,</span> <span class="mf">0.224</span><span class="p">,</span> <span class="mf">0.225</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_tensor</span> <span class="o">=</span> <span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
+
+    <span class="k">def</span> <span class="nf">normalize_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
+        <span class="n">width_ratio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">/</span> <span class="n">image</span><span class="o">.</span><span class="n">width</span>
+        <span class="n">height_ratio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">/</span> <span class="n">image</span><span class="o">.</span><span class="n">height</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">width_ratio</span><span class="p">,</span> <span class="n">height_ratio</span><span class="p">)</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">ratio</span> <span class="o">*</span> <span class="n">image</span><span class="o">.</span><span class="n">width</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">ratio</span> <span class="o">*</span> <span class="n">image</span><span class="o">.</span><span class="n">height</span><span class="p">)))</span>
+
+        <span class="n">p_top</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">image</span><span class="o">.</span><span class="n">height</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">p_bottom</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">image</span><span class="o">.</span><span class="n">height</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">p_left</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">image</span><span class="o">.</span><span class="n">width</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">p_right</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">image</span><span class="o">.</span><span class="n">width</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">pad</span><span class="p">(</span><span class="n">image</span><span class="p">,</span>
+                    <span class="p">[</span><span class="n">p_left</span><span class="p">,</span> <span class="n">p_top</span><span class="p">,</span> <span class="n">p_right</span><span class="p">,</span> <span class="n">p_bottom</span><span class="p">],</span>
+                    <span class="n">fill</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">padding_mode</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">image</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resnet</span><span class="p">(</span><span class="n">x</span><span class="p">)[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_size</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_tensor</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_values</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">VisualClassifier</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2048</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
+
+    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">x</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prediction</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">prediction</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()]</span>
 </pre></div>
 </div>
-<p>An instance of this type is no supplied to the <code class="docutils literal notranslate"><span class="pre">create_model</span></code> method.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_package</span> <span class="kn">import</span> <span class="n">MyModule</span><span class="p">,</span> <span class="n">MyType</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">my_database</span><span class="o">.</span><span class="n">my_collection</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;my_type&#39;</span><span class="p">,</span> <span class="n">MyType</span><span class="p">())</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;my_model&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="o">=</span><span class="n">MyModule</span><span class="p">(),</span> <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$exists&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;my_type&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Once a model has been created, the documents selected by the <code class="docutils literal notranslate"><span class="pre">filter</span></code> are wrapped in a
-<code class="docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code> and outputs are computed. For this, the utility function
-<code class="docutils literal notranslate"><span class="pre">superduperdb.models.utils.apply_model</span></code> is applied.
-The basic logic of this function is that the <code class="docutils literal notranslate"><span class="pre">preprocess</span></code> part is wrapped in a
-<code class="docutils literal notranslate"><span class="pre">torch.utils.data.DataSet</span></code> object and the outputs of this are batched together using a dataloader
-and passed to the <code class="docutils literal notranslate"><span class="pre">forward</span></code> part of the model.
-Finally the batched outputs of the <code class="docutils literal notranslate"><span class="pre">forward</span></code> part are unpacked, and the <code class="docutils literal notranslate"><span class="pre">postprocess</span></code> part
-is applied to the “rows” of the batch.</p>
-<p>Exactly what your batches of data will look like inside this process, is illustrated by the following
-lines of code:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch.utils.data</span><span class="o">,</span> <span class="nn">torch</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">datapoints</span> <span class="o">=</span> <span class="p">[</span>
-<span class="gp">... </span>  <span class="p">[{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-<span class="gp">... </span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">datapoints</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
-<span class="go">[{&#39;a&#39;: {&#39;b&#39;: tensor([1, 1])}, &#39;c&#39;: tensor([2, 2])}, tensor([[0, 0], [0, 0]])]</span>
-<span class="go">[{&#39;a&#39;: {&#39;b&#39;: tensor([1, 1])}, &#39;c&#39;: tensor([2, 2])}, tensor([[0, 0], [0, 0]])]</span>
-<span class="go">[{&#39;a&#39;: {&#39;b&#39;: tensor([1, 1])}, &#39;c&#39;: tensor([2, 2])}, tensor([[0, 0], [0, 0]])]</span>
-<span class="go">[{&#39;a&#39;: {&#39;b&#39;: tensor([1, 1])}, &#39;c&#39;: tensor([2, 2])}, tensor([[0, 0], [0, 0]])]</span>
-<span class="go">[{&#39;a&#39;: {&#39;b&#39;: tensor([1, 1])}, &#39;c&#39;: tensor([2, 2])}, tensor([[0, 0], [0, 0]])]</span>
-</pre></div>
-</div>
-<p>You can see the <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> class drilling down into the “leaf” nodes of the individual data points,
-and batching at the level of those leaves. For nested MongoDB documents, this is rather convenient,
-since the nested structure of the records may be easily handled in using the standard
-<code class="docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code>.</p>
-<p>By default, the arguments of the <code class="docutils literal notranslate"><span class="pre">preprocess</span></code> part of a model, is always an entire MongoDB
-record. Optionally, however, models can act on certain sub-documents or fields, by specifying
-the <code class="docutils literal notranslate"><span class="pre">key</span></code> parameter in creating the model:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
-<span class="go">{&#39;_id&#39;: ObjectId(&#39;6387bc38477124958d0b97d9&#39;),</span>
-<span class="go"> &#39;title&#39;: &#39;BODYSUIT - Long sleeved top&#39;,</span>
-<span class="go"> &#39;img&#39;: &lt;PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361&gt;,</span>
-<span class="go"> &#39;_fold&#39;: &#39;train&#39;}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;my_model&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="o">=</span><span class="n">MyModule</span><span class="p">(),</span> <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$exists&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span>
-<span class="go">                      type=&#39;my_type&#39;, key=&#39;title&#39;)</span>
-<span class="go"># wait a bit</span>
+<p>In order to register these models with SuperDuperDB, we do the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_packages.models</span> <span class="kn">import</span> <span class="n">CNN</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;resnet&#39;</span><span class="p">,</span> <span class="n">CNN</span><span class="p">(),</span> <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$exists&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;visual_classifier&#39;</span><span class="p">:</span> <span class="n">VisualClassifier</span><span class="p">(</span><span class="n">my_labels</span><span class="p">),</span>
+<span class="gp">... </span>                  <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$exists&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+<span class="gp">... </span>                  <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="s1">&#39;resnet&#39;</span><span class="p">},</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">)</span>
+<span class="go"># wait a bit...</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
 <span class="go">{&#39;_id&#39;: ObjectId(&#39;6387bc38477124958d0b97d9&#39;),</span>
-<span class="go"> &#39;title&#39;: &#39;BODYSUIT - Long sleeved top&#39;,</span>
 <span class="go"> &#39;img&#39;: &lt;PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361&gt;,</span>
-<span class="go"> &#39;_fold&#39;: &#39;train&#39;,</span>
-<span class="go"> &#39;_outputs&#39;: {&#39;title&#39;: {&#39;my_module&#39;: tensor([ 0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253])}}}</span>
+<span class="go"> &#39;_outputs&#39;: {&#39;img&#39;: {&#39;resnet&#39;: tensor([0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253])},</span>
+<span class="go">                      &#39;visual_classifier&#39;: &#39;dark-lighting&#39;}}</span>
 </pre></div>
 </div>
-<p>You can see that the outputs of the model are saved in the <code class="docutils literal notranslate"><span class="pre">_outputs.title.my_module</span></code> field.
-By specifying the <code class="docutils literal notranslate"><span class="pre">key</span></code> field, you avoid the necessity of having to delve into the depth
-of the records inside your model, which makes your setup more flexible and easier to understand.</p>
-<p>Now that the outputs are saved in the documents, they can be used to “featurize” the same
-field over which they were computed:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="s1">&#39;my_module&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;_outputs&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
-<span class="go">{&#39;_id&#39;: ObjectId(&#39;6387bc38477124958d0b97d9&#39;),</span>
-<span class="go"> &#39;title&#39;: &#39;BODYSUIT - Long sleeved top&#39;,</span>
-<span class="go"> &#39;img&#39;: tensor([ 0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253]),</span>
-<span class="go"> &#39;_fold&#39;: &#39;train&#39;,</span>
-<span class="go"> &#39;_outputs&#39;: {&#39;title&#39;: {&#39;my_module&#39;: tensor([ 0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253])}}}</span>
-</pre></div>
-</div>
-<p>You can see that the model outputs for <code class="docutils literal notranslate"><span class="pre">my_module</span></code> have been substituted into the <code class="docutils literal notranslate"><span class="pre">img</span></code> field.
-This is a very useful feature, when models depend on one another, e.g. in transfer learning.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">create_model</span></code> command saves the <code class="docutils literal notranslate"><span class="pre">CNN()</span></code> and <code class="docutils literal notranslate"><span class="pre">VisualClassifier</span></code> objects to the MongoDB
+filesystem and also applies the model to all of the documents which are selected by the <code class="docutils literal notranslate"><span class="pre">filter</span></code>
+parameter (default <code class="docutils literal notranslate"><span class="pre">{}</span></code> - all). The second model depends for its input features on the first
+model. This is configured via the <code class="docutils literal notranslate"><span class="pre">features={...}</span></code> key-word. The fields in the dictionary
+are substituted with the model-outputs defined there.</p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="cluster.html" class="btn btn-neutral float-left" title="Setting up a SuperDuperDB cluster" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="semantic_indexes.html" class="btn btn-neutral float-right" title="Deep dive into semantic indexes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="content.html" class="btn btn-neutral float-left" title="Adding content to SuperDuperDB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="watchers.html" class="btn btn-neutral float-right" title="Watchers in SuperDuperDB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

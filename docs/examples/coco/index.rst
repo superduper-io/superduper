@@ -1,5 +1,5 @@
 ************
-CoCo Dataset
+CoCo (Common Objects in Context) Dataset
 ************
 
 .. toctree::

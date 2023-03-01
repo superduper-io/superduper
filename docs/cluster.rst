@@ -1,6 +1,5 @@
-*********************************
 Setting up a SuperDuperDB cluster
-*********************************
+=================================
 
 The exact setup of your SuperDuperDB cluster will depend on the use-cases you
 plan to execute with the cluster. Factors to consider will be:
@@ -11,51 +10,48 @@ plan to execute with the cluster. Factors to consider will be:
 - What hardware you'd like to run
 - And more...
 
-++++++++++
 Components
-++++++++++
+----------
 
 The basic topology of a SuperDuperDB cluster is given in the graphic below:
 
-.. image:: img/architecture_detailed.png
+.. image:: img/architecture_now.png
     :width: 80%
 
 Client
-======
+^^^^^^
 
 The client is analagous to the client used in MongoDB. This is the programmer's interface to
 the SuperDuperDB cluster and provides a unified user-experience very similar to the MongoDB
 user experience.
 
 MongoDB
-=======
+^^^^^^^
 
 This is a standard MongoDB deployment. The deployment can either sit in the same infrastructure
-as the remained of the SuperDuperDB, or it can be situated remotely. Performance and latency
+as the remainder of the SuperDuperDB cluster, or it can be situated remotely. Performance and latency
 concerns here will play a role in which version works best and is most convenient.
 
-Master/ Vector Search
-=====================
+Linear algebra 
+^^^^^^^^^^^^^^
 
 This node returns real time semantic index search outputs to the client. The node loads
 model outputs which are of vector or tensor type, and creates an in-memory search index over
 them.
 
-Job-master
-==========
+Model-server
+^^^^^^^^^^^^
 
-This node schedules jobs to run on the job-workers. These jobs compute model outputs and
-also run training to create new models.
+SuperDuperDB contains a component which serves models which has been created.
 
 Job-worker
-==========
+^^^^^^^^^^
 
 These nodes perform the long computations necessary to update model outputs when new data
 come in, and also perform model training for models which are set up to be trained on creation.
 
-+++++++++++++++++++++++++
 Basic local cluster setup
-+++++++++++++++++++++++++
+-------------------------
 
 The following ``config.json`` and ``supervisord.conf`` configuration runs a test cluster
 on the ``localhost``:
@@ -64,9 +60,13 @@ on the ``localhost``:
 
     {
       "remote": true,
-      "master": {
+      "linear_algebra": {
         "host": "localhost",
         "port": 5001
+      },
+      "model_server": {
+        "host": "localhost",
+        "port": 5003
       },
       "jobs": {
         "host": "localhost",
@@ -89,9 +89,9 @@ on the ``localhost``:
     logfile=/dev/null
     logfile_maxbytes=0
 
-    [program:master]
+    [program:linear-algebra]
 
-    command=/bin/bash -c "python3 -m superduperdb.servers.master $(cat config.json | jq .master.port)"
+    command=/bin/bash -c "python3 -m superduperdb.servers.linear_algebra $(cat config.json | jq .linear_algebra.port)"
     process_name=%(program_name)s_%(process_num)s
     numprocs=1
     stdout_logfile=logs/master.out
@@ -99,23 +99,23 @@ on the ``localhost``:
     autorestart=false
     startretries=1
 
-    [program:jobs-master]
+    [program:model-server]
 
-    command=/bin/bash -c "python3 -m superduperdb.servers.jobs $(cat config.json | jq .hash_set.port)"
+    command=/bin/bash -c "python3 -m superduperdb.servers.models $(cat config.json | jq .hash_set.port)"
     process_name=%(program_name)s_%(process_num)s
     numprocs=1
-    stdout_logfile=logs/jobs-master.out
-    stderr_logfile=logs/jobs-master.out
+    stdout_logfile=logs/model-server.out
+    stderr_logfile=logs/model-server.out
     autorestart=false
     startretries=1
 
-    [program:jobs-worker]
+    [program:worker]
 
     command=/bin/bash -c "rq worker -v --url redis://:@localhost:$(cat config.json | jq .redis.port)"
     process_name=%(program_name)s_%(process_num)s
     numprocs=2
-    stdout_logfile=logs/jobs-worker.out
-    stderr_logfile=logs/jobs-worker.out
+    stdout_logfile=logs/worker.out
+    stderr_logfile=logs/worker.out
     autorestart=false
     startretries=1
 

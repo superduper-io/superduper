@@ -50,7 +50,7 @@ class Collection(BaseCollection):
 
     Deleting objects:
 
-    - ``delete_objects``
+    - ``delete_object``
 
     Accessing data:
 
@@ -90,10 +90,11 @@ class Collection(BaseCollection):
         self._type_lookup = None
 
         self.objects = ArgumentDefaultDict(
-            lambda x: ArgumentDefaultDict(lambda y: self._load_object(x, y))
+            lambda x: ArgumentDefaultDict(lambda y: self._load_object(x[:-1], y))
         )
-        self._allowed_varieties = ['model', 'function',
-                                   'splitter', 'loss', 'measure', 'type']
+        self.models = ArgumentDefaultDict(lambda x: self._load_model(x))
+        self._allowed_varieties = ['model', 'function', 'preprocessor', 'postprocessor',
+                                   'splitter', 'objective', 'measure', 'type', 'metric']
         self.headers = None
 
     def __getitem__(self, item):
@@ -150,44 +151,24 @@ class Collection(BaseCollection):
                     continue
         return self._type_lookup
 
-    def apply_model(self, name, r, **kwargs):
+    def apply_model(self, name, input_, **kwargs):
         if self.remote:
-            return superduper_requests.client.apply_model(name, r, **kwargs)
-        model = self.models[name]
-        info = self['_objects'].find_one({'name': name, 'varieties': 'model'})
-        key = info['key']
-        if isinstance(r, dict):
-            if info['features']:
-                r = MongoStyleDict(r)
-                for k in info['features']:
-                    r[k] = r[f'_outputs.{k}.{info["features"][k]}']
-            if key == '_base':
-                return apply_model(model, r, single=True, **kwargs)
-            else:
-                return apply_model(model, MongoStyleDict(r)[key], single=True, **kwargs)
-        else:
-            assert isinstance(r, list)
-            if info['features']:
-                for i, rr in enumerate(r):
-                    r[i] = MongoStyleDict(rr)
-                    for k in info['features']:
-                        r[i][k] = r[i][f'_outputs.{k}.{info["features"][k]}']
-            if key == '_base':
-                return apply_model(model, r, single=False, **kwargs)
-            else:
-                return apply_model(model, [MongoStyleDict(rr)[key] for rr in r], single=False,
-                                   **kwargs)
+            return superduper_requests.client.apply_model(name, input_, **kwargs)
+        return apply_model(self.models[name], input_, **kwargs)
 
-    def create_imputation(self, name, model, target, loss=None, metrics=None,
-                          splitter=None, **trainer_kwargs):
+    def create_imputation(self, name, model, model_key, target, target_key,
+                          objective=None, metrics=None,
+                          splitter=None, watch=True, **trainer_kwargs):
         """
         Create an imputation setup. This is any learning task where we have an input to the model
         compared to the target.
 
         :param name: Name of imputation
         :param model: Model settings or model name
-        :param loss: Loss settings or loss
+        :param model_key: Key for model to injest
         :param target: Target settings (input to ``create_model``) or target name
+        :param target_key: Key for model to predict
+        :param objective: Loss settings or objective
         :param metrics: List of metric settings or metric names
         :param splitter: Splitter name to use to prepare data points for insertion to model
         :param trainer_kwargs: Keyword-arguments to forward to ``train_tools.ImputationTrainer``
@@ -195,10 +176,10 @@ class Collection(BaseCollection):
         """
 
         assert name not in self.list_imputations()
-        assert target in self.list_models()
+        assert target in self.list_functions()
         assert model in self.list_models()
-        if loss is not None:
-            assert loss in self.list_losses()
+        if objective is not None:
+            assert objective in self.list_objectives()
         if metrics:
             for metric in metrics:
                 assert metric in self.list_metrics()
@@ -207,54 +188,77 @@ class Collection(BaseCollection):
             'varieties': 'imputation',
             'name': name,
             'model': model,
+            'model_key': model_key,
             'target': target,
+            'target_key': target_key,
             'metrics': metrics or [],
-            'loss': loss,
+            'objective': objective,
             'splitter': splitter,
             'trainer_kwargs': trainer_kwargs,
         })
 
-        if loss is None:
+        if objective is None:
             return
 
-        return self._train_imputation(name)
+        try:
+            jobs = [self._train_imputation(name)]
+        except KeyboardInterrupt:
+            print('aborting training early...')
+            jobs = []
+        if watch:
+            jobs.append(self.create_watcher(
+                model=model,
+                key=model_key,
+                filter_=trainer_kwargs.get('filter', {}),
+                features=trainer_kwargs.get('features', {}),
+                dependencies=jobs,
+                verbose=True,
+            ))
+        return jobs
 
-    def create_watcher(self, model, filter=None, key='_base', verbose=False,
-                       process_docs=True, features=None):
+    def create_watcher(self, model, key='_base', filter_=None, verbose=False, target=None,
+                       process_docs=True, features=None, loader_kwargs=None,
+                       dependencies=()):
+
+        assert self['_objects'].count_documents({'model': model, 'key': key,
+                                                 'varieties': 'watcher'}) == 0, \
+            f"This watcher {model}, {key} already exists"
 
         self['_objects'].insert_one({
-            'varieties': 'watcher',
+            'varieties': ['watcher'],
             'model': model,
-            'filter': filter if filter else {},
+            'filter': filter_ if filter_ else {},
             'key': key,
             'features': features if features else {},
+            'target': target,
+            'loader_kwargs': loader_kwargs or {},
         })
 
         if process_docs:
-            ids = [r['_id'] for r in self.find(filter if filter else {}, {'_id': 1})]
+            ids = [r['_id'] for r in self.find(filter_ if filter_ else {}, {'_id': 1})]
             if not ids:
                 return
             if not self.remote:
-                self._process_documents_with_model(model, ids, key=key, verbose=verbose)
+                self._process_documents_with_watcher(model, key, ids, verbose=verbose)
             else:  # pragma: no cover
                 return superduper_requests.jobs.process(
                     self.database.name,
                     self.name,
-                    '_process_documents_with_model',
+                    '_process_documents_with_watcher',
                     model,
-                    key=key,
-                    ids=ids,
+                    key,
+                    ids,
                     verbose=verbose,
+                    dependencies=dependencies,
                 )
 
-    def create_model(self, name, object=None, preprocessor=None, forward=None,
-                     postprocessor=None, type=None, key='_base',
-                     features=None):
+    def create_model(self, name, object=None, preprocessor=None,
+                     postprocessor=None, type=None):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
-        records into the ``"_outputs"`` fields of the records. The model is then stored inside MongoDB and can
-        be accessed using the ``SuperDuperClient``.
+        records into the ``"_outputs"`` fields of the records.
+        The model is then stored inside MongoDB and can be accessed using the ``SuperDuperClient``.
 
         :param name: name of model
         :param object: if specified the model object (pickle-able) else None if model already exists
@@ -266,32 +270,20 @@ class Collection(BaseCollection):
         assert name not in self['_objects'].distinct('name', {'varieties': 'model'}), \
             f'Model {name} already exists!'
 
+        assert name not in self['_objects'].distinct('name', {'varieties': 'function'}), \
+            f'Function {name} already exists!'
+
         if type is not None:
-            assert type in self['_types'].distinct('name')
+            assert type in self['_objects'].distinct('name', {'varieties': 'type'})
 
-        if preprocessor is not None or forward is not None or postprocessor is not None:
-            assert object is None
-            file_id = None
-        else:
-            if object is not None and not isinstance(object, str):
-                file_id = self._create_pickled_file(object)
-            elif isinstance(object, str):
-                file_id = object
-
-            preprocessor = None
-            forward = None
-            postprocessor = None
+        file_id = self._create_pickled_file(object)
 
         self['_objects'].insert_one({
-            'varieties': 'model',
+            'varieties': ['model', 'function'],
             'name': name,
             'object': file_id,
-            'filter': filter if filter else {},
             'type': type,
-            'key': key,
-            'features': features if features else {},
             'preprocessor': preprocessor,
-            'forward': forward,
             'postprocessor': postprocessor,
         })
 
@@ -320,8 +312,9 @@ class Collection(BaseCollection):
                 ids=ids,
             )
 
-    def create_semantic_index(self, name, models, measure, keys, validation_sets=(), metrics=(), loss=None,
-                              splitter=None, **trainer_kwargs):
+    def create_semantic_index(self, name, models, measure, keys, validation_sets=(), metrics=(),
+                              objective=None, filter_=None, splitter=None, loader_kwargs=None,
+                              **trainer_kwargs):
         """
         :param name: Name of index
         :param models: List of existing models
@@ -329,14 +322,15 @@ class Collection(BaseCollection):
         :param keys: Keys in incoming data to listen to
         :param validation_sets: Name of immutable validation set to be used to evaluate performance
         :param metrics: List of existing metrics,
-        :param loss: Loss name
+        :param objective: Loss name
         :param splitter: Splitter name
         :param filter: Filter on which to train
         :param trainer_kwargs: Keyword arguments to be passed to ``training.train_tools.RepresentationTrainer``
         :return: List of job identifiers if ``self.remote``
         """
+        assert name not in self.list_semantic_indexes()
 
-        if loss is not None:  # pragma: no cover
+        if objective is not None:  # pragma: no cover
             if len(models) == 1:
                 assert splitter is not None, 'need a splitter for self-supervised ranking...'
 
@@ -346,16 +340,25 @@ class Collection(BaseCollection):
             'models': models,
             'keys': keys,
             'metrics': metrics,
-            'loss': loss,
+            'objective': objective,
             'measure': measure,
             'splitter': splitter,
-            'filter': filter or {},
+            'filter': filter_ or {},
             'validation_sets': list(validation_sets),
             'trainer_kwargs': trainer_kwargs,
         })
-        if loss is None:
-            return
-        return self._train_semantic_index(name=name)
+        self.create_watcher(models[0], keys[0], filter_=filter_, process_docs=False,
+                            features=trainer_kwargs.get('features', {}),
+                            loader_kwargs=loader_kwargs or {})
+        if objective is None:
+            return [self.refresh_watcher(models[0], keys[0], dependencies=())]
+        try:
+            jobs = [self._train_semantic_index(name=name)]
+        except KeyboardInterrupt:
+            print('training aborted...')
+            jobs = []
+        jobs.append(self.refresh_watcher(models[0], keys[0], dependencies=jobs))
+        return jobs
 
     def create_validation_set(self, name, filter=None, chunk_size=1000, splitter=None,
                               sample_size=None):
@@ -403,56 +406,44 @@ class Collection(BaseCollection):
         :param force: Toggle to ``True`` to skip confirmation
         """
         do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete the imputation {name}?',
+        if force or click.confirm(f'Are you sure you want to delete the imputation "{name}"?',
                                   default=False):
             do_delete = True
         if not do_delete:
             return
 
+        info = self['_objects'].find_one({'name': name, 'varieties': 'imputation'})
+        self['_objects'].delete_one({'model': info['model'], 'key': info['model_key'],
+                                     'varieties': 'watcher'})
         self['_objects'].delete_one({'name': name, 'varieties': 'imputation'})
 
-    def delete_model(self, name, force=False):
+    def delete_watcher(self, model, key, force=False, delete_outputs=True):
         """
         Delete model from collection
 
         :param name: Name of model
         :param force: Toggle to ``True`` to skip confirmation
         """
-        info = self['_objects'].find_one({'name': name, 'varieties': 'model'}, {'filter': 1})
-        try:
-            del self.models[name]
-        except KeyError:
-            pass
+        info = self['_objects'].find_one({'model': model, 'key': key,
+                                          'varieties': 'watcher'})
         if not force: # pragma: no cover
             n_documents = self.count_documents(info.get('filter') or {})
         do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete this model: {name}; '
+        if force or click.confirm(f'Are you sure you want to delete this watcher: {model}, {key}; '
                                   f'{n_documents} documents will be affected.',
                                   default=False):
             do_delete = True
         if not do_delete:
             return
 
-        info = self['_objects'].find_one({'name': name, 'varieties': 'model'})
-        if info is None:
-            return
-
-        self['_objects'].delete_one({'name': name, 'varieties': 'model'})
-
-        if isinstance(info['object'], ObjectId):
-            _ = self.delete_objects(
-                'models', objects=[info['object']], force=True,
+        if info.get('target') is None and delete_outputs:
+            print(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
+            super().update_many(
+                info.get('filter') or {},
+                {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}
             )
-        print(f'unsetting output field _outputs.{info["key"]}.{info["name"]}')
-        super().update_many(
-            info.get('filter') or {},
-            {'$unset': {f'_outputs.{info["key"]}.{info["name"]}': 1}}
-        )
-        self['_validation_sets'].update_many(
-            info.get('filter') or {},
-            {'$unset': {f'_outputs.{info["key"]}.{info["name"]}': 1}},
-            refresh=False,
-        )
+        return self['_objects'].delete_one({'model': model, 'key': key,
+                                            'varieties': 'watcher'})
 
     def delete_neighbourhood(self, name, force=False):
         """
@@ -462,34 +453,15 @@ class Collection(BaseCollection):
         :param force: Toggle to ``True`` to skip confirmation
         """
         info = self['_objects'].find_one({'name': name, 'varieties': 'neighbourhood'})
-        si_info = self['_objects'].find_one({'name': info['semantic_index']})
-        model = self.list_models(**{'active': True, 'name': {'$in': si_info['models']}})[0]
-        filter_ = self['_models'].find_one({'name': model}, {'filter': 1})['filter']
+        watcher_info = self['_objects'].find_one({'name': info['watcher']})
+        filter_ = watcher_info['filter']
         n_documents = self.count_documents(filter_)
         if force or click.confirm(f'Removing neighbourhood "{name}", this will affect {n_documents}'
                                   ' documents. Are you sure?', default=False):
-            self['_neighbourhoods'].delete_one({'name': name})
+            self['_objects'].delete_one({'name': name})
             self.update_many(filter_, {'$unset': {f'_like.{name}': 1}}, refresh=False)
         else:
             print('aborting') # pragma: no cover
-
-    def delete_postprocessor(self, postprocessor, force=False):
-        """
-        Delete postprocess from collection
-
-        :param name: Name of postprocess
-        :param force: Toggle to ``True`` to skip confirmation
-        """
-        return self.delete_objects('postprocessors', objects=[postprocessor], force=force)
-
-    def delete_preprocessor(self, preprocessor, force=False):
-        """
-        Delete preprocess from collection
-
-        :param name: Name of preprocess
-        :param force: Toggle to ``True`` to skip confirmation
-        """
-        return self.delete_objects('preprocessors', objects=[preprocessor], force=force)
 
     def delete_semantic_index(self, name, force=False):
         """
@@ -498,20 +470,21 @@ class Collection(BaseCollection):
         :param name: Name of semantic index
         :param force: Toggle to ``True`` to skip confirmation
         """
-        info = self['_semantic_indexes'].find_one({'name': name})
+        info = self['_objects'].find_one({'name': name, 'varieties': 'semantic_index'})
+        watcher = self['_objects'].find_one({'model': info['models'][0], 'key': info['keys'][0]})
         if info is None:  # pragma: no cover
             return
         do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete this semantic index: {name}; '):
+        if force or \
+                click.confirm(f'Are you sure you want to delete this semantic index: "{name}"; '):
             do_delete = True
 
         if not do_delete:
             return
 
-        self['_semantic_indexes'].delete_one({'name': name})
-
-    def delete_splitter(self, splitter=None, force=False):
-        return self.delete_objects('splitters', objects=[splitter], force=force)
+        if watcher:
+            self['_objects'].delete_one({'_id': watcher['_id']})
+        self['_objects'].delete_one({'name': name, 'varieties': 'semantic_index'})
 
     def _get_content_for_filter(self, filter):
         if '_id' not in filter:
@@ -616,6 +589,18 @@ class Collection(BaseCollection):
         else:
             return list(self.parent_if_appl['_objects'].find(query, {'name': 1, 'varieties': 1, '_id': 0}))
 
+    def list_semantic_indexes(self, query=None):
+        query = query or {}
+        return [r['name'] for r in self['_objects'].find({**query, 'varieties': 'semantic_index'},
+                                                          {'name': 1})]
+
+    def list_watchers(self, query=None):
+        if query is None:
+            query = {}
+        items = self.parent_if_appl['_objects'].find({**query, 'varieties': 'watcher'},
+                                                     {'model': 1, 'key': 1, '_id': 0})
+        return [(r['model'], r['key']) for r in items]
+
     def list_validation_sets(self):
         """
         List validation sets
@@ -623,15 +608,18 @@ class Collection(BaseCollection):
         """
         return self.parent_if_appl['_validation_sets'].distinct('_validation_set')
 
-    def refresh_model(self, model_name):
+    def refresh_watcher(self, model, key, dependencies=()):
         """
         Recompute model outputs.
 
-        :param model_name: Name of model.
+        :param model: Name of model.
         """
-        info = self.parent_if_appl['_models'].find_one({'name': model_name})
+        info = self.parent_if_appl['_objects'].find_one(
+            {'model': model, 'key': key, 'varieties': 'watcher'}
+        )
         ids = self.distinct('_id', info.get('filter') or {})
-        self._process_documents_with_model(model_name, ids=ids, **(info.get('loader_kwargs') or {}))
+        return self._submit_process_documents_with_watcher(model, key, sub_ids=ids,
+                                                           dependencies=dependencies)
 
     def replace_one(self, filter, replacement, *args, refresh=True, **kwargs):
         """
@@ -727,13 +715,14 @@ class Collection(BaseCollection):
 
     def validate_semantic_index(self, name, validation_sets, metrics):
         results = {}
-        features = self['_semantic_indexes'].find_one({'name': name}).get('features')
+        features = self['_objects'].find_one({'name': name,
+                                              'varieties': 'semantic_index'}).get('features')
         for vs in validation_sets:
             results[vs] = validate_representations(self, vs, name, metrics, features=features)
         for vs in results:
             for m in results[vs]:
-                self['_semantic_indexes'].update_one(
-                    {'name': name},
+                self['_objects'].update_one(
+                    {'name': name, 'varieties': 'semantic_index'},
                     {'$set': {f'final_metrics.{vs}.{m}': results[vs][m]}}
                 )
 
@@ -742,7 +731,7 @@ class Collection(BaseCollection):
         import sys
         sys.path.insert(0, os.getcwd())
 
-        info = self['_neighbourhoods'].find_one({'name': name})
+        info = self['_objects'].find_one({'name': name, 'varieties': 'neighbourhood'})
         print('getting hash set')
         h = self._all_hash_sets[info['semantic_index']]
         print(h.shape)
@@ -761,14 +750,14 @@ class Collection(BaseCollection):
     def _create_plan(self):
         G = networkx.DiGraph()
         for watcher in self.list_watchers():
-            G.add_node(('watchers', watcher))
-        for watcher in self.list_watchers():
-            deps = self._get_dependencies_for_watcher(watcher)
+            G.add_node(('watcher', watcher))
+        for model, key in self.list_watchers():
+            deps = self._get_dependencies_for_watcher(model, key)
             for dep in deps:
-                G.add_edge(('watchers', dep), ('watchers', watcher))
+                G.add_edge(('watcher', dep), ('watcher', (model, key)))
         for neigh in self.list_neighbourhoods():
-            model = self._get_model_for_neighbourhood(neigh)
-            G.add_edge(('models', model), ('neighbourhoods', neigh))
+            model, key = self._get_watcher_for_neighbourhood(neigh)
+            G.add_edge(('watcher', (model, key)), ('neighbourhood', neigh))
         assert networkx.is_directed_acyclic_graph(G)
         return G
 
@@ -785,22 +774,21 @@ class Collection(BaseCollection):
         if item.startswith('create_'):
             variety = item.split('_')[-1]
             def create_local(name, object):
-                return self.create_object(name, object, variety)
+                return self.create_object(name, object, [variety])
             return create_local
         if item.startswith('delete_'):
             variety = item.split('_')[-1]
             def delete_local(name, force=False):
-                assert self['_objects'].find_one({'name': name})['varieties'] == [variety], \
+                assert self['_objects'].find_one({'name': name, 'varieties': variety})['varieties'] == [variety], \
                     'can\'t delete object in this way, since used may multiple types of objects'
-                return self.delete_objects(variety + 's', objects=[name], force=force)
+                return self.delete_object([variety], name, force=force)
             return delete_local
         if item.startswith('list'):
-            variety = item.split('_')[-1]
+            variety = item.split('_')[-1][:-1]
             def list_local(query=None):
                 return self.list_objects(variety, query)
             return list_local
-
-        if item in self._allowed_varieties:
+        if item[:-1] in self._allowed_varieties and item[-1] == 's':
             return self.objects[item]
         raise AttributeError(item)
 
@@ -826,22 +814,22 @@ class Collection(BaseCollection):
                 r[k] = {'_content': {'bytes': self.types[t].encode(r[k]), 'type': t}}
         return r
 
-    def delete_objects(self, type, objects, force=False):
-        data = list(self[f'_objects'].find({'name': {'$in': objects}}))
-        data += list(self[f'_objects'].find({'$or': [
-            {'name': {'$regex': f'^{x}\.'}}
-            for x in objects
-        ]}))
-        for k in objects:
-            if k in getattr(self, type):
-                del getattr(self, type)[k]
+    def delete_model(self, name, force=False):
+        return self.delete_object(['model', 'function'], name, force=force)
 
-        if force or click.confirm(f'You are about to delete these {type}: {objects}, are you sure?',
+    def delete_object(self, varieties, object, force=False):
+        data = list(self[f'_objects'].find({'name': object, 'varieties': varieties}))
+        if not data and not force:
+            raise Exception(f'This object does not exist...{object}')
+        for variety in varieties:
+            if object in getattr(self, variety + 's'):
+                del getattr(self, variety + 's')[object]
+
+        if force or click.confirm(f'You are about to delete these {varieties}: {object}, are you sure?',
                                   default=False):
-            for r in self[f'_{type}'].find({'name': {'$in': objects}}):
-                if '.' not in r['name']:
-                    self.filesystem.delete(r['object'])
-                self[f'_{type}'].delete_one({'name': r['name']})
+            r = self[f'_objects'].find_one({'name': object, 'varieties': varieties})
+            self.filesystem.delete(r['object'])
+            self[f'_objects'].delete_one({'name': r['name'], 'varieties': varieties})
         return data
 
     @staticmethod
@@ -913,28 +901,32 @@ class Collection(BaseCollection):
             return hash_set.find_nearest_from_id(like['_id'],
                                                  n=n)
         else:
-            models = self.parent_if_appl['_semantic_indexes'].find_one(
-                {'name': self.semantic_index}
-            )['models']
+            si_info = self.parent_if_appl['_objects'].find_one(
+                {'name': self.semantic_index, 'varieties': 'semantic_index'}
+            )
+            models = si_info['models']
+            keys = si_info['keys']
+            watcher_model, watcher_key = (models[0], keys[0])
             available_keys = list(like.keys()) + ['_base']
-            man = self.parent_if_appl['_models'].find_one({
-                'key': {'$in': available_keys},
-                'name': {'$in': models},
-            })
-            model = self.models[man['name']]
+            model, key = next((m, k) for m, k in zip(models, keys) if k in available_keys)
             document = MongoStyleDict(like)
             if '_outputs' not in document:
                 document['_outputs'] = {}
-            info = self.parent_if_appl['_models'].find_one({'name': man['name']})
+            info = self.parent_if_appl['_objects'].find_one({'model': watcher_model,
+                                                             'key': watcher_key,
+                                                             'varieties': 'watcher'})
             features = info.get('features', {})
-            for key in features:
-                if key not in document['_outputs']:
-                    document['_outputs'][key] = {}
-                if features[key] not in document['_outputs'][key]:
-                    document['_outputs'][key][features[key]] = \
-                        apply_model(self.models[features[key]], document[key])
-                document[key] = document['_outputs'][key][features[key]]
-            model_input = document[man['key']] if man['key'] != '_base' else document
+            for subkey in features:
+                if subkey not in document:
+                    continue
+                if subkey not in document['_outputs']:
+                    document['_outputs'][subkey] = {}
+                if features[subkey] not in document['_outputs'][subkey]:
+                    document['_outputs'][subkey][features[subkey]] = \
+                        apply_model(self.models[features[subkey]], document[subkey])
+                document[subkey] = document['_outputs'][subkey][features[subkey]]
+            model_input = document[key if key != '_base' else document]
+            model = self.models[model]
             with torch.no_grad():
                 h = apply_model(model, model_input, True)
         return hash_set.find_nearest_from_hash(h, n=n)
@@ -1024,56 +1016,49 @@ class Collection(BaseCollection):
         return documents
 
     def _load_model(self, name):
-        manifest = self.parent_if_appl[f'_models'].find_one({'name': name})
+        manifest = self.parent_if_appl[f'_objects'].find_one({'name': name, 'varieties': 'model'})
         if manifest is None:
             raise Exception(f'No such object of type "model", "{name}" has been registered.') # pragma: no cover
-        if manifest['object'] is not None and not isinstance(manifest['object'], str):
-            return self._load_object('models', name)
-        elif isinstance(manifest['object'], str) and '.'  in manifest['object']:
-            model_name, attr = manifest['object'].split('.')
-            model = self._load_object('models', model_name)
-            return getattr(model, attr)
-        elif isinstance(manifest['object'], str):
-            return self._load_object('models', manifest['object'])
-
+        model = self._load_object('model', name)
+        if manifest['preprocessor'] is None and manifest['postprocessor'] is None:
+            return model
         assert manifest.get('preprocessor') is not None \
             or manifest.get('forward') is not None
         preprocessor = None
         if manifest.get('preprocessor') is not None:
-            preprocessor = self._load_object('preprocessors', manifest['preprocessor'])
-        forward = None
-        if manifest.get('forward') is not None:
-            forward = self._load_object('forwards', manifest['forward'])
+            preprocessor = self._load_object('preprocessor', manifest['preprocessor'])
         postprocessor = None
         if manifest.get('postprocessor') is not None:
-            postprocessor = self._load_object('postprocessors', manifest['postprocessor'])
-        return create_container(preprocessor, forward, postprocessor)
+            postprocessor = self._load_object('postprocessor', manifest['postprocessor'])
+        return create_container(preprocessor, model, postprocessor)
 
     def _load_object(self, type, name):
-        manifest = self.parent_if_appl[f'_{type}'].find_one({'name': name})
+        manifest = self.parent_if_appl[f'_objects'].find_one({'name': name, 'varieties': type})
         if manifest is None:
             raise Exception(f'No such object of type "{type}", "{name}" has been registered.') # pragma: no cover
         m = self.parent_if_appl._load_pickled_file(manifest['object'])
-        if type == 'models' and isinstance(m, torch.nn.Module):
+        if isinstance(m, torch.nn.Module):
             m.eval()
         return m
 
     def _load_hashes(self, name):
-        info = self.parent_if_appl['_semantic_indexes'].find_one({'name': name})
-        model_name = self.list_models(**{'active': True, 'name': {'$in': info['models']}})[0]
-        model_info = self.parent_if_appl['_models'].find_one({'name': model_name})
-        filter = model_info.get('filter', {})
-        key = model_info.get('key', '_base')
-        filter[f'_outputs.{key}.{model_name}'] = {'$exists': 1}
+        si = self.parent_if_appl['_objects'].find_one({'name': name, 'varieties': 'semantic_index'})
+        watcher_info = \
+            self.parent_if_appl['_objects'].find_one({'model': si['models'][0],
+                                                      'key': si['keys'][0],
+                                                      'varieties': 'watcher'})
+        filter = watcher_info.get('filter', {})
+        key = watcher_info.get('key', '_base')
+        filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
         n_docs = self.count_documents(filter)
-        c = self.find(filter, {f'_outputs.{key}.{model_name}': 1})
-        measure = self.measures[info['measure']]
+        c = self.find(filter, {f'_outputs.{key}.{watcher_info["model"]}': 1})
+        measure = self.measures[si['measure']]
         loaded = []
         ids = []
         docs = progressbar(c, total=n_docs)
         print(f'loading hashes: "{name}"')
         for r in docs:
-            h = MongoStyleDict(r)[f'_outputs.{key}.{model_name}']
+            h = MongoStyleDict(r)[f'_outputs.{key}.{watcher_info["model"]}']
             loaded.append(h)
             ids.append(r['_id'])
         return hashes.HashSet(torch.stack(loaded), ids, measure=measure)
@@ -1081,32 +1066,36 @@ class Collection(BaseCollection):
     def _load_pickled_file(self, file_id):
         return loading.load(file_id, filesystem=self.filesystem)
 
-    def _get_dependencies_for_watcher(self, model):
-        model_info = self['_models'].find_one({'name': model}, {'features': 1})
-        if model_info is None:
+    def _get_dependencies_for_watcher(self, model, key):
+        info = self['_objects'].find_one({'model': model, 'key': key, 'varieties': 'watcher'},
+                                         {'features': 1})
+        if info is None:
             return []
-        model_features = model_info.get('features', {})
-        return list(model_features.values())
+        model_features = info.get('features', {})
+        return list(zip(model_features.values(), model_features.keys()))
 
-    def _get_model_for_neighbourhood(self, neigh):
-        info = self['_neighbourhoods'].find_one({'name': neigh})
-        si = self['_semantic_indexes'].find_one({'name': info['semantic_index']})
-        return next(m for m in si['models'] if self['_models'].find_one({'name': m})['active'])
+    def _get_watcher_for_neighbourhood(self, neigh):
+        info = self['_objects'].find_one({'name': neigh, 'varieties': 'neighbourhood'})
+        watcher_info = self['_objects'].find_one({'name': info['watcher'], 'varieties': 'watcher'})
+        return (watcher_info['model'], watcher_info['key'])
 
-    def _submit_process_documents_with_model(self, model_name, sub_ids, dependencies, verbose=True):
-        model_info = self.parent_if_appl['_models'].find_one({'name': model_name})
+    def _submit_process_documents_with_watcher(self, model, key, sub_ids, dependencies,
+                                               verbose=True):
+        watcher_info = \
+            self.parent_if_appl['_objects'].find_one({'model': model, 'varieties': 'watcher',
+                                                      'key': key})
         if not self.remote:
-            self._process_documents_with_model(
-                model_name=model_name, ids=sub_ids, verbose=verbose,
+            self._process_documents_with_watcher(
+                model_name=model, key=key, ids=sub_ids, verbose=verbose,
             )
-            if model_info.get('download', False):  # pragma: no cover
+            if watcher_info.get('download', False):  # pragma: no cover
                 self._download_content(ids=sub_ids)
         else:
             return superduper_requests.jobs.process(
                 self.parent_if_appl.database.name,
                 self.name,
-                '_process_documents_with_model',
-                model_name=model_name,
+                '_process_documents_with_watcher',
+                model_name=model,
                 ids=sub_ids,
                 verbose=verbose,
                 dependencies=dependencies,
@@ -1114,9 +1103,10 @@ class Collection(BaseCollection):
 
     def _create_filter_lookup(self, ids):
         filters = []
-        for item in self.list_models(active=True):
-            model_info = self.parent_if_appl['_models'].find_one({'name': item})
-            filters.append(model_info.get('filter') or {})
+        for model, key in self.list_watchers():
+            watcher_info = self.parent_if_appl['_objects'].find_one({'model': model, 'key': key,
+                                                                     'varieties': 'watcher'})
+            filters.append(watcher_info.get('filter') or {})
         filter_lookup = {self._dict_to_str(f): f for f in filters}
         lookup = {}
         for filter_str in filter_lookup:
@@ -1130,7 +1120,7 @@ class Collection(BaseCollection):
                 lookup[filter_str] = {'_ids': tmp_ids}
         return lookup
 
-    def _submit_download_content(self, ids):
+    def _submit_download_content(self, ids, dependencies=()):
         if not self.remote:
             print('downloading content from retrieved urls')
             self._download_content(ids=ids)
@@ -1140,6 +1130,7 @@ class Collection(BaseCollection):
                 self.name,
                 '_download_content',
                 ids=ids,
+                dependencies=dependencies,
             )
 
     def _submit_compute_neighbourhood(self, item, sub_ids, dependencies):
@@ -1157,8 +1148,10 @@ class Collection(BaseCollection):
 
     def _process_single_item(self, type_, item, iteration, lookup, job_ids, download_id,
                              verbose=True):
-        if type_ == 'models':
-            model_info = self.parent_if_appl['_models'].find_one({'name': item})
+        if type_ == 'watcher':
+            watcher_info = self.parent_if_appl['_objects'].find_one(
+                {'model': item[0], 'key': item[1], 'varieties': 'watcher'}
+            )
             if iteration == 0:
                 dependencies = [download_id]
             else:
@@ -1168,25 +1161,20 @@ class Collection(BaseCollection):
                     job_ids[('models', dep)]
                     for dep in model_dependencies
                 ], [])
-            filter_str = self._dict_to_str(model_info.get('filter') or {})
+            filter_str = self._dict_to_str(watcher_info.get('filter') or {})
             sub_ids = lookup[filter_str]['_ids']
             process_id = \
-                self._submit_process_documents_with_model(item, sub_ids, dependencies,
-                                                          verbose=verbose)
+                self._submit_process_documents_with_watcher(item[0], item[1], sub_ids, dependencies,
+                                                            verbose=verbose)
             job_ids[(type_, item)].append(process_id)
-            if model_info.get('download', False):  # pragma: no cover
-                download_id = superduper_requests.jobs.process(
-                    self.parent_if_appl.database.name,
-                    self.name,
-                    '_download_content',
-                    ids=sub_ids,
-                    dependencies=(process_id,),
-                )
+            if watcher_info.get('download', False):  # pragma: no cover
+                download_id = \
+                    self._submit_download_content(sub_ids, dependencies=(process_id,))
                 job_ids[(type_, item)].append(download_id)
         elif type_ == 'neighbourhoods':
-            model = self.parent_if_appl._get_model_for_neighbourhood(item)
-            model_info = self.parent_if_appl['_models'].find_one({'name': model})
-            filter_str = self._dict_to_str(model_info.get('filter') or {})
+            model = self.parent_if_appl._get_watcher_for_neighbourhood(item)
+            watcher_info = self.parent_if_appl['_objects'].find_one({'name': model, 'varieties': 'watcher'})
+            filter_str = self._dict_to_str(watcher_info.get('filter') or {})
             sub_ids = lookup[filter_str]['_ids']
             dependencies = job_ids[('models', model)]
             process_id = self._submit_compute_neighbourhood(item, sub_ids, dependencies)
@@ -1200,9 +1188,8 @@ class Collection(BaseCollection):
             return
         lookup = self._create_filter_lookup(ids)
         G = self._create_plan()
-        current = [('watchers', watcher) for watcher in self.list_watchers(active=True)
-                   if not list(G.predecessors(('watchers', watcher)))]
-
+        current = [('watcher', watcher) for watcher in self.list_watchers()
+                   if not list(G.predecessors(('watcher', watcher)))]
         iteration = 0
         while current:
             for (type_, item) in current:
@@ -1212,13 +1199,16 @@ class Collection(BaseCollection):
             iteration += 1
         return job_ids
 
-    def _compute_model_outputs(self, ids, model_info, key='_base', model=None, verbose=True):
+    def _compute_model_outputs(self, ids, model_info, features=None,
+                               key='_base', model=None, verbose=True, loader_kwargs=None):
         print('finding documents under filter')
+        features = features or {}
         model_name = model_info['name']
-        features = model_info.get('features', {})
         if features is None:
             features = {}  # pragma: no cover
-        documents = list(self.find({'_id': {'$in': ids}}, features=features))
+
+        documents = self.find({'_id': {'$in': ids}}, features=features)
+        documents = list(documents)
         ids = [r['_id'] for r in documents]  # find statement messes with the ordering
         for r in documents:
             del r['_id'] # _id can't be handled by dataloader
@@ -1233,7 +1223,7 @@ class Collection(BaseCollection):
             passed_docs,
             model.preprocess if hasattr(model, 'preprocess') else lambda x: x
         )
-        loader_kwargs = model_info.get('loader_kwargs', {})
+        loader_kwargs = loader_kwargs or {}
         if isinstance(model, torch.nn.Module):
             loader = torch.utils.data.DataLoader(
                 inputs,
@@ -1266,50 +1256,63 @@ class Collection(BaseCollection):
                     outputs.append(model.preprocess(r))
         return outputs, ids
 
-    def _process_documents_with_model(self, model_name, ids, key='_base', verbose=False,
-                                      max_chunk_size=5000, num_workers=0, model=None):
+    def _process_documents_with_watcher(self, model_name, key, ids, verbose=False,
+                                        max_chunk_size=5000, model=None, recompute=False):
         import sys
         sys.path.insert(0, os.getcwd())
 
-        model_info = self.parent_if_appl['_models'].find_one({'name': model_name})
+        watcher_info = self.parent_if_appl['_objects'].find_one(
+            {'model': model_name, 'key': key, 'varieties': 'watcher'}
+        )
+        if not recompute:
+            ids = [r['_id'] for r in self.find({'_id': {'$in': ids},
+                                                f'_outputs.{key}.{model_name}': {'$exists': 0}})]
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
                 print('computing chunk '
                       f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
-                self._process_documents_with_model(
+                self._process_documents_with_watcher(
                     model_name,
-                    ids=ids[i: i + max_chunk_size],
-                    key=key,
+                    key,
+                    ids[i: i + max_chunk_size],
                     verbose=verbose,
-                    num_workers=num_workers,
                     max_chunk_size=None,
                     model=model,
+                    recompute=recompute,
                 )
             return
 
-        outputs, ids = self._compute_model_outputs(ids, model_info, key=key,
-                                                   model=model, verbose=verbose)
+        model_info = self.parent_if_appl['_objects'].find_one({'name': model_name, 'varieties': 'model'})
+        outputs, ids = self._compute_model_outputs(ids,
+                                                   model_info,
+                                                   key=key,
+                                                   features=watcher_info.get('features', {}),
+                                                   model=model,
+                                                   loader_kwargs=watcher_info.get('loader_kwargs'),
+                                                   verbose=verbose)
 
-        if model_info.get('type'):
-            type = self.types[model_info['type']]
+        type_ = self.parent_if_appl['_objects'].find_one({'name': model_name, 'varieties': 'model'},
+                                                         {'type': 1}).get('type')
+        if type_:
+            type_ = self.types[type_]
             outputs = [
                 {
                     '_content': {
-                        'bytes': type.encode(x),
+                        'bytes': type_.encode(x),
                         'type': model_info['type']
                     }
                 }
                 for x in outputs
             ]
 
-        self._write_model_outputs(outputs, ids, model_info)
+        self._write_watcher_outputs(outputs, ids, watcher_info)
         return outputs
 
-    def _write_model_outputs(self, outputs, ids, model_info):
-        key = model_info.get('key', '_base')
-        model_name = model_info['name']
+    def _write_watcher_outputs(self, outputs, ids, watcher_info):
+        key = watcher_info.get('key', '_base')
+        model_name = watcher_info['model']
         print('bulk writing...')
-        if 'target' not in model_info:
+        if watcher_info.get('target') is None:
             self.bulk_write([
                 UpdateOne({'_id': id},
                           {'$set': {f'_outputs.{key}.{model_name}': outputs[i]}})
@@ -1319,7 +1322,7 @@ class Collection(BaseCollection):
             self.bulk_write([
                 UpdateOne({'_id': id},
                           {'$set': {
-                              model_info['target']: outputs[i]
+                              watcher_info['target']: outputs[i]
                           }})
                 for i, id in enumerate(ids)
             ])
@@ -1330,37 +1333,38 @@ class Collection(BaseCollection):
         return {k: v for k, v in r.items() if k != '$like'}
 
     def _replace_model(self, name, object):
-        r = self['_models'].find_one({'name': name})
-        assert name in self.list_models(), 'model doesn\'t exist to replace'
+        r = self['_objects'].find_one({'name': name, 'varieties': 'model'})
+        assert name in self.list_models(), f'model "{name}" doesn\'t exist to replace'
         if isinstance(r['object'], ObjectId):
             file_id = self._create_pickled_file(object)
             self.filesystem.delete(r['object'])
-            self['_models'].update_one({'name': name}, {'$set': {'object': file_id}})
+            self['_objects'].update_one({'name': name, 'varieties': 'model'},
+                                        {'$set': {'object': file_id}})
         elif isinstance(r['object'], str):
             self._replace_model(r['object'], object)
         else:
             assert r['object'] is None
             if isinstance(r['preprocessor'], str):
                 file_id = self._create_pickled_file(object._preprocess)
-                pre_info = self['_preprocessors'].find_one({'name': r['preprocessor']})
+                pre_info = self['_objects'].find_one({'name': r['preprocessor'], 'varieties': 'preprocessor'})
                 self.filesystem.delete(pre_info['object'])
-                self['_preprocessors'].update_one(
-                    {'name': r['preprocessor']},
+                self['_objects'].update_one(
+                    {'name': r['preprocessor'], 'varieties': 'function'},
                     {'$set': {'object': file_id}}
                 )
 
             if isinstance(r['forward'], str):
                 file_id = self._create_pickled_file(object._forward)
-                forward_info = self['_forwards'].find_one({'name': r['forward']})
+                forward_info = self['_objects'].find_one({'name': r['forward'], 'varieties': 'model'})
                 self.filesystem.delete(forward_info['object'])
-                self['_forwards'].update_one({'name': r['forward']}, {'$set': {'object': file_id}})
+                self['_objects'].update_one({'name': r['forward'], 'varieties': 'model'}, {'$set': {'object': file_id}})
 
             if isinstance(r['postprocessor'], str):
                 file_id = self._create_pickled_file(object._postprocess)
-                post_info = self['_postprocessors'].find_one({'name': r['postprocessor']})
+                post_info = self['_objects'].find_one({'name': r['postprocessor'], 'varieties': 'postprocessor'})
                 self.filesystem.delete(post_info['object'])
-                self['_postprocessors'].update_one({'name': r['postprocessor']},
-                                                   {'$set': {'object': file_id}})
+                self['_objects'].update_one({'name': r['postprocessor'], 'varieties': 'postprocessor'},
+                                            {'$set': {'object': file_id}})
 
     @staticmethod
     def _standardize_dict(d):  # pragma: no cover
@@ -1382,21 +1386,16 @@ class Collection(BaseCollection):
             return superduper_requests.jobs.process(self.database.name, self.name,
                                                     '_train_imputation', name)
 
-        info = self['_imputations'].find_one({'name': name})
-        self['_models'].update_one({'name': info['name']}, {'$set': {'training': True}})
+        info = self['_objects'].find_one({'name': name, 'varieties': 'imputation'})
         splitter = None
         if info.get('splitter'):
             splitter = self.splitters[info['splitter']]
 
         model = self.models[info['model']]
-        target = self.models[info['target']]
-        loss = self.losses[info['loss']]
+        target = self.functions[info['target']]
+        objective = self.objectives[info['objective']]
         metrics = {k: self.metrics[k] for k in info['metrics']}
-
-        model_info = self['_models'].find_one({'name': info['model']})
-        target_info = self['_models'].find_one({'name': info['target']})
-
-        keys = (model_info['key'], target_info['key'])
+        keys = (info['model_key'], info['target_key'])
 
         training.train_tools.ImputationTrainer(
             name,
@@ -1406,13 +1405,10 @@ class Collection(BaseCollection):
             models=(model, target),
             keys=keys,
             model_names=(info['model'], info['target']),
-            loss=loss,
+            objective=objective,
             metrics=metrics,
             **info['trainer_kwargs'],
             save=self._replace_model,
-            features=model_info.get('features', {}),
-            filter=info['filter'],
-            projection=info['projection'],
             splitter=splitter,
         ).train()
 
@@ -1425,28 +1421,21 @@ class Collection(BaseCollection):
             return superduper_requests.jobs.process(self.database.name, self.name,
                                                     '_train_semantic_index', name)
 
-        info = self['_semantic_indexes'].find_one({'name': name})
+        info = self['_objects'].find_one({'name': name, 'varieties': 'semantic_index'})
         model_names = info['models']
+
         models = []
-        keys = []
-        features = {}
-        for save_name in model_names:
-            r = self['_models'].find_one({'name': save_name})
-            features.update(r.get('features', {}))
-            keys.append(r['key'])
-            models.append(self.models[save_name])
+        for mn in info['models']:
+            models.append(self.models[mn])
 
         metrics = {}
         for metric in info['metrics']:
             metrics[metric] = self.metrics[metric]
 
-        loss = self.losses[info['loss']]
+        objective = self.objectives[info['objective']]
         splitter = info.get('splitter')
         if splitter:
             splitter = self.splitters[info['splitter']]
-
-        active_model = self.list_models(**{'active': True, 'name': {'$in': model_names}})[0]
-        filter_ = self['_models'].find_one({'name': active_model}, {'filter': 1})['filter']
 
         t = training.train_tools.SemanticIndexTrainer(
             name,
@@ -1454,15 +1443,13 @@ class Collection(BaseCollection):
             self.database.name,
             self.name,
             models=models,
-            keys=keys,
-            model_names=model_names,
+            keys=info['keys'],
+            model_names=info['models'],
             splitter=splitter,
-            loss=loss,
-            filter=filter_,
+            objective=objective,
             save=self._replace_model,
-            watch='loss',
+            watch='objective',
             metrics=metrics,
-            features=features,
             validation_sets=info.get('validation_sets', ()),
             **info.get('trainer_kwargs', {}),
         )

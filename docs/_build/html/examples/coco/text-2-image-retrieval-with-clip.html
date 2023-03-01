@@ -46,12 +46,15 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../concepts.html">SuperDuperDB Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../types.html">Types in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models - an extension of PyTorch models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchers.html">Watchers in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../imputations.html">Imputations for filling in data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../models.html">Deep dive into SuperDuperDB models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../semantic_indexes.html">Deep dive into semantic indexes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">Notebook examples</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo Dataset</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo (Common Objects in Context) Dataset</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="setup-and-installation.html">Setup and installation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="inserting-and-getting-data.html">Inserting and getting data</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Text-2-Image document retrieval using pretrained CLIP</a></li>
@@ -80,7 +83,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Notebook examples</a></li>
-          <li class="breadcrumb-item"><a href="index.html">CoCo Dataset</a></li>
+          <li class="breadcrumb-item"><a href="index.html">CoCo (Common Objects in Context) Dataset</a></li>
       <li class="breadcrumb-item active">Text-2-Image document retrieval using pretrained CLIP</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/examples/coco/text-2-image-retrieval-with-clip.ipynb.txt" rel="nofollow"> View page source</a>
@@ -409,7 +412,31 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">delete_model</span><span class="p">(</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[{&#39;_id&#39;: ObjectId(&#39;63fcd66a55623ea6d8942ae3&#39;),
+  &#39;varieties&#39;: [&#39;model&#39;, &#39;function&#39;],
+  &#39;name&#39;: &#39;clip&#39;,
+  &#39;object&#39;: ObjectId(&#39;63fcd66355623ea6d89424c5&#39;),
+  &#39;type&#39;: &#39;float_tensor&#39;,
+  &#39;preprocessor&#39;: None,
+  &#39;forward&#39;: None,
+  &#39;postprocessor&#39;: None}]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">CLIP</span>
@@ -417,13 +444,16 @@ div.rendered_html tbody tr:hover {
 <span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span>
     <span class="nb">object</span><span class="o">=</span><span class="n">CLIP</span><span class="p">(</span><span class="s1">&#39;RN50&#39;</span><span class="p">),</span>
-    <span class="nb">filter</span><span class="o">=</span><span class="p">{},</span>
     <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span>
-    <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span>
-    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">active</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">loader_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
 <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">delete_watcher</span><span class="p">(</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="n">delete_outputs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -432,376 +462,24 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-computing chunk (1/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:49&lt;00:00,  1.06it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (2/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:43&lt;00:00,  1.08it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (3/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:39&lt;00:00,  1.09it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (4/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:41&lt;00:00,  1.08it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (5/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:41&lt;00:00,  1.08it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (6/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:34&lt;00:00,  1.10it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (7/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:49&lt;00:00,  1.07it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (8/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:47&lt;00:00,  1.07it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (9/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:47&lt;00:00,  1.07it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (10/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:48&lt;00:00,  1.07it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (11/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:48&lt;00:00,  1.07it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (12/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:49&lt;00:00,  1.07it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (13/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:54&lt;00:00,  1.05it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (14/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:42&lt;00:00,  1.08it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (15/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [15:49&lt;00:00,  1.90s/it]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (16/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [07:37&lt;00:00,  1.09it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-bulk writing...
-done.
-computing chunk (17/17)
-finding documents under filter
-done.
-processing with clip
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 179/179 [02:44&lt;00:00,  1.09it/s]
+Are you sure you want to delete this watcher: clip, img; 81783 documents will be affected. [y/N]: y
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-bulk writing...
-done.
+&lt;pymongo.results.DeleteResult at 0x1683bc2b0&gt;
 </pre></div></div>
 </div>
-<p>We’ll create a companion model which uses the same underlying object as the previous model. That’s specified by adding the name instead of the object in the <code class="docutils literal notranslate"><span class="pre">object</span></code> argument. In this case the model is not <code class="docutils literal notranslate"><span class="pre">active</span></code>, since we’ll only be using it for querying the collection. We don’t need to specify a <code class="docutils literal notranslate"><span class="pre">type</span></code> since that was done in the last step.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;clip_text&#39;</span><span class="p">,</span>
-    <span class="nb">object</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span>
-    <span class="n">key</span><span class="o">=</span><span class="s1">&#39;captions&#39;</span><span class="p">,</span>
-    <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_watcher</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="n">filter_</span><span class="o">=</span><span class="p">{},</span> <span class="n">loader_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;num_workers&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -818,7 +496,7 @@ done.
 </pre></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.measures</span> <span class="kn">import</span> <span class="n">css</span>
@@ -838,7 +516,7 @@ done.
 </pre></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.metrics</span> <span class="kn">import</span> <span class="n">PatK</span>
@@ -849,14 +527,15 @@ done.
 </div>
 <p>Now we’re ready to go to add a <strong>semantic index</strong>. This is a tuple of models, one of which is activated in order to populate the collection with vectors. The idea is that any of the models in the <strong>semantic index</strong> can be used to query the collection using nearest neighbour lookup based on the <strong>measure</strong> chosen.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">CLIP</span>
 
 <span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
     <span class="s1">&#39;clip&#39;</span><span class="p">,</span>
-    <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="s1">&#39;clip_text&#39;</span><span class="p">],</span>
+    <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="s1">&#39;clip&#39;</span><span class="p">],</span>
+    <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="s1">&#39;captions&#39;</span><span class="p">],</span>
     <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;css&#39;</span><span class="p">,</span>
     <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">],</span>
 <span class="p">)</span>
@@ -866,7 +545,7 @@ done.
 <p>Now the semantic index has been created, we can search through the data using that index.</p>
 <p>We can see that we can get nice meaningful retrievals using the CLIP model from short descriptive pieces of text. This is very useful, since the model is now deployed to the database, listening for incoming queries.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
@@ -898,70 +577,84 @@ QUERY 1
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_1.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_1.png" />
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "db571f9524a34c1ea99186b33b1e7e97", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;clip&#34;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_3.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_3.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_2.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_2.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_4.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_4.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_3.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_3.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_5.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_5.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_4.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_4.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_6.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_6.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_5.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_5.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_7.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_7.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_6.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_6.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_8.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_8.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_7.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_7.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_9.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_9.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_8.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_8.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_10.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_10.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_9.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_9.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_11.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_11.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_10.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_10.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_12.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_12.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -976,75 +669,75 @@ QUERY 2
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_12.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_12.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_14.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_14.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_13.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_13.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_15.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_15.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_14.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_14.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_16.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_16.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_15.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_15.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_17.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_17.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_16.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_16.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_18.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_18.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_17.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_17.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_19.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_19.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_18.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_18.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_20.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_20.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_19.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_19.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_21.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_21.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_20.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_20.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_22.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_22.png" />
 </div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_21.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_14_21.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_23.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_15_23.png" />
 </div>
 </div>
 <p>Let’s now evaluate the quality of this semantic index</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_validation_set</span><span class="p">(</span>
@@ -1059,10 +752,8 @@ QUERY 2
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-  0%|                                                                                                                                                                  | 0/1000 [00:00&lt;?, ?it/s]
-</pre></div></div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "3358830ee20e4f43adeef18085b968f4", "version_major": 2, "version_minor": 0}</script></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
@@ -1080,146 +771,20 @@ processing with clip
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-
-  0%|                                                                                                                                                                   | 0/100 [00:00&lt;?, ?it/s]
-  1%|█▌                                                                                                                                                         | 1/100 [00:01&lt;01:47,  1.09s/it]
-  2%|███                                                                                                                                                        | 2/100 [00:02&lt;01:37,  1.00it/s]
-  3%|████▋                                                                                                                                                      | 3/100 [00:02&lt;01:34,  1.03it/s]
-  4%|██████▏                                                                                                                                                    | 4/100 [00:03&lt;01:31,  1.05it/s]
-  5%|███████▊                                                                                                                                                   | 5/100 [00:04&lt;01:29,  1.07it/s]
-  6%|█████████▎                                                                                                                                                 | 6/100 [00:05&lt;01:27,  1.08it/s]
-  7%|██████████▊                                                                                                                                                | 7/100 [00:06&lt;01:25,  1.09it/s]
-  8%|████████████▍                                                                                                                                              | 8/100 [00:07&lt;01:23,  1.10it/s]
-  9%|█████████████▉                                                                                                                                             | 9/100 [00:08&lt;01:23,  1.09it/s]
- 10%|███████████████▍                                                                                                                                          | 10/100 [00:09&lt;01:21,  1.10it/s]
- 11%|████████████████▉                                                                                                                                         | 11/100 [00:10&lt;01:19,  1.11it/s]
- 12%|██████████████████▍                                                                                                                                       | 12/100 [00:11&lt;01:19,  1.11it/s]
- 13%|████████████████████                                                                                                                                      | 13/100 [00:12&lt;01:18,  1.11it/s]
- 14%|█████████████████████▌                                                                                                                                    | 14/100 [00:12&lt;01:17,  1.11it/s]
- 15%|███████████████████████                                                                                                                                   | 15/100 [00:13&lt;01:16,  1.12it/s]
- 16%|████████████████████████▋                                                                                                                                 | 16/100 [00:14&lt;01:14,  1.12it/s]
- 17%|██████████████████████████▏                                                                                                                               | 17/100 [00:15&lt;01:14,  1.11it/s]
- 18%|███████████████████████████▋                                                                                                                              | 18/100 [00:16&lt;01:14,  1.10it/s]
- 19%|█████████████████████████████▎                                                                                                                            | 19/100 [00:17&lt;01:12,  1.11it/s]
- 20%|██████████████████████████████▊                                                                                                                           | 20/100 [00:18&lt;01:12,  1.10it/s]
- 21%|████████████████████████████████▎                                                                                                                         | 21/100 [00:19&lt;01:11,  1.10it/s]
- 22%|█████████████████████████████████▉                                                                                                                        | 22/100 [00:20&lt;01:10,  1.10it/s]
- 23%|███████████████████████████████████▍                                                                                                                      | 23/100 [00:21&lt;01:10,  1.10it/s]
- 24%|████████████████████████████████████▉                                                                                                                     | 24/100 [00:21&lt;01:08,  1.11it/s]
- 25%|██████████████████████████████████████▌                                                                                                                   | 25/100 [00:22&lt;01:07,  1.11it/s]
- 26%|████████████████████████████████████████                                                                                                                  | 26/100 [00:23&lt;01:06,  1.12it/s]
- 27%|█████████████████████████████████████████▌                                                                                                                | 27/100 [00:24&lt;01:05,  1.11it/s]
- 28%|███████████████████████████████████████████                                                                                                               | 28/100 [00:25&lt;01:04,  1.11it/s]
- 29%|████████████████████████████████████████████▋                                                                                                             | 29/100 [00:26&lt;01:03,  1.11it/s]
- 30%|██████████████████████████████████████████████▏                                                                                                           | 30/100 [00:27&lt;01:02,  1.11it/s]
- 31%|███████████████████████████████████████████████▋                                                                                                          | 31/100 [00:28&lt;01:02,  1.11it/s]
- 32%|█████████████████████████████████████████████████▎                                                                                                        | 32/100 [00:29&lt;01:01,  1.10it/s]
- 33%|██████████████████████████████████████████████████▊                                                                                                       | 33/100 [00:30&lt;01:00,  1.10it/s]
- 34%|████████████████████████████████████████████████████▎                                                                                                     | 34/100 [00:30&lt;01:00,  1.10it/s]
- 35%|█████████████████████████████████████████████████████▉                                                                                                    | 35/100 [00:31&lt;00:58,  1.10it/s]
- 36%|███████████████████████████████████████████████████████▍                                                                                                  | 36/100 [00:32&lt;00:57,  1.11it/s]
- 37%|████████████████████████████████████████████████████████▉                                                                                                 | 37/100 [00:33&lt;00:56,  1.11it/s]
- 38%|██████████████████████████████████████████████████████████▌                                                                                               | 38/100 [00:34&lt;00:56,  1.11it/s]
- 39%|████████████████████████████████████████████████████████████                                                                                              | 39/100 [00:35&lt;00:55,  1.11it/s]
- 40%|█████████████████████████████████████████████████████████████▌                                                                                            | 40/100 [00:36&lt;00:54,  1.11it/s]
- 41%|███████████████████████████████████████████████████████████████▏                                                                                          | 41/100 [00:37&lt;00:52,  1.11it/s]
- 42%|████████████████████████████████████████████████████████████████▋                                                                                         | 42/100 [00:38&lt;00:51,  1.12it/s]
- 43%|██████████████████████████████████████████████████████████████████▏                                                                                       | 43/100 [00:39&lt;00:51,  1.12it/s]
- 44%|███████████████████████████████████████████████████████████████████▊                                                                                      | 44/100 [00:39&lt;00:50,  1.11it/s]
- 45%|█████████████████████████████████████████████████████████████████████▎                                                                                    | 45/100 [00:40&lt;00:49,  1.11it/s]
- 46%|██████████████████████████████████████████████████████████████████████▊                                                                                   | 46/100 [00:41&lt;00:49,  1.09it/s]
- 47%|████████████████████████████████████████████████████████████████████████▍                                                                                 | 47/100 [00:42&lt;00:48,  1.09it/s]
- 48%|█████████████████████████████████████████████████████████████████████████▉                                                                                | 48/100 [00:43&lt;00:47,  1.09it/s]
- 49%|███████████████████████████████████████████████████████████████████████████▍                                                                              | 49/100 [00:44&lt;00:46,  1.09it/s]
- 50%|█████████████████████████████████████████████████████████████████████████████                                                                             | 50/100 [00:45&lt;00:45,  1.09it/s]
- 51%|██████████████████████████████████████████████████████████████████████████████▌                                                                           | 51/100 [00:46&lt;00:45,  1.09it/s]
- 52%|████████████████████████████████████████████████████████████████████████████████                                                                          | 52/100 [00:47&lt;00:44,  1.09it/s]
- 53%|█████████████████████████████████████████████████████████████████████████████████▌                                                                        | 53/100 [00:48&lt;00:43,  1.08it/s]
- 54%|███████████████████████████████████████████████████████████████████████████████████▏                                                                      | 54/100 [00:49&lt;00:42,  1.08it/s]
- 55%|████████████████████████████████████████████████████████████████████████████████████▋                                                                     | 55/100 [00:50&lt;00:41,  1.09it/s]
- 56%|██████████████████████████████████████████████████████████████████████████████████████▏                                                                   | 56/100 [00:51&lt;00:40,  1.08it/s]
- 57%|███████████████████████████████████████████████████████████████████████████████████████▊                                                                  | 57/100 [00:51&lt;00:40,  1.07it/s]
- 58%|█████████████████████████████████████████████████████████████████████████████████████████▎                                                                | 58/100 [00:52&lt;00:39,  1.07it/s]
- 59%|██████████████████████████████████████████████████████████████████████████████████████████▊                                                               | 59/100 [00:53&lt;00:38,  1.07it/s]
- 60%|████████████████████████████████████████████████████████████████████████████████████████████▍                                                             | 60/100 [00:54&lt;00:37,  1.06it/s]
- 61%|█████████████████████████████████████████████████████████████████████████████████████████████▉                                                            | 61/100 [00:55&lt;00:36,  1.06it/s]
- 62%|███████████████████████████████████████████████████████████████████████████████████████████████▍                                                          | 62/100 [00:56&lt;00:35,  1.06it/s]
- 63%|█████████████████████████████████████████████████████████████████████████████████████████████████                                                         | 63/100 [00:57&lt;00:34,  1.06it/s]
- 64%|██████████████████████████████████████████████████████████████████████████████████████████████████▌                                                       | 64/100 [00:58&lt;00:33,  1.06it/s]
- 65%|████████████████████████████████████████████████████████████████████████████████████████████████████                                                      | 65/100 [00:59&lt;00:32,  1.07it/s]
- 66%|█████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                    | 66/100 [01:00&lt;00:31,  1.07it/s]
- 67%|███████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                  | 67/100 [01:01&lt;00:30,  1.08it/s]
- 68%|████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                 | 68/100 [01:02&lt;00:29,  1.07it/s]
- 69%|██████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                               | 69/100 [01:03&lt;00:29,  1.06it/s]
- 70%|███████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                              | 70/100 [01:04&lt;00:28,  1.07it/s]
- 71%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                            | 71/100 [01:05&lt;00:27,  1.07it/s]
- 72%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                           | 72/100 [01:06&lt;00:26,  1.06it/s]
- 73%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                         | 73/100 [01:06&lt;00:25,  1.08it/s]
- 74%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                        | 74/100 [01:07&lt;00:24,  1.07it/s]
- 75%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                      | 75/100 [01:08&lt;00:23,  1.08it/s]
- 76%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                     | 76/100 [01:09&lt;00:22,  1.07it/s]
- 77%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                   | 77/100 [01:10&lt;00:21,  1.08it/s]
- 78%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                  | 78/100 [01:11&lt;00:20,  1.08it/s]
- 79%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                | 79/100 [01:12&lt;00:19,  1.08it/s]
- 80%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                              | 80/100 [01:13&lt;00:18,  1.07it/s]
- 81%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                             | 81/100 [01:14&lt;00:17,  1.07it/s]
- 82%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                           | 82/100 [01:15&lt;00:16,  1.06it/s]
- 83%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                          | 83/100 [01:16&lt;00:15,  1.07it/s]
- 84%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                        | 84/100 [01:17&lt;00:14,  1.09it/s]
- 85%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                       | 85/100 [01:18&lt;00:13,  1.10it/s]
- 86%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                     | 86/100 [01:19&lt;00:12,  1.10it/s]
- 87%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                    | 87/100 [01:19&lt;00:11,  1.10it/s]
- 88%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                  | 88/100 [01:20&lt;00:10,  1.10it/s]
- 89%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                 | 89/100 [01:21&lt;00:10,  1.10it/s]
- 90%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌               | 90/100 [01:22&lt;00:09,  1.10it/s]
- 91%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏             | 91/100 [01:23&lt;00:08,  1.11it/s]
- 92%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋            | 92/100 [01:24&lt;00:07,  1.10it/s]
- 93%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏          | 93/100 [01:25&lt;00:06,  1.10it/s]
- 94%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊         | 94/100 [01:26&lt;00:05,  1.10it/s]
- 95%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎       | 95/100 [01:27&lt;00:04,  1.11it/s]
- 96%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊      | 96/100 [01:28&lt;00:03,  1.11it/s]
- 97%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍    | 97/100 [01:28&lt;00:02,  1.11it/s]
- 98%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉   | 98/100 [01:29&lt;00:01,  1.11it/s]
- 99%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍ | 99/100 [01:30&lt;00:00,  1.11it/s]
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [01:31&lt;00:00,  1.09it/s]
-</pre></div></div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "fae09d8ccd754265bd1b297d8f15fa6c", "version_major": 2, "version_minor": 0}</script></div>
 </div>
-<div class="nboutput docutils container">
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 bulk writing...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [01:33&lt;00:00, 10.69it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
 done.
 </pre></div></div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-
-</pre></div></div>
-</div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
@@ -1227,12 +792,12 @@ done.
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;_id&#39;: ObjectId(&#39;63f4d31b99e15ed933e61fcd&#39;),
+{&#39;_id&#39;: ObjectId(&#39;63fca4325d2a192e05fe154a&#39;),
  &#39;captions&#39;: [&#39;A restaurant has modern wooden tables and chairs.&#39;,
   &#39;A long restaurant table with rattan rounded back chairs.&#39;,
   &#39;a long table with a plant on top of it surrounded with wooden chairs &#39;,
@@ -1244,7 +809,7 @@ done.
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">validate_semantic_index</span><span class="p">(</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">])</span>
@@ -1254,13 +819,16 @@ done.
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-  0%|                                                                                                                                                                  | 0/1000 [00:00&lt;?, ?it/s]
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00&lt;00:00, 43900.11it/s]
-</pre></div></div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "9e1d182693fc4a9d8b546eada82f0335", "version_major": 2, "version_minor": 0}</script></div>
 </div>
 <div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "71025071287a40e7a2567ac7d28f7286", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
@@ -1268,29 +836,60 @@ done.
 loading hashes: &#34;clip&#34;
 </pre></div></div>
 </div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [01:44&lt;00:00,  9.55it/s]
-</pre></div></div>
-</div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_semantic_indexes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">()[</span><span class="s1">&#39;final_metrics&#39;</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_objects&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;varieties&#39;</span><span class="p">:</span> <span class="s1">&#39;semantic_index&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;clip&#39;</span><span class="p">})[</span><span class="s1">&#39;final_metrics&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;text2image_retrieval&#39;: {&#39;p_at_10&#39;: 0.844}}
+{&#39;text2image_retrieval&#39;: {&#39;p_at_10&#39;: 0.859}}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_objects</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[{&#39;name&#39;: &#39;float_tensor&#39;, &#39;varieties&#39;: [&#39;type&#39;]},
+ {&#39;name&#39;: &#39;image&#39;, &#39;varieties&#39;: [&#39;type&#39;]},
+ {&#39;varieties&#39;: [&#39;model&#39;, &#39;function&#39;], &#39;name&#39;: &#39;clip&#39;},
+ {&#39;name&#39;: &#39;css&#39;, &#39;varieties&#39;: [&#39;measure&#39;]},
+ {&#39;name&#39;: &#39;p_at_10&#39;, &#39;varieties&#39;: [&#39;metric&#39;]},
+ {&#39;varieties&#39;: [&#39;semantic_index&#39;], &#39;name&#39;: &#39;clip&#39;}]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_watchers</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[]
 </pre></div></div>
 </div>
 </section>

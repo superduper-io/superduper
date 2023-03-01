@@ -12,6 +12,10 @@ import torch.utils.data
 import tqdm
 
 
+class opts:
+    progress_bar = tqdm.tqdm_notebook
+
+
 class MongoStyleDict(dict):
     """
     Dictionary object mirroring how fields can be referred to and set in MongoDB.
@@ -271,44 +275,8 @@ class Downloader:
             self.results[self.ids[i]] = r.content
 
 
-class UpdateableProgress:
-    type_ = 'tqdm'
-
-    def __init__(self, total, size=None, prefix='', file=sys.stdout):
-        self.total = total
-        if size is None:
-            try:
-                size = os.get_terminal_size().columns
-            except OSError as e:
-                size = 80
-        self.size = size
-        self.file = file
-        self.prefix = prefix
-        self.j = 0
-
-        if self.type_ == 'tqdm':
-            self.progress = tqdm.tqdm(total=total)
-        elif self.type_ == 'tqdm_notebook':
-            self.progress = tqdm.tqdm_notebook(total=total)
-        else:
-            raise NotImplementedError
-
-    def update(self, it=1):
-        self.progress.update(it)
-
-
 def progressbar(*args, **kwargs):
-    if args and args[0] is not None:
-        return _progressbar(*args, **kwargs)
-    else:
-        return UpdateableProgress(*args, **kwargs)
-
-
-def _progressbar(it=None, prefix="", size=None, out=sys.stdout, total=None):
-    if it is not None:
-        return tqdm.tqdm(it, total=total)
-    else:
-        return tqdm.tqdm(total=total)
+    return opts.progress_bar(*args, **kwargs)
 
 
 class ArgumentDefaultDict(defaultdict):

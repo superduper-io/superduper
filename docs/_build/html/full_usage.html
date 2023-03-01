@@ -43,54 +43,30 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Deep dive into SuperDuperDB models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Deep dive into semantic indexes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="training.html">Model training with SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Full usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#superduperdb.collection.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_forward"><code class="docutils literal notranslate"><span class="pre">Collection.create_forward()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_imputation"><code class="docutils literal notranslate"><span class="pre">Collection.create_imputation()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_loss"><code class="docutils literal notranslate"><span class="pre">Collection.create_loss()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_measure"><code class="docutils literal notranslate"><span class="pre">Collection.create_measure()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_metric"><code class="docutils literal notranslate"><span class="pre">Collection.create_metric()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_model"><code class="docutils literal notranslate"><span class="pre">Collection.create_model()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_postprocessor"><code class="docutils literal notranslate"><span class="pre">Collection.create_postprocessor()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_preprocessor"><code class="docutils literal notranslate"><span class="pre">Collection.create_preprocessor()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_semantic_index"><code class="docutils literal notranslate"><span class="pre">Collection.create_semantic_index()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_splitter"><code class="docutils literal notranslate"><span class="pre">Collection.create_splitter()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_type"><code class="docutils literal notranslate"><span class="pre">Collection.create_type()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.create_validation_set"><code class="docutils literal notranslate"><span class="pre">Collection.create_validation_set()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_forward"><code class="docutils literal notranslate"><span class="pre">Collection.delete_forward()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_imputation"><code class="docutils literal notranslate"><span class="pre">Collection.delete_imputation()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_loss"><code class="docutils literal notranslate"><span class="pre">Collection.delete_loss()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_measure"><code class="docutils literal notranslate"><span class="pre">Collection.delete_measure()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_metric"><code class="docutils literal notranslate"><span class="pre">Collection.delete_metric()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_model"><code class="docutils literal notranslate"><span class="pre">Collection.delete_model()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_neighbourhood"><code class="docutils literal notranslate"><span class="pre">Collection.delete_neighbourhood()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_postprocessor"><code class="docutils literal notranslate"><span class="pre">Collection.delete_postprocessor()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_preprocessor"><code class="docutils literal notranslate"><span class="pre">Collection.delete_preprocessor()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_semantic_index"><code class="docutils literal notranslate"><span class="pre">Collection.delete_semantic_index()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_type"><code class="docutils literal notranslate"><span class="pre">Collection.delete_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.delete_watcher"><code class="docutils literal notranslate"><span class="pre">Collection.delete_watcher()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.find"><code class="docutils literal notranslate"><span class="pre">Collection.find()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.find_one"><code class="docutils literal notranslate"><span class="pre">Collection.find_one()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.insert_many"><code class="docutils literal notranslate"><span class="pre">Collection.insert_many()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.insert_one"><code class="docutils literal notranslate"><span class="pre">Collection.insert_one()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_forwards"><code class="docutils literal notranslate"><span class="pre">Collection.list_forwards()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_imputations"><code class="docutils literal notranslate"><span class="pre">Collection.list_imputations()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_jobs"><code class="docutils literal notranslate"><span class="pre">Collection.list_jobs()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_losses"><code class="docutils literal notranslate"><span class="pre">Collection.list_losses()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_measures"><code class="docutils literal notranslate"><span class="pre">Collection.list_measures()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_metrics"><code class="docutils literal notranslate"><span class="pre">Collection.list_metrics()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_models"><code class="docutils literal notranslate"><span class="pre">Collection.list_models()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_neighbourhoods"><code class="docutils literal notranslate"><span class="pre">Collection.list_neighbourhoods()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_postprocessors"><code class="docutils literal notranslate"><span class="pre">Collection.list_postprocessors()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_preprocessors"><code class="docutils literal notranslate"><span class="pre">Collection.list_preprocessors()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_semantic_indexes"><code class="docutils literal notranslate"><span class="pre">Collection.list_semantic_indexes()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_splitters"><code class="docutils literal notranslate"><span class="pre">Collection.list_splitters()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_types"><code class="docutils literal notranslate"><span class="pre">Collection.list_types()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.list_validation_sets"><code class="docutils literal notranslate"><span class="pre">Collection.list_validation_sets()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.refresh_watcher"><code class="docutils literal notranslate"><span class="pre">Collection.refresh_watcher()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.replace_one"><code class="docutils literal notranslate"><span class="pre">Collection.replace_one()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.unset_hash_set"><code class="docutils literal notranslate"><span class="pre">Collection.unset_hash_set()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#superduperdb.collection.Collection.update_many"><code class="docutils literal notranslate"><span class="pre">Collection.update_many()</span></code></a></li>
@@ -161,25 +137,15 @@
 Key methods are:</p>
 <p>Creating objects:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">create_imputation</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">create_loss</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">create_metric</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_object</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">create_model</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_watcher</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">create_neighbourhood</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">create_semantic_index</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">create_splitter</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">create_type</span></code></p></li>
 </ul>
 <p>Deleting objects:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">delete_imputation</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">delete_loss</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">delete_metric</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">delete_model</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">delete_neighbourhood</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">delete_semantic_index</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">delete_splitter</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">delete_type</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">delete_object</span></code></p></li>
 </ul>
 <p>Accessing data:</p>
 <ul class="simple">
@@ -194,13 +160,7 @@ Key methods are:</p>
 - <code class="docutils literal notranslate"><span class="pre">update_many</span></code></p>
 <p>Viewing meta-data</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">list_models</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">list_semantic_indexes</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">list_imputations</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">list_types</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">list_losses</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">list_metrics</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">list_types</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">list_objects</span></code></p></li>
 </ul>
 <p>Watching jobs</p>
 <ul class="simple">
@@ -209,13 +169,7 @@ Key methods are:</p>
 <p>Key properties:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">hash_set</span></code> (in memory vectors for neighbourhood search)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">losses</span></code> (dictionary of losses)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">measures</span></code> (dictionary of measures)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">metrics</span></code> (dictionary of metrics)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">models</span></code> (dictionary of models)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">remote</span></code> (whether the client sends requests in thread or to a server)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">splitters</span></code> (dictionary of splitters)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">types</span></code> (dictionary of types)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">objects</span></code></p></li>
 </ul>
 <p>Get / create a Mongo collection.</p>
 <p>Raises <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeError</span></code> if <cite>name</cite> is not an instance of
@@ -299,22 +253,8 @@ instead::</p>
 <p>The MongoDB documentation on <a class="reference external" href="https://dochub.mongodb.org/core/collections">collections</a>.</p>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_forward">
-<span class="sig-name descname"><span class="pre">create_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_forward" title="Permalink to this definition"></a></dt>
-<dd><p>Create a forward directly from a Python object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – name of forward</p></li>
-<li><p><strong>object</strong> – Python object</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.create_imputation">
-<span class="sig-name descname"><span class="pre">create_imputation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">splitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">trainer_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_imputation" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_imputation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">splitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">watch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">trainer_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_imputation" title="Permalink to this definition"></a></dt>
 <dd><p>Create an imputation setup. This is any learning task where we have an input to the model
 compared to the target.</p>
 <dl class="field-list simple">
@@ -322,11 +262,11 @@ compared to the target.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of imputation</p></li>
 <li><p><strong>model</strong> – Model settings or model name</p></li>
-<li><p><strong>loss</strong> – Loss settings or loss</p></li>
+<li><p><strong>model_key</strong> – Key for model to injest</p></li>
 <li><p><strong>target</strong> – Target settings (input to <code class="docutils literal notranslate"><span class="pre">create_model</span></code>) or target name</p></li>
+<li><p><strong>target_key</strong> – Key for model to predict</p></li>
+<li><p><strong>objective</strong> – Loss settings or objective</p></li>
 <li><p><strong>metrics</strong> – List of metric settings or metric names</p></li>
-<li><p><strong>filter</strong> – Filter on which to train the imputation</p></li>
-<li><p><strong>projection</strong> – Projection of data to apply during training (use for efficiency)</p></li>
 <li><p><strong>splitter</strong> – Splitter name to use to prepare data points for insertion to model</p></li>
 <li><p><strong>trainer_kwargs</strong> – Keyword-arguments to forward to <code class="docutils literal notranslate"><span class="pre">train_tools.ImputationTrainer</span></code></p></li>
 </ul>
@@ -338,54 +278,12 @@ compared to the target.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_loss">
-<span class="sig-name descname"><span class="pre">create_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_loss" title="Permalink to this definition"></a></dt>
-<dd><p>Create a loss function directly from a Python object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – name of loss function</p></li>
-<li><p><strong>object</strong> – Python object</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_measure">
-<span class="sig-name descname"><span class="pre">create_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_measure" title="Permalink to this definition"></a></dt>
-<dd><p>Create a document measure directly from a Python object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – name of measure</p></li>
-<li><p><strong>object</strong> – Python object</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_metric">
-<span class="sig-name descname"><span class="pre">create_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_metric" title="Permalink to this definition"></a></dt>
-<dd><p>Create a metric directly from a Python object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – name of metric</p></li>
-<li><p><strong>object</strong> – Python object</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.create_model">
-<span class="sig-name descname"><span class="pre">create_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forward</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocessor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_docs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_model" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocessor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_model" title="Permalink to this definition"></a></dt>
 <dd><p>Create a model registered in the collection directly from a python session.
 The added model will then watch incoming records and add outputs computed on those
-records into the <code class="docutils literal notranslate"><span class="pre">&quot;_outputs&quot;</span></code> fields of the records. The model is then stored inside MongoDB and can
-be accessed using the <code class="docutils literal notranslate"><span class="pre">SuperDuperClient</span></code>.</p>
+records into the <code class="docutils literal notranslate"><span class="pre">&quot;_outputs&quot;</span></code> fields of the records.
+The model is then stored inside MongoDB and can be accessed using the <code class="docutils literal notranslate"><span class="pre">SuperDuperClient</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -394,45 +292,7 @@ be accessed using the <code class="docutils literal notranslate"><span class="pr
 <li><p><strong>preprocessor</strong> – separate preprocessing</p></li>
 <li><p><strong>forward</strong> – separate forward pass</p></li>
 <li><p><strong>postprocessor</strong> – separate postprocessing</p></li>
-<li><p><strong>filter</strong> – filter specifying which documents model acts on</p></li>
 <li><p><strong>type</strong> – type for converting model outputs back and forth from bytes</p></li>
-<li><p><strong>active</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">False</span></code> if model should not actively process incoming data</p></li>
-<li><p><strong>key</strong> – key in records on which model acts (default whole record “_base”)</p></li>
-<li><p><strong>verbose</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> if processing on data is verbose</p></li>
-<li><p><strong>semantic_index</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
-<li><p><strong>process_docs</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">False</span></code> if documents not to be processed by models</p></li>
-<li><p><strong>loader_kwargs</strong> – kwargs to be passed to dataloader for model in processing</p></li>
-<li><p><strong>max_chunk_size</strong> – maximum chunk size of documents to be held in memory simultaneously</p></li>
-<li><p><strong>features</strong> – dictionary of features to be substituted from model outputs to record</p></li>
-<li><p><strong>neighbourboods</strong> – neighbourhoods whose computation is required for model inputs</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_postprocessor">
-<span class="sig-name descname"><span class="pre">create_postprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_postprocessor" title="Permalink to this definition"></a></dt>
-<dd><p>Create a postprocessor directly from a Python object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – name of postprocessor</p></li>
-<li><p><strong>object</strong> – Python object</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_preprocessor">
-<span class="sig-name descname"><span class="pre">create_preprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_preprocessor" title="Permalink to this definition"></a></dt>
-<dd><p>Create a preprocessor directly from a Python object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – name of preprocessor</p></li>
-<li><p><strong>object</strong> – Python object</p></li>
 </ul>
 </dd>
 </dl>
@@ -440,16 +300,17 @@ be accessed using the <code class="docutils literal notranslate"><span class="pr
 
 <dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.create_semantic_index">
-<span class="sig-name descname"><span class="pre">create_semantic_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_sets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">splitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">trainer_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_semantic_index" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_semantic_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_sets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">splitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">trainer_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_semantic_index" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of index</p></li>
 <li><p><strong>models</strong> – List of existing models</p></li>
 <li><p><strong>measure</strong> – Measure name</p></li>
+<li><p><strong>keys</strong> – Keys in incoming data to listen to</p></li>
 <li><p><strong>validation_sets</strong> – Name of immutable validation set to be used to evaluate performance</p></li>
 <li><p><strong>metrics</strong> – List of existing metrics,</p></li>
-<li><p><strong>loss</strong> – Loss name</p></li>
+<li><p><strong>objective</strong> – Loss name</p></li>
 <li><p><strong>splitter</strong> – Splitter name</p></li>
 <li><p><strong>filter</strong> – Filter on which to train</p></li>
 <li><p><strong>trainer_kwargs</strong> – Keyword arguments to be passed to <code class="docutils literal notranslate"><span class="pre">training.train_tools.RepresentationTrainer</span></code></p></li>
@@ -457,34 +318,6 @@ be accessed using the <code class="docutils literal notranslate"><span class="pr
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>List of job identifiers if <code class="docutils literal notranslate"><span class="pre">self.remote</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_splitter">
-<span class="sig-name descname"><span class="pre">create_splitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_splitter" title="Permalink to this definition"></a></dt>
-<dd><p>Create a document splitter directly from a Python object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – name of splitter</p></li>
-<li><p><strong>object</strong> – Python object</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.create_type">
-<span class="sig-name descname"><span class="pre">create_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.create_type" title="Permalink to this definition"></a></dt>
-<dd><p>Create a type directly from a Python object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – name of type</p></li>
-<li><p><strong>object</strong> – Python object</p></li>
-</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -500,20 +333,6 @@ be accessed using the <code class="docutils literal notranslate"><span class="pr
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_forward">
-<span class="sig-name descname"><span class="pre">delete_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forward</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_forward" title="Permalink to this definition"></a></dt>
-<dd><p>Delete forward from collection</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – Name of forward</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_imputation">
 <span class="sig-name descname"><span class="pre">delete_imputation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_imputation" title="Permalink to this definition"></a></dt>
 <dd><p>Delete imputation from collection</p>
@@ -521,62 +340,6 @@ be accessed using the <code class="docutils literal notranslate"><span class="pr
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – Name of imputation</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_loss">
-<span class="sig-name descname"><span class="pre">delete_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_loss" title="Permalink to this definition"></a></dt>
-<dd><p>Delete loss from collection</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – Name of loss</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_measure">
-<span class="sig-name descname"><span class="pre">delete_measure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_measure" title="Permalink to this definition"></a></dt>
-<dd><p>Delete measure from collection</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – Name of measure</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_metric">
-<span class="sig-name descname"><span class="pre">delete_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_metric" title="Permalink to this definition"></a></dt>
-<dd><p>Delete metric from collection</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – Name of metric</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_model">
-<span class="sig-name descname"><span class="pre">delete_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_model" title="Permalink to this definition"></a></dt>
-<dd><p>Delete model from collection</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – Name of model</p></li>
 <li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
@@ -598,34 +361,6 @@ be accessed using the <code class="docutils literal notranslate"><span class="pr
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_postprocessor">
-<span class="sig-name descname"><span class="pre">delete_postprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">postprocessor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_postprocessor" title="Permalink to this definition"></a></dt>
-<dd><p>Delete postprocess from collection</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – Name of postprocess</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_preprocessor">
-<span class="sig-name descname"><span class="pre">delete_preprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preprocessor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_preprocessor" title="Permalink to this definition"></a></dt>
-<dd><p>Delete preprocess from collection</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – Name of preprocess</p></li>
-<li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_semantic_index">
 <span class="sig-name descname"><span class="pre">delete_semantic_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_semantic_index" title="Permalink to this definition"></a></dt>
 <dd><p>Delete semantic index.</p>
@@ -640,13 +375,13 @@ be accessed using the <code class="docutils literal notranslate"><span class="pr
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_type">
-<span class="sig-name descname"><span class="pre">delete_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_type" title="Permalink to this definition"></a></dt>
-<dd><p>Delete type from collection</p>
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.delete_watcher">
+<span class="sig-name descname"><span class="pre">delete_watcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.delete_watcher" title="Permalink to this definition"></a></dt>
+<dd><p>Delete model from collection</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – Name of type</p></li>
+<li><p><strong>name</strong> – Name of model</p></li>
 <li><p><strong>force</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to skip confirmation</p></li>
 </ul>
 </dd>
@@ -722,99 +457,21 @@ See <em>Collection.find</em> for more details.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_forwards">
-<span class="sig-name descname"><span class="pre">list_forwards</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_forwards" title="Permalink to this definition"></a></dt>
-<dd><p>List forwards
-:return: list of forwards</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_imputations">
-<span class="sig-name descname"><span class="pre">list_imputations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_imputations" title="Permalink to this definition"></a></dt>
-<dd><p>List imputations
-:return: list of imputations</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_jobs">
-<span class="sig-name descname"><span class="pre">list_jobs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_jobs" title="Permalink to this definition"></a></dt>
-<dd><p>List jobs.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_losses">
-<span class="sig-name descname"><span class="pre">list_losses</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_losses" title="Permalink to this definition"></a></dt>
-<dd><p>List losses
-:return: list of losses</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_measures">
-<span class="sig-name descname"><span class="pre">list_measures</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_measures" title="Permalink to this definition"></a></dt>
-<dd><p>List measures
-:return: list of measures</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_metrics">
-<span class="sig-name descname"><span class="pre">list_metrics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_metrics" title="Permalink to this definition"></a></dt>
-<dd><p>List metrics
-:return: list of metrics</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_models">
-<span class="sig-name descname"><span class="pre">list_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_models" title="Permalink to this definition"></a></dt>
-<dd><p>List models
-:return: list of models</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_neighbourhoods">
-<span class="sig-name descname"><span class="pre">list_neighbourhoods</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_neighbourhoods" title="Permalink to this definition"></a></dt>
-<dd><p>List neighbourhoods.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_postprocessors">
-<span class="sig-name descname"><span class="pre">list_postprocessors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_postprocessors" title="Permalink to this definition"></a></dt>
-<dd><p>List postprocessors
-:return: list of postprocessors</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_preprocessors">
-<span class="sig-name descname"><span class="pre">list_preprocessors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_preprocessors" title="Permalink to this definition"></a></dt>
-<dd><p>List preprocessors
-:return: list of preprocessors</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_semantic_indexes">
-<span class="sig-name descname"><span class="pre">list_semantic_indexes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_semantic_indexes" title="Permalink to this definition"></a></dt>
-<dd><p>List semantic_indexes
-:return: list of semantic_indexes</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_splitters">
-<span class="sig-name descname"><span class="pre">list_splitters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_splitters" title="Permalink to this definition"></a></dt>
-<dd><p>List splitters
-:return: list of splitters</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="superduperdb.collection.Collection.list_types">
-<span class="sig-name descname"><span class="pre">list_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_types" title="Permalink to this definition"></a></dt>
-<dd><p>List types
-:return: list of types</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="superduperdb.collection.Collection.list_validation_sets">
 <span class="sig-name descname"><span class="pre">list_validation_sets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.list_validation_sets" title="Permalink to this definition"></a></dt>
 <dd><p>List validation sets
 :return: list of validation sets</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.collection.Collection.refresh_watcher">
+<span class="sig-name descname"><span class="pre">refresh_watcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dependencies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.collection.Collection.refresh_watcher" title="Permalink to this definition"></a></dt>
+<dd><p>Recompute model outputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> – Name of model.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">

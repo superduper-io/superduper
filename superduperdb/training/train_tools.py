@@ -25,7 +25,7 @@ class Trainer:
                  splitter=None,
                  validation_sets=(),
                  metrics=None,
-                 loss=None,
+                 objective=None,
                  batch_size=100,
                  optimizers=(),
                  lr=0.0001,
@@ -36,7 +36,7 @@ class Trainer:
                  n_epochs=None,
                  n_iterations=None,
                  save=None,
-                 watch='loss',
+                 watch='objective',
                  log_weights=False,
                  validation_interval=1000,
                  no_improve_then_stop=10,
@@ -61,7 +61,7 @@ class Trainer:
         self.models = models
         self.model_names = model_names
         self.keys = keys
-        self.loss = loss
+        self.objective = objective
         self.features = features
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -117,7 +117,7 @@ class Trainer:
         self.metric_values = {}
         for ds in self.validation_sets:
             self.metric_values[ds] = {me: [] for me in self.metrics}
-        self.metric_values['loss'] = []
+        self.metric_values['objective'] = []
         self.lr = lr
         self.weights_dict = defaultdict(lambda: [])
         self._weights_choices = {}
@@ -140,8 +140,8 @@ class Trainer:
                 self.models[i] = torch.nn.DataParallel(m)
 
     def _early_stop(self):
-        if self.watch == 'loss':
-            to_watch = [-x for x in self.metric_values['loss']]
+        if self.watch == 'objective':
+            to_watch = [-x for x in self.metric_values['objective']]
         else:  # pragma: no cover
             to_watch = self.metric_values[self.watch]
         if max(to_watch[-self.no_improve_then_stop:]) < max(to_watch):  # pragma: no cover
@@ -150,8 +150,8 @@ class Trainer:
         return False
 
     def _save_weight_traces(self):
-        self.collection[self.sub_collection].update_one(
-            {'name': self.train_name},
+        self.collection['_objects'].update_one(
+            {'name': self.train_name, 'varieties': self.variety},
             {'$set': {'weights': self.weights_dict}}
         )
 
@@ -193,17 +193,19 @@ class Trainer:
                 self.weights_dict[f'{f}.{p}'].append(tmp)
 
     def _save_metrics(self):
-        self.collection[self.sub_collection].update_one(
-            {'name': self.train_name},
-            {'$set': {'metric_values': self.metric_values, 'weights': self.weights_dict}}
+        self.collection['_objects'].update_one(
+            {'name': self.train_name, 'varieties': self.variety},
+            {'$set': {'metric_values': self.metric_values}}
         )
 
     def _save_best_model(self):
-        agg = min if self.watch == 'loss' else max
-        if self.watch == 'loss' and self.metric_values['loss'][-1] == agg(self.metric_values['loss']):
+        agg = min if self.watch == 'objective' else max
+        if self.watch == 'objective' \
+                and self.metric_values['objective'][-1] == agg(self.metric_values['objective']):
             print('saving')
             for sn, encoder in zip(self.model_names, self.models):
-                self.save(sn, encoder)
+                if sn in self.collection.list_models():
+                    self.save(sn, encoder)
         else:  # pragma: no cover
             print('no best model found...')
 
@@ -271,15 +273,15 @@ class Trainer:
                 output.append(subbatch)
         return output
 
-    def take_step(self, loss):
+    def take_step(self, objective):
         for opt in self.optimizers:
             opt.zero_grad()
-        loss.backward()
+        objective.backward()
         for opt in self.optimizers:
             opt.step()
         if self._log_weights:
             self.log_weight_traces()
-        return loss
+        return objective
 
     def validate_model(self, dataloader, model):
         raise NotImplementedError  # pragma: no cover
@@ -297,8 +299,8 @@ class Trainer:
 
         metrics = self.validate_model(self.data_loaders[1], -1)
         for k in metrics:
-            if k == 'loss':
-                self.metric_values[k].append(metrics['loss'])
+            if k == 'objective':
+                self.metric_values[k].append(metrics['objective'])
                 continue
             for me in metrics[k]:
                 self.metric_values[k][me].append(metrics[k][me])
@@ -314,15 +316,15 @@ class Trainer:
 
             for batch in train_loader:
                 outputs = self.apply_models_to_batch(batch, self.learn_encoders)
-                l_ = self.take_step(self.loss(*outputs))
-                self.log_progress(fold='TRAIN', iteration=it, epoch=epoch, loss=l_.item())
+                l_ = self.take_step(self.objective(*outputs))
+                self.log_progress(fold='TRAIN', iteration=it, epoch=epoch, objective=l_.item())
                 it += 1
                 if it % self.validation_interval == 0:
                     print('validating model...')
                     metrics = self.validate_model(valid_loader, epoch)
                     for k in metrics:
-                        if k == 'loss':
-                            self.metric_values[k].append(metrics['loss'])
+                        if k == 'objective':
+                            self.metric_values[k].append(metrics['objective'])
                             continue
                         for me in metrics[k]:
                             self.metric_values[k][me].append(metrics[k][me])
@@ -343,7 +345,7 @@ class Trainer:
 
 class ImputationTrainer(Trainer):
 
-    sub_collection = '_imputations'
+    variety = 'imputation'
 
     def __init__(self, *args, inference_model=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -359,11 +361,11 @@ class ImputationTrainer(Trainer):
                 results[vs] = validate_imputation(self.collection, vs, self.train_name,
                                                   self.metrics, model=self.models[0],
                                                   features=self.features)
-        loss_values = []
+        objective_values = []
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.learn_encoders)
-            loss_values.append(self.loss(*outputs).item())
-        results['loss'] = sum(loss_values) / len(loss_values)
+            objective_values.append(self.objective(*outputs).item())
+        results['objective'] = sum(objective_values) / len(objective_values)
 
         for e in self.models:
             if hasattr(e, 'train'):
@@ -383,7 +385,7 @@ class _Mapped:
 
 
 class SemanticIndexTrainer(Trainer):
-    sub_collection = '_semantic_indexes'
+    variety = 'semantic_index'
 
     def __init__(self, *args, n_retrieve=100, **kwargs):
         self.n_retrieve = n_retrieve
@@ -396,14 +398,16 @@ class SemanticIndexTrainer(Trainer):
         results = {}
         if self.metrics:
             for vs in self.validation_sets:
-                results[vs] = validate_representations(self.collection, vs, self.train_name,
-                                                       self.metrics, self.models, features=self.features,
-                                                       refresh=True)
-        loss_values = []
+                results[vs] = validate_representations(
+                    self.collection, vs, self.train_name,
+                    self.metrics, self.models, features=self.features,
+                    refresh=True
+                )
+        objective_values = []
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.learn_encoders)
-            loss_values.append(self.loss(*outputs).item())
-        results['loss'] = sum(loss_values) / len(loss_values)
+            objective_values.append(self.objective(*outputs).item())
+        results['objective'] = sum(objective_values) / len(objective_values)
         for m in self.models:
             if hasattr(m, 'train'):
                 m.train()

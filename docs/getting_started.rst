@@ -37,31 +37,4 @@ Installation
 
     pip install superduperdb
 
-Configuration
--------------
-
-SuperDuperDB looks for a configuration file by default in your working directory. Here's
-a minimal example with all components running on ``localhost``.
-
-.. code-block:: json
-
-    {
-      "remote": true,
-      "password": "<this-is-the-secure-password>"
-      "master": {
-        "host": "localhost",
-        "port": 5001
-      },
-      "jobs": {
-        "host": "localhost",
-        "port": 5002
-      },
-      "redis": {
-        "host": "localhost",
-        "port": 6379
-      },
-      "mongodb": {
-        "host": "localhost",
-        "port": 27017,
-      }
-    }
+See :ref:`here <Setting up a SuperDuperDB cluster>` for information regarding setting up a SuperDuperDB cluster.

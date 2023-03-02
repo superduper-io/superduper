@@ -18,7 +18,7 @@ These concepts are:
 Types
 =====
 
-A type is an Python object registered with a SuperDuperDB collection which manages how
+A type is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from ``bytes`` so that these may be
 stored and retrieved from the database. Creating types is a prerequisite to adding models
 which have non-Jsonable outputs to a collection, as well as adding content to the database

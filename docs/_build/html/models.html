@@ -239,23 +239,13 @@ library.</p>
 </div>
 <p>In order to register these models with SuperDuperDB, we do the following:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">my_packages.models</span> <span class="kn">import</span> <span class="n">CNN</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;resnet&#39;</span><span class="p">,</span> <span class="n">CNN</span><span class="p">(),</span> <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$exists&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;visual_classifier&#39;</span><span class="p">:</span> <span class="n">VisualClassifier</span><span class="p">(</span><span class="n">my_labels</span><span class="p">),</span>
-<span class="gp">... </span>                  <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$exists&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
-<span class="gp">... </span>                  <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="s1">&#39;resnet&#39;</span><span class="p">},</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">)</span>
-<span class="go"># wait a bit...</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
-<span class="go">{&#39;_id&#39;: ObjectId(&#39;6387bc38477124958d0b97d9&#39;),</span>
-<span class="go"> &#39;img&#39;: &lt;PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361&gt;,</span>
-<span class="go"> &#39;_outputs&#39;: {&#39;img&#39;: {&#39;resnet&#39;: tensor([0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253])},</span>
-<span class="go">                      &#39;visual_classifier&#39;: &#39;dark-lighting&#39;}}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;resnet&#39;</span><span class="p">,</span> <span class="n">CNN</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;visual_classifier&#39;</span><span class="p">:</span> <span class="n">VisualClassifier</span><span class="p">(</span><span class="n">my_labels</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">create_model</span></code> command saves the <code class="docutils literal notranslate"><span class="pre">CNN()</span></code> and <code class="docutils literal notranslate"><span class="pre">VisualClassifier</span></code> objects to the MongoDB
-filesystem and also applies the model to all of the documents which are selected by the <code class="docutils literal notranslate"><span class="pre">filter</span></code>
-parameter (default <code class="docutils literal notranslate"><span class="pre">{}</span></code> - all). The second model depends for its input features on the first
-model. This is configured via the <code class="docutils literal notranslate"><span class="pre">features={...}</span></code> key-word. The fields in the dictionary
-are substituted with the model-outputs defined there.</p>
+filesystem. The models are now registered and ready to go. To set up the models to respond to
+incoming data, see the <a class="reference internal" href="watchers.html#watchers-in-superduperdb"><span class="std std-ref">section on watchers</span></a>.</p>
 </section>
 </section>
 

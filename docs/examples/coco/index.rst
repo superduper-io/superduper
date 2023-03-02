@@ -1,6 +1,10 @@
-************
+****************************************
 CoCo (Common Objects in Context) Dataset
-************
+****************************************
+
+The `CoCo dataset <https://cocodataset.org/#home>`_ is a good test bed for trying out SuperDuperDB. That's because it includes data of 
+various types (images/ text) and these data are interesting and flexible enough to try and test 
+a range of AI functionality.
 
 .. toctree::
     :maxdepth: 1

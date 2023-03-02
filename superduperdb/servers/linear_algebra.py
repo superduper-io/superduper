@@ -39,4 +39,4 @@ def _find_nearest():
 
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=cf['master']['port'])
+    app.run(host='localhost', port=cf['linear_algebra']['port'])

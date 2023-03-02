@@ -152,20 +152,9 @@ In order to register these models with SuperDuperDB, we do the following:
 .. code-block:: python
 
     >>> from my_packages.models import CNN
-    >>> docs.create_model('resnet', CNN(), filter={'img': {'$exists': 1}}, key='img')
-    >>> docs.create_model('visual_classifier': VisualClassifier(my_labels),
-    ...                   filter={'img': {'$exists': 1},
-    ...                   features={'img': 'resnet'}, key='img')
-    # wait a bit...
-    >>> docs.find_one()
-    {'_id': ObjectId('6387bc38477124958d0b97d9'),
-     'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361>,
-     '_outputs': {'img': {'resnet': tensor([0.0064,  0.0055, -0.0140,  ...,  0.0120,  0.0084, -0.0253])},
-                          'visual_classifier': 'dark-lighting'}}
-
+    >>> docs.create_model('resnet', CNN())
+    >>> docs.create_model('visual_classifier': VisualClassifier(my_labels))
 
 The ``create_model`` command saves the ``CNN()`` and ``VisualClassifier`` objects to the MongoDB
-filesystem and also applies the model to all of the documents which are selected by the ``filter``
-parameter (default ``{}`` - all). The second model depends for its input features on the first
-model. This is configured via the ``features={...}`` key-word. The fields in the dictionary
-are substituted with the model-outputs defined there.
+filesystem. The models are now registered and ready to go. To set up the models to respond to 
+incoming data, see the :ref:`section on watchers <Watchers in SuperDuperDB>`.

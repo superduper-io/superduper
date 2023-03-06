@@ -2,8 +2,6 @@ import contextlib
 import datetime
 import traceback
 
-from superduperdb.client import the_client
-
 
 class Logger:
     def __init__(self, collection, id_, stream='stdout'):
@@ -37,6 +35,7 @@ def handle_function_output(function, collection, identifier, *args, **kwargs):
 
 def _function_job(database_name, collection_name, function_name, identifier,
                   args_, kwargs_):
+    from superduperdb.client import the_client
     collection = the_client[database_name][collection_name]
     function = getattr(collection, function_name)
     collection['_jobs'].update_one({'identifier': identifier},

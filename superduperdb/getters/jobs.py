@@ -5,16 +5,16 @@ import uuid
 from redis import Redis
 from rq import Queue
 
-from superduperdb.client import the_client
 from superduperdb.jobs import process as process_jobs
 from superduperdb import cf
 
 q = Queue(connection=Redis(port=cf['redis']['port']), default_timeout=24 * 60 * 60)
 
 
-def process(database, collection, method, *args, dependencies=(), **kwargs):
+def process(database_name, collection_name, method, *args, dependencies=(), **kwargs):
+    from superduperdb.client import the_client
     job_id = str(uuid.uuid4())
-    collection = the_client[database][collection]
+    collection = the_client[database_name][collection_name]
     collection['_jobs'].insert_one({
         'identifier': job_id,
         'time': datetime.datetime.now(),
@@ -27,8 +27,8 @@ def process(database, collection, method, *args, dependencies=(), **kwargs):
     })
     job = q.enqueue(
         process_jobs._function_job,
-        database,
-        collection,
+        database_name,
+        collection_name,
         method,
         job_id,
         job_id=job_id,

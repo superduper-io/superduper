@@ -1,10 +1,12 @@
 import io
 import numpy
 import PIL.Image
+import PIL.JpegImagePlugin
 import torch
 
 
 class Image:
+    types = (PIL.JpegImagePlugin.JpegImageFile,)
 
     @staticmethod
     def encode(x):

@@ -66,6 +66,33 @@ def random_data(float_tensors):
 
 
 @pytest.fixture()
+def an_update():
+    data = []
+    for i in range(10):
+        x = torch.randn(32)
+        y = int(random.random() > 0.5)
+        z = torch.randn(32)
+        data.append({'x': x, 'z': z, 'y': y, 'update': True})
+    return data
+
+
+@pytest.fixture()
+def with_semantic_index(random_data, a_model, measure):
+    random_data.create_semantic_index(
+        'test_semantic_index',
+        ['linear_a'],
+        keys=['x'],
+        measure='css',
+    )
+    random_data['_meta'].insert_one({'key': 'semantic_index', 'value': 'test_semantic_index'})
+    yield random_data
+    random_data.delete_semantic_index('test_semantic_index', force=True)
+    random_data['_meta'].delete_one({'key': 'semantic_index'})
+    random_data.remote = True
+    random_data.unset_hash_set()
+
+
+@pytest.fixture()
 def si_validation(random_data):
     random_data.create_validation_set('my_valid', chunk_size=100,
                                       splitter=lambda r: ({'x': r['x']}, {'z': r['z']}))
@@ -95,6 +122,13 @@ def a_model(float_tensors):
         if "'NoneType' object is not subscriptable" in str(e):
             return
         raise e
+
+
+@pytest.fixture()
+def a_watcher(a_model):
+    a_model.create_watcher('linear_a', 'x')
+    yield a_model
+    a_model.delete_watcher('linear_a', 'x', force=True)
 
 
 @pytest.fixture()

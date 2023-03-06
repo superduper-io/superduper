@@ -1,6 +1,6 @@
 from superduperdb.client import SuperDuperClient
 from bson import BSON, ObjectId
-from flask import request, Flask, jsonify
+from flask import request, Flask, jsonify, make_response
 
 # https://flask.palletsprojects.com/en/2.1.x/patterns/streaming/ streaming for the find endpoint
 
@@ -12,8 +12,21 @@ client = SuperDuperClient(**cf['mongodb'])
 collections = {}
 
 
-@app.route('/_find_nearest', methods=['GET'])
-def _find_nearest():
+@app.route('/unset_hash_set', methods=['PUT'])
+def unset_hash_set():
+    data = request.get_json()
+    database = data['database']
+    collection = data['collection']
+    if f'{database}.{collection}' not in collections:
+        collections[f'{database}.{collection}'] = client[database][collection]
+    collection = collections[f'{database}.{collection}']
+    collection.remote = False
+    collection.unset_hash_set()
+    return make_response('ok', 200)
+
+
+@app.route('/find_nearest', methods=['GET'])
+def find_nearest():
     data = request.get_json()
     database = data['database']
     collection = data['collection']

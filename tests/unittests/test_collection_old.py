@@ -440,7 +440,7 @@ def test_downloads(with_urls):
 
 
 def test__convert_types(random_vectors):
-    r = random_vectors._convert_types({
+    r = random_vectors.convert_types({
         'my_tensor': torch.randn(32)
     })
 

@@ -1,4 +1,5 @@
 import json
+import pickle
 
 from bson import ObjectId, BSON
 import requests
@@ -6,7 +7,7 @@ import requests
 from superduperdb import cf
 
 
-def _find_nearest(database, collection, filter, ids=None):
+def find_nearest(database, collection, filter, ids=None):
     json_ = {
         'database': database,
         'collection': collection,
@@ -16,7 +17,7 @@ def _find_nearest(database, collection, filter, ids=None):
         json_['ids'] = [str(id_) for id_ in json_['ids']]
 
     response = requests.get(
-        f'http://{cf["master"]["host"]}:{cf["master"]["port"]}/_find_nearest',
+        f'http://{cf["linear_algebra"]["host"]}:{cf["linear_algebra"]["port"]}/find_nearest',
         headers=None,
         stream=True,
         json=json_,
@@ -24,5 +25,34 @@ def _find_nearest(database, collection, filter, ids=None):
     results = json.loads(response.text)
     for i, id_ in enumerate(results['_ids']):
         results['_ids'][i] = ObjectId(id_)
-    print(results)
     return results
+
+
+def unset_hash_set(database, collection):
+    json_ = {
+        'database': database,
+        'collection': collection,
+    }
+    response = requests.put(
+        f'http://{cf["linear_algebra"]["host"]}:{cf["linear_algebra"]["port"]}/unset_hash_set',
+        headers=None,
+        json=json_,
+    )
+    if response.status_code != 200:
+        raise Exception('Unsetting hash set failed...')
+
+
+def apply_model(database, collection, name, input_, **kwargs):
+    input_ = pickle.dumps(input_).decode('iso-8859-1')
+    json_ = {
+        'database': database,
+        'collection': collection,
+        'input_': input_,
+        'name': name,
+        'kwargs': kwargs,
+    }
+    response = requests.get(
+        f'http://{cf["model_server"]["host"]}:{cf["model_server"]["port"]}/apply_model',
+        json=json_
+    )
+    return pickle.loads(response.content)

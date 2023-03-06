@@ -1,15 +1,13 @@
-import os
 from collections import defaultdict
 from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
 import requests
 import signal
 import sys
-import warnings
-
 import torch
 import torch.utils.data
 import tqdm
+import warnings
 
 
 class opts:

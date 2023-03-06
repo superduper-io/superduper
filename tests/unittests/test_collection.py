@@ -1,9 +1,31 @@
 from tests.fixtures.collection import (
     float_tensors, empty, a_model, b_model, c_model, random_data,
     si_validation, measure, metric, my_rank_obj, a_classifier, a_target, accuracy_metric,
-    my_class_obj, imputation_validation
+    my_class_obj, imputation_validation, with_semantic_index, an_update, a_watcher
 )
+import pytest
 import torch
+
+
+@pytest.mark.parametrize('remote', [False, True])
+def test_find(with_semantic_index, remote):
+    with_semantic_index.remote = remote
+    r = with_semantic_index.find_one()
+
+    s = with_semantic_index.find_one(like={'x': r['x']})
+    assert s['_id'] == r['_id']
+
+
+@pytest.mark.parametrize('remote', [False, True])
+def test_insert(random_data, a_model, an_update, remote):
+    random_data.remote = remote
+    output = random_data.insert_many(an_update)
+    if remote:
+        jobs = output[1]
+        for node in jobs:
+            for job_id in jobs[node]:
+                random_data.watch_job(job_id)
+    assert random_data.count_documents({}) == 110
 
 
 def test_watcher(random_data, a_model, b_model):

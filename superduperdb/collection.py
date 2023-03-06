@@ -153,7 +153,9 @@ class Collection(BaseCollection):
 
     def apply_model(self, name, input_, **kwargs):
         if self.remote:
-            return superduper_requests.client.apply_model(name, input_, **kwargs)
+            return superduper_requests.client.apply_model(self.database.name,
+                                                          self.name,
+                                                          name, input_, **kwargs)
         return apply_model(self.models[name], input_, **kwargs)
 
     def create_imputation(self, name, model, model_key, target, target_key,
@@ -263,7 +265,6 @@ class Collection(BaseCollection):
         :param name: name of model
         :param object: if specified the model object (pickle-able) else None if model already exists
         :param preprocessor: separate preprocessing
-        :param forward: separate forward pass
         :param postprocessor: separate postprocessing
         :param type: type for converting model outputs back and forth from bytes
         """
@@ -276,7 +277,10 @@ class Collection(BaseCollection):
         if type is not None:
             assert type in self['_objects'].distinct('name', {'varieties': 'type'})
 
-        file_id = self._create_pickled_file(object)
+        if isinstance(object, str):
+            file_id = object
+        else:
+            file_id = self._create_pickled_file(object)
 
         self['_objects'].insert_one({
             'varieties': ['model', 'function'],
@@ -483,7 +487,7 @@ class Collection(BaseCollection):
             return
 
         if watcher:
-            self['_objects'].delete_one({'_id': watcher['_id']})
+            self.delete_watcher(watcher['model'], watcher['key'], force=force)
         self['_objects'].delete_one({'name': name, 'varieties': 'semantic_index'})
 
     def _get_content_for_filter(self, filter):
@@ -633,7 +637,7 @@ class Collection(BaseCollection):
         :param kwargs: kwargs to be passed to super()
         """
         id_ = super().find_one(filter, *args, **kwargs)['_id']
-        replacement = self._convert_types(replacement)
+        replacement = self.convert_types(replacement)
         result = super().replace_one({'_id': id_}, replacement, *args, **kwargs)
         if refresh and self.list_models():
             self._process_documents([id_])
@@ -653,7 +657,7 @@ class Collection(BaseCollection):
         if refresh and self.list_models():
             ids = [r['_id'] for r in super().find(filter, {'_id': 1})]
         args = list(args)
-        args[0] = self._convert_types(args[0])
+        args[0] = self.convert_types(args[0])
         args = tuple(args)
         result = super().update_many(filter, *args, **kwargs)
         if refresh and self.list_models():
@@ -678,6 +682,8 @@ class Collection(BaseCollection):
         """
         Drop the hash_set currently in-use.
         """
+        if self.remote:
+            return superduper_requests.client.unset_hash_set(self.database.name, self.name)
         if self.semantic_index in self._all_hash_sets:
             del self._all_hash_sets[self.semantic_index]
 
@@ -795,23 +801,23 @@ class Collection(BaseCollection):
     def _create_pickled_file(self, object):
         return loading.save(object, filesystem=self.filesystem)
 
-    def _convert_types(self, r):
+    def convert_types(self, r):
         """
         Convert non MongoDB types to bytes using types already registered with collection.
 
         :param r: record in which to convert types
         :return modified record
         """
-        for k in r:
-            if isinstance(r[k], dict) and '_content' not in r[k]:
-                r[k] = self._convert_types(r[k])
-            try:
-                d = self.type_lookup
-                t = d[type(r[k])]
-            except KeyError:
-                t = None
-            if t is not None:
-                r[k] = {'_content': {'bytes': self.types[t].encode(r[k]), 'type': t}}
+        if isinstance(r, dict):
+            for k in r:
+                r[k] = self.convert_types(r[k])
+            return r
+        try:
+            t = self.type_lookup[type(r)]
+        except KeyError:
+            t = None
+        if t is not None:
+            return {'_content': {'bytes': self.types[t].encode(r), 'type': t}}
         return r
 
     def delete_model(self, name, force=False):
@@ -889,9 +895,9 @@ class Collection(BaseCollection):
 
     def _find_nearest(self, like, ids=None, n=10):
         if self.remote:
-            like = self._convert_types(like)
-            return superduper_requests.client._find_nearest(self.database.name, self.name, like,
-                                                            ids=ids)
+            like = self.convert_types(like)
+            return superduper_requests.client.find_nearest(self.database.name, self.name, like,
+                                                           ids=ids)
         if ids is None:
             hash_set = self.hash_set
         else:  # pragma: no cover
@@ -1012,18 +1018,20 @@ class Collection(BaseCollection):
 
     def _infer_types(self, documents):
         for r in documents:
-            self._convert_types(r)
+            self.convert_types(r)
         return documents
 
     def _load_model(self, name):
         manifest = self.parent_if_appl[f'_objects'].find_one({'name': name, 'varieties': 'model'})
         if manifest is None:
             raise Exception(f'No such object of type "model", "{name}" has been registered.') # pragma: no cover
-        model = self._load_object('model', name)
+        manifest = dict(manifest)
+        if isinstance(manifest['object'], str):
+            manifest['object'] = self['_objects'].find_one({'name': manifest['object'],
+                                                            'varieties': 'model'})['object']
+        model = self.parent_if_appl._load_pickled_file(manifest['object'])
         if manifest['preprocessor'] is None and manifest['postprocessor'] is None:
             return model
-        assert manifest.get('preprocessor') is not None \
-            or manifest.get('forward') is not None
         preprocessor = None
         if manifest.get('preprocessor') is not None:
             preprocessor = self._load_object('preprocessor', manifest['preprocessor'])
@@ -1096,6 +1104,7 @@ class Collection(BaseCollection):
                 self.name,
                 '_process_documents_with_watcher',
                 model_name=model,
+                key=key,
                 ids=sub_ids,
                 verbose=verbose,
                 dependencies=dependencies,

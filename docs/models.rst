@@ -1,7 +1,7 @@
 Models - an extension of PyTorch models
 =======================================
 
-Models in SuperDuperDB extend the notion of PyTorch models
+Models in SuperDuperDB extend standard PyTorch models
 by including pre-processing and post-processing. These are necessary
 since the data in the database aren't necessarily in tensor format
 and the outputs which one might like to query in the database also

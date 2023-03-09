@@ -26,7 +26,7 @@ What is SuperDuperDB not?
 * SuperDuperDB does not try to hack or create dialects of query languages such as the MongoDB query API or SQL. These languages do their job well already.
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++
-What types of use-cases does SuperDuperDB excel at?
+What types of use-cases is SuperDuperDB suited for?
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
 * If model outputs need to be kept up-to-date when new data comes in.

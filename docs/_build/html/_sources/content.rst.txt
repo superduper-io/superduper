@@ -6,7 +6,7 @@ but may be distributed over file-servers, file-systems, web-urls, and object sto
 
 SuperDuperDB allows one to specify this data without first downloading and collating the data
 in one place. One simply uses the ``"_content"`` keyword and inside this field specifies the
-location (either file ``"file://<path>"`` or "http...") inside the ``"url"`` field:
+location (either file ``"file://<path>"`` or ``"http..."``) inside the ``"url"`` field:
 
 .. code-block:: python
 
@@ -23,8 +23,8 @@ After adding data in this way, SuperDuperDB creates a :ref:`job <Jobs - scheduli
 which downloads the data from the specified locations using multiprocessing, and inserts the raw
 bytes into the database inside the ``"_content"`` subfield.
 
-One can see what happened under the hood by specifying ``raw=True``. The `bytes` have been
-added to the external reference.
+One can see what happened under the hood by specifying ``raw=True``. The ``"bytes"`` field containing
+the raw data has been added to the ``"_content"`` sub-document:
 
 .. code-block:: python
 

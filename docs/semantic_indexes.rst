@@ -42,8 +42,8 @@ To use a semantic index, use the ``like`` keyword in ``Collection.find`` or ``Co
     >>> docs.find(exact_filter, like=doc_contents, n=n)
 
 The ``like`` keyword is passed to one of the models registered during the ``create_semantic_index`` call,
-and encoded by that model. This vector is compared using the ``measure`` argument with the
-vectors which have pre-computed using the ``active=True`` model in the *semantic index*.
+and encoded by that model. This output is compared using the ``measure`` argument with outputs
+of the first model's outputs on the first of the ``keys`` parameter.
 Which of the models is used to encode the ``document`` is determined by the ``keys`` argument of
 the ``create_semantic_index`` call. SuperDuperDB takes the first model in the *semantic_index* whose ``key``
 is in the ``like`` keyword. The exact filter part of the query is executed as a

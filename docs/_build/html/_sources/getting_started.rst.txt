@@ -1,5 +1,5 @@
-Getting started
-===============
+Quick  start
+============
 
 Prerequisites
 -------------
@@ -37,4 +37,8 @@ Installation
 
     pip install superduperdb
 
-See :ref:`here <Setting up a SuperDuperDB cluster>` for information regarding setting up a SuperDuperDB cluster.
+Cluster Setup
+-------------
+
+To run SuperDuperDB in asynchronous mode, one is required to set up a SuperDuperDB cluster.
+Read here :ref:`here <Setting up a SuperDuperDB cluster>` for information regarding setting up a SuperDuperDB cluster.

@@ -22,7 +22,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Adding content to SuperDuperDB" href="content.html" />
+    <link rel="next" title="Adding interesting content to SuperDuperDB" href="content.html" />
     <link rel="prev" title="SuperDuperDB Concepts" href="concepts.html" /> 
 </head>
 
@@ -42,16 +42,18 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Types in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Adding interesting content to SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -105,7 +107,7 @@
 </style>
 <section id="types-in-superduperdb">
 <h1>Types in SuperDuperDB<a class="headerlink" href="#types-in-superduperdb" title="Permalink to this heading"></a></h1>
-<p>A type is a Python object registered with a SuperDuperDB collection which manages how
+<p>A <strong>type</strong> is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from <code class="docutils literal notranslate"><span class="pre">bytes</span></code> so that these may be
 stored and retrieved from the database. Creating types is a prerequisite to adding models
 which have non-Jsonable outputs to a collection, as well as adding content to the database
@@ -141,8 +143,8 @@ for many AI models:</p>
         <span class="k">return</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">bytes_</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The classes must be defined so that standard <code class="docutils literal notranslate"><span class="pre">pickle</span></code> serialization works - SuperDuperDB
-stores the pickle object in the database.
+<p>The classes must be pickleable using python <code class="docutils literal notranslate"><span class="pre">pickle</span></code> - SuperDuperDB
+stores the pickled object in the database.
 In the case above, we’ve used static methods and class variables, because the class isn’t
 configurable. However, by using an <code class="docutils literal notranslate"><span class="pre">__init__</span></code> signature with meaningful arguments,
 it’s possible to create flexible type classes.
@@ -157,6 +159,21 @@ Equipped with this class, we can now register a type with the collection:</p>
 <span class="go"> &lt;my_package.FloatTensor at 0x10bbf9270&gt;</span>
 </pre></div>
 </div>
+<p>Let’s test the <cite>“image”</cite> type by adding a <cite>PIL.Image</cite> object to SuperDuperDB:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">requests</span><span class="o">,</span> <span class="nn">PIL.Image</span><span class="o">,</span> <span class="nn">io</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bytes_</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://www.superduperdb.com/logos/white.png&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">content</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">image</span> <span class="o">=</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">bytes_</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">insert_one</span><span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">image</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+<span class="go">    {&#39;_id&#39;: ObjectId(&#39;63fca4325d2a192e05fe154a&#39;),</span>
+<span class="go">     &#39;img&#39;: &lt;PIL.PngImagePlugin.PngImageFile image mode=RGBA size=531x106&gt;,</span>
+<span class="go">     &#39;_fold&#39;: &#39;train&#39;}</span>
+</pre></div>
+</div>
+<p>A more efficient approach which gives the same result, it to add the type of the data explicitly like this</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">insert_one</span><span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_content&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;bytes&#39;</span><span class="p">:</span> <span class="n">bytes_</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;image&#39;</span><span class="p">}},</span> <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+</pre></div>
+</div>
 </section>
 
 
@@ -164,7 +181,7 @@ Equipped with this class, we can now register a type with the collection:</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="concepts.html" class="btn btn-neutral float-left" title="SuperDuperDB Concepts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="content.html" class="btn btn-neutral float-right" title="Adding content to SuperDuperDB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="content.html" class="btn btn-neutral float-right" title="Adding interesting content to SuperDuperDB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

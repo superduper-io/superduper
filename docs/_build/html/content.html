@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Adding content to SuperDuperDB &mdash; SuperDuperDB  documentation</title>
+  <title>Adding interesting content to SuperDuperDB &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -42,16 +42,18 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding interesting content to SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -69,7 +71,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">Adding content to SuperDuperDB</li>
+      <li class="breadcrumb-item active">Adding interesting content to SuperDuperDB</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/content.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -103,46 +105,35 @@
     text-align: unset;
 }
 </style>
-<section id="adding-content-to-superduperdb">
-<h1>Adding content to SuperDuperDB<a class="headerlink" href="#adding-content-to-superduperdb" title="Permalink to this heading"></a></h1>
-<p>Many AI models may be used with interesting content such as image, video or audio, to name but a few types.
-MongoDB does not support these types of data natively.
-Accordingly, SuperDuperDB allows users to use user-defined <a class="reference internal" href="types.html#types-in-superduperdb"><span class="std std-ref">types</span></a>
-to support interesting content.</p>
-<p>The most straight-forward way to do this, is to define a types which includes the <code class="docutils literal notranslate"><span class="pre">types</span></code> attribute; see
-<a class="reference internal" href="types.html#types-in-superduperdb"><span class="std std-ref">here</span></a> for an example. If the types of certain subfields of added documents
-are of one of these types, then SuperDuperDB may be used to add this types in a way directly analogous to
-a standard MongoDB update:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">requests</span><span class="o">,</span> <span class="nn">PIL.Image</span><span class="o">,</span> <span class="nn">io</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">bytes_</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://www.superduperdb.com/logos/white.png&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">content</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">image</span> <span class="o">=</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">bytes_</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">insert_one</span><span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">image</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
-<span class="go">{&#39;_id&#39;: ObjectId(&#39;63fca4325d2a192e05fe154a&#39;),</span>
-<span class="go"> &#39;img&#39;: &lt;PIL.PngImagePlugin.PngImageFile image mode=RGBA size=531x106&gt;,</span>
-<span class="go"> &#39;_fold&#39;: &#39;train&#39;}</span>
-</pre></div>
-</div>
-<p>If one hasn’t set the <code class="docutils literal notranslate"><span class="pre">types</span></code> attribute, one may add the content more explicitly like this</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">insert_one</span><span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_content&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;bytes&#39;</span><span class="p">:</span> <span class="n">bytes_</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;image&#39;</span><span class="p">}},</span> <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
-</pre></div>
-</div>
-<p>It’s important to add the <code class="docutils literal notranslate"><span class="pre">&quot;type&quot;</span></code> key-word to the <code class="docutils literal notranslate"><span class="pre">&quot;_content&quot;</span></code> subfield, so that
-SuperDuperDB knows how to handle the content.</p>
-<p>One can also specify the content from a URL - SuperDuperDB makes sure that the <code class="docutils literal notranslate"><span class="pre">bytes</span></code> at that URL
-are added to the database.</p>
+<section id="adding-interesting-content-to-superduperdb">
+<h1>Adding interesting content to SuperDuperDB<a class="headerlink" href="#adding-interesting-content-to-superduperdb" title="Permalink to this heading"></a></h1>
+<p>In an application context, certain data do not necessarily lie around in a convenient form
+but may be distributed over file-servers, file-systems, web-urls, and object storage.</p>
+<p>SuperDuperDB allows one to specify this data without first downloading and collating the data
+in one place. One simply uses the <code class="docutils literal notranslate"><span class="pre">&quot;_content&quot;</span></code> keyword and inside this field specifies the
+location (either file <code class="docutils literal notranslate"><span class="pre">&quot;file://&lt;path&gt;&quot;</span></code> or “http…”) inside the <code class="docutils literal notranslate"><span class="pre">&quot;url&quot;</span></code> field:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">insert_one</span><span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_content&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="s1">&#39;https://www.superduperdb.com/logos/white.png&#39;</span><span class="p">,</span>
 <span class="gp">... </span>                 <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;image&#39;</span><span class="p">,</span>
 <span class="gp">... </span>                 <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
 <span class="go">{&#39;_id&#39;: ObjectId(&#39;6129008308hs99hjne05fe154a&#39;),</span>
 <span class="go"> &#39;img&#39;: &lt;PIL.PngImagePlugin.PngImageFile image mode=RGBA size=531x106&gt;,</span>
+<span class="go"> &#39;i&#39;: 1,</span>
 <span class="go"> &#39;_fold&#39;: &#39;train&#39;}</span>
 </pre></div>
 </div>
-<p>One can retrieve the <code class="docutils literal notranslate"><span class="pre">bytes</span></code> in raw form from the data base by specifying <code class="docutils literal notranslate"><span class="pre">raw=True</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="s1">&#39;img&#39;</span><span class="p">][</span><span class="s1">&#39;_content&#39;</span><span class="p">][</span><span class="s1">&#39;bytes&#39;</span><span class="p">]</span>
-<span class="go">b&#39;\x1c\xf4\xd0;[\xe4\xb4;D)f\xbc\x7f\xfc\x83\xb9e\xf2\x87;:H\x06;q\x95...&#39;</span>
+<p>After adding data in this way, SuperDuperDB creates a <a class="reference internal" href="jobs.html#jobs-scheduling-of-training-and-model-outputs"><span class="std std-ref">job</span></a>
+which downloads the data from the specified locations using multiprocessing, and inserts the raw
+bytes into the database inside the <code class="docutils literal notranslate"><span class="pre">&quot;_content&quot;</span></code> subfield.</p>
+<p>One can see what happened under the hood by specifying <code class="docutils literal notranslate"><span class="pre">raw=True</span></code>. The <cite>bytes</cite> have been
+added to the external reference.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+<span class="go">{&#39;_id&#39;: ObjectId(&#39;640939c0deb71bb414652022&#39;),</span>
+<span class="go"> &#39;img&#39;: {&#39;_content&#39;: {&#39;url&#39;: &#39;https://www.superduperdb.com/logos/white.png&#39;,</span>
+<span class="go">                      &#39;type&#39;: &#39;image&#39;,</span>
+<span class="go">                      &#39;bytes&#39;: b&#39;\x89PNG\r\n\x1a\n\x0...&#39;}},</span>
+<span class="go"> &#39;i&#39;: 1,</span>
+<span class="go"> &#39;_fold&#39;: &#39;train&#39;}</span>
 </pre></div>
 </div>
 </section>

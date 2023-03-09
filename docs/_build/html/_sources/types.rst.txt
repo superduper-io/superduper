@@ -1,7 +1,7 @@
 Types in SuperDuperDB
 =====================
 
-A type is a Python object registered with a SuperDuperDB collection which manages how
+A **type** is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from ``bytes`` so that these may be
 stored and retrieved from the database. Creating types is a prerequisite to adding models
 which have non-Jsonable outputs to a collection, as well as adding content to the database
@@ -41,8 +41,8 @@ for many AI models:
             return PIL.Image.open(io.BytesIO(bytes_))
 
 
-The classes must be defined so that standard ``pickle`` serialization works - SuperDuperDB
-stores the pickle object in the database.
+The classes must be pickleable using python ``pickle`` - SuperDuperDB
+stores the pickled object in the database.
 In the case above, we've used static methods and class variables, because the class isn't
 configurable. However, by using an ``__init__`` signature with meaningful arguments,
 it's possible to create flexible type classes.
@@ -58,3 +58,22 @@ Equipped with this class, we can now register a type with the collection:
     # retrieve the type object from the database
     >>> docs.types['float_tensor']
      <my_package.FloatTensor at 0x10bbf9270>
+
+Let's test the `"image"` type by adding a `PIL.Image` object to SuperDuperDB:
+
+.. code-block:: python
+
+    >>> import requests, PIL.Image, io
+    >>> bytes_ = requests.get('https://www.superduperdb.com/logos/white.png').content
+    >>> image = PIL.Image.open(io.BytesIO(bytes_))
+    >>> docs.insert_one({'img': image, 'i': 0)
+    >>> docs.find_one({'i': 0})
+	{'_id': ObjectId('63fca4325d2a192e05fe154a'),
+	 'img': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=531x106>,
+	 '_fold': 'train'}
+
+A more efficient approach which gives the same result, it to add the type of the data explicitly like this
+
+.. code-block:: python
+
+	>>> docs.insert_one({'img': {'_content': {'bytes': bytes_, 'type': 'image'}}, 'i': 0})

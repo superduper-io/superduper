@@ -22,8 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Notebook examples" href="examples/index.html" />
-    <link rel="prev" title="Imputations for filling in data" href="imputations.html" /> 
+    <link rel="next" title="Full usage" href="full_usage.html" />
+    <link rel="prev" title="Jobs - scheduling of training and model outputs" href="jobs.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,27 +42,29 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Adding interesting content to SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Setting up a SuperDuperDB cluster</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#components">Components</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#client">Client</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#mongodb">MongoDB</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#linear-algebra">Linear algebra</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#model-server">Model-server</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#job-worker">Job-worker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#worker">Worker</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#basic-local-cluster-setup">Basic local cluster setup</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -116,6 +118,20 @@
 </style>
 <section id="setting-up-a-superduperdb-cluster">
 <h1>Setting up a SuperDuperDB cluster<a class="headerlink" href="#setting-up-a-superduperdb-cluster" title="Permalink to this heading"></a></h1>
+<p>There are 3 features of a SuperDuperDB cluster:</p>
+<ol class="arabic simple">
+<li><p>When users access SuperDuperDB, they invoke the SuperDuperDB <strong>client</strong> which manages communication
+with the various components of the SuperDuperDB cluster.</p></li>
+<li><p>Data storage: occurs in <strong>MongoDB</strong>, where the raw data,
+<a class="reference internal" href="models.html#models-an-extension-of-pytorch-models"><span class="std std-ref">models</span></a> and model outputs are stored.</p></li>
+<li><p>Job management: whenever SuperDuperDB creates a <a class="reference internal" href="jobs.html#jobs-scheduling-of-training-and-model-outputs"><span class="std std-ref">job</span></a>
+(i.e. during data inserts, updates, downloads, and model training), a job is queued and
+then executed by a pool of <strong>workers</strong>.</p></li>
+<li><p>Querying SuperDuperDB: when using queries which use tensor similarity, the SuperDuperDB client
+combines calls to MongoDB with calls to the <strong>linear-algebra</strong> component.</p></li>
+<li><p>SuperDuperDB includes a <strong>model-server</strong>, which may be used to serve the models which have
+been uploaded to SuperDuperDB.</p></li>
+</ol>
 <p>The exact setup of your SuperDuperDB cluster will depend on the use-cases you
 plan to execute with the cluster. Factors to consider will be:</p>
 <ul class="simple">
@@ -151,8 +167,8 @@ them.</p>
 <h3>Model-server<a class="headerlink" href="#model-server" title="Permalink to this heading"></a></h3>
 <p>SuperDuperDB contains a component which serves models which has been created.</p>
 </section>
-<section id="job-worker">
-<h3>Job-worker<a class="headerlink" href="#job-worker" title="Permalink to this heading"></a></h3>
+<section id="worker">
+<h3>Worker<a class="headerlink" href="#worker" title="Permalink to this heading"></a></h3>
 <p>These nodes perform the long computations necessary to update model outputs when new data
 come in, and also perform model training for models which are set up to be trained on creation.</p>
 </section>
@@ -243,8 +259,8 @@ on the <code class="docutils literal notranslate"><span class="pre">localhost</s
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="imputations.html" class="btn btn-neutral float-left" title="Imputations for filling in data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="examples/index.html" class="btn btn-neutral float-right" title="Notebook examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="jobs.html" class="btn btn-neutral float-left" title="Jobs - scheduling of training and model outputs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="full_usage.html" class="btn btn-neutral float-right" title="Full usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -119,9 +119,10 @@ class Trainer:
             self.metric_values[ds] = {me: [] for me in self.metrics}
         self.metric_values['objective'] = []
         self.lr = lr
-        self.weights_dict = defaultdict(lambda: [])
-        self._weights_choices = {}
-        self._init_weight_traces()
+        if log_weights:
+            self.weights_dict = defaultdict(lambda: [])
+            self._weights_choices = {}
+            self._init_weight_traces()
         self._log_weights = log_weights
         self.save = save
         self.validation_interval = validation_interval
@@ -168,7 +169,7 @@ class Trainer:
                         (random.randrange(sd[p].shape[0]), random.randrange(sd[p].shape[1]))
                         for _ in range(min(10, max(sd[p].shape[0], sd[p].shape[1])))
                     ]
-                else:
+                elif len(sd[p].shape) == 1:
                     assert len(sd[p].shape) == 1
                     indexes = [
                         (random.randrange(sd[p].shape[0]),)
@@ -328,7 +329,8 @@ class Trainer:
                             continue
                         for me in metrics[k]:
                             self.metric_values[k][me].append(metrics[k][me])
-                    self._save_weight_traces()
+                    if self._log_weights:
+                        self._save_weight_traces()
                     self._save_best_model()
                     self.log_progress(fold='VALID', iteration=it, epoch=epoch, **metrics)
                     self._save_metrics()

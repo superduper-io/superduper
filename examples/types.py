@@ -6,7 +6,7 @@ import torch
 
 
 class Image:
-    types = (PIL.JpegImagePlugin.JpegImageFile,)
+    types = (PIL.JpegImagePlugin.JpegImageFile, PIL.Image.Image)
 
     @staticmethod
     def encode(x):

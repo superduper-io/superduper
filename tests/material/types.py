@@ -1,4 +1,7 @@
+import io
 import numpy
+import PIL.Image
+import PIL.JpegImagePlugin
 import torch
 
 
@@ -21,13 +24,16 @@ class FloatTensor:
         return torch.from_numpy(array).type(torch.float)
 
 
-class RawBytes:
-    types = [bytes]
+class Image:
+    types = (PIL.JpegImagePlugin.JpegImageFile,)
 
     @staticmethod
     def encode(x):
-        return x
+        buffer = io.BytesIO()
+        x.save(buffer, format='png')
+        return buffer.getvalue()
 
     @staticmethod
     def decode(bytes_):
-        return bytes_
+        return PIL.Image.open(io.BytesIO(bytes_))
+

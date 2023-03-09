@@ -2,7 +2,7 @@ Watchers in SuperDuperDB
 ========================
 
 Once you have created a model to work with SuperDuperDB using ``Collection.create_model``, it's possible to 
-set up the model to react to changes in a collection's data using a "watcher". To create a watcher, use the 
+set up the model to react to changes in a collection's data using a **watcher**. To create a watcher, use the
 ``Collection.create_watcher`` command:
 
 .. code-block:: python
@@ -11,11 +11,12 @@ set up the model to react to changes in a collection's data using a "watcher". T
 	...                     loader_kwargs={'batch_size': 100, 'num_workers': 10)
 	# lots of output
 
-When this command is called, a job is created which iterates through all documents selected by the ``filter`` key-word
-and updates the outputs to the sub-field under the key ``"_outputs.<key>.<model>."```
+When this command is called, a :ref:`job <Jobs - scheduling of training and model outputs>` is
+created which iterates through all documents selected by the ``filter`` key-word
+and updates the outputs to the sub-field under the key ``"_outputs.<key>.<model>"``.
 
 Whenever new data are inserted or updates are made, if these fall under the query given by ``filter_`` then the model outputs
-are computed over this new data and updated to ``"_outputs.<key>.<model>."``.
+are computed on this new data and updated to ``"_outputs.<key>.<model>."``.
 
 How watchers work under the hood
 --------------------------------
@@ -95,15 +96,15 @@ field over which they were computed:
 
 You can see that the model outputs for ``my_module`` have been substituted into the ``img`` field.
 
-Often watchers will depend on other watcher, if the output of one watcher is needed as the input for another
+Often watchers will depend on other watchers, if the output of one watcher is needed as the input for another
 watcher. The way to do this is to set the ``features`` key-word when creating a watcher. This means
 that when data is fetched from the database during computation of model outputs, the keys specified
 in the ``features`` dictionary are replaced by outputs of the models given in the values.
 
 .. code-block:: python
 
-		>>> docs.create_watcher('other_model', 'img', filter={'img': {'$exists': 1}}, 
-		...                     features={'img': 'my_model')
+    >>> docs.create_watcher('other_model', 'img', filter={'img': {'$exists': 1}},
+    ...                     features={'img': 'my_model')
 
 This is a very useful feature, for instance, in transfer learning.
 

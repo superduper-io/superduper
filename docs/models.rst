@@ -72,7 +72,7 @@ This has the advantage of modularity as the pre- and postprocessing parts can be
 models more easily.
 
 The ``type`` key-word is only necessary if the output type of the postprocess is not supported 
-by MongoDB. Read more about types here ``Types in SuperDuperDB``.
+by MongoDB. Read more about types here :ref:`Types in SuperDuperDB`.
 
 CNN example
 -----------

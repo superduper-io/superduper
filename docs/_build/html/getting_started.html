@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Getting started &mdash; SuperDuperDB  documentation</title>
+  <title>Quick start &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -22,7 +22,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="SuperDuperDB Concepts" href="concepts.html" />
+    <link rel="next" title="Minimum working example" href="minimum_working_example.html" />
     <link rel="prev" title="SuperDuperDB Documentation" href="index.html" /> 
 </head>
 
@@ -42,24 +42,27 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick  start</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#ubuntu">Ubuntu</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#mac-osx">Mac OSX</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cluster-setup">Cluster Setup</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Adding interesting content to SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -77,7 +80,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">Getting started</li>
+      <li class="breadcrumb-item active">Quick  start</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/getting_started.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -111,8 +114,8 @@
     text-align: unset;
 }
 </style>
-<section id="getting-started">
-<h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this heading"></a></h1>
+<section id="quick-start">
+<h1>Quick  start<a class="headerlink" href="#quick-start" title="Permalink to this heading"></a></h1>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h2>
 <p>We assume you are running a recent version of Python3:</p>
@@ -147,7 +150,11 @@ bespoke deployments which you’ll use specifically for SuperDuperDB.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install superduperdb
 </pre></div>
 </div>
-<p>See <a class="reference internal" href="cluster.html#setting-up-a-superduperdb-cluster"><span class="std std-ref">here</span></a> for information regarding setting up a SuperDuperDB cluster.</p>
+</section>
+<section id="cluster-setup">
+<h2>Cluster Setup<a class="headerlink" href="#cluster-setup" title="Permalink to this heading"></a></h2>
+<p>To run SuperDuperDB in asynchronous mode, one is required to set up a SuperDuperDB cluster.
+Read here <a class="reference internal" href="cluster.html#setting-up-a-superduperdb-cluster"><span class="std std-ref">here</span></a> for information regarding setting up a SuperDuperDB cluster.</p>
 </section>
 </section>
 
@@ -156,7 +163,7 @@ bespoke deployments which you’ll use specifically for SuperDuperDB.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="SuperDuperDB Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="concepts.html" class="btn btn-neutral float-right" title="SuperDuperDB Concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="minimum_working_example.html" class="btn btn-neutral float-right" title="Minimum working example" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

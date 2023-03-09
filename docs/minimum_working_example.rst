@@ -2,13 +2,7 @@ Minimum working example
 =======================
 
 Try this example to check everything is working as expected. For an explanation of the concepts
-and detailed usage of SuperDuperDB see the tutorials, concepts and examples.
-
-We register a model which has ``torch.FloatTensor`` outputs with SuperDuperDB and
-then upload some data which is automatically processed by the registered model.
-For this we need to define a class ``my_module.FloatTensor`` so that SuperDuperDB knows how to insert and
-extract the data. SuperDuperDB can handle any data type you might want to work with, provided that
-you can convert the objects you'd like back and forward to a ``bytes`` representation.
+and detailed usage of SuperDuperDB see :ref:`here <SuperDuperDB Concepts>`.
 
 .. code-block:: python
     :caption: In :code:`my_module.py`
@@ -39,9 +33,11 @@ you can convert the objects you'd like back and forward to a ``bytes`` represent
     >>> import torch
     >>> docs = SuperDuperClient().my_database.my_collection
     >>> docs.create_type('float_tensor', FloatTensor())
-    >>> docs.create_model('linear_embedding', torch.nn.Linear(1024, 64), key='x')
+    >>> docs.create_model('linear_embedding', torch.nn.linear(1024, 64))
+    >>> docs.create_watcher('linear_embedding', 'x')
     >>> docs.insert_many([{'x': torch.randn(1024) for _ in range(100)])
     <pymongo.results.InsertManyResult at 0x15bb2b100>
+    # watch a bit ...
     >>> docs.find_one()
     {'_id': ObjectId('63bbe91425c3c66430781968'),
      'x': tensor([ 0.4183,  0.8675, -1.1050,  ..., -1.1262,  1.1444, -1.6189]),
@@ -54,6 +50,3 @@ you can convert the objects you'd like back and forward to a ``bytes`` represent
                -1.1780, -0.3219, -0.7944, -0.0969, -0.1691,  0.3163,  0.0658,  0.4155,
                -1.1576,  0.3640,  0.2191, -0.6726,  0.3572,  1.3214, -0.1269,  0.5001,
                 0.0653,  0.6070, -0.0184, -0.4811,  0.2756, -0.0257, -0.5821,  0.7546])}}}
-
-
-

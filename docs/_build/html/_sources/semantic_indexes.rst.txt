@@ -3,81 +3,14 @@ Semantic indexes for flexibly searching data
 
 When you've created one or more models in SuperDuperDB which have tensor outputs,
 SuperDuperDB may be used to search through the data, on the basis of input which
-may be accepted by those models.
+may be accepted by those models. To enable this feature, one creates one or more **semantic indexes**.
 
-For example, continuing the example begun :ref:`here <CNN example>`, 
-let's make a semantic index on the basis of the ``img`` field ,
-utilizing the ``resnet`` model from before. We first need to create a measure function
-which will be used to compare tensor outputs of the contained models:
+Defining a semantic index
+-------------------------
 
-.. code-block:: python
-
-    def dot(x, y):
-        return x.matmul(y.T)
-
-Equipped with this measure function, we are able to register the semantic index to
-SuperDuperDB, using already existing models.
-Once the semantic index has been created, it may be searched using the ``like`` keyword
-in a MongoDB style query.
-
-.. code-block:: python
-
-    >>> from my_package.measures import css
-    >>> docs.create_measure('dot', dot)
-    >>> docs.create_semantic_index('resnet-index', ['resnet'], measure='dot')
-    >>> docs.find_one(like={'_id': ObjectId('6387bc38477124958d0b97d9')}, n=1)
-    ObjectId('6387bc38477124958d0b97d9')
-    >>> docs.find_one(
-    ...     like={'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=250x361>},
-    ...     n=1,
-    ... )['_id']
-    ObjectId('6387bc38477124958d0b97d9')
-
-It's also possible to train a semantic-index end-2-end using the ``create_semantic_index`` command.
-For this it's necessary to define additionally:
-- a **splitter**, which divides a document into a query and retrieved item pair
-- a **loss** function, which measures the quality of retrievals quantitatively, and is used for backpropagation.
-- optionally **metrics**, which measure the quality of retrieval in an interpretable way.
-
-.. code-block:: python
-
-    def split_images(r):
-        index = random.randrange(len(r['images']))
-        return {'images': [r['images'][index]]}, {'images': [*r['images'][:index], *r['images'][index:]]}
-
-    def ranking_loss(x, y):
-        x = x.div(x.norm(dim=1)[:, None])
-        y = y.div(y.norm(dim=1)[:, None])
-        similarities = x.matmul(y.T)
-        return -torch.nn.functional.log_softmax(similarities, dim=1).diag().mean()
-
-    def r_at_1(x, y):
-        return y == x[0]
-
-
-.. code-block:: python
-
-    >>> from my_package.utils import r_at_1, ranking_loss, split_images
-    >>> docs.create_metric('r@1', r_at_1)
-    >>> docs.create_loss('ranking', ranking_loss)
-    >>> docs.create_semantic_index('my_index', ['resnet'], measure='dot', loss='ranking', metrics=['r@1'])
-
-SuperDuperDB is the most natural environment to implement and deploy semantic search and
-models such as
-`Retro <https://www.deepmind.com/publications/improving-language-models-by-retrieving-from-trillions-of-tokens>`_
-which leverage semantic search.
-
-A *semantic index* is the framework within which SuperDuperDB may be used to perform semantic search.
-It consists of one or more models which all output vectorial features and whose outputs can be
-meaningfully compared to one another using a *measure*. At least one of these models needs to
-be set to ``active=True``, so that we have vectors which form the index over which to search.
-Once this is in place, any of the specified models may be used to search over the vector index.
-
-Defining your own semantic index
---------------------------------
-
-Given a collection with models available, it's possible to define a semantic index with already
-existing models as follows:
+At a minimum, creating a semantic index requires users to supply one of more models,
+the keys which those models will act on, and a **measure** function for comparing the
+output of those models:
 
 .. code-block:: python
 
@@ -86,6 +19,7 @@ existing models as follows:
     >>> docs.create_semantic_index(
     ...    'my_semantic_index',
     ...     models=['my_model_1', 'my_model_2', ...],
+    ...     keys=['key_1', 'key_2', ...],
     ...     measure='css',
     ... )
 
@@ -108,12 +42,12 @@ To use a semantic index, use the ``like`` keyword in ``Collection.find`` or ``Co
     >>> docs.find(exact_filter, like=doc_contents, n=n)
 
 The ``like`` keyword is passed to one of the models registered during the ``create_semantic_index`` call,
-and encoded as a vector. This vector is compared using the ``measure`` argument with the
+and encoded by that model. This vector is compared using the ``measure`` argument with the
 vectors which have pre-computed using the ``active=True`` model in the *semantic index*.
-Which of the models is used to encode the ``document`` is determined by the ``key`` argument of
-the ``create_model`` call. SuperDuperDB takes the first model in the *semantic_index* whose ``key``
-is in the ``document`` subfield of the query. The ``exact_part`` of the query is executed as a
-standard MongoDB query, and the results are merged with the results of the ``$like`` part.
+Which of the models is used to encode the ``document`` is determined by the ``keys`` argument of
+the ``create_semantic_index`` call. SuperDuperDB takes the first model in the *semantic_index* whose ``key``
+is in the ``like`` keyword. The exact filter part of the query is executed as a
+standard MongoDB query, and the results are merged with the results of the ``like`` part.
 
 This functionality allows for very sophisticated document filtering using a combination of logic
 and AI.
@@ -121,7 +55,7 @@ and AI.
 Creating a neighbourhood
 ------------------------
 
-Once we have a *semantic index* activated for a collection, it's possible to cache
+Once we have a semantic index activated for a collection, it's possible to cache
 nearest neighbours in the collection documents, and keep this cache in some sense up-to-date
 when new data arrives. The way to do this is by using ``docs.create_neighbourhood``:
 
@@ -146,3 +80,37 @@ when new data arrives. The way to do this is by using ``docs.create_neighbourhoo
 You can see that the neighbours according to ``my_semantic_index`` have been cached in the ``_like``
 field of the documents. This can come in very useful, when nearest neighbours are required with
 very low latency.
+
+Training a semantic index by fine-tuning models
+-----------------------------------------------
+
+It's also possible to *train* a semantic-index end-2-end using the ``create_semantic_index`` command.
+For this it's additionally necessary to define:
+
+* an **objective** function, which measures the quality of retrievals quantitatively, and is used for backpropagation.
+* (optionally) a **splitter**, which divides a document into a query and retrieved item pair.
+* (optionally) **metrics**, which measure the quality of retrieval in an interpretable way.
+
+.. code-block:: python
+
+    def split_images(r):
+        index = random.randrange(len(r['images']))
+        return {'images': [r['images'][index]]}, {'images': [*r['images'][:index], *r['images'][index:]]}
+
+    def ranking_loss(x, y):
+        x = x.div(x.norm(dim=1)[:, None])
+        y = y.div(y.norm(dim=1)[:, None])
+        similarities = x.matmul(y.T)
+        return -torch.nn.functional.log_softmax(similarities, dim=1).diag().mean()
+
+    def r_at_1(x, y):
+        return y == x[0]
+
+
+.. code-block:: python
+
+    >>> from my_package.utils import r_at_1, ranking_loss, split_images
+    >>> docs.create_metric('r@1', r_at_1)
+    >>> docs.create_loss('ranking', ranking_loss)
+    >>> docs.create_semantic_index('my_index', ['resnet'], measure='dot', loss='ranking', metrics=['r@1'])
+

@@ -1,6 +1,20 @@
 Setting up a SuperDuperDB cluster
 =================================
 
+There are 3 features of a SuperDuperDB cluster:
+
+1. When users access SuperDuperDB, they invoke the SuperDuperDB **client** which manages communication
+   with the various components of the SuperDuperDB cluster.
+2. Data storage: occurs in **MongoDB**, where the raw data,
+   :ref:`models <Models - an extension of PyTorch models>` and model outputs are stored.
+3. Job management: whenever SuperDuperDB creates a :ref:`job <Jobs - scheduling of training and model outputs>`
+   (i.e. during data inserts, updates, downloads, and model training), a job is queued and
+   then executed by a pool of **workers**.
+4. Querying SuperDuperDB: when using queries which use tensor similarity, the SuperDuperDB client
+   combines calls to MongoDB with calls to the **linear-algebra** component.
+5. SuperDuperDB includes a **model-server**, which may be used to serve the models which have
+   been uploaded to SuperDuperDB.
+
 The exact setup of your SuperDuperDB cluster will depend on the use-cases you
 plan to execute with the cluster. Factors to consider will be:
 
@@ -44,8 +58,8 @@ Model-server
 
 SuperDuperDB contains a component which serves models which has been created.
 
-Job-worker
-^^^^^^^^^^
+Worker
+^^^^^^
 
 These nodes perform the long computations necessary to update model outputs when new data
 come in, and also perform model training for models which are set up to be trained on creation.

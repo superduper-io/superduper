@@ -94,7 +94,8 @@ class Collection(BaseCollection):
         )
         self.models = ArgumentDefaultDict(lambda x: self._load_model(x))
         self._allowed_varieties = ['model', 'function', 'preprocessor', 'postprocessor',
-                                   'splitter', 'objective', 'measure', 'type', 'metric']
+                                   'splitter', 'objective', 'measure', 'type', 'metric',
+                                   'imputation', 'neighbourhood']
         self.headers = None
 
     def __getitem__(self, item):
@@ -151,12 +152,14 @@ class Collection(BaseCollection):
                     continue
         return self._type_lookup
 
-    def apply_model(self, name, input_, **kwargs):
+    def apply_model(self, model, input_, **kwargs):
         if self.remote:
             return superduper_requests.client.apply_model(self.database.name,
                                                           self.name,
-                                                          name, input_, **kwargs)
-        return apply_model(self.models[name], input_, **kwargs)
+                                                          model, input_, **kwargs)
+        if isinstance(model, str):
+            model = self.models[model]
+        return apply_model(model, input_, **kwargs)
 
     def create_imputation(self, name, model, model_key, target, target_key,
                           objective=None, metrics=None,
@@ -417,6 +420,8 @@ class Collection(BaseCollection):
             return
 
         info = self['_objects'].find_one({'name': name, 'varieties': 'imputation'})
+        if info is None and force:
+            return
         self['_objects'].delete_one({'model': info['model'], 'key': info['model_key'],
                                      'varieties': 'watcher'})
         self['_objects'].delete_one({'name': name, 'varieties': 'imputation'})
@@ -779,18 +784,26 @@ class Collection(BaseCollection):
     def __getattr__(self, item):
         if item.startswith('create_'):
             variety = item.split('_')[-1]
+            assert variety in self._allowed_varieties
             def create_local(name, object):
                 return self.create_object(name, object, [variety])
             return create_local
         if item.startswith('delete_'):
             variety = item.split('_')[-1]
+            assert variety in self._allowed_varieties
             def delete_local(name, force=False):
+                r = self['_objects'].find_one({'name': name, 'varieties': variety})
+                if not r:
+                    if not force:
+                        assert f'{variety} "{r}" does not exist...'
+                    return
                 assert self['_objects'].find_one({'name': name, 'varieties': variety})['varieties'] == [variety], \
                     'can\'t delete object in this way, since used may multiple types of objects'
                 return self.delete_object([variety], name, force=force)
             return delete_local
         if item.startswith('list'):
             variety = item.split('_')[-1][:-1]
+            assert variety in self._allowed_varieties
             def list_local(query=None):
                 return self.list_objects(variety, query)
             return list_local
@@ -825,8 +838,10 @@ class Collection(BaseCollection):
 
     def delete_object(self, varieties, object, force=False):
         data = list(self[f'_objects'].find({'name': object, 'varieties': varieties}))
-        if not data and not force:
-            raise Exception(f'This object does not exist...{object}')
+        if not data:
+            if not force:
+                raise Exception(f'This object does not exist...{object}')
+            return
         for variety in varieties:
             if object in getattr(self, variety + 's'):
                 del getattr(self, variety + 's')[object]
@@ -845,6 +860,10 @@ class Collection(BaseCollection):
 
     def _download_content(self, ids=None, documents=None, timeout=None, raises=True,
                           n_download_workers=None, headers=None):
+
+        import sys
+        sys.path.insert(0, os.getcwd())
+
         update_db = False
         if documents is None:
             update_db = True
@@ -1193,8 +1212,9 @@ class Collection(BaseCollection):
     def _process_documents(self, ids, verbose=False):
         job_ids = defaultdict(lambda: [])
         download_id = self._submit_download_content(ids=ids)
+        job_ids['download'].append(download_id)
         if not self.list_watchers():
-            return
+            return job_ids
         lookup = self._create_filter_lookup(ids)
         G = self._create_plan()
         current = [('watcher', watcher) for watcher in self.list_watchers()
@@ -1202,8 +1222,8 @@ class Collection(BaseCollection):
         iteration = 0
         while current:
             for (type_, item) in current:
-                job_ids = self._process_single_item(type_, item, iteration, lookup, job_ids,
-                                                    download_id, verbose=verbose)
+                job_ids.update(self._process_single_item(type_, item, iteration, lookup, job_ids,
+                                                         download_id, verbose=verbose))
             current = sum([list(G.successors((type_, item))) for (type_, item) in current], [])
             iteration += 1
         return job_ids

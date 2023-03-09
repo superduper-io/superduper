@@ -42,10 +42,12 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="content.html">Adding content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Adding interesting content to SuperDuperDB</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Watchers in SuperDuperDB</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#how-watchers-work-under-the-hood">How watchers work under the hood</a></li>
@@ -55,8 +57,8 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Notebook examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -111,17 +113,18 @@
 <section id="watchers-in-superduperdb">
 <h1>Watchers in SuperDuperDB<a class="headerlink" href="#watchers-in-superduperdb" title="Permalink to this heading"></a></h1>
 <p>Once you have created a model to work with SuperDuperDB using <code class="docutils literal notranslate"><span class="pre">Collection.create_model</span></code>, it’s possible to
-set up the model to react to changes in a collection’s data using a “watcher”. To create a watcher, use the
+set up the model to react to changes in a collection’s data using a <strong>watcher</strong>. To create a watcher, use the
 <code class="docutils literal notranslate"><span class="pre">Collection.create_watcher</span></code> command:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_watcher</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;my_model&#39;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">filter_</span><span class="o">=</span><span class="p">{},</span>
 <span class="gp">... </span>                    <span class="n">loader_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;num_workers&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">)</span>
 <span class="go"># lots of output</span>
 </pre></div>
 </div>
-<p>When this command is called, a job is created which iterates through all documents selected by the <code class="docutils literal notranslate"><span class="pre">filter</span></code> key-word
-and updates the outputs to the sub-field under the key <code class="docutils literal notranslate"><span class="pre">&quot;_outputs.&lt;key&gt;.&lt;model&gt;.&quot;`</span></code></p>
+<p>When this command is called, a <a class="reference internal" href="jobs.html#jobs-scheduling-of-training-and-model-outputs"><span class="std std-ref">job</span></a> is
+created which iterates through all documents selected by the <code class="docutils literal notranslate"><span class="pre">filter</span></code> key-word
+and updates the outputs to the sub-field under the key <code class="docutils literal notranslate"><span class="pre">&quot;_outputs.&lt;key&gt;.&lt;model&gt;&quot;</span></code>.</p>
 <p>Whenever new data are inserted or updates are made, if these fall under the query given by <code class="docutils literal notranslate"><span class="pre">filter_</span></code> then the model outputs
-are computed over this new data and updated to <code class="docutils literal notranslate"><span class="pre">&quot;_outputs.&lt;key&gt;.&lt;model&gt;.&quot;</span></code>.</p>
+are computed on this new data and updated to <code class="docutils literal notranslate"><span class="pre">&quot;_outputs.&lt;key&gt;.&lt;model&gt;.&quot;</span></code>.</p>
 <section id="how-watchers-work-under-the-hood">
 <h2>How watchers work under the hood<a class="headerlink" href="#how-watchers-work-under-the-hood" title="Permalink to this heading"></a></h2>
 <p>Once a watcher has been created, the documents selected by the <code class="docutils literal notranslate"><span class="pre">filter</span></code> are wrapped in a
@@ -188,7 +191,7 @@ field over which they were computed:</p>
 </pre></div>
 </div>
 <p>You can see that the model outputs for <code class="docutils literal notranslate"><span class="pre">my_module</span></code> have been substituted into the <code class="docutils literal notranslate"><span class="pre">img</span></code> field.</p>
-<p>Often watchers will depend on other watcher, if the output of one watcher is needed as the input for another
+<p>Often watchers will depend on other watchers, if the output of one watcher is needed as the input for another
 watcher. The way to do this is to set the <code class="docutils literal notranslate"><span class="pre">features</span></code> key-word when creating a watcher. This means
 that when data is fetched from the database during computation of model outputs, the keys specified
 in the <code class="docutils literal notranslate"><span class="pre">features</span></code> dictionary are replaced by outputs of the models given in the values.</p>

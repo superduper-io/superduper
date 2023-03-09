@@ -8,7 +8,7 @@ from rq import Queue
 from superduperdb.jobs import process as process_jobs
 from superduperdb import cf
 
-q = Queue(connection=Redis(port=cf['redis']['port']), default_timeout=24 * 60 * 60)
+q = Queue(connection=Redis(port=cf.get('redis', {}).get('port', 6379)), default_timeout=24 * 60 * 60)
 
 
 def process(database_name, collection_name, method, *args, dependencies=(), **kwargs):

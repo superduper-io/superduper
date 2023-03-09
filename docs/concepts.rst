@@ -2,10 +2,23 @@
 SuperDuperDB Concepts
 *********************
 
-There are several key concepts which SuperDuperDB uses and implements in order to add the functionality 
-necessary for deploying AI models with MongoDB. By integrating features based on these concepts, SuperDuperDB
-allows users to work naturally with MongoDB collections together with PyTorch models.
-These concepts are:
+The SuperDuperDB workflow looks like this:
+
+1. The user adds data to SuperDuperDB, which may include user defined **types**, and external web or other **content**.
+2. The user uploads one or more **models** including weights to SuperDuperDB, configuring which models should be applied to which data, by linking models to a
+   query and key. 
+3. (Optionally) SuperDuperDB creates a **job** to train the uploaded models on the data contained in the database;
+   the user can choose from two varieties of training: **semantic index** or **imputation**.
+4. SuperDuperDB creates a **job** applying the **models** to their configured data and the outputs are stored in the documents to which
+   the **models** were applied.
+5. SuperDuperDB **watches** for when new data comes in, when the **models** which have already been uploaded are reactivated.
+6. (Optionally) SuperDuperDB retrains **models** on the latest data.
+7. SuperDuperDB creates a **job** to apply the **models** to data, which has yet to be processed, and the outputs
+   are stored in the documents to which the **models** were applied.
+
+.. image:: img/cycle-linear.svg
+
+The key concepts are:
 
 * :ref:`Types`
 * :ref:`Content`
@@ -32,10 +45,11 @@ Read in more detail :ref:`here <Types in SuperDuperDB>`.
 Content
 =======
 
-In order to add data of a certain "type" to SuperDuperDB, one uses the concept of "content". This refers 
-to a data point, whose "content" may be described in a number of ways - either explicitly by supplying the raw
-bytes or implicitly, by pointing to a URL or bucket location which contains the content. For those bits of 
-content which are referred to implicitly, SuperDuperDB creates a :ref:`job <Jobs>` which fetches the bytes from the 
+Often building and training AI applications requires the awkward task of downloading, pulling and
+scraping diverse bits of data from the web, file-servers and systems, and object storage.
+To facilitate this, SuperDuperDB allows users to specify the **content** of a key-value pair
+using references to external sources.
+For those bits of content which are referred to in this way, SuperDuperDB creates a :ref:`job <Jobs>` which fetches the bytes from the
 described location, and inserts these into MongoDB.
 
 Read in more detail :ref:`here <Adding interesting content to SuperDuperDB>`.
@@ -43,7 +57,7 @@ Read in more detail :ref:`here <Adding interesting content to SuperDuperDB>`.
 Models
 ======
 
-A model in SuperDuperDB is a PyTorch model, with (optionally) two additional methods ``preprocess`` 
+A **model** in SuperDuperDB is a PyTorch model, with (optionally) two additional methods ``preprocess``
 and ``postprocess``. These methods are necessary so that the model knows how to convert content from 
 the database to tensors, and also to convert outputs of the object into a form which is appropriate 
 to be saved in the database.
@@ -54,10 +68,10 @@ Watchers
 ========
 
 Once you have one or more models registered with SuperDuperDB, the model(s) can be set up to 
-listen to certain sub-keys (``key``) or full documents in MongoDB collections, and to compute outputs
-over those items when new data comes in or updates are made to the database.
+**watch** certain sub-keys (``key``) or full documents in MongoDB collections, and to compute outputs
+from those inputs when new data comes in or updates are made to the database.
 
-When a watcher is created based on a SuperDuperDB model, a dataloader is created which 
+When a **watcher** is created based on a SuperDuperDB model, a dataloader is created which
 loads data from the database, passes the data inside the configured ``key`` to the model's
 ``preprocess`` method, batches the tensors and passes these to the model's ``forward`` method,
 and finally unpacks the batch and applies the model's ``postprocess`` method to the lines of 
@@ -70,7 +84,7 @@ Semantic Indexes
 ================
 
 Models and their outputs may be used in concert, to make the content of SuperDuperDB collections
-searchable. A **semantic index** is one or more models, which produce PyTorch vector or tensor 
+searchable. A **semantic index** consists of one or more models, which produce PyTorch vector or tensor
 outputs. A semantic index may be leveraged using the ``Collection.find`` or ``Collection.find_one``
 method, for finding matches based on the individual models which are registered with the semantic index.
 
@@ -92,7 +106,8 @@ Read in more detail :ref:`here <Semantic indexes for flexibly searching data>`.
 Imputations
 ===========
 
-An imputation is a pair of models, where one model is used to predict the output of the other model.
+An **imputation** is a pair of model, and target function (potentially also a model),
+where one model is used to predict the output of the other model.
 This subsumes many use cases:
 
 * Classification
@@ -118,7 +133,7 @@ Whenever SuperDuperDB does any of the following:
 * Neighbourhood calculations
 
 then SuperDuperDB is required to perform certain longer running computations.
-These computations are wrapped as "jobs" and the jobs are carried out asynchronously on
+These computations are wrapped as **jobs** and the **jobs** are carried out asynchronously on
 a pool of parallel workers.
 
 SuperDuperDB may also be used in the foreground, so that calculations block the Python program. 

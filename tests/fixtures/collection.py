@@ -2,7 +2,7 @@ import random
 
 from superduperdb.client import the_client
 from tests.material.models import BinaryClassifier, BinaryTarget
-from tests.material.types import FloatTensor
+from tests.material.types import FloatTensor, Image
 from tests.material.measures import css
 from tests.material.metrics import PatK, accuracy
 from tests.material.losses import ranking_loss
@@ -110,6 +110,13 @@ def float_tensors(empty):
     empty.create_type('float_tensor', FloatTensor())
     yield empty
     empty.delete_type('float_tensor', force=True)
+
+
+@pytest.fixture()
+def image_type(empty):
+    empty.create_type('image', Image())
+    yield empty
+    empty.delete_type('image', force=True)
 
 
 @pytest.fixture()

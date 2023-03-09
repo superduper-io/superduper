@@ -6,10 +6,9 @@ SuperDuperDB Documentation
 What is SuperDuperDB?
 +++++++++++++++++++++
 
-The goal of the SuperDuperDB project is to provide a unified environment for open-source AI model development
-and production together with PyTorch and MongoDB.
-
-That means:
+SuperDuperDB is a project which aims to facilitate building and integrating AI models together with data.
+It does this by providing and open-source AI model development
+and production environment together with PyTorch and MongoDB.
 
 * SuperDuperDB allows users to integrate PyTorch models into MongoDB.
 * Arbitrary PyTorch models can be configured to save their outputs directly in the database alongside the inputs used to compute them.
@@ -66,6 +65,8 @@ Documentation contents
     :maxdepth: 2
 
     getting_started
+    minimum_working_example
+    examples/index
     concepts
     types
     content
@@ -73,7 +74,7 @@ Documentation contents
     watchers
     semantic_indexes
     imputations
+    jobs
     cluster
-    examples/index
     full_usage
 

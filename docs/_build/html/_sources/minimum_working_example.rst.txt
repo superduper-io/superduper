@@ -2,7 +2,7 @@ Minimum working example
 =======================
 
 Try this example to check everything is working as expected. For an explanation of the concepts
-and detailed usage of SuperDuperDB see :ref:`here <SuperDuperDB Concepts>`.
+of SuperDuperDB see :ref:`here <SuperDuperDB Concepts>`.
 
 .. code-block:: python
     :caption: In :code:`my_module.py`

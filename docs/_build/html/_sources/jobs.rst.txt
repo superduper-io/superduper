@@ -4,7 +4,7 @@ Jobs - scheduling of training and model outputs
 In order to most efficiently marshall computational resources,
 SuperDuperDB may be configured to run in asynchronous mode ``{"remote": True}``.
 
-See :ref:`the section <Setting up a SuperDuperDB cluster>` on setting up a cluster for an overview
+See the section on :ref:`setting up a cluster <Setting up a SuperDuperDB cluster>` for an overview
 of what this means from an infrastructural point of view.
 
 There are several key functionalities in SuperDuperDB which cause asynchronous jobs to be

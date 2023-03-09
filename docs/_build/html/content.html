@@ -111,7 +111,7 @@
 but may be distributed over file-servers, file-systems, web-urls, and object storage.</p>
 <p>SuperDuperDB allows one to specify this data without first downloading and collating the data
 in one place. One simply uses the <code class="docutils literal notranslate"><span class="pre">&quot;_content&quot;</span></code> keyword and inside this field specifies the
-location (either file <code class="docutils literal notranslate"><span class="pre">&quot;file://&lt;path&gt;&quot;</span></code> or “http…”) inside the <code class="docutils literal notranslate"><span class="pre">&quot;url&quot;</span></code> field:</p>
+location (either file <code class="docutils literal notranslate"><span class="pre">&quot;file://&lt;path&gt;&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;http...&quot;</span></code>) inside the <code class="docutils literal notranslate"><span class="pre">&quot;url&quot;</span></code> field:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">insert_one</span><span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_content&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="s1">&#39;https://www.superduperdb.com/logos/white.png&#39;</span><span class="p">,</span>
 <span class="gp">... </span>                 <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;image&#39;</span><span class="p">,</span>
 <span class="gp">... </span>                 <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}})</span>
@@ -125,8 +125,8 @@ location (either file <code class="docutils literal notranslate"><span class="pr
 <p>After adding data in this way, SuperDuperDB creates a <a class="reference internal" href="jobs.html#jobs-scheduling-of-training-and-model-outputs"><span class="std std-ref">job</span></a>
 which downloads the data from the specified locations using multiprocessing, and inserts the raw
 bytes into the database inside the <code class="docutils literal notranslate"><span class="pre">&quot;_content&quot;</span></code> subfield.</p>
-<p>One can see what happened under the hood by specifying <code class="docutils literal notranslate"><span class="pre">raw=True</span></code>. The <cite>bytes</cite> have been
-added to the external reference.</p>
+<p>One can see what happened under the hood by specifying <code class="docutils literal notranslate"><span class="pre">raw=True</span></code>. The <code class="docutils literal notranslate"><span class="pre">&quot;bytes&quot;</span></code> field containing
+the raw data has been added to the <code class="docutils literal notranslate"><span class="pre">&quot;_content&quot;</span></code> sub-document:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
 <span class="go">{&#39;_id&#39;: ObjectId(&#39;640939c0deb71bb414652022&#39;),</span>
 <span class="go"> &#39;img&#39;: {&#39;_content&#39;: {&#39;url&#39;: &#39;https://www.superduperdb.com/logos/white.png&#39;,</span>

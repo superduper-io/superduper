@@ -21,7 +21,7 @@ are computed on this new data and updated to ``"_outputs.<key>.<model>."``.
 How watchers work under the hood
 --------------------------------
 
-Once a watcher has been created, the documents selected by the ``filter`` are wrapped in a
+Once a watcher has been created, the documents selected by the ``filter_`` parameter are wrapped in a
 ``torch.utils.data.DataLoader`` and outputs are computed. For this, the utility function
 ``superduperdb.models.utils.apply_model`` is applied.
 The basic logic of this function is that the ``preprocess`` part is wrapped in a

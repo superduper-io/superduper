@@ -110,7 +110,7 @@
 <p>A <strong>type</strong> is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from <code class="docutils literal notranslate"><span class="pre">bytes</span></code> so that these may be
 stored and retrieved from the database. Creating types is a prerequisite to adding models
-which have non-Jsonable outputs to a collection, as well as adding content to the database
+which have non-Jsonable outputs to a collection, as well as adding data types to the database
 of a more sophisticated variety, such as images, tensors and so forth.</p>
 <p>Here are two examples of types, which can be very handy
 for many AI models:</p>
@@ -143,12 +143,12 @@ for many AI models:</p>
         <span class="k">return</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">bytes_</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The classes must be pickleable using python <code class="docutils literal notranslate"><span class="pre">pickle</span></code> - SuperDuperDB
-stores the pickled object in the database.
-In the case above, we’ve used static methods and class variables, because the class isn’t
-configurable. However, by using an <code class="docutils literal notranslate"><span class="pre">__init__</span></code> signature with meaningful arguments,
-it’s possible to create flexible type classes.
-Equipped with this class, we can now register a type with the collection:</p>
+<p>Each <strong>type</strong> must include an <code class="docutils literal notranslate"><span class="pre">.encode</span></code> and a <code class="docutils literal notranslate"><span class="pre">.decode</span></code> method. Optionally, the type
+will include a tuple of the python classes which belong to that type in the <code class="docutils literal notranslate"><span class="pre">.types</span></code>
+attribute.</p>
+<p>A <strong>type</strong> class must be pickleable using python <code class="docutils literal notranslate"><span class="pre">pickle</span></code> - SuperDuperDB
+stores the pickled object in the database.</p>
+<p>Equipped with this class, we can now register a type with the collection:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span> <span class="o">=</span> <span class="n">SuperDuperClient</span><span class="p">(</span><span class="o">**</span><span class="n">opts</span><span class="p">)</span><span class="o">.</span><span class="n">my_database</span><span class="o">.</span><span class="n">documents</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span> <span class="n">FloatTensor</span><span class="p">())</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="n">PILImage</span><span class="p">())</span>
@@ -159,7 +159,7 @@ Equipped with this class, we can now register a type with the collection:</p>
 <span class="go"> &lt;my_package.FloatTensor at 0x10bbf9270&gt;</span>
 </pre></div>
 </div>
-<p>Let’s test the <cite>“image”</cite> type by adding a <cite>PIL.Image</cite> object to SuperDuperDB:</p>
+<p>Let’s test the <code class="docutils literal notranslate"><span class="pre">&quot;image&quot;</span></code> type by adding a <code class="docutils literal notranslate"><span class="pre">PIL.Image</span></code> object to SuperDuperDB:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">requests</span><span class="o">,</span> <span class="nn">PIL.Image</span><span class="o">,</span> <span class="nn">io</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bytes_</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://www.superduperdb.com/logos/white.png&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">content</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">image</span> <span class="o">=</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">bytes_</span><span class="p">))</span>
@@ -170,7 +170,7 @@ Equipped with this class, we can now register a type with the collection:</p>
 <span class="go">     &#39;_fold&#39;: &#39;train&#39;}</span>
 </pre></div>
 </div>
-<p>A more efficient approach which gives the same result, it to add the type of the data explicitly like this</p>
+<p>A more efficient approach which gives the same result, is to add the <strong>type</strong> of the data explicitly like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="o">.</span><span class="n">insert_one</span><span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_content&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;bytes&#39;</span><span class="p">:</span> <span class="n">bytes_</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;image&#39;</span><span class="p">}},</span> <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
 </pre></div>
 </div>

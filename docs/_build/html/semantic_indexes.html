@@ -146,8 +146,8 @@ To use a semantic index, use the <code class="docutils literal notranslate"><spa
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">like</span></code> keyword is passed to one of the models registered during the <code class="docutils literal notranslate"><span class="pre">create_semantic_index</span></code> call,
-and encoded by that model. This vector is compared using the <code class="docutils literal notranslate"><span class="pre">measure</span></code> argument with the
-vectors which have pre-computed using the <code class="docutils literal notranslate"><span class="pre">active=True</span></code> model in the <em>semantic index</em>.
+and encoded by that model. This output is compared using the <code class="docutils literal notranslate"><span class="pre">measure</span></code> argument with outputs
+of the first model’s outputs on the first of the <code class="docutils literal notranslate"><span class="pre">keys</span></code> parameter.
 Which of the models is used to encode the <code class="docutils literal notranslate"><span class="pre">document</span></code> is determined by the <code class="docutils literal notranslate"><span class="pre">keys</span></code> argument of
 the <code class="docutils literal notranslate"><span class="pre">create_semantic_index</span></code> call. SuperDuperDB takes the first model in the <em>semantic_index</em> whose <code class="docutils literal notranslate"><span class="pre">key</span></code>
 is in the <code class="docutils literal notranslate"><span class="pre">like</span></code> keyword. The exact filter part of the query is executed as a

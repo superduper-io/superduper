@@ -64,5 +64,5 @@ the ``y`` key, if the ``x`` field contains a tensor of the right dimensionality.
     ...     loss='classification_loss',
     ... )
 
-Once the imputation has finished training, by default, SuperDuperDB creates a watcher based on the 
+Once the imputation has finished training, by default, SuperDuperDB creates a :ref:`watcher <Watchers in SuperDuperDB>` based on the
 ``model`` and ``model_key`` parameters.

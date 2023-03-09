@@ -127,7 +127,7 @@ and updates the outputs to the sub-field under the key <code class="docutils lit
 are computed on this new data and updated to <code class="docutils literal notranslate"><span class="pre">&quot;_outputs.&lt;key&gt;.&lt;model&gt;.&quot;</span></code>.</p>
 <section id="how-watchers-work-under-the-hood">
 <h2>How watchers work under the hood<a class="headerlink" href="#how-watchers-work-under-the-hood" title="Permalink to this heading"></a></h2>
-<p>Once a watcher has been created, the documents selected by the <code class="docutils literal notranslate"><span class="pre">filter</span></code> are wrapped in a
+<p>Once a watcher has been created, the documents selected by the <code class="docutils literal notranslate"><span class="pre">filter_</span></code> parameter are wrapped in a
 <code class="docutils literal notranslate"><span class="pre">torch.utils.data.DataLoader</span></code> and outputs are computed. For this, the utility function
 <code class="docutils literal notranslate"><span class="pre">superduperdb.models.utils.apply_model</span></code> is applied.
 The basic logic of this function is that the <code class="docutils literal notranslate"><span class="pre">preprocess</span></code> part is wrapped in a

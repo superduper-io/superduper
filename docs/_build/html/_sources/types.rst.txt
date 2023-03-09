@@ -4,7 +4,7 @@ Types in SuperDuperDB
 A **type** is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from ``bytes`` so that these may be
 stored and retrieved from the database. Creating types is a prerequisite to adding models
-which have non-Jsonable outputs to a collection, as well as adding content to the database
+which have non-Jsonable outputs to a collection, as well as adding data types to the database
 of a more sophisticated variety, such as images, tensors and so forth.
 
 Here are two examples of types, which can be very handy
@@ -40,12 +40,13 @@ for many AI models:
         def decode(bytes_):
             return PIL.Image.open(io.BytesIO(bytes_))
 
+Each **type** must include an ``.encode`` and a ``.decode`` method. Optionally, the type
+will include a tuple of the python classes which belong to that type in the ``.types``
+attribute.
 
-The classes must be pickleable using python ``pickle`` - SuperDuperDB
+A **type** class must be pickleable using python ``pickle`` - SuperDuperDB
 stores the pickled object in the database.
-In the case above, we've used static methods and class variables, because the class isn't
-configurable. However, by using an ``__init__`` signature with meaningful arguments,
-it's possible to create flexible type classes.
+
 Equipped with this class, we can now register a type with the collection:
 
 .. code-block:: python
@@ -59,7 +60,7 @@ Equipped with this class, we can now register a type with the collection:
     >>> docs.types['float_tensor']
      <my_package.FloatTensor at 0x10bbf9270>
 
-Let's test the `"image"` type by adding a `PIL.Image` object to SuperDuperDB:
+Let's test the ``"image"`` type by adding a ``PIL.Image`` object to SuperDuperDB:
 
 .. code-block:: python
 
@@ -72,7 +73,7 @@ Let's test the `"image"` type by adding a `PIL.Image` object to SuperDuperDB:
 	 'img': <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=531x106>,
 	 '_fold': 'train'}
 
-A more efficient approach which gives the same result, it to add the type of the data explicitly like this
+A more efficient approach which gives the same result, is to add the **type** of the data explicitly like this:
 
 .. code-block:: python
 

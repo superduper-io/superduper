@@ -1,9 +1,10 @@
 import pickle
-
 import flask
 
 from superduperdb.client import SuperDuperClient
 from flask import request, Flask
+
+# TODO - use torchserve...
 
 # https://flask.palletsprojects.com/en/2.1.x/patterns/streaming/ streaming for the find endpoint
 

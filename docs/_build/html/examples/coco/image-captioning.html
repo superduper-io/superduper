@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Image captioning using recurrent language modelling and transfer learning based on CLIP &mdash; SuperDuperDB  documentation</title>
@@ -12,10 +12,8 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -33,11 +31,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> SuperDuperDB
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SuperDuperDB
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -84,7 +86,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Tutorials and examples</a></li>
           <li class="breadcrumb-item"><a href="index.html">CoCo (Common Objects in Context) Dataset</a></li>
       <li class="breadcrumb-item active">Image captioning using recurrent language modelling and transfer learning based on CLIP</li>
@@ -378,6 +380,8 @@ div.rendered_html tbody tr:hover {
 </style>
 <section id="Image-captioning-using-recurrent-language-modelling-and-transfer-learning-based-on-CLIP">
 <h1>Image captioning using recurrent language modelling and transfer learning based on CLIP<a class="headerlink" href="#Image-captioning-using-recurrent-language-modelling-and-transfer-learning-based-on-CLIP" title="Permalink to this heading"></a></h1>
+<p>In the final modelling part of this tutorial, we show that a radically different type of model can be created but which also leverages the <code class="docutils literal notranslate"><span class="pre">create_imputation</span></code> functionality. This is possible, because we utilize a different loss, target, than the previous chapter and also use a model which has a different inference <code class="docutils literal notranslate"><span class="pre">forward</span></code> pass than training <code class="docutils literal notranslate"><span class="pre">forward</span></code> pass. This is a very common occurrence in AI, especially when doing, for example, autoregressive training.</p>
+<p>The model we create, will be input an image, and will write out a sentence describing that image in unconstrained English. This task is known as <em>captioning</em>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -388,6 +392,7 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
+<p>You can see here that the raw data contains several example captions per image. We use these examples to train the model to write its own caption.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -432,8 +437,6 @@ div.rendered_html tbody tr:hover {
     &#39;top&#39;]}}}
 </pre></div></div>
 </div>
-<p>In the final modelling part of this tutorial, we show that a radically different type of model can be created but which also leverages the <code class="docutils literal notranslate"><span class="pre">create_imputation</span></code> functionality. This is possible, because we utilize a different loss, target, and also use a model which has a different inference <code class="docutils literal notranslate"><span class="pre">forward</span></code> pass than training <code class="docutils literal notranslate"><span class="pre">forward</span></code> pass. This is a very common occurrence, in AI, especially when doing, for example, autoregressive training.</p>
-<p>The model we create, will be input an image, and will write out a sentence describing that image in unconstrained English. This task is known as “captioning” in AI speak.</p>
 <p>This model will leverage a fixed vocabulary of “allowed” words. Let us first create this quickly in the following cell:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
@@ -461,82 +464,98 @@ div.rendered_html tbody tr:hover {
 <div class="output_area docutils container">
 <script type="application/vnd.jupyter.widget-view+json">{"model_id": "3bac05891e504fdba7609175a3f85cbd", "version_major": 2, "version_minor": 0}</script></div>
 </div>
-<p>Now we can create the model - it utilizes a “tokenizer” for preprocessing the captioning data.</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">examples.models</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SimpleTokenizer</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span>
-        <span class="k">if</span> <span class="s1">&#39;&lt;unk&gt;&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
-            <span class="n">tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&lt;unk&gt;&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_tokens</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lookup</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">))))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dictionary</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tokens</span><span class="p">)}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">=</span> <span class="n">max_length</span>
-
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sentence</span><span class="p">):</span>
-        <span class="n">sentence</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[^a-z]]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">sentence</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sentence</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="p">]</span>
-        <span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="k">else</span> <span class="s1">&#39;&lt;unk&gt;&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">words</span><span class="p">]</span>
-        <span class="n">words</span> <span class="o">=</span> <span class="n">words</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">]</span>
-        <span class="n">tokenized</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookup</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">,</span> <span class="n">words</span><span class="p">))</span>
-        <span class="n">tokenized</span> <span class="o">=</span> <span class="n">tokenized</span> <span class="o">+</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">))]</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">tokenized</span><span class="p">)</span>
-
-
-<span class="k">class</span> <span class="nc">ConditionalLM</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">n_hidden</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">n_condition</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span> <span class="o">=</span> <span class="n">n_hidden</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">conditioning_linear</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_condition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rnn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">GRU</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prediction</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">=</span> <span class="n">max_length</span>
-
-    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="s1">&#39;caption&#39;</span> <span class="ow">in</span> <span class="n">r</span><span class="p">:</span>
-            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">)]</span>  <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">)]</span>
-        <span class="n">out</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">])</span>
-        <span class="k">if</span> <span class="s1">&#39;img&#39;</span> <span class="ow">in</span> <span class="n">r</span><span class="p">:</span>
-            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">out</span>
-
-    <span class="k">def</span> <span class="nf">train_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
-        <span class="n">input_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">])</span>
-        <span class="n">img_vectors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditioning_linear</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">rnn_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rnn</span><span class="p">(</span><span class="n">input_</span><span class="p">,</span> <span class="n">img_vectors</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction</span><span class="p">(</span><span class="n">rnn_outputs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
-        <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditioning_linear</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">predictions</span> <span class="o">=</span> \
-            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
-        <span class="n">predictions</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">rnn_outputs</span><span class="p">,</span> <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rnn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">predictions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
-                                                  <span class="n">hidden_states</span><span class="p">)</span>
-            <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction</span><span class="p">(</span><span class="n">rnn_outputs</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
-            <span class="n">predictions</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">logits</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">predictions</span>
-
-    <span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">first_end_token</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">output</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:</span><span class="n">first_end_token</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
-            <span class="k">pass</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">output</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">)]</span>
-        <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">,</span> <span class="n">output</span><span class="p">)))</span>
+<p>Now we can create the model - it utilizes a <em>tokenizer</em> for preprocessing the captioning data.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/conditional_lm.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">re</span>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">torch</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">SimpleTokenizer</span>:
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, tokens, max_length<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">15</span>):
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens <span style="color: rgb(102,102,102)">=</span> tokens
+        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">&lt;unk&gt;</span><span style="color: rgb(186,33,33)">&#39;</span> <span class="ansi-bold" style="color: rgb(170,34,255)">not</span> <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> tokens:
+            tokens<span style="color: rgb(102,102,102)">.</span>append(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">&lt;unk&gt;</span><span style="color: rgb(186,33,33)">&#39;</span>)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>_set_tokens <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">set</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>lookup <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">dict</span>(<span style="color: rgb(0,128,0)">zip</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens, <span style="color: rgb(0,128,0)">range</span>(<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens))))
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>dictionary <span style="color: rgb(102,102,102)">=</span> {k: i <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> i, k <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">enumerate</span>(tokens)}
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length <span style="color: rgb(102,102,102)">=</span> max_length
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__len__</span>(<span style="color: rgb(0,128,0)">self</span>):
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens)
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">preprocess</span>(<span style="color: rgb(0,128,0)">self</span>, sentence):
+        sentence <span style="color: rgb(102,102,102)">=</span> re<span style="color: rgb(102,102,102)">.</span>sub(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">[^a-z]]</span><span style="color: rgb(186,33,33)">&#39;</span>, <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">&#39;</span>, sentence<span style="color: rgb(102,102,102)">.</span>lower())<span style="color: rgb(102,102,102)">.</span>strip()
+        words <span style="color: rgb(102,102,102)">=</span> [x <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> sentence<span style="color: rgb(102,102,102)">.</span>split(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)"> </span><span style="color: rgb(186,33,33)">&#39;</span>) <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> x]
+        words <span style="color: rgb(102,102,102)">=</span> [x <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens <span class="ansi-bold" style="color: rgb(0,128,0)">else</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">&lt;unk&gt;</span><span style="color: rgb(186,33,33)">&#39;</span> <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> words]
+        words <span style="color: rgb(102,102,102)">=</span> words[:<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length]
+        tokenized <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">list</span>(<span style="color: rgb(0,128,0)">map</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>lookup<span style="color: rgb(102,102,102)">.</span><span style="color: rgb(0,0,255)">__getitem__</span>, words))
+        tokenized <span style="color: rgb(102,102,102)">=</span> tokenized <span style="color: rgb(102,102,102)">+</span> [<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span>) <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">1</span> <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> _ <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">range</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length <span style="color: rgb(102,102,102)">-</span> <span style="color: rgb(0,128,0)">len</span>(words))]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> torch<span style="color: rgb(102,102,102)">.</span>tensor(tokenized)
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">ConditionalLM</span>(torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>Module):
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, tokenizer, n_hidden<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">512</span>, max_length<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">15</span>, n_condition<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1024</span>):
+        <span style="color: rgb(0,128,0)">super</span>()<span style="color: rgb(102,102,102)">.</span><span style="color: rgb(0,0,255)">__init__</span>()
+
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer <span style="color: rgb(102,102,102)">=</span> tokenizer
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden <span style="color: rgb(102,102,102)">=</span> n_hidden
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>embedding <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>Embedding(<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer) <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">2</span>, <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>conditioning_linear <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>Linear(n_condition, <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>rnn <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>GRU(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden, <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden, batch_first<span style="color: rgb(102,102,102)">=</span><span class="ansi-bold" style="color: rgb(0,128,0)">True</span>)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>prediction <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>Linear(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden, <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer) <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">2</span>)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length <span style="color: rgb(102,102,102)">=</span> max_length
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">preprocess</span>(<span style="color: rgb(0,128,0)">self</span>, r):
+        out <span style="color: rgb(102,102,102)">=</span> {}
+        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span> <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> r:
+            out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> [<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer)]  <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer<span style="color: rgb(102,102,102)">.</span>preprocess(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>])<span style="color: rgb(102,102,102)">.</span>tolist()[:<span style="color: rgb(102,102,102)">-</span><span style="color: rgb(102,102,102)">1</span>]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">else</span>:
+            out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> [<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer)]
+        out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>tensor(out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>])
+        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span> <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> r:
+            out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> out
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">train_forward</span>(<span style="color: rgb(0,128,0)">self</span>, r):
+        input_ <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>embedding(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>])
+        img_vectors <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>conditioning_linear(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>])<span style="color: rgb(102,102,102)">.</span>unsqueeze(<span style="color: rgb(102,102,102)">0</span>)
+        rnn_outputs <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>rnn(input_, img_vectors)[<span style="color: rgb(102,102,102)">0</span>]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>prediction(rnn_outputs)
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">forward</span>(<span style="color: rgb(0,128,0)">self</span>, r):
+        hidden_states <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>conditioning_linear(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>])<span style="color: rgb(102,102,102)">.</span>unsqueeze(<span style="color: rgb(102,102,102)">0</span>)
+        predictions <span style="color: rgb(102,102,102)">=</span> \
+            torch<span style="color: rgb(102,102,102)">.</span>zeros(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>]<span style="color: rgb(102,102,102)">.</span>shape[<span style="color: rgb(102,102,102)">0</span>], <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length)<span style="color: rgb(102,102,102)">.</span>to(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>]<span style="color: rgb(102,102,102)">.</span>device)<span style="color: rgb(102,102,102)">.</span>type(torch<span style="color: rgb(102,102,102)">.</span>long)
+        predictions[:, <span style="color: rgb(102,102,102)">0</span>] <span style="color: rgb(102,102,102)">=</span> r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>][:, <span style="color: rgb(102,102,102)">0</span>]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> i <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">range</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length <span style="color: rgb(102,102,102)">-</span> <span style="color: rgb(102,102,102)">1</span>):
+            rnn_outputs, hidden_states <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>rnn(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>embedding(predictions[:, i])<span style="color: rgb(102,102,102)">.</span>unsqueeze(<span style="color: rgb(102,102,102)">1</span>),
+                                                  hidden_states)
+            logits <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>prediction(rnn_outputs)[:, <span style="color: rgb(102,102,102)">0</span>, :]
+            predictions[:, i <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">1</span>] <span style="color: rgb(102,102,102)">=</span> logits<span style="color: rgb(102,102,102)">.</span>topk(<span style="color: rgb(102,102,102)">1</span>, dim<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)[<span style="color: rgb(102,102,102)">1</span>][:, <span style="color: rgb(102,102,102)">0</span>]<span style="color: rgb(102,102,102)">.</span>type(torch<span style="color: rgb(102,102,102)">.</span>long)
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> predictions
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">postprocess</span>(<span style="color: rgb(0,128,0)">self</span>, output):
+        output <span style="color: rgb(102,102,102)">=</span> output<span style="color: rgb(102,102,102)">.</span>tolist()
+        <span class="ansi-bold" style="color: rgb(0,128,0)">try</span>:
+            first_end_token <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">next</span>(x <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> output <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> x <span style="color: rgb(102,102,102)">==</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer) <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">2</span>)
+            output <span style="color: rgb(102,102,102)">=</span> output[:first_end_token]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">except</span> <span class="ansi-bold" style="color: rgb(203,63,56)">StopIteration</span>:
+            <span class="ansi-bold" style="color: rgb(0,128,0)">pass</span>
+        output <span style="color: rgb(102,102,102)">=</span> [x <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> output <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> x <span style="color: rgb(102,102,102)">&lt;</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer)]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)"> </span><span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(102,102,102)">.</span>join(<span style="color: rgb(0,128,0)">list</span>(<span style="color: rgb(0,128,0)">map</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer<span style="color: rgb(102,102,102)">.</span>tokens<span style="color: rgb(102,102,102)">.</span><span style="color: rgb(0,0,255)">__getitem__</span>, output)))
+</pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
@@ -549,29 +568,44 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-<p>Let us know create the required models necessary for training this model. One of the models is fairly trivial, only used to create the prediction target for the learning task:</p>
+<p>Let us now create the required models necessary for training this model. One of the models is fairly trivial, only used to create the prediction target for the learning task:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="c1"># active=False, features={&#39;img&#39;: &#39;clip&#39;}, key=&#39;_base&#39;)</span>
-<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;captioning_tokenizer&#39;</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">)</span> <span class="c1"># key=&#39;caption&#39;, active=False)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;captioning_tokenizer&#39;</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <p>We’ll use a standard autoregressive loss, of the sort used as a matter of course in language modelling tasks.</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">examples.losses</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">auto_regressive_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="c1"># start token = x.shape[2] - 2, stop_token = x.shape[2] - 1 (by convention)</span>
-    <span class="n">stop_token</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">losses</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">cross_entropy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">reduce</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">not_stops</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
-    <span class="n">not_stops</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">stop_token</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
-    <span class="n">normalizing_factors</span> <span class="o">=</span> <span class="n">not_stops</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">av_loss_per_row</span> <span class="o">=</span> <span class="p">(</span><span class="n">losses</span> <span class="o">*</span> <span class="n">not_stops</span><span class="p">)</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">normalizing_factors</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">av_loss_per_row</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/autoregressive_loss.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">torch</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">auto_regressive_loss</span>(x, y):
+    <span style="color: rgb(61,123,123)"># start token = x.shape[2] - 2, stop_token = x.shape[2] - 1 (by convention)</span>
+    stop_token <span style="color: rgb(102,102,102)">=</span> x<span style="color: rgb(102,102,102)">.</span>shape[<span style="color: rgb(102,102,102)">2</span>] <span style="color: rgb(102,102,102)">-</span> <span style="color: rgb(102,102,102)">1</span>
+    x <span style="color: rgb(102,102,102)">=</span> x<span style="color: rgb(102,102,102)">.</span>transpose(<span style="color: rgb(102,102,102)">2</span>, <span style="color: rgb(102,102,102)">1</span>)
+    losses <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>functional<span style="color: rgb(102,102,102)">.</span>cross_entropy(x, y, reduce<span style="color: rgb(102,102,102)">=</span><span class="ansi-bold" style="color: rgb(0,128,0)">False</span>)
+    not_stops <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>ones_like(losses)
+    not_stops[:, <span style="color: rgb(102,102,102)">1</span>:] <span style="color: rgb(102,102,102)">=</span> (y[:, :<span style="color: rgb(102,102,102)">-</span><span style="color: rgb(102,102,102)">1</span>] <span style="color: rgb(102,102,102)">!=</span> stop_token)<span style="color: rgb(102,102,102)">.</span>type(torch<span style="color: rgb(102,102,102)">.</span>long)
+    normalizing_factors <span style="color: rgb(102,102,102)">=</span> not_stops<span style="color: rgb(102,102,102)">.</span>sum(axis<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)<span style="color: rgb(102,102,102)">.</span>unsqueeze(<span style="color: rgb(102,102,102)">1</span>)
+    av_loss_per_row <span style="color: rgb(102,102,102)">=</span> (losses <span style="color: rgb(102,102,102)">*</span> not_stops)<span style="color: rgb(102,102,102)">.</span>div(normalizing_factors)<span style="color: rgb(102,102,102)">.</span>sum(axis<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)
+    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> av_loss_per_row<span style="color: rgb(102,102,102)">.</span>mean()
+</pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
@@ -582,18 +616,34 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-<p>Since each record in the database has several captions per image, we’ll need to use a so-called “splitter”, to align the prediction model and prediction target during training. You can see that the splitter randomly chooses one of the captions to train on for an iteration.</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">examples.splitters</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
-
-
-<span class="k">def</span> <span class="nf">captioning_splitter</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
-    <span class="n">index</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">]))</span>
-    <span class="n">target</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">target</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
-    <span class="n">r</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">r</span><span class="p">,</span> <span class="n">target</span>
+<p>Since each record in the database has several captions per image, we’ll need to use a so-called <strong>splitter</strong>, to align the prediction model and prediction target during training. You can see that the splitter randomly chooses one of the captions to train on for an iteration.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/splitters.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">random</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">captioning_splitter</span>(r):
+    index <span style="color: rgb(102,102,102)">=</span> random<span style="color: rgb(102,102,102)">.</span>randrange(<span style="color: rgb(0,128,0)">len</span>(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>]))
+    target <span style="color: rgb(102,102,102)">=</span> {}
+    target[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>][index]
+    r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>][index]
+    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> r, target
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">retrieval_splitter</span>(r):
+    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> {<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>: r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>]}, {<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>: [r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>][<span style="color: rgb(102,102,102)">0</span>]]}
+</pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
@@ -644,38 +694,6 @@ div.rendered_html tbody tr:hover {
  {&#39;caption&#39;: &#39;A restaurant has modern wooden tables and chairs.&#39;})
 </pre></div></div>
 </div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_validation_set</span><span class="p">(</span><span class="s1">&#39;captioning&#39;</span><span class="p">,</span> <span class="n">splitter</span><span class="o">=</span><span class="n">docs</span><span class="o">.</span><span class="n">splitters</span><span class="p">[</span><span class="s1">&#39;captioning_splitter&#39;</span><span class="p">],</span>
-                           <span class="n">sample_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "9012b5dad5f040b79c07f5df54db42b1", "version_major": 2, "version_minor": 0}</script></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-downloading content from retrieved urls
-found 0 urls
-downloading content from retrieved urls
-found 0 urls
-downloading content from retrieved urls
-found 0 urls
-downloading content from retrieved urls
-found 0 urls
-downloading content from retrieved urls
-found 0 urls
-</pre></div></div>
-</div>
 <p>Now we’re ready to start the training:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
@@ -689,7 +707,7 @@ found 0 urls
     <span class="n">target_key</span><span class="o">=</span><span class="s1">&#39;caption&#39;</span><span class="p">,</span>
     <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;autoregressive_loss&#39;</span><span class="p">,</span>
     <span class="n">splitter</span><span class="o">=</span><span class="s1">&#39;captioning_splitter&#39;</span><span class="p">,</span>
-    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;captioning&#39;</span><span class="p">],</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[],</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
     <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
     <span class="n">validation_interval</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
@@ -2072,7 +2090,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_1.png" src="../../_images/examples_coco_image-captioning_18_1.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_1.png" src="../../_images/examples_coco_image-captioning_21_1.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2087,7 +2105,7 @@ a table with a bunch of flowers in it
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_3.png" src="../../_images/examples_coco_image-captioning_18_3.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_3.png" src="../../_images/examples_coco_image-captioning_21_3.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2102,7 +2120,7 @@ a person holding a piece of cake on a &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_5.png" src="../../_images/examples_coco_image-captioning_18_5.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_5.png" src="../../_images/examples_coco_image-captioning_21_5.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2117,7 +2135,7 @@ a man in a suit is standing next to a &lt;unk&gt; &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_7.png" src="../../_images/examples_coco_image-captioning_18_7.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_7.png" src="../../_images/examples_coco_image-captioning_21_7.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2132,7 +2150,7 @@ a kitchen with a stove and oven &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_9.png" src="../../_images/examples_coco_image-captioning_18_9.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_9.png" src="../../_images/examples_coco_image-captioning_21_9.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2147,7 +2165,7 @@ a man and woman standing next to a woman holding a &lt;unk&gt; &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_11.png" src="../../_images/examples_coco_image-captioning_18_11.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_11.png" src="../../_images/examples_coco_image-captioning_21_11.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2162,7 +2180,7 @@ a man in a suit and tie standing in front of a &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_13.png" src="../../_images/examples_coco_image-captioning_18_13.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_13.png" src="../../_images/examples_coco_image-captioning_21_13.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2177,7 +2195,7 @@ a living room with a table and a clock &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_15.png" src="../../_images/examples_coco_image-captioning_18_15.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_15.png" src="../../_images/examples_coco_image-captioning_21_15.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2192,7 +2210,7 @@ a person walking down a street with a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_17.png" src="../../_images/examples_coco_image-captioning_18_17.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_17.png" src="../../_images/examples_coco_image-captioning_21_17.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2207,7 +2225,7 @@ a black and white image of a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_19.png" src="../../_images/examples_coco_image-captioning_18_19.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_19.png" src="../../_images/examples_coco_image-captioning_21_19.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2222,7 +2240,7 @@ a man in a kitchen preparing food
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_21.png" src="../../_images/examples_coco_image-captioning_18_21.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_21.png" src="../../_images/examples_coco_image-captioning_21_21.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2237,7 +2255,7 @@ a man in a suit is standing in front of a &lt;unk&gt; &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_23.png" src="../../_images/examples_coco_image-captioning_18_23.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_23.png" src="../../_images/examples_coco_image-captioning_21_23.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2252,7 +2270,7 @@ a man is making a sandwich on a &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_25.png" src="../../_images/examples_coco_image-captioning_18_25.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_25.png" src="../../_images/examples_coco_image-captioning_21_25.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2267,7 +2285,7 @@ a kitchen with a stove and oven &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_27.png" src="../../_images/examples_coco_image-captioning_18_27.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_27.png" src="../../_images/examples_coco_image-captioning_21_27.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2282,7 +2300,7 @@ a kitchen with a stove and a refrigerator
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_29.png" src="../../_images/examples_coco_image-captioning_18_29.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_29.png" src="../../_images/examples_coco_image-captioning_21_29.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2297,7 +2315,7 @@ a man in a kitchen preparing food
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_31.png" src="../../_images/examples_coco_image-captioning_18_31.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_31.png" src="../../_images/examples_coco_image-captioning_21_31.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2312,7 +2330,7 @@ a man is sitting on a laptop &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_33.png" src="../../_images/examples_coco_image-captioning_18_33.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_33.png" src="../../_images/examples_coco_image-captioning_21_33.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2327,7 +2345,7 @@ a group of people standing around a table with a &lt;unk&gt; &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_35.png" src="../../_images/examples_coco_image-captioning_18_35.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_35.png" src="../../_images/examples_coco_image-captioning_21_35.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2342,7 +2360,7 @@ a man is standing in front of a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_37.png" src="../../_images/examples_coco_image-captioning_18_37.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_37.png" src="../../_images/examples_coco_image-captioning_21_37.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -2357,7 +2375,7 @@ a large group of people standing around a &lt;unk&gt;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_image-captioning_18_39.png" src="../../_images/examples_coco_image-captioning_18_39.png" />
+<img alt="../../_images/examples_coco_image-captioning_21_39.png" src="../../_images/examples_coco_image-captioning_21_39.png" />
 </div>
 </div>
 <div class="nboutput nblast docutils container">

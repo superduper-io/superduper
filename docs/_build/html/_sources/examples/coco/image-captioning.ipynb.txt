@@ -9,6 +9,20 @@
    ]
   },
   {
+   "cell_type": "markdown",
+   "id": "90b0c571",
+   "metadata": {},
+   "source": [
+    "In the final modelling part of this tutorial, we show that a radically different type of model can be created\n",
+    "but which also leverages the `create_imputation` functionality. This is possible, because we utilize a\n",
+    "different loss, target, than the previous chapter and also use a model which has a different inference `forward` pass than training\n",
+    "`forward` pass. This is a very common occurrence in AI, especially when doing, for example, autoregressive \n",
+    "training.\n",
+    "\n",
+    "The model we create, will be input an image, and will write out a sentence describing that image in unconstrained English. This task is known as *captioning*."
+   ]
+  },
+  {
    "cell_type": "code",
    "execution_count": 1,
    "id": "ff1b9f7d",
@@ -18,6 +32,14 @@
     "from superduperdb.client import the_client\n",
     "\n",
     "docs = the_client.coco.documents"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0897abfa",
+   "metadata": {},
+   "source": [
+    "You can see here that the raw data contains several example captions per image. We use these examples to train the model to write its own caption."
    ]
   },
   {
@@ -66,20 +88,6 @@
    ],
    "source": [
     "docs.find_one()"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "id": "d35f8993",
-   "metadata": {},
-   "source": [
-    "In the final modelling part of this tutorial, we show that a radically different type of model can be created\n",
-    "but which also leverages the `create_imputation` functionality. This is possible, because we utilize a\n",
-    "different loss, target, and also use a model which has a different inference `forward` pass than training\n",
-    "`forward` pass. This is a very common occurrence, in AI, especially when doing, for example, autoregressive \n",
-    "training.\n",
-    "\n",
-    "The model we create, will be input an image, and will write out a sentence describing that image in unconstrained English. This task is known as \"captioning\" in AI speak."
    ]
   },
   {
@@ -150,87 +158,102 @@
    "id": "cd20f424",
    "metadata": {},
    "source": [
-    "Now we can create the model - it utilizes a \"tokenizer\" for preprocessing the captioning data.\n",
-    "\n",
-    "In `examples.models`:\n",
-    "\n",
-    "```python\n",
-    "\n",
-    "class SimpleTokenizer:\n",
-    "    def __init__(self, tokens, max_length=15):\n",
-    "        self.tokens = tokens\n",
-    "        if '<unk>' not in tokens:\n",
-    "            tokens.append('<unk>')\n",
-    "        self._set_tokens = set(self.tokens)\n",
-    "        self.lookup = dict(zip(self.tokens, range(len(self.tokens))))\n",
-    "        self.dictionary = {k: i for i, k in enumerate(tokens)}\n",
-    "        self.max_length = max_length\n",
-    "\n",
-    "    def __len__(self):\n",
-    "        return len(self.tokens)\n",
-    "\n",
-    "    def preprocess(self, sentence):\n",
-    "        sentence = re.sub('[^a-z]]', '', sentence.lower()).strip()\n",
-    "        words = [x for x in sentence.split(' ') if x]\n",
-    "        words = [x if x in self.tokens else '<unk>' for x in words]\n",
-    "        words = words[:self.max_length]\n",
-    "        tokenized = list(map(self.lookup.__getitem__, words))\n",
-    "        tokenized = tokenized + [len(self) + 1 for _ in range(self.max_length - len(words))]\n",
-    "        return torch.tensor(tokenized)\n",
-    "\n",
-    "\n",
-    "class ConditionalLM(torch.nn.Module):\n",
-    "    def __init__(self, tokenizer, n_hidden=512, max_length=15, n_condition=1024):\n",
-    "        super().__init__()\n",
-    "\n",
-    "        self.tokenizer = tokenizer\n",
-    "        self.n_hidden = n_hidden\n",
-    "        self.embedding = torch.nn.Embedding(len(self.tokenizer) + 2, self.n_hidden)\n",
-    "        self.conditioning_linear = torch.nn.Linear(n_condition, self.n_hidden)\n",
-    "        self.rnn = torch.nn.GRU(self.n_hidden, self.n_hidden, batch_first=True)\n",
-    "        self.prediction = torch.nn.Linear(self.n_hidden, len(self.tokenizer) + 2)\n",
-    "        self.max_length = max_length\n",
-    "\n",
-    "    def preprocess(self, r):\n",
-    "        out = {}\n",
-    "        if 'caption' in r:\n",
-    "            out['caption'] = [len(self.tokenizer)]  + self.tokenizer.preprocess(r['caption']).tolist()[:-1]\n",
-    "        else:\n",
-    "            out['caption'] = [len(self.tokenizer)]\n",
-    "        out['caption'] = torch.tensor(out['caption'])\n",
-    "        if 'img' in r:\n",
-    "            out['img'] = r['img']\n",
-    "        return out\n",
-    "\n",
-    "    def train_forward(self, r):\n",
-    "        input_ = self.embedding(r['caption'])\n",
-    "        img_vectors = self.conditioning_linear(r['img']).unsqueeze(0)\n",
-    "        rnn_outputs = self.rnn(input_, img_vectors)[0]\n",
-    "        return self.prediction(rnn_outputs)\n",
-    "\n",
-    "    def forward(self, r):\n",
-    "        hidden_states = self.conditioning_linear(r['img']).unsqueeze(0)\n",
-    "        predictions = \\\n",
-    "            torch.zeros(r['caption'].shape[0], self.max_length).to(r['caption'].device).type(torch.long)\n",
-    "        predictions[:, 0] = r['caption'][:, 0]\n",
-    "        for i in range(self.max_length - 1):\n",
-    "            rnn_outputs, hidden_states = self.rnn(self.embedding(predictions[:, i]).unsqueeze(1),\n",
-    "                                                  hidden_states)\n",
-    "            logits = self.prediction(rnn_outputs)[:, 0, :]\n",
-    "            predictions[:, i + 1] = logits.topk(1, dim=1)[1][:, 0].type(torch.long)\n",
-    "        return predictions\n",
-    "\n",
-    "    def postprocess(self, output):\n",
-    "        output = output.tolist()\n",
-    "        try:\n",
-    "            first_end_token = next(x for x in output if x == len(self.tokenizer) + 2)\n",
-    "            output = output[:first_end_token]\n",
-    "        except StopIteration:\n",
-    "            pass\n",
-    "        output = [x for x in output if x < len(self.tokenizer)]\n",
-    "        return ' '.join(list(map(self.tokenizer.tokens.__getitem__, output)))\n",
-    "\n",
-    "```"
+    "Now we can create the model - it utilizes a *tokenizer* for preprocessing the captioning data."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "643571b6",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\u001b[38;2;0;128;0;01mimport\u001b[39;00m \u001b[38;2;0;0;255;01mre\u001b[39;00m\r\n",
+      "\u001b[38;2;0;128;0;01mimport\u001b[39;00m \u001b[38;2;0;0;255;01mtorch\u001b[39;00m\r\n",
+      "\r\n",
+      "\r\n",
+      "\u001b[38;2;0;128;0;01mclass\u001b[39;00m \u001b[38;2;0;0;255;01mSimpleTokenizer\u001b[39;00m:\r\n",
+      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255m__init__\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m, tokens, max_length\u001b[38;2;102;102;102m=\u001b[39m\u001b[38;2;102;102;102m15\u001b[39m):\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokens \u001b[38;2;102;102;102m=\u001b[39m tokens\r\n",
+      "        \u001b[38;2;0;128;0;01mif\u001b[39;00m \u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33m<unk>\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m \u001b[38;2;170;34;255;01mnot\u001b[39;00m \u001b[38;2;170;34;255;01min\u001b[39;00m tokens:\r\n",
+      "            tokens\u001b[38;2;102;102;102m.\u001b[39mappend(\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33m<unk>\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m)\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39m_set_tokens \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mset\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokens)\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mlookup \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mdict\u001b[39m(\u001b[38;2;0;128;0mzip\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokens, \u001b[38;2;0;128;0mrange\u001b[39m(\u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokens))))\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mdictionary \u001b[38;2;102;102;102m=\u001b[39m {k: i \u001b[38;2;0;128;0;01mfor\u001b[39;00m i, k \u001b[38;2;170;34;255;01min\u001b[39;00m \u001b[38;2;0;128;0menumerate\u001b[39m(tokens)}\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mmax_length \u001b[38;2;102;102;102m=\u001b[39m max_length\r\n",
+      "\r\n",
+      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255m__len__\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m):\r\n",
+      "        \u001b[38;2;0;128;0;01mreturn\u001b[39;00m \u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokens)\r\n",
+      "\r\n",
+      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255mpreprocess\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m, sentence):\r\n",
+      "        sentence \u001b[38;2;102;102;102m=\u001b[39m re\u001b[38;2;102;102;102m.\u001b[39msub(\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33m[^a-z]]\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m, \u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m, sentence\u001b[38;2;102;102;102m.\u001b[39mlower())\u001b[38;2;102;102;102m.\u001b[39mstrip()\r\n",
+      "        words \u001b[38;2;102;102;102m=\u001b[39m [x \u001b[38;2;0;128;0;01mfor\u001b[39;00m x \u001b[38;2;170;34;255;01min\u001b[39;00m sentence\u001b[38;2;102;102;102m.\u001b[39msplit(\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33m \u001b[39m\u001b[38;2;186;33;33m'\u001b[39m) \u001b[38;2;0;128;0;01mif\u001b[39;00m x]\r\n",
+      "        words \u001b[38;2;102;102;102m=\u001b[39m [x \u001b[38;2;0;128;0;01mif\u001b[39;00m x \u001b[38;2;170;34;255;01min\u001b[39;00m \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokens \u001b[38;2;0;128;0;01melse\u001b[39;00m \u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33m<unk>\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m \u001b[38;2;0;128;0;01mfor\u001b[39;00m x \u001b[38;2;170;34;255;01min\u001b[39;00m words]\r\n",
+      "        words \u001b[38;2;102;102;102m=\u001b[39m words[:\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mmax_length]\r\n",
+      "        tokenized \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mlist\u001b[39m(\u001b[38;2;0;128;0mmap\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mlookup\u001b[38;2;102;102;102m.\u001b[39m\u001b[38;2;0;0;255m__getitem__\u001b[39m, words))\r\n",
+      "        tokenized \u001b[38;2;102;102;102m=\u001b[39m tokenized \u001b[38;2;102;102;102m+\u001b[39m [\u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m) \u001b[38;2;102;102;102m+\u001b[39m \u001b[38;2;102;102;102m1\u001b[39m \u001b[38;2;0;128;0;01mfor\u001b[39;00m _ \u001b[38;2;170;34;255;01min\u001b[39;00m \u001b[38;2;0;128;0mrange\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mmax_length \u001b[38;2;102;102;102m-\u001b[39m \u001b[38;2;0;128;0mlen\u001b[39m(words))]\r\n",
+      "        \u001b[38;2;0;128;0;01mreturn\u001b[39;00m torch\u001b[38;2;102;102;102m.\u001b[39mtensor(tokenized)\r\n",
+      "\r\n",
+      "\r\n",
+      "\u001b[38;2;0;128;0;01mclass\u001b[39;00m \u001b[38;2;0;0;255;01mConditionalLM\u001b[39;00m(torch\u001b[38;2;102;102;102m.\u001b[39mnn\u001b[38;2;102;102;102m.\u001b[39mModule):\r\n",
+      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255m__init__\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m, tokenizer, n_hidden\u001b[38;2;102;102;102m=\u001b[39m\u001b[38;2;102;102;102m512\u001b[39m, max_length\u001b[38;2;102;102;102m=\u001b[39m\u001b[38;2;102;102;102m15\u001b[39m, n_condition\u001b[38;2;102;102;102m=\u001b[39m\u001b[38;2;102;102;102m1024\u001b[39m):\r\n",
+      "        \u001b[38;2;0;128;0msuper\u001b[39m()\u001b[38;2;102;102;102m.\u001b[39m\u001b[38;2;0;0;255m__init__\u001b[39m()\r\n",
+      "\r",
+      "\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokenizer \u001b[38;2;102;102;102m=\u001b[39m tokenizer\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mn_hidden \u001b[38;2;102;102;102m=\u001b[39m n_hidden\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39membedding \u001b[38;2;102;102;102m=\u001b[39m torch\u001b[38;2;102;102;102m.\u001b[39mnn\u001b[38;2;102;102;102m.\u001b[39mEmbedding(\u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokenizer) \u001b[38;2;102;102;102m+\u001b[39m \u001b[38;2;102;102;102m2\u001b[39m, \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mn_hidden)\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mconditioning_linear \u001b[38;2;102;102;102m=\u001b[39m torch\u001b[38;2;102;102;102m.\u001b[39mnn\u001b[38;2;102;102;102m.\u001b[39mLinear(n_condition, \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mn_hidden)\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mrnn \u001b[38;2;102;102;102m=\u001b[39m torch\u001b[38;2;102;102;102m.\u001b[39mnn\u001b[38;2;102;102;102m.\u001b[39mGRU(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mn_hidden, \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mn_hidden, batch_first\u001b[38;2;102;102;102m=\u001b[39m\u001b[38;2;0;128;0;01mTrue\u001b[39;00m)\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mprediction \u001b[38;2;102;102;102m=\u001b[39m torch\u001b[38;2;102;102;102m.\u001b[39mnn\u001b[38;2;102;102;102m.\u001b[39mLinear(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mn_hidden, \u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokenizer) \u001b[38;2;102;102;102m+\u001b[39m \u001b[38;2;102;102;102m2\u001b[39m)\r\n",
+      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mmax_length \u001b[38;2;102;102;102m=\u001b[39m max_length\r\n",
+      "\r\n",
+      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255mpreprocess\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m, r):\r\n",
+      "        out \u001b[38;2;102;102;102m=\u001b[39m {}\r\n",
+      "        \u001b[38;2;0;128;0;01mif\u001b[39;00m \u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m \u001b[38;2;170;34;255;01min\u001b[39;00m r:\r\n",
+      "            out[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m] \u001b[38;2;102;102;102m=\u001b[39m [\u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokenizer)]  \u001b[38;2;102;102;102m+\u001b[39m \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokenizer\u001b[38;2;102;102;102m.\u001b[39mpreprocess(r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m])\u001b[38;2;102;102;102m.\u001b[39mtolist()[:\u001b[38;2;102;102;102m-\u001b[39m\u001b[38;2;102;102;102m1\u001b[39m]\r\n",
+      "        \u001b[38;2;0;128;0;01melse\u001b[39;00m:\r\n",
+      "            out[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m] \u001b[38;2;102;102;102m=\u001b[39m [\u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokenizer)]\r\n",
+      "        out[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m] \u001b[38;2;102;102;102m=\u001b[39m torch\u001b[38;2;102;102;102m.\u001b[39mtensor(out[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m])\r\n",
+      "        \u001b[38;2;0;128;0;01mif\u001b[39;00m \u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mimg\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m \u001b[38;2;170;34;255;01min\u001b[39;00m r:\r\n",
+      "            out[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mimg\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m] \u001b[38;2;102;102;102m=\u001b[39m r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mimg\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m]\r\n",
+      "        \u001b[38;2;0;128;0;01mreturn\u001b[39;00m out\r\n",
+      "\r\n",
+      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255mtrain_forward\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m, r):\r\n",
+      "        input_ \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39membedding(r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m])\r\n",
+      "        img_vectors \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mconditioning_linear(r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mimg\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m])\u001b[38;2;102;102;102m.\u001b[39munsqueeze(\u001b[38;2;102;102;102m0\u001b[39m)\r\n",
+      "        rnn_outputs \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mrnn(input_, img_vectors)[\u001b[38;2;102;102;102m0\u001b[39m]\r\n",
+      "        \u001b[38;2;0;128;0;01mreturn\u001b[39;00m \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mprediction(rnn_outputs)\r\n",
+      "\r\n",
+      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255mforward\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m, r):\r\n",
+      "        hidden_states \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mconditioning_linear(r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mimg\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m])\u001b[38;2;102;102;102m.\u001b[39munsqueeze(\u001b[38;2;102;102;102m0\u001b[39m)\r\n",
+      "        predictions \u001b[38;2;102;102;102m=\u001b[39m \\\r\n",
+      "            torch\u001b[38;2;102;102;102m.\u001b[39mzeros(r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m]\u001b[38;2;102;102;102m.\u001b[39mshape[\u001b[38;2;102;102;102m0\u001b[39m], \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mmax_length)\u001b[38;2;102;102;102m.\u001b[39mto(r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m]\u001b[38;2;102;102;102m.\u001b[39mdevice)\u001b[38;2;102;102;102m.\u001b[39mtype(torch\u001b[38;2;102;102;102m.\u001b[39mlong)\r\n",
+      "        predictions[:, \u001b[38;2;102;102;102m0\u001b[39m] \u001b[38;2;102;102;102m=\u001b[39m r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m][:, \u001b[38;2;102;102;102m0\u001b[39m]\r\n",
+      "        \u001b[38;2;0;128;0;01mfor\u001b[39;00m i \u001b[38;2;170;34;255;01min\u001b[39;00m \u001b[38;2;0;128;0mrange\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mmax_length \u001b[38;2;102;102;102m-\u001b[39m \u001b[38;2;102;102;102m1\u001b[39m):\r\n",
+      "            rnn_outputs, hidden_states \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mrnn(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39membedding(predictions[:, i])\u001b[38;2;102;102;102m.\u001b[39munsqueeze(\u001b[38;2;102;102;102m1\u001b[39m),\r\n",
+      "                                                  hidden_states)\r\n",
+      "            logits \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mprediction(rnn_outputs)[:, \u001b[38;2;102;102;102m0\u001b[39m, :]\r\n",
+      "            predictions[:, i \u001b[38;2;102;102;102m+\u001b[39m \u001b[38;2;102;102;102m1\u001b[39m] \u001b[38;2;102;102;102m=\u001b[39m logits\u001b[38;2;102;102;102m.\u001b[39mtopk(\u001b[38;2;102;102;102m1\u001b[39m, dim\u001b[38;2;102;102;102m=\u001b[39m\u001b[38;2;102;102;102m1\u001b[39m)[\u001b[38;2;102;102;102m1\u001b[39m][:, \u001b[38;2;102;102;102m0\u001b[39m]\u001b[38;2;102;102;102m.\u001b[39mtype(torch\u001b[38;2;102;102;102m.\u001b[39mlong)\r\n",
+      "        \u001b[38;2;0;128;0;01mreturn\u001b[39;00m predictions\r\n",
+      "\r\n",
+      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255mpostprocess\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m, output):\r\n",
+      "        output \u001b[38;2;102;102;102m=\u001b[39m output\u001b[38;2;102;102;102m.\u001b[39mtolist()\r\n",
+      "        \u001b[38;2;0;128;0;01mtry\u001b[39;00m:\r\n",
+      "            first_end_token \u001b[38;2;102;102;102m=\u001b[39m \u001b[38;2;0;128;0mnext\u001b[39m(x \u001b[38;2;0;128;0;01mfor\u001b[39;00m x \u001b[38;2;170;34;255;01min\u001b[39;00m output \u001b[38;2;0;128;0;01mif\u001b[39;00m x \u001b[38;2;102;102;102m==\u001b[39m \u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokenizer) \u001b[38;2;102;102;102m+\u001b[39m \u001b[38;2;102;102;102m2\u001b[39m)\r\n",
+      "            output \u001b[38;2;102;102;102m=\u001b[39m output[:first_end_token]\r\n",
+      "        \u001b[38;2;0;128;0;01mexcept\u001b[39;00m \u001b[38;2;203;63;56;01mStopIteration\u001b[39;00m:\r\n",
+      "            \u001b[38;2;0;128;0;01mpass\u001b[39;00m\r\n",
+      "        output \u001b[38;2;102;102;102m=\u001b[39m [x \u001b[38;2;0;128;0;01mfor\u001b[39;00m x \u001b[38;2;170;34;255;01min\u001b[39;00m output \u001b[38;2;0;128;0;01mif\u001b[39;00m x \u001b[38;2;102;102;102m<\u001b[39m \u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokenizer)]\r\n",
+      "        \u001b[38;2;0;128;0;01mreturn\u001b[39;00m \u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33m \u001b[39m\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mjoin(\u001b[38;2;0;128;0mlist\u001b[39m(\u001b[38;2;0;128;0mmap\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mtokenizer\u001b[38;2;102;102;102m.\u001b[39mtokens\u001b[38;2;102;102;102m.\u001b[39m\u001b[38;2;0;0;255m__getitem__\u001b[39m, output)))\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!pygmentize examples/coco/conditional_lm.py"
    ]
   },
   {
@@ -251,7 +274,7 @@
    "id": "754d9b26",
    "metadata": {},
    "source": [
-    "Let us know create the required models necessary for training this model. One of the models is fairly \n",
+    "Let us now create the required models necessary for training this model. One of the models is fairly \n",
     "trivial, only used to create the prediction target for the learning task:"
    ]
   },
@@ -264,8 +287,8 @@
    },
    "outputs": [],
    "source": [
-    "docs.create_model('conditional_lm', m) # active=False, features={'img': 'clip'}, key='_base')\n",
-    "docs.create_model('captioning_tokenizer', tokenizer) # key='caption', active=False)"
+    "docs.create_model('conditional_lm', m) \n",
+    "docs.create_model('captioning_tokenizer', tokenizer)"
    ]
   },
   {
@@ -273,23 +296,37 @@
    "id": "6f673e70",
    "metadata": {},
    "source": [
-    "We'll use a standard autoregressive loss, of the sort used as a matter of course in language modelling tasks.\n",
-    "\n",
-    "In `examples.losses`:\n",
-    "\n",
-    "\n",
-    "```python\n",
-    "def auto_regressive_loss(x, y):\n",
-    "    # start token = x.shape[2] - 2, stop_token = x.shape[2] - 1 (by convention)\n",
-    "    stop_token = x.shape[2] - 1\n",
-    "    x = x.transpose(2, 1)\n",
-    "    losses = torch.nn.functional.cross_entropy(x, y, reduce=False)\n",
-    "    not_stops = torch.ones_like(losses)\n",
-    "    not_stops[:, 1:] = (y[:, :-1] != stop_token).type(torch.long)\n",
-    "    normalizing_factors = not_stops.sum(axis=1).unsqueeze(1)\n",
-    "    av_loss_per_row = (losses * not_stops).div(normalizing_factors).sum(axis=1)\n",
-    "    return av_loss_per_row.mean()\n",
-    "```"
+    "We'll use a standard autoregressive loss, of the sort used as a matter of course in language modelling tasks."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "4280cbe8",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\u001b[38;2;0;128;0;01mimport\u001b[39;00m \u001b[38;2;0;0;255;01mtorch\u001b[39;00m\r\n",
+      "\r\n",
+      "\r\n",
+      "\u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255mauto_regressive_loss\u001b[39m(x, y):\r\n",
+      "    \u001b[38;2;61;123;123;03m# start token = x.shape[2] - 2, stop_token = x.shape[2] - 1 (by convention)\u001b[39;00m\r\n",
+      "    stop_token \u001b[38;2;102;102;102m=\u001b[39m x\u001b[38;2;102;102;102m.\u001b[39mshape[\u001b[38;2;102;102;102m2\u001b[39m] \u001b[38;2;102;102;102m-\u001b[39m \u001b[38;2;102;102;102m1\u001b[39m\r\n",
+      "    x \u001b[38;2;102;102;102m=\u001b[39m x\u001b[38;2;102;102;102m.\u001b[39mtranspose(\u001b[38;2;102;102;102m2\u001b[39m, \u001b[38;2;102;102;102m1\u001b[39m)\r\n",
+      "    losses \u001b[38;2;102;102;102m=\u001b[39m torch\u001b[38;2;102;102;102m.\u001b[39mnn\u001b[38;2;102;102;102m.\u001b[39mfunctional\u001b[38;2;102;102;102m.\u001b[39mcross_entropy(x, y, reduce\u001b[38;2;102;102;102m=\u001b[39m\u001b[38;2;0;128;0;01mFalse\u001b[39;00m)\r\n",
+      "    not_stops \u001b[38;2;102;102;102m=\u001b[39m torch\u001b[38;2;102;102;102m.\u001b[39mones_like(losses)\r\n",
+      "    not_stops[:, \u001b[38;2;102;102;102m1\u001b[39m:] \u001b[38;2;102;102;102m=\u001b[39m (y[:, :\u001b[38;2;102;102;102m-\u001b[39m\u001b[38;2;102;102;102m1\u001b[39m] \u001b[38;2;102;102;102m!=\u001b[39m stop_token)\u001b[38;2;102;102;102m.\u001b[39mtype(torch\u001b[38;2;102;102;102m.\u001b[39mlong)\r\n",
+      "    normalizing_factors \u001b[38;2;102;102;102m=\u001b[39m not_stops\u001b[38;2;102;102;102m.\u001b[39msum(axis\u001b[38;2;102;102;102m=\u001b[39m\u001b[38;2;102;102;102m1\u001b[39m)\u001b[38;2;102;102;102m.\u001b[39munsqueeze(\u001b[38;2;102;102;102m1\u001b[39m)\r\n",
+      "    av_loss_per_row \u001b[38;2;102;102;102m=\u001b[39m (losses \u001b[38;2;102;102;102m*\u001b[39m not_stops)\u001b[38;2;102;102;102m.\u001b[39mdiv(normalizing_factors)\u001b[38;2;102;102;102m.\u001b[39msum(axis\u001b[38;2;102;102;102m=\u001b[39m\u001b[38;2;102;102;102m1\u001b[39m)\r\n",
+      "    \u001b[38;2;0;128;0;01mreturn\u001b[39;00m av_loss_per_row\u001b[38;2;102;102;102m.\u001b[39mmean()\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!pygmentize examples/coco/autoregressive_loss.py"
    ]
   },
   {
@@ -308,23 +345,39 @@
    "id": "5cbe8736",
    "metadata": {},
    "source": [
-    "Since each record in the database has several captions per image, we'll need to use a so-called \"splitter\", to \n",
+    "Since each record in the database has several captions per image, we'll need to use a so-called **splitter**, to \n",
     "align the prediction model and prediction target during training. You can see that the splitter randomly chooses\n",
-    "one of the captions to train on for an iteration.\n",
-    "\n",
-    "In `examples.splitters`:\n",
-    "\n",
-    "```python\n",
-    "import random\n",
-    "\n",
-    "\n",
-    "def captioning_splitter(r):\n",
-    "    index = random.randrange(len(r['captions']))\n",
-    "    target = {}\n",
-    "    target['caption'] = r['captions'][index]\n",
-    "    r['caption'] = r['captions'][index]\n",
-    "    return r, target\n",
-    "```"
+    "one of the captions to train on for an iteration."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "0f94d4cf",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\u001b[38;2;0;128;0;01mimport\u001b[39;00m \u001b[38;2;0;0;255;01mrandom\u001b[39;00m\r\n",
+      "\r\n",
+      "\r\n",
+      "\u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255mcaptioning_splitter\u001b[39m(r):\r\n",
+      "    index \u001b[38;2;102;102;102m=\u001b[39m random\u001b[38;2;102;102;102m.\u001b[39mrandrange(\u001b[38;2;0;128;0mlen\u001b[39m(r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaptions\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m]))\r\n",
+      "    target \u001b[38;2;102;102;102m=\u001b[39m {}\r\n",
+      "    target[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m] \u001b[38;2;102;102;102m=\u001b[39m r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaptions\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m][index]\r\n",
+      "    r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaption\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m] \u001b[38;2;102;102;102m=\u001b[39m r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaptions\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m][index]\r\n",
+      "    \u001b[38;2;0;128;0;01mreturn\u001b[39;00m r, target\r\n",
+      "\r\n",
+      "\r\n",
+      "\u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255mretrieval_splitter\u001b[39m(r):\r\n",
+      "    \u001b[38;2;0;128;0;01mreturn\u001b[39;00m {\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mimg\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m: r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mimg\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m]}, {\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaptions\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m: [r[\u001b[38;2;186;33;33m'\u001b[39m\u001b[38;2;186;33;33mcaptions\u001b[39m\u001b[38;2;186;33;33m'\u001b[39m][\u001b[38;2;102;102;102m0\u001b[39m]]}\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!pygmentize examples/coco/splitters.py"
    ]
   },
   {
@@ -378,67 +431,6 @@
     "\n",
     "docs.create_splitter('captioning_splitter', captioning_splitter)\n",
     "captioning_splitter(docs.find_one())"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 9,
-   "id": "10344946",
-   "metadata": {
-    "scrolled": false
-   },
-   "outputs": [
-    {
-     "data": {
-      "application/json": {
-       "ascii": false,
-       "bar_format": null,
-       "colour": null,
-       "elapsed": 0.021524906158447266,
-       "initial": 0,
-       "n": 0,
-       "ncols": null,
-       "nrows": 48,
-       "postfix": null,
-       "prefix": "",
-       "rate": null,
-       "total": 500,
-       "unit": "it",
-       "unit_divisor": 1000,
-       "unit_scale": false
-      },
-      "application/vnd.jupyter.widget-view+json": {
-       "model_id": "9012b5dad5f040b79c07f5df54db42b1",
-       "version_major": 2,
-       "version_minor": 0
-      },
-      "text/plain": [
-       "  0%|          | 0/500 [00:00<?, ?it/s]"
-      ]
-     },
-     "metadata": {},
-     "output_type": "display_data"
-    },
-    {
-     "name": "stdout",
-     "output_type": "stream",
-     "text": [
-      "downloading content from retrieved urls\n",
-      "found 0 urls\n",
-      "downloading content from retrieved urls\n",
-      "found 0 urls\n",
-      "downloading content from retrieved urls\n",
-      "found 0 urls\n",
-      "downloading content from retrieved urls\n",
-      "found 0 urls\n",
-      "downloading content from retrieved urls\n",
-      "found 0 urls\n"
-     ]
-    }
-   ],
-   "source": [
-    "docs.create_validation_set('captioning', splitter=docs.splitters['captioning_splitter'],\n",
-    "                           sample_size=500, chunk_size=100)"
    ]
   },
   {
@@ -1869,7 +1861,7 @@
     "    target_key='caption',\n",
     "    objective='autoregressive_loss',\n",
     "    splitter='captioning_splitter',\n",
-    "    validation_sets=['captioning'],\n",
+    "    validation_sets=[],\n",
     "    batch_size=50,\n",
     "    lr=0.001,\n",
     "    validation_interval=200,\n",

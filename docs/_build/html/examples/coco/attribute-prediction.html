@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Attribute prediction using “imputations” with preparation in SpaCy &mdash; SuperDuperDB  documentation</title>
@@ -12,10 +12,8 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -33,11 +31,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> SuperDuperDB
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SuperDuperDB
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -84,7 +86,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Tutorials and examples</a></li>
           <li class="breadcrumb-item"><a href="index.html">CoCo (Common Objects in Context) Dataset</a></li>
       <li class="breadcrumb-item active">Attribute prediction using “imputations” with preparation in SpaCy</li>
@@ -388,64 +390,44 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-<p>Now we’re going to train a different type of model, using a meta-class of machine learning problems we call “imputation”. The basic idea is to generate tags, by using as training data the noun words extracted from the sentences attached to each image. For this we’ll need one model to prepare the data, by extracting these noun words, and another model to predict the tags. Imputations aren’t restricted to this however. We can handle any machine learning problem which involves predicting one thing
-from another thing. This subsumes classification, attribute prediction, generative adversarial learning, language modelling and more.</p>
-<p>For the noun extraction, we’ll use an external library <code class="docutils literal notranslate"><span class="pre">spacy</span></code>. You can see this in the source code <code class="docutils literal notranslate"><span class="pre">examples.models.NounWords</span></code>.</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">examples.models</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">spacy</span>
-
-<span class="k">class</span> <span class="nc">NounWords</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;en_core_web_sm&#39;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sentences</span><span class="p">):</span>
-        <span class="n">sentence</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sentences</span><span class="p">)</span>
-        <span class="n">nouns</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span><span class="p">(</span><span class="n">sentence</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">pos_</span> <span class="o">==</span> <span class="s1">&#39;NOUN&#39;</span><span class="p">:</span>
-                <span class="n">nouns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
-        <span class="n">nouns</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">nouns</span><span class="p">)))</span>
-        <span class="k">return</span> <span class="n">nouns</span>
-</pre></div>
-</div>
+<p>Now we’re going to train a different type of model, using a meta-class of machine learning problems we call <strong>imputation</strong>; read <a class="reference external" href="https://en.wikipedia.org/wiki/Imputation_(statistics)">here</a>. The basic idea is to generate tags, by using as training data the noun words extracted from the sentences attached to each image. For this we’ll need one model to prepare the data, by extracting these noun words, and another model to predict the tags. Imputations aren’t restricted to this however.
+Imputations can handle any machine learning problem which involves predicting one thing from another thing. This subsumes classification, attribute prediction, generative adversarial learning, language modelling and more.</p>
+<p>For the noun extraction, we’ll use an external library <code class="docutils literal notranslate"><span class="pre">spacy</span></code>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">delete_watcher</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;noun_words&#39;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;captions&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">docs</span><span class="o">.</span><span class="n">delete_model</span><span class="p">(</span><span class="s1">&#39;noun_words&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/nouns.py
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
+<div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-unsetting output field _outputs.captions.noun_words
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-[{&#39;_id&#39;: ObjectId(&#39;63fe73701ff3836419463975&#39;),
-  &#39;varieties&#39;: [&#39;model&#39;, &#39;function&#39;],
-  &#39;name&#39;: &#39;noun_words&#39;,
-  &#39;object&#39;: ObjectId(&#39;63fe73701ff3836419463935&#39;),
-  &#39;type&#39;: None,
-  &#39;preprocessor&#39;: None,
-  &#39;forward&#39;: None,
-  &#39;postprocessor&#39;: None}]
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">spacy</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">NounWords</span>:
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>):
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>nlp <span style="color: rgb(102,102,102)">=</span> spacy<span style="color: rgb(102,102,102)">.</span>load(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">en_core_web_sm</span><span style="color: rgb(186,33,33)">&#39;</span>)
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">preprocess</span>(<span style="color: rgb(0,128,0)">self</span>, sentences):
+        sentence <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)"> </span><span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(102,102,102)">.</span>join(sentences)
+        nouns <span style="color: rgb(102,102,102)">=</span> []
+        <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> w <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>nlp(sentence):
+            <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> w<span style="color: rgb(102,102,102)">.</span>pos_ <span style="color: rgb(102,102,102)">==</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">NOUN</span><span style="color: rgb(186,33,33)">&#39;</span>:
+                nouns<span style="color: rgb(102,102,102)">.</span>append(<span style="color: rgb(0,128,0)">str</span>(w)<span style="color: rgb(102,102,102)">.</span>lower())
+        nouns <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">sorted</span>(<span style="color: rgb(0,128,0)">list</span>(<span style="color: rgb(0,128,0)">set</span>(nouns)))
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> nouns
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">NounWords</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.nouns</span> <span class="kn">import</span> <span class="n">NounWords</span>
 <span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;noun_words&#39;</span><span class="p">,</span> <span class="n">NounWords</span><span class="p">())</span>
 <span class="n">docs</span><span class="o">.</span><span class="n">create_watcher</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;noun_words&#39;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;captions&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
@@ -545,23 +527,6 @@ done.
 </div>
 <p>We’ll also need a simple validation set:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_validation_sets&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">delete_many</span><span class="p">({</span><span class="s1">&#39;_validation_set&#39;</span><span class="p">:</span> <span class="s1">&#39;attribute_prediction&#39;</span><span class="p">})</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-&lt;pymongo.results.DeleteResult at 0x16a6b1ba0&gt;
-</pre></div></div>
-</div>
-<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
@@ -584,7 +549,7 @@ downloading content from retrieved urls
 found 0 urls
 </pre></div></div>
 </div>
-<p>Let’s prepare the tag set we’d like to train on in the next few cells:</p>
+<p>Let’s prepare the tag set we’d like to train on.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
@@ -610,72 +575,69 @@ found 0 urls
 <script type="application/vnd.jupyter.widget-view+json">{"model_id": "acca7963012d42408704d2c7d7b21e2c", "version_major": 2, "version_minor": 0}</script></div>
 </div>
 <p>Now we’ve got our tag set ready, we can create the items necessary to train the model.</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">examples.models</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
-
-
-<span class="k">class</span> <span class="nc">FewHot</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lookup</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">))))</span>
-
-    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span> <span class="k">if</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">]</span>
-        <span class="n">integers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookup</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
-        <span class="n">empty</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">))</span>
-        <span class="n">empty</span><span class="p">[</span><span class="n">integers</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="n">empty</span>
-
-
-<span class="k">class</span> <span class="nc">TopK</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
-
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">pred</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pred</span><span class="p">]</span>
-</pre></div>
-</div>
-<p>In <code class="docutils literal notranslate"><span class="pre">examples.metrics</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">jacquard_index</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
-</pre></div>
-</div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">delete_metric</span><span class="p">(</span><span class="s1">&#39;jacquard_index&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">docs</span><span class="o">.</span><span class="n">delete_objective</span><span class="p">(</span><span class="s1">&#39;nouns_loss&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">docs</span><span class="o">.</span><span class="n">delete_model</span><span class="p">(</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">docs</span><span class="o">.</span><span class="n">delete_postprocessor</span><span class="p">(</span><span class="s1">&#39;top_5&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">docs</span><span class="o">.</span><span class="n">delete_model</span><span class="p">(</span><span class="s1">&#39;nouns_to_few_hot&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/attributes.py
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
-</pre></div>
+<div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[{&#39;_id&#39;: ObjectId(&#39;63fe77d31ff3836419463a73&#39;),
-  &#39;varieties&#39;: [&#39;model&#39;, &#39;function&#39;],
-  &#39;name&#39;: &#39;nouns_to_few_hot&#39;,
-  &#39;object&#39;: ObjectId(&#39;63fe7cafaa6480cf5187c66d&#39;),
-  &#39;type&#39;: None,
-  &#39;preprocessor&#39;: None,
-  &#39;forward&#39;: None,
-  &#39;postprocessor&#39;: None}]
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">torch</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">FewHot</span>:
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, tokens):
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens <span style="color: rgb(102,102,102)">=</span> tokens
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>lookup <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">dict</span>(<span style="color: rgb(0,128,0)">zip</span>(tokens, <span style="color: rgb(0,128,0)">range</span>(<span style="color: rgb(0,128,0)">len</span>(tokens))))
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">preprocess</span>(<span style="color: rgb(0,128,0)">self</span>, x):
+        x <span style="color: rgb(102,102,102)">=</span> [y <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> y <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> x <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> y <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens]
+        integers <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">list</span>(<span style="color: rgb(0,128,0)">map</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>lookup<span style="color: rgb(102,102,102)">.</span><span style="color: rgb(0,0,255)">__getitem__</span>, x))
+        empty <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>zeros(<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens))
+        empty[integers] <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(102,102,102)">1</span>
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> empty
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">TopK</span>:
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, tokens, n<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">10</span>):
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens <span style="color: rgb(102,102,102)">=</span> tokens
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n <span style="color: rgb(102,102,102)">=</span> n
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__call__</span>(<span style="color: rgb(0,128,0)">self</span>, x):
+        pred <span style="color: rgb(102,102,102)">=</span> x<span style="color: rgb(102,102,102)">.</span>topk(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n)[<span style="color: rgb(102,102,102)">1</span>]<span style="color: rgb(102,102,102)">.</span>tolist()
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> [<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens[i] <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> i <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> pred]
 </pre></div></div>
 </div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/jacquard.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">jacquard_index</span>(x, y):
+    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">set</span>(x)<span style="color: rgb(102,102,102)">.</span>intersection(<span style="color: rgb(0,128,0)">set</span>(y))) <span style="color: rgb(102,102,102)">/</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">set</span>(x)<span style="color: rgb(102,102,102)">.</span>union(<span style="color: rgb(0,128,0)">set</span>(y)))
+</pre></div></div>
+</div>
+<p>In the next cell we create a model out of separately defined <code class="docutils literal notranslate"><span class="pre">preprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">forward</span></code> and <code class="docutils literal notranslate"><span class="pre">postprocess</span></code> parts. Sometimes this is advantageous when it comes to sharing aspects between models.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">FewHot</span><span class="p">,</span> <span class="n">TopK</span>
-<span class="kn">from</span> <span class="nn">examples.metrics</span> <span class="kn">import</span> <span class="n">jacquard_index</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.attributes</span> <span class="kn">import</span> <span class="n">FewHot</span><span class="p">,</span> <span class="n">TopK</span>
+<span class="kn">from</span> <span class="nn">examples.coco.jacquard</span> <span class="kn">import</span> <span class="n">jacquard_index</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 
 <span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;nouns_to_few_hot&#39;</span><span class="p">,</span> <span class="n">FewHot</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">))</span>
@@ -683,51 +645,11 @@ found 0 urls
 <span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">)))</span>
 <span class="n">docs</span><span class="o">.</span><span class="n">create_objective</span><span class="p">(</span><span class="s1">&#39;nouns_loss&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">(</span><span class="n">pos_weight</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">pos_weights</span><span class="p">)))</span>
 <span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;jacquard_index&#39;</span><span class="p">,</span> <span class="n">jacquard_index</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<p>We demonstrate a different way of creating a model. Instead of using a class with <code class="docutils literal notranslate"><span class="pre">preprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">forward</span></code> and <code class="docutils literal notranslate"><span class="pre">postprocess</span></code> methods, we supply these separately. Sometimes this is advantageous when it comes to sharing aspects between models.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">delete_model</span><span class="p">(</span><span class="s1">&#39;attribute_model&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-[{&#39;_id&#39;: ObjectId(&#39;63fe78101ff3836419463a82&#39;),
-  &#39;varieties&#39;: [&#39;model&#39;, &#39;function&#39;],
-  &#39;name&#39;: &#39;attribute_model&#39;,
-  &#39;object&#39;: None,
-  &#39;type&#39;: None,
-  &#39;preprocessor&#39;: None,
-  &#39;forward&#39;: &#39;attribute_predictor&#39;,
-  &#39;postprocessor&#39;: &#39;top_5&#39;}]
-</pre></div></div>
-</div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;attribute_model&#39;</span><span class="p">,</span> <span class="n">forward</span><span class="o">=</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">postprocessor</span><span class="o">=</span><span class="s1">&#39;top_5&#39;</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;attribute_model&#39;</span><span class="p">,</span> <span class="n">forward</span><span class="o">=</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">postprocessor</span><span class="o">=</span><span class="s1">&#39;top_5&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <p>Now let’s train the model:</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">delete_imputation</span><span class="p">(</span><span class="s1">&#39;noun_prediction&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
@@ -832,7 +754,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_1.png" src="../../_images/examples_coco_attribute-prediction_19_1.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_1.png" src="../../_images/examples_coco_attribute-prediction_16_1.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -847,7 +769,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_3.png" src="../../_images/examples_coco_attribute-prediction_19_3.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_3.png" src="../../_images/examples_coco_attribute-prediction_16_3.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -862,7 +784,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_5.png" src="../../_images/examples_coco_attribute-prediction_19_5.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_5.png" src="../../_images/examples_coco_attribute-prediction_16_5.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -877,7 +799,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_7.png" src="../../_images/examples_coco_attribute-prediction_19_7.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_7.png" src="../../_images/examples_coco_attribute-prediction_16_7.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -892,7 +814,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_9.png" src="../../_images/examples_coco_attribute-prediction_19_9.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_9.png" src="../../_images/examples_coco_attribute-prediction_16_9.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -907,7 +829,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_11.png" src="../../_images/examples_coco_attribute-prediction_19_11.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_11.png" src="../../_images/examples_coco_attribute-prediction_16_11.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -922,7 +844,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_13.png" src="../../_images/examples_coco_attribute-prediction_19_13.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_13.png" src="../../_images/examples_coco_attribute-prediction_16_13.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -937,7 +859,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_15.png" src="../../_images/examples_coco_attribute-prediction_19_15.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_15.png" src="../../_images/examples_coco_attribute-prediction_16_15.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -952,7 +874,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_17.png" src="../../_images/examples_coco_attribute-prediction_19_17.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_17.png" src="../../_images/examples_coco_attribute-prediction_16_17.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -967,7 +889,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_19.png" src="../../_images/examples_coco_attribute-prediction_19_19.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_19.png" src="../../_images/examples_coco_attribute-prediction_16_19.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -982,7 +904,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_21.png" src="../../_images/examples_coco_attribute-prediction_19_21.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_21.png" src="../../_images/examples_coco_attribute-prediction_16_21.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -997,7 +919,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_23.png" src="../../_images/examples_coco_attribute-prediction_19_23.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_23.png" src="../../_images/examples_coco_attribute-prediction_16_23.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1012,7 +934,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_25.png" src="../../_images/examples_coco_attribute-prediction_19_25.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_25.png" src="../../_images/examples_coco_attribute-prediction_16_25.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1027,7 +949,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_27.png" src="../../_images/examples_coco_attribute-prediction_19_27.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_27.png" src="../../_images/examples_coco_attribute-prediction_16_27.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1042,7 +964,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_29.png" src="../../_images/examples_coco_attribute-prediction_19_29.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_29.png" src="../../_images/examples_coco_attribute-prediction_16_29.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1057,7 +979,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_31.png" src="../../_images/examples_coco_attribute-prediction_19_31.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_31.png" src="../../_images/examples_coco_attribute-prediction_16_31.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1072,7 +994,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_33.png" src="../../_images/examples_coco_attribute-prediction_19_33.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_33.png" src="../../_images/examples_coco_attribute-prediction_16_33.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1087,7 +1009,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_35.png" src="../../_images/examples_coco_attribute-prediction_19_35.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_35.png" src="../../_images/examples_coco_attribute-prediction_16_35.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1102,7 +1024,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_37.png" src="../../_images/examples_coco_attribute-prediction_19_37.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_37.png" src="../../_images/examples_coco_attribute-prediction_16_37.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -1117,7 +1039,7 @@ aborting training early...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_attribute-prediction_19_39.png" src="../../_images/examples_coco_attribute-prediction_19_39.png" />
+<img alt="../../_images/examples_coco_attribute-prediction_16_39.png" src="../../_images/examples_coco_attribute-prediction_16_39.png" />
 </div>
 </div>
 </section>

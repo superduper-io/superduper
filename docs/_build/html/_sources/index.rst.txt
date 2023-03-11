@@ -7,7 +7,7 @@ What is SuperDuperDB?
 +++++++++++++++++++++
 
 SuperDuperDB is a project which aims to facilitate building and integrating AI models together with data.
-It does this by providing and open-source AI model development
+It does this by providing an open-source AI model development
 and production environment together with PyTorch and MongoDB.
 
 * SuperDuperDB allows users to integrate PyTorch models into MongoDB.

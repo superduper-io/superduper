@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hello World: handwritten digit recognition with SuperDuperDB &mdash; SuperDuperDB  documentation</title>
@@ -12,10 +12,8 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -33,11 +31,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> SuperDuperDB
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SuperDuperDB
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -79,7 +81,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Tutorials and examples</a></li>
           <li class="breadcrumb-item"><a href="index.html">MNIST Dataset</a></li>
       <li class="breadcrumb-item active">Hello World: handwritten digit recognition with SuperDuperDB</li>
@@ -408,7 +410,7 @@ div.rendered_html tbody tr:hover {
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize examples/types.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/types.py
 </pre></div>
 </div>
 </div>
@@ -538,7 +540,7 @@ found 0 urls
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize examples/mnist/models.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/mnist/models.py
 </pre></div>
 </div>
 </div>
@@ -639,10 +641,10 @@ found 0 urls
 </div>
 <p>And a metric to measure performance:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize examples/metrics.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/mnist/metrics.py
 </pre></div>
 </div>
 </div>
@@ -653,25 +655,13 @@ found 0 urls
 <div class="highlight"><pre>
 <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">accuracy</span>(x, y):
     <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> x <span style="color: rgb(102,102,102)">==</span> y
-
-
-<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">PatK</span>:
-    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, k):
-        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>k <span style="color: rgb(102,102,102)">=</span> k
-
-    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__call__</span>(<span style="color: rgb(0,128,0)">self</span>, x, y):
-        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> y <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> x[:<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>k]
-
-
-<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">jacquard_index</span>(x, y):
-    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">set</span>(x)<span style="color: rgb(102,102,102)">.</span>intersection(<span style="color: rgb(0,128,0)">set</span>(y))) <span style="color: rgb(102,102,102)">/</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">set</span>(x)<span style="color: rgb(102,102,102)">.</span>union(<span style="color: rgb(0,128,0)">set</span>(y)))
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.metrics</span> <span class="kn">import</span> <span class="n">accuracy</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.mnist.metrics</span> <span class="kn">import</span> <span class="n">accuracy</span>
 
 <span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">)</span>
 </pre></div>

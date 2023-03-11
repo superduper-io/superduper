@@ -386,7 +386,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 3,
+   "execution_count": 2,
    "id": "7c00ff79",
    "metadata": {},
    "outputs": [
@@ -395,24 +395,12 @@
      "output_type": "stream",
      "text": [
       "\u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255maccuracy\u001b[39m(x, y):\r\n",
-      "    \u001b[38;2;0;128;0;01mreturn\u001b[39;00m x \u001b[38;2;102;102;102m==\u001b[39m y\r\n",
-      "\r\n",
-      "\r\n",
-      "\u001b[38;2;0;128;0;01mclass\u001b[39;00m \u001b[38;2;0;0;255;01mPatK\u001b[39;00m:\r\n",
-      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255m__init__\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m, k):\r\n",
-      "        \u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mk \u001b[38;2;102;102;102m=\u001b[39m k\r\n",
-      "\r\n",
-      "    \u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255m__call__\u001b[39m(\u001b[38;2;0;128;0mself\u001b[39m, x, y):\r\n",
-      "        \u001b[38;2;0;128;0;01mreturn\u001b[39;00m y \u001b[38;2;170;34;255;01min\u001b[39;00m x[:\u001b[38;2;0;128;0mself\u001b[39m\u001b[38;2;102;102;102m.\u001b[39mk]\r\n",
-      "\r\n",
-      "\r\n",
-      "\u001b[38;2;0;128;0;01mdef\u001b[39;00m \u001b[38;2;0;0;255mjacquard_index\u001b[39m(x, y):\r\n",
-      "    \u001b[38;2;0;128;0;01mreturn\u001b[39;00m \u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mset\u001b[39m(x)\u001b[38;2;102;102;102m.\u001b[39mintersection(\u001b[38;2;0;128;0mset\u001b[39m(y))) \u001b[38;2;102;102;102m/\u001b[39m \u001b[38;2;0;128;0mlen\u001b[39m(\u001b[38;2;0;128;0mset\u001b[39m(x)\u001b[38;2;102;102;102m.\u001b[39munion(\u001b[38;2;0;128;0mset\u001b[39m(y)))\r\n"
+      "    \u001b[38;2;0;128;0;01mreturn\u001b[39;00m x \u001b[38;2;102;102;102m==\u001b[39m y\r\n"
      ]
     }
    ],
    "source": [
-    "!pygmentize examples/metrics.py"
+    "!pygmentize examples/mnist/metrics.py"
    ]
   },
   {
@@ -422,7 +410,7 @@
    "metadata": {},
    "outputs": [],
    "source": [
-    "from examples.metrics import accuracy\n",
+    "from examples.mnist.metrics import accuracy\n",
     "\n",
     "docs.create_metric('accuracy', accuracy)"
    ]

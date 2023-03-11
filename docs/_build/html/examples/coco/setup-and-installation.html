@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Setup and installation &mdash; SuperDuperDB  documentation</title>
@@ -12,10 +12,8 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -33,11 +31,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../index.html" class="icon icon-home"> SuperDuperDB
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SuperDuperDB
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -84,7 +86,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Tutorials and examples</a></li>
           <li class="breadcrumb-item"><a href="index.html">CoCo (Common Objects in Context) Dataset</a></li>
       <li class="breadcrumb-item active">Setup and installation</li>
@@ -379,33 +381,33 @@ div.rendered_html tbody tr:hover {
 <section id="Setup-and-installation">
 <h1>Setup and installation<a class="headerlink" href="#Setup-and-installation" title="Permalink to this heading"></a></h1>
 <p>SuperDuperDB uses MongoDB for data storage. If you haven’t done so already, install it using the following lines of bash.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc <span class="p">|</span> sudo apt-key add -
-sudo apt-get install gnupg
-wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc <span class="p">|</span> sudo apt-key add -
-<span class="nb">echo</span> <span class="s2">&quot;deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse&quot;</span> <span class="p">|</span> sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-sudo apt-get update
-sudo apt-get install -y mongodb-org
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>-qO<span class="w"> </span>-<span class="w"> </span>https://www.mongodb.org/static/pgp/server-6.0.asc<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>apt-key<span class="w"> </span>add<span class="w"> </span>-
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>gnupg
+wget<span class="w"> </span>-qO<span class="w"> </span>-<span class="w"> </span>https://www.mongodb.org/static/pgp/server-6.0.asc<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>apt-key<span class="w"> </span>add<span class="w"> </span>-
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/apt/sources.list.d/mongodb-org-6.0.list
+sudo<span class="w"> </span>apt-get<span class="w"> </span>update
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>mongodb-org
 </pre></div>
 </div>
 <p>If you haven’t downloaded the data already, execute the lines of bash below. We’ve tried to keep it clean, and for reasons of efficiency have resized the images using imagemagick:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl http://images.cocodataset.org/annotations/annotations_trainval2014.zip -o raw.zip
-unzip raw.zip
-curl http://images.cocodataset.org/zips/train2014.zip -o images.zip
-unzip -q images.zip
-sudo apt install -y imagemagick
-mogrify -resize 224x <span class="s1">&#39;train2014/*.jpg&#39;</span>
-mkdir -p data/coco
-mv train2014 data/coco/images
-mv annotations/* data/coco
-rm raw.zip
-rm images.zip
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>http://images.cocodataset.org/annotations/annotations_trainval2014.zip<span class="w"> </span>-o<span class="w"> </span>raw.zip
+unzip<span class="w"> </span>raw.zip
+curl<span class="w"> </span>http://images.cocodataset.org/zips/train2014.zip<span class="w"> </span>-o<span class="w"> </span>images.zip
+unzip<span class="w"> </span>-q<span class="w"> </span>images.zip
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>imagemagick
+mogrify<span class="w"> </span>-resize<span class="w"> </span>224x<span class="w"> </span><span class="s1">&#39;train2014/*.jpg&#39;</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span>data/coco
+mv<span class="w"> </span>train2014<span class="w"> </span>data/coco/images
+mv<span class="w"> </span>annotations/*<span class="w"> </span>data/coco
+rm<span class="w"> </span>raw.zip
+rm<span class="w"> </span>images.zip
 </pre></div>
 </div>
 <p>In case you haven’t done so already, install the dependencies for this tutorial, including SuperDuperDB, which is a simple pip install:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pandas
-pip install pillow
-pip install torch
-pip install -r ../../requirements.txt
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pandas
+pip<span class="w"> </span>install<span class="w"> </span>pillow
+pip<span class="w"> </span>install<span class="w"> </span>torch
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>../../requirements.txt
 </pre></div>
 </div>
 <p>SuperDuperDB can handle data in any format, including images. The documents in the database are MongoDB <code class="docutils literal notranslate"><span class="pre">bson</span></code> documents, which mix <code class="docutils literal notranslate"><span class="pre">json</span></code> with raw bytes and <code class="docutils literal notranslate"><span class="pre">ObjectId</span></code> objects. SuperDuperDB takes advantage of this by serializing more sophisticated objects to bytes, and reinstantiating the objects in memory, when data is queried.</p>
@@ -419,12 +421,12 @@ pip install -r ../../requirements.txt
 </pre></div>
 </div>
 <p>If however, the content is located on the web or the filesystem, one can specify the URLs directly:</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nt">&quot;_content&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;url-or-file&gt;&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;my-type&gt;&quot;</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;_content&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;url-or-file&gt;&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;my-type&gt;&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 <p>Let’s see this now in action. We reformat the CoCo data, so that each image is associated in one document with all of the captions which describe it, and add the location of the images using the <code class="docutils literal notranslate"><span class="pre">_content</span></code> keyword.</p>

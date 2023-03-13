@@ -11,11 +11,12 @@ from superduperdb import cf
 q = Queue(connection=Redis(port=cf.get('redis', {}).get('port', 6379)), default_timeout=24 * 60 * 60)
 
 
-def process(database_name, collection_name, method, *args, dependencies=(), **kwargs):
+def process(database_name, method, *args, dependencies=(),
+            **kwargs):
     from superduperdb.client import the_client
     job_id = str(uuid.uuid4())
-    collection = the_client[database_name][collection_name]
-    collection['_jobs'].insert_one({
+    database = the_client[database_name]
+    database['_jobs'].insert_one({
         'identifier': job_id,
         'time': datetime.datetime.now(),
         'status': 'pending',
@@ -28,7 +29,6 @@ def process(database_name, collection_name, method, *args, dependencies=(), **kw
     job = q.enqueue(
         process_jobs._function_job,
         database_name,
-        collection_name,
         method,
         job_id,
         job_id=job_id,

@@ -1,4 +1,4 @@
-class PatK:
+class RatK:
     def __init__(self, k):
         self.k = k
 

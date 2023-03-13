@@ -25,6 +25,13 @@ def unset_hash_set():
     return make_response('ok', 200)
 
 
+@app.route('/count/<database>/<collection>', methods=['GET'])
+def count(database, collection):
+    collection = collections[f'{database}.{collection}']
+    print(collection.database.models)
+    return make_response(str(collection.count_documents({})), 200)
+
+
 @app.route('/find_nearest', methods=['GET'])
 def find_nearest():
     data = request.get_json()
@@ -42,7 +49,6 @@ def find_nearest():
         collections[f'{database}.{collection}'] = client[database][collection]
     collection = collections[f'{database}.{collection}']
     collection.remote = False
-    collection.single_thread = True
     from superduperdb.types.utils import convert_types
     filter = convert_types(filter, converters=collection.types)
     result = collection._find_nearest(filter, ids=ids)

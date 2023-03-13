@@ -88,7 +88,7 @@ def with_semantic_index(random_data, a_model, measure):
     random_data['_meta'].insert_one({'key': 'semantic_index', 'value': 'test_semantic_index'})
     yield random_data
     if random_data.remote:
-        random_data.unset_hash_set()
+        random_data.clear_remote_cache()
     random_data.delete_semantic_index('test_semantic_index', force=True)
     random_data['_meta'].delete_one({'key': 'semantic_index'})
 

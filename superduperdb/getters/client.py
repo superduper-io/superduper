@@ -42,6 +42,15 @@ def unset_hash_set(database, collection):
         raise Exception('Unsetting hash set failed...')
 
 
+def clear_remote_cache():
+    response = requests.put(
+        f'http://{cf["linear_algebra"]["host"]}:{cf["linear_algebra"]["port"]}/clear_remote_cache',
+        headers=None,
+    )
+    if response.status_code != 200:
+        raise Exception('Unsetting hash set failed...')
+
+
 def apply_model(database, collection, name, input_, **kwargs):
     input_ = pickle.dumps(input_).decode('iso-8859-1')
     json_ = {

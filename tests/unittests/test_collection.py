@@ -101,7 +101,6 @@ def test_create_semantic_index(si_validation, a_model, c_model, measure, metric,
                                                validation_sets=('my_valid',),
                                                n_iterations=4,
                                                validation_interval=2)
-
     if remote:
         for job_id in jobs:
             si_validation.watch_job(job_id)

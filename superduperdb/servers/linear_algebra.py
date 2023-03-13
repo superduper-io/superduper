@@ -25,6 +25,14 @@ def unset_hash_set():
     return make_response('ok', 200)
 
 
+@app.route('/clear_remote_cache', methods=['PUT'])
+def clear_cache():
+    keys = list(collections.keys())[:]
+    for k in keys:
+        del collections[k]
+    return make_response('ok', 200)
+
+
 @app.route('/count/<database>/<collection>', methods=['GET'])
 def count(database, collection):
     collection = collections[f'{database}.{collection}']

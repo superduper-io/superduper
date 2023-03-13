@@ -13,7 +13,8 @@ from numpy.random import permutation
 from pymongo import UpdateOne
 from pymongo.database import Database as BaseDatabase
 import superduperdb.collection
-from superduperdb import getters as superduper_requests, training, cf
+from superduperdb import training, cf
+from superduperdb.getters import jobs
 from superduperdb.models import loading
 from superduperdb.models.utils import create_container, apply_model, BasicDataset
 from superduperdb.training.validation import validate_representations
@@ -126,7 +127,7 @@ class Database(BaseDatabase):
             self._compute_neighbourhood(collection, name, ids)
         else:
             return superduper_requests.jobs.process(
-                self.database.name,
+                self.name,
                 '_compute_neighbourhood',
                 collection,
                 name,
@@ -172,7 +173,7 @@ class Database(BaseDatabase):
             urls=urls,
             ids=place_ids,
             keys=keys,
-            collection=self,
+            collection=collection,
             n_workers=n_download_workers,
             timeout=timeout,
             headers=headers,
@@ -193,7 +194,7 @@ class Database(BaseDatabase):
             print('downloading content from retrieved urls')
             self._download_content(collection, ids=ids)
         else:
-            return superduper_requests.jobs.process(
+            return jobs.process(
                 self.name,
                 '_download_content',
                 collection=collection,
@@ -223,14 +224,14 @@ class Database(BaseDatabase):
         })
 
         if process_docs:
-            ids = [r['_id'] for r in self.find(filter_ if filter_ else {}, {'_id': 1})]
+            ids = [r['_id'] for r in self[collection].find(filter_ if filter_ else {}, {'_id': 1})]
             if not ids:
                 return
             if not self.remote:
                 self._process_documents_with_watcher(collection, model, key, ids, verbose=verbose)
             else:  # pragma: no cover
-                return superduper_requests.jobs.process(
-                    self.database.name,
+                return jobs.process(
+                    self.name,
                     '_process_documents_with_watcher',
                     collection,
                     model,
@@ -614,6 +615,9 @@ class Database(BaseDatabase):
     def list_metrics(self):
         return self.list_objects('metric')
 
+    def list_neighbourhoods(self):
+        return self.list_objects('neighbourhood')
+
     def list_objectives(self):
         return self.list_objects('objective')
 
@@ -628,6 +632,14 @@ class Database(BaseDatabase):
 
     def list_types(self):
         return self.list_objects('type')
+
+    def list_jobs(self):
+        return list(self['_jobs'].find())
+
+    @staticmethod
+    def _dict_to_str(d):
+        sd = Database._standardize_dict(d)
+        return str(sd)
 
     @staticmethod
     def _standardize_dict(d):  # pragma: no cover
@@ -836,7 +848,7 @@ class Database(BaseDatabase):
         sys.path.insert(0, os.getcwd())
 
         if self.remote:
-            return superduper_requests.jobs.process(self.name,
+            return jobs.process(self.name,
                                                     '_train_imputation', collection, name)
 
         info = self['_objects'].find_one({'name': name, 'variety': 'imputation'})
@@ -853,8 +865,8 @@ class Database(BaseDatabase):
         training.train_tools.ImputationTrainer(
             name,
             cf['mongodb'],
-            self.database.name,
             self.name,
+            collection,
             models=(model, target),
             keys=keys,
             model_names=(info['model'], info['target']),
@@ -871,7 +883,7 @@ class Database(BaseDatabase):
         sys.path.insert(0, os.getcwd())
 
         if self.remote:
-            return superduper_requests.jobs.process(self.name,
+            return jobs.process(self.name,
                                                     '_train_semantic_index',
                                                     collection,
                                                     name)
@@ -895,8 +907,8 @@ class Database(BaseDatabase):
         t = training.train_tools.SemanticIndexTrainer(
             name,
             cf['mongodb'],
-            self.database.name,
             self.name,
+            collection,
             models=models,
             keys=info['keys'],
             model_names=info['models'],
@@ -951,9 +963,9 @@ class Database(BaseDatabase):
         if not self.remote:
             self._compute_neighbourhood(collection, item, sub_ids)
         else:
-            return superduper_requests.jobs.process(
-                self.database.name,
+            return jobs.process(
                 self.name,
+                collection,
                 '_compute_neighbourhood',
                 collection=collection,
                 name=item,
@@ -961,9 +973,9 @@ class Database(BaseDatabase):
                 dependencies=dependencies
             )
 
-    def _create_filter_lookup(self, ids, collection):
+    def _create_filter_lookup(self, collection, ids):
         filters = []
-        for model, key in self.list_watchers(collection):
+        for model, key, collection in self.list_watchers(collection):
             watcher_info = self['_objects'].find_one({'model': model, 'key': key,
                                                       'collection': collection,
                                                       'variety': 'watcher'})
@@ -974,7 +986,7 @@ class Database(BaseDatabase):
             if filter_str not in lookup:
                 tmp_ids = [
                     r['_id']
-                    for r in super().find({
+                    for r in self[collection].find({
                         '$and': [{'_id': {'$in': ids}}, filter_lookup[filter_str]]
                     })
                 ]
@@ -1013,8 +1025,8 @@ class Database(BaseDatabase):
             if watcher_info.get('download', False):  # pragma: no cover
                 self[collection]._download_content(ids=sub_ids)
         else:
-            return superduper_requests.jobs.process(
-                self.database.name,
+            return jobs.process(
+                self.name,
                 '_process_documents_with_watcher',
                 collection,
                 model_name=model,
@@ -1088,7 +1100,7 @@ class Database(BaseDatabase):
         G = networkx.DiGraph()
         for watcher in self.list_watchers(collection):
             G.add_node(('watcher', watcher))
-        for model, key in self.list_watchers(collection):
+        for model, key, collection in self.list_watchers(collection):
             deps = self._get_dependencies_for_watcher(model, key, collection)
             for dep in deps:
                 G.add_edge(('watcher', dep), ('watcher', (model, key, collection)))
@@ -1153,8 +1165,7 @@ class Database(BaseDatabase):
 
     def apply_model(self, model, input_, **kwargs):
         if self.remote:
-            return superduper_requests.client.apply_model(self.database.name,
-                                                          self.name,
+            return superduper_requests.client.apply_model(self.name,
                                                           model, input_, **kwargs)
         if isinstance(model, str):
             model = self.models[model]

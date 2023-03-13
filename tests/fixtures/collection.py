@@ -63,6 +63,7 @@ def random_data(float_tensors):
         data.append({'x': x, 'z': z, 'y': y})
     float_tensors.insert_many(data)
     yield float_tensors
+    float_tensors.delete_many({})
 
 
 @pytest.fixture()
@@ -86,10 +87,10 @@ def with_semantic_index(random_data, a_model, measure):
     )
     random_data['_meta'].insert_one({'key': 'semantic_index', 'value': 'test_semantic_index'})
     yield random_data
+    if random_data.remote:
+        random_data.unset_hash_set()
     random_data.delete_semantic_index('test_semantic_index', force=True)
     random_data['_meta'].delete_one({'key': 'semantic_index'})
-    random_data.remote = True
-    random_data.unset_hash_set()
 
 
 @pytest.fixture()
@@ -124,7 +125,7 @@ def a_model(float_tensors):
     float_tensors.create_model('linear_a', torch.nn.Linear(32, 16), type='float_tensor')
     yield float_tensors
     try:
-        float_tensors.delete_object(['function', 'model'], 'linear_a', force=True)
+        float_tensors.delete_model('linear_a', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -144,7 +145,7 @@ def a_classifier(float_tensors):
                                BinaryClassifier(32))
     yield float_tensors
     try:
-        float_tensors.delete_object(['function', 'model'], 'classifier', force=True)
+        float_tensors.delete_model('classifier', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -169,7 +170,7 @@ def b_model(float_tensors):
     float_tensors.create_model('linear_b', torch.nn.Linear(16, 8), type='float_tensor')
     yield float_tensors
     try:
-        float_tensors.delete_object(['function', 'model'], 'linear_b', force=True)
+        float_tensors.delete_model('linear_b', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -181,7 +182,7 @@ def c_model(float_tensors):
     float_tensors.create_model('linear_c', torch.nn.Linear(32, 16), type='float_tensor')
     yield float_tensors
     try:
-        float_tensors.delete_object(['function', 'model'], 'linear_c', force=True)
+        float_tensors.delete_model('linear_c', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return

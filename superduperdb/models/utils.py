@@ -1,7 +1,20 @@
 import torch
 
-from superduperdb.training.loading import BasicDataset
 from superduperdb.utils import create_batch, unpack_batch, progressbar
+from torch.utils import data
+
+
+class BasicDataset(data.Dataset):
+    def __init__(self, documents, transform):
+        super().__init__()
+        self.documents = documents
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.documents)
+
+    def __getitem__(self, item):
+        return self.transform(self.documents[item])
 
 
 class Container(torch.nn.Module):

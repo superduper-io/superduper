@@ -8,7 +8,3 @@ def captioning_splitter(r):
     r['caption'] = r['captions'][index]
     return r, target
 
-
-def retrieval_splitter(r):
-    return {'img': r['img']}, {'captions': [r['captions'][0]]}
-

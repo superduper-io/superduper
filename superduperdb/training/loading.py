@@ -2,19 +2,6 @@ from torch.utils import data
 import pymongo
 
 
-class BasicDataset(data.Dataset):
-    def __init__(self, documents, transform):
-        super().__init__()
-        self.documents = documents
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.documents)
-
-    def __getitem__(self, item):
-        return self.transform(self.documents[item])
-
-
 class MongoIterable(data.IterableDataset):  # pragma: no cover
     def __init__(self, client, database, collection, transform=None, filter=None):
         super().__init__()

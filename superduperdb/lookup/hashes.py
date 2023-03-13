@@ -21,6 +21,7 @@ class HashSet:
 
     def find_nearest_from_hashes(self, h, n=100):
         similarities = self.measure(h, self.h)
+        print(similarities)
         scores, ix = similarities.topk(min(n, similarities.shape[1]), dim=1)
         ix = ix.tolist()
         scores = scores.tolist()

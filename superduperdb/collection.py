@@ -11,10 +11,9 @@ from pymongo.collection import Collection as BaseCollection
 from pymongo.cursor import Cursor
 import torch.utils.data
 
-from superduperdb import cf
 from superduperdb.lookup import hashes
 from superduperdb import getters as superduper_requests
-from superduperdb.utils import MongoStyleDict, Downloader, progressbar, \
+from superduperdb.utils import MongoStyleDict, progressbar, \
     ArgumentDefaultDict
 from superduperdb.models.utils import apply_model
 
@@ -332,6 +331,13 @@ class Collection(BaseCollection):
         id_ = super().find_one(filter, {'_id': 1})['_id']
         return self.update_many({'_id': id_}, *args, refresh=refresh, **kwargs)
 
+    def clear_remote_cache(self):
+        """
+        Drop the hash_set currently in-use.
+        """
+        if self.remote:
+            return superduper_requests.client.clear_remote_cache()
+
     def unset_hash_set(self):
         """
         Drop the hash_set currently in-use.
@@ -341,17 +347,6 @@ class Collection(BaseCollection):
         if self.semantic_index in self._all_hash_sets:
             del self._all_hash_sets[self.semantic_index]
             self._semantic_index = None
-            models = self.database['_objects'].find_one({'variety': 'semantic_index',
-                                                         'name': self.semantic_index,
-                                                         'collection': self.name})['models']
-            for k in models:
-                if k in self.database.models:
-                    del self.database.models[k]
-
-    @staticmethod
-    def _dict_to_str(d):
-        sd = Collection._standardize_dict(d)
-        return str(sd)
 
     def _find_nearest(self, like, ids=None, n=10):
         if self.remote:

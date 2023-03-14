@@ -8,7 +8,7 @@ from superduperdb.utils import progressbar
 
 def validate_imputation(collection, validation_set, imputation, metrics, model=None, features=None):
 
-    info = collection['_objects'].find_one({'name': imputation, 'varieties': 'imputation'})
+    info = collection.database['_objects'].find_one({'name': imputation, 'variety': 'imputation'})
     if model is None:
         model = collection.models[info['model']]
     model_key = info['model_key']
@@ -21,8 +21,8 @@ def validate_imputation(collection, validation_set, imputation, metrics, model=N
         for m in _save:
             metrics[m] = collection.metrics[m]
 
-    docs = list(collection['_validation_sets'].find(
-        {'_validation_set': validation_set},
+    docs = list(collection.database['_validation_sets'].find(
+        {'_validation_set': validation_set, 'collection': collection.name},
         features=features,
     ))
     if model_key != '_base':
@@ -56,7 +56,8 @@ def validate_representations(collection, validation_set, semantic_index,
                              metrics, encoders=None,
                              features=None, refresh=False):
 
-    info = collection['_objects'].find_one({'name': semantic_index, 'varieties': 'semantic_index'})
+    info = collection.database['_objects'].find_one({'name': semantic_index, 'variety': 'semantic_index',
+                                                     'collection': collection.name})
     encoder_names = info['models']
     projection = info.get('projection', {})
     if encoders is None:
@@ -77,24 +78,28 @@ def validate_representations(collection, validation_set, semantic_index,
             raise e
 
     if refresh:
-        _ids = collection['_validation_sets'].distinct('_id', {'_validation_set': validation_set})
+        _ids = collection['_validation_sets'].distinct('_id', {'_validation_set': validation_set,
+                                                               'collection': collection.name})
     else:
         _ids = collection['_validation_sets'].distinct(
             '_id',
-            {'_validation_set': validation_set, f'_outputs.{info["keys"][0]}.{encoder_names[0]}':
-                {'$exists': 0}
-            }
+            {
+                '_validation_set': validation_set,
+                f'_outputs.{info["keys"][0]}.{encoder_names[0]}': {'$exists': 0},
+                'collection': collection.name
+            },
         )
 
     collection.remote = False
-    collection['_validation_sets']._process_documents_with_watcher(
+    collection.database._process_documents_with_watcher(
+        '_validation_sets',
         encoder_names[0], info['keys'][0], _ids, verbose=True, model=encoders[0],
         recompute=True,
     )
-    valid_coll = collection['_validation_sets']
+    valid_coll = collection.database['_validation_sets']
     valid_coll.semantic_index = semantic_index
     anchors = progressbar(
-        valid_coll.find({'_validation_set': validation_set},
+        valid_coll.find({'_validation_set': validation_set, 'collection': collection.name},
                         projection,
                         features=features).sort('_id', pymongo.ASCENDING),
         total=valid_coll.count_documents({'_validation_set': validation_set}),

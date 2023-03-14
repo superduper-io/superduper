@@ -5,6 +5,9 @@ from bson import ObjectId, BSON
 import requests
 
 from superduperdb import cf
+from superduperdb.types.utils import convert_types
+
+databases = {}
 
 
 def find_nearest(database, collection, filter, ids=None):
@@ -51,11 +54,13 @@ def clear_remote_cache():
         raise Exception('Unsetting hash set failed...')
 
 
-def apply_model(database, collection, name, input_, **kwargs):
+def apply_model(database, name, input_, **kwargs):
+    from superduperdb.mongodb.client import the_client
+    if database not in databases:
+        databases[database] = the_client[database]
     input_ = pickle.dumps(input_).decode('iso-8859-1')
     json_ = {
         'database': database,
-        'collection': collection,
         'input_': input_,
         'name': name,
         'kwargs': kwargs,
@@ -64,4 +69,7 @@ def apply_model(database, collection, name, input_, **kwargs):
         f'http://{cf["model_server"]["host"]}:{cf["model_server"]["port"]}/apply_model',
         json=json_
     )
-    return pickle.loads(response.content)
+    out = pickle.loads(response.content)
+    out = convert_types(out, converters=databases[database].types)
+    return out
+

@@ -34,7 +34,7 @@ def handle_function_output(function, database, identifier, *args, **kwargs):
 
 def _function_job(database_name, function_name, identifier,
                   args_, kwargs_):
-    from superduperdb.client import the_client
+    from superduperdb.mongodb.client import the_client
     database = the_client[database_name]
     function = getattr(database, function_name)
     database['_jobs'].update_one({'identifier': identifier},

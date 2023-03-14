@@ -4,9 +4,9 @@ def convert_types(r, converters=None):
         converters = {}  # pragma: no cover
     for k in r:
         if isinstance(r[k], dict):
-            if '_content' in r[k]:
-                converter = converters[r[k]['_content']['type']]
-                r[k] = converter.decode(r[k]['_content']['bytes'])
+            if k == '_content':
+                converter = converters[r[k]['type']]
+                return converter.decode(r[k]['bytes'])
             else:
                 convert_types(r[k], converters=converters)
     return r

@@ -1,4 +1,4 @@
-from superduperdb.client import SuperDuperClient
+from superduperdb.mongodb.client import SuperDuperClient
 from bson import BSON, ObjectId
 from flask import request, Flask, jsonify, make_response
 

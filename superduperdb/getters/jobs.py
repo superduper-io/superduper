@@ -13,7 +13,7 @@ q = Queue(connection=Redis(port=cf.get('redis', {}).get('port', 6379)), default_
 
 def process(database_name, method, *args, dependencies=(),
             **kwargs):
-    from superduperdb.client import the_client
+    from superduperdb.mongodb.client import the_client
     job_id = str(uuid.uuid4())
     database = the_client[database_name]
     database['_jobs'].insert_one({

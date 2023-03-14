@@ -6,7 +6,7 @@ from collections import defaultdict
 import pymongo
 import torch.utils.data
 
-from superduperdb import client
+from superduperdb.mongodb import client
 from superduperdb.training.loading import QueryDataset
 from superduperdb.utils import MongoStyleDict
 from superduperdb.training.validation import validate_representations, validate_imputation

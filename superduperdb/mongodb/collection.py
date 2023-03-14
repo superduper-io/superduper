@@ -4,7 +4,7 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-from superduperdb.cursor import SuperDuperCursor
+from superduperdb.mongodb.cursor import SuperDuperCursor
 from superduperdb.types.utils import convert_types
 
 from pymongo.collection import Collection as BaseCollection
@@ -12,7 +12,6 @@ from pymongo.cursor import Cursor
 import torch.utils.data
 
 from superduperdb.lookup import hashes
-from superduperdb import getters as superduper_requests
 from superduperdb.utils import MongoStyleDict, progressbar, \
     ArgumentDefaultDict
 from superduperdb.models.utils import apply_model
@@ -76,6 +75,9 @@ class Collection(BaseCollection):
     def apply_model(self, *args, **kwargs):
         return self.database.apply_model(*args, **kwargs)
 
+    def create_function(self, *args, **kwargs):
+        return self.database.create_function(*args, **kwargs)
+
     def create_imputation(self, *args, **kwargs):
         return self.database.create_imputation(self.name, *args, **kwargs)
 
@@ -91,6 +93,9 @@ class Collection(BaseCollection):
     def create_neighbourhood(self, *args, **kwargs):
         return self.database.create_neighbourhood(self.name, *args, **kwargs)
 
+    def create_objective(self, *args, **kwargs):
+        return self.database.create_objective(*args, **kwargs)
+
     def create_semantic_index(self, *args, **kwargs):
         return self.database.create_semantic_index(self.name, *args, **kwargs)
 
@@ -102,6 +107,9 @@ class Collection(BaseCollection):
 
     def create_watcher(self, *args, **kwargs):
         return self.database.create_watcher(self.name, *args, **kwargs)
+
+    def delete_function(self, *args, **kwargs):
+        return self.database.delete_function(*args, **kwargs)
 
     def delete_imputation(self, *args, **kwargs):
         return self.database.delete_imputation(self.name, *args, **kwargs)
@@ -117,6 +125,9 @@ class Collection(BaseCollection):
 
     def delete_neighbourhood(self, *args, **kwargs):
         return self.database.delete_neighbourhood(self.name, *args, **kwargs)
+
+    def delete_objective(self, *args, **kwargs):
+        return self.database.delete_objective(*args, **kwargs)
 
     def delete_semantic_index(self, *args, **kwargs):
         return self.database.delete_semantic_index(self.name, *args, **kwargs)
@@ -135,6 +146,9 @@ class Collection(BaseCollection):
 
     def list_metrics(self):
         return self.database.list_metrics(self.name)
+
+    def list_models(self):
+        return self.database.list_models(self.name)
 
     def list_imputations(self):
         return self.database.list_imputations()
@@ -181,7 +195,7 @@ class Collection(BaseCollection):
         :param similar_join: replace ids by documents
         :param kwargs: kwargs to be passed to super()
         """
-
+        import pdb; pdb.set_trace()
         if filter is None:
             filter = {}
         if download and like is not None:
@@ -284,17 +298,7 @@ class Collection(BaseCollection):
         :param r: record in which to convert types
         :return modified record
         """
-        if isinstance(r, dict):
-            for k in r:
-                r[k] = self.convert_types(r[k])
-            return r
-        try:
-            t = self.database.type_lookup[type(r)]
-        except KeyError:
-            t = None
-        if t is not None:
-            return {'_content': {'bytes': self.types[t].encode(r), 'type': t}}
-        return r
+        return self.database.convert_types(r)
 
     def update_many(self, filter, *args, refresh=True, **kwargs):
         """

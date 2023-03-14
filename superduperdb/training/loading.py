@@ -91,7 +91,7 @@ class QueryDataset(data.Dataset):
 
     @property
     def client(self):
-        from superduperdb.client import SuperDuperClient
+        from superduperdb.mongodb.client import SuperDuperClient
         return SuperDuperClient(**self._client)
 
     @property

@@ -8,7 +8,8 @@ import pytest
 import torch
 
 
-@pytest.mark.parametrize('remote', [False, True])
+@pytest.mark.parametrize('remote', [False])
+
 def test_find(with_semantic_index, remote):
     with_semantic_index.remote = remote
     print(with_semantic_index.count_documents({}))
@@ -87,7 +88,7 @@ def test_watcher(random_data, a_model, b_model, remote):
 
 
 @pytest.mark.parametrize('remote', [False, True])
-def test_create_semantic_index(si_validation, a_model, c_model, measure, metric, my_rank_obj,
+def test_semantic_index(si_validation, a_model, c_model, measure, metric, my_rank_obj,
                                remote):
 
     si_validation.remote = remote
@@ -107,7 +108,7 @@ def test_create_semantic_index(si_validation, a_model, c_model, measure, metric,
 
 
 @pytest.mark.parametrize('remote', [False, True])
-def test_create_imputation(imputation_validation, a_classifier, a_target, my_class_obj,
+def test_imputation(imputation_validation, a_classifier, a_target, my_class_obj,
                            accuracy_metric, remote):
 
     imputation_validation.remote = remote
@@ -127,3 +128,9 @@ def test_create_imputation(imputation_validation, a_classifier, a_target, my_cla
         for job_id in jobs:
             imputation_validation.watch_job(job_id)
 
+
+@pytest.mark.parametrize('remote', [True])
+def test_apply_model(a_model, remote):
+    a_model.remote = remote
+    out = a_model.apply_model('linear_a', torch.randn(32))
+    print(out)

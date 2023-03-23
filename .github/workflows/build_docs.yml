@@ -29,6 +29,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        sudo apt install pandoc
         python -m pip install --upgrade pip
         pip install -e .
         pip install -r docs/requirements.txt

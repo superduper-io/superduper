@@ -4,7 +4,6 @@ networkx
 numpy
 pillow
 pymongo
-pytest
 redis
 requests
 rq

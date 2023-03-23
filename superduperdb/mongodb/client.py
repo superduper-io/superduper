@@ -1,7 +1,6 @@
 from pymongo.mongo_client import MongoClient
 
 import superduperdb.mongodb.database
-from superduperdb import cf
 
 
 class SuperDuperClient(MongoClient):
@@ -17,5 +16,5 @@ class SuperDuperClient(MongoClient):
     def __getitem__(self, name: str):
         return superduperdb.mongodb.database.Database(self, name)
 
-
-the_client = SuperDuperClient(**cf['mongodb'])
+    def get_database_from_name(self, name):
+        return self[name]

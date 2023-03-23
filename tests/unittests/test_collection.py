@@ -4,12 +4,27 @@ from tests.fixtures.collection import (
     my_class_obj, imputation_validation, with_semantic_index, an_update, a_watcher, image_type
 )
 import PIL.PngImagePlugin
+import os
 import pytest
 import torch
 
 
-@pytest.mark.parametrize('remote', [False])
+remote = os.environ.get('SUPERDUPERDB_REMOTE_TEST', 'false') == 'true'
+image_url = 'https://www.superduperdb.com/logos/white.png'
 
+remote_values = [False]
+if remote:
+    remote_values = [False, True]
+    image_url = 'http://localhost:8002/purple.png'
+
+
+@pytest.mark.parametrize('remote', remote_values)
+def test_get_data(random_data, remote):
+    r = random_data.find_one()
+    print(r)
+
+
+@pytest.mark.parametrize('remote', remote_values)
 def test_find(with_semantic_index, remote):
     with_semantic_index.remote = remote
     print(with_semantic_index.count_documents({}))
@@ -18,7 +33,7 @@ def test_find(with_semantic_index, remote):
     assert s['_id'] == r['_id']
 
 
-@pytest.mark.parametrize('remote', [False, True])
+@pytest.mark.parametrize('remote', remote_values)
 def test_insert(random_data, a_model, an_update, remote):
     random_data.remote = remote
     output = random_data.insert_many(an_update)
@@ -30,21 +45,21 @@ def test_insert(random_data, a_model, an_update, remote):
     assert random_data.count_documents({}) == 110
 
 
-@pytest.mark.parametrize('remote', [False, True])
+@pytest.mark.parametrize('remote', remote_values)
 def test_insert_from_urls(empty, image_type, remote):
     empty.remote = remote
     to_insert = [
         {
             'item': {
                 '_content': {
-                    'url': 'http://localhost:8002/purple.png',
+                    'url': image_url,
                     'type': 'image',
                 }
             },
             'other': {
                 'item': {
                     '_content': {
-                        'url': 'http://localhost:8002/black.png',
+                        'url': image_url,
                         'type': 'image',
                     }
                 }
@@ -62,11 +77,11 @@ def test_insert_from_urls(empty, image_type, remote):
     assert isinstance(empty.find_one()['other']['item'], PIL.PngImagePlugin.PngImageFile)
 
 
-@pytest.mark.parametrize('remote', [False, True])
+@pytest.mark.parametrize('remote', remote_values)
 def test_watcher(random_data, a_model, b_model, remote):
 
     random_data.remote = remote
-    job_id = random_data.create_watcher('linear_a', key='x')
+    job_id = random_data.create_watcher('linear_a/x', 'linear_a', key='x')
     if remote:
         random_data.watch_job(job_id)
 
@@ -81,22 +96,21 @@ def test_watcher(random_data, a_model, b_model, remote):
 
     assert 'linear_a' in random_data.find_one({'update': True})['_outputs']['x']
 
-    job_id = random_data.create_watcher('linear_b', key='x', features={'x': 'linear_a'})
+    job_id = random_data.create_watcher('linear_b/x', 'linear_b', key='x', features={'x': 'linear_a'})
     if remote:
         random_data.watch_job(job_id)
     assert 'linear_b' in random_data.find_one()['_outputs']['x']
 
 
-@pytest.mark.parametrize('remote', [False, True])
+@pytest.mark.parametrize('remote', remote_values)
 def test_semantic_index(si_validation, a_model, c_model, measure, metric, my_rank_obj,
-                               remote):
+                        remote):
 
     si_validation.remote = remote
-
     jobs = si_validation.create_semantic_index('my_index',
                                                models=['linear_a', 'linear_c'],
-                                               measure='css',
                                                keys=['x', 'z'],
+                                               measure='css',
                                                metrics=['p_at_1'],
                                                objective='rank_obj',
                                                validation_sets=('my_valid',),
@@ -107,7 +121,7 @@ def test_semantic_index(si_validation, a_model, c_model, measure, metric, my_ran
             si_validation.watch_job(job_id)
 
 
-@pytest.mark.parametrize('remote', [False, True])
+@pytest.mark.parametrize('remote', remote_values)
 def test_imputation(imputation_validation, a_classifier, a_target, my_class_obj,
                            accuracy_metric, remote):
 
@@ -123,13 +137,12 @@ def test_imputation(imputation_validation, a_classifier, a_target, my_class_obj,
                                                    validation_sets=('my_imputation_valid',),
                                                    n_iterations=4,
                                                    validation_interval=2)
-
     if remote:
         for job_id in jobs:
             imputation_validation.watch_job(job_id)
 
 
-@pytest.mark.parametrize('remote', [True])
+@pytest.mark.parametrize('remote', remote_values)
 def test_apply_model(a_model, remote):
     a_model.remote = remote
     out = a_model.apply_model('linear_a', torch.randn(32))

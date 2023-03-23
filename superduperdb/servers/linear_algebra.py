@@ -57,8 +57,8 @@ def find_nearest():
         collections[f'{database}.{collection}'] = client[database][collection]
     collection = collections[f'{database}.{collection}']
     collection.remote = False
-    from superduperdb.types.utils import convert_types
-    filter = convert_types(filter, converters=collection.types)
+    from superduperdb.types.utils import convert_from_bytes_to_types
+    filter = convert_from_bytes_to_types(filter, converters=collection.types)
     result = collection._find_nearest(filter, ids=ids)
     for i, _id in enumerate(result['_ids']):
         result['_ids'][i] = str(_id)

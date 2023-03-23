@@ -1,0 +1,2671 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bespoke retrieval based on CLIP embedding vectors &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/nbsphinx-code-cells.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Attribute prediction using “imputations” with preparation in SpaCy" href="attribute-prediction.html" />
+    <link rel="prev" title="Text-2-Image document retrieval using pretrained CLIP" href="text-2-image-retrieval-with-clip.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials and examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../mnist/index.html">MNIST Dataset</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo (Common Objects in Context) Dataset</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="setup-and-installation.html">Setup and installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="inserting-and-getting-data.html">Inserting and getting data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="text-2-image-retrieval-with-clip.html">Text-2-Image document retrieval using pretrained CLIP</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Bespoke retrieval based on CLIP embedding vectors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="attribute-prediction.html">Attribute prediction using “imputations” with preparation in SpaCy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="image-captioning.html">Image captioning using recurrent language modelling and transfer learning based on CLIP</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">SuperDuperDB Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../types.html">Types in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../content.html">Adding interesting content to SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models - an extension of PyTorch models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchers.html">Watchers in SuperDuperDB</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../imputations.html">Imputations for filling in data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../jobs.html">Jobs - scheduling of training and model outputs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cluster.html">Setting up a SuperDuperDB cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../full_usage.html">Full usage</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Tutorials and examples</a></li>
+          <li class="breadcrumb-item"><a href="index.html">CoCo (Common Objects in Context) Dataset</a></li>
+      <li class="breadcrumb-item active">Bespoke retrieval based on CLIP embedding vectors</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/examples/coco/bespoke-retriever-using-clip-embeddings.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Bespoke-retrieval-based-on-CLIP-embedding-vectors">
+<h1>Bespoke retrieval based on CLIP embedding vectors<a class="headerlink" href="#Bespoke-retrieval-based-on-CLIP-embedding-vectors" title="Permalink to this heading"></a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from superduperdb.client import the_client
+
+docs = the_client.coco.documents
+</pre></div>
+</div>
+</div>
+<p>In the notebook from the previous chapter we implemented retrieval based on a pretrained CLIP model from open-source. In this notebook we will train our own model based on a simpler architecture, but which has the upside of increased efficiency compared to the original model.</p>
+<p>To this end we will first implement a simpler sentence embedding, using a simple word-embedding approach based around Glove.</p>
+<p>Get the embeddings first if you haven’t already:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!curl https://downloads.cs.stanford.edu/nlp/data/glove.6B.zip
+!unzip glove.6B.zip
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/glove.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">re</span>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">torch</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">AverageOfGloves</span>:
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, embeddings, index):
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>embeddings <span style="color: rgb(102,102,102)">=</span> embeddings
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>index <span style="color: rgb(102,102,102)">=</span> index
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>lookup <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">dict</span>(<span style="color: rgb(0,128,0)">zip</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>index, <span style="color: rgb(0,128,0)">range</span>(<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>index))))
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">preprocess</span>(<span style="color: rgb(0,128,0)">self</span>, sentence):
+        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span style="color: rgb(0,128,0)">isinstance</span>(sentence, <span style="color: rgb(0,128,0)">list</span>):
+            sentence <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)"> </span><span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(102,102,102)">.</span>join(sentence)
+        cleaned <span style="color: rgb(102,102,102)">=</span> re<span style="color: rgb(102,102,102)">.</span>sub(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">[^a-z0-9 ]</span><span style="color: rgb(186,33,33)">&#39;</span>, <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)"> </span><span style="color: rgb(186,33,33)">&#39;</span>,  sentence<span style="color: rgb(102,102,102)">.</span>lower())
+        cleaned <span style="color: rgb(102,102,102)">=</span> re<span style="color: rgb(102,102,102)">.</span>sub(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">[ ]+</span><span style="color: rgb(186,33,33)">&#39;</span>, <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)"> </span><span style="color: rgb(186,33,33)">&#39;</span>,  cleaned)
+        words <span style="color: rgb(102,102,102)">=</span> cleaned<span style="color: rgb(102,102,102)">.</span>split()
+        words <span style="color: rgb(102,102,102)">=</span> [x <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> words <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>index]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span class="ansi-bold" style="color: rgb(170,34,255)">not</span> words:
+            <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> torch<span style="color: rgb(102,102,102)">.</span>ones(<span style="color: rgb(102,102,102)">50</span>)<span style="color: rgb(102,102,102)">.</span>type(torch<span style="color: rgb(102,102,102)">.</span>float)
+        ix <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">list</span>(<span style="color: rgb(0,128,0)">map</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>lookup<span style="color: rgb(102,102,102)">.</span><span style="color: rgb(0,0,255)">__getitem__</span>, words))
+        vectors <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>embeddings[ix, :]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> vectors<span style="color: rgb(102,102,102)">.</span>mean(<span style="color: rgb(102,102,102)">0</span>)
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy
+import torch
+from examples.coco.glove import AverageOfGloves
+
+with open(&#39;glove.6B.50d.txt&#39;) as f:
+    lines = f.read().split(&#39;\n&#39;)
+
+lines = [x.split(&#39; &#39;) for x in lines[:-1]]
+index = [x[0] for x in lines]
+vectors = [[float(y) for y in x[1:]] for x in lines]
+vectors = numpy.array(vectors)
+
+glove = AverageOfGloves(torch.from_numpy(vectors).type(torch.float), index)
+
+docs.create_model(
+    &#39;average_glove&#39;,
+    glove,
+    type=&#39;float_tensor&#39;,
+)
+</pre></div>
+</div>
+</div>
+<p>Since the glove vectors are smaller than the output of the CLIP model, we will create a linear projection of the CLIP embeddings so that the outputs over image inputs have the same size as the glove embeddings.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_model(
+    &#39;clip_projection&#39;,
+    object=torch.nn.Linear(1024, 50),
+    type=&#39;float_tensor&#39;,
+)
+</pre></div>
+</div>
+</div>
+<p>Let’s also create a loss function <code class="docutils literal notranslate"><span class="pre">ranking_loss</span></code>, in order to be able to perform the learning task.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/ranking_loss.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">torch</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">ranking_loss</span>(x, y):
+    x <span style="color: rgb(102,102,102)">=</span> x<span style="color: rgb(102,102,102)">.</span>div(x<span style="color: rgb(102,102,102)">.</span>norm(dim<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)[:, <span class="ansi-bold" style="color: rgb(0,128,0)">None</span>])
+    y <span style="color: rgb(102,102,102)">=</span> y<span style="color: rgb(102,102,102)">.</span>div(y<span style="color: rgb(102,102,102)">.</span>norm(dim<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)[:, <span class="ansi-bold" style="color: rgb(0,128,0)">None</span>])
+    similarities <span style="color: rgb(102,102,102)">=</span> x<span style="color: rgb(102,102,102)">.</span>matmul(y<span style="color: rgb(102,102,102)">.</span>T)
+    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(102,102,102)">-</span>torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>functional<span style="color: rgb(102,102,102)">.</span>log_softmax(similarities, dim<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)<span style="color: rgb(102,102,102)">.</span>diag()<span style="color: rgb(102,102,102)">.</span>mean()
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.coco.ranking_loss import ranking_loss
+
+docs.create_objective(&#39;ranking_loss&#39;, ranking_loss)
+</pre></div>
+</div>
+</div>
+<p>A semantic index training requires:</p>
+<ul class="simple">
+<li><p>1 or more models</p></li>
+<li><p>A measure function to measure similarity between model outputs</p></li>
+<li><p>An objective (loss) function</p></li>
+<li><p>One or more validation sets</p></li>
+<li><p>One or more metrics to measure performance</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_models()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;average_glove&#39;, &#39;clip&#39;, &#39;clip_projection&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_measures()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;css&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_objectives()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;ranking_loss&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_validation_sets()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;text2image_retrieval&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_metrics()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;p_at_10&#39;]
+</pre></div></div>
+</div>
+<p>We now have all of these things ready and registered with the database, so we can start the training:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_semantic_index(
+    &#39;simple_image_search&#39;,
+    models=[&#39;clip_projection&#39;, &#39;average_glove&#39;],
+    keys=[&#39;img&#39;, &#39;captions&#39;],
+    objective=&#39;ranking_loss&#39;,
+    filter={},
+    features={&#39;img&#39;: &#39;clip&#39;},
+    metrics=[&#39;p_at_10&#39;],
+    measure=&#39;css&#39;,
+    validation_sets=[&#39;text2image_retrieval&#39;],
+    batch_size=250,
+    num_workers=0,
+    n_epochs=20,
+    lr=0.001,
+    log_weights=True,
+    download=True,
+    validation_interval=50,
+    no_improve_then_stop=5,
+    n_iterations=5000,
+    use_grads={&#39;clip_projection&#39;: True, &#39;average_glove&#39;: False},
+)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+downloading ids for {&#39;_fold&#39;: &#39;train&#39;}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "93403eb99d054b568726385e97f59083", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+downloading records for {&#39;_fold&#39;: &#39;valid&#39;}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "f44dafc47dfd49da910d775e522488fa", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "a18618cd34e94a13ac8b2fe8ae2cdcef", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "6cf4ffa35a324fa79e2c127c14fa7d7d", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "bc5d31eba82c441cba679aabab052b6c", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+fold: VALID; iteration: 0; epoch: 0; text2image_retrieval/p_at_10: 0.006; objective: 5.417091565973618;
+fold: TRAIN; iteration: 0; epoch: 0; objective: 5.524089813232422;
+fold: TRAIN; iteration: 1; epoch: 0; objective: 5.505591869354248;
+fold: TRAIN; iteration: 2; epoch: 0; objective: 5.489068508148193;
+fold: TRAIN; iteration: 3; epoch: 0; objective: 5.472532272338867;
+fold: TRAIN; iteration: 4; epoch: 0; objective: 5.454397678375244;
+fold: TRAIN; iteration: 5; epoch: 0; objective: 5.427471160888672;
+fold: TRAIN; iteration: 6; epoch: 0; objective: 5.419985294342041;
+fold: TRAIN; iteration: 7; epoch: 0; objective: 5.410735607147217;
+fold: TRAIN; iteration: 8; epoch: 0; objective: 5.394529342651367;
+fold: TRAIN; iteration: 9; epoch: 0; objective: 5.39639949798584;
+fold: TRAIN; iteration: 10; epoch: 0; objective: 5.379389762878418;
+fold: TRAIN; iteration: 11; epoch: 0; objective: 5.387411117553711;
+fold: TRAIN; iteration: 12; epoch: 0; objective: 5.379367351531982;
+fold: TRAIN; iteration: 13; epoch: 0; objective: 5.365805625915527;
+fold: TRAIN; iteration: 14; epoch: 0; objective: 5.367343902587891;
+fold: TRAIN; iteration: 15; epoch: 0; objective: 5.368618011474609;
+fold: TRAIN; iteration: 16; epoch: 0; objective: 5.362681865692139;
+fold: TRAIN; iteration: 17; epoch: 0; objective: 5.361654281616211;
+fold: TRAIN; iteration: 18; epoch: 0; objective: 5.356680870056152;
+fold: TRAIN; iteration: 19; epoch: 0; objective: 5.3513336181640625;
+fold: TRAIN; iteration: 20; epoch: 0; objective: 5.358112812042236;
+fold: TRAIN; iteration: 21; epoch: 0; objective: 5.357871055603027;
+fold: TRAIN; iteration: 22; epoch: 0; objective: 5.350862979888916;
+fold: TRAIN; iteration: 23; epoch: 0; objective: 5.34467887878418;
+fold: TRAIN; iteration: 24; epoch: 0; objective: 5.34572696685791;
+fold: TRAIN; iteration: 25; epoch: 0; objective: 5.343122959136963;
+fold: TRAIN; iteration: 26; epoch: 0; objective: 5.343909740447998;
+fold: TRAIN; iteration: 27; epoch: 0; objective: 5.345189571380615;
+fold: TRAIN; iteration: 28; epoch: 0; objective: 5.341660976409912;
+fold: TRAIN; iteration: 29; epoch: 0; objective: 5.341576099395752;
+fold: TRAIN; iteration: 30; epoch: 0; objective: 5.337402820587158;
+fold: TRAIN; iteration: 31; epoch: 0; objective: 5.338311672210693;
+fold: TRAIN; iteration: 32; epoch: 0; objective: 5.347019672393799;
+fold: TRAIN; iteration: 33; epoch: 0; objective: 5.338568210601807;
+fold: TRAIN; iteration: 34; epoch: 0; objective: 5.3411126136779785;
+fold: TRAIN; iteration: 35; epoch: 0; objective: 5.337347507476807;
+fold: TRAIN; iteration: 36; epoch: 0; objective: 5.334493160247803;
+fold: TRAIN; iteration: 37; epoch: 0; objective: 5.340918064117432;
+fold: TRAIN; iteration: 38; epoch: 0; objective: 5.330418586730957;
+fold: TRAIN; iteration: 39; epoch: 0; objective: 5.332492351531982;
+fold: TRAIN; iteration: 40; epoch: 0; objective: 5.330962181091309;
+fold: TRAIN; iteration: 41; epoch: 0; objective: 5.332724571228027;
+fold: TRAIN; iteration: 42; epoch: 0; objective: 5.333348751068115;
+fold: TRAIN; iteration: 43; epoch: 0; objective: 5.329241752624512;
+fold: TRAIN; iteration: 44; epoch: 0; objective: 5.333497047424316;
+fold: TRAIN; iteration: 45; epoch: 0; objective: 5.3226141929626465;
+fold: TRAIN; iteration: 46; epoch: 0; objective: 5.326714515686035;
+fold: TRAIN; iteration: 47; epoch: 0; objective: 5.329339027404785;
+fold: TRAIN; iteration: 48; epoch: 0; objective: 5.328666687011719;
+fold: TRAIN; iteration: 49; epoch: 0; objective: 5.3294243812561035;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "cdeaf250fd67460595965449f14f134a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "a8090780d5e3471395cb4b0fe5996262", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "c42bc57769ec402b81114052ae5ee495", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 50; epoch: 0; text2image_retrieval/p_at_10: 0.233; objective: 5.224311730440925;
+fold: TRAIN; iteration: 50; epoch: 0; objective: 5.338551044464111;
+fold: TRAIN; iteration: 51; epoch: 0; objective: 5.3397111892700195;
+fold: TRAIN; iteration: 52; epoch: 0; objective: 5.326765060424805;
+fold: TRAIN; iteration: 53; epoch: 0; objective: 5.322484493255615;
+fold: TRAIN; iteration: 54; epoch: 0; objective: 5.333186149597168;
+fold: TRAIN; iteration: 55; epoch: 0; objective: 5.3290605545043945;
+fold: TRAIN; iteration: 56; epoch: 0; objective: 5.332774639129639;
+fold: TRAIN; iteration: 57; epoch: 0; objective: 5.333982467651367;
+fold: TRAIN; iteration: 58; epoch: 0; objective: 5.334574222564697;
+fold: TRAIN; iteration: 59; epoch: 0; objective: 5.328280448913574;
+fold: TRAIN; iteration: 60; epoch: 0; objective: 5.324556827545166;
+fold: TRAIN; iteration: 61; epoch: 0; objective: 5.327946186065674;
+fold: TRAIN; iteration: 62; epoch: 0; objective: 5.322636127471924;
+fold: TRAIN; iteration: 63; epoch: 0; objective: 5.334684371948242;
+fold: TRAIN; iteration: 64; epoch: 0; objective: 5.3258771896362305;
+fold: TRAIN; iteration: 65; epoch: 0; objective: 5.329965114593506;
+fold: TRAIN; iteration: 66; epoch: 0; objective: 5.3221516609191895;
+fold: TRAIN; iteration: 67; epoch: 0; objective: 5.329530239105225;
+fold: TRAIN; iteration: 68; epoch: 0; objective: 5.32960844039917;
+fold: TRAIN; iteration: 69; epoch: 0; objective: 5.3249735832214355;
+fold: TRAIN; iteration: 70; epoch: 0; objective: 5.3281941413879395;
+fold: TRAIN; iteration: 71; epoch: 0; objective: 5.324628829956055;
+fold: TRAIN; iteration: 72; epoch: 0; objective: 5.328751087188721;
+fold: TRAIN; iteration: 73; epoch: 0; objective: 5.325242519378662;
+fold: TRAIN; iteration: 74; epoch: 0; objective: 5.323412895202637;
+fold: TRAIN; iteration: 75; epoch: 0; objective: 5.33321475982666;
+fold: TRAIN; iteration: 76; epoch: 0; objective: 5.320866107940674;
+fold: TRAIN; iteration: 77; epoch: 0; objective: 5.323550224304199;
+fold: TRAIN; iteration: 78; epoch: 0; objective: 5.321530818939209;
+fold: TRAIN; iteration: 79; epoch: 0; objective: 5.330416202545166;
+fold: TRAIN; iteration: 80; epoch: 0; objective: 5.318420886993408;
+fold: TRAIN; iteration: 81; epoch: 0; objective: 5.329902172088623;
+fold: TRAIN; iteration: 82; epoch: 0; objective: 5.317391395568848;
+fold: TRAIN; iteration: 83; epoch: 0; objective: 5.326170921325684;
+fold: TRAIN; iteration: 84; epoch: 0; objective: 5.328503608703613;
+fold: TRAIN; iteration: 85; epoch: 0; objective: 5.317636013031006;
+fold: TRAIN; iteration: 86; epoch: 0; objective: 5.326113224029541;
+fold: TRAIN; iteration: 87; epoch: 0; objective: 5.3220744132995605;
+fold: TRAIN; iteration: 88; epoch: 0; objective: 5.325397491455078;
+fold: TRAIN; iteration: 89; epoch: 0; objective: 5.321215629577637;
+fold: TRAIN; iteration: 90; epoch: 0; objective: 5.32357931137085;
+fold: TRAIN; iteration: 91; epoch: 0; objective: 5.325582504272461;
+fold: TRAIN; iteration: 92; epoch: 0; objective: 5.31926155090332;
+fold: TRAIN; iteration: 93; epoch: 0; objective: 5.324344158172607;
+fold: TRAIN; iteration: 94; epoch: 0; objective: 5.323460578918457;
+fold: TRAIN; iteration: 95; epoch: 0; objective: 5.321723461151123;
+fold: TRAIN; iteration: 96; epoch: 0; objective: 5.323446273803711;
+fold: TRAIN; iteration: 97; epoch: 0; objective: 5.319704532623291;
+fold: TRAIN; iteration: 98; epoch: 0; objective: 5.3190083503723145;
+fold: TRAIN; iteration: 99; epoch: 0; objective: 5.314661026000977;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "7876e873caa4485b8a8578056654e78e", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "4317e9afabec4a3190af812150996335", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "53b8bbdc46aa447ebe1347eea88c7bbd", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 100; epoch: 0; text2image_retrieval/p_at_10: 0.317; objective: 5.217227178461411;
+fold: TRAIN; iteration: 100; epoch: 0; objective: 5.325514793395996;
+fold: TRAIN; iteration: 101; epoch: 0; objective: 5.3208770751953125;
+fold: TRAIN; iteration: 102; epoch: 0; objective: 5.328906059265137;
+fold: TRAIN; iteration: 103; epoch: 0; objective: 5.325454235076904;
+fold: TRAIN; iteration: 104; epoch: 0; objective: 5.32430362701416;
+fold: TRAIN; iteration: 105; epoch: 0; objective: 5.329595565795898;
+fold: TRAIN; iteration: 106; epoch: 0; objective: 5.323193073272705;
+fold: TRAIN; iteration: 107; epoch: 0; objective: 5.3223443031311035;
+fold: TRAIN; iteration: 108; epoch: 0; objective: 5.3271379470825195;
+fold: TRAIN; iteration: 109; epoch: 0; objective: 5.319332599639893;
+fold: TRAIN; iteration: 110; epoch: 0; objective: 5.32206916809082;
+fold: TRAIN; iteration: 111; epoch: 0; objective: 5.322122097015381;
+fold: TRAIN; iteration: 112; epoch: 0; objective: 5.324742317199707;
+fold: TRAIN; iteration: 113; epoch: 0; objective: 5.315544128417969;
+fold: TRAIN; iteration: 114; epoch: 0; objective: 5.32076358795166;
+fold: TRAIN; iteration: 115; epoch: 0; objective: 5.323005199432373;
+fold: TRAIN; iteration: 116; epoch: 0; objective: 5.318248271942139;
+fold: TRAIN; iteration: 117; epoch: 0; objective: 5.326498985290527;
+fold: TRAIN; iteration: 118; epoch: 0; objective: 5.324572563171387;
+fold: TRAIN; iteration: 119; epoch: 0; objective: 5.323737621307373;
+fold: TRAIN; iteration: 120; epoch: 0; objective: 5.322812557220459;
+fold: TRAIN; iteration: 121; epoch: 0; objective: 5.325056552886963;
+fold: TRAIN; iteration: 122; epoch: 0; objective: 5.3219523429870605;
+fold: TRAIN; iteration: 123; epoch: 0; objective: 5.326084136962891;
+fold: TRAIN; iteration: 124; epoch: 0; objective: 5.323330879211426;
+fold: TRAIN; iteration: 125; epoch: 0; objective: 5.323115825653076;
+fold: TRAIN; iteration: 126; epoch: 0; objective: 5.325913906097412;
+fold: TRAIN; iteration: 127; epoch: 0; objective: 5.319926738739014;
+fold: TRAIN; iteration: 128; epoch: 0; objective: 5.321945667266846;
+fold: TRAIN; iteration: 129; epoch: 0; objective: 5.321124076843262;
+fold: TRAIN; iteration: 130; epoch: 0; objective: 5.332142353057861;
+fold: TRAIN; iteration: 131; epoch: 0; objective: 5.322497844696045;
+fold: TRAIN; iteration: 132; epoch: 0; objective: 5.322293758392334;
+fold: TRAIN; iteration: 133; epoch: 0; objective: 5.325979232788086;
+fold: TRAIN; iteration: 134; epoch: 0; objective: 5.31882905960083;
+fold: TRAIN; iteration: 135; epoch: 0; objective: 5.324482440948486;
+fold: TRAIN; iteration: 136; epoch: 0; objective: 5.31943941116333;
+fold: TRAIN; iteration: 137; epoch: 0; objective: 5.321263790130615;
+fold: TRAIN; iteration: 138; epoch: 0; objective: 5.323235511779785;
+fold: TRAIN; iteration: 139; epoch: 0; objective: 5.320988178253174;
+fold: TRAIN; iteration: 140; epoch: 0; objective: 5.319422721862793;
+fold: TRAIN; iteration: 141; epoch: 0; objective: 5.323246002197266;
+fold: TRAIN; iteration: 142; epoch: 0; objective: 5.320528984069824;
+fold: TRAIN; iteration: 143; epoch: 0; objective: 5.332995414733887;
+fold: TRAIN; iteration: 144; epoch: 0; objective: 5.321744441986084;
+fold: TRAIN; iteration: 145; epoch: 0; objective: 5.3190717697143555;
+fold: TRAIN; iteration: 146; epoch: 0; objective: 5.318844318389893;
+fold: TRAIN; iteration: 147; epoch: 0; objective: 5.321220874786377;
+fold: TRAIN; iteration: 148; epoch: 0; objective: 5.323151111602783;
+fold: TRAIN; iteration: 149; epoch: 0; objective: 5.322291374206543;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "50dbf74a303c444ba6afc7f34945f9b9", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "38b7d76f10d44d98839ea616ff32e9d8", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "d027bd109138401592931a3cd77fac54", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 150; epoch: 0; text2image_retrieval/p_at_10: 0.341; objective: 5.215378424700568;
+fold: TRAIN; iteration: 150; epoch: 0; objective: 5.312405586242676;
+fold: TRAIN; iteration: 151; epoch: 0; objective: 5.324182987213135;
+fold: TRAIN; iteration: 152; epoch: 0; objective: 5.323192119598389;
+fold: TRAIN; iteration: 153; epoch: 0; objective: 5.327282428741455;
+fold: TRAIN; iteration: 154; epoch: 0; objective: 5.319421291351318;
+fold: TRAIN; iteration: 155; epoch: 0; objective: 5.3235697746276855;
+fold: TRAIN; iteration: 156; epoch: 0; objective: 5.321167945861816;
+fold: TRAIN; iteration: 157; epoch: 0; objective: 5.315560340881348;
+fold: TRAIN; iteration: 158; epoch: 0; objective: 5.32195520401001;
+fold: TRAIN; iteration: 159; epoch: 0; objective: 5.325678825378418;
+fold: TRAIN; iteration: 160; epoch: 0; objective: 5.3207478523254395;
+fold: TRAIN; iteration: 161; epoch: 0; objective: 5.326735496520996;
+fold: TRAIN; iteration: 162; epoch: 0; objective: 5.325973033905029;
+fold: TRAIN; iteration: 163; epoch: 0; objective: 5.324706077575684;
+fold: TRAIN; iteration: 164; epoch: 0; objective: 5.316420078277588;
+fold: TRAIN; iteration: 165; epoch: 0; objective: 5.3190507888793945;
+fold: TRAIN; iteration: 166; epoch: 0; objective: 5.331889629364014;
+fold: TRAIN; iteration: 167; epoch: 0; objective: 5.319876194000244;
+fold: TRAIN; iteration: 168; epoch: 0; objective: 5.314802646636963;
+fold: TRAIN; iteration: 169; epoch: 0; objective: 5.320347785949707;
+fold: TRAIN; iteration: 170; epoch: 0; objective: 5.324019432067871;
+fold: TRAIN; iteration: 171; epoch: 0; objective: 5.323643207550049;
+fold: TRAIN; iteration: 172; epoch: 0; objective: 5.323431968688965;
+fold: TRAIN; iteration: 173; epoch: 0; objective: 5.3158698081970215;
+fold: TRAIN; iteration: 174; epoch: 0; objective: 5.327216625213623;
+fold: TRAIN; iteration: 175; epoch: 0; objective: 5.323125839233398;
+fold: TRAIN; iteration: 176; epoch: 0; objective: 5.319998264312744;
+fold: TRAIN; iteration: 177; epoch: 0; objective: 5.319823265075684;
+fold: TRAIN; iteration: 178; epoch: 0; objective: 5.31354284286499;
+fold: TRAIN; iteration: 179; epoch: 0; objective: 5.321597576141357;
+fold: TRAIN; iteration: 180; epoch: 0; objective: 5.32361364364624;
+fold: TRAIN; iteration: 181; epoch: 0; objective: 5.325308322906494;
+fold: TRAIN; iteration: 182; epoch: 0; objective: 5.324424743652344;
+fold: TRAIN; iteration: 183; epoch: 0; objective: 5.321698188781738;
+fold: TRAIN; iteration: 184; epoch: 0; objective: 5.319480895996094;
+fold: TRAIN; iteration: 185; epoch: 0; objective: 5.3291425704956055;
+fold: TRAIN; iteration: 186; epoch: 0; objective: 5.3201470375061035;
+fold: TRAIN; iteration: 187; epoch: 0; objective: 5.3221001625061035;
+fold: TRAIN; iteration: 188; epoch: 0; objective: 5.326850891113281;
+fold: TRAIN; iteration: 189; epoch: 0; objective: 5.3172478675842285;
+fold: TRAIN; iteration: 190; epoch: 0; objective: 5.316368103027344;
+fold: TRAIN; iteration: 191; epoch: 0; objective: 5.3293328285217285;
+fold: TRAIN; iteration: 192; epoch: 0; objective: 5.320223331451416;
+fold: TRAIN; iteration: 193; epoch: 0; objective: 5.3164448738098145;
+fold: TRAIN; iteration: 194; epoch: 0; objective: 5.3094048500061035;
+fold: TRAIN; iteration: 195; epoch: 0; objective: 5.319260597229004;
+fold: TRAIN; iteration: 196; epoch: 0; objective: 5.319187164306641;
+fold: TRAIN; iteration: 197; epoch: 0; objective: 5.325090408325195;
+fold: TRAIN; iteration: 198; epoch: 0; objective: 5.32055139541626;
+fold: TRAIN; iteration: 199; epoch: 0; objective: 5.322051048278809;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "f8b9ab8d7ac841a5938c5b550e6f15f6", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "acc8f6a8f66541e1b772051579f56664", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "445c9cf0a1bb4a8b89134eaec0457156", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 200; epoch: 0; text2image_retrieval/p_at_10: 0.34; objective: 5.214197271010455;
+fold: TRAIN; iteration: 200; epoch: 0; objective: 5.321757793426514;
+fold: TRAIN; iteration: 201; epoch: 0; objective: 5.319576740264893;
+fold: TRAIN; iteration: 202; epoch: 0; objective: 5.314815044403076;
+fold: TRAIN; iteration: 203; epoch: 0; objective: 5.319633960723877;
+fold: TRAIN; iteration: 204; epoch: 0; objective: 5.319507598876953;
+fold: TRAIN; iteration: 205; epoch: 0; objective: 5.316718101501465;
+fold: TRAIN; iteration: 206; epoch: 0; objective: 5.323395252227783;
+fold: TRAIN; iteration: 207; epoch: 0; objective: 5.327869415283203;
+fold: TRAIN; iteration: 208; epoch: 0; objective: 5.324555397033691;
+fold: TRAIN; iteration: 209; epoch: 0; objective: 5.32435941696167;
+fold: TRAIN; iteration: 210; epoch: 0; objective: 5.31551456451416;
+fold: TRAIN; iteration: 211; epoch: 0; objective: 5.319411754608154;
+fold: TRAIN; iteration: 212; epoch: 0; objective: 5.3183488845825195;
+fold: TRAIN; iteration: 213; epoch: 0; objective: 5.317847728729248;
+fold: TRAIN; iteration: 214; epoch: 0; objective: 5.318204879760742;
+fold: TRAIN; iteration: 215; epoch: 0; objective: 5.3200812339782715;
+fold: TRAIN; iteration: 216; epoch: 0; objective: 5.324962139129639;
+fold: TRAIN; iteration: 217; epoch: 0; objective: 5.319225788116455;
+fold: TRAIN; iteration: 218; epoch: 0; objective: 5.317937850952148;
+fold: TRAIN; iteration: 219; epoch: 0; objective: 5.318467617034912;
+fold: TRAIN; iteration: 220; epoch: 0; objective: 5.314256191253662;
+fold: TRAIN; iteration: 221; epoch: 0; objective: 5.320919990539551;
+fold: TRAIN; iteration: 222; epoch: 0; objective: 5.31785249710083;
+fold: TRAIN; iteration: 223; epoch: 0; objective: 5.315645694732666;
+fold: TRAIN; iteration: 224; epoch: 0; objective: 5.315078258514404;
+fold: TRAIN; iteration: 225; epoch: 0; objective: 5.322017669677734;
+fold: TRAIN; iteration: 226; epoch: 0; objective: 5.320253849029541;
+fold: TRAIN; iteration: 227; epoch: 0; objective: 5.324283123016357;
+fold: TRAIN; iteration: 228; epoch: 0; objective: 5.317839622497559;
+fold: TRAIN; iteration: 229; epoch: 0; objective: 5.316126346588135;
+fold: TRAIN; iteration: 230; epoch: 0; objective: 5.318646430969238;
+fold: TRAIN; iteration: 231; epoch: 0; objective: 5.320728778839111;
+fold: TRAIN; iteration: 232; epoch: 0; objective: 5.326905250549316;
+fold: TRAIN; iteration: 233; epoch: 0; objective: 5.322701930999756;
+fold: TRAIN; iteration: 234; epoch: 0; objective: 5.324061393737793;
+fold: TRAIN; iteration: 235; epoch: 0; objective: 5.327050685882568;
+fold: TRAIN; iteration: 236; epoch: 0; objective: 5.316817283630371;
+fold: TRAIN; iteration: 237; epoch: 0; objective: 5.320886611938477;
+fold: TRAIN; iteration: 238; epoch: 0; objective: 5.323670387268066;
+fold: TRAIN; iteration: 239; epoch: 0; objective: 5.3188276290893555;
+fold: TRAIN; iteration: 240; epoch: 0; objective: 5.326030254364014;
+fold: TRAIN; iteration: 241; epoch: 0; objective: 5.3144707679748535;
+fold: TRAIN; iteration: 242; epoch: 0; objective: 5.316022872924805;
+fold: TRAIN; iteration: 243; epoch: 0; objective: 5.316053867340088;
+fold: TRAIN; iteration: 244; epoch: 0; objective: 5.314867973327637;
+fold: TRAIN; iteration: 245; epoch: 0; objective: 5.320450782775879;
+fold: TRAIN; iteration: 246; epoch: 0; objective: 5.32431173324585;
+fold: TRAIN; iteration: 247; epoch: 0; objective: 5.323398113250732;
+fold: TRAIN; iteration: 248; epoch: 0; objective: 5.322033882141113;
+fold: TRAIN; iteration: 249; epoch: 0; objective: 5.321503639221191;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "6ba094c62c694cd5af3acdd435157395", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "8059eb8a9e46473ca4d876924ce9c55c", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "9ad475ed32174999a62b775820ab8774", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 250; epoch: 0; text2image_retrieval/p_at_10: 0.355; objective: 5.2134396889630485;
+fold: TRAIN; iteration: 250; epoch: 0; objective: 5.325177192687988;
+fold: TRAIN; iteration: 251; epoch: 0; objective: 5.316627502441406;
+fold: TRAIN; iteration: 252; epoch: 0; objective: 5.320126056671143;
+fold: TRAIN; iteration: 253; epoch: 0; objective: 5.317678928375244;
+fold: TRAIN; iteration: 254; epoch: 0; objective: 5.3187971115112305;
+fold: TRAIN; iteration: 255; epoch: 0; objective: 5.3133392333984375;
+fold: TRAIN; iteration: 256; epoch: 0; objective: 5.317606449127197;
+fold: TRAIN; iteration: 257; epoch: 0; objective: 5.319932460784912;
+fold: TRAIN; iteration: 258; epoch: 0; objective: 5.320897579193115;
+fold: TRAIN; iteration: 259; epoch: 0; objective: 5.319098472595215;
+fold: TRAIN; iteration: 260; epoch: 0; objective: 5.320389747619629;
+fold: TRAIN; iteration: 261; epoch: 0; objective: 5.324409484863281;
+fold: TRAIN; iteration: 262; epoch: 0; objective: 5.315340042114258;
+fold: TRAIN; iteration: 263; epoch: 0; objective: 5.32105016708374;
+fold: TRAIN; iteration: 264; epoch: 0; objective: 5.317410945892334;
+fold: TRAIN; iteration: 265; epoch: 0; objective: 5.324715614318848;
+fold: TRAIN; iteration: 266; epoch: 0; objective: 5.320156097412109;
+fold: TRAIN; iteration: 267; epoch: 0; objective: 5.31608247756958;
+fold: TRAIN; iteration: 268; epoch: 0; objective: 5.322691917419434;
+fold: TRAIN; iteration: 269; epoch: 0; objective: 5.317266941070557;
+fold: TRAIN; iteration: 270; epoch: 0; objective: 5.316896915435791;
+fold: TRAIN; iteration: 271; epoch: 0; objective: 5.325902938842773;
+fold: TRAIN; iteration: 272; epoch: 0; objective: 5.312793731689453;
+fold: TRAIN; iteration: 273; epoch: 0; objective: 5.3184003829956055;
+fold: TRAIN; iteration: 274; epoch: 0; objective: 5.319456577301025;
+fold: TRAIN; iteration: 275; epoch: 0; objective: 5.315410614013672;
+fold: TRAIN; iteration: 276; epoch: 0; objective: 5.315104007720947;
+fold: TRAIN; iteration: 277; epoch: 0; objective: 5.31868839263916;
+fold: TRAIN; iteration: 278; epoch: 0; objective: 5.317525863647461;
+fold: TRAIN; iteration: 279; epoch: 0; objective: 5.323766708374023;
+fold: TRAIN; iteration: 280; epoch: 0; objective: 5.314596176147461;
+fold: TRAIN; iteration: 281; epoch: 0; objective: 5.330917835235596;
+fold: TRAIN; iteration: 282; epoch: 0; objective: 5.320174694061279;
+fold: TRAIN; iteration: 283; epoch: 0; objective: 5.32002067565918;
+fold: TRAIN; iteration: 284; epoch: 0; objective: 5.315609455108643;
+fold: TRAIN; iteration: 285; epoch: 0; objective: 5.329649925231934;
+fold: TRAIN; iteration: 286; epoch: 0; objective: 5.316504001617432;
+fold: TRAIN; iteration: 287; epoch: 0; objective: 5.313065528869629;
+fold: TRAIN; iteration: 288; epoch: 0; objective: 5.323227405548096;
+fold: TRAIN; iteration: 289; epoch: 0; objective: 5.316856861114502;
+fold: TRAIN; iteration: 290; epoch: 0; objective: 5.322352409362793;
+fold: TRAIN; iteration: 291; epoch: 0; objective: 5.319930553436279;
+fold: TRAIN; iteration: 292; epoch: 0; objective: 5.317135810852051;
+fold: TRAIN; iteration: 293; epoch: 0; objective: 5.30711030960083;
+fold: TRAIN; iteration: 294; epoch: 0; objective: 5.322817802429199;
+fold: TRAIN; iteration: 295; epoch: 0; objective: 5.3185272216796875;
+fold: TRAIN; iteration: 296; epoch: 0; objective: 5.318746089935303;
+fold: TRAIN; iteration: 297; epoch: 0; objective: 5.317831039428711;
+fold: TRAIN; iteration: 298; epoch: 0; objective: 5.314785480499268;
+fold: TRAIN; iteration: 299; epoch: 0; objective: 5.3232421875;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "0e12b777d2ec4e7e817c207599904d9c", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "01ab9d87508f48a583ca38af8be4ffdf", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "3b9dc43f2bd745e5bbec72cf54a8eb97", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 300; epoch: 0; text2image_retrieval/p_at_10: 0.355; objective: 5.213074249379775;
+fold: TRAIN; iteration: 300; epoch: 0; objective: 5.3207478523254395;
+fold: TRAIN; iteration: 301; epoch: 0; objective: 5.324264049530029;
+fold: TRAIN; iteration: 302; epoch: 0; objective: 5.3232421875;
+fold: TRAIN; iteration: 303; epoch: 0; objective: 5.3155927658081055;
+fold: TRAIN; iteration: 304; epoch: 0; objective: 5.325338363647461;
+fold: TRAIN; iteration: 305; epoch: 0; objective: 5.318785667419434;
+fold: TRAIN; iteration: 306; epoch: 0; objective: 5.322279453277588;
+fold: TRAIN; iteration: 307; epoch: 0; objective: 5.317646503448486;
+fold: TRAIN; iteration: 308; epoch: 0; objective: 5.322110176086426;
+fold: TRAIN; iteration: 309; epoch: 0; objective: 5.32066011428833;
+fold: TRAIN; iteration: 310; epoch: 0; objective: 5.29600715637207;
+fold: TRAIN; iteration: 311; epoch: 1; objective: 5.3218278884887695;
+fold: TRAIN; iteration: 312; epoch: 1; objective: 5.32100772857666;
+fold: TRAIN; iteration: 313; epoch: 1; objective: 5.323609828948975;
+fold: TRAIN; iteration: 314; epoch: 1; objective: 5.312709808349609;
+fold: TRAIN; iteration: 315; epoch: 1; objective: 5.320814609527588;
+fold: TRAIN; iteration: 316; epoch: 1; objective: 5.3225603103637695;
+fold: TRAIN; iteration: 317; epoch: 1; objective: 5.3194475173950195;
+fold: TRAIN; iteration: 318; epoch: 1; objective: 5.317378044128418;
+fold: TRAIN; iteration: 319; epoch: 1; objective: 5.3190436363220215;
+fold: TRAIN; iteration: 320; epoch: 1; objective: 5.319688320159912;
+fold: TRAIN; iteration: 321; epoch: 1; objective: 5.316035270690918;
+fold: TRAIN; iteration: 322; epoch: 1; objective: 5.31705379486084;
+fold: TRAIN; iteration: 323; epoch: 1; objective: 5.314036846160889;
+fold: TRAIN; iteration: 324; epoch: 1; objective: 5.319619178771973;
+fold: TRAIN; iteration: 325; epoch: 1; objective: 5.308172702789307;
+fold: TRAIN; iteration: 326; epoch: 1; objective: 5.319395542144775;
+fold: TRAIN; iteration: 327; epoch: 1; objective: 5.3194451332092285;
+fold: TRAIN; iteration: 328; epoch: 1; objective: 5.32050895690918;
+fold: TRAIN; iteration: 329; epoch: 1; objective: 5.320479393005371;
+fold: TRAIN; iteration: 330; epoch: 1; objective: 5.321671962738037;
+fold: TRAIN; iteration: 331; epoch: 1; objective: 5.317802906036377;
+fold: TRAIN; iteration: 332; epoch: 1; objective: 5.320364475250244;
+fold: TRAIN; iteration: 333; epoch: 1; objective: 5.315843105316162;
+fold: TRAIN; iteration: 334; epoch: 1; objective: 5.324914932250977;
+fold: TRAIN; iteration: 335; epoch: 1; objective: 5.322127342224121;
+fold: TRAIN; iteration: 336; epoch: 1; objective: 5.324028015136719;
+fold: TRAIN; iteration: 337; epoch: 1; objective: 5.315244674682617;
+fold: TRAIN; iteration: 338; epoch: 1; objective: 5.315949440002441;
+fold: TRAIN; iteration: 339; epoch: 1; objective: 5.321253776550293;
+fold: TRAIN; iteration: 340; epoch: 1; objective: 5.319171905517578;
+fold: TRAIN; iteration: 341; epoch: 1; objective: 5.313889026641846;
+fold: TRAIN; iteration: 342; epoch: 1; objective: 5.321611404418945;
+fold: TRAIN; iteration: 343; epoch: 1; objective: 5.319907188415527;
+fold: TRAIN; iteration: 344; epoch: 1; objective: 5.324358940124512;
+fold: TRAIN; iteration: 345; epoch: 1; objective: 5.31540060043335;
+fold: TRAIN; iteration: 346; epoch: 1; objective: 5.3225555419921875;
+fold: TRAIN; iteration: 347; epoch: 1; objective: 5.319173812866211;
+fold: TRAIN; iteration: 348; epoch: 1; objective: 5.31386137008667;
+fold: TRAIN; iteration: 349; epoch: 1; objective: 5.3315887451171875;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "ff63a7229546427b8f38aed4c9f7b37b", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "a6e1d2ff5c3149719aa6ce5b1d45c73d", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "2d61e2f72ed94feb9666593f0dfd4a4a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 350; epoch: 1; text2image_retrieval/p_at_10: 0.335; objective: 5.212984996683457;
+fold: TRAIN; iteration: 350; epoch: 1; objective: 5.320950031280518;
+fold: TRAIN; iteration: 351; epoch: 1; objective: 5.318922519683838;
+fold: TRAIN; iteration: 352; epoch: 1; objective: 5.322129249572754;
+fold: TRAIN; iteration: 353; epoch: 1; objective: 5.3205952644348145;
+fold: TRAIN; iteration: 354; epoch: 1; objective: 5.3186492919921875;
+fold: TRAIN; iteration: 355; epoch: 1; objective: 5.323493957519531;
+fold: TRAIN; iteration: 356; epoch: 1; objective: 5.310271263122559;
+fold: TRAIN; iteration: 357; epoch: 1; objective: 5.3198561668396;
+fold: TRAIN; iteration: 358; epoch: 1; objective: 5.317119121551514;
+fold: TRAIN; iteration: 359; epoch: 1; objective: 5.315925598144531;
+fold: TRAIN; iteration: 360; epoch: 1; objective: 5.326632976531982;
+fold: TRAIN; iteration: 361; epoch: 1; objective: 5.325036525726318;
+fold: TRAIN; iteration: 362; epoch: 1; objective: 5.321094512939453;
+fold: TRAIN; iteration: 363; epoch: 1; objective: 5.318521499633789;
+fold: TRAIN; iteration: 364; epoch: 1; objective: 5.32329797744751;
+fold: TRAIN; iteration: 365; epoch: 1; objective: 5.326398849487305;
+fold: TRAIN; iteration: 366; epoch: 1; objective: 5.315864086151123;
+fold: TRAIN; iteration: 367; epoch: 1; objective: 5.325039386749268;
+fold: TRAIN; iteration: 368; epoch: 1; objective: 5.314069747924805;
+fold: TRAIN; iteration: 369; epoch: 1; objective: 5.320777416229248;
+fold: TRAIN; iteration: 370; epoch: 1; objective: 5.319825172424316;
+fold: TRAIN; iteration: 371; epoch: 1; objective: 5.322964668273926;
+fold: TRAIN; iteration: 372; epoch: 1; objective: 5.3176045417785645;
+fold: TRAIN; iteration: 373; epoch: 1; objective: 5.31771183013916;
+fold: TRAIN; iteration: 374; epoch: 1; objective: 5.323544979095459;
+fold: TRAIN; iteration: 375; epoch: 1; objective: 5.317461967468262;
+fold: TRAIN; iteration: 376; epoch: 1; objective: 5.3135504722595215;
+fold: TRAIN; iteration: 377; epoch: 1; objective: 5.320384502410889;
+fold: TRAIN; iteration: 378; epoch: 1; objective: 5.323092460632324;
+fold: TRAIN; iteration: 379; epoch: 1; objective: 5.320266246795654;
+fold: TRAIN; iteration: 380; epoch: 1; objective: 5.31805944442749;
+fold: TRAIN; iteration: 381; epoch: 1; objective: 5.318263530731201;
+fold: TRAIN; iteration: 382; epoch: 1; objective: 5.311814308166504;
+fold: TRAIN; iteration: 383; epoch: 1; objective: 5.321691513061523;
+fold: TRAIN; iteration: 384; epoch: 1; objective: 5.313752174377441;
+fold: TRAIN; iteration: 385; epoch: 1; objective: 5.320617198944092;
+fold: TRAIN; iteration: 386; epoch: 1; objective: 5.322143077850342;
+fold: TRAIN; iteration: 387; epoch: 1; objective: 5.317309379577637;
+fold: TRAIN; iteration: 388; epoch: 1; objective: 5.31998348236084;
+fold: TRAIN; iteration: 389; epoch: 1; objective: 5.314938545227051;
+fold: TRAIN; iteration: 390; epoch: 1; objective: 5.317598819732666;
+fold: TRAIN; iteration: 391; epoch: 1; objective: 5.310431480407715;
+fold: TRAIN; iteration: 392; epoch: 1; objective: 5.325125217437744;
+fold: TRAIN; iteration: 393; epoch: 1; objective: 5.323758125305176;
+fold: TRAIN; iteration: 394; epoch: 1; objective: 5.3253374099731445;
+fold: TRAIN; iteration: 395; epoch: 1; objective: 5.321231842041016;
+fold: TRAIN; iteration: 396; epoch: 1; objective: 5.312859535217285;
+fold: TRAIN; iteration: 397; epoch: 1; objective: 5.3204522132873535;
+fold: TRAIN; iteration: 398; epoch: 1; objective: 5.316713809967041;
+fold: TRAIN; iteration: 399; epoch: 1; objective: 5.3241353034973145;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "16266efb6040479ea6a975a6857d476d", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "179120cd30704993925b48db7ff80e07", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "9da6f447867c4ebd86b77297fa26e917", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 400; epoch: 1; text2image_retrieval/p_at_10: 0.358; objective: 5.2126273968640495;
+fold: TRAIN; iteration: 400; epoch: 1; objective: 5.308872222900391;
+fold: TRAIN; iteration: 401; epoch: 1; objective: 5.32319450378418;
+fold: TRAIN; iteration: 402; epoch: 1; objective: 5.324280738830566;
+fold: TRAIN; iteration: 403; epoch: 1; objective: 5.315586090087891;
+fold: TRAIN; iteration: 404; epoch: 1; objective: 5.318851470947266;
+fold: TRAIN; iteration: 405; epoch: 1; objective: 5.3226141929626465;
+fold: TRAIN; iteration: 406; epoch: 1; objective: 5.317885875701904;
+fold: TRAIN; iteration: 407; epoch: 1; objective: 5.313289165496826;
+fold: TRAIN; iteration: 408; epoch: 1; objective: 5.320749282836914;
+fold: TRAIN; iteration: 409; epoch: 1; objective: 5.314390182495117;
+fold: TRAIN; iteration: 410; epoch: 1; objective: 5.312128067016602;
+fold: TRAIN; iteration: 411; epoch: 1; objective: 5.312901496887207;
+fold: TRAIN; iteration: 412; epoch: 1; objective: 5.316286563873291;
+fold: TRAIN; iteration: 413; epoch: 1; objective: 5.315993309020996;
+fold: TRAIN; iteration: 414; epoch: 1; objective: 5.313339710235596;
+fold: TRAIN; iteration: 415; epoch: 1; objective: 5.322319507598877;
+fold: TRAIN; iteration: 416; epoch: 1; objective: 5.315288066864014;
+fold: TRAIN; iteration: 417; epoch: 1; objective: 5.326223373413086;
+fold: TRAIN; iteration: 418; epoch: 1; objective: 5.3175554275512695;
+fold: TRAIN; iteration: 419; epoch: 1; objective: 5.3192009925842285;
+fold: TRAIN; iteration: 420; epoch: 1; objective: 5.327507495880127;
+fold: TRAIN; iteration: 421; epoch: 1; objective: 5.32267427444458;
+fold: TRAIN; iteration: 422; epoch: 1; objective: 5.3282294273376465;
+fold: TRAIN; iteration: 423; epoch: 1; objective: 5.320188522338867;
+fold: TRAIN; iteration: 424; epoch: 1; objective: 5.314329147338867;
+fold: TRAIN; iteration: 425; epoch: 1; objective: 5.325654029846191;
+fold: TRAIN; iteration: 426; epoch: 1; objective: 5.3166985511779785;
+fold: TRAIN; iteration: 427; epoch: 1; objective: 5.314322471618652;
+fold: TRAIN; iteration: 428; epoch: 1; objective: 5.316560745239258;
+fold: TRAIN; iteration: 429; epoch: 1; objective: 5.320812702178955;
+fold: TRAIN; iteration: 430; epoch: 1; objective: 5.315211772918701;
+fold: TRAIN; iteration: 431; epoch: 1; objective: 5.324840545654297;
+fold: TRAIN; iteration: 432; epoch: 1; objective: 5.323424816131592;
+fold: TRAIN; iteration: 433; epoch: 1; objective: 5.322157859802246;
+fold: TRAIN; iteration: 434; epoch: 1; objective: 5.313292980194092;
+fold: TRAIN; iteration: 435; epoch: 1; objective: 5.325383186340332;
+fold: TRAIN; iteration: 436; epoch: 1; objective: 5.32073450088501;
+fold: TRAIN; iteration: 437; epoch: 1; objective: 5.311645030975342;
+fold: TRAIN; iteration: 438; epoch: 1; objective: 5.318785190582275;
+fold: TRAIN; iteration: 439; epoch: 1; objective: 5.317197322845459;
+fold: TRAIN; iteration: 440; epoch: 1; objective: 5.312716007232666;
+fold: TRAIN; iteration: 441; epoch: 1; objective: 5.31195592880249;
+fold: TRAIN; iteration: 442; epoch: 1; objective: 5.311425685882568;
+fold: TRAIN; iteration: 443; epoch: 1; objective: 5.325848579406738;
+fold: TRAIN; iteration: 444; epoch: 1; objective: 5.319055557250977;
+fold: TRAIN; iteration: 445; epoch: 1; objective: 5.314944744110107;
+fold: TRAIN; iteration: 446; epoch: 1; objective: 5.314905166625977;
+fold: TRAIN; iteration: 447; epoch: 1; objective: 5.321572780609131;
+fold: TRAIN; iteration: 448; epoch: 1; objective: 5.319957256317139;
+fold: TRAIN; iteration: 449; epoch: 1; objective: 5.3202128410339355;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "135c2ec2dc084ae79a468ee23de186cc", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "a2041f8eb2e44a9585a478850889f80e", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "634b5603038248bb87f07aeb42cb5852", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+no best model found...
+fold: VALID; iteration: 450; epoch: 1; text2image_retrieval/p_at_10: 0.363; objective: 5.213148888419656;
+fold: TRAIN; iteration: 450; epoch: 1; objective: 5.324559211730957;
+fold: TRAIN; iteration: 451; epoch: 1; objective: 5.322771072387695;
+fold: TRAIN; iteration: 452; epoch: 1; objective: 5.323271751403809;
+fold: TRAIN; iteration: 453; epoch: 1; objective: 5.312834739685059;
+fold: TRAIN; iteration: 454; epoch: 1; objective: 5.325619697570801;
+fold: TRAIN; iteration: 455; epoch: 1; objective: 5.313399791717529;
+fold: TRAIN; iteration: 456; epoch: 1; objective: 5.321579933166504;
+fold: TRAIN; iteration: 457; epoch: 1; objective: 5.316813945770264;
+fold: TRAIN; iteration: 458; epoch: 1; objective: 5.313375949859619;
+fold: TRAIN; iteration: 459; epoch: 1; objective: 5.320130825042725;
+fold: TRAIN; iteration: 460; epoch: 1; objective: 5.311299800872803;
+fold: TRAIN; iteration: 461; epoch: 1; objective: 5.307363986968994;
+fold: TRAIN; iteration: 462; epoch: 1; objective: 5.320638179779053;
+fold: TRAIN; iteration: 463; epoch: 1; objective: 5.311824321746826;
+fold: TRAIN; iteration: 464; epoch: 1; objective: 5.315761566162109;
+fold: TRAIN; iteration: 465; epoch: 1; objective: 5.316647052764893;
+fold: TRAIN; iteration: 466; epoch: 1; objective: 5.316657066345215;
+fold: TRAIN; iteration: 467; epoch: 1; objective: 5.318286895751953;
+fold: TRAIN; iteration: 468; epoch: 1; objective: 5.314538478851318;
+fold: TRAIN; iteration: 469; epoch: 1; objective: 5.312847137451172;
+fold: TRAIN; iteration: 470; epoch: 1; objective: 5.318443298339844;
+fold: TRAIN; iteration: 471; epoch: 1; objective: 5.320950031280518;
+fold: TRAIN; iteration: 472; epoch: 1; objective: 5.319143772125244;
+fold: TRAIN; iteration: 473; epoch: 1; objective: 5.313892841339111;
+fold: TRAIN; iteration: 474; epoch: 1; objective: 5.316718101501465;
+fold: TRAIN; iteration: 475; epoch: 1; objective: 5.3216233253479;
+fold: TRAIN; iteration: 476; epoch: 1; objective: 5.321977138519287;
+fold: TRAIN; iteration: 477; epoch: 1; objective: 5.320076942443848;
+fold: TRAIN; iteration: 478; epoch: 1; objective: 5.317322254180908;
+fold: TRAIN; iteration: 479; epoch: 1; objective: 5.319781303405762;
+fold: TRAIN; iteration: 480; epoch: 1; objective: 5.318779945373535;
+fold: TRAIN; iteration: 481; epoch: 1; objective: 5.318194389343262;
+fold: TRAIN; iteration: 482; epoch: 1; objective: 5.322598934173584;
+fold: TRAIN; iteration: 483; epoch: 1; objective: 5.323246479034424;
+fold: TRAIN; iteration: 484; epoch: 1; objective: 5.327053546905518;
+fold: TRAIN; iteration: 485; epoch: 1; objective: 5.323181629180908;
+fold: TRAIN; iteration: 486; epoch: 1; objective: 5.323303699493408;
+fold: TRAIN; iteration: 487; epoch: 1; objective: 5.316850662231445;
+fold: TRAIN; iteration: 488; epoch: 1; objective: 5.319888114929199;
+fold: TRAIN; iteration: 489; epoch: 1; objective: 5.321783065795898;
+fold: TRAIN; iteration: 490; epoch: 1; objective: 5.31619930267334;
+fold: TRAIN; iteration: 491; epoch: 1; objective: 5.317756175994873;
+fold: TRAIN; iteration: 492; epoch: 1; objective: 5.328413963317871;
+fold: TRAIN; iteration: 493; epoch: 1; objective: 5.318354606628418;
+fold: TRAIN; iteration: 494; epoch: 1; objective: 5.322761058807373;
+fold: TRAIN; iteration: 495; epoch: 1; objective: 5.3109612464904785;
+fold: TRAIN; iteration: 496; epoch: 1; objective: 5.3271307945251465;
+fold: TRAIN; iteration: 497; epoch: 1; objective: 5.329096794128418;
+fold: TRAIN; iteration: 498; epoch: 1; objective: 5.316301345825195;
+fold: TRAIN; iteration: 499; epoch: 1; objective: 5.321552276611328;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "776ba0519c3742f59e04a2e76e48cb94", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "9c3522ad52ee4a9bacc7b5d4b2f9c887", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "19202dc61f9845c08548854d9d2c5f47", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 500; epoch: 1; text2image_retrieval/p_at_10: 0.366; objective: 5.212579250335693;
+fold: TRAIN; iteration: 500; epoch: 1; objective: 5.318964004516602;
+fold: TRAIN; iteration: 501; epoch: 1; objective: 5.328332424163818;
+fold: TRAIN; iteration: 502; epoch: 1; objective: 5.322052955627441;
+fold: TRAIN; iteration: 503; epoch: 1; objective: 5.319618225097656;
+fold: TRAIN; iteration: 504; epoch: 1; objective: 5.331596374511719;
+fold: TRAIN; iteration: 505; epoch: 1; objective: 5.31381893157959;
+fold: TRAIN; iteration: 506; epoch: 1; objective: 5.315026760101318;
+fold: TRAIN; iteration: 507; epoch: 1; objective: 5.314594268798828;
+fold: TRAIN; iteration: 508; epoch: 1; objective: 5.312464237213135;
+fold: TRAIN; iteration: 509; epoch: 1; objective: 5.322141170501709;
+fold: TRAIN; iteration: 510; epoch: 1; objective: 5.317487716674805;
+fold: TRAIN; iteration: 511; epoch: 1; objective: 5.31777811050415;
+fold: TRAIN; iteration: 512; epoch: 1; objective: 5.319328308105469;
+fold: TRAIN; iteration: 513; epoch: 1; objective: 5.322638988494873;
+fold: TRAIN; iteration: 514; epoch: 1; objective: 5.323519229888916;
+fold: TRAIN; iteration: 515; epoch: 1; objective: 5.3270344734191895;
+fold: TRAIN; iteration: 516; epoch: 1; objective: 5.321805477142334;
+fold: TRAIN; iteration: 517; epoch: 1; objective: 5.320427894592285;
+fold: TRAIN; iteration: 518; epoch: 1; objective: 5.318668365478516;
+fold: TRAIN; iteration: 519; epoch: 1; objective: 5.31586217880249;
+fold: TRAIN; iteration: 520; epoch: 1; objective: 5.319797039031982;
+fold: TRAIN; iteration: 521; epoch: 1; objective: 5.314311504364014;
+fold: TRAIN; iteration: 522; epoch: 1; objective: 5.317503929138184;
+fold: TRAIN; iteration: 523; epoch: 1; objective: 5.316093444824219;
+fold: TRAIN; iteration: 524; epoch: 1; objective: 5.323437690734863;
+fold: TRAIN; iteration: 525; epoch: 1; objective: 5.321444988250732;
+fold: TRAIN; iteration: 526; epoch: 1; objective: 5.315873146057129;
+fold: TRAIN; iteration: 527; epoch: 1; objective: 5.325173854827881;
+fold: TRAIN; iteration: 528; epoch: 1; objective: 5.319441318511963;
+fold: TRAIN; iteration: 529; epoch: 1; objective: 5.318235874176025;
+fold: TRAIN; iteration: 530; epoch: 1; objective: 5.3196821212768555;
+fold: TRAIN; iteration: 531; epoch: 1; objective: 5.316575050354004;
+fold: TRAIN; iteration: 532; epoch: 1; objective: 5.314515113830566;
+fold: TRAIN; iteration: 533; epoch: 1; objective: 5.31574821472168;
+fold: TRAIN; iteration: 534; epoch: 1; objective: 5.320690155029297;
+fold: TRAIN; iteration: 535; epoch: 1; objective: 5.316155433654785;
+fold: TRAIN; iteration: 536; epoch: 1; objective: 5.322494029998779;
+fold: TRAIN; iteration: 537; epoch: 1; objective: 5.321086406707764;
+fold: TRAIN; iteration: 538; epoch: 1; objective: 5.320246696472168;
+fold: TRAIN; iteration: 539; epoch: 1; objective: 5.316413879394531;
+fold: TRAIN; iteration: 540; epoch: 1; objective: 5.3240556716918945;
+fold: TRAIN; iteration: 541; epoch: 1; objective: 5.317744731903076;
+fold: TRAIN; iteration: 542; epoch: 1; objective: 5.320738792419434;
+fold: TRAIN; iteration: 543; epoch: 1; objective: 5.315957069396973;
+fold: TRAIN; iteration: 544; epoch: 1; objective: 5.319836616516113;
+fold: TRAIN; iteration: 545; epoch: 1; objective: 5.316442012786865;
+fold: TRAIN; iteration: 546; epoch: 1; objective: 5.320725440979004;
+fold: TRAIN; iteration: 547; epoch: 1; objective: 5.320755481719971;
+fold: TRAIN; iteration: 548; epoch: 1; objective: 5.318702697753906;
+fold: TRAIN; iteration: 549; epoch: 1; objective: 5.32888650894165;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "becb4d5a2ac44618971ee1a367cadaba", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "d5fb6c70ddb846ed9bec5fe30a3a789a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "703b25215c6440d2a980e85d5db106de", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 550; epoch: 1; text2image_retrieval/p_at_10: 0.385; objective: 5.2125116937300735;
+fold: TRAIN; iteration: 550; epoch: 1; objective: 5.313462257385254;
+fold: TRAIN; iteration: 551; epoch: 1; objective: 5.3156046867370605;
+fold: TRAIN; iteration: 552; epoch: 1; objective: 5.319708824157715;
+fold: TRAIN; iteration: 553; epoch: 1; objective: 5.316842079162598;
+fold: TRAIN; iteration: 554; epoch: 1; objective: 5.321951389312744;
+fold: TRAIN; iteration: 555; epoch: 1; objective: 5.321457862854004;
+fold: TRAIN; iteration: 556; epoch: 1; objective: 5.317196369171143;
+fold: TRAIN; iteration: 557; epoch: 1; objective: 5.320762634277344;
+fold: TRAIN; iteration: 558; epoch: 1; objective: 5.322360515594482;
+fold: TRAIN; iteration: 559; epoch: 1; objective: 5.318593978881836;
+fold: TRAIN; iteration: 560; epoch: 1; objective: 5.322066783905029;
+fold: TRAIN; iteration: 561; epoch: 1; objective: 5.312936782836914;
+fold: TRAIN; iteration: 562; epoch: 1; objective: 5.3130035400390625;
+fold: TRAIN; iteration: 563; epoch: 1; objective: 5.318637371063232;
+fold: TRAIN; iteration: 564; epoch: 1; objective: 5.3163533210754395;
+fold: TRAIN; iteration: 565; epoch: 1; objective: 5.316047191619873;
+fold: TRAIN; iteration: 566; epoch: 1; objective: 5.32408332824707;
+fold: TRAIN; iteration: 567; epoch: 1; objective: 5.3231329917907715;
+fold: TRAIN; iteration: 568; epoch: 1; objective: 5.316566467285156;
+fold: TRAIN; iteration: 569; epoch: 1; objective: 5.3177361488342285;
+fold: TRAIN; iteration: 570; epoch: 1; objective: 5.317597389221191;
+fold: TRAIN; iteration: 571; epoch: 1; objective: 5.322271347045898;
+fold: TRAIN; iteration: 572; epoch: 1; objective: 5.326308250427246;
+fold: TRAIN; iteration: 573; epoch: 1; objective: 5.317809104919434;
+fold: TRAIN; iteration: 574; epoch: 1; objective: 5.314988613128662;
+fold: TRAIN; iteration: 575; epoch: 1; objective: 5.3202128410339355;
+fold: TRAIN; iteration: 576; epoch: 1; objective: 5.316666126251221;
+fold: TRAIN; iteration: 577; epoch: 1; objective: 5.317258834838867;
+fold: TRAIN; iteration: 578; epoch: 1; objective: 5.317634105682373;
+fold: TRAIN; iteration: 579; epoch: 1; objective: 5.3219428062438965;
+fold: TRAIN; iteration: 580; epoch: 1; objective: 5.314919948577881;
+fold: TRAIN; iteration: 581; epoch: 1; objective: 5.313419342041016;
+fold: TRAIN; iteration: 582; epoch: 1; objective: 5.315027713775635;
+fold: TRAIN; iteration: 583; epoch: 1; objective: 5.319835662841797;
+fold: TRAIN; iteration: 584; epoch: 1; objective: 5.315680503845215;
+fold: TRAIN; iteration: 585; epoch: 1; objective: 5.316007137298584;
+fold: TRAIN; iteration: 586; epoch: 1; objective: 5.31804084777832;
+fold: TRAIN; iteration: 587; epoch: 1; objective: 5.316523551940918;
+fold: TRAIN; iteration: 588; epoch: 1; objective: 5.32745361328125;
+fold: TRAIN; iteration: 589; epoch: 1; objective: 5.323873043060303;
+fold: TRAIN; iteration: 590; epoch: 1; objective: 5.319192409515381;
+fold: TRAIN; iteration: 591; epoch: 1; objective: 5.3142900466918945;
+fold: TRAIN; iteration: 592; epoch: 1; objective: 5.308379650115967;
+fold: TRAIN; iteration: 593; epoch: 1; objective: 5.321237564086914;
+fold: TRAIN; iteration: 594; epoch: 1; objective: 5.313346862792969;
+fold: TRAIN; iteration: 595; epoch: 1; objective: 5.321500778198242;
+fold: TRAIN; iteration: 596; epoch: 1; objective: 5.309659957885742;
+fold: TRAIN; iteration: 597; epoch: 1; objective: 5.3171610832214355;
+fold: TRAIN; iteration: 598; epoch: 1; objective: 5.312607288360596;
+fold: TRAIN; iteration: 599; epoch: 1; objective: 5.320799827575684;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "106dc525e3514752a7c73241a360c919", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "32634c19992e4578a63ce68a11d19e01", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "d17dd572e30a4601b38acef957781d7c", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 600; epoch: 1; text2image_retrieval/p_at_10: 0.381; objective: 5.212477459627039;
+fold: TRAIN; iteration: 600; epoch: 1; objective: 5.3136515617370605;
+fold: TRAIN; iteration: 601; epoch: 1; objective: 5.311807632446289;
+fold: TRAIN; iteration: 602; epoch: 1; objective: 5.320379734039307;
+fold: TRAIN; iteration: 603; epoch: 1; objective: 5.314677715301514;
+fold: TRAIN; iteration: 604; epoch: 1; objective: 5.31606912612915;
+fold: TRAIN; iteration: 605; epoch: 1; objective: 5.322044372558594;
+fold: TRAIN; iteration: 606; epoch: 1; objective: 5.31836462020874;
+fold: TRAIN; iteration: 607; epoch: 1; objective: 5.317148208618164;
+fold: TRAIN; iteration: 608; epoch: 1; objective: 5.3130059242248535;
+fold: TRAIN; iteration: 609; epoch: 1; objective: 5.315979957580566;
+fold: TRAIN; iteration: 610; epoch: 1; objective: 5.316568374633789;
+fold: TRAIN; iteration: 611; epoch: 1; objective: 5.317832946777344;
+fold: TRAIN; iteration: 612; epoch: 1; objective: 5.309708118438721;
+fold: TRAIN; iteration: 613; epoch: 1; objective: 5.320644378662109;
+fold: TRAIN; iteration: 614; epoch: 1; objective: 5.320512294769287;
+fold: TRAIN; iteration: 615; epoch: 1; objective: 5.314291477203369;
+fold: TRAIN; iteration: 616; epoch: 1; objective: 5.3221354484558105;
+fold: TRAIN; iteration: 617; epoch: 1; objective: 5.315539836883545;
+fold: TRAIN; iteration: 618; epoch: 1; objective: 5.315736293792725;
+fold: TRAIN; iteration: 619; epoch: 1; objective: 5.31307315826416;
+fold: TRAIN; iteration: 620; epoch: 1; objective: 5.322190284729004;
+fold: TRAIN; iteration: 621; epoch: 1; objective: 5.292072772979736;
+fold: TRAIN; iteration: 622; epoch: 2; objective: 5.321263790130615;
+fold: TRAIN; iteration: 623; epoch: 2; objective: 5.313666820526123;
+fold: TRAIN; iteration: 624; epoch: 2; objective: 5.316850662231445;
+fold: TRAIN; iteration: 625; epoch: 2; objective: 5.319975852966309;
+fold: TRAIN; iteration: 626; epoch: 2; objective: 5.315371036529541;
+fold: TRAIN; iteration: 627; epoch: 2; objective: 5.319797992706299;
+fold: TRAIN; iteration: 628; epoch: 2; objective: 5.319570541381836;
+fold: TRAIN; iteration: 629; epoch: 2; objective: 5.302689552307129;
+fold: TRAIN; iteration: 630; epoch: 2; objective: 5.318568706512451;
+fold: TRAIN; iteration: 631; epoch: 2; objective: 5.319656848907471;
+fold: TRAIN; iteration: 632; epoch: 2; objective: 5.312445163726807;
+fold: TRAIN; iteration: 633; epoch: 2; objective: 5.320735454559326;
+fold: TRAIN; iteration: 634; epoch: 2; objective: 5.313614845275879;
+fold: TRAIN; iteration: 635; epoch: 2; objective: 5.311033725738525;
+fold: TRAIN; iteration: 636; epoch: 2; objective: 5.325622081756592;
+fold: TRAIN; iteration: 637; epoch: 2; objective: 5.324291229248047;
+fold: TRAIN; iteration: 638; epoch: 2; objective: 5.307039737701416;
+fold: TRAIN; iteration: 639; epoch: 2; objective: 5.323692798614502;
+fold: TRAIN; iteration: 640; epoch: 2; objective: 5.314417839050293;
+fold: TRAIN; iteration: 641; epoch: 2; objective: 5.317509651184082;
+fold: TRAIN; iteration: 642; epoch: 2; objective: 5.321617126464844;
+fold: TRAIN; iteration: 643; epoch: 2; objective: 5.314050674438477;
+fold: TRAIN; iteration: 644; epoch: 2; objective: 5.323510646820068;
+fold: TRAIN; iteration: 645; epoch: 2; objective: 5.318635940551758;
+fold: TRAIN; iteration: 646; epoch: 2; objective: 5.314940452575684;
+fold: TRAIN; iteration: 647; epoch: 2; objective: 5.318441390991211;
+fold: TRAIN; iteration: 648; epoch: 2; objective: 5.318694114685059;
+fold: TRAIN; iteration: 649; epoch: 2; objective: 5.323514461517334;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "6cfaff95bd8a433781af596610738d44", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "49c8ae37a0bd427a952cd21b68edcff5", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "1e9157b6da944b5db606a222e5cefb9f", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 650; epoch: 2; text2image_retrieval/p_at_10: 0.375; objective: 5.212397715624641;
+fold: TRAIN; iteration: 650; epoch: 2; objective: 5.3187575340271;
+fold: TRAIN; iteration: 651; epoch: 2; objective: 5.323095321655273;
+fold: TRAIN; iteration: 652; epoch: 2; objective: 5.317195415496826;
+fold: TRAIN; iteration: 653; epoch: 2; objective: 5.308709144592285;
+fold: TRAIN; iteration: 654; epoch: 2; objective: 5.318724632263184;
+fold: TRAIN; iteration: 655; epoch: 2; objective: 5.31820821762085;
+fold: TRAIN; iteration: 656; epoch: 2; objective: 5.311007976531982;
+fold: TRAIN; iteration: 657; epoch: 2; objective: 5.308334827423096;
+fold: TRAIN; iteration: 658; epoch: 2; objective: 5.314262866973877;
+fold: TRAIN; iteration: 659; epoch: 2; objective: 5.31102180480957;
+fold: TRAIN; iteration: 660; epoch: 2; objective: 5.328312873840332;
+fold: TRAIN; iteration: 661; epoch: 2; objective: 5.315556526184082;
+fold: TRAIN; iteration: 662; epoch: 2; objective: 5.313215255737305;
+fold: TRAIN; iteration: 663; epoch: 2; objective: 5.313255310058594;
+fold: TRAIN; iteration: 664; epoch: 2; objective: 5.331045627593994;
+fold: TRAIN; iteration: 665; epoch: 2; objective: 5.325650215148926;
+fold: TRAIN; iteration: 666; epoch: 2; objective: 5.311819076538086;
+fold: TRAIN; iteration: 667; epoch: 2; objective: 5.315435409545898;
+fold: TRAIN; iteration: 668; epoch: 2; objective: 5.31003999710083;
+fold: TRAIN; iteration: 669; epoch: 2; objective: 5.327092170715332;
+fold: TRAIN; iteration: 670; epoch: 2; objective: 5.317392349243164;
+fold: TRAIN; iteration: 671; epoch: 2; objective: 5.320870876312256;
+fold: TRAIN; iteration: 672; epoch: 2; objective: 5.311417102813721;
+fold: TRAIN; iteration: 673; epoch: 2; objective: 5.324186325073242;
+fold: TRAIN; iteration: 674; epoch: 2; objective: 5.317049980163574;
+fold: TRAIN; iteration: 675; epoch: 2; objective: 5.311278820037842;
+fold: TRAIN; iteration: 676; epoch: 2; objective: 5.317629337310791;
+fold: TRAIN; iteration: 677; epoch: 2; objective: 5.323013782501221;
+fold: TRAIN; iteration: 678; epoch: 2; objective: 5.311758041381836;
+fold: TRAIN; iteration: 679; epoch: 2; objective: 5.315333843231201;
+fold: TRAIN; iteration: 680; epoch: 2; objective: 5.3235697746276855;
+fold: TRAIN; iteration: 681; epoch: 2; objective: 5.322639465332031;
+fold: TRAIN; iteration: 682; epoch: 2; objective: 5.315768718719482;
+fold: TRAIN; iteration: 683; epoch: 2; objective: 5.32222318649292;
+fold: TRAIN; iteration: 684; epoch: 2; objective: 5.318423271179199;
+fold: TRAIN; iteration: 685; epoch: 2; objective: 5.317289352416992;
+fold: TRAIN; iteration: 686; epoch: 2; objective: 5.314305305480957;
+fold: TRAIN; iteration: 687; epoch: 2; objective: 5.324331760406494;
+fold: TRAIN; iteration: 688; epoch: 2; objective: 5.309156894683838;
+fold: TRAIN; iteration: 689; epoch: 2; objective: 5.320225238800049;
+fold: TRAIN; iteration: 690; epoch: 2; objective: 5.317846298217773;
+fold: TRAIN; iteration: 691; epoch: 2; objective: 5.314566612243652;
+fold: TRAIN; iteration: 692; epoch: 2; objective: 5.315381050109863;
+fold: TRAIN; iteration: 693; epoch: 2; objective: 5.318515777587891;
+fold: TRAIN; iteration: 694; epoch: 2; objective: 5.313573360443115;
+fold: TRAIN; iteration: 695; epoch: 2; objective: 5.312880992889404;
+fold: TRAIN; iteration: 696; epoch: 2; objective: 5.323644161224365;
+fold: TRAIN; iteration: 697; epoch: 2; objective: 5.31362771987915;
+fold: TRAIN; iteration: 698; epoch: 2; objective: 5.314979076385498;
+fold: TRAIN; iteration: 699; epoch: 2; objective: 5.312999248504639;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "1dae293d8e5742878c29525ce15f2391", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "0f6a53cb613843bba62a6dceb8eec26b", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "a8902c188b3546f8bba9460af0e497b7", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 700; epoch: 2; text2image_retrieval/p_at_10: 0.353; objective: 5.212256627924302;
+fold: TRAIN; iteration: 700; epoch: 2; objective: 5.320154190063477;
+fold: TRAIN; iteration: 701; epoch: 2; objective: 5.318159103393555;
+fold: TRAIN; iteration: 702; epoch: 2; objective: 5.312366962432861;
+fold: TRAIN; iteration: 703; epoch: 2; objective: 5.32371187210083;
+fold: TRAIN; iteration: 704; epoch: 2; objective: 5.321481227874756;
+fold: TRAIN; iteration: 705; epoch: 2; objective: 5.323731899261475;
+fold: TRAIN; iteration: 706; epoch: 2; objective: 5.31348991394043;
+fold: TRAIN; iteration: 707; epoch: 2; objective: 5.322353839874268;
+fold: TRAIN; iteration: 708; epoch: 2; objective: 5.323760509490967;
+fold: TRAIN; iteration: 709; epoch: 2; objective: 5.320419788360596;
+fold: TRAIN; iteration: 710; epoch: 2; objective: 5.317980766296387;
+fold: TRAIN; iteration: 711; epoch: 2; objective: 5.325870990753174;
+fold: TRAIN; iteration: 712; epoch: 2; objective: 5.323819637298584;
+fold: TRAIN; iteration: 713; epoch: 2; objective: 5.323164463043213;
+fold: TRAIN; iteration: 714; epoch: 2; objective: 5.3138017654418945;
+fold: TRAIN; iteration: 715; epoch: 2; objective: 5.319643497467041;
+fold: TRAIN; iteration: 716; epoch: 2; objective: 5.317982196807861;
+fold: TRAIN; iteration: 717; epoch: 2; objective: 5.313130855560303;
+fold: TRAIN; iteration: 718; epoch: 2; objective: 5.315195083618164;
+fold: TRAIN; iteration: 719; epoch: 2; objective: 5.3159918785095215;
+fold: TRAIN; iteration: 720; epoch: 2; objective: 5.315218925476074;
+fold: TRAIN; iteration: 721; epoch: 2; objective: 5.314479351043701;
+fold: TRAIN; iteration: 722; epoch: 2; objective: 5.312352180480957;
+fold: TRAIN; iteration: 723; epoch: 2; objective: 5.325717926025391;
+fold: TRAIN; iteration: 724; epoch: 2; objective: 5.318464756011963;
+fold: TRAIN; iteration: 725; epoch: 2; objective: 5.319522857666016;
+fold: TRAIN; iteration: 726; epoch: 2; objective: 5.3181962966918945;
+fold: TRAIN; iteration: 727; epoch: 2; objective: 5.312507629394531;
+fold: TRAIN; iteration: 728; epoch: 2; objective: 5.323492050170898;
+fold: TRAIN; iteration: 729; epoch: 2; objective: 5.3128790855407715;
+fold: TRAIN; iteration: 730; epoch: 2; objective: 5.32275915145874;
+fold: TRAIN; iteration: 731; epoch: 2; objective: 5.3148651123046875;
+fold: TRAIN; iteration: 732; epoch: 2; objective: 5.314101696014404;
+fold: TRAIN; iteration: 733; epoch: 2; objective: 5.318225383758545;
+fold: TRAIN; iteration: 734; epoch: 2; objective: 5.319622993469238;
+fold: TRAIN; iteration: 735; epoch: 2; objective: 5.3187713623046875;
+fold: TRAIN; iteration: 736; epoch: 2; objective: 5.3139872550964355;
+fold: TRAIN; iteration: 737; epoch: 2; objective: 5.321902275085449;
+fold: TRAIN; iteration: 738; epoch: 2; objective: 5.32418966293335;
+fold: TRAIN; iteration: 739; epoch: 2; objective: 5.308055877685547;
+fold: TRAIN; iteration: 740; epoch: 2; objective: 5.323733806610107;
+fold: TRAIN; iteration: 741; epoch: 2; objective: 5.3125786781311035;
+fold: TRAIN; iteration: 742; epoch: 2; objective: 5.32370138168335;
+fold: TRAIN; iteration: 743; epoch: 2; objective: 5.321475028991699;
+fold: TRAIN; iteration: 744; epoch: 2; objective: 5.31496000289917;
+fold: TRAIN; iteration: 745; epoch: 2; objective: 5.326349258422852;
+fold: TRAIN; iteration: 746; epoch: 2; objective: 5.313365459442139;
+fold: TRAIN; iteration: 747; epoch: 2; objective: 5.318514823913574;
+fold: TRAIN; iteration: 748; epoch: 2; objective: 5.322966575622559;
+fold: TRAIN; iteration: 749; epoch: 2; objective: 5.3258233070373535;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "b7f774265064475bb58f99c8b0be415e", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "4ab0fcfc32874ad8a9ffba81091679ec", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "a4b411e1af5f4a68aa3b507eeb644446", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 750; epoch: 2; text2image_retrieval/p_at_10: 0.372; objective: 5.212037226733039;
+fold: TRAIN; iteration: 750; epoch: 2; objective: 5.323301315307617;
+fold: TRAIN; iteration: 751; epoch: 2; objective: 5.317042350769043;
+fold: TRAIN; iteration: 752; epoch: 2; objective: 5.318236827850342;
+fold: TRAIN; iteration: 753; epoch: 2; objective: 5.311710834503174;
+fold: TRAIN; iteration: 754; epoch: 2; objective: 5.319220542907715;
+fold: TRAIN; iteration: 755; epoch: 2; objective: 5.314059257507324;
+fold: TRAIN; iteration: 756; epoch: 2; objective: 5.311269760131836;
+fold: TRAIN; iteration: 757; epoch: 2; objective: 5.322725772857666;
+fold: TRAIN; iteration: 758; epoch: 2; objective: 5.320312976837158;
+fold: TRAIN; iteration: 759; epoch: 2; objective: 5.321694850921631;
+fold: TRAIN; iteration: 760; epoch: 2; objective: 5.310960292816162;
+fold: TRAIN; iteration: 761; epoch: 2; objective: 5.3218865394592285;
+fold: TRAIN; iteration: 762; epoch: 2; objective: 5.315217018127441;
+fold: TRAIN; iteration: 763; epoch: 2; objective: 5.322329521179199;
+fold: TRAIN; iteration: 764; epoch: 2; objective: 5.318338871002197;
+fold: TRAIN; iteration: 765; epoch: 2; objective: 5.31670618057251;
+fold: TRAIN; iteration: 766; epoch: 2; objective: 5.317660331726074;
+fold: TRAIN; iteration: 767; epoch: 2; objective: 5.309793472290039;
+fold: TRAIN; iteration: 768; epoch: 2; objective: 5.321085453033447;
+fold: TRAIN; iteration: 769; epoch: 2; objective: 5.316338062286377;
+fold: TRAIN; iteration: 770; epoch: 2; objective: 5.32370138168335;
+fold: TRAIN; iteration: 771; epoch: 2; objective: 5.317266941070557;
+fold: TRAIN; iteration: 772; epoch: 2; objective: 5.319334983825684;
+fold: TRAIN; iteration: 773; epoch: 2; objective: 5.316610336303711;
+fold: TRAIN; iteration: 774; epoch: 2; objective: 5.320341110229492;
+fold: TRAIN; iteration: 775; epoch: 2; objective: 5.32430362701416;
+fold: TRAIN; iteration: 776; epoch: 2; objective: 5.319766521453857;
+fold: TRAIN; iteration: 777; epoch: 2; objective: 5.314414024353027;
+fold: TRAIN; iteration: 778; epoch: 2; objective: 5.316626071929932;
+fold: TRAIN; iteration: 779; epoch: 2; objective: 5.321872234344482;
+fold: TRAIN; iteration: 780; epoch: 2; objective: 5.320626735687256;
+fold: TRAIN; iteration: 781; epoch: 2; objective: 5.314175128936768;
+fold: TRAIN; iteration: 782; epoch: 2; objective: 5.314743995666504;
+fold: TRAIN; iteration: 783; epoch: 2; objective: 5.326330661773682;
+fold: TRAIN; iteration: 784; epoch: 2; objective: 5.310892105102539;
+fold: TRAIN; iteration: 785; epoch: 2; objective: 5.3252105712890625;
+fold: TRAIN; iteration: 786; epoch: 2; objective: 5.318220138549805;
+fold: TRAIN; iteration: 787; epoch: 2; objective: 5.314844131469727;
+fold: TRAIN; iteration: 788; epoch: 2; objective: 5.327507495880127;
+fold: TRAIN; iteration: 789; epoch: 2; objective: 5.317483425140381;
+fold: TRAIN; iteration: 790; epoch: 2; objective: 5.318802833557129;
+fold: TRAIN; iteration: 791; epoch: 2; objective: 5.319099426269531;
+fold: TRAIN; iteration: 792; epoch: 2; objective: 5.317530632019043;
+fold: TRAIN; iteration: 793; epoch: 2; objective: 5.315091609954834;
+fold: TRAIN; iteration: 794; epoch: 2; objective: 5.31420373916626;
+fold: TRAIN; iteration: 795; epoch: 2; objective: 5.3191094398498535;
+fold: TRAIN; iteration: 796; epoch: 2; objective: 5.320926666259766;
+fold: TRAIN; iteration: 797; epoch: 2; objective: 5.31926965713501;
+fold: TRAIN; iteration: 798; epoch: 2; objective: 5.321617126464844;
+fold: TRAIN; iteration: 799; epoch: 2; objective: 5.319118976593018;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "8b7dbe69f0a54233970e91fc8d9f7085", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "316fd942dcea42e89ce4ec7a1d0a9e65", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "1a468799369c4df097811ec929ba4f93", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 800; epoch: 2; text2image_retrieval/p_at_10: 0.352; objective: 5.211888032801011;
+fold: TRAIN; iteration: 800; epoch: 2; objective: 5.317920207977295;
+fold: TRAIN; iteration: 801; epoch: 2; objective: 5.3188581466674805;
+fold: TRAIN; iteration: 802; epoch: 2; objective: 5.3186163902282715;
+fold: TRAIN; iteration: 803; epoch: 2; objective: 5.3193278312683105;
+fold: TRAIN; iteration: 804; epoch: 2; objective: 5.308448314666748;
+fold: TRAIN; iteration: 805; epoch: 2; objective: 5.314630031585693;
+fold: TRAIN; iteration: 806; epoch: 2; objective: 5.3183183670043945;
+fold: TRAIN; iteration: 807; epoch: 2; objective: 5.322851657867432;
+fold: TRAIN; iteration: 808; epoch: 2; objective: 5.317101955413818;
+fold: TRAIN; iteration: 809; epoch: 2; objective: 5.314860820770264;
+fold: TRAIN; iteration: 810; epoch: 2; objective: 5.314589977264404;
+fold: TRAIN; iteration: 811; epoch: 2; objective: 5.3188982009887695;
+fold: TRAIN; iteration: 812; epoch: 2; objective: 5.317887783050537;
+fold: TRAIN; iteration: 813; epoch: 2; objective: 5.319838047027588;
+fold: TRAIN; iteration: 814; epoch: 2; objective: 5.3266682624816895;
+fold: TRAIN; iteration: 815; epoch: 2; objective: 5.323430061340332;
+fold: TRAIN; iteration: 816; epoch: 2; objective: 5.312090873718262;
+fold: TRAIN; iteration: 817; epoch: 2; objective: 5.318948268890381;
+fold: TRAIN; iteration: 818; epoch: 2; objective: 5.320685863494873;
+fold: TRAIN; iteration: 819; epoch: 2; objective: 5.321603775024414;
+fold: TRAIN; iteration: 820; epoch: 2; objective: 5.317643642425537;
+fold: TRAIN; iteration: 821; epoch: 2; objective: 5.3210930824279785;
+fold: TRAIN; iteration: 822; epoch: 2; objective: 5.325810432434082;
+fold: TRAIN; iteration: 823; epoch: 2; objective: 5.320983409881592;
+fold: TRAIN; iteration: 824; epoch: 2; objective: 5.315448760986328;
+fold: TRAIN; iteration: 825; epoch: 2; objective: 5.320678234100342;
+fold: TRAIN; iteration: 826; epoch: 2; objective: 5.319331645965576;
+fold: TRAIN; iteration: 827; epoch: 2; objective: 5.315651893615723;
+fold: TRAIN; iteration: 828; epoch: 2; objective: 5.31832218170166;
+fold: TRAIN; iteration: 829; epoch: 2; objective: 5.315821647644043;
+fold: TRAIN; iteration: 830; epoch: 2; objective: 5.322690010070801;
+fold: TRAIN; iteration: 831; epoch: 2; objective: 5.319921970367432;
+fold: TRAIN; iteration: 832; epoch: 2; objective: 5.309048652648926;
+fold: TRAIN; iteration: 833; epoch: 2; objective: 5.314138412475586;
+fold: TRAIN; iteration: 834; epoch: 2; objective: 5.321427345275879;
+fold: TRAIN; iteration: 835; epoch: 2; objective: 5.317091464996338;
+fold: TRAIN; iteration: 836; epoch: 2; objective: 5.318564414978027;
+fold: TRAIN; iteration: 837; epoch: 2; objective: 5.323694229125977;
+fold: TRAIN; iteration: 838; epoch: 2; objective: 5.314627170562744;
+fold: TRAIN; iteration: 839; epoch: 2; objective: 5.315507411956787;
+fold: TRAIN; iteration: 840; epoch: 2; objective: 5.3193278312683105;
+fold: TRAIN; iteration: 841; epoch: 2; objective: 5.322064399719238;
+fold: TRAIN; iteration: 842; epoch: 2; objective: 5.31210470199585;
+fold: TRAIN; iteration: 843; epoch: 2; objective: 5.320416450500488;
+fold: TRAIN; iteration: 844; epoch: 2; objective: 5.319947242736816;
+fold: TRAIN; iteration: 845; epoch: 2; objective: 5.321224689483643;
+fold: TRAIN; iteration: 846; epoch: 2; objective: 5.323767185211182;
+fold: TRAIN; iteration: 847; epoch: 2; objective: 5.3186869621276855;
+fold: TRAIN; iteration: 848; epoch: 2; objective: 5.316024303436279;
+fold: TRAIN; iteration: 849; epoch: 2; objective: 5.315422534942627;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "3a4980f2022648b9b7f04a9494c51063", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "c6f118ad9d2046bfbf01630dc3b3e627", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "2035c9b0e8ae49c99cb87936ce5feee5", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+no best model found...
+fold: VALID; iteration: 850; epoch: 2; text2image_retrieval/p_at_10: 0.373; objective: 5.211909153882195;
+fold: TRAIN; iteration: 850; epoch: 2; objective: 5.314499855041504;
+fold: TRAIN; iteration: 851; epoch: 2; objective: 5.315718173980713;
+fold: TRAIN; iteration: 852; epoch: 2; objective: 5.3262939453125;
+fold: TRAIN; iteration: 853; epoch: 2; objective: 5.314019203186035;
+fold: TRAIN; iteration: 854; epoch: 2; objective: 5.327064514160156;
+fold: TRAIN; iteration: 855; epoch: 2; objective: 5.318339824676514;
+fold: TRAIN; iteration: 856; epoch: 2; objective: 5.315792560577393;
+fold: TRAIN; iteration: 857; epoch: 2; objective: 5.320196151733398;
+fold: TRAIN; iteration: 858; epoch: 2; objective: 5.324298858642578;
+fold: TRAIN; iteration: 859; epoch: 2; objective: 5.315780162811279;
+fold: TRAIN; iteration: 860; epoch: 2; objective: 5.317692279815674;
+fold: TRAIN; iteration: 861; epoch: 2; objective: 5.318416595458984;
+fold: TRAIN; iteration: 862; epoch: 2; objective: 5.315313339233398;
+fold: TRAIN; iteration: 863; epoch: 2; objective: 5.329802513122559;
+fold: TRAIN; iteration: 864; epoch: 2; objective: 5.3145880699157715;
+fold: TRAIN; iteration: 865; epoch: 2; objective: 5.320214748382568;
+fold: TRAIN; iteration: 866; epoch: 2; objective: 5.31584358215332;
+fold: TRAIN; iteration: 867; epoch: 2; objective: 5.319209098815918;
+fold: TRAIN; iteration: 868; epoch: 2; objective: 5.313198089599609;
+fold: TRAIN; iteration: 869; epoch: 2; objective: 5.314603805541992;
+fold: TRAIN; iteration: 870; epoch: 2; objective: 5.315013408660889;
+fold: TRAIN; iteration: 871; epoch: 2; objective: 5.311701774597168;
+fold: TRAIN; iteration: 872; epoch: 2; objective: 5.324944019317627;
+fold: TRAIN; iteration: 873; epoch: 2; objective: 5.312807083129883;
+fold: TRAIN; iteration: 874; epoch: 2; objective: 5.32295560836792;
+fold: TRAIN; iteration: 875; epoch: 2; objective: 5.3174519538879395;
+fold: TRAIN; iteration: 876; epoch: 2; objective: 5.31755256652832;
+fold: TRAIN; iteration: 877; epoch: 2; objective: 5.314163684844971;
+fold: TRAIN; iteration: 878; epoch: 2; objective: 5.316070079803467;
+fold: TRAIN; iteration: 879; epoch: 2; objective: 5.320196151733398;
+fold: TRAIN; iteration: 880; epoch: 2; objective: 5.322478294372559;
+fold: TRAIN; iteration: 881; epoch: 2; objective: 5.31649112701416;
+fold: TRAIN; iteration: 882; epoch: 2; objective: 5.324578285217285;
+fold: TRAIN; iteration: 883; epoch: 2; objective: 5.317032814025879;
+fold: TRAIN; iteration: 884; epoch: 2; objective: 5.3177690505981445;
+fold: TRAIN; iteration: 885; epoch: 2; objective: 5.321328639984131;
+fold: TRAIN; iteration: 886; epoch: 2; objective: 5.3079094886779785;
+fold: TRAIN; iteration: 887; epoch: 2; objective: 5.315325736999512;
+fold: TRAIN; iteration: 888; epoch: 2; objective: 5.324731826782227;
+fold: TRAIN; iteration: 889; epoch: 2; objective: 5.3198771476745605;
+fold: TRAIN; iteration: 890; epoch: 2; objective: 5.320115089416504;
+fold: TRAIN; iteration: 891; epoch: 2; objective: 5.313549518585205;
+fold: TRAIN; iteration: 892; epoch: 2; objective: 5.317733287811279;
+fold: TRAIN; iteration: 893; epoch: 2; objective: 5.310875415802002;
+fold: TRAIN; iteration: 894; epoch: 2; objective: 5.320183277130127;
+fold: TRAIN; iteration: 895; epoch: 2; objective: 5.3142008781433105;
+fold: TRAIN; iteration: 896; epoch: 2; objective: 5.324836254119873;
+fold: TRAIN; iteration: 897; epoch: 2; objective: 5.317400932312012;
+fold: TRAIN; iteration: 898; epoch: 2; objective: 5.311673641204834;
+fold: TRAIN; iteration: 899; epoch: 2; objective: 5.323748588562012;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "6c319d5844004fc6a23bcf0c745284a8", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "e32d6620c0fe4d07911db2a108bcb91e", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "0345700fc72943f7872c593c262d0e1a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+saving
+fold: VALID; iteration: 900; epoch: 2; text2image_retrieval/p_at_10: 0.389; objective: 5.211732191198013;
+fold: TRAIN; iteration: 900; epoch: 2; objective: 5.317083358764648;
+fold: TRAIN; iteration: 901; epoch: 2; objective: 5.317745208740234;
+fold: TRAIN; iteration: 902; epoch: 2; objective: 5.323066234588623;
+fold: TRAIN; iteration: 903; epoch: 2; objective: 5.3198442459106445;
+fold: TRAIN; iteration: 904; epoch: 2; objective: 5.31540060043335;
+fold: TRAIN; iteration: 905; epoch: 2; objective: 5.325831890106201;
+fold: TRAIN; iteration: 906; epoch: 2; objective: 5.315299987792969;
+fold: TRAIN; iteration: 907; epoch: 2; objective: 5.313060283660889;
+fold: TRAIN; iteration: 908; epoch: 2; objective: 5.326051235198975;
+fold: TRAIN; iteration: 909; epoch: 2; objective: 5.324390888214111;
+fold: TRAIN; iteration: 910; epoch: 2; objective: 5.318334102630615;
+fold: TRAIN; iteration: 911; epoch: 2; objective: 5.316638469696045;
+fold: TRAIN; iteration: 912; epoch: 2; objective: 5.310136795043945;
+fold: TRAIN; iteration: 913; epoch: 2; objective: 5.319587707519531;
+fold: TRAIN; iteration: 914; epoch: 2; objective: 5.324687480926514;
+fold: TRAIN; iteration: 915; epoch: 2; objective: 5.325171947479248;
+fold: TRAIN; iteration: 916; epoch: 2; objective: 5.3158087730407715;
+fold: TRAIN; iteration: 917; epoch: 2; objective: 5.32119607925415;
+fold: TRAIN; iteration: 918; epoch: 2; objective: 5.317370414733887;
+fold: TRAIN; iteration: 919; epoch: 2; objective: 5.323590278625488;
+fold: TRAIN; iteration: 920; epoch: 2; objective: 5.319164276123047;
+fold: TRAIN; iteration: 921; epoch: 2; objective: 5.318253040313721;
+fold: TRAIN; iteration: 922; epoch: 2; objective: 5.315612316131592;
+fold: TRAIN; iteration: 923; epoch: 2; objective: 5.314922332763672;
+fold: TRAIN; iteration: 924; epoch: 2; objective: 5.318063259124756;
+fold: TRAIN; iteration: 925; epoch: 2; objective: 5.322589874267578;
+fold: TRAIN; iteration: 926; epoch: 2; objective: 5.319059371948242;
+fold: TRAIN; iteration: 927; epoch: 2; objective: 5.314518451690674;
+fold: TRAIN; iteration: 928; epoch: 2; objective: 5.316678524017334;
+fold: TRAIN; iteration: 929; epoch: 2; objective: 5.317367076873779;
+fold: TRAIN; iteration: 930; epoch: 2; objective: 5.3120856285095215;
+fold: TRAIN; iteration: 931; epoch: 2; objective: 5.3194427490234375;
+fold: TRAIN; iteration: 932; epoch: 2; objective: 5.292462348937988;
+fold: TRAIN; iteration: 933; epoch: 3; objective: 5.317733287811279;
+fold: TRAIN; iteration: 934; epoch: 3; objective: 5.315731048583984;
+fold: TRAIN; iteration: 935; epoch: 3; objective: 5.314584255218506;
+fold: TRAIN; iteration: 936; epoch: 3; objective: 5.314193248748779;
+fold: TRAIN; iteration: 937; epoch: 3; objective: 5.317671775817871;
+fold: TRAIN; iteration: 938; epoch: 3; objective: 5.318809986114502;
+fold: TRAIN; iteration: 939; epoch: 3; objective: 5.322333812713623;
+fold: TRAIN; iteration: 940; epoch: 3; objective: 5.318514823913574;
+fold: TRAIN; iteration: 941; epoch: 3; objective: 5.317271709442139;
+fold: TRAIN; iteration: 942; epoch: 3; objective: 5.317205905914307;
+fold: TRAIN; iteration: 943; epoch: 3; objective: 5.316186428070068;
+fold: TRAIN; iteration: 944; epoch: 3; objective: 5.318180084228516;
+fold: TRAIN; iteration: 945; epoch: 3; objective: 5.311115264892578;
+fold: TRAIN; iteration: 946; epoch: 3; objective: 5.32238245010376;
+fold: TRAIN; iteration: 947; epoch: 3; objective: 5.316607475280762;
+fold: TRAIN; iteration: 948; epoch: 3; objective: 5.322423934936523;
+fold: TRAIN; iteration: 949; epoch: 3; objective: 5.320133209228516;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "570da3d8f2cb43308bb9b7a556c3b73a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "c3fa41b485964d75911844c8a0a41907", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "5d8708dabf954fbdab5ccaf905b8d70a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+no best model found...
+fold: VALID; iteration: 950; epoch: 3; text2image_retrieval/p_at_10: 0.373; objective: 5.211991338168874;
+fold: TRAIN; iteration: 950; epoch: 3; objective: 5.311694145202637;
+fold: TRAIN; iteration: 951; epoch: 3; objective: 5.3234381675720215;
+fold: TRAIN; iteration: 952; epoch: 3; objective: 5.316041946411133;
+fold: TRAIN; iteration: 953; epoch: 3; objective: 5.316519737243652;
+fold: TRAIN; iteration: 954; epoch: 3; objective: 5.325632095336914;
+fold: TRAIN; iteration: 955; epoch: 3; objective: 5.3131842613220215;
+fold: TRAIN; iteration: 956; epoch: 3; objective: 5.322791576385498;
+fold: TRAIN; iteration: 957; epoch: 3; objective: 5.315244197845459;
+fold: TRAIN; iteration: 958; epoch: 3; objective: 5.317416191101074;
+fold: TRAIN; iteration: 959; epoch: 3; objective: 5.321035385131836;
+fold: TRAIN; iteration: 960; epoch: 3; objective: 5.321491718292236;
+fold: TRAIN; iteration: 961; epoch: 3; objective: 5.314481735229492;
+fold: TRAIN; iteration: 962; epoch: 3; objective: 5.318504333496094;
+fold: TRAIN; iteration: 963; epoch: 3; objective: 5.316734790802002;
+fold: TRAIN; iteration: 964; epoch: 3; objective: 5.318391799926758;
+fold: TRAIN; iteration: 965; epoch: 3; objective: 5.314501762390137;
+fold: TRAIN; iteration: 966; epoch: 3; objective: 5.324667930603027;
+fold: TRAIN; iteration: 967; epoch: 3; objective: 5.32048225402832;
+fold: TRAIN; iteration: 968; epoch: 3; objective: 5.319729328155518;
+fold: TRAIN; iteration: 969; epoch: 3; objective: 5.320495128631592;
+fold: TRAIN; iteration: 970; epoch: 3; objective: 5.314696311950684;
+fold: TRAIN; iteration: 971; epoch: 3; objective: 5.311010837554932;
+fold: TRAIN; iteration: 972; epoch: 3; objective: 5.3231964111328125;
+fold: TRAIN; iteration: 973; epoch: 3; objective: 5.31479024887085;
+fold: TRAIN; iteration: 974; epoch: 3; objective: 5.318077087402344;
+fold: TRAIN; iteration: 975; epoch: 3; objective: 5.314135551452637;
+fold: TRAIN; iteration: 976; epoch: 3; objective: 5.309889793395996;
+fold: TRAIN; iteration: 977; epoch: 3; objective: 5.317428112030029;
+fold: TRAIN; iteration: 978; epoch: 3; objective: 5.310407638549805;
+fold: TRAIN; iteration: 979; epoch: 3; objective: 5.318488597869873;
+fold: TRAIN; iteration: 980; epoch: 3; objective: 5.319988250732422;
+fold: TRAIN; iteration: 981; epoch: 3; objective: 5.312290668487549;
+fold: TRAIN; iteration: 982; epoch: 3; objective: 5.319448947906494;
+fold: TRAIN; iteration: 983; epoch: 3; objective: 5.329160690307617;
+fold: TRAIN; iteration: 984; epoch: 3; objective: 5.319592475891113;
+fold: TRAIN; iteration: 985; epoch: 3; objective: 5.3250226974487305;
+fold: TRAIN; iteration: 986; epoch: 3; objective: 5.318316459655762;
+fold: TRAIN; iteration: 987; epoch: 3; objective: 5.319995403289795;
+fold: TRAIN; iteration: 988; epoch: 3; objective: 5.320492744445801;
+fold: TRAIN; iteration: 989; epoch: 3; objective: 5.325067043304443;
+fold: TRAIN; iteration: 990; epoch: 3; objective: 5.313523292541504;
+fold: TRAIN; iteration: 991; epoch: 3; objective: 5.315349578857422;
+fold: TRAIN; iteration: 992; epoch: 3; objective: 5.31675910949707;
+fold: TRAIN; iteration: 993; epoch: 3; objective: 5.314404010772705;
+fold: TRAIN; iteration: 994; epoch: 3; objective: 5.3231706619262695;
+fold: TRAIN; iteration: 995; epoch: 3; objective: 5.3163652420043945;
+fold: TRAIN; iteration: 996; epoch: 3; objective: 5.314452648162842;
+fold: TRAIN; iteration: 997; epoch: 3; objective: 5.320489406585693;
+fold: TRAIN; iteration: 998; epoch: 3; objective: 5.3132476806640625;
+fold: TRAIN; iteration: 999; epoch: 3; objective: 5.321308135986328;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "0952e9bb9f7a4503af5b75d8396eb53a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "6a92cb7161df4354b9055dd5fc9409a6", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "7a2d071bdbc047648184c1ce1b1e93b3", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+no best model found...
+fold: VALID; iteration: 1000; epoch: 3; text2image_retrieval/p_at_10: 0.373; objective: 5.211902127546423;
+fold: TRAIN; iteration: 1000; epoch: 3; objective: 5.33189058303833;
+fold: TRAIN; iteration: 1001; epoch: 3; objective: 5.321025371551514;
+fold: TRAIN; iteration: 1002; epoch: 3; objective: 5.321225643157959;
+fold: TRAIN; iteration: 1003; epoch: 3; objective: 5.318996906280518;
+fold: TRAIN; iteration: 1004; epoch: 3; objective: 5.320418834686279;
+fold: TRAIN; iteration: 1005; epoch: 3; objective: 5.314464569091797;
+fold: TRAIN; iteration: 1006; epoch: 3; objective: 5.319134712219238;
+fold: TRAIN; iteration: 1007; epoch: 3; objective: 5.321824073791504;
+fold: TRAIN; iteration: 1008; epoch: 3; objective: 5.317175388336182;
+fold: TRAIN; iteration: 1009; epoch: 3; objective: 5.313566207885742;
+fold: TRAIN; iteration: 1010; epoch: 3; objective: 5.324023723602295;
+fold: TRAIN; iteration: 1011; epoch: 3; objective: 5.315616607666016;
+fold: TRAIN; iteration: 1012; epoch: 3; objective: 5.317206382751465;
+fold: TRAIN; iteration: 1013; epoch: 3; objective: 5.314631938934326;
+fold: TRAIN; iteration: 1014; epoch: 3; objective: 5.3217997550964355;
+fold: TRAIN; iteration: 1015; epoch: 3; objective: 5.321202754974365;
+fold: TRAIN; iteration: 1016; epoch: 3; objective: 5.316458225250244;
+fold: TRAIN; iteration: 1017; epoch: 3; objective: 5.317274570465088;
+fold: TRAIN; iteration: 1018; epoch: 3; objective: 5.325681209564209;
+fold: TRAIN; iteration: 1019; epoch: 3; objective: 5.3203535079956055;
+fold: TRAIN; iteration: 1020; epoch: 3; objective: 5.317038059234619;
+fold: TRAIN; iteration: 1021; epoch: 3; objective: 5.325808525085449;
+fold: TRAIN; iteration: 1022; epoch: 3; objective: 5.314758777618408;
+fold: TRAIN; iteration: 1023; epoch: 3; objective: 5.30771017074585;
+fold: TRAIN; iteration: 1024; epoch: 3; objective: 5.326529502868652;
+fold: TRAIN; iteration: 1025; epoch: 3; objective: 5.319363594055176;
+fold: TRAIN; iteration: 1026; epoch: 3; objective: 5.323240280151367;
+fold: TRAIN; iteration: 1027; epoch: 3; objective: 5.321716785430908;
+fold: TRAIN; iteration: 1028; epoch: 3; objective: 5.32338285446167;
+fold: TRAIN; iteration: 1029; epoch: 3; objective: 5.320611953735352;
+fold: TRAIN; iteration: 1030; epoch: 3; objective: 5.318363189697266;
+fold: TRAIN; iteration: 1031; epoch: 3; objective: 5.315858840942383;
+fold: TRAIN; iteration: 1032; epoch: 3; objective: 5.315685749053955;
+fold: TRAIN; iteration: 1033; epoch: 3; objective: 5.322301387786865;
+fold: TRAIN; iteration: 1034; epoch: 3; objective: 5.308239459991455;
+fold: TRAIN; iteration: 1035; epoch: 3; objective: 5.318146228790283;
+fold: TRAIN; iteration: 1036; epoch: 3; objective: 5.3160505294799805;
+fold: TRAIN; iteration: 1037; epoch: 3; objective: 5.320681095123291;
+fold: TRAIN; iteration: 1038; epoch: 3; objective: 5.319143772125244;
+fold: TRAIN; iteration: 1039; epoch: 3; objective: 5.318899631500244;
+fold: TRAIN; iteration: 1040; epoch: 3; objective: 5.3191914558410645;
+fold: TRAIN; iteration: 1041; epoch: 3; objective: 5.319006443023682;
+fold: TRAIN; iteration: 1042; epoch: 3; objective: 5.318881511688232;
+fold: TRAIN; iteration: 1043; epoch: 3; objective: 5.318985462188721;
+fold: TRAIN; iteration: 1044; epoch: 3; objective: 5.308990955352783;
+fold: TRAIN; iteration: 1045; epoch: 3; objective: 5.318904399871826;
+fold: TRAIN; iteration: 1046; epoch: 3; objective: 5.320764541625977;
+fold: TRAIN; iteration: 1047; epoch: 3; objective: 5.313874244689941;
+fold: TRAIN; iteration: 1048; epoch: 3; objective: 5.322519302368164;
+fold: TRAIN; iteration: 1049; epoch: 3; objective: 5.32139778137207;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "1b55862ec352408c9c90c7fda396667a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "b76852e63f4f4c7a8e21eb14d80acc7b", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "55dd32f7b843437cbab6b3b59460ad8f", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+no best model found...
+fold: VALID; iteration: 1050; epoch: 3; text2image_retrieval/p_at_10: 0.375; objective: 5.211860151851878;
+fold: TRAIN; iteration: 1050; epoch: 3; objective: 5.314130783081055;
+fold: TRAIN; iteration: 1051; epoch: 3; objective: 5.314666271209717;
+fold: TRAIN; iteration: 1052; epoch: 3; objective: 5.3187255859375;
+fold: TRAIN; iteration: 1053; epoch: 3; objective: 5.322607040405273;
+fold: TRAIN; iteration: 1054; epoch: 3; objective: 5.311845779418945;
+fold: TRAIN; iteration: 1055; epoch: 3; objective: 5.31402063369751;
+fold: TRAIN; iteration: 1056; epoch: 3; objective: 5.31800651550293;
+fold: TRAIN; iteration: 1057; epoch: 3; objective: 5.314266681671143;
+fold: TRAIN; iteration: 1058; epoch: 3; objective: 5.309676170349121;
+fold: TRAIN; iteration: 1059; epoch: 3; objective: 5.322261810302734;
+fold: TRAIN; iteration: 1060; epoch: 3; objective: 5.306193828582764;
+fold: TRAIN; iteration: 1061; epoch: 3; objective: 5.319725513458252;
+fold: TRAIN; iteration: 1062; epoch: 3; objective: 5.325287342071533;
+fold: TRAIN; iteration: 1063; epoch: 3; objective: 5.30745267868042;
+fold: TRAIN; iteration: 1064; epoch: 3; objective: 5.315972805023193;
+fold: TRAIN; iteration: 1065; epoch: 3; objective: 5.31487512588501;
+fold: TRAIN; iteration: 1066; epoch: 3; objective: 5.318320274353027;
+fold: TRAIN; iteration: 1067; epoch: 3; objective: 5.3119401931762695;
+fold: TRAIN; iteration: 1068; epoch: 3; objective: 5.314573287963867;
+fold: TRAIN; iteration: 1069; epoch: 3; objective: 5.3173980712890625;
+fold: TRAIN; iteration: 1070; epoch: 3; objective: 5.317841053009033;
+fold: TRAIN; iteration: 1071; epoch: 3; objective: 5.316170692443848;
+fold: TRAIN; iteration: 1072; epoch: 3; objective: 5.311516284942627;
+fold: TRAIN; iteration: 1073; epoch: 3; objective: 5.320667266845703;
+fold: TRAIN; iteration: 1074; epoch: 3; objective: 5.316608905792236;
+fold: TRAIN; iteration: 1075; epoch: 3; objective: 5.316659450531006;
+fold: TRAIN; iteration: 1076; epoch: 3; objective: 5.322800159454346;
+fold: TRAIN; iteration: 1077; epoch: 3; objective: 5.319404602050781;
+fold: TRAIN; iteration: 1078; epoch: 3; objective: 5.322343349456787;
+fold: TRAIN; iteration: 1079; epoch: 3; objective: 5.312837600708008;
+fold: TRAIN; iteration: 1080; epoch: 3; objective: 5.314612865447998;
+fold: TRAIN; iteration: 1081; epoch: 3; objective: 5.321871280670166;
+fold: TRAIN; iteration: 1082; epoch: 3; objective: 5.318238258361816;
+fold: TRAIN; iteration: 1083; epoch: 3; objective: 5.306923866271973;
+fold: TRAIN; iteration: 1084; epoch: 3; objective: 5.32080602645874;
+fold: TRAIN; iteration: 1085; epoch: 3; objective: 5.319209575653076;
+fold: TRAIN; iteration: 1086; epoch: 3; objective: 5.320493221282959;
+fold: TRAIN; iteration: 1087; epoch: 3; objective: 5.322454929351807;
+fold: TRAIN; iteration: 1088; epoch: 3; objective: 5.316385746002197;
+fold: TRAIN; iteration: 1089; epoch: 3; objective: 5.32573938369751;
+fold: TRAIN; iteration: 1090; epoch: 3; objective: 5.3224358558654785;
+fold: TRAIN; iteration: 1091; epoch: 3; objective: 5.319167613983154;
+fold: TRAIN; iteration: 1092; epoch: 3; objective: 5.320624828338623;
+fold: TRAIN; iteration: 1093; epoch: 3; objective: 5.317054748535156;
+fold: TRAIN; iteration: 1094; epoch: 3; objective: 5.31776237487793;
+fold: TRAIN; iteration: 1095; epoch: 3; objective: 5.316981792449951;
+fold: TRAIN; iteration: 1096; epoch: 3; objective: 5.314631938934326;
+fold: TRAIN; iteration: 1097; epoch: 3; objective: 5.317938804626465;
+fold: TRAIN; iteration: 1098; epoch: 3; objective: 5.315404891967773;
+fold: TRAIN; iteration: 1099; epoch: 3; objective: 5.311835289001465;
+validating model...
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with clip_projection
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "2bb50a7f73c5448691aa4e6bf1c7401e", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "98ddabc434e243dca9b56076839e65db", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "1ef6c9a834554182854ef8071db48a4a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+training aborted...
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[None]
+</pre></div></div>
+</div>
+<p>We now can see that we’ve set and trained our own semantic index. Let’s take a look at the results of the training:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from matplotlib import pyplot as plt
+info = docs[&#39;_objects&#39;].find_one({&#39;name&#39;: &#39;simple_image_search&#39;, &#39;varieties&#39;: &#39;semantic_index&#39;})
+</pre></div>
+</div>
+</div>
+<p>We can visualize the improvement of metrics during training using standard functionality from the scientific Python ecosystem. No need for Tensorboards or special visualization interfaces!</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for k in info[&#39;metric_values&#39;]:
+    if k == &#39;objective&#39;:
+        plt.figure()
+        plt.title(&#39;objective&#39;)
+        plt.plot(info[&#39;metric_values&#39;][k])
+        continue
+    for result in info[&#39;metric_values&#39;][k]:
+        plt.figure()
+        plt.title(f&#39;{k}/{result}&#39;)
+        plt.plot(info[&#39;metric_values&#39;][k][result])
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_22_0.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_22_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_22_1.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_22_1.png" />
+</div>
+</div>
+<p>The same can be done for the progression of weights during training:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for parameter in info[&#39;weights&#39;]:
+    plt.figure()
+    plt.title(parameter)
+    plt.plot(info[&#39;weights&#39;][parameter])
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_24_0.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_24_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_24_1.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_24_1.png" />
+</div>
+</div>
+<p>We see that our model provides quick retrievals using its simpler architecture, and we succeeded in doing this with a very small resource footprint:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from IPython.display import display
+
+docs.semantic_index = &#39;simple_image_search&#39;
+for r in docs.find(like={&#39;captions&#39;: [&#39;Dog catches frisbee&#39;]}, n=5):
+    display(r[&#39;img&#39;])
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "d4b449ec829549d4b2404c0db1f505da", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_2.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_2.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_3.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_4.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_4.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_5.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_5.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_6.png" src="../../_images/examples_coco_bespoke-retriever-using-clip-embeddings_26_6.png" />
+</div>
+</div>
+<p>Let’s see how well our model has done:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.validate_semantic_index(&#39;simple_image_search&#39;, [&#39;text2image_retrieval&#39;], [&#39;p_at_10&#39;])
+docs[&#39;_objects&#39;].find_one({&#39;name&#39;: &#39;simple_image_search&#39;, &#39;varieties&#39;: &#39;semantic_index&#39;}, {&#39;final_metrics&#39;: 1})
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "72e8a6b99852453dbc6a8e68d7b58bb1", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "aac2b0c2145a4099a52e3296c5ee75a6", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+loading hashes: &#34;simple_image_search&#34;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;_id&#39;: ObjectId(&#39;63fe61339ef33c2039730554&#39;),
+ &#39;final_metrics&#39;: {&#39;text2image_retrieval&#39;: {&#39;p_at_10&#39;: 0.386}}}
+</pre></div></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="text-2-image-retrieval-with-clip.html" class="btn btn-neutral float-left" title="Text-2-Image document retrieval using pretrained CLIP" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="attribute-prediction.html" class="btn btn-neutral float-right" title="Attribute prediction using “imputations” with preparation in SpaCy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Duncan Blythe duncan@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -107,9 +107,9 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from superduperdb.client import the_client
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.client</span> <span class="kn">import</span> <span class="n">the_client</span>
 
-docs = the_client.coco.documents
+<span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">coco</span><span class="o">.</span><span class="n">documents</span>
 </pre></div>
 </div>
 </div>
@@ -120,8 +120,8 @@ docs = the_client.coco.documents
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!curl https://downloads.cs.stanford.edu/nlp/data/glove.6B.zip
-!unzip glove.6B.zip
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>curl<span class="w"> </span>https://downloads.cs.stanford.edu/nlp/data/glove.6B.zip
+<span class="o">!</span>unzip<span class="w"> </span>glove.6B.zip
 </pre></div>
 </div>
 </div>
@@ -129,7 +129,7 @@ docs = the_client.coco.documents
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/glove.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/glove.py
 </pre></div>
 </div>
 </div>
@@ -166,25 +166,25 @@ docs = the_client.coco.documents
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy
-import torch
-from examples.coco.glove import AverageOfGloves
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">examples.coco.glove</span> <span class="kn">import</span> <span class="n">AverageOfGloves</span>
 
-with open(&#39;glove.6B.50d.txt&#39;) as f:
-    lines = f.read().split(&#39;\n&#39;)
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;glove.6B.50d.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-lines = [x.split(&#39; &#39;) for x in lines[:-1]]
-index = [x[0] for x in lines]
-vectors = [[float(y) for y in x[1:]] for x in lines]
-vectors = numpy.array(vectors)
+<span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+<span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+<span class="n">vectors</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+<span class="n">vectors</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span>
 
-glove = AverageOfGloves(torch.from_numpy(vectors).type(torch.float), index)
+<span class="n">glove</span> <span class="o">=</span> <span class="n">AverageOfGloves</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">),</span> <span class="n">index</span><span class="p">)</span>
 
-docs.create_model(
-    &#39;average_glove&#39;,
-    glove,
-    type=&#39;float_tensor&#39;,
-)
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
+    <span class="s1">&#39;average_glove&#39;</span><span class="p">,</span>
+    <span class="n">glove</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -193,11 +193,11 @@ docs.create_model(
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_model(
-    &#39;clip_projection&#39;,
-    object=torch.nn.Linear(1024, 50),
-    type=&#39;float_tensor&#39;,
-)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
+    <span class="s1">&#39;clip_projection&#39;</span><span class="p">,</span>
+    <span class="nb">object</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -206,7 +206,7 @@ docs.create_model(
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/ranking_loss.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/ranking_loss.py
 </pre></div>
 </div>
 </div>
@@ -229,9 +229,9 @@ docs.create_model(
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.coco.ranking_loss import ranking_loss
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.ranking_loss</span> <span class="kn">import</span> <span class="n">ranking_loss</span>
 
-docs.create_objective(&#39;ranking_loss&#39;, ranking_loss)
+<span class="n">docs</span><span class="o">.</span><span class="n">create_objective</span><span class="p">(</span><span class="s1">&#39;ranking_loss&#39;</span><span class="p">,</span> <span class="n">ranking_loss</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -247,7 +247,7 @@ docs.create_objective(&#39;ranking_loss&#39;, ranking_loss)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_models()
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_models</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -264,7 +264,7 @@ docs.create_objective(&#39;ranking_loss&#39;, ranking_loss)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_measures()
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_measures</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -281,7 +281,7 @@ docs.create_objective(&#39;ranking_loss&#39;, ranking_loss)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_objectives()
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_objectives</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -298,7 +298,7 @@ docs.create_objective(&#39;ranking_loss&#39;, ranking_loss)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_validation_sets()
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_validation_sets</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -315,7 +315,7 @@ docs.create_objective(&#39;ranking_loss&#39;, ranking_loss)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.list_metrics()
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_metrics</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -333,27 +333,27 @@ docs.create_objective(&#39;ranking_loss&#39;, ranking_loss)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_semantic_index(
-    &#39;simple_image_search&#39;,
-    models=[&#39;clip_projection&#39;, &#39;average_glove&#39;],
-    keys=[&#39;img&#39;, &#39;captions&#39;],
-    objective=&#39;ranking_loss&#39;,
-    filter={},
-    features={&#39;img&#39;: &#39;clip&#39;},
-    metrics=[&#39;p_at_10&#39;],
-    measure=&#39;css&#39;,
-    validation_sets=[&#39;text2image_retrieval&#39;],
-    batch_size=250,
-    num_workers=0,
-    n_epochs=20,
-    lr=0.001,
-    log_weights=True,
-    download=True,
-    validation_interval=50,
-    no_improve_then_stop=5,
-    n_iterations=5000,
-    use_grads={&#39;clip_projection&#39;: True, &#39;average_glove&#39;: False},
-)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
+    <span class="s1">&#39;simple_image_search&#39;</span><span class="p">,</span>
+    <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clip_projection&#39;</span><span class="p">,</span> <span class="s1">&#39;average_glove&#39;</span><span class="p">],</span>
+    <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="s1">&#39;captions&#39;</span><span class="p">],</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;ranking_loss&#39;</span><span class="p">,</span>
+    <span class="nb">filter</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="s1">&#39;clip&#39;</span><span class="p">},</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">],</span>
+    <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;css&#39;</span><span class="p">,</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">n_epochs</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">log_weights</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">validation_interval</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">no_improve_then_stop</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">n_iterations</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+    <span class="n">use_grads</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;clip_projection&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;average_glove&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -2469,8 +2469,8 @@ training aborted...
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from matplotlib import pyplot as plt
-info = docs[&#39;_objects&#39;].find_one({&#39;name&#39;: &#39;simple_image_search&#39;, &#39;varieties&#39;: &#39;semantic_index&#39;})
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="n">info</span> <span class="o">=</span> <span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_objects&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;simple_image_search&#39;</span><span class="p">,</span> <span class="s1">&#39;varieties&#39;</span><span class="p">:</span> <span class="s1">&#39;semantic_index&#39;</span><span class="p">})</span>
 </pre></div>
 </div>
 </div>
@@ -2479,17 +2479,17 @@ info = docs[&#39;_objects&#39;].find_one({&#39;name&#39;: &#39;simple_image_sear
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for k in info[&#39;metric_values&#39;]:
-    if k == &#39;objective&#39;:
-        plt.figure()
-        plt.title(&#39;objective&#39;)
-        plt.plot(info[&#39;metric_values&#39;][k])
-        continue
-    for result in info[&#39;metric_values&#39;][k]:
-        plt.figure()
-        plt.title(f&#39;{k}/{result}&#39;)
-        plt.plot(info[&#39;metric_values&#39;][k][result])
-plt.show()
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;objective&#39;</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;objective&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">continue</span>
+    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">]:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="n">result</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -2512,10 +2512,10 @@ plt.show()
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>for parameter in info[&#39;weights&#39;]:
-    plt.figure()
-    plt.title(parameter)
-    plt.plot(info[&#39;weights&#39;][parameter])
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">]:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">parameter</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">][</span><span class="n">parameter</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -2538,11 +2538,11 @@ plt.show()
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from IPython.display import display
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
 
-docs.semantic_index = &#39;simple_image_search&#39;
-for r in docs.find(like={&#39;captions&#39;: [&#39;Dog catches frisbee&#39;]}, n=5):
-    display(r[&#39;img&#39;])
+<span class="n">docs</span><span class="o">.</span><span class="n">semantic_index</span> <span class="o">=</span> <span class="s1">&#39;simple_image_search&#39;</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Dog catches frisbee&#39;</span><span class="p">]},</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -2600,8 +2600,8 @@ loading hashes: &#34;simple_image_search&#34;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.validate_semantic_index(&#39;simple_image_search&#39;, [&#39;text2image_retrieval&#39;], [&#39;p_at_10&#39;])
-docs[&#39;_objects&#39;].find_one({&#39;name&#39;: &#39;simple_image_search&#39;, &#39;varieties&#39;: &#39;semantic_index&#39;}, {&#39;final_metrics&#39;: 1})
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">validate_semantic_index</span><span class="p">(</span><span class="s1">&#39;simple_image_search&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">])</span>
+<span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_objects&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;simple_image_search&#39;</span><span class="p">,</span> <span class="s1">&#39;varieties&#39;</span><span class="p">:</span> <span class="s1">&#39;semantic_index&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;final_metrics&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
 </pre></div>
 </div>
 </div>

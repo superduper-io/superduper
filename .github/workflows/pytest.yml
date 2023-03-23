@@ -27,8 +27,8 @@ jobs:
     - name: Install dependencies
       run: |
         echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-        sudo apt update
-        sudo apt install mongodb-org
+        sudo apt-get update
+        sudo apt-get install mongodb-org
         systemctl enable mongod.service
         systemctl start mongod.service
         python -m pip install --upgrade pip

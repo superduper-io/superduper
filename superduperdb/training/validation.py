@@ -1,16 +1,13 @@
 from collections import defaultdict
 
-import pymongo
-
 from superduperdb.models.utils import apply_model
-from superduperdb.utils import progressbar
 
 
-def validate_imputation(collection, validation_set, imputation, metrics, model=None, features=None):
+def validate_imputation(database, validation_set, imputation, metrics, model=None, features=None):
 
-    info = collection.database['_objects'].find_one({'name': imputation, 'variety': 'imputation'})
+    info = database.get_object_info(identifier=imputation, variety='imputation')
     if model is None:
-        model = collection.models[info['model']]
+        model = database.models[info['model']]
     model_key = info['model_key']
     target_key = info['target_key']
     loader_kwargs = info.get('loader_kwargs') or {}
@@ -19,12 +16,10 @@ def validate_imputation(collection, validation_set, imputation, metrics, model=N
         _save = metrics[:]
         metrics = {}
         for m in _save:
-            metrics[m] = collection.metrics[m]
+            metrics[m] = database.metrics[m]
 
-    docs = list(collection.database['_validation_sets'].find(
-        {'_validation_set': validation_set, 'collection': collection.name},
-        features=features,
-    ))
+    query_params = database.get_query_params_for_validation_set(validation_set)
+    docs = list(database.execute_query(*query_params, features=features))
     if model_key != '_base':
         inputs_ = [r[model_key] for r in docs]
     elif '_base' in features:
@@ -52,69 +47,43 @@ def validate_imputation(collection, validation_set, imputation, metrics, model=N
     return metric_values
 
 
-def validate_representations(collection, validation_set, semantic_index,
-                             metrics, encoders=None,
-                             features=None, refresh=False):
+def validate_representations(database, validation_set, semantic_index,
+                             metrics, encoders=None):
 
-    info = collection.database['_objects'].find_one({'name': semantic_index, 'variety': 'semantic_index',
-                                                     'collection': collection.name})
+    info = database.get_object_info(identifier=semantic_index, variety='semantic_index')
+
     encoder_names = info['models']
-    projection = info.get('projection', {})
     if encoders is None:
         encoders = []
         for e in encoder_names:
-            encoders.append(collection.models[e])
+            encoders.append(database.models[e])
 
     if isinstance(metrics, list):
         _save = metrics[:]
         metrics = {}
         for m in _save:
-            metrics[m] = collection.metrics[m]
+            metrics[m] = database.metrics[m]
 
     try:
-        collection.unset_hash_set()
+        database.unset_hash_set(semantic_index)
     except KeyError as e:  # pragma: no cover
         if not 'semantic_index' in str(e):
             raise e
 
-    if refresh:
-        _ids = collection['_validation_sets'].distinct('_id', {'_validation_set': validation_set,
-                                                               'collection': collection.name})
-    else:
-        _ids = collection['_validation_sets'].distinct(
-            '_id',
-            {
-                '_validation_set': validation_set,
-                f'_outputs.{info["keys"][0]}.{encoder_names[0]}': {'$exists': 0},
-                'collection': collection.name
-            },
-        )
+    database.remote = False
+    database._process_documents_with_watcher(f'{semantic_index}/{validation_set}', model=encoders[0])
+    query_params = database.get_query_params_for_validation_set(validation_set)
 
-    collection.remote = False
-    collection.database._process_documents_with_watcher(
-        '_validation_sets',
-        encoder_names[0], info['keys'][0], _ids, verbose=True, model=encoders[0],
-        recompute=True,
-    )
-    valid_coll = collection.database['_validation_sets']
-    valid_coll.semantic_index = semantic_index
-    anchors = progressbar(
-        valid_coll.find({'_validation_set': validation_set, 'collection': collection.name},
-                        projection,
-                        features=features).sort('_id', pymongo.ASCENDING),
-        total=valid_coll.count_documents({'_validation_set': validation_set}),
-    )
+    anchors = list(database.execute_query(*query_params))
+    _ids = database.get_ids_from_result(query_params, anchors)
 
     metric_values = defaultdict(lambda: [])
-    for r in anchors:
-        _id = r['_id']
-        if '_other' in r:
-            r = r['_other']
-        if '_id' in r:
-            del r['_id']
-        result = list(valid_coll.find({}, {'_id': 1}, like=r, n=100))
+    for _id, r in zip(_ids, anchors):
+        query_part, r = database.separate_query_part_from_validation_record(r)
+        result = list(database.execute_query(*query_params, like=query_part, n=100,
+                                             semantic_index=f'{semantic_index}/{validation_set}'))
         result = sorted(result, key=lambda r: -r['_score'])
-        result = [r['_id'] for r in result]
+        result = database.get_ids_from_result(query_params, result)
         for metric in metrics:
             metric_values[metric].append(metrics[metric](result, _id))
 

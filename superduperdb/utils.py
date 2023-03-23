@@ -1,3 +1,4 @@
+import importlib
 from collections import defaultdict
 from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
@@ -8,6 +9,8 @@ import torch
 import torch.utils.data
 import tqdm
 import warnings
+
+from superduperdb import cf
 
 
 class opts:
@@ -145,8 +148,9 @@ def timeout(seconds):  # pragma: no cover
 class Downloader:
     def __init__(
         self,
+        table,
         urls,
-        collection,
+        update_one=None,
         ids=None,
         keys=None,
         n_workers=20,
@@ -155,20 +159,11 @@ class Downloader:
         headers=None,
         skip_existing=True,
         timeout=None,
-        update_db=True,
     ):
-        """
-        Parallel file downloader
-        :param urls: list of file urls
-        :param files: list of destination paths for saving
-        :param n_workers: number of workers over which to parallelize
-        :param n_callback_workers: number of workers over which to parallelize callbacks
-        :param max_queue: Maximum number of tasks in the multiprocessing queue.
-        """
+        self.table = table
         self.urls = urls
         self.ids = ids
         self.keys = keys
-        self.collection = collection
         self.n_workers = n_workers
         self.raises = raises
         self.max_queue = max_queue
@@ -176,7 +171,8 @@ class Downloader:
         self.headers = headers
         self.skip_existing = skip_existing
         self.timeout = timeout
-        self.update_db = update_db
+        self.update_db = update_one is not None
+        self.update_one = update_one
         if not self.update_db:  # pragma: no cover
             self.results = {}
 
@@ -266,9 +262,7 @@ class Downloader:
             raise Exception(f"Non-200 response. ({r.status_code})")
 
         if self.update_db:
-            self.collection.update_one({'_id': self.ids[i]},
-                                       {'$set': {f'{self.keys[i]}._content.bytes': r.content}},
-                                       refresh=False)
+            self.update_one(self.table, self.ids[i], self.keys[i], r.content)
         else:  # pragma: no cover
             self.results[self.ids[i]] = r.content
 
@@ -282,3 +276,48 @@ class ArgumentDefaultDict(defaultdict):
         if item not in self.keys():
             self[item] = self.default_factory(item)
         return super().__getitem__(item)
+
+
+def gather_urls(documents):
+    urls = []
+    mongo_keys = []
+    ids = []
+    for r in documents:
+        sub_urls, sub_mongo_keys = _gather_urls_for_document(r)
+        ids.extend([r['_id'] for _ in sub_urls])
+        urls.extend(sub_urls)
+        mongo_keys.extend(sub_mongo_keys)
+    return urls, mongo_keys, ids
+
+
+def _gather_urls_for_document(r):
+    '''
+    >>> _gather_urls_for_document({'a': {'_content': {'url': 'test'}}})
+    (['test'], ['a'])
+    >>> d = {'b': {'a': {'_content': {'url': 'test'}}}}
+    >>> _gather_urls_for_document(d)
+    (['test'], ['b.a'])
+    >>> d = {'b': {'a': {'_content': {'url': 'test', 'bytes': b'abc'}}}}
+    >>> _gather_urls_for_document(d)
+    ([], [])
+    '''
+    urls = []
+    keys = []
+    for k in r:
+        if isinstance(r[k], dict) and '_content' in r[k]:
+            if 'url' in r[k]['_content'] and 'bytes' not in r[k]['_content']:
+                keys.append(k)
+                urls.append(r[k]['_content']['url'])
+        elif isinstance(r[k], dict) and '_content' not in r[k]:
+            sub_urls, sub_keys = _gather_urls_for_document(r[k])
+            urls.extend(sub_urls)
+            keys.extend([f'{k}.{key}' for key in sub_keys])
+    return urls, keys
+
+
+def get_database_from_database_type(database_type, database_name):
+    module = importlib.import_module(f'superduperdb.{database_type}.client')
+    client_cls = getattr(module, 'SuperDuperClient')
+    client = client_cls(**cf.get(database_type, {}))
+    return client.get_database_from_name(database_name)
+

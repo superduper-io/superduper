@@ -1,5 +1,5 @@
 
-def convert_types(r, converters=None):
+def convert_from_bytes_to_types(r, converters=None):
     if converters is None:
         converters = {}  # pragma: no cover
     for k in r:
@@ -8,5 +8,5 @@ def convert_types(r, converters=None):
                 converter = converters[r[k]['type']]
                 return converter.decode(r[k]['bytes'])
             else:
-                convert_types(r[k], converters=converters)
+                r[k] = convert_from_bytes_to_types(r[k], converters=converters)
     return r

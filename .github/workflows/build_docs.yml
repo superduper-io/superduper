@@ -35,7 +35,7 @@ jobs:
     - name: Build docs
       run: |
         cd docs
-        make github
+        make html
         cd ../
     - name: Commit and Push changes
       run: |

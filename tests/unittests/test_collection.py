@@ -1,7 +1,8 @@
 from tests.fixtures.collection import (
     float_tensors, empty, a_model, b_model, c_model, random_data,
     si_validation, measure, metric, my_rank_obj, a_classifier, a_target, accuracy_metric,
-    my_class_obj, imputation_validation, with_semantic_index, an_update, a_watcher, image_type
+    my_class_obj, imputation_validation, with_semantic_index, an_update, a_watcher, image_type,
+    n_data_points
 )
 import PIL.PngImagePlugin
 import os
@@ -42,7 +43,7 @@ def test_insert(random_data, a_model, an_update, remote):
         for node in jobs:
             for job_id in jobs[node]:
                 random_data.watch_job(job_id)
-    assert random_data.count_documents({}) == 110
+    assert random_data.count_documents({}) == n_data_points + 10
 
 
 @pytest.mark.parametrize('remote', remote_values)

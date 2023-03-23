@@ -29,7 +29,7 @@ def apply_model():
     database = databases[f'{database}']
     database.remote = False
     result = database.apply_model(name, input_, **kwargs)
-    result = database.convert_types(result)
+    result = database.convert_from_bytes_to_types(result)
     response = flask.make_response(pickle.dumps(result))
     return response
 

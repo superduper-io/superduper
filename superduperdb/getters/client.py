@@ -5,7 +5,7 @@ from bson import ObjectId, BSON
 import requests
 
 from superduperdb import cf
-from superduperdb.types.utils import convert_types
+from superduperdb.types.utils import convert_from_bytes_to_types
 
 databases = {}
 
@@ -55,9 +55,6 @@ def clear_remote_cache():
 
 
 def apply_model(database, name, input_, **kwargs):
-    from superduperdb.mongodb.client import the_client
-    if database not in databases:
-        databases[database] = the_client[database]
     input_ = pickle.dumps(input_).decode('iso-8859-1')
     json_ = {
         'database': database,
@@ -70,6 +67,6 @@ def apply_model(database, name, input_, **kwargs):
         json=json_
     )
     out = pickle.loads(response.content)
-    out = convert_types(out, converters=databases[database].types)
+    out = convert_from_bytes_to_types(out, converters=databases[database].types)
     return out
 

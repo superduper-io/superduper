@@ -1,5 +1,9 @@
+import importlib
 from torch.utils import data
 import pymongo
+
+from superduperdb import cf
+from superduperdb.utils import get_database_from_database_type, MongoStyleDict
 
 
 class MongoIterable(data.IterableDataset):  # pragma: no cover
@@ -53,73 +57,29 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
 
 
 class QueryDataset(data.Dataset):
-    def __init__(self, client, database, collection, filter=None, transform=None, download=False,
-                 features=None, projection=None):
+    def __init__(self, database_type, database, query_params, fold='train', suppress=(), transform=None):
         super().__init__()
 
-        self._client = client
-        self._database = database
-        self._collection = collection
-        self.transform = transform
-        self.filter = filter if filter is not None else {}
-        self.download = download
-        self.features = features
-        self.projection = projection
+        self._database = None
+        self._database_type = database_type
+        self._database_name = database
 
-        from superduperdb.utils import progressbar
-        if not self.download:
-            cursor = self.collection.find(self.filter, {'_id': 1})
-            self.ids = []
-            print(f'downloading ids for {filter}')
-            docs = progressbar(cursor, total=len(self))
-            for r in docs:
-                self.ids.append(r['_id'])
-        else:
-            if projection is None:
-                cursor = self.collection.find(self.filter, features=self.features)
-            else:  # pragma: no cover
-                cursor = self.collection.find(self.filter, self.projection, features=self.features)
-            self.ids = []
-            self.documents = {}
-            print(f'downloading records for {filter}')
-            docs = progressbar(cursor, total=len(self))
-            for r in docs:
-                self.ids.append(r['_id'])
-                self.documents[r['_id']] = r
-
-            assert len(self) == len(self.ids)
-
-    @property
-    def client(self):
-        from superduperdb.mongodb.client import SuperDuperClient
-        return SuperDuperClient(**self._client)
+        self.transform = transform if transform else lambda x: x
+        query_params = self.database._format_fold_to_query(query_params, fold)
+        self._documents = list(self.database.execute_query(*query_params))
+        self.suppress = suppress
 
     @property
     def database(self):
-        return self.client[self._database]
-
-    @property
-    def collection(self):
-        return self.database[self._collection]
+        if self._database is None:
+            self._database = get_database_from_database_type(self._database_type, self._database_name)
+        return self._database
 
     def __len__(self):
-        return self.collection.count_documents(self.filter)
+        return len(self._documents)
 
     def __getitem__(self, item):
-        if self.download:
-            r = self.documents[self.ids[item]]
-        else:
-            if self.projection is None:
-                r = self.collection.find_one({'_id': self.ids[item]}, features=self.features)
-            else:  # pragma: no cover
-                r = self.collection.find_one({'_id': self.ids[item]}, self.projection,
-                                             features=self.features)
-        if '_id' in r:
-            del r['_id']
-
-        if self.transform is not None:
-            out = self.transform(r)
-        else:  # pragma: no cover
-            out = r
-
-        return out
+        r = MongoStyleDict(self._documents[item])
+        for k in self.suppress:
+            del r[k]
+        return self.transform(self._documents[item])

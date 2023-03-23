@@ -1,31 +1,25 @@
 import random
 import warnings
 
-
 warnings.filterwarnings('ignore')
 
 from superduperdb.mongodb.cursor import SuperDuperCursor
-from superduperdb.types.utils import convert_types
+from superduperdb.types.utils import convert_from_bytes_to_types
 
-from pymongo.collection import Collection as BaseCollection
+from pymongo.collection import Collection as MongoCollection
 from pymongo.cursor import Cursor
 import torch.utils.data
 
-from superduperdb.lookup import hashes
-from superduperdb.utils import MongoStyleDict, progressbar, \
-    ArgumentDefaultDict
+from superduperdb.utils import MongoStyleDict
 from superduperdb.models.utils import apply_model
+from superduperdb.getters import client as our_client
 
 
-class Collection(BaseCollection):
-    """
-    SuperDuperDB collection type, subclassing *pymongo.collection.Collection*.
-    """
+class Collection(MongoCollection):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._hash_set = None
-        self._all_hash_sets = ArgumentDefaultDict(self._load_hashes)
         self._semantic_index = None
 
         self.models = self.database.models
@@ -53,9 +47,10 @@ class Collection(BaseCollection):
 
     @property
     def hash_set(self):
-        if self.semantic_index is None:
-            raise Exception('No semantic index has been set!')  # pragma: no cover
-        return self._all_hash_sets[self.semantic_index]
+        return self.database._get_hash_set(self.database._get_meta_data(
+            key='semantic_index',
+            collection=self.name,
+        )['value'])
 
     @property
     def semantic_index(self):
@@ -78,8 +73,9 @@ class Collection(BaseCollection):
     def create_function(self, *args, **kwargs):
         return self.database.create_function(*args, **kwargs)
 
-    def create_imputation(self, *args, **kwargs):
-        return self.database.create_imputation(self.name, *args, **kwargs)
+    def create_imputation(self, identifier, model, model_key, target, target_key, *args, **kwargs):
+        return self.database.create_imputation(identifier, model, model_key, target, target_key,
+                                               self.name, *args, **kwargs)
 
     def create_measure(self, *args, **kwargs):
         return self.database.create_measure(*args, **kwargs)
@@ -91,28 +87,33 @@ class Collection(BaseCollection):
         return self.database.create_model(*args, **kwargs)
 
     def create_neighbourhood(self, *args, **kwargs):
-        return self.database.create_neighbourhood(self.name, *args, **kwargs)
+        return self.database.create_neighbourhood(*args, **kwargs)
 
     def create_objective(self, *args, **kwargs):
         return self.database.create_objective(*args, **kwargs)
 
-    def create_semantic_index(self, *args, **kwargs):
-        return self.database.create_semantic_index(self.name, *args, **kwargs)
+    def create_semantic_index(self, identifier, models, keys, measure, *args, **kwargs):
+        return self.database.create_semantic_index(identifier, models, keys, measure,
+                                                   collection=self.name,
+                                                   *args,
+                                                   **kwargs)
 
     def create_type(self, *args, **kwargs):
         return self.database.create_type(*args, **kwargs)
 
-    def create_validation_set(self, *args, **kwargs):
-        return self.database.create_validation_set(self.name, *args, **kwargs)
+    def create_validation_set(self, identifier, filter_=None, *args, **kwargs):
+        if filter_ is None:
+            filter_ = {'_fold': 'valid'}
+        return self.database.create_validation_set(identifier, self.name, filter_, *args, **kwargs)
 
-    def create_watcher(self, *args, **kwargs):
-        return self.database.create_watcher(self.name, *args, **kwargs)
+    def create_watcher(self, identifier, model, *args, **kwargs):
+        return self.database.create_watcher(identifier, model, self.name, *args, **kwargs)
 
     def delete_function(self, *args, **kwargs):
         return self.database.delete_function(*args, **kwargs)
 
     def delete_imputation(self, *args, **kwargs):
-        return self.database.delete_imputation(self.name, *args, **kwargs)
+        return self.database.delete_imputation(*args, **kwargs)
 
     def delete_measure(self, *args, **kwargs):
         return self.database.delete_measure(*args, **kwargs)
@@ -124,34 +125,31 @@ class Collection(BaseCollection):
         return self.database.delete_model(*args, **kwargs)
 
     def delete_neighbourhood(self, *args, **kwargs):
-        return self.database.delete_neighbourhood(self.name, *args, **kwargs)
+        return self.database.delete_neighbourhood(*args, **kwargs)
 
     def delete_objective(self, *args, **kwargs):
         return self.database.delete_objective(*args, **kwargs)
 
     def delete_semantic_index(self, *args, **kwargs):
-        return self.database.delete_semantic_index(self.name, *args, **kwargs)
+        return self.database.delete_semantic_index(*args, **kwargs)
 
     def delete_type(self, *args, **kwargs):
         return self.database.delete_type(*args, **kwargs)
 
     def delete_validation_set(self, *args, **kwargs):
-        return self.database.delete_validation_set(self.name, *args, **kwargs)
+        return self.database.delete_validation_set(*args, **kwargs)
 
     def delete_watcher(self, *args, **kwargs):
-        return self.database.delete_watcher(self.name, *args, **kwargs)
+        return self.database.delete_watcher(*args, **kwargs)
 
     def list_functions(self):
-        return self.database.list_functions(self.name)
-
-    def list_metrics(self):
-        return self.database.list_metrics(self.name)
-
-    def list_models(self):
-        return self.database.list_models(self.name)
+        return self.database.list_functions()
 
     def list_imputations(self):
         return self.database.list_imputations()
+
+    def list_metrics(self):
+        return self.database.list_metrics()
 
     def list_models(self):
         return self.database.list_models()
@@ -168,6 +166,9 @@ class Collection(BaseCollection):
     def list_semantic_indexes(self):
         return self.database.list_semantic_indexes()
 
+    def list_types(self):
+        return self.database.list_types()
+
     def _get_content_for_filter(self, filter):
         if '_id' not in filter:
             filter['_id'] = 0
@@ -176,11 +177,11 @@ class Collection(BaseCollection):
             filter = self.database._download_content(self.name,
                                                      documents=[filter],
                                                      timeout=None, raises=True)[0]
-            filter = convert_types(filter, converters=self.types)
+            filter = convert_from_bytes_to_types(filter, converters=self.types)
         return filter
 
     def find(self, filter=None, *args, like=None, similar_first=False, raw=False,
-             features=None, download=False, similar_join=None, **kwargs):
+             features=None, download=False, similar_join=None, semantic_index=None, **kwargs):
         """
         Behaves like MongoDB ``find`` with similarity search as additional option.
 
@@ -195,7 +196,6 @@ class Collection(BaseCollection):
         :param similar_join: replace ids by documents
         :param kwargs: kwargs to be passed to super()
         """
-        import pdb; pdb.set_trace()
         if filter is None:
             filter = {}
         if download and like is not None:
@@ -203,12 +203,17 @@ class Collection(BaseCollection):
             if '_id' in like:
                 del like['_id']
         if like is not None:
+            if semantic_index is None:
+                semantic_index = self.database.get_meta_data(key='semantic_index',
+                                                             collection=self.name)
             if similar_first:
                 return self._find_similar_then_matches(filter, like, *args, raw=raw,
-                                                       features=features, like=like, **kwargs)
+                                                       features=features, like=like,
+                                                       semantic_index=semantic_index, **kwargs)
             else:
                 return self._find_matches_then_similar(filter, like, *args, raw=raw,
-                                                       features=features, **kwargs)
+                                                       features=features, semantic_index=semantic_index,
+                                                       **kwargs)
         else:
             if raw:
                 return Cursor(self, filter, *args, **kwargs)
@@ -260,7 +265,10 @@ class Collection(BaseCollection):
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover
             return output
-        job_ids = self.database._process_documents(self.name, output.inserted_ids, verbose=verbose)
+        job_ids = self.database._process_documents(self.name,
+                                                   self.name,
+                                                   ids=output.inserted_ids,
+                                                   verbose=verbose)
         if not self.remote:
             return output
         return output, job_ids
@@ -285,20 +293,20 @@ class Collection(BaseCollection):
         :param kwargs: kwargs to be passed to super()
         """
         id_ = super().find_one(filter, *args, **kwargs)['_id']
-        replacement = self.convert_types(replacement)
+        replacement = self.convert_from_types_to_bytes(replacement)
         result = super().replace_one({'_id': id_}, replacement, *args, **kwargs)
         if refresh and self.list_models():
             self._process_documents([id_])
         return result
 
-    def convert_types(self, r):
+    def convert_from_types_to_bytes(self, r):
         """
         Convert non MongoDB types to bytes using types already registered with collection.
 
         :param r: record in which to convert types
         :return modified record
         """
-        return self.database.convert_types(r)
+        return self.database.convert_from_types_to_bytes(r)
 
     def update_many(self, filter, *args, refresh=True, **kwargs):
         """
@@ -314,7 +322,7 @@ class Collection(BaseCollection):
         if refresh and self.list_models():
             ids = [r['_id'] for r in super().find(filter, {'_id': 1})]
         args = list(args)
-        args[0] = self.convert_types(args[0])
+        args[0] = self.convert_from_types_to_bytes(args[0])
         args = tuple(args)
         result = super().update_many(filter, *args, **kwargs)
         if refresh and self.list_models():
@@ -340,48 +348,43 @@ class Collection(BaseCollection):
         Drop the hash_set currently in-use.
         """
         if self.remote:
-            return superduper_requests.client.clear_remote_cache()
+            return our_client.clear_remote_cache()
 
     def unset_hash_set(self):
         """
         Drop the hash_set currently in-use.
         """
         if self.remote:
-            return superduper_requests.client.unset_hash_set(self.database.name, self.name)
+            return our_client.unset_hash_set(self.database.name, self.name)
         if self.semantic_index in self._all_hash_sets:
             del self._all_hash_sets[self.semantic_index]
             self._semantic_index = None
 
-    def _find_nearest(self, like, ids=None, n=10):
+    def _find_nearest(self, like, ids=None, n=10, semantic_index=None):
         if self.remote:
-            like = self.convert_types(like)
-            return superduper_requests.client.find_nearest(self.database.name, self.name, like,
+            like = self.convert_from_types_to_bytes(like)
+            return our_client.find_nearest(self.database.name, self.name, like,
                                                            ids=ids)
-        if ids is None:
-            hash_set = self.hash_set
-        else:  # pragma: no cover
-            hash_set = self.hash_set[ids]
+        hash_set = self.database._get_hash_set(semantic_index)
+        if ids is not None:
+            hash_set = hash_set[ids]
 
         if '_id' in like:
             return hash_set.find_nearest_from_id(like['_id'],
                                                  n=n)
         else:
-            si_info = self.database['_objects'].find_one(
-                {'name': self.semantic_index, 'variety': 'semantic_index'}
-            )
+            if semantic_index is None:
+                semantic_index = self.database._get_meta_data('semantic_index')
+            si_info = self.database.get_object_info(semantic_index, 'semantic_index')
             models = si_info['models']
             keys = si_info['keys']
-            watcher_model, watcher_key = (models[0], keys[0])
             available_keys = list(like.keys()) + ['_base']
             model, key = next((m, k) for m, k in zip(models, keys) if k in available_keys)
             document = MongoStyleDict(like)
             if '_outputs' not in document:
                 document['_outputs'] = {}
-            info = self.database['_objects'].find_one({'model': watcher_model,
-                                                       'key': watcher_key,
-                                                       'variety': 'watcher',
-                                                       'collection': self.name})
-            features = info.get('features', {})
+            watcher_info = self.database.get_object_info(semantic_index, 'watcher')
+            features = watcher_info.get('features', {})
             for subkey in features:
                 if subkey not in document:
                     continue
@@ -398,8 +401,9 @@ class Collection(BaseCollection):
         return hash_set.find_nearest_from_hash(h, n=n)
 
     def _find_similar_then_matches(self, filter, like, *args, raw=False, features=None, n=10,
+                                   semantic_index=None,
                                    **kwargs):
-        similar = self._find_nearest(like, n=n)
+        similar = self._find_nearest(like, n=n, semantic_index=semantic_index)
         filter = {
             '$and': [
                 filter,
@@ -419,7 +423,7 @@ class Collection(BaseCollection):
             )
 
     def _find_matches_then_similar(self, filter, like, *args, raw=False, features=None, n=10,
-                                   **kwargs):
+                                   semantic_index=None, **kwargs):
         if filter:
             matches_cursor = SuperDuperCursor(
                 self,
@@ -430,81 +434,21 @@ class Collection(BaseCollection):
                 **kwargs,
             )
             ids = [x['_id'] for x in matches_cursor]
-            similar = self._find_nearest(like, ids=ids, n=n)
+            similar = self._find_nearest(like, ids=ids, n=n, semantic_index=semantic_index)
         else:  # pragma: no cover
-            similar = self._find_nearest(like, n=n)
+            similar = self._find_nearest(like, n=n, semantic_index=semantic_index)
 
         if raw:
             return Cursor(self, {'_id': {'$in': similar['_ids']}}, **kwargs)  # pragma: no cover
         else:
             return SuperDuperCursor(self, {'_id': {'$in': similar['_ids']}},
                                     features=features,
-                                    scores=dict(zip(similar['_ids'], similar['scores'])), **kwargs)
-
-    def _gather_urls(self, documents):
-        urls = []
-        mongo_keys = []
-        ids = []
-        for r in documents:
-            sub_urls, sub_mongo_keys = self._gather_urls_for_document(r)
-            ids.extend([r['_id'] for _ in sub_urls])
-            urls.extend(sub_urls)
-            mongo_keys.extend(sub_mongo_keys)
-        return urls, mongo_keys, ids
-
-    @staticmethod
-    def _gather_urls_for_document(r):
-        '''
-        >>> Collection._gather_urls_for_document({'a': {'_content': {'url': 'test'}}})
-        (['test'], ['a'])
-        >>> d = {'b': {'a': {'_content': {'url': 'test'}}}}
-        >>> Collection._gather_urls_for_document(d)
-        (['test'], ['b.a'])
-        >>> d = {'b': {'a': {'_content': {'url': 'test', 'bytes': b'abc'}}}}
-        >>> Collection._gather_urls_for_document(d)
-        ([], [])
-        '''
-        urls = []
-        keys = []
-        for k in r:
-            if isinstance(r[k], dict) and '_content' in r[k]:
-                if 'url' in r[k]['_content'] and 'bytes' not in r[k]['_content']:
-                    keys.append(k)
-                    urls.append(r[k]['_content']['url'])
-            elif isinstance(r[k], dict) and '_content' not in r[k]:
-                sub_urls, sub_keys = Collection._gather_urls_for_document(r[k])
-                urls.extend(sub_urls)
-                keys.extend([f'{k}.{key}' for key in sub_keys])
-        return urls, keys
+                                    scores=dict(zip(similar['_ids'],similar['scores'])), **kwargs)
 
     def _infer_types(self, documents):
         for r in documents:
-            self.convert_types(r)
+            self.convert_from_types_to_bytes(r)
         return documents
-
-    def _load_hashes(self, name):
-        si = self.database['_objects'].find_one({'name': name, 'variety': 'semantic_index',
-                                                 'collection': self.name})
-        watcher_info = \
-            self.database['_objects'].find_one({'model': si['models'][0],
-                                                'key': si['keys'][0],
-                                                'variety': 'watcher',
-                                                'collection': self.name})
-        filter = watcher_info.get('filter', {})
-        key = watcher_info.get('key', '_base')
-        filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
-        n_docs = self.count_documents(filter)
-        c = self.find(filter, {f'_outputs.{key}.{watcher_info["model"]}': 1})
-        measure = self.measures[si['measure']]
-        loaded = []
-        ids = []
-        docs = progressbar(c, total=n_docs)
-        print(f'loading hashes: "{name}"')
-        for r in docs:
-            h = MongoStyleDict(r)[f'_outputs.{key}.{watcher_info["model"]}']
-            loaded.append(h)
-            ids.append(r['_id'])
-        return hashes.HashSet(torch.stack(loaded), ids, measure=measure)
 
     def watch_job(self, *args, **kwargs):
         return self.database.watch_job(*args, **kwargs)

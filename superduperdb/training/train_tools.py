@@ -1,26 +1,23 @@
 import random
-import time
 import uuid
 from collections import defaultdict
 
-import pymongo
 import torch.utils.data
 
-from superduperdb.mongodb import client
 from superduperdb.training.loading import QueryDataset
-from superduperdb.utils import MongoStyleDict
+from superduperdb.utils import MongoStyleDict, get_database_from_database_type
 from superduperdb.training.validation import validate_representations, validate_imputation
 
 
 class Trainer:
     def __init__(self,
                  train_name,
-                 client,
-                 database,
-                 collection,
                  models,
                  keys,
                  model_names,
+                 database_type,
+                 database,
+                 query_params,
                  use_grads=None,
                  splitter=None,
                  validation_sets=(),
@@ -28,10 +25,10 @@ class Trainer:
                  objective=None,
                  batch_size=100,
                  optimizers=(),
+                 loader_suppress=None,
                  lr=0.0001,
                  num_workers=0,
                  projection=None,
-                 filter=None,
                  features=None,
                  n_epochs=None,
                  n_iterations=None,
@@ -44,10 +41,6 @@ class Trainer:
 
         self.id = uuid.uuid4()
         self.train_name = train_name
-        self._client = client
-        self._database = database
-        self._collection = collection
-        self._collection_object = None
 
         if use_grads is None:
             self.use_grads = {mn: True for mn in model_names}
@@ -59,55 +52,46 @@ class Trainer:
 
         self.splitter = splitter
         self.models = models
-        self.model_names = model_names
         self.keys = keys
+        self.model_names = model_names
+
         self.objective = objective
+
         self.features = features
+        self.projection = projection
+
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.filter = filter if filter is not None else {}
-        self.valid_ids = [
-            r['_id'] for r in self.collection.find({**self.filter, '_fold': 'valid'},
-                                                   {'_id': 1}).sort('_id', pymongo.ASCENDING)
-        ]
         self.validation_sets = validation_sets
         self.n_epochs = n_epochs
         self.n_iterations = n_iterations
         self.download = download
-        self.training_id = str(int(time.time() * 100))
-        self.projection = projection
-        self.train_data = QueryDataset(
-            client=self._client,
-            database=self._database,
-            collection=self._collection,
-            filter={**self.filter, '_fold': 'train'},
-            transform=self.apply_splitter_and_encoders,
-            projection=self.projection,
-            features=features,
-        )
-        self.valid_data = QueryDataset(
-            client=self._client,
-            database=self._database,
-            collection=self._collection,
-            filter={**self.filter, '_fold': 'valid'},
-            download=True,
-            transform=self.apply_splitter_and_encoders,
-            projection=self.projection,
-            features=features,
-        )
+        self.loader_suppress = {} or loader_suppress
+
+        self._database = None
+        self._database_type = database_type
+        self._database_name = database
+        self.query_params = query_params
+        self.train_data, self.valid_data = self._get_data()
+
         self.best = []
         self.metrics = metrics if metrics is not None else {}
+
         if isinstance(self.keys, str):  # pragma: no cover
             self.keys = (self.keys,)
+
         if not isinstance(self.models, tuple) and not isinstance(self.models, list):  # pragma: no cover
             self.models = [self.models, ]
         self.models = list(self.models)
+
         self._send_to_device()
+
         self.learn_fields = self.keys
         self.learn_encoders = self.models
         if len(self.keys) == 1:
             self.learn_fields = (self.keys[0], self.keys[0])
             self.learn_encoders = (self.models[0], self.models[0])
+
         self.optimizers = optimizers if optimizers else [
             self._get_optimizer(model, lr) for model, mn in zip(self.models, self.model_names)
             if isinstance(model, torch.nn.Module) and list(model.parameters())
@@ -127,6 +111,28 @@ class Trainer:
         self.save = save
         self.validation_interval = validation_interval
         self.no_improve_then_stop = no_improve_then_stop
+
+    @property
+    def database(self):
+        if self._database is None:
+            self._database = get_database_from_database_type(self._database_type, self._database_name)
+        return self._database
+
+    def _get_data(self):
+        train_data = QueryDataset(self._database_type,
+                                  self._database_name,
+                                  self.query_params,
+                                  fold='train',
+                                  suppress=self.loader_suppress,
+                                  transform=self.apply_splitter_and_encoders)
+        valid_data = QueryDataset(self._database_type,
+                                  self._database_name,
+                                  self.query_params,
+                                  fold='valid',
+                                  suppress=self.loader_suppress,
+                                  transform=self.apply_splitter_and_encoders)
+
+        return train_data, valid_data
 
     def _send_to_device(self):
         if not torch.cuda.is_available():
@@ -151,10 +157,9 @@ class Trainer:
         return False
 
     def _save_weight_traces(self):
-        self.collection['_objects'].update_one(
-            {'name': self.train_name, 'varieties': self.variety},
-            {'$set': {'weights': self.weights_dict}}
-        )
+        self.database.save_weight_traces(identifier=self.train_name,
+                                         variety=self.variety,
+                                         weights=self.weights_dict)
 
     def _init_weight_traces(self):
         for i, e in enumerate(self.models):
@@ -194,9 +199,10 @@ class Trainer:
                 self.weights_dict[f'{f}.{p}'].append(tmp)
 
     def _save_metrics(self):
-        self.collection['_objects'].update_one(
-            {'name': self.train_name, 'varieties': self.variety},
-            {'$set': {'metric_values': self.metric_values}}
+        self.database.save_metrics(
+            self.train_name,
+            self.variety,
+            self.metric_values
         )
 
     def _save_best_model(self):
@@ -205,7 +211,8 @@ class Trainer:
                 and self.metric_values['objective'][-1] == agg(self.metric_values['objective']):
             print('saving')
             for sn, encoder in zip(self.model_names, self.models):
-                if sn in self.collection.list_models():
+                # only able to save objects of variety "model"
+                if sn in self.database.list_models():
                     self.save(sn, encoder)
         else:  # pragma: no cover
             print('no best model found...')
@@ -214,20 +221,6 @@ class Trainer:
         if not hasattr(encoder, 'calibrate'):
             return
         raise NotImplementedError  # pragma: no cover
-
-    @property
-    def client(self):
-        return client.SuperDuperClient(**self._client)
-
-    @property
-    def database(self):
-        return self.client[self._database]
-
-    @property
-    def collection(self):
-        if self._collection_object is None:
-            self._collection_object = self.database[self._collection]
-        return self._collection_object
 
     def _get_optimizer(self, encoder, lr):
         learnable_parameters = [x for x in encoder.parameters() if x.requires_grad]
@@ -288,7 +281,6 @@ class Trainer:
         raise NotImplementedError  # pragma: no cover
 
     def train(self):
-
         for encoder in self.models:
             self.calibrate(encoder)
 
@@ -360,7 +352,7 @@ class ImputationTrainer(Trainer):
         results = {}
         if self.metrics:
             for vs in self.validation_sets:
-                results[vs] = validate_imputation(self.collection, vs, self.train_name,
+                results[vs] = validate_imputation(self.database, vs, self.train_name,
                                                   self.metrics, model=self.models[0],
                                                   features=self.features)
         objective_values = []
@@ -400,11 +392,11 @@ class SemanticIndexTrainer(Trainer):
         results = {}
         if self.metrics:
             for vs in self.validation_sets:
-                results[vs] = validate_representations(
-                    self.collection, vs, self.train_name,
-                    self.metrics, self.models, features=self.features,
-                    refresh=True
-                )
+                results[vs] = validate_representations(self.database,
+                                                       vs,
+                                                       self.train_name,
+                                                       self.metrics,
+                                                       self.models)
         objective_values = []
         for batch in data_loader:
             outputs = self.apply_models_to_batch(batch, self.learn_encoders)

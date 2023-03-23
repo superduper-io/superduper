@@ -1,6 +1,6 @@
 import random
 
-from superduperdb.mongodb.client import the_client
+from superduperdb.mongodb.client import SuperDuperClient
 from tests.material.models import BinaryClassifier, BinaryTarget
 from tests.material.types import FloatTensor, Image
 from tests.material.measures import css
@@ -9,6 +9,9 @@ from tests.material.losses import ranking_loss
 
 import pytest
 import torch
+
+
+the_client = SuperDuperClient()
 
 
 @pytest.fixture()
@@ -61,7 +64,7 @@ def random_data(float_tensors):
         y = int(random.random() > 0.5)
         z = torch.randn(32)
         data.append({'x': x, 'z': z, 'y': y})
-    float_tensors.insert_many(data)
+    float_tensors.insert_many(data, refresh=False)
     yield float_tensors
     float_tensors.delete_many({})
 
@@ -85,7 +88,8 @@ def with_semantic_index(random_data, a_model, measure):
         keys=['x'],
         measure='css',
     )
-    random_data['_meta'].insert_one({'key': 'semantic_index', 'value': 'test_semantic_index'})
+    random_data.database['_meta'].insert_one({'key': 'semantic_index', 'collection': 'documents',
+                                              'value': 'test_semantic_index'})
     yield random_data
     if random_data.remote:
         random_data.clear_remote_cache()
@@ -95,8 +99,9 @@ def with_semantic_index(random_data, a_model, measure):
 
 @pytest.fixture()
 def si_validation(random_data):
-    random_data.create_validation_set('my_valid', chunk_size=100,
-                                      splitter=lambda r: ({'x': r['x']}, {'z': r['z']}))
+    random_data.create_validation_set('my_valid', {'_fold': 'valid'}, chunk_size=100,
+                                      splitter=lambda r: ({'x': r['x'], '_fold': 'valid'}, {'z': r['z']}))
+
     yield random_data
 
 
@@ -109,6 +114,7 @@ def imputation_validation(random_data):
 @pytest.fixture()
 def float_tensors(empty):
     empty.create_type('float_tensor', FloatTensor())
+    t = empty.types['float_tensor']
     yield empty
     empty.delete_type('float_tensor', force=True)
 
@@ -134,9 +140,9 @@ def a_model(float_tensors):
 
 @pytest.fixture()
 def a_watcher(a_model):
-    a_model.create_watcher('linear_a', 'x')
+    a_model.create_watcher('linear_a/x', 'linear_a', 'x')
     yield a_model
-    a_model.delete_watcher('linear_a', 'x', force=True)
+    a_model.delete_watcher('linear_a/x', force=True)
 
 
 @pytest.fixture()

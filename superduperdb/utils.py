@@ -14,7 +14,7 @@ from superduperdb import cf
 
 
 class opts:
-    progress_bar = tqdm.tqdm_notebook
+    progressbar = tqdm.tqdm
 
 
 class MongoStyleDict(dict):

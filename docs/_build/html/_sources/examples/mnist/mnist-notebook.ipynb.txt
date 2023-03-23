@@ -5,7 +5,7 @@
    "id": "2a6ac9b2",
    "metadata": {},
    "source": [
-    "# Hello World: handwritten digit recognition with SuperDuperDB"
+    "# MNIST: Handwritten digit recognition with SuperDuperDB"
    ]
   },
   {
@@ -13,8 +13,6 @@
    "id": "8c096450",
    "metadata": {},
    "source": [
-    "In this tutorial, we implement the classic MNIST handwritten digits recognition task in SuperDuperDB. \n",
-    "\n",
     "First we import the SuperDuperDB client, and create a fresh collection."
    ]
   },

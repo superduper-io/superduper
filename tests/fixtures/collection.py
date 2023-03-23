@@ -13,6 +13,8 @@ import torch
 
 the_client = SuperDuperClient()
 
+n_data_points = 250
+
 
 @pytest.fixture()
 def empty():
@@ -59,7 +61,7 @@ def my_class_obj(empty):
 @pytest.fixture()
 def random_data(float_tensors):
     data = []
-    for i in range(100):
+    for i in range(n_data_points):
         x = torch.randn(32)
         y = int(random.random() > 0.5)
         z = torch.randn(32)

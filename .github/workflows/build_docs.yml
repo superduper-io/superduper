@@ -40,6 +40,8 @@ jobs:
         cd ../
     - name: Commit and Push changes
       run: |
+        git config --global user.email "builds@superduperdb.com"
+        git config --global user.name "GitHub Actions SuperDuperDB"
         git add docs/
         git commit -am "Automated docs builder"
         git push

@@ -109,9 +109,9 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from superduperdb.client import the_client
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.client</span> <span class="kn">import</span> <span class="n">the_client</span>
 
-docs = the_client.coco.documents
+<span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">coco</span><span class="o">.</span><span class="n">documents</span>
 </pre></div>
 </div>
 </div>
@@ -120,7 +120,7 @@ docs = the_client.coco.documents
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.find_one()
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -165,19 +165,19 @@ docs = the_client.coco.documents
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import tqdm
-import collections
-import re
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tqdm</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">re</span>
 
-all_captions = []
-n = docs.count_documents({&#39;_fold&#39;: &#39;train&#39;})
-for r in tqdm.tqdm_notebook(docs.find({&#39;_fold&#39;: &#39;train&#39;}, {&#39;captions&#39;: 1, &#39;_id&#39;: 0}), total=n):
-    all_captions.extend(r[&#39;captions&#39;])
+<span class="n">all_captions</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">})</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm_notebook</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}),</span> <span class="n">total</span><span class="o">=</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">all_captions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">])</span>
 
-all_captions = [re.sub(&#39;[^a-z ]&#39;, &#39;&#39;, x.lower()).strip() for x in all_captions]
-words = &#39; &#39;.join(all_captions).split(&#39; &#39;)
-counts = dict(collections.Counter(words))
-vocab = sorted([w for w in counts if counts[w] &gt; 5 and w])
+<span class="n">all_captions</span> <span class="o">=</span> <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[^a-z ]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">all_captions</span><span class="p">]</span>
+<span class="n">words</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">all_captions</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">Counter</span><span class="p">(</span><span class="n">words</span><span class="p">))</span>
+<span class="n">vocab</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">counts</span> <span class="k">if</span> <span class="n">counts</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="ow">and</span> <span class="n">w</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -192,7 +192,7 @@ vocab = sorted([w for w in counts if counts[w] &gt; 5 and w])
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/conditional_lm.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/conditional_lm.py
 </pre></div>
 </div>
 </div>
@@ -284,10 +284,10 @@ vocab = sorted([w for w in counts if counts[w] &gt; 5 and w])
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.models import ConditionalLM, SimpleTokenizer
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">ConditionalLM</span><span class="p">,</span> <span class="n">SimpleTokenizer</span>
 
-tokenizer = SimpleTokenizer(vocab)
-m = ConditionalLM(tokenizer)
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">SimpleTokenizer</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConditionalLM</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -296,8 +296,8 @@ m = ConditionalLM(tokenizer)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_model(&#39;conditional_lm&#39;, m)
-docs.create_model(&#39;captioning_tokenizer&#39;, tokenizer)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;captioning_tokenizer&#39;</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -306,7 +306,7 @@ docs.create_model(&#39;captioning_tokenizer&#39;, tokenizer)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/autoregressive_loss.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/autoregressive_loss.py
 </pre></div>
 </div>
 </div>
@@ -334,8 +334,8 @@ docs.create_model(&#39;captioning_tokenizer&#39;, tokenizer)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.losses import auto_regressive_loss
-docs.create_objective(&#39;autoregressive_loss&#39;, auto_regressive_loss)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.losses</span> <span class="kn">import</span> <span class="n">auto_regressive_loss</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_objective</span><span class="p">(</span><span class="s1">&#39;autoregressive_loss&#39;</span><span class="p">,</span> <span class="n">auto_regressive_loss</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -344,7 +344,7 @@ docs.create_objective(&#39;autoregressive_loss&#39;, auto_regressive_loss)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/splitters.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/splitters.py
 </pre></div>
 </div>
 </div>
@@ -372,10 +372,10 @@ docs.create_objective(&#39;autoregressive_loss&#39;, auto_regressive_loss)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.splitters import captioning_splitter
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.splitters</span> <span class="kn">import</span> <span class="n">captioning_splitter</span>
 
-docs.create_splitter(&#39;captioning_splitter&#39;, captioning_splitter)
-captioning_splitter(docs.find_one())
+<span class="n">docs</span><span class="o">.</span><span class="n">create_splitter</span><span class="p">(</span><span class="s1">&#39;captioning_splitter&#39;</span><span class="p">,</span> <span class="n">captioning_splitter</span><span class="p">)</span>
+<span class="n">captioning_splitter</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -422,19 +422,19 @@ captioning_splitter(docs.find_one())
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_imputation(
-    &#39;image_captioner&#39;,
-    model=&#39;conditional_lm&#39;,
-    model_key=&#39;_base&#39;,
-    target=&#39;captioning_tokenizer&#39;,
-    target_key=&#39;caption&#39;,
-    objective=&#39;autoregressive_loss&#39;,
-    splitter=&#39;captioning_splitter&#39;,
-    validation_sets=[],
-    batch_size=50,
-    lr=0.001,
-    validation_interval=200,
-)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_imputation</span><span class="p">(</span>
+    <span class="s1">&#39;image_captioner&#39;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span>
+    <span class="n">model_key</span><span class="o">=</span><span class="s1">&#39;_base&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;captioning_tokenizer&#39;</span><span class="p">,</span>
+    <span class="n">target_key</span><span class="o">=</span><span class="s1">&#39;caption&#39;</span><span class="p">,</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;autoregressive_loss&#39;</span><span class="p">,</span>
+    <span class="n">splitter</span><span class="o">=</span><span class="s1">&#39;captioning_splitter&#39;</span><span class="p">,</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">validation_interval</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -1790,14 +1790,14 @@ aborting training early...
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>test_docs = list(docs.find().limit(20))
-images = list(docs.find({}, {&#39;img&#39;: 1}).limit(100))
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">test_docs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+<span class="n">images</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({},</span> <span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
 
-results = docs.apply_model(&#39;conditional_lm&#39;, test_docs, batch_size=10)
+<span class="n">results</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">apply_model</span><span class="p">(</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span> <span class="n">test_docs</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
-for r, res in zip(images, results):
-    display(r[&#39;img&#39;])
-    print(res)
+<span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

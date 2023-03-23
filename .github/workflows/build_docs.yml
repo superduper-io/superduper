@@ -37,18 +37,8 @@ jobs:
         cd docs
         make github
         cd ../
-#    - name: Check for modified files
-#      run: |
-#        if [[ `git status --porcelain` ]]; then
-#          echo "CHANGES=true" >> "$GITHUB_ENV"
-#        else
-#          echo "CHANGES=false" >> "$GITHUB_ENV"
-#        fi
     - name: Commit and Push changes
-#      if: env.CHANGES == 'true'
       run: |
-#        git config --global user.name 'LF1 Bot'
-#        git config --global user.email 'lf1_bot@users.noreply.github.com'
         git add docs/
         git commit -am "Automated docs builder"
         git push

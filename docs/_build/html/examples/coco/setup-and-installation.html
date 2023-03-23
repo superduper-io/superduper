@@ -157,30 +157,30 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import json
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
 
-with open(&#39;data/coco/captions_train2014.json&#39;) as f:
-    raw = json.load(f)
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;data/coco/captions_train2014.json&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
-raw[&#39;images&#39;] = {x[&#39;id&#39;]: x for x in raw[&#39;images&#39;]}
+<span class="n">raw</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]:</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">]}</span>
 
-for im in raw[&#39;images&#39;]:
-    raw[&#39;images&#39;][im][&#39;captions&#39;] = []
+<span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">]:</span>
+    <span class="n">raw</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">][</span><span class="n">im</span><span class="p">][</span><span class="s1">&#39;captions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-for a in raw[&#39;annotations&#39;]:
-    raw[&#39;images&#39;][a[&#39;image_id&#39;]][&#39;captions&#39;].append(a[&#39;caption&#39;])
+<span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">[</span><span class="s1">&#39;annotations&#39;</span><span class="p">]:</span>
+    <span class="n">raw</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">][</span><span class="n">a</span><span class="p">[</span><span class="s1">&#39;image_id&#39;</span><span class="p">]][</span><span class="s1">&#39;captions&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="s1">&#39;caption&#39;</span><span class="p">])</span>
 
-raw = list(raw[&#39;images&#39;].values())
+<span class="n">raw</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s1">&#39;images&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
-for i, im in enumerate(raw):
-    # if image is already in memory, then add &#39;bytes&#39;: b&#39;...&#39; instead of &#39;url&#39;: &#39;...&#39;
-    # for content located on the web, use &#39;http://&#39; or &#39;https://&#39; instead of &#39;file://&#39;
-    im[&#39;img&#39;] = {
-        &#39;_content&#39;: {&#39;url&#39;: f&#39;file://data/coco/images/{im[&quot;file_name&quot;]}&#39;, &#39;type&#39;: &#39;image&#39;}
-    }
-    raw[i] = {&#39;captions&#39;: im[&#39;captions&#39;], &#39;img&#39;: im[&#39;img&#39;]}
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">im</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw</span><span class="p">):</span>
+    <span class="c1"># if image is already in memory, then add &#39;bytes&#39;: b&#39;...&#39; instead of &#39;url&#39;: &#39;...&#39;</span>
+    <span class="c1"># for content located on the web, use &#39;http://&#39; or &#39;https://&#39; instead of &#39;file://&#39;</span>
+    <span class="n">im</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;_content&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;file://data/coco/images/</span><span class="si">{</span><span class="n">im</span><span class="p">[</span><span class="s2">&quot;file_name&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;image&#39;</span><span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">raw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="n">im</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">],</span> <span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">im</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]}</span>
 
-print(json.dumps(raw[:2], indent=2))
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">raw</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -228,8 +228,8 @@ print(json.dumps(raw[:2], indent=2))
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>with open(&#39;data/coco/data.json&#39;, &#39;w&#39;) as f:
-    json.dump(raw, f)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;data/coco/data.json&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

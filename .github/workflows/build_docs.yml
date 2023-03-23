@@ -36,6 +36,7 @@ jobs:
     - name: Build docs
       run: |
         cd docs
+        make clean
         make html
         cd ../
     - name: Commit and Push changes

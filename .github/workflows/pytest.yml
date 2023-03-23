@@ -30,7 +30,7 @@ jobs:
         curl -fsSL https://pgp.mongodb.com/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb60.gpg
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/mongodb60.gpg] http://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org.list
         sudo apt update
-        sudo apt install mongodb-org
+        sudo apt install -y mongodb-org
         systemctl enable mongod.service
         systemctl start mongod.service
         python -m pip install --upgrade pip

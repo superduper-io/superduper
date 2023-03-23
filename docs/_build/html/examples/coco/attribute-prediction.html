@@ -107,9 +107,9 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from superduperdb.client import the_client
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.client</span> <span class="kn">import</span> <span class="n">the_client</span>
 
-docs = the_client.coco.documents
+<span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">coco</span><span class="o">.</span><span class="n">documents</span>
 </pre></div>
 </div>
 </div>
@@ -120,7 +120,7 @@ Imputations can handle any machine learning problem which involves predicting on
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/nouns.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/nouns.py
 </pre></div>
 </div>
 </div>
@@ -150,9 +150,9 @@ Imputations can handle any machine learning problem which involves predicting on
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.coco.nouns import NounWords
-docs.create_model(&#39;noun_words&#39;, NounWords())
-docs.create_watcher(model=&#39;noun_words&#39;, key=&#39;captions&#39;, verbose=True)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.nouns</span> <span class="kn">import</span> <span class="n">NounWords</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;noun_words&#39;</span><span class="p">,</span> <span class="n">NounWords</span><span class="p">())</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_watcher</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;noun_words&#39;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;captions&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -253,7 +253,7 @@ done.
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_validation_set(&#39;attribute_prediction&#39;, sample_size=250)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_validation_set</span><span class="p">(</span><span class="s1">&#39;attribute_prediction&#39;</span><span class="p">,</span> <span class="n">sample_size</span><span class="o">=</span><span class="mi">250</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -277,17 +277,17 @@ found 0 urls
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import collections
-import tqdm
-all_nouns = []
-for r in tqdm.tqdm_notebook(docs.find({&#39;_fold&#39;: &#39;train&#39;}, {&#39;_outputs.captions.noun_words&#39;: 1}),
-                   total=docs.count_documents({})):
-    all_nouns.extend(r[&#39;_outputs&#39;][&#39;captions&#39;][&#39;noun_words&#39;])
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">tqdm</span>
+<span class="n">all_nouns</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm_notebook</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;_outputs.captions.noun_words&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+                   <span class="n">total</span><span class="o">=</span><span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({})):</span>
+    <span class="n">all_nouns</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;_outputs&#39;</span><span class="p">][</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="s1">&#39;noun_words&#39;</span><span class="p">])</span>
 
-counts = dict(collections.Counter(all_nouns))
-all_nouns = [w for w in counts if counts[w] &gt; 1000]
-total = docs.count_documents({})
-pos_weights = [total / counts[w] for w in all_nouns]
+<span class="n">counts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">Counter</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">))</span>
+<span class="n">all_nouns</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">counts</span> <span class="k">if</span> <span class="n">counts</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">]</span>
+<span class="n">total</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({})</span>
+<span class="n">pos_weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">total</span> <span class="o">/</span> <span class="n">counts</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">all_nouns</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -302,7 +302,7 @@ pos_weights = [total / counts[w] for w in all_nouns]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/attributes.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/attributes.py
 </pre></div>
 </div>
 </div>
@@ -341,7 +341,7 @@ pos_weights = [total / counts[w] for w in all_nouns]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/jacquard.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/jacquard.py
 </pre></div>
 </div>
 </div>
@@ -359,16 +359,16 @@ pos_weights = [total / counts[w] for w in all_nouns]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.coco.attributes import FewHot, TopK
-from examples.coco.jacquard import jacquard_index
-import torch
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.attributes</span> <span class="kn">import</span> <span class="n">FewHot</span><span class="p">,</span> <span class="n">TopK</span>
+<span class="kn">from</span> <span class="nn">examples.coco.jacquard</span> <span class="kn">import</span> <span class="n">jacquard_index</span>
+<span class="kn">import</span> <span class="nn">torch</span>
 
-docs.create_model(&#39;nouns_to_few_hot&#39;, FewHot(all_nouns))
-docs.create_postprocessor(&#39;top_5&#39;, TopK(all_nouns, 5))
-docs.create_model(&#39;attribute_predictor&#39;, torch.nn.Linear(1024, len(all_nouns)))
-docs.create_objective(&#39;nouns_loss&#39;, torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weights)))
-docs.create_metric(&#39;jacquard_index&#39;, jacquard_index)
-docs.create_model(&#39;attribute_model&#39;, forward=&#39;attribute_predictor&#39;, postprocessor=&#39;top_5&#39;)
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;nouns_to_few_hot&#39;</span><span class="p">,</span> <span class="n">FewHot</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">))</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_postprocessor</span><span class="p">(</span><span class="s1">&#39;top_5&#39;</span><span class="p">,</span> <span class="n">TopK</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_nouns</span><span class="p">)))</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_objective</span><span class="p">(</span><span class="s1">&#39;nouns_loss&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">(</span><span class="n">pos_weight</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">pos_weights</span><span class="p">)))</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;jacquard_index&#39;</span><span class="p">,</span> <span class="n">jacquard_index</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;attribute_model&#39;</span><span class="p">,</span> <span class="n">forward</span><span class="o">=</span><span class="s1">&#39;attribute_predictor&#39;</span><span class="p">,</span> <span class="n">postprocessor</span><span class="o">=</span><span class="s1">&#39;top_5&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -377,20 +377,20 @@ docs.create_model(&#39;attribute_model&#39;, forward=&#39;attribute_predictor&#3
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_imputation(
-    &#39;noun_prediction&#39;,
-    model=&#39;attribute_model&#39;,
-    model_key=&#39;img&#39;,
-    target=&#39;nouns_to_few_hot&#39;,
-    target_key=&#39;_outputs.captions.noun_words&#39;,
-    objective=&#39;nouns_loss&#39;,
-    features={&#39;img&#39;: &#39;clip&#39;},
-    metrics=[&#39;jacquard_index&#39;],
-    validation_sets=[&#39;attribute_prediction&#39;],
-    lr=0.01,
-    validation_interval=50,
-    n_iterations=1000,
-)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_imputation</span><span class="p">(</span>
+    <span class="s1">&#39;noun_prediction&#39;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s1">&#39;attribute_model&#39;</span><span class="p">,</span>
+    <span class="n">model_key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;nouns_to_few_hot&#39;</span><span class="p">,</span>
+    <span class="n">target_key</span><span class="o">=</span><span class="s1">&#39;_outputs.captions.noun_words&#39;</span><span class="p">,</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;nouns_loss&#39;</span><span class="p">,</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="s1">&#39;clip&#39;</span><span class="p">},</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;jacquard_index&#39;</span><span class="p">],</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;attribute_prediction&#39;</span><span class="p">],</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">validation_interval</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">n_iterations</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -455,13 +455,13 @@ aborting training early...
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import random
-from IPython.display import display
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
 
-for _ in range(20):
-    r = docs.find({&#39;_fold&#39;: &#39;valid&#39;})[random.randrange(1000)]
-    print(docs.apply_model(&#39;attribute_model&#39;, r[&#39;_outputs&#39;][&#39;img&#39;][&#39;clip&#39;]))
-    display(r[&#39;img&#39;])
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;valid&#39;</span><span class="p">})[</span><span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">1000</span><span class="p">)]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">apply_model</span><span class="p">(</span><span class="s1">&#39;attribute_model&#39;</span><span class="p">,</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;_outputs&#39;</span><span class="p">][</span><span class="s1">&#39;img&#39;</span><span class="p">][</span><span class="s1">&#39;clip&#39;</span><span class="p">]))</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>

@@ -37,13 +37,13 @@ jobs:
         cd docs
         make github
         cd ../
-    - name: Check for modified files
-      run: |
-        if [[ `git status --porcelain` ]]; then
-          echo "CHANGES=true" >> "$GITHUB_ENV"
-        else
-          echo "CHANGES=false" >> "$GITHUB_ENV"
-        fi
+#    - name: Check for modified files
+#      run: |
+#        if [[ `git status --porcelain` ]]; then
+#          echo "CHANGES=true" >> "$GITHUB_ENV"
+#        else
+#          echo "CHANGES=false" >> "$GITHUB_ENV"
+#        fi
     - name: Commit and Push changes
       if: env.CHANGES == 'true'
       run: |

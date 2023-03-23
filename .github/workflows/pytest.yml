@@ -31,8 +31,8 @@ jobs:
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/mongodb60.gpg] http://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org.list
         sudo apt update
         sudo apt install -y mongodb-org
-        systemctl enable mongod.service
-        systemctl start mongod.service
+        sudo systemctl enable mongod.service
+        sudo systemctl start mongod.service
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r tests/requirements.txt

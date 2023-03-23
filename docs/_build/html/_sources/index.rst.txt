@@ -20,7 +20,7 @@ and production environment together with PyTorch and MongoDB.
 What is SuperDuperDB not?
 +++++++++++++++++++++++++++
 
-* SuperDuperDB is **not** a database (despite the name) - it *makes* your database super-duper.
+* SuperDuperDB is **not** a database (despite the name) - it *makes* your database *super-duper*.
 * SuperDuperDB doesn't perform AutoML. We think it's good to offer users the opportunity to choose their own models.
 * SuperDuperDB is not a pure vector search database - it leverages open-source vector search components, which allow certain types of data querying. However SuperDuperDB does not reinvent the wheel there.
 * SuperDuperDB does not try to hack or create dialects of query languages such as the MongoDB query API or SQL. These languages do their job well already.

@@ -268,7 +268,7 @@ class Downloader:
 
 
 def progressbar(*args, **kwargs):
-    return opts.progress_bar(*args, **kwargs)
+    return opts.progressbar(*args, **kwargs)
 
 
 class ArgumentDefaultDict(defaultdict):

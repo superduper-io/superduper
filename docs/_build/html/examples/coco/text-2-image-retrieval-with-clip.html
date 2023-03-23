@@ -108,9 +108,9 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from superduperdb.client import the_client
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.client</span> <span class="kn">import</span> <span class="n">the_client</span>
 
-docs = the_client.coco.documents
+<span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">coco</span><span class="o">.</span><span class="n">documents</span>
 </pre></div>
 </div>
 </div>
@@ -119,7 +119,7 @@ docs = the_client.coco.documents
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/clip.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/clip.py
 </pre></div>
 </div>
 </div>
@@ -154,13 +154,13 @@ docs = the_client.coco.documents
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.coco.clip import CLIP
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.clip</span> <span class="kn">import</span> <span class="n">CLIP</span>
 
-docs.create_model(
-    name=&#39;clip&#39;,
-    object=CLIP(&#39;RN50&#39;),
-    type=&#39;float_tensor&#39;,
-)
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span>
+    <span class="nb">object</span><span class="o">=</span><span class="n">CLIP</span><span class="p">(</span><span class="s1">&#39;RN50&#39;</span><span class="p">),</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -168,8 +168,8 @@ docs.create_model(
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_watcher(model=&#39;clip&#39;, key=&#39;img&#39;, filter_={}, loader_kwargs={&#39;batch_size&#39;: 10, &#39;num_workers&#39;: 0},
-                    verbose=True)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_watcher</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="n">filter_</span><span class="o">=</span><span class="p">{},</span> <span class="n">loader_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;num_workers&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -178,7 +178,7 @@ docs.create_model(
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/measures.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/measures.py
 </pre></div>
 </div>
 </div>
@@ -201,9 +201,9 @@ docs.create_model(
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.coco.measures import css
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.measures</span> <span class="kn">import</span> <span class="n">css</span>
 
-docs.create_measure(&#39;css&#39;, css)
+<span class="n">docs</span><span class="o">.</span><span class="n">create_measure</span><span class="p">(</span><span class="s1">&#39;css&#39;</span><span class="p">,</span> <span class="n">css</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -212,7 +212,7 @@ docs.create_measure(&#39;css&#39;, css)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>!pygmentize examples/coco/recall.py
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/recall.py
 </pre></div>
 </div>
 </div>
@@ -233,9 +233,9 @@ docs.create_measure(&#39;css&#39;, css)
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.coco.recall import RatK
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.recall</span> <span class="kn">import</span> <span class="n">RatK</span>
 
-docs.create_metric(&#39;p_at_10&#39;, RatK(10))
+<span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">,</span> <span class="n">RatK</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -244,15 +244,15 @@ docs.create_metric(&#39;p_at_10&#39;, RatK(10))
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from examples.coco.clip import CLIP
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.clip</span> <span class="kn">import</span> <span class="n">CLIP</span>
 
-docs.create_semantic_index(
-    &#39;clip&#39;,
-    models=[&#39;clip&#39;, &#39;clip&#39;],
-    keys=[&#39;img&#39;, &#39;captions&#39;],
-    measure=&#39;css&#39;,
-    metrics=[&#39;p_at_10&#39;],
-)
+<span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
+    <span class="s1">&#39;clip&#39;</span><span class="p">,</span>
+    <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="s1">&#39;clip&#39;</span><span class="p">],</span>
+    <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="s1">&#39;captions&#39;</span><span class="p">],</span>
+    <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;css&#39;</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">],</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -262,20 +262,20 @@ docs.create_semantic_index(
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from IPython.display import display
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
 
-docs.semantic_index = &#39;clip&#39;
-r = docs.find_one()
+<span class="n">docs</span><span class="o">.</span><span class="n">semantic_index</span> <span class="o">=</span> <span class="s1">&#39;clip&#39;</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
 
-print(&#39;QUERY 1&#39;)
-# example using item id directly
-for r in docs.find(like={&#39;_id&#39;: r[&#39;_id&#39;]}, n=10):
-    display(r[&#39;img&#39;])
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;QUERY 1&#39;</span><span class="p">)</span>
+<span class="c1"># example using item id directly</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]},</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
 
-print(&#39;QUERY 2&#39;)
-# or a query which is interpreted by the CLIP model
-for r in docs.find(like={&#39;captions&#39;: [&#39;Dog catches a frisbee&#39;]}, n=10):
-    display(r[&#39;img&#39;])
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;QUERY 2&#39;</span><span class="p">)</span>
+<span class="c1"># or a query which is interpreted by the CLIP model</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Dog catches a frisbee&#39;</span><span class="p">]},</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -454,12 +454,12 @@ QUERY 2
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.create_validation_set(
-    &#39;text2image_retrieval&#39;,
-    filter={},
-    splitter=lambda x: ({&#39;img&#39;: x[&#39;img&#39;]}, {&#39;captions&#39;: [x[&#39;captions&#39;][0]]}),
-    sample_size=1000,
-)
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_validation_set</span><span class="p">(</span>
+    <span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">,</span>
+    <span class="nb">filter</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">splitter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]},</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]]}),</span>
+    <span class="n">sample_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -501,7 +501,7 @@ done.
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs.validate_semantic_index(&#39;clip&#39;, [&#39;text2image_retrieval&#39;], [&#39;p_at_10&#39;])
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">validate_semantic_index</span><span class="p">(</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;text2image_retrieval&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -529,7 +529,7 @@ loading hashes: &#34;clip&#34;
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>docs[&#39;_objects&#39;].find_one({&#39;varieties&#39;: &#39;semantic_index&#39;, &#39;name&#39;: &#39;clip&#39;})[&#39;final_metrics&#39;]
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_objects&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;varieties&#39;</span><span class="p">:</span> <span class="s1">&#39;semantic_index&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;clip&#39;</span><span class="p">})[</span><span class="s1">&#39;final_metrics&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>

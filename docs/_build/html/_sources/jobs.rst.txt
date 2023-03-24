@@ -1,6 +1,8 @@
-Jobs - scheduling of training and model outputs
-================================================
+Jobs
+====
 
+Scheduling of training and model outputs
+----------------------------------------
 In order to most efficiently marshall computational resources,
 SuperDuperDB may be configured to run in asynchronous mode ``{"remote": True}``.
 

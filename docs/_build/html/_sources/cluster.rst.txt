@@ -1,5 +1,8 @@
-Setting up a SuperDuperDB cluster
-=================================
+
+.. _Cluster:
+
+Cluster test
+============
 
 There are 3 features of a SuperDuperDB cluster:
 

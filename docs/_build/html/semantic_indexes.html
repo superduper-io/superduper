@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Semantic indexes for flexibly searching data &mdash; SuperDuperDB  documentation</title>
+  <title>Semantic indexes &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -21,8 +21,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Imputations for filling in data" href="imputations.html" />
-    <link rel="prev" title="Watchers in SuperDuperDB" href="watchers.html" /> 
+    <link rel="next" title="Imputations" href="imputations.html" />
+    <link rel="prev" title="Watchers" href="watchers.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,22 +47,25 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="content.html">Adding interesting content to SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Semantic indexes for flexibly searching data</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#defining-a-semantic-index">Defining a semantic index</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#using-a-semantic-index">Using a semantic index</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#creating-a-neighbourhood">Creating a neighbourhood</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#training-a-semantic-index-by-fine-tuning-models">Training a semantic index by fine-tuning models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Semantic indexes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#flexible-search-using-models-with-tensor-outputs">Flexible search using models with tensor outputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#defining-a-semantic-index">Defining a semantic index</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-a-semantic-index">Using a semantic index</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-neighbourhood">Creating a neighbourhood</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#training-a-semantic-index-by-fine-tuning-models">Training a semantic index by fine-tuning models</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Cluster test</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -80,7 +83,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Semantic indexes for flexibly searching data</li>
+      <li class="breadcrumb-item active">Semantic indexes</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/semantic_indexes.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -90,13 +93,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="semantic-indexes-for-flexibly-searching-data">
-<h1>Semantic indexes for flexibly searching data<a class="headerlink" href="#semantic-indexes-for-flexibly-searching-data" title="Permalink to this heading"></a></h1>
+  <section id="semantic-indexes">
+<h1>Semantic indexes<a class="headerlink" href="#semantic-indexes" title="Permalink to this heading"></a></h1>
+<section id="flexible-search-using-models-with-tensor-outputs">
+<h2>Flexible search using models with tensor outputs<a class="headerlink" href="#flexible-search-using-models-with-tensor-outputs" title="Permalink to this heading"></a></h2>
 <p>When you’ve created one or more models in SuperDuperDB which have tensor outputs,
 SuperDuperDB may be used to search through the data, on the basis of input which
 may be accepted by those models. To enable this feature, one creates one or more <strong>semantic indexes</strong>.</p>
 <section id="defining-a-semantic-index">
-<h2>Defining a semantic index<a class="headerlink" href="#defining-a-semantic-index" title="Permalink to this heading"></a></h2>
+<h3>Defining a semantic index<a class="headerlink" href="#defining-a-semantic-index" title="Permalink to this heading"></a></h3>
 <p>At a minimum, creating a semantic index requires users to supply one of more models,
 the keys which those models will act on, and a <strong>measure</strong> function for comparing the
 output of those models:</p>
@@ -112,7 +117,7 @@ output of those models:</p>
 </div>
 </section>
 <section id="using-a-semantic-index">
-<h2>Using a semantic index<a class="headerlink" href="#using-a-semantic-index" title="Permalink to this heading"></a></h2>
+<h3>Using a semantic index<a class="headerlink" href="#using-a-semantic-index" title="Permalink to this heading"></a></h3>
 <p>To set a default index, update <code class="docutils literal notranslate"><span class="pre">docs['_meta']</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">docs</span><span class="p">[</span><span class="s1">&#39;_meta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update_one</span><span class="p">({</span><span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;semantic_index&#39;</span><span class="p">},</span>
 <span class="gp">... </span>                         <span class="p">{</span><span class="s1">&#39;$set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="s1">&#39;my_semantic_index&#39;</span><span class="p">}},</span>
@@ -135,7 +140,7 @@ standard MongoDB query, and the results are merged with the results of the <code
 and AI.</p>
 </section>
 <section id="creating-a-neighbourhood">
-<h2>Creating a neighbourhood<a class="headerlink" href="#creating-a-neighbourhood" title="Permalink to this heading"></a></h2>
+<h3>Creating a neighbourhood<a class="headerlink" href="#creating-a-neighbourhood" title="Permalink to this heading"></a></h3>
 <p>Once we have a semantic index activated for a collection, it’s possible to cache
 nearest neighbours in the collection documents, and keep this cache in some sense up-to-date
 when new data arrives. The way to do this is by using <code class="docutils literal notranslate"><span class="pre">docs.create_neighbourhood</span></code>:</p>
@@ -161,7 +166,7 @@ field of the documents. This can come in very useful, when nearest neighbours ar
 very low latency.</p>
 </section>
 <section id="training-a-semantic-index-by-fine-tuning-models">
-<h2>Training a semantic index by fine-tuning models<a class="headerlink" href="#training-a-semantic-index-by-fine-tuning-models" title="Permalink to this heading"></a></h2>
+<h3>Training a semantic index by fine-tuning models<a class="headerlink" href="#training-a-semantic-index-by-fine-tuning-models" title="Permalink to this heading"></a></h3>
 <p>It’s also possible to <em>train</em> a semantic-index end-2-end using the <code class="docutils literal notranslate"><span class="pre">create_semantic_index</span></code> command.
 For this it’s additionally necessary to define:</p>
 <ul class="simple">
@@ -191,13 +196,14 @@ For this it’s additionally necessary to define:</p>
 </div>
 </section>
 </section>
+</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="watchers.html" class="btn btn-neutral float-left" title="Watchers in SuperDuperDB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="imputations.html" class="btn btn-neutral float-right" title="Imputations for filling in data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="watchers.html" class="btn btn-neutral float-left" title="Watchers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="imputations.html" class="btn btn-neutral float-right" title="Imputations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

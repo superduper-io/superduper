@@ -1,5 +1,8 @@
-Watchers in SuperDuperDB
-========================
+Watchers
+========
+
+Model callbacks for continuously populating model outputs
+---------------------------------------------------------
 
 Once you have created a model to work with SuperDuperDB using ``Collection.create_model``, it's possible to 
 set up the model to react to changes in a collection's data using a **watcher**. To create a watcher, use the

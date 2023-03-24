@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Adding interesting content to SuperDuperDB &mdash; SuperDuperDB  documentation</title>
+  <title>Content &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -21,8 +21,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Models - an extension of PyTorch models" href="models.html" />
-    <link rel="prev" title="Types in SuperDuperDB" href="types.html" /> 
+    <link rel="next" title="Models" href="models.html" />
+    <link rel="prev" title="Types" href="types.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,16 +47,19 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding interesting content to SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Content</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#adding-interesting-content-to-superduperdb">Adding interesting content to SuperDuperDB</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Cluster test</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -74,7 +77,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Adding interesting content to SuperDuperDB</li>
+      <li class="breadcrumb-item active">Content</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/content.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -84,8 +87,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="adding-interesting-content-to-superduperdb">
-<h1>Adding interesting content to SuperDuperDB<a class="headerlink" href="#adding-interesting-content-to-superduperdb" title="Permalink to this heading"></a></h1>
+  <section id="content">
+<h1>Content<a class="headerlink" href="#content" title="Permalink to this heading"></a></h1>
+<section id="adding-interesting-content-to-superduperdb">
+<h2>Adding interesting content to SuperDuperDB<a class="headerlink" href="#adding-interesting-content-to-superduperdb" title="Permalink to this heading"></a></h2>
 <p>In an application context, certain data do not necessarily lie around in a convenient form
 but may be distributed over file-servers, file-systems, web-urls, and object storage.</p>
 <p>SuperDuperDB allows one to specify this data without first downloading and collating the data
@@ -101,7 +106,7 @@ location (either file <code class="docutils literal notranslate"><span class="pr
 <span class="go"> &#39;_fold&#39;: &#39;train&#39;}</span>
 </pre></div>
 </div>
-<p>After adding data in this way, SuperDuperDB creates a <a class="reference internal" href="jobs.html#jobs-scheduling-of-training-and-model-outputs"><span class="std std-ref">job</span></a>
+<p>After adding data in this way, SuperDuperDB creates a <span class="xref std std-ref">job</span>
 which downloads the data from the specified locations using multiprocessing, and inserts the raw
 bytes into the database inside the <code class="docutils literal notranslate"><span class="pre">&quot;_content&quot;</span></code> subfield.</p>
 <p>One can see what happened under the hood by specifying <code class="docutils literal notranslate"><span class="pre">raw=True</span></code>. The <code class="docutils literal notranslate"><span class="pre">&quot;bytes&quot;</span></code> field containing
@@ -116,13 +121,14 @@ the raw data has been added to the <code class="docutils literal notranslate"><s
 </pre></div>
 </div>
 </section>
+</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="types.html" class="btn btn-neutral float-left" title="Types in SuperDuperDB" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="models.html" class="btn btn-neutral float-right" title="Models - an extension of PyTorch models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="types.html" class="btn btn-neutral float-left" title="Types" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="models.html" class="btn btn-neutral float-right" title="Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

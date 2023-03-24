@@ -1,5 +1,9 @@
+Content
+=======
+
+
 Adding interesting content to SuperDuperDB
-==========================================
+------------------------------------------
 
 In an application context, certain data do not necessarily lie around in a convenient form
 but may be distributed over file-servers, file-systems, web-urls, and object storage.

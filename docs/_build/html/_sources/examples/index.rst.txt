@@ -1,6 +1,6 @@
-**********************
-Tutorials and examples
-**********************
+********
+Examples
+********
 
 .. toctree::
     :maxdepth: 1

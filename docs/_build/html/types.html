@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Types in SuperDuperDB &mdash; SuperDuperDB  documentation</title>
+  <title>Types &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -21,8 +21,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Adding interesting content to SuperDuperDB" href="content.html" />
-    <link rel="prev" title="SuperDuperDB Concepts" href="concepts.html" /> 
+    <link rel="next" title="Content" href="content.html" />
+    <link rel="prev" title="Concepts" href="concepts.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,16 +47,19 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Types in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="content.html">Adding interesting content to SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#user-defined-types-for-serializing-arbitrary-data">User defined types for serializing arbitrary data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Cluster test</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -74,7 +77,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Types in SuperDuperDB</li>
+      <li class="breadcrumb-item active">Types</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/types.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -84,8 +87,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="types-in-superduperdb">
-<h1>Types in SuperDuperDB<a class="headerlink" href="#types-in-superduperdb" title="Permalink to this heading"></a></h1>
+  <section id="types">
+<h1>Types<a class="headerlink" href="#types" title="Permalink to this heading"></a></h1>
+<section id="user-defined-types-for-serializing-arbitrary-data">
+<h2>User defined types for serializing arbitrary data<a class="headerlink" href="#user-defined-types-for-serializing-arbitrary-data" title="Permalink to this heading"></a></h2>
 <p>A <strong>type</strong> is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from <code class="docutils literal notranslate"><span class="pre">bytes</span></code> so that these may be
 stored and retrieved from the database. Creating types is a prerequisite to adding models
@@ -154,13 +159,14 @@ stores the pickled object in the database.</p>
 </pre></div>
 </div>
 </section>
+</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="concepts.html" class="btn btn-neutral float-left" title="SuperDuperDB Concepts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="content.html" class="btn btn-neutral float-right" title="Adding interesting content to SuperDuperDB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="concepts.html" class="btn btn-neutral float-left" title="Concepts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="content.html" class="btn btn-neutral float-right" title="Content" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

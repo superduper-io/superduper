@@ -1,5 +1,8 @@
-Models - an extension of PyTorch models
-=======================================
+Models
+======
+
+An extension of PyTorch models
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Models in SuperDuperDB extend standard PyTorch models
 by including pre-processing and post-processing. These are necessary

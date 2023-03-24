@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SuperDuperDB Concepts &mdash; SuperDuperDB  documentation</title>
+  <title>Concepts &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -21,7 +21,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Types in SuperDuperDB" href="types.html" />
+    <link rel="next" title="Types" href="types.html" />
     <link rel="prev" title="Image captioning using recurrent language modelling and transfer learning based on CLIP" href="examples/coco/image-captioning.html" /> 
 </head>
 
@@ -47,8 +47,8 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">SuperDuperDB Concepts</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Concepts</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#types">Types</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#content">Content</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#models">Models</a></li>
@@ -58,14 +58,14 @@
 <li class="toctree-l2"><a class="reference internal" href="#jobs">Jobs</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="content.html">Adding interesting content to SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Cluster test</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -83,7 +83,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">SuperDuperDB Concepts</li>
+      <li class="breadcrumb-item active">Concepts</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/concepts.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -93,8 +93,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="superduperdb-concepts">
-<h1>SuperDuperDB Concepts<a class="headerlink" href="#superduperdb-concepts" title="Permalink to this heading"></a></h1>
+  <section id="concepts">
+<h1>Concepts<a class="headerlink" href="#concepts" title="Permalink to this heading"></a></h1>
 <p>The SuperDuperDB workflow looks like this:</p>
 <ol class="arabic simple">
 <li><p>The user adds data to SuperDuperDB, which may include user defined <strong>types</strong>, and external web or other <strong>content</strong>.</p></li>
@@ -111,16 +111,16 @@ are stored in the documents to which the <strong>models</strong> were applied.</
 </ol>
 <img alt="_images/cycle-linear.svg" src="_images/cycle-linear.svg" /><p>The key concepts are:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#types"><span class="std std-ref">Types</span></a></p></li>
-<li><p><a class="reference internal" href="#content"><span class="std std-ref">Content</span></a></p></li>
-<li><p><a class="reference internal" href="#models"><span class="std std-ref">Models</span></a></p></li>
-<li><p><a class="reference internal" href="#watchers"><span class="std std-ref">Watchers</span></a></p></li>
-<li><p><a class="reference internal" href="#semantic-indexes"><span class="std std-ref">Semantic Indexes</span></a></p></li>
-<li><p><a class="reference internal" href="#imputations"><span class="std std-ref">Imputations</span></a></p></li>
-<li><p><a class="reference internal" href="#jobs"><span class="std std-ref">Jobs</span></a></p></li>
+<li><p><a class="reference internal" href="#types-short"><span class="std std-ref">Types</span></a></p></li>
+<li><p><a class="reference internal" href="#content-short"><span class="std std-ref">Content</span></a></p></li>
+<li><p><a class="reference internal" href="#models-short"><span class="std std-ref">Models</span></a></p></li>
+<li><p><a class="reference internal" href="#watchers-short"><span class="std std-ref">Watchers</span></a></p></li>
+<li><p><a class="reference internal" href="#semantic-indexes-short"><span class="std std-ref">Semantic Indexes</span></a></p></li>
+<li><p><a class="reference internal" href="#imputations-short"><span class="std std-ref">Imputations</span></a></p></li>
+<li><p><a class="reference internal" href="#jobs-short"><span class="std std-ref">Jobs</span></a></p></li>
 </ul>
 <section id="types">
-<h2>Types<a class="headerlink" href="#types" title="Permalink to this heading"></a></h2>
+<span id="types-short"></span><h2>Types<a class="headerlink" href="#types" title="Permalink to this heading"></a></h2>
 <p>A type is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from <code class="docutils literal notranslate"><span class="pre">bytes</span></code> so that these may be
 stored and retrieved from the database. Creating types is a prerequisite to adding models
@@ -128,28 +128,28 @@ which have non-Jsonable outputs to a collection, as well as adding content to th
 of a more sophisticated variety, such as images, tensors and so forth.</p>
 <p>A type is any class with <code class="docutils literal notranslate"><span class="pre">.encode</span></code> and <code class="docutils literal notranslate"><span class="pre">.decode</span></code> methods
 as well as an optional <code class="docutils literal notranslate"><span class="pre">.types</span></code> property.</p>
-<p>Read in more detail <a class="reference internal" href="types.html#types-in-superduperdb"><span class="std std-ref">here</span></a>.</p>
+<p>Read in more detail <a class="reference internal" href="types.html#types"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="content">
-<h2>Content<a class="headerlink" href="#content" title="Permalink to this heading"></a></h2>
+<span id="content-short"></span><h2>Content<a class="headerlink" href="#content" title="Permalink to this heading"></a></h2>
 <p>Often building and training AI applications requires the awkward task of downloading, pulling and
 scraping diverse bits of data from the web, file-servers and systems, and object storage.
 To facilitate this, SuperDuperDB allows users to specify the <strong>content</strong> of a key-value pair
 using references to external sources.
-For those bits of content which are referred to in this way, SuperDuperDB creates a <a class="reference internal" href="#jobs"><span class="std std-ref">job</span></a> which fetches the bytes from the
+For those bits of content which are referred to in this way, SuperDuperDB creates a <a class="reference internal" href="jobs.html#jobs"><span class="std std-ref">job</span></a> which fetches the bytes from the
 described location, and inserts these into MongoDB.</p>
-<p>Read in more detail <a class="reference internal" href="content.html#adding-interesting-content-to-superduperdb"><span class="std std-ref">here</span></a>.</p>
+<p>Read in more detail <a class="reference internal" href="content.html#content"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="models">
-<h2>Models<a class="headerlink" href="#models" title="Permalink to this heading"></a></h2>
+<span id="models-short"></span><h2>Models<a class="headerlink" href="#models" title="Permalink to this heading"></a></h2>
 <p>A <strong>model</strong> in SuperDuperDB is a PyTorch model, with (optionally) two additional methods <code class="docutils literal notranslate"><span class="pre">preprocess</span></code>
 and <code class="docutils literal notranslate"><span class="pre">postprocess</span></code>. These methods are necessary so that the model knows how to convert content from
 the database to tensors, and also to convert outputs of the object into a form which is appropriate
 to be saved in the database.</p>
-<p>Read in more detail <a class="reference internal" href="models.html#models-an-extension-of-pytorch-models"><span class="std std-ref">here</span></a></p>
+<p>Read in more detail <a class="reference internal" href="models.html#models"><span class="std std-ref">here</span></a></p>
 </section>
 <section id="watchers">
-<h2>Watchers<a class="headerlink" href="#watchers" title="Permalink to this heading"></a></h2>
+<span id="watchers-short"></span><h2>Watchers<a class="headerlink" href="#watchers" title="Permalink to this heading"></a></h2>
 <p>Once you have one or more models registered with SuperDuperDB, the model(s) can be set up to
 <strong>watch</strong> certain sub-keys (<code class="docutils literal notranslate"><span class="pre">key</span></code>) or full documents in MongoDB collections, and to compute outputs
 from those inputs when new data comes in or updates are made to the database.</p>
@@ -159,10 +159,10 @@ loads data from the database, passes the data inside the configured <code class=
 and finally unpacks the batch and applies the model’s <code class="docutils literal notranslate"><span class="pre">postprocess</span></code> method to the lines of
 output from the model. The results are saved in <code class="docutils literal notranslate"><span class="pre">&quot;_outputs.&lt;key&gt;.&lt;model_name&gt;&quot;</span></code> of the collection
 documents.</p>
-<p>Read in more detail <a class="reference internal" href="watchers.html#watchers-in-superduperdb"><span class="std std-ref">here</span></a>.</p>
+<p>Read in more detail <a class="reference internal" href="watchers.html#watchers"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="semantic-indexes">
-<h2>Semantic Indexes<a class="headerlink" href="#semantic-indexes" title="Permalink to this heading"></a></h2>
+<span id="semantic-indexes-short"></span><h2>Semantic Indexes<a class="headerlink" href="#semantic-indexes" title="Permalink to this heading"></a></h2>
 <p>Models and their outputs may be used in concert, to make the content of SuperDuperDB collections
 searchable. A <strong>semantic index</strong> consists of one or more models, which produce PyTorch vector or tensor
 outputs. A semantic index may be leveraged using the <code class="docutils literal notranslate"><span class="pre">Collection.find</span></code> or <code class="docutils literal notranslate"><span class="pre">Collection.find_one</span></code>
@@ -178,10 +178,10 @@ method, for finding matches based on the individual models which are registered 
 <p>For example, a semantic index could consist of a pair of models, where one model understands text and
 the other understands images. Using this pair, one can search for images using a textual description of the image.</p>
 <p>SuperDuperDB may be used to train or fine-tune semantic-indexes.</p>
-<p>Read in more detail <a class="reference internal" href="semantic_indexes.html#semantic-indexes-for-flexibly-searching-data"><span class="std std-ref">here</span></a>.</p>
+<p>Read in more detail <a class="reference internal" href="semantic_indexes.html#semantic-indexes"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="imputations">
-<h2>Imputations<a class="headerlink" href="#imputations" title="Permalink to this heading"></a></h2>
+<span id="imputations-short"></span><h2>Imputations<a class="headerlink" href="#imputations" title="Permalink to this heading"></a></h2>
 <p>An <strong>imputation</strong> is a pair of model, and target function (potentially also a model),
 where one model is used to predict the output of the other model.
 This subsumes many use cases:</p>
@@ -194,10 +194,10 @@ This subsumes many use cases:</p>
 <li><p>Bounding box regression</p></li>
 <li><p>… (there are many possibilities)</p></li>
 </ul>
-<p>Read in more detail <a class="reference internal" href="imputations.html#imputations-for-filling-in-data"><span class="std std-ref">here</span></a>.</p>
+<p>Read in more detail <a class="reference internal" href="imputations.html#imputations"><span class="std std-ref">here</span></a>.</p>
 </section>
 <section id="jobs">
-<h2>Jobs<a class="headerlink" href="#jobs" title="Permalink to this heading"></a></h2>
+<span id="jobs-short"></span><h2>Jobs<a class="headerlink" href="#jobs" title="Permalink to this heading"></a></h2>
 <p>Whenever SuperDuperDB does any of the following:</p>
 <ul class="simple">
 <li><p>Data insertion</p></li>
@@ -212,7 +212,7 @@ These computations are wrapped as <strong>jobs</strong> and the <strong>jobs</st
 a pool of parallel workers.</p>
 <p>SuperDuperDB may also be used in the foreground, so that calculations block the Python program.
 This is recommended for development purposes only.</p>
-<p>Read in more detail <a class="reference internal" href="jobs.html#jobs-scheduling-of-training-and-model-outputs"><span class="std std-ref">here</span></a>.</p>
+<p>Read in more detail <a class="reference internal" href="jobs.html#jobs"><span class="std std-ref">here</span></a>.</p>
 </section>
 </section>
 
@@ -221,7 +221,7 @@ This is recommended for development purposes only.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="examples/coco/image-captioning.html" class="btn btn-neutral float-left" title="Image captioning using recurrent language modelling and transfer learning based on CLIP" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="types.html" class="btn btn-neutral float-right" title="Types in SuperDuperDB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="types.html" class="btn btn-neutral float-right" title="Types" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

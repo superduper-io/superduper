@@ -1,12 +1,15 @@
-Semantic indexes for flexibly searching data
-============================================
+Semantic indexes
+================
+
+Flexible search using models with tensor outputs
+------------------------------------------------
 
 When you've created one or more models in SuperDuperDB which have tensor outputs,
 SuperDuperDB may be used to search through the data, on the basis of input which
 may be accepted by those models. To enable this feature, one creates one or more **semantic indexes**.
 
 Defining a semantic index
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 At a minimum, creating a semantic index requires users to supply one of more models,
 the keys which those models will act on, and a **measure** function for comparing the
@@ -24,7 +27,7 @@ output of those models:
     ... )
 
 Using a semantic index
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 To set a default index, update ``docs['_meta']``:
 
@@ -53,7 +56,7 @@ This functionality allows for very sophisticated document filtering using a comb
 and AI.
 
 Creating a neighbourhood
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once we have a semantic index activated for a collection, it's possible to cache
 nearest neighbours in the collection documents, and keep this cache in some sense up-to-date
@@ -82,7 +85,7 @@ field of the documents. This can come in very useful, when nearest neighbours ar
 very low latency.
 
 Training a semantic index by fine-tuning models
------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It's also possible to *train* a semantic-index end-2-end using the ``create_semantic_index`` command.
 For this it's additionally necessary to define:

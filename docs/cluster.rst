@@ -1,8 +1,5 @@
-
-.. _Cluster:
-
-Cluster test
-============
+Cluster
+=======
 
 There are 3 features of a SuperDuperDB cluster:
 

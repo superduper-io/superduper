@@ -56,7 +56,23 @@
 <li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Full usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Full usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.clear_remote_cache"><code class="docutils literal notranslate"><span class="pre">Collection.clear_remote_cache()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.convert_from_types_to_bytes"><code class="docutils literal notranslate"><span class="pre">Collection.convert_from_types_to_bytes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.find"><code class="docutils literal notranslate"><span class="pre">Collection.find()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.find_one"><code class="docutils literal notranslate"><span class="pre">Collection.find_one()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.insert_many"><code class="docutils literal notranslate"><span class="pre">Collection.insert_many()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.insert_one"><code class="docutils literal notranslate"><span class="pre">Collection.insert_one()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.refresh_watcher"><code class="docutils literal notranslate"><span class="pre">Collection.refresh_watcher()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.replace_one"><code class="docutils literal notranslate"><span class="pre">Collection.replace_one()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.unset_hash_set"><code class="docutils literal notranslate"><span class="pre">Collection.unset_hash_set()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.update_many"><code class="docutils literal notranslate"><span class="pre">Collection.update_many()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#superduperdb.mongodb.collection.Collection.update_one"><code class="docutils literal notranslate"><span class="pre">Collection.update_one()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -85,6 +101,253 @@
              
   <section id="full-usage">
 <h1>Full usage<a class="headerlink" href="#full-usage" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">superduperdb.mongodb.collection.</span></span><span class="sig-name descname"><span class="pre">Collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection" title="Permalink to this definition"></a></dt>
+<dd><p>Get / create a Mongo collection.</p>
+<p>Raises <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeError</span></code> if <cite>name</cite> is not an instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">basestring</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> in python 3). Raises
+<code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidName</span></code> if <cite>name</cite> is not a valid
+collection name. Any additional keyword arguments will be used
+as options passed to the create command. See
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">create_collection()</span></code> for valid
+options.</p>
+<p>If <cite>create</cite> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, <cite>collation</cite> is specified, or any additional
+keyword arguments are present, a <code class="docutils literal notranslate"><span class="pre">create</span></code> command will be
+sent, using <code class="docutils literal notranslate"><span class="pre">session</span></code> if specified. Otherwise, a <code class="docutils literal notranslate"><span class="pre">create</span></code> command
+will not be sent and the collection will be created implicitly on first
+use. The optional <code class="docutils literal notranslate"><span class="pre">session</span></code> argument is <em>only</em> used for the <code class="docutils literal notranslate"><span class="pre">create</span></code>
+command, it is not associated with the collection afterward.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><cite>database</cite>: the database to get a collection from</p></li>
+<li><p><cite>name</cite>: the name of the collection to get</p></li>
+<li><p><cite>create</cite> (optional): if <code class="docutils literal notranslate"><span class="pre">True</span></code>, force collection
+creation even without options being set</p></li>
+<li><p><cite>codec_options</cite> (optional): An instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CodecOptions</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (the
+default) database.codec_options is used.</p></li>
+<li><p><cite>read_preference</cite> (optional): The read preference to use. If
+<code class="docutils literal notranslate"><span class="pre">None</span></code> (the default) database.read_preference is used.</p></li>
+<li><p><cite>write_concern</cite> (optional): An instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">WriteConcern</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (the
+default) database.write_concern is used.</p></li>
+<li><p><cite>read_concern</cite> (optional): An instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ReadConcern</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (the
+default) database.read_concern is used.</p></li>
+<li><p><cite>collation</cite> (optional): An instance of
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Collation</span></code>. If a collation is provided,
+it will be passed to the create collection command.</p></li>
+<li><p><cite>session</cite> (optional): a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ClientSession</span></code> that is used with
+the create collection command</p></li>
+<li><p><cite>**kwargs</cite> (optional): additional keyword arguments will
+be passed as options for the create collection command</p></li>
+</ul>
+</dd>
+</dl>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 4.2: </span>Added the <code class="docutils literal notranslate"><span class="pre">clusteredIndex</span></code> and <code class="docutils literal notranslate"><span class="pre">encryptedFields</span></code> parameters.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 4.0: </span>Removed the reindex, map_reduce, inline_map_reduce,
+parallel_scan, initialize_unordered_bulk_op,
+initialize_ordered_bulk_op, group, count, insert, save,
+update, remove, find_and_modify, and ensure_index methods. See the
+<span class="xref std std-ref">pymongo4-migration-guide</span>.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.6: </span>Added <code class="docutils literal notranslate"><span class="pre">session</span></code> parameter.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.4: </span>Support the <cite>collation</cite> option.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.2: </span>Added the read_concern option.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.0: </span>Added the codec_options, read_preference, and write_concern options.
+Removed the uuid_subtype attribute.
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code> no longer returns an
+instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code> for attribute
+names with leading underscores. You must use dict-style lookups
+instead::</p>
+<blockquote>
+<div><p>collection[‘__my_collection__’]</p>
+</div></blockquote>
+<p>Not:</p>
+<blockquote>
+<div><p>collection.__my_collection__</p>
+</div></blockquote>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>The MongoDB documentation on <a class="reference external" href="https://dochub.mongodb.org/core/collections">collections</a>.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.clear_remote_cache">
+<span class="sig-name descname"><span class="pre">clear_remote_cache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.clear_remote_cache" title="Permalink to this definition"></a></dt>
+<dd><p>Drop the hash_set currently in-use.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.convert_from_types_to_bytes">
+<span class="sig-name descname"><span class="pre">convert_from_types_to_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.convert_from_types_to_bytes" title="Permalink to this definition"></a></dt>
+<dd><p>Convert non MongoDB types to bytes using types already registered with collection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>r</strong> – record in which to convert types</p>
+</dd>
+</dl>
+<p>:return modified record</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.find">
+<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">like</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_join</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.find" title="Permalink to this definition"></a></dt>
+<dd><p>Behaves like MongoDB <code class="docutils literal notranslate"><span class="pre">find</span></code> with similarity search as additional option.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> – filter dictionary</p></li>
+<li><p><strong>args</strong> – args passed to super()</p></li>
+<li><p><strong>like</strong> – item to which the results of the find should be similar</p></li>
+<li><p><strong>similar_first</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to first find similar things, and then
+apply filter to these things</p></li>
+<li><p><strong>raw</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to not convert bytes to Python objects but return raw bytes</p></li>
+<li><p><strong>features</strong> – dictionary of model outputs to replace for dictionary elements</p></li>
+<li><p><strong>download</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> in case query has downloadable “_content” components</p></li>
+<li><p><strong>similar_join</strong> – replace ids by documents</p></li>
+<li><p><strong>kwargs</strong> – kwargs to be passed to super()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.find_one">
+<span class="sig-name descname"><span class="pre">find_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.find_one" title="Permalink to this definition"></a></dt>
+<dd><p>Behaves like MongoDB <code class="docutils literal notranslate"><span class="pre">find_one</span></code> with exception of <code class="docutils literal notranslate"><span class="pre">$like</span></code> operator.
+See <em>Collection.find</em> for more details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – args passed to super()</p></li>
+<li><p><strong>kwargs</strong> – kwargs to be passed to super()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.insert_many">
+<span class="sig-name descname"><span class="pre">insert_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">documents</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.insert_many" title="Permalink to this definition"></a></dt>
+<dd><p>Insert many documents into database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>documents</strong> – list of documents</p></li>
+<li><p><strong>args</strong> – args to be passed to super()</p></li>
+<li><p><strong>verbose</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">True</span></code> to display outputs during computation</p></li>
+<li><p><strong>refresh</strong> – toggle to <code class="docutils literal notranslate"><span class="pre">False</span></code> to suppress model processing</p></li>
+<li><p><strong>kwargs</strong> – kwargs to be passed to super()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.insert_one">
+<span class="sig-name descname"><span class="pre">insert_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.insert_one" title="Permalink to this definition"></a></dt>
+<dd><p>Insert a document into database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>document</strong> – list of documents</p></li>
+<li><p><strong>args</strong> – args to be passed to super()</p></li>
+<li><p><strong>kwargs</strong> – kwargs to be passed to super()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.refresh_watcher">
+<span class="sig-name descname"><span class="pre">refresh_watcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.refresh_watcher" title="Permalink to this definition"></a></dt>
+<dd><p>Recompute model outputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> – Name of model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.replace_one">
+<span class="sig-name descname"><span class="pre">replace_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.replace_one" title="Permalink to this definition"></a></dt>
+<dd><p>Replace a document in the database. The outputs of models will be refreshed for this
+document.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> – MongoDB like filter</p></li>
+<li><p><strong>replacement</strong> – Replacement document</p></li>
+<li><p><strong>args</strong> – args to be passed to super()</p></li>
+<li><p><strong>refresh</strong> – Toggle to <em>False</em> to not process document again with models.</p></li>
+<li><p><strong>kwargs</strong> – kwargs to be passed to super()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.unset_hash_set">
+<span class="sig-name descname"><span class="pre">unset_hash_set</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.unset_hash_set" title="Permalink to this definition"></a></dt>
+<dd><p>Drop the hash_set currently in-use.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.update_many">
+<span class="sig-name descname"><span class="pre">update_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.update_many" title="Permalink to this definition"></a></dt>
+<dd><p>Update the collection at the documents specified by the filter. If there are active
+models these are applied to the updated documents.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> – Filter dictionary selecting documents to be updated</p></li>
+<li><p><strong>args</strong> – Arguments to be passed to <code class="docutils literal notranslate"><span class="pre">super()</span></code></p></li>
+<li><p><strong>refresh</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">False</span></code> to stop models being applied to updated documents</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments to be passed to <code class="docutils literal notranslate"><span class="pre">super()</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">result</span></code> or <code class="docutils literal notranslate"><span class="pre">(result,</span> <span class="pre">job_ids)</span></code> depending on <code class="docutils literal notranslate"><span class="pre">self.remote</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="superduperdb.mongodb.collection.Collection.update_one">
+<span class="sig-name descname"><span class="pre">update_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#superduperdb.mongodb.collection.Collection.update_one" title="Permalink to this definition"></a></dt>
+<dd><p>Update a single document specified by the filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> – Filter dictionary selecting documents to be updated</p></li>
+<li><p><strong>args</strong> – Arguments to be passed to <code class="docutils literal notranslate"><span class="pre">super()</span></code></p></li>
+<li><p><strong>refresh</strong> – Toggle to <code class="docutils literal notranslate"><span class="pre">False</span></code> to stop models being applied to updated documents</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments to be passed to <code class="docutils literal notranslate"><span class="pre">super()</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">result</span></code> or <code class="docutils literal notranslate"><span class="pre">(result,</span> <span class="pre">job_ids)</span></code> depending on <code class="docutils literal notranslate"><span class="pre">self.remote</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
 

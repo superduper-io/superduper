@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Setting up a SuperDuperDB cluster &mdash; SuperDuperDB  documentation</title>
+  <title>Cluster test &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -22,7 +22,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Full usage" href="full_usage.html" />
-    <link rel="prev" title="Jobs - scheduling of training and model outputs" href="jobs.html" /> 
+    <link rel="prev" title="Jobs" href="jobs.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,16 +47,16 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="content.html">Adding interesting content to SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs - scheduling of training and model outputs</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Setting up a SuperDuperDB cluster</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Cluster test</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#components">Components</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#client">Client</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#mongodb">MongoDB</a></li>
@@ -85,7 +85,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Setting up a SuperDuperDB cluster</li>
+      <li class="breadcrumb-item active">Cluster test</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/cluster.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -95,15 +95,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="setting-up-a-superduperdb-cluster">
-<h1>Setting up a SuperDuperDB cluster<a class="headerlink" href="#setting-up-a-superduperdb-cluster" title="Permalink to this heading"></a></h1>
+  <section id="cluster-test">
+<span id="cluster"></span><h1>Cluster test<a class="headerlink" href="#cluster-test" title="Permalink to this heading"></a></h1>
 <p>There are 3 features of a SuperDuperDB cluster:</p>
 <ol class="arabic simple">
 <li><p>When users access SuperDuperDB, they invoke the SuperDuperDB <strong>client</strong> which manages communication
 with the various components of the SuperDuperDB cluster.</p></li>
 <li><p>Data storage: occurs in <strong>MongoDB</strong>, where the raw data,
-<a class="reference internal" href="models.html#models-an-extension-of-pytorch-models"><span class="std std-ref">models</span></a> and model outputs are stored.</p></li>
-<li><p>Job management: whenever SuperDuperDB creates a <a class="reference internal" href="jobs.html#jobs-scheduling-of-training-and-model-outputs"><span class="std std-ref">job</span></a>
+<span class="xref std std-ref">models</span> and model outputs are stored.</p></li>
+<li><p>Job management: whenever SuperDuperDB creates a <span class="xref std std-ref">job</span>
 (i.e. during data inserts, updates, downloads, and model training), a job is queued and
 then executed by a pool of <strong>workers</strong>.</p></li>
 <li><p>Querying SuperDuperDB: when using queries which use tensor similarity, the SuperDuperDB client
@@ -238,7 +238,7 @@ on the <code class="docutils literal notranslate"><span class="pre">localhost</s
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="jobs.html" class="btn btn-neutral float-left" title="Jobs - scheduling of training and model outputs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="jobs.html" class="btn btn-neutral float-left" title="Jobs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="full_usage.html" class="btn btn-neutral float-right" title="Full usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

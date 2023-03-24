@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jobs - scheduling of training and model outputs &mdash; SuperDuperDB  documentation</title>
+  <title>Jobs &mdash; SuperDuperDB  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -21,8 +21,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Setting up a SuperDuperDB cluster" href="cluster.html" />
-    <link rel="prev" title="Imputations for filling in data" href="imputations.html" /> 
+    <link rel="next" title="Cluster test" href="cluster.html" />
+    <link rel="prev" title="Imputations" href="imputations.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,16 +47,19 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Tutorials and examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="concepts.html">SuperDuperDB Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="types.html">Types in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="content.html">Adding interesting content to SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="models.html">Models - an extension of PyTorch models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers in SuperDuperDB</a></li>
-<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes for flexibly searching data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations for filling in data</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Jobs - scheduling of training and model outputs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cluster.html">Setting up a SuperDuperDB cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Jobs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#scheduling-of-training-and-model-outputs">Scheduling of training and model outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Cluster test</a></li>
 <li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
 </ul>
 
@@ -74,7 +77,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Jobs - scheduling of training and model outputs</li>
+      <li class="breadcrumb-item active">Jobs</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/jobs.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -84,11 +87,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="jobs-scheduling-of-training-and-model-outputs">
-<h1>Jobs - scheduling of training and model outputs<a class="headerlink" href="#jobs-scheduling-of-training-and-model-outputs" title="Permalink to this heading"></a></h1>
+  <section id="jobs">
+<h1>Jobs<a class="headerlink" href="#jobs" title="Permalink to this heading"></a></h1>
+<section id="scheduling-of-training-and-model-outputs">
+<h2>Scheduling of training and model outputs<a class="headerlink" href="#scheduling-of-training-and-model-outputs" title="Permalink to this heading"></a></h2>
 <p>In order to most efficiently marshall computational resources,
 SuperDuperDB may be configured to run in asynchronous mode <code class="docutils literal notranslate"><span class="pre">{&quot;remote&quot;:</span> <span class="pre">True}</span></code>.</p>
-<p>See the section on <a class="reference internal" href="cluster.html#setting-up-a-superduperdb-cluster"><span class="std std-ref">setting up a cluster</span></a> for an overview
+<p>See the section on <span class="xref std std-ref">setting up a cluster</span> for an overview
 of what this means from an infrastructural point of view.</p>
 <p>There are several key functionalities in SuperDuperDB which cause asynchronous jobs to be
 spawned in the SuperDuperDB cluster’s worker pool:</p>
@@ -116,13 +121,14 @@ output using:</p>
 </pre></div>
 </div>
 </section>
+</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="imputations.html" class="btn btn-neutral float-left" title="Imputations for filling in data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="cluster.html" class="btn btn-neutral float-right" title="Setting up a SuperDuperDB cluster" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="imputations.html" class="btn btn-neutral float-left" title="Imputations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cluster.html" class="btn btn-neutral float-right" title="Cluster test" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

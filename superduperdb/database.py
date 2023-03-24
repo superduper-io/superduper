@@ -279,9 +279,9 @@ class BaseDatabase:
 
     def _create_object(self, identifier, object, variety):
         assert identifier not in self._list_objects(variety)
-        secret = {}
+        secrets = {}
         if isinstance(object, CallableWithSecret):
-            secrets = {'secrets': object.secret}
+            secrets = {'secrets': object.secrets}
             object.secrets = None
         file_id = self._create_pickled_file(object)
         self._create_object_entry({

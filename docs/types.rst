@@ -1,5 +1,8 @@
-Types in SuperDuperDB
-=====================
+Types
+=====
+
+User defined types for serializing arbitrary data
+-------------------------------------------------
 
 A **type** is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from ``bytes`` so that these may be

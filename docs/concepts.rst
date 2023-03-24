@@ -1,6 +1,5 @@
-*********************
-SuperDuperDB Concepts
-*********************
+Concepts
+========
 
 The SuperDuperDB workflow looks like this:
 
@@ -20,16 +19,18 @@ The SuperDuperDB workflow looks like this:
 
 The key concepts are:
 
-* :ref:`Types`
-* :ref:`Content`
-* :ref:`Models`
-* :ref:`Watchers`
-* :ref:`Semantic Indexes`
-* :ref:`Imputations`
-* :ref:`Jobs`
+* :ref:`Types_short`
+* :ref:`Content_short`
+* :ref:`Models_short`
+* :ref:`Watchers_short`
+* :ref:`Semantic_indexes_short`
+* :ref:`Imputations_short`
+* :ref:`Jobs_short`
+
+.. _Types_short:
 
 Types
-=====
+-----
 
 A type is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from ``bytes`` so that these may be
@@ -40,10 +41,12 @@ of a more sophisticated variety, such as images, tensors and so forth.
 A type is any class with ``.encode`` and ``.decode`` methods
 as well as an optional ``.types`` property.
 
-Read in more detail :ref:`here <Types in SuperDuperDB>`.
+Read in more detail :ref:`here <Types>`.
+
+.. _Content_short:
 
 Content
-=======
+-------
 
 Often building and training AI applications requires the awkward task of downloading, pulling and
 scraping diverse bits of data from the web, file-servers and systems, and object storage.
@@ -52,20 +55,24 @@ using references to external sources.
 For those bits of content which are referred to in this way, SuperDuperDB creates a :ref:`job <Jobs>` which fetches the bytes from the
 described location, and inserts these into MongoDB.
 
-Read in more detail :ref:`here <Adding interesting content to SuperDuperDB>`.
+Read in more detail :ref:`here <Content>`.
+
+.. _Models_short:
 
 Models
-======
+------
 
 A **model** in SuperDuperDB is a PyTorch model, with (optionally) two additional methods ``preprocess``
 and ``postprocess``. These methods are necessary so that the model knows how to convert content from 
 the database to tensors, and also to convert outputs of the object into a form which is appropriate 
 to be saved in the database.
 
-Read in more detail :ref:`here <Models - an extension of PyTorch models>`
+Read in more detail :ref:`here <Models>`
+
+.. _Watchers_short:
 
 Watchers
-========
+--------
 
 Once you have one or more models registered with SuperDuperDB, the model(s) can be set up to 
 **watch** certain sub-keys (``key``) or full documents in MongoDB collections, and to compute outputs
@@ -78,10 +85,12 @@ and finally unpacks the batch and applies the model's ``postprocess`` method to 
 output from the model. The results are saved in ``"_outputs.<key>.<model_name>"`` of the collection 
 documents.
 
-Read in more detail :ref:`here <Watchers in SuperDuperDB>`.
+Read in more detail :ref:`here <Watchers>`.
+
+.. _Semantic_indexes_short:
 
 Semantic Indexes
-================
+----------------
 
 Models and their outputs may be used in concert, to make the content of SuperDuperDB collections
 searchable. A **semantic index** consists of one or more models, which produce PyTorch vector or tensor
@@ -101,10 +110,12 @@ the other understands images. Using this pair, one can search for images using a
 
 SuperDuperDB may be used to train or fine-tune semantic-indexes.
 
-Read in more detail :ref:`here <Semantic indexes for flexibly searching data>`.
+Read in more detail :ref:`here <Semantic indexes>`.
+
+.. _Imputations_short:
 
 Imputations
-===========
+-----------
 
 An **imputation** is a pair of model, and target function (potentially also a model),
 where one model is used to predict the output of the other model.
@@ -118,10 +129,12 @@ This subsumes many use cases:
 * Bounding box regression
 * ... (there are many possibilities)
 
-Read in more detail :ref:`here <Imputations for filling in data>`.
+Read in more detail :ref:`here <Imputations>`.
+
+.. _Jobs_short:
 
 Jobs
-====
+----
 
 Whenever SuperDuperDB does any of the following:
 
@@ -139,4 +152,4 @@ a pool of parallel workers.
 SuperDuperDB may also be used in the foreground, so that calculations block the Python program. 
 This is recommended for development purposes only.
 
-Read in more detail :ref:`here <Jobs - scheduling of training and model outputs>`.
+Read in more detail :ref:`here <Jobs>`.

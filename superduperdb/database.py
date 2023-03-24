@@ -13,7 +13,7 @@ from superduperdb.getters import jobs
 from superduperdb.lookup import hashes
 from superduperdb.training.validation import validate_representations
 from superduperdb.types.utils import convert_from_bytes_to_types
-from superduperdb.utils import gather_urls
+from superduperdb.utils import gather_urls, CallableWithSecret
 from superduperdb.getters import client as our_client
 from superduperdb.models.utils import BasicDataset, create_container, Container, apply_model
 from superduperdb.utils import ArgumentDefaultDict, progressbar, unpack_batch, Downloader
@@ -279,11 +279,16 @@ class BaseDatabase:
 
     def _create_object(self, identifier, object, variety):
         assert identifier not in self._list_objects(variety)
+        secret = {}
+        if isinstance(object, CallableWithSecret):
+            secrets = {'secrets': object.secret}
+            object.secrets = None
         file_id = self._create_pickled_file(object)
         self._create_object_entry({
             'identifier': identifier,
             'object': file_id,
             'variety': variety,
+            **secrets,
         })
 
     def create_objective(self, name, object):
@@ -758,6 +763,8 @@ class BaseDatabase:
             raise Exception(f'No such object of type "{variety}", '
                             f'"{identifier}" has been registered.')  # pragma: no cover
         m = self._load_pickled_file(info['object'])
+        if isinstance(m, CallableWithSecret) and 'secrets' in info:
+            m.secrets = info['secrets']
         if isinstance(m, torch.nn.Module):
             m.eval()
         return m

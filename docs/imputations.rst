@@ -1,5 +1,8 @@
-Imputations for filling in data
-=================================
+Imputations
+===========
+
+Filling in missing data with AI models
+--------------------------------------
 
 An imputation is a pair of models, where one model is used to predict the output of the other model.
 This subsumes many use cases:

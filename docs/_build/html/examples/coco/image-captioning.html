@@ -109,7 +109,9 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.client</span> <span class="kn">import</span> <span class="n">the_client</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.mongodb.client</span> <span class="kn">import</span> <span class="n">SuperDuperClient</span>
+
+<span class="n">the_client</span> <span class="o">=</span> <span class="n">SuperDuperClient</span><span class="p">()</span>
 
 <span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">coco</span><span class="o">.</span><span class="n">documents</span>
 </pre></div>

@@ -1,4 +1,5 @@
 import importlib
+import os
 from collections import defaultdict
 from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
@@ -321,3 +322,25 @@ def get_database_from_database_type(database_type, database_name):
     client = client_cls(**cf.get(database_type, {}))
     return client.get_database_from_name(database_name)
 
+
+class CallableWithSecret:
+    def __init__(self, secrets):
+        self._secrets = secrets
+
+    @property
+    def secrets(self):
+        return self._secrets
+
+    @secrets.setter
+    def secrets(self, value):
+        self._secrets = value
+        if value is None:
+            return
+        self._set_envs()
+
+    def _set_envs(self):
+        for k in self.secrets:
+            os.environ[k] = self.secrets[k]
+
+    def __call__(self, *args, **kwargs):
+        raise NotImplementedError

@@ -2,12 +2,5 @@
 Full usage
 **********
 
-.. autoclass:: superduperdb.collection.Collection
+.. autoclass:: superduperdb.mongodb.collection.Collection
   :members:
-
-.. autoclass:: superduperdb.database.Database
-  :members:
-
-.. autoclass:: superduperdb.client.SuperDuperClient
-  :members:
-

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SuperDuperDB Documentation &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quick start" href="getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">SuperDuperDB Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="superduperdb-documentation">
+<h1>SuperDuperDB Documentation<a class="headerlink" href="#superduperdb-documentation" title="Permalink to this heading"></a></h1>
+<section id="what-is-superduperdb">
+<h2>What is SuperDuperDB?<a class="headerlink" href="#what-is-superduperdb" title="Permalink to this heading"></a></h2>
+<p>SuperDuperDB is a project which aims to facilitate building and integrating AI models together with data.
+It does this by providing an open-source AI model development
+and production environment together with PyTorch and MongoDB.</p>
+<ul class="simple">
+<li><p>SuperDuperDB allows users to integrate PyTorch models into MongoDB.</p></li>
+<li><p>Arbitrary PyTorch models can be configured to save their outputs directly in the database alongside the inputs used to compute them.</p></li>
+<li><p>Model outputs can be used in database queries, for example, enabling queries which use linear algebra.</p></li>
+<li><p>SuperDuperDB can handle models with outputs of various types - anything which can be converted from a Python object to raw bytes and back.</p></li>
+<li><p>SuperDuperDB allows users to train their models directly with the database, without the need for intermediate data caching or preparation steps.</p></li>
+</ul>
+</section>
+<section id="what-is-superduperdb-not">
+<h2>What is SuperDuperDB not?<a class="headerlink" href="#what-is-superduperdb-not" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>SuperDuperDB is <strong>not</strong> a database (despite the name) - it <em>makes</em> your database <em>super-duper</em>.</p></li>
+<li><p>SuperDuperDB doesn’t perform AutoML. We think it’s good to offer users the opportunity to choose their own models.</p></li>
+<li><p>SuperDuperDB is not a pure vector search database - it leverages open-source vector search components, which allow certain types of data querying. However SuperDuperDB does not reinvent the wheel there.</p></li>
+<li><p>SuperDuperDB does not try to hack or create dialects of query languages such as the MongoDB query API or SQL. These languages do their job well already.</p></li>
+</ul>
+</section>
+<section id="what-types-of-use-cases-is-superduperdb-suited-for">
+<h2>What types of use-cases is SuperDuperDB suited for?<a class="headerlink" href="#what-types-of-use-cases-is-superduperdb-suited-for" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>If model outputs need to be kept up-to-date when new data comes in.</p></li>
+<li><p>If training and/ or deployment data already sits in a MongoDB cluster.</p></li>
+<li><p>Transfer learning - downstream models injest the outputs of other models as inputs.</p></li>
+<li><p>Managing multiple model variants and versions which potentially listen to different sets of data.</p></li>
+<li><p>Multimodal branching models which injest JSON type data points as inputs.</p></li>
+<li><p>AI involving data types not supported by standard data bases, such as images.</p></li>
+</ul>
+</section>
+<section id="how-does-superduperdb-differ-from-mindsdb">
+<h2>How does SuperDuperDB differ from MindsDB?<a class="headerlink" href="#how-does-superduperdb-differ-from-mindsdb" title="Permalink to this heading"></a></h2>
+<p>MindsDB is an <a class="reference external" href="https://github.com/mindsdb/mindsdb">open source project</a> which offers in-database machine learning.</p>
+<p><strong>SuperDuperDB can do these things which MindsDB can’t</strong></p>
+<ul class="simple">
+<li><p>Users can define arbitrary data types for their documents using Python.</p></li>
+<li><p>As a consequence SuperDuperDB can easily support image data types (for example).</p></li>
+<li><p>SuperDuperDB allows users to work with PyTorch models natively.</p></li>
+<li><p>SuperDuperDB allows users to work with MongoDB natively.</p></li>
+<li><p>SuperDuperDB has a Python first approach - add your models and data directly from Jupyter.</p></li>
+<li><p>SuperDuperDB has very flexible training wrappers, to define your own training procedures.</p></li>
+</ul>
+<p><strong>MindsDB can do these things which SuperDuperDB can’t</strong></p>
+<ul class="simple">
+<li><p>MindsDB supports AutoML. For large PyTorch AI models, this can get very expensive, so we have chosen not to add this support.</p></li>
+<li><p>MindsDB supports SQL as a priority. We may add support for structured data bases later.</p></li>
+<li><p>MindsDB offers a user interface. We believe that Python is the right way to do AI and data science, so don’t offer a UI.</p></li>
+<li><p>MindsDB offers many data connectors. With SuperDuperDB, you can combine the Python ecosystem with SuperDuperDB for data injestion.</p></li>
+</ul>
+<section id="documentation-contents">
+<h3>Documentation contents<a class="headerlink" href="#documentation-contents" title="Permalink to this heading"></a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#cluster-setup">Cluster Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/mnist/index.html">MNIST Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples/coco/index.html">CoCo (Common Objects in Context) Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#types">Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#content">Content</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#models">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#watchers">Watchers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#semantic-indexes">Semantic Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#imputations">Imputations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#jobs">Jobs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="types.html#user-defined-types-for-serializing-arbitrary-data">User defined types for serializing arbitrary data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="content.html">Content</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="content.html#adding-interesting-content-to-superduperdb">Adding interesting content to SuperDuperDB</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="models.html#an-extension-of-pytorch-models">An extension of PyTorch models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="watchers.html#model-callbacks-for-continuously-populating-model-outputs">Model callbacks for continuously populating model outputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="watchers.html#how-watchers-work-under-the-hood">How watchers work under the hood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="watchers.html#chaining-watchers-by-using-features">Chaining watchers by using features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="watchers.html#cnn-watcher">CNN watcher</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_indexes.html">Semantic indexes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="semantic_indexes.html#flexible-search-using-models-with-tensor-outputs">Flexible search using models with tensor outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="imputations.html">Imputations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="imputations.html#filling-in-missing-data-with-ai-models">Filling in missing data with AI models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="jobs.html#scheduling-of-training-and-model-outputs">Scheduling of training and model outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Cluster</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cluster.html#components">Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cluster.html#basic-local-cluster-setup">Basic local cluster setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.mongodb.collection.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started.html" class="btn btn-neutral float-right" title="Quick start" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Duncan Blythe duncan@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

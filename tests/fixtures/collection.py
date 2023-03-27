@@ -19,8 +19,7 @@ n_data_points = 250
 @pytest.fixture()
 def empty():
     yield the_client.test_db.documents
-    the_client.drop_database('test_db')
-    the_client.drop_database('_test_db:documents:files')
+    the_client.drop_database('test_db', force=True)
 
 
 @pytest.fixture()

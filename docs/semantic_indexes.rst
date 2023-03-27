@@ -29,20 +29,11 @@ output of those models:
 Using a semantic index
 ^^^^^^^^^^^^^^^^^^^^^^
 
-To set a default index, update ``docs['_meta']``:
-
-.. code-block:: python
-
-    >>> docs['_meta'].update_one({'key': 'semantic_index'},
-    ...                          {'$set': {'value': 'my_semantic_index'}},
-    ...                          upsert=True)
-
-To set an index for a query, set the property ``docs.semantic_index = 'my_semantic_index'``.
 To use a semantic index, use the ``like`` keyword in ``Collection.find`` or ``Collection.find_one``:
 
 .. code-block:: python
 
-    >>> docs.find(exact_filter, like=doc_contents, n=n)
+    >>> docs.find(exact_filter, like=doc_contents, n=n, semantic_index='my_semantic_index')
 
 The ``like`` keyword is passed to one of the models registered during the ``create_semantic_index`` call,
 and encoded by that model. This output is compared using the ``measure`` argument with outputs

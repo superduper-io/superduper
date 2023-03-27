@@ -9,6 +9,7 @@ from flask import request, Flask
 # https://flask.palletsprojects.com/en/2.1.x/patterns/streaming/ streaming for the find endpoint
 
 from superduperdb import cf
+from superduperdb.types.utils import convert_from_bytes_to_types
 
 app = Flask(__name__)
 
@@ -29,7 +30,7 @@ def apply_model():
     database = databases[f'{database}']
     database.remote = False
     result = database.apply_model(name, input_, **kwargs)
-    result = database.convert_from_bytes_to_types(result)
+    result = database.convert_from_types_to_bytes(result)
     response = flask.make_response(pickle.dumps(result))
     return response
 

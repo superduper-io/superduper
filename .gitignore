@@ -141,6 +141,7 @@ dmypy.json
 
 # Config file (maybe sensitive)
 /config.json
+/examples/*/config.json
 
 # Annoying Mac thingy
 .DS_Store

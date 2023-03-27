@@ -1,6 +1,7 @@
+import io
 import math
 import multiprocessing
-import os
+import pickle
 import time
 from collections import defaultdict
 
@@ -54,8 +55,8 @@ class BaseDatabase:
         raise NotImplementedError
 
     def apply_model(self, model, input_, **kwargs):
-        if self.remote:
-            return our_client.apply_model(self.name, model, input_, **kwargs)
+        if self.remote and isinstance(model, str):
+            return our_client.apply_model(self._database_type, self.name, model, input_, **kwargs)
         if isinstance(model, str):
             model = self.models[model]
         with torch.no_grad():
@@ -116,8 +117,6 @@ class BaseDatabase:
         return outputs
 
     def _compute_neighbourhood(self, identifier):
-        import sys
-        sys.path.insert(0, os.getcwd())
 
         info = self.get_object_info(identifier, 'neighbourhood')
         watcher_info = self.get_object_info(identifier, 'watcher')
@@ -146,8 +145,11 @@ class BaseDatabase:
             return {'_content': {'bytes': self.types[t].encode(r), 'type': t}}
         return r
 
-    def create_function(self, name, object):
-        return self._create_object(name, object, 'function')
+    def create_function(self, name, object, **kwargs):
+        return self._create_object(name, object, 'function', **kwargs)
+
+    def _create_job_record(self, *args, **kwargs):
+        raise NotImplementedError
 
     def _create_imputation(self, identifier, model, model_key, target, target_key, query_params,
                            objective=None, metrics=None,
@@ -215,14 +217,14 @@ class BaseDatabase:
             ))
         return jobs
 
-    def create_measure(self, name, object):
-        return self._create_object(name, object, 'measure')
+    def create_measure(self, name, object, **kwargs):
+        return self._create_object(name, object, 'measure', **kwargs)
 
-    def create_metric(self, name, object):
-        return self._create_object(name, object, 'metric')
+    def create_metric(self, name, object, **kwargs):
+        return self._create_object(name, object, 'metric', **kwargs)
 
     def create_model(self, identifier, object=None, preprocessor=None,
-                     postprocessor=None, type=None):
+                     postprocessor=None, type=None, **kwargs):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -244,7 +246,7 @@ class BaseDatabase:
         if isinstance(object, str):
             file_id = object
         else:
-            file_id = self._create_pickled_file(object)
+            file_id = self._create_serialized_file(object, **kwargs)
 
         self._create_object_entry({
             'variety': 'model',
@@ -253,10 +255,10 @@ class BaseDatabase:
             'type': type,
             'preprocessor': preprocessor,
             'postprocessor': postprocessor,
+            **kwargs,
         })
 
-    def create_neighbourhood(self, identifier, n=10,
-                             batch_size=100):
+    def create_neighbourhood(self, identifier, n=10, batch_size=100):
         assert identifier in self.list_watchers()
         assert identifier not in self.list_neighbourhoods()
         self._create_object_entry({
@@ -269,6 +271,7 @@ class BaseDatabase:
             self._compute_neighbourhood(identifier)
         else:
             return jobs.process(
+                self._database_type,
                 self.name,
                 '_compute_neighbourhood',
                 identifier,
@@ -277,22 +280,26 @@ class BaseDatabase:
     def _create_object_entry(self, info):
         raise NotImplementedError
 
-    def _create_object(self, identifier, object, variety):
+    def _create_object(self, identifier, object, variety, serializer='pickle', serializer_kwargs=None):
+        serializer_kwargs = serializer_kwargs or {}
         assert identifier not in self._list_objects(variety)
         secrets = {}
         if isinstance(object, CallableWithSecret):
             secrets = {'secrets': object.secrets}
             object.secrets = None
-        file_id = self._create_pickled_file(object)
+        file_id = self._create_serialized_file(object, serializer=serializer,
+                                               serializer_kwargs=serializer_kwargs)
         self._create_object_entry({
             'identifier': identifier,
             'object': file_id,
             'variety': variety,
+            'serializer': serializer,
+            'serializer_kwargs': serializer_kwargs,
             **secrets,
         })
 
-    def create_objective(self, name, object):
-        return self._create_object(name, object, 'objective')
+    def create_objective(self, name, object, **kwargs):
+        return self._create_object(name, object, 'objective', **kwargs)
 
     def _create_plan(self):
         G = networkx.DiGraph()
@@ -308,14 +315,28 @@ class BaseDatabase:
         assert networkx.is_directed_acyclic_graph(G)
         return G
 
-    def _create_pickled_file(self, object):
-        raise NotImplementedError
+    def _create_serialized_file(self, object, serializer='pickle', serializer_kwargs=None):
+        serializer_kwargs = serializer_kwargs or {}
+        if serializer == 'pickle':
+            with io.BytesIO() as f:
+                pickle.dump(object, f, **serializer_kwargs)
+                bytes_ = f.getvalue()
+        elif serializer == 'dill':
+            import dill
+            if not serializer_kwargs:
+                serializer_kwargs['recurse'] = True
+            with io.BytesIO() as f:
+                dill.dump(object, f, **serializer_kwargs)
+                bytes_ = f.getvalue()
+        else:
+            raise NotImplementedError
+        return self._save_blob_of_bytes(bytes_)
 
-    def create_postprocessor(self, name, object):
-        return self._create_object(name, object, 'postprocessor')
+    def create_postprocessor(self, name, object, **kwargs):
+        return self._create_object(name, object, 'postprocessor', **kwargs)
 
-    def create_preprocessor(self, name, object):
-        return self._create_object(name, object, 'preprocessor')
+    def create_preprocessor(self, name, object, **kwargs):
+        return self._create_object(name, object, 'preprocessor', **kwargs)
 
     def _create_semantic_index(self, identifier, query_params, models, keys, measure,
                                validation_sets=(), metrics=(), objective=None,
@@ -380,11 +401,11 @@ class BaseDatabase:
         jobs.append(self.refresh_watcher(identifier, dependencies=jobs))
         return jobs
 
-    def create_splitter(self, name, object):
-        return self._create_object(name, object, 'splitter')
+    def create_splitter(self, name, object, **kwargs):
+        return self._create_object(name, object, 'splitter', **kwargs)
 
-    def create_type(self, name, object):
-        return self._create_object(name, object, 'type')
+    def create_type(self, name, object, **kwargs):
+        return self._create_object(name, object, 'type', **kwargs)
 
     def _create_validation_set(self, identifier, *query_params, chunk_size=1000, splitter=None):
         if identifier in self.list_validation_sets():
@@ -434,6 +455,7 @@ class BaseDatabase:
                 self._process_documents_with_watcher(identifier, ids, verbose=verbose)
             else:  # pragma: no cover
                 return jobs.process(
+                    self._database_type,
                     self.name,
                     '_process_documents_with_watcher',
                     identifier,
@@ -526,10 +548,10 @@ class BaseDatabase:
         self._delete_object_info(identifier, 'semantic_index')
 
     def delete_splitter(self, name, force=False):
-        return self._delete_object(name, ['splitter'], force=force)
+        return self._delete_object(name, 'splitter', force=force)
 
     def delete_type(self, name, force=False):
-        return self._delete_object(name, ['type'], force=force)
+        return self._delete_object(name, 'type', force=force)
 
     def delete_watcher(self, identifier, force=False, delete_outputs=True):
         """
@@ -553,9 +575,6 @@ class BaseDatabase:
 
     def _download_content(self, table, *query_params, ids=None, documents=None, timeout=None,
                           raises=True, n_download_workers=None, headers=None):
-        import sys
-        sys.path.insert(0, os.getcwd())
-
         update_db = False
         if documents is None:
             update_db = True
@@ -679,7 +698,7 @@ class BaseDatabase:
         return self._list_objects('imputation')
 
     def list_jobs(self):
-        return self._list_objects('jobs')
+        raise NotImplementedError
 
     def list_measures(self):
         return self._list_objects('measure')
@@ -719,6 +738,9 @@ class BaseDatabase:
 
     def list_watchers(self):
         return self._list_objects('watcher')
+
+    def _load_blob_of_bytes(self, file_id):
+        raise NotImplementedError
 
     def _load_hashes(self, identifier):
         info = self.get_object_info(identifier, 'semantic_index')
@@ -762,21 +784,31 @@ class BaseDatabase:
         if info is None:
             raise Exception(f'No such object of type "{variety}", '
                             f'"{identifier}" has been registered.')  # pragma: no cover
-        m = self._load_pickled_file(info['object'])
+        if 'serializer' not in info:
+            info['serializer'] = 'pickle'
+        if 'serializer_kwargs' not in info:
+            info['serializer_kwargs'] = {}
+        m = self._load_pickled_file(info['object'], serializer=info['serializer'],
+                                    serializer_kwargs=info['serializer_kwargs'])
         if isinstance(m, CallableWithSecret) and 'secrets' in info:
             m.secrets = info['secrets']
         if isinstance(m, torch.nn.Module):
             m.eval()
         return m
 
-    def _load_pickled_file(self, file_id):
+    def _load_pickled_file(self, file_id, serializer='pickle', serializer_kwargs=None):
+        serializer_kwargs = serializer_kwargs or {}
+        bytes_ = self._load_blob_of_bytes(file_id)
+        f = io.BytesIO(bytes_)
+        if serializer == 'pickle':
+            return pickle.load(f)
+        elif serializer == 'dill':
+            import dill
+            return dill.load(f)
         raise NotImplementedError
 
     def _process_documents_with_watcher(self, identifier, ids=None, verbose=False,
                                         max_chunk_size=5000, model=None, recompute=False):
-        import sys
-        sys.path.insert(0, os.getcwd())
-
         watcher_info = self.get_object_info(identifier, 'watcher')
         query_params = watcher_info['query_params']
         if ids is None:
@@ -834,7 +866,7 @@ class BaseDatabase:
         while current:
             for (variety, identifier) in current:
                 job_ids.update(self._process_single_item(variety, identifier, iteration, job_ids,
-                                                         download_id, verbose=verbose))
+                                                         download_id, ids=ids, verbose=verbose))
             current = sum([list(G.successors((variety, identifier)))
                            for (variety, identifier) in current], [])
             iteration += 1
@@ -873,16 +905,24 @@ class BaseDatabase:
         return self._submit_process_documents_with_watcher(identifier, dependencies=dependencies)
 
     def _replace_model(self, identifier, object):
-        r = self.get_object_info(identifier, 'model')
+        info = self.get_object_info(identifier, 'model')
+        if 'serializer' not in info:
+            info['serializer'] = 'pickle'
+        if 'serializer_kwargs' not in info:
+            info['serializer_kwargs'] = {}
         assert identifier in self.list_models(), f'model "{identifier}" doesn\'t exist to replace'
         if not isinstance(object, Container):
-            file_id = self._create_pickled_file(object)
-            self._replace_object(r['object'], file_id, 'model', identifier)
+            file_id = self._create_serialized_file(object, serializer=info['serializer'],
+                                                   serializer_kwargs=info['serializer_kwargs'])
+            self._replace_object(info['object'], file_id, 'model', identifier)
             return
-        file_id = self._create_pickled_file(object._forward)
-        self._replace_object(r['object'], file_id, 'model', identifier)
+        file_id = self._create_serialized_file(object._forward)
+        self._replace_object(info['object'], file_id, 'model', identifier)
 
     def _replace_object(self, file_id, new_file_id, variety, identifier):
+        raise NotImplementedError
+
+    def _save_blob_of_bytes(self, bytes_):
         raise NotImplementedError
 
     def save_metrics(self, identifier, variety, metrics):
@@ -899,6 +939,7 @@ class BaseDatabase:
             self._compute_neighbourhood(identifier)
         else:
             return jobs.process(
+                self._database_type,
                 self.name,
                 '_compute_neighbourhood',
                 identifier,
@@ -911,6 +952,7 @@ class BaseDatabase:
             self._download_content(*query_params, ids=ids)
         else:
             return jobs.process(
+                self._database_type,
                 self.name,
                 '_download_content',
                 *query_params,
@@ -927,19 +969,18 @@ class BaseDatabase:
                 self._download_content(*watcher_info['query_params'])
         else:
             return jobs.process(
+                self._database_type,
                 self.name,
                 '_process_documents_with_watcher',
                 identifier,
+                ids=ids,
                 verbose=verbose,
                 dependencies=dependencies,
             )
 
     def _train_imputation(self, identifier):
-        import sys
-        sys.path.insert(0, os.getcwd())
-
         if self.remote:
-            return jobs.process(self.name, '_train_imputation', identifier)
+            return jobs.process(self._database_type, self.name, '_train_imputation', identifier)
 
         info = self.get_object_info(identifier, 'imputation')
         splitter = None
@@ -969,11 +1010,9 @@ class BaseDatabase:
 
     def _train_semantic_index(self, identifier):
 
-        import sys
-        sys.path.insert(0, os.getcwd())
-
         if self.remote:
-            return jobs.process(self.name,
+            return jobs.process(self._database_type,
+                                self.name,
                                 '_train_semantic_index',
                                 identifier)
 

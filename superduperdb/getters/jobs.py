@@ -7,16 +7,16 @@ from rq import Queue
 
 from superduperdb.jobs import process as process_jobs
 from superduperdb import cf
+from superduperdb.utils import get_database_from_database_type
 
 q = Queue(connection=Redis(port=cf.get('redis', {}).get('port', 6379)), default_timeout=24 * 60 * 60)
 
 
-def process(database_name, method, *args, dependencies=(),
+def process(database_type, database_name, method, *args, dependencies=(),
             **kwargs):
-    from superduperdb.mongodb.client import the_client
     job_id = str(uuid.uuid4())
-    database = the_client[database_name]
-    database['_jobs'].insert_one({
+    database = get_database_from_database_type(database_type, database_name)
+    database._create_job_record({
         'identifier': job_id,
         'time': datetime.datetime.now(),
         'status': 'pending',

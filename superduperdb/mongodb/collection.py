@@ -104,6 +104,8 @@ class Collection(MongoCollection):
     def create_validation_set(self, identifier, filter_=None, *args, **kwargs):
         if filter_ is None:
             filter_ = {'_fold': 'valid'}
+        else:
+            filter_['_fold'] = 'valid'
         return self.database.create_validation_set(identifier, self.name, filter_, *args, **kwargs)
 
     def create_watcher(self, identifier, model, *args, **kwargs):
@@ -148,6 +150,9 @@ class Collection(MongoCollection):
     def list_imputations(self):
         return self.database.list_imputations()
 
+    def list_jobs(self):
+        return self.database.list_jobs()
+
     def list_metrics(self):
         return self.database.list_metrics()
 
@@ -168,6 +173,9 @@ class Collection(MongoCollection):
 
     def list_types(self):
         return self.database.list_types()
+
+    def list_watchers(self):
+        return self.database.list_watchers()
 
     def _get_content_for_filter(self, filter):
         if '_id' not in filter:
@@ -364,7 +372,7 @@ class Collection(MongoCollection):
         if self.remote:
             like = self.convert_from_types_to_bytes(like)
             return our_client.find_nearest(self.database.name, self.name, like,
-                                                           ids=ids)
+                                           ids=ids, semantic_index=semantic_index)
         hash_set = self.database._get_hash_set(semantic_index)
         if ids is not None:
             hash_set = hash_set[ids]

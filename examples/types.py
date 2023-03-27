@@ -2,11 +2,13 @@ import io
 import numpy
 import PIL.Image
 import PIL.JpegImagePlugin
+import PIL.PngImagePlugin
 import torch
 
 
 class Image:
-    types = (PIL.JpegImagePlugin.JpegImageFile, PIL.Image.Image)
+    types = (PIL.JpegImagePlugin.JpegImageFile, PIL.Image.Image,
+             PIL.PngImagePlugin.PngImageFile)
 
     @staticmethod
     def encode(x):

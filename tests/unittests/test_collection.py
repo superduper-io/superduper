@@ -16,7 +16,6 @@ image_url = 'https://www.superduperdb.com/logos/white.png'
 remote_values = [False]
 if remote:
     remote_values = [False, True]
-    image_url = 'http://localhost:8002/purple.png'
 
 
 @pytest.mark.parametrize('remote', remote_values)

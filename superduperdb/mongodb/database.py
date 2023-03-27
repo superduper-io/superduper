@@ -61,6 +61,9 @@ class Database(MongoDatabase, BaseDatabase):
             splitter=splitter, watch=watch, loader_kwargs=loader_kwargs, **trainer_kwargs
         )
 
+    def _create_job_record(self, r):
+        self['_jobs'].insert_one(r)
+
     def _create_object_entry(self, info):
         return self['_objects'].insert_one(info)
 
@@ -104,14 +107,19 @@ class Database(MongoDatabase, BaseDatabase):
                                       dependencies=dependencies)
 
     def create_validation_set(self, identifier, collection, filter_, chunk_size=1000,
-                              splitter=None):
+                              splitter=None, sample_size=None):
         if filter_ is None:
             filter_ = {}
+        if sample_size is not None:
+            sample = self[collection].aggregate([
+                {'$match': filter_},
+                {'$sample': {'size': sample_size}},
+                {'$project': {'_id': 1}}
+            ])
+            _ids = [r['_id'] for r in sample]
+            filter_['_id'] = {'$in': _ids}
         return super()._create_validation_set(identifier, collection, filter_, chunk_size=chunk_size,
                                               splitter=splitter)
-
-    def _create_pickled_file(self, object):
-        return loading.save(object, filesystem=self.filesystem)
 
     def _delete_object_info(self, identifier, variety):
         return self['_objects'].delete_one({'identifier': identifier, 'variety': variety})
@@ -168,6 +176,11 @@ class Database(MongoDatabase, BaseDatabase):
         tmp = [{**r, 'identifier': identifier} for r in tmp]
         self['_validation_sets'].insert_many(tmp)
 
+    def list_jobs(self, status=None):
+        status = {} if status is None else {'status': status}
+        return list(self['_jobs'].find(status, {'identifier': 1, '_id': 0, 'method': 1,
+                                                'status': 1, 'time': 1}))
+
     def _list_objects(self, variety):
         return self['_objects'].distinct('identifier', {'variety': variety})
 
@@ -178,7 +191,7 @@ class Database(MongoDatabase, BaseDatabase):
         """
         return self['_validation_sets'].distinct('identifier')
 
-    def _load_pickled_file(self, file_id):
+    def _load_blob_of_bytes(self, file_id):
         return loading.load(file_id, filesystem=self.filesystem)
 
     def _replace_object(self, file_id, new_file_id, variety, identifier):
@@ -187,6 +200,9 @@ class Database(MongoDatabase, BaseDatabase):
             'identifier': identifier,
             'variety': variety,
         }, {'$set': {'object': new_file_id}})
+
+    def _save_blob_of_bytes(self, bytes_):
+        return loading.save(bytes_, self.filesystem)
 
     def save_metrics(self, identifier, variety, metrics):
         self['_objects'].update_one({'identifier': identifier, 'variety': variety},

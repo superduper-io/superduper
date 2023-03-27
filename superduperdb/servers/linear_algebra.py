@@ -45,6 +45,7 @@ def find_nearest():
     data = request.get_json()
     database = data['database']
     collection = data['collection']
+    semantic_index = data['semantic_index']
     if 'filter' in data:
         filter = BSON.decode(data['filter'].encode('iso-8859-1'))
     else:
@@ -59,7 +60,7 @@ def find_nearest():
     collection.remote = False
     from superduperdb.types.utils import convert_from_bytes_to_types
     filter = convert_from_bytes_to_types(filter, converters=collection.types)
-    result = collection._find_nearest(filter, ids=ids)
+    result = collection._find_nearest(filter, ids=ids, semantic_index=semantic_index)
     for i, _id in enumerate(result['_ids']):
         result['_ids'][i] = str(_id)
     return jsonify(result)

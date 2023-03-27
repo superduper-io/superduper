@@ -6,15 +6,17 @@ import requests
 
 from superduperdb import cf
 from superduperdb.types.utils import convert_from_bytes_to_types
+from superduperdb.utils import get_database_from_database_type
 
 databases = {}
 
 
-def find_nearest(database, collection, filter, ids=None):
+def find_nearest(database, collection, filter, ids=None, semantic_index=None):
     json_ = {
         'database': database,
         'collection': collection,
         'filter': bytes(BSON.encode(filter)).decode('iso-8859-1'),
+        'semantic_index': semantic_index,
     }
     if ids is not None:  # pragma: no cover
         json_['ids'] = [str(id_) for id_ in json_['ids']]
@@ -54,10 +56,14 @@ def clear_remote_cache():
         raise Exception('Unsetting hash set failed...')
 
 
-def apply_model(database, name, input_, **kwargs):
+def apply_model(database_type, database, name, input_, **kwargs):
+    database_name = database
+    if database not in databases:
+        database = get_database_from_database_type(database_type, database)
+        databases[database_name] = database
     input_ = pickle.dumps(input_).decode('iso-8859-1')
     json_ = {
-        'database': database,
+        'database': database_name,
         'input_': input_,
         'name': name,
         'kwargs': kwargs,
@@ -67,6 +73,7 @@ def apply_model(database, name, input_, **kwargs):
         json=json_
     )
     out = pickle.loads(response.content)
-    out = convert_from_bytes_to_types(out, converters=databases[database].types)
+    if isinstance(out, dict):
+        out = convert_from_bytes_to_types(out, converters=database.types)
     return out
 

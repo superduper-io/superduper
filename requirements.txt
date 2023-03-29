@@ -1,3 +1,4 @@
+dill
 flask
 matplotlib
 networkx

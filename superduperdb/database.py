@@ -14,7 +14,7 @@ from superduperdb.getters import jobs
 from superduperdb.lookup import hashes
 from superduperdb.training.validation import validate_representations
 from superduperdb.types.utils import convert_from_bytes_to_types
-from superduperdb.utils import gather_urls, CallableWithSecret
+from superduperdb.utils import gather_urls, CallableWithSecret, to_device, set_device, device_of
 from superduperdb.getters import client as our_client
 from superduperdb.models.utils import BasicDataset, create_container, Container, apply_model
 from superduperdb.utils import ArgumentDefaultDict, progressbar, unpack_batch, Downloader
@@ -95,10 +95,12 @@ class BaseDatabase:
             outputs = []
             has_post = hasattr(model, 'postprocess')
             for batch in loader:
+                batch = to_device(batch, device_of(model))
                 with torch.no_grad():
                     output = model.forward(batch)
                 if has_post:
                     unpacked = unpack_batch(output)
+                    unpacked = to_device(unpacked, 'cpu')
                     outputs.extend([model.postprocess(x) for x in unpacked])
                 else:
                     outputs.extend(unpack_batch(output))
@@ -223,8 +225,8 @@ class BaseDatabase:
     def create_metric(self, name, object, **kwargs):
         return self._create_object(name, object, 'metric', **kwargs)
 
-    def create_model(self, identifier, object=None, preprocessor=None,
-                     postprocessor=None, type=None, **kwargs):
+    def create_model(self, identifier, object=None, preprocessor=None, postprocessor=None,
+                     type=None, **kwargs):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -246,7 +248,8 @@ class BaseDatabase:
         if isinstance(object, str):
             file_id = object
         else:
-            file_id = self._create_serialized_file(object, **kwargs)
+            with set_device(object, 'cpu'):
+                file_id = self._create_serialized_file(object, **kwargs)
 
         self._create_object_entry({
             'variety': 'model',
@@ -485,7 +488,7 @@ class BaseDatabase:
         if info is None and force:
             return
 
-        self._delete_object_info(info['watcher_identifier'], 'watcher')
+        self._delete_object_info(info['identifier'], 'watcher')
         self._delete_object_info(info['identifier'], 'imputation')
 
     def delete_measure(self, name, force=False):
@@ -767,6 +770,8 @@ class BaseDatabase:
         info = dict(info)
         model = self._load_pickled_file(info['object'])
         model.eval()
+        if torch.cuda.is_available():
+            model.to('cuda')
 
         if info.get('preprocessor') is None and info.get('postprocessor') is None:
             return model
@@ -912,11 +917,15 @@ class BaseDatabase:
             info['serializer_kwargs'] = {}
         assert identifier in self.list_models(), f'model "{identifier}" doesn\'t exist to replace'
         if not isinstance(object, Container):
-            file_id = self._create_serialized_file(object, serializer=info['serializer'],
-                                                   serializer_kwargs=info['serializer_kwargs'])
+            with set_device(object, 'cpu'):
+                file_id = self._create_serialized_file(object, serializer=info['serializer'],
+                                                       serializer_kwargs=info['serializer_kwargs'])
             self._replace_object(info['object'], file_id, 'model', identifier)
             return
-        file_id = self._create_serialized_file(object._forward)
+
+        with set_device(object, 'cpu'):
+            file_id = self._create_serialized_file(object._forward)
+
         self._replace_object(info['object'], file_id, 'model', identifier)
 
     def _replace_object(self, file_id, new_file_id, variety, identifier):

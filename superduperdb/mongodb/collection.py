@@ -31,6 +31,7 @@ class Collection(MongoCollection):
         self.objectives = self.database.objectives
         self.measures = self.database.measures
         self.metrics = self.database.metrics
+        self._all_hash_sets = self.database._all_hash_sets
 
     @property
     def remote(self):

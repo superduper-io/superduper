@@ -342,7 +342,8 @@ class BaseDatabase:
         return self._create_object(name, object, 'preprocessor', **kwargs)
 
     def _create_semantic_index(self, identifier, query_params, models, keys, measure,
-                               validation_sets=(), metrics=(), objective=None,
+                               validation_sets=(), metrics=(), objective=None, index_type='vanilla',
+                               index_kwargs=None,
                                splitter=None, loader_kwargs=None, **trainer_kwargs):
         """
         :param identifier: Name/ unique id to assign to index
@@ -377,6 +378,8 @@ class BaseDatabase:
             'measure': measure,
             'splitter': splitter,
             'validation_sets': validation_sets,
+            'index_type': index_type,
+            'index_kwargs': index_kwargs or {},
             'trainer_kwargs': trainer_kwargs,
         })
 
@@ -747,6 +750,8 @@ class BaseDatabase:
 
     def _load_hashes(self, identifier):
         info = self.get_object_info(identifier, 'semantic_index')
+        index_type = info.get('index_type', 'vanilla')
+        index_kwargs = info.get('index_kwargs', {}) or {}
         watcher_info = self.get_object_info(identifier, 'watcher')
         filter = watcher_info.get('filter', {})
         key = watcher_info.get('key', '_base')
@@ -761,7 +766,13 @@ class BaseDatabase:
             h = self._get_hash_from_record(r, watcher_info)
             loaded.append(h)
             ids.append(r['_id'])
-        return hashes.HashSet(torch.stack(loaded), ids, measure=measure)
+
+        if index_type == 'vanilla':
+            return hashes.HashSet(torch.stack(loaded), ids, measure=measure)
+        elif index_type == 'faiss':
+            return hashes.FaissHashSet(torch.stack(loaded), ids, **index_kwargs)
+        else:
+            raise NotImplementedError
 
     def _load_model(self, identifier):
         info = self.get_object_info(identifier, 'model')

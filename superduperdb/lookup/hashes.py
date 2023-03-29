@@ -1,3 +1,11 @@
+import faiss
+import numpy
+import os
+import torch
+
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
+
 class HashSet:
     def __init__(self, h, index, measure):
         self.h = h
@@ -32,3 +40,29 @@ class HashSet:
     def __getitem__(self, item):
         ix = [self.lookup[i] for i in item]
         return HashSet(self.h[ix], item, self.measure)
+
+
+class FaissHashSet(HashSet):
+    def __init__(self, h, index, measure='l2', faiss_index=None):
+        super().__init__(h, index, None)
+        if isinstance(h, torch.Tensor):
+            h = h.numpy().astype('float32')
+        self.h = h
+        self.index = index
+        if faiss_index is None:
+            if measure == 'css':
+                h = h / (numpy.linalg.norm(h, axis=1)[:, None])
+            if measure == 'l2':
+                faiss_index = faiss.index_factory(self.h.shape[1], 'Flat', faiss.METRIC_L2)
+            if measure in {'css', 'dot'}:
+                faiss_index = faiss.index_factory(self.h.shape[1], 'Flat', faiss.METRIC_INNER_PRODUCT)
+            faiss_index.add(h)
+        self.faiss_index = faiss_index
+
+    def find_nearest_from_hashes(self, h, n=100):
+        if isinstance(h, torch.Tensor):
+            h = h.numpy().astype('float32')
+        scores, ix = self.faiss_index.search(h, n)
+        ids = [[self.index[i] for i in sub] for sub in ix]
+        return [{'scores': s.tolist(), 'ix': i.tolist(), '_ids': _id}
+                for s, i, _id in zip(scores, ix, ids)]

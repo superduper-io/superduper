@@ -1,6 +1,6 @@
 import torch
 
-from superduperdb.utils import create_batch, unpack_batch, progressbar
+from superduperdb.utils import create_batch, unpack_batch, progressbar, to_device, device_of
 from torch.utils import data
 
 
@@ -101,9 +101,11 @@ def apply_model(model, args, single=True, forward='forward', postprocess=True, *
     if single:
         if hasattr(model, 'preprocess'):
             args = model.preprocess(args)
+        args = to_device(args, device_of(model))
         if hasattr(model, forward):
             singleton_batch = create_batch(args)
             output = getattr(model, forward)(singleton_batch)
+            output = to_device(output, 'cpu')
             args = unpack_batch(output)[0]
         if postprocess and hasattr(model, 'postprocess'):
             args = model.postprocess(args)
@@ -116,8 +118,10 @@ def apply_model(model, args, single=True, forward='forward', postprocess=True, *
             loader = torch.utils.data.DataLoader(args, **kwargs)
         out = []
         for batch in progressbar(loader, total=len(loader)):
+            batch = to_device(batch, device_of(model))
             if hasattr(model, forward):
                 tmp = getattr(model, forward)(batch)
+                tmp = to_device(tmp, 'cpu')
                 tmp = unpack_batch(tmp)
             else:
                 tmp = unpack_batch(batch)

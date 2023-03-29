@@ -344,3 +344,31 @@ class CallableWithSecret:
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
+
+
+def to_device(item, device):
+    if isinstance(item, tuple):
+        item = list(item)
+    if isinstance(item, list):
+        for i, it in enumerate(item):
+            item[i] = to_device(it, device)
+        return item
+    if isinstance(item, dict):
+        for k in item:
+            item[k] = to_device(item[k], device)
+        return item
+    return item.to(device)
+
+
+def device_of(model):
+    return next(model.parameters()).device
+
+
+@contextmanager
+def set_device(model, device):
+    device_before = device_of(model)
+    try:
+        model.to(device)
+        yield
+    finally:
+        model.to(device_before)

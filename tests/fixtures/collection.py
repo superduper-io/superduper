@@ -98,6 +98,27 @@ def with_semantic_index(random_data, a_model, measure):
     random_data['_meta'].delete_one({'key': 'semantic_index'})
 
 
+
+@pytest.fixture()
+def with_faiss_semantic_index(random_data, a_model, measure):
+    random_data.create_semantic_index(
+        'test_semantic_index',
+        ['linear_a'],
+        keys=['x'],
+        measure='css',
+        index_type='faiss',
+        index_kwargs={'measure': 'css'}
+    )
+    random_data.database['_meta'].insert_one({'key': 'semantic_index',
+                                              'collection': 'documents',
+                                              'value': 'test_semantic_index'})
+    yield random_data
+    if random_data.remote:
+        random_data.clear_remote_cache()
+    random_data.delete_semantic_index('test_semantic_index', force=True)
+    random_data['_meta'].delete_one({'key': 'semantic_index'})
+
+
 @pytest.fixture()
 def si_validation(random_data):
     random_data.create_validation_set('my_valid', {'_fold': 'valid'}, chunk_size=100,

@@ -5,7 +5,7 @@ from collections import defaultdict
 import torch.utils.data
 
 from superduperdb.training.loading import QueryDataset
-from superduperdb.utils import MongoStyleDict, get_database_from_database_type
+from superduperdb.utils import MongoStyleDict, get_database_from_database_type, to_device
 from superduperdb.training.validation import validate_representations, validate_imputation
 
 
@@ -84,8 +84,6 @@ class Trainer:
             self.models = [self.models, ]
         self.models = list(self.models)
 
-        self._send_to_device()
-
         self.learn_fields = self.keys
         self.learn_encoders = self.models
         if len(self.keys) == 1:
@@ -112,6 +110,8 @@ class Trainer:
         self.validation_interval = validation_interval
         self.no_improve_then_stop = no_improve_then_stop
 
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
     @property
     def database(self):
         if self._database is None:
@@ -133,18 +133,6 @@ class Trainer:
                                   transform=self.apply_splitter_and_encoders)
 
         return train_data, valid_data
-
-    def _send_to_device(self):
-        if not torch.cuda.is_available():
-            return
-        if torch.cuda.device_count() == 1:
-            for m in self.models:
-                if isinstance(m, torch.nn.Module):
-                    m.to('cuda')
-            return
-        for i, m in enumerate(self.models):
-            if isinstance(m, torch.nn.Module):
-                self.models[i] = torch.nn.DataParallel(m)
 
     def _early_stop(self):
         if self.watch == 'objective':
@@ -256,7 +244,8 @@ class Trainer:
         print(out)
 
     @staticmethod
-    def apply_models_to_batch(batch, models):
+    def apply_models_to_batch(batch, models, device):
+        batch = to_device(batch, device)
         output = []
         for subbatch, model in list(zip(batch, models)):
             if isinstance(model, torch.nn.Module) and hasattr(model, 'train_forward'):
@@ -281,6 +270,10 @@ class Trainer:
         raise NotImplementedError  # pragma: no cover
 
     def train(self):
+        for encoder in self.models:
+            if isinstance(encoder, torch.nn.Module):
+                encoder.to(self.device)
+
         for encoder in self.models:
             self.calibrate(encoder)
 
@@ -308,7 +301,7 @@ class Trainer:
             train_loader, valid_loader = self.data_loaders
 
             for batch in train_loader:
-                outputs = self.apply_models_to_batch(batch, self.learn_encoders)
+                outputs = self.apply_models_to_batch(batch, self.learn_encoders, self.device)
                 l_ = self.take_step(self.objective(*outputs))
                 self.log_progress(fold='TRAIN', iteration=it, epoch=epoch, objective=l_.item())
                 it += 1
@@ -357,7 +350,7 @@ class ImputationTrainer(Trainer):
                                                   features=self.features)
         objective_values = []
         for batch in data_loader:
-            outputs = self.apply_models_to_batch(batch, self.learn_encoders)
+            outputs = self.apply_models_to_batch(batch, self.learn_encoders, self.device)
             objective_values.append(self.objective(*outputs).item())
         results['objective'] = sum(objective_values) / len(objective_values)
 
@@ -399,7 +392,7 @@ class SemanticIndexTrainer(Trainer):
                                                        self.models)
         objective_values = []
         for batch in data_loader:
-            outputs = self.apply_models_to_batch(batch, self.learn_encoders)
+            outputs = self.apply_models_to_batch(batch, self.learn_encoders, self.device)
             objective_values.append(self.objective(*outputs).item())
         results['objective'] = sum(objective_values) / len(objective_values)
         for m in self.models:

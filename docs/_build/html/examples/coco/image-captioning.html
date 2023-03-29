@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image captioning using recurrent language modelling and transfer learning based on CLIP &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/nbsphinx-code-cells.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Concepts" href="../../concepts.html" />
+    <link rel="prev" title="Attribute prediction using “imputations” with preparation in SpaCy" href="attribute-prediction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../mnist-notebook.html">MNIST: Handwritten digit recognition with SuperDuperDB</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo (Common Objects in Context) Dataset</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="setup-and-installation.html">Setup and installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="inserting-and-getting-data.html">Inserting and getting data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="text-2-image-retrieval-with-clip.html">Text-2-Image document retrieval using pretrained CLIP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bespoke-retriever-using-clip-embeddings.html">Bespoke retrieval based on CLIP embedding vectors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="attribute-prediction.html">Attribute prediction using “imputations” with preparation in SpaCy</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Image captioning using recurrent language modelling and transfer learning based on CLIP</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../types.html">Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../content.html">Content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../semantic_indexes.html">Semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../imputations.html">Imputations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../full_usage.html">Full usage</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Examples</a></li>
+          <li class="breadcrumb-item"><a href="index.html">CoCo (Common Objects in Context) Dataset</a></li>
+      <li class="breadcrumb-item active">Image captioning using recurrent language modelling and transfer learning based on CLIP</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/examples/coco/image-captioning.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Image-captioning-using-recurrent-language-modelling-and-transfer-learning-based-on-CLIP">
+<h1>Image captioning using recurrent language modelling and transfer learning based on CLIP<a class="headerlink" href="#Image-captioning-using-recurrent-language-modelling-and-transfer-learning-based-on-CLIP" title="Permalink to this heading"></a></h1>
+<p>In the final modelling part of this tutorial, we show that a radically different type of model can be created but which also leverages the <code class="docutils literal notranslate"><span class="pre">create_imputation</span></code> functionality. This is possible, because we utilize a different loss, target, than the previous chapter and also use a model which has a different inference <code class="docutils literal notranslate"><span class="pre">forward</span></code> pass than training <code class="docutils literal notranslate"><span class="pre">forward</span></code> pass. This is a very common occurrence in AI, especially when doing, for example, autoregressive training.</p>
+<p>The model we create, will be input an image, and will write out a sentence describing that image in unconstrained English. This task is known as <em>captioning</em>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.mongodb.client</span> <span class="kn">import</span> <span class="n">SuperDuperClient</span>
+
+<span class="n">the_client</span> <span class="o">=</span> <span class="n">SuperDuperClient</span><span class="p">()</span>
+
+<span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">coco</span><span class="o">.</span><span class="n">documents</span>
+</pre></div>
+</div>
+</div>
+<p>You can see here that the raw data contains several example captions per image. We use these examples to train the model to write its own caption.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;_id&#39;: ObjectId(&#39;63fca4325d2a192e05fe154a&#39;),
+ &#39;captions&#39;: [&#39;A restaurant has modern wooden tables and chairs.&#39;,
+  &#39;A long restaurant table with rattan rounded back chairs.&#39;,
+  &#39;a long table with a plant on top of it surrounded with wooden chairs &#39;,
+  &#39;A long table with a flower arrangement in the middle for meetings&#39;,
+  &#39;A table is adorned with wooden chairs with blue accents.&#39;],
+ &#39;img&#39;: &lt;PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=224x168&gt;,
+ &#39;_fold&#39;: &#39;train&#39;,
+ &#39;_outputs&#39;: {&#39;img&#39;: {&#39;clip&#39;: tensor([ 0.0203,  0.0837,  0.0035,  ..., -0.0788,  0.0529, -0.1146]),
+   &#39;clip_projection&#39;: tensor([ 0.0273,  0.0889, -0.0575, -0.0450,  0.0815, -0.0810,  0.0146, -0.0690,
+           -0.1187, -0.0559, -0.0958, -0.0585,  0.0403,  0.0382,  0.0095,  0.0418,
+           -0.0080, -0.0145,  0.1256, -0.1420,  0.1046, -0.0101, -0.0739, -0.0068,
+           -0.0902,  0.1656,  0.0071,  0.0819, -0.0555,  0.0466,  0.0184, -0.0389,
+            0.0302, -0.0364,  0.0266,  0.0792,  0.0397,  0.0946,  0.0531,  0.0374,
+            0.0324, -0.0023,  0.0022,  0.0615, -0.0431,  0.1171, -0.0223, -0.0774,
+           -0.0218, -0.0880]),
+   &#39;attribute_model&#39;: [&#39;chairs&#39;, &#39;room&#39;, &#39;table&#39;, &#39;wall&#39;, &#39;wood&#39;]},
+  &#39;captions&#39;: {&#39;noun_words&#39;: [&#39;accents&#39;,
+    &#39;arrangement&#39;,
+    &#39;chairs&#39;,
+    &#39;flower&#39;,
+    &#39;meetings&#39;,
+    &#39;middle&#39;,
+    &#39;plant&#39;,
+    &#39;restaurant&#39;,
+    &#39;table&#39;,
+    &#39;tables&#39;,
+    &#39;top&#39;]}}}
+</pre></div></div>
+</div>
+<p>This model will leverage a fixed vocabulary of “allowed” words. Let us first create this quickly in the following cell:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tqdm</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="n">all_captions</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">})</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm_notebook</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;captions&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}),</span> <span class="n">total</span><span class="o">=</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">all_captions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;captions&#39;</span><span class="p">])</span>
+
+<span class="n">all_captions</span> <span class="o">=</span> <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;[^a-z ]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">all_captions</span><span class="p">]</span>
+<span class="n">words</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">all_captions</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">Counter</span><span class="p">(</span><span class="n">words</span><span class="p">))</span>
+<span class="n">vocab</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">counts</span> <span class="k">if</span> <span class="n">counts</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="ow">and</span> <span class="n">w</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "3bac05891e504fdba7609175a3f85cbd", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<p>Now we can create the model - it utilizes a <em>tokenizer</em> for preprocessing the captioning data.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/conditional_lm.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">re</span>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">torch</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">SimpleTokenizer</span>:
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, tokens, max_length<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">15</span>):
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens <span style="color: rgb(102,102,102)">=</span> tokens
+        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">&lt;unk&gt;</span><span style="color: rgb(186,33,33)">&#39;</span> <span class="ansi-bold" style="color: rgb(170,34,255)">not</span> <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> tokens:
+            tokens<span style="color: rgb(102,102,102)">.</span>append(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">&lt;unk&gt;</span><span style="color: rgb(186,33,33)">&#39;</span>)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>_set_tokens <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">set</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>lookup <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">dict</span>(<span style="color: rgb(0,128,0)">zip</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens, <span style="color: rgb(0,128,0)">range</span>(<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens))))
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>dictionary <span style="color: rgb(102,102,102)">=</span> {k: i <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> i, k <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">enumerate</span>(tokens)}
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length <span style="color: rgb(102,102,102)">=</span> max_length
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__len__</span>(<span style="color: rgb(0,128,0)">self</span>):
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens)
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">preprocess</span>(<span style="color: rgb(0,128,0)">self</span>, sentence):
+        sentence <span style="color: rgb(102,102,102)">=</span> re<span style="color: rgb(102,102,102)">.</span>sub(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">[^a-z]]</span><span style="color: rgb(186,33,33)">&#39;</span>, <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">&#39;</span>, sentence<span style="color: rgb(102,102,102)">.</span>lower())<span style="color: rgb(102,102,102)">.</span>strip()
+        words <span style="color: rgb(102,102,102)">=</span> [x <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> sentence<span style="color: rgb(102,102,102)">.</span>split(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)"> </span><span style="color: rgb(186,33,33)">&#39;</span>) <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> x]
+        words <span style="color: rgb(102,102,102)">=</span> [x <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokens <span class="ansi-bold" style="color: rgb(0,128,0)">else</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">&lt;unk&gt;</span><span style="color: rgb(186,33,33)">&#39;</span> <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> words]
+        words <span style="color: rgb(102,102,102)">=</span> words[:<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length]
+        tokenized <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">list</span>(<span style="color: rgb(0,128,0)">map</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>lookup<span style="color: rgb(102,102,102)">.</span><span style="color: rgb(0,0,255)">__getitem__</span>, words))
+        tokenized <span style="color: rgb(102,102,102)">=</span> tokenized <span style="color: rgb(102,102,102)">+</span> [<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span>) <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">1</span> <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> _ <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">range</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length <span style="color: rgb(102,102,102)">-</span> <span style="color: rgb(0,128,0)">len</span>(words))]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> torch<span style="color: rgb(102,102,102)">.</span>tensor(tokenized)
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">ConditionalLM</span>(torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>Module):
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, tokenizer, n_hidden<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">512</span>, max_length<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">15</span>, n_condition<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1024</span>):
+        <span style="color: rgb(0,128,0)">super</span>()<span style="color: rgb(102,102,102)">.</span><span style="color: rgb(0,0,255)">__init__</span>()
+
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer <span style="color: rgb(102,102,102)">=</span> tokenizer
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden <span style="color: rgb(102,102,102)">=</span> n_hidden
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>embedding <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>Embedding(<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer) <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">2</span>, <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>conditioning_linear <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>Linear(n_condition, <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>rnn <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>GRU(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden, <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden, batch_first<span style="color: rgb(102,102,102)">=</span><span class="ansi-bold" style="color: rgb(0,128,0)">True</span>)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>prediction <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>Linear(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>n_hidden, <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer) <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">2</span>)
+        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length <span style="color: rgb(102,102,102)">=</span> max_length
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">preprocess</span>(<span style="color: rgb(0,128,0)">self</span>, r):
+        out <span style="color: rgb(102,102,102)">=</span> {}
+        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span> <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> r:
+            out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> [<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer)]  <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer<span style="color: rgb(102,102,102)">.</span>preprocess(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>])<span style="color: rgb(102,102,102)">.</span>tolist()[:<span style="color: rgb(102,102,102)">-</span><span style="color: rgb(102,102,102)">1</span>]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">else</span>:
+            out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> [<span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer)]
+        out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>tensor(out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>])
+        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span> <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> r:
+            out[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> out
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">train_forward</span>(<span style="color: rgb(0,128,0)">self</span>, r):
+        input_ <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>embedding(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>])
+        img_vectors <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>conditioning_linear(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>])<span style="color: rgb(102,102,102)">.</span>unsqueeze(<span style="color: rgb(102,102,102)">0</span>)
+        rnn_outputs <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>rnn(input_, img_vectors)[<span style="color: rgb(102,102,102)">0</span>]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>prediction(rnn_outputs)
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">forward</span>(<span style="color: rgb(0,128,0)">self</span>, r):
+        hidden_states <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>conditioning_linear(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>])<span style="color: rgb(102,102,102)">.</span>unsqueeze(<span style="color: rgb(102,102,102)">0</span>)
+        predictions <span style="color: rgb(102,102,102)">=</span> \
+            torch<span style="color: rgb(102,102,102)">.</span>zeros(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>]<span style="color: rgb(102,102,102)">.</span>shape[<span style="color: rgb(102,102,102)">0</span>], <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length)<span style="color: rgb(102,102,102)">.</span>to(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>]<span style="color: rgb(102,102,102)">.</span>device)<span style="color: rgb(102,102,102)">.</span>type(torch<span style="color: rgb(102,102,102)">.</span>long)
+        predictions[:, <span style="color: rgb(102,102,102)">0</span>] <span style="color: rgb(102,102,102)">=</span> r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>][:, <span style="color: rgb(102,102,102)">0</span>]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> i <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> <span style="color: rgb(0,128,0)">range</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>max_length <span style="color: rgb(102,102,102)">-</span> <span style="color: rgb(102,102,102)">1</span>):
+            rnn_outputs, hidden_states <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>rnn(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>embedding(predictions[:, i])<span style="color: rgb(102,102,102)">.</span>unsqueeze(<span style="color: rgb(102,102,102)">1</span>),
+                                                  hidden_states)
+            logits <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>prediction(rnn_outputs)[:, <span style="color: rgb(102,102,102)">0</span>, :]
+            predictions[:, i <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">1</span>] <span style="color: rgb(102,102,102)">=</span> logits<span style="color: rgb(102,102,102)">.</span>topk(<span style="color: rgb(102,102,102)">1</span>, dim<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)[<span style="color: rgb(102,102,102)">1</span>][:, <span style="color: rgb(102,102,102)">0</span>]<span style="color: rgb(102,102,102)">.</span>type(torch<span style="color: rgb(102,102,102)">.</span>long)
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> predictions
+
+    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">postprocess</span>(<span style="color: rgb(0,128,0)">self</span>, output):
+        output <span style="color: rgb(102,102,102)">=</span> output<span style="color: rgb(102,102,102)">.</span>tolist()
+        <span class="ansi-bold" style="color: rgb(0,128,0)">try</span>:
+            first_end_token <span style="color: rgb(102,102,102)">=</span> <span style="color: rgb(0,128,0)">next</span>(x <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> output <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> x <span style="color: rgb(102,102,102)">==</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer) <span style="color: rgb(102,102,102)">+</span> <span style="color: rgb(102,102,102)">2</span>)
+            output <span style="color: rgb(102,102,102)">=</span> output[:first_end_token]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">except</span> <span class="ansi-bold" style="color: rgb(203,63,56)">StopIteration</span>:
+            <span class="ansi-bold" style="color: rgb(0,128,0)">pass</span>
+        output <span style="color: rgb(102,102,102)">=</span> [x <span class="ansi-bold" style="color: rgb(0,128,0)">for</span> x <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> output <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> x <span style="color: rgb(102,102,102)">&lt;</span> <span style="color: rgb(0,128,0)">len</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer)]
+        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)"> </span><span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(102,102,102)">.</span>join(<span style="color: rgb(0,128,0)">list</span>(<span style="color: rgb(0,128,0)">map</span>(<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>tokenizer<span style="color: rgb(102,102,102)">.</span>tokens<span style="color: rgb(102,102,102)">.</span><span style="color: rgb(0,0,255)">__getitem__</span>, output)))
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.models</span> <span class="kn">import</span> <span class="n">ConditionalLM</span><span class="p">,</span> <span class="n">SimpleTokenizer</span>
+
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">SimpleTokenizer</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">ConditionalLM</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Let us now create the required models necessary for training this model. One of the models is fairly trivial, only used to create the prediction target for the learning task:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;captioning_tokenizer&#39;</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We’ll use a standard autoregressive loss, of the sort used as a matter of course in language modelling tasks.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/autoregressive_loss.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">torch</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">auto_regressive_loss</span>(x, y):
+    <span style="color: rgb(61,123,123)"># start token = x.shape[2] - 2, stop_token = x.shape[2] - 1 (by convention)</span>
+    stop_token <span style="color: rgb(102,102,102)">=</span> x<span style="color: rgb(102,102,102)">.</span>shape[<span style="color: rgb(102,102,102)">2</span>] <span style="color: rgb(102,102,102)">-</span> <span style="color: rgb(102,102,102)">1</span>
+    x <span style="color: rgb(102,102,102)">=</span> x<span style="color: rgb(102,102,102)">.</span>transpose(<span style="color: rgb(102,102,102)">2</span>, <span style="color: rgb(102,102,102)">1</span>)
+    losses <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>functional<span style="color: rgb(102,102,102)">.</span>cross_entropy(x, y, reduce<span style="color: rgb(102,102,102)">=</span><span class="ansi-bold" style="color: rgb(0,128,0)">False</span>)
+    not_stops <span style="color: rgb(102,102,102)">=</span> torch<span style="color: rgb(102,102,102)">.</span>ones_like(losses)
+    not_stops[:, <span style="color: rgb(102,102,102)">1</span>:] <span style="color: rgb(102,102,102)">=</span> (y[:, :<span style="color: rgb(102,102,102)">-</span><span style="color: rgb(102,102,102)">1</span>] <span style="color: rgb(102,102,102)">!=</span> stop_token)<span style="color: rgb(102,102,102)">.</span>type(torch<span style="color: rgb(102,102,102)">.</span>long)
+    normalizing_factors <span style="color: rgb(102,102,102)">=</span> not_stops<span style="color: rgb(102,102,102)">.</span>sum(axis<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)<span style="color: rgb(102,102,102)">.</span>unsqueeze(<span style="color: rgb(102,102,102)">1</span>)
+    av_loss_per_row <span style="color: rgb(102,102,102)">=</span> (losses <span style="color: rgb(102,102,102)">*</span> not_stops)<span style="color: rgb(102,102,102)">.</span>div(normalizing_factors)<span style="color: rgb(102,102,102)">.</span>sum(axis<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)
+    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> av_loss_per_row<span style="color: rgb(102,102,102)">.</span>mean()
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.losses</span> <span class="kn">import</span> <span class="n">auto_regressive_loss</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_objective</span><span class="p">(</span><span class="s1">&#39;autoregressive_loss&#39;</span><span class="p">,</span> <span class="n">auto_regressive_loss</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Since each record in the database has several captions per image, we’ll need to use a so-called <strong>splitter</strong>, to align the prediction model and prediction target during training. You can see that the splitter randomly chooses one of the captions to train on for an iteration.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/splitters.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">random</span>
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">captioning_splitter</span>(r):
+    index <span style="color: rgb(102,102,102)">=</span> random<span style="color: rgb(102,102,102)">.</span>randrange(<span style="color: rgb(0,128,0)">len</span>(r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>]))
+    target <span style="color: rgb(102,102,102)">=</span> {}
+    target[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>][index]
+    r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">caption</span><span style="color: rgb(186,33,33)">&#39;</span>] <span style="color: rgb(102,102,102)">=</span> r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>][index]
+    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> r, target
+
+
+<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">retrieval_splitter</span>(r):
+    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> {<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>: r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">img</span><span style="color: rgb(186,33,33)">&#39;</span>]}, {<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>: [r[<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)">captions</span><span style="color: rgb(186,33,33)">&#39;</span>][<span style="color: rgb(102,102,102)">0</span>]]}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.splitters</span> <span class="kn">import</span> <span class="n">captioning_splitter</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_splitter</span><span class="p">(</span><span class="s1">&#39;captioning_splitter&#39;</span><span class="p">,</span> <span class="n">captioning_splitter</span><span class="p">)</span>
+<span class="n">captioning_splitter</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+({&#39;_id&#39;: ObjectId(&#39;63fca4325d2a192e05fe154a&#39;),
+  &#39;captions&#39;: [&#39;A restaurant has modern wooden tables and chairs.&#39;,
+   &#39;A long restaurant table with rattan rounded back chairs.&#39;,
+   &#39;a long table with a plant on top of it surrounded with wooden chairs &#39;,
+   &#39;A long table with a flower arrangement in the middle for meetings&#39;,
+   &#39;A table is adorned with wooden chairs with blue accents.&#39;],
+  &#39;img&#39;: &lt;PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=224x168&gt;,
+  &#39;_fold&#39;: &#39;train&#39;,
+  &#39;_outputs&#39;: {&#39;img&#39;: {&#39;clip&#39;: tensor([ 0.0203,  0.0837,  0.0035,  ..., -0.0788,  0.0529, -0.1146]),
+    &#39;clip_projection&#39;: tensor([ 0.0273,  0.0889, -0.0575, -0.0450,  0.0815, -0.0810,  0.0146, -0.0690,
+            -0.1187, -0.0559, -0.0958, -0.0585,  0.0403,  0.0382,  0.0095,  0.0418,
+            -0.0080, -0.0145,  0.1256, -0.1420,  0.1046, -0.0101, -0.0739, -0.0068,
+            -0.0902,  0.1656,  0.0071,  0.0819, -0.0555,  0.0466,  0.0184, -0.0389,
+             0.0302, -0.0364,  0.0266,  0.0792,  0.0397,  0.0946,  0.0531,  0.0374,
+             0.0324, -0.0023,  0.0022,  0.0615, -0.0431,  0.1171, -0.0223, -0.0774,
+            -0.0218, -0.0880]),
+    &#39;attribute_model&#39;: [&#39;chairs&#39;, &#39;room&#39;, &#39;table&#39;, &#39;wall&#39;, &#39;wood&#39;]},
+   &#39;captions&#39;: {&#39;noun_words&#39;: [&#39;accents&#39;,
+     &#39;arrangement&#39;,
+     &#39;chairs&#39;,
+     &#39;flower&#39;,
+     &#39;meetings&#39;,
+     &#39;middle&#39;,
+     &#39;plant&#39;,
+     &#39;restaurant&#39;,
+     &#39;table&#39;,
+     &#39;tables&#39;,
+     &#39;top&#39;]}},
+  &#39;caption&#39;: &#39;A restaurant has modern wooden tables and chairs.&#39;},
+ {&#39;caption&#39;: &#39;A restaurant has modern wooden tables and chairs.&#39;})
+</pre></div></div>
+</div>
+<p>Now we’re ready to start the training:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_imputation</span><span class="p">(</span>
+    <span class="s1">&#39;image_captioner&#39;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span>
+    <span class="n">model_key</span><span class="o">=</span><span class="s1">&#39;_base&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;captioning_tokenizer&#39;</span><span class="p">,</span>
+    <span class="n">target_key</span><span class="o">=</span><span class="s1">&#39;caption&#39;</span><span class="p">,</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;autoregressive_loss&#39;</span><span class="p">,</span>
+    <span class="n">splitter</span><span class="o">=</span><span class="s1">&#39;captioning_splitter&#39;</span><span class="p">,</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">validation_interval</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+downloading ids for {&#39;_fold&#39;: &#39;train&#39;}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 77716/77716 [00:00&lt;00:00, 241775.78it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+downloading records for {&#39;_fold&#39;: &#39;valid&#39;}
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4067/4067 [00:00&lt;00:00, 11553.58it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+fold: VALID; iteration: 0; epoch: 0; loss: 8.991816450909871;
+fold: TRAIN; iteration: 0; epoch: 0; loss: 8.987167358398438;
+fold: TRAIN; iteration: 1; epoch: 0; loss: 8.632171630859375;
+fold: TRAIN; iteration: 2; epoch: 0; loss: 8.306602478027344;
+fold: TRAIN; iteration: 3; epoch: 0; loss: 8.009835243225098;
+fold: TRAIN; iteration: 4; epoch: 0; loss: 7.5560808181762695;
+fold: TRAIN; iteration: 5; epoch: 0; loss: 6.854074001312256;
+fold: TRAIN; iteration: 6; epoch: 0; loss: 6.188560962677002;
+fold: TRAIN; iteration: 7; epoch: 0; loss: 5.577432632446289;
+fold: TRAIN; iteration: 8; epoch: 0; loss: 5.279464244842529;
+fold: TRAIN; iteration: 9; epoch: 0; loss: 5.061738014221191;
+fold: TRAIN; iteration: 10; epoch: 0; loss: 5.008975982666016;
+fold: TRAIN; iteration: 11; epoch: 0; loss: 4.962060451507568;
+fold: TRAIN; iteration: 12; epoch: 0; loss: 5.066431999206543;
+fold: TRAIN; iteration: 13; epoch: 0; loss: 4.624704837799072;
+fold: TRAIN; iteration: 14; epoch: 0; loss: 4.979156017303467;
+fold: TRAIN; iteration: 15; epoch: 0; loss: 5.028122901916504;
+fold: TRAIN; iteration: 16; epoch: 0; loss: 5.035597324371338;
+fold: TRAIN; iteration: 17; epoch: 0; loss: 5.05545711517334;
+fold: TRAIN; iteration: 18; epoch: 0; loss: 4.759028434753418;
+fold: TRAIN; iteration: 19; epoch: 0; loss: 4.71093225479126;
+fold: TRAIN; iteration: 20; epoch: 0; loss: 4.846728324890137;
+fold: TRAIN; iteration: 21; epoch: 0; loss: 4.821264266967773;
+fold: TRAIN; iteration: 22; epoch: 0; loss: 4.489032745361328;
+fold: TRAIN; iteration: 23; epoch: 0; loss: 4.853068828582764;
+fold: TRAIN; iteration: 24; epoch: 0; loss: 4.589850902557373;
+fold: TRAIN; iteration: 25; epoch: 0; loss: 4.905335426330566;
+fold: TRAIN; iteration: 26; epoch: 0; loss: 4.726339340209961;
+fold: TRAIN; iteration: 27; epoch: 0; loss: 4.710085868835449;
+fold: TRAIN; iteration: 28; epoch: 0; loss: 4.439413070678711;
+fold: TRAIN; iteration: 29; epoch: 0; loss: 4.6394171714782715;
+fold: TRAIN; iteration: 30; epoch: 0; loss: 4.236497402191162;
+fold: TRAIN; iteration: 31; epoch: 0; loss: 4.4521379470825195;
+fold: TRAIN; iteration: 32; epoch: 0; loss: 4.540523052215576;
+fold: TRAIN; iteration: 33; epoch: 0; loss: 4.519608974456787;
+fold: TRAIN; iteration: 34; epoch: 0; loss: 4.439594745635986;
+fold: TRAIN; iteration: 35; epoch: 0; loss: 4.420795440673828;
+fold: TRAIN; iteration: 36; epoch: 0; loss: 4.370251655578613;
+fold: TRAIN; iteration: 37; epoch: 0; loss: 4.193024158477783;
+fold: TRAIN; iteration: 38; epoch: 0; loss: 4.33895206451416;
+fold: TRAIN; iteration: 39; epoch: 0; loss: 4.529318332672119;
+fold: TRAIN; iteration: 40; epoch: 0; loss: 4.465487003326416;
+fold: TRAIN; iteration: 41; epoch: 0; loss: 4.587072372436523;
+fold: TRAIN; iteration: 42; epoch: 0; loss: 4.287297248840332;
+fold: TRAIN; iteration: 43; epoch: 0; loss: 4.167821884155273;
+fold: TRAIN; iteration: 44; epoch: 0; loss: 4.393378257751465;
+fold: TRAIN; iteration: 45; epoch: 0; loss: 4.237006664276123;
+fold: TRAIN; iteration: 46; epoch: 0; loss: 4.2395219802856445;
+fold: TRAIN; iteration: 47; epoch: 0; loss: 4.127511501312256;
+fold: TRAIN; iteration: 48; epoch: 0; loss: 4.387850761413574;
+fold: TRAIN; iteration: 49; epoch: 0; loss: 4.1109700202941895;
+fold: TRAIN; iteration: 50; epoch: 0; loss: 3.98905086517334;
+fold: TRAIN; iteration: 51; epoch: 0; loss: 4.191991806030273;
+fold: TRAIN; iteration: 52; epoch: 0; loss: 4.2061848640441895;
+fold: TRAIN; iteration: 53; epoch: 0; loss: 3.968729019165039;
+fold: TRAIN; iteration: 54; epoch: 0; loss: 4.086851119995117;
+fold: TRAIN; iteration: 55; epoch: 0; loss: 3.9672250747680664;
+fold: TRAIN; iteration: 56; epoch: 0; loss: 4.405607223510742;
+fold: TRAIN; iteration: 57; epoch: 0; loss: 4.093164443969727;
+fold: TRAIN; iteration: 58; epoch: 0; loss: 3.8344717025756836;
+fold: TRAIN; iteration: 59; epoch: 0; loss: 4.220386981964111;
+fold: TRAIN; iteration: 60; epoch: 0; loss: 4.10354471206665;
+fold: TRAIN; iteration: 61; epoch: 0; loss: 4.259488582611084;
+fold: TRAIN; iteration: 62; epoch: 0; loss: 4.373102188110352;
+fold: TRAIN; iteration: 63; epoch: 0; loss: 4.030450344085693;
+fold: TRAIN; iteration: 64; epoch: 0; loss: 4.189177513122559;
+fold: TRAIN; iteration: 65; epoch: 0; loss: 4.1408843994140625;
+fold: TRAIN; iteration: 66; epoch: 0; loss: 4.536048889160156;
+fold: TRAIN; iteration: 67; epoch: 0; loss: 3.998668909072876;
+fold: TRAIN; iteration: 68; epoch: 0; loss: 4.166776657104492;
+fold: TRAIN; iteration: 69; epoch: 0; loss: 4.175795078277588;
+fold: TRAIN; iteration: 70; epoch: 0; loss: 4.292830944061279;
+fold: TRAIN; iteration: 71; epoch: 0; loss: 4.078512191772461;
+fold: TRAIN; iteration: 72; epoch: 0; loss: 3.8415515422821045;
+fold: TRAIN; iteration: 73; epoch: 0; loss: 3.9431471824645996;
+fold: TRAIN; iteration: 74; epoch: 0; loss: 3.8470544815063477;
+fold: TRAIN; iteration: 75; epoch: 0; loss: 3.884636163711548;
+fold: TRAIN; iteration: 76; epoch: 0; loss: 4.023519039154053;
+fold: TRAIN; iteration: 77; epoch: 0; loss: 4.172287464141846;
+fold: TRAIN; iteration: 78; epoch: 0; loss: 3.7092971801757812;
+fold: TRAIN; iteration: 79; epoch: 0; loss: 3.9809601306915283;
+fold: TRAIN; iteration: 80; epoch: 0; loss: 4.1198410987854;
+fold: TRAIN; iteration: 81; epoch: 0; loss: 4.081096649169922;
+fold: TRAIN; iteration: 82; epoch: 0; loss: 3.8778557777404785;
+fold: TRAIN; iteration: 83; epoch: 0; loss: 3.8706789016723633;
+fold: TRAIN; iteration: 84; epoch: 0; loss: 3.8795711994171143;
+fold: TRAIN; iteration: 85; epoch: 0; loss: 3.7479164600372314;
+fold: TRAIN; iteration: 86; epoch: 0; loss: 3.580929756164551;
+fold: TRAIN; iteration: 87; epoch: 0; loss: 3.768501043319702;
+fold: TRAIN; iteration: 88; epoch: 0; loss: 3.842830181121826;
+fold: TRAIN; iteration: 89; epoch: 0; loss: 4.078423500061035;
+fold: TRAIN; iteration: 90; epoch: 0; loss: 3.813352584838867;
+fold: TRAIN; iteration: 91; epoch: 0; loss: 3.7445287704467773;
+fold: TRAIN; iteration: 92; epoch: 0; loss: 4.05780553817749;
+fold: TRAIN; iteration: 93; epoch: 0; loss: 3.964869499206543;
+fold: TRAIN; iteration: 94; epoch: 0; loss: 3.827465295791626;
+fold: TRAIN; iteration: 95; epoch: 0; loss: 3.6535611152648926;
+fold: TRAIN; iteration: 96; epoch: 0; loss: 4.074286460876465;
+fold: TRAIN; iteration: 97; epoch: 0; loss: 3.9547910690307617;
+fold: TRAIN; iteration: 98; epoch: 0; loss: 3.558861494064331;
+fold: TRAIN; iteration: 99; epoch: 0; loss: 4.046000957489014;
+fold: TRAIN; iteration: 100; epoch: 0; loss: 3.9698996543884277;
+fold: TRAIN; iteration: 101; epoch: 0; loss: 3.8141162395477295;
+fold: TRAIN; iteration: 102; epoch: 0; loss: 3.789405584335327;
+fold: TRAIN; iteration: 103; epoch: 0; loss: 3.9603278636932373;
+fold: TRAIN; iteration: 104; epoch: 0; loss: 3.756758213043213;
+fold: TRAIN; iteration: 105; epoch: 0; loss: 3.694593906402588;
+fold: TRAIN; iteration: 106; epoch: 0; loss: 3.5971333980560303;
+fold: TRAIN; iteration: 107; epoch: 0; loss: 3.885953903198242;
+fold: TRAIN; iteration: 108; epoch: 0; loss: 3.7824127674102783;
+fold: TRAIN; iteration: 109; epoch: 0; loss: 3.705796003341675;
+fold: TRAIN; iteration: 110; epoch: 0; loss: 3.6615400314331055;
+fold: TRAIN; iteration: 111; epoch: 0; loss: 3.7527077198028564;
+fold: TRAIN; iteration: 112; epoch: 0; loss: 3.969515323638916;
+fold: TRAIN; iteration: 113; epoch: 0; loss: 3.8525404930114746;
+fold: TRAIN; iteration: 114; epoch: 0; loss: 3.8021817207336426;
+fold: TRAIN; iteration: 115; epoch: 0; loss: 3.4866533279418945;
+fold: TRAIN; iteration: 116; epoch: 0; loss: 3.7375378608703613;
+fold: TRAIN; iteration: 117; epoch: 0; loss: 3.7450220584869385;
+fold: TRAIN; iteration: 118; epoch: 0; loss: 3.837003469467163;
+fold: TRAIN; iteration: 119; epoch: 0; loss: 3.5997982025146484;
+fold: TRAIN; iteration: 120; epoch: 0; loss: 3.5561883449554443;
+fold: TRAIN; iteration: 121; epoch: 0; loss: 3.83182430267334;
+fold: TRAIN; iteration: 122; epoch: 0; loss: 3.8399863243103027;
+fold: TRAIN; iteration: 123; epoch: 0; loss: 3.8910045623779297;
+fold: TRAIN; iteration: 124; epoch: 0; loss: 3.8685712814331055;
+fold: TRAIN; iteration: 125; epoch: 0; loss: 3.6664960384368896;
+fold: TRAIN; iteration: 126; epoch: 0; loss: 3.633727788925171;
+fold: TRAIN; iteration: 127; epoch: 0; loss: 3.715029716491699;
+fold: TRAIN; iteration: 128; epoch: 0; loss: 3.480959892272949;
+fold: TRAIN; iteration: 129; epoch: 0; loss: 3.6808648109436035;
+fold: TRAIN; iteration: 130; epoch: 0; loss: 3.6534595489501953;
+fold: TRAIN; iteration: 131; epoch: 0; loss: 3.6787471771240234;
+fold: TRAIN; iteration: 132; epoch: 0; loss: 3.6658434867858887;
+fold: TRAIN; iteration: 133; epoch: 0; loss: 3.679363965988159;
+fold: TRAIN; iteration: 134; epoch: 0; loss: 3.669689416885376;
+fold: TRAIN; iteration: 135; epoch: 0; loss: 3.601888656616211;
+fold: TRAIN; iteration: 136; epoch: 0; loss: 3.775768518447876;
+fold: TRAIN; iteration: 137; epoch: 0; loss: 3.3024063110351562;
+fold: TRAIN; iteration: 138; epoch: 0; loss: 3.7773807048797607;
+fold: TRAIN; iteration: 139; epoch: 0; loss: 3.8865556716918945;
+fold: TRAIN; iteration: 140; epoch: 0; loss: 3.591221809387207;
+fold: TRAIN; iteration: 141; epoch: 0; loss: 3.7890729904174805;
+fold: TRAIN; iteration: 142; epoch: 0; loss: 3.536827325820923;
+fold: TRAIN; iteration: 143; epoch: 0; loss: 3.795884609222412;
+fold: TRAIN; iteration: 144; epoch: 0; loss: 3.2019524574279785;
+fold: TRAIN; iteration: 145; epoch: 0; loss: 3.5819132328033447;
+fold: TRAIN; iteration: 146; epoch: 0; loss: 3.4398386478424072;
+fold: TRAIN; iteration: 147; epoch: 0; loss: 3.3563995361328125;
+fold: TRAIN; iteration: 148; epoch: 0; loss: 3.5105111598968506;
+fold: TRAIN; iteration: 149; epoch: 0; loss: 3.5919275283813477;
+fold: TRAIN; iteration: 150; epoch: 0; loss: 3.4921154975891113;
+fold: TRAIN; iteration: 151; epoch: 0; loss: 3.704421043395996;
+fold: TRAIN; iteration: 152; epoch: 0; loss: 3.3838281631469727;
+fold: TRAIN; iteration: 153; epoch: 0; loss: 3.743018388748169;
+fold: TRAIN; iteration: 154; epoch: 0; loss: 3.4389355182647705;
+fold: TRAIN; iteration: 155; epoch: 0; loss: 3.6576759815216064;
+fold: TRAIN; iteration: 156; epoch: 0; loss: 3.573241949081421;
+fold: TRAIN; iteration: 157; epoch: 0; loss: 3.722275495529175;
+fold: TRAIN; iteration: 158; epoch: 0; loss: 3.6418097019195557;
+fold: TRAIN; iteration: 159; epoch: 0; loss: 3.832275629043579;
+fold: TRAIN; iteration: 160; epoch: 0; loss: 3.5476529598236084;
+fold: TRAIN; iteration: 161; epoch: 0; loss: 3.4345896244049072;
+fold: TRAIN; iteration: 162; epoch: 0; loss: 3.360739231109619;
+fold: TRAIN; iteration: 163; epoch: 0; loss: 3.878511667251587;
+fold: TRAIN; iteration: 164; epoch: 0; loss: 3.6442043781280518;
+fold: TRAIN; iteration: 165; epoch: 0; loss: 3.521991014480591;
+fold: TRAIN; iteration: 166; epoch: 0; loss: 3.4492387771606445;
+fold: TRAIN; iteration: 167; epoch: 0; loss: 3.7439866065979004;
+fold: TRAIN; iteration: 168; epoch: 0; loss: 3.4940085411071777;
+fold: TRAIN; iteration: 169; epoch: 0; loss: 3.370112657546997;
+fold: TRAIN; iteration: 170; epoch: 0; loss: 3.7268059253692627;
+fold: TRAIN; iteration: 171; epoch: 0; loss: 3.6041693687438965;
+fold: TRAIN; iteration: 172; epoch: 0; loss: 3.583667516708374;
+fold: TRAIN; iteration: 173; epoch: 0; loss: 3.274082660675049;
+fold: TRAIN; iteration: 174; epoch: 0; loss: 3.550992965698242;
+fold: TRAIN; iteration: 175; epoch: 0; loss: 3.559938907623291;
+fold: TRAIN; iteration: 176; epoch: 0; loss: 3.4572393894195557;
+fold: TRAIN; iteration: 177; epoch: 0; loss: 3.3447394371032715;
+fold: TRAIN; iteration: 178; epoch: 0; loss: 3.6309080123901367;
+fold: TRAIN; iteration: 179; epoch: 0; loss: 3.5923614501953125;
+fold: TRAIN; iteration: 180; epoch: 0; loss: 3.157752752304077;
+fold: TRAIN; iteration: 181; epoch: 0; loss: 3.6777496337890625;
+fold: TRAIN; iteration: 182; epoch: 0; loss: 3.5817017555236816;
+fold: TRAIN; iteration: 183; epoch: 0; loss: 3.4370038509368896;
+fold: TRAIN; iteration: 184; epoch: 0; loss: 3.4460320472717285;
+fold: TRAIN; iteration: 185; epoch: 0; loss: 3.4091570377349854;
+fold: TRAIN; iteration: 186; epoch: 0; loss: 3.5128445625305176;
+fold: TRAIN; iteration: 187; epoch: 0; loss: 3.7336947917938232;
+fold: TRAIN; iteration: 188; epoch: 0; loss: 3.4040722846984863;
+fold: TRAIN; iteration: 189; epoch: 0; loss: 3.4755094051361084;
+fold: TRAIN; iteration: 190; epoch: 0; loss: 3.3320722579956055;
+fold: TRAIN; iteration: 191; epoch: 0; loss: 3.324002265930176;
+fold: TRAIN; iteration: 192; epoch: 0; loss: 3.4221768379211426;
+fold: TRAIN; iteration: 193; epoch: 0; loss: 3.359175443649292;
+fold: TRAIN; iteration: 194; epoch: 0; loss: 3.437162160873413;
+fold: TRAIN; iteration: 195; epoch: 0; loss: 3.3334789276123047;
+fold: TRAIN; iteration: 196; epoch: 0; loss: 3.3412413597106934;
+fold: TRAIN; iteration: 197; epoch: 0; loss: 3.4968221187591553;
+fold: TRAIN; iteration: 198; epoch: 0; loss: 3.321174383163452;
+fold: TRAIN; iteration: 199; epoch: 0; loss: 3.510772705078125;
+validating model...
+saving
+fold: VALID; iteration: 200; epoch: 0; loss: 3.36125416871978;
+fold: TRAIN; iteration: 200; epoch: 0; loss: 3.4511187076568604;
+fold: TRAIN; iteration: 201; epoch: 0; loss: 3.389582633972168;
+fold: TRAIN; iteration: 202; epoch: 0; loss: 3.268890619277954;
+fold: TRAIN; iteration: 203; epoch: 0; loss: 3.5725831985473633;
+fold: TRAIN; iteration: 204; epoch: 0; loss: 3.134629487991333;
+fold: TRAIN; iteration: 205; epoch: 0; loss: 3.289097309112549;
+fold: TRAIN; iteration: 206; epoch: 0; loss: 3.468327522277832;
+fold: TRAIN; iteration: 207; epoch: 0; loss: 3.255953311920166;
+fold: TRAIN; iteration: 208; epoch: 0; loss: 3.3942742347717285;
+fold: TRAIN; iteration: 209; epoch: 0; loss: 3.3333053588867188;
+fold: TRAIN; iteration: 210; epoch: 0; loss: 3.495330810546875;
+fold: TRAIN; iteration: 211; epoch: 0; loss: 3.657900333404541;
+fold: TRAIN; iteration: 212; epoch: 0; loss: 3.516345500946045;
+fold: TRAIN; iteration: 213; epoch: 0; loss: 3.4336512088775635;
+fold: TRAIN; iteration: 214; epoch: 0; loss: 3.4937262535095215;
+fold: TRAIN; iteration: 215; epoch: 0; loss: 3.443080425262451;
+fold: TRAIN; iteration: 216; epoch: 0; loss: 3.080543279647827;
+fold: TRAIN; iteration: 217; epoch: 0; loss: 3.480623483657837;
+fold: TRAIN; iteration: 218; epoch: 0; loss: 3.645707607269287;
+fold: TRAIN; iteration: 219; epoch: 0; loss: 3.2943365573883057;
+fold: TRAIN; iteration: 220; epoch: 0; loss: 3.3577141761779785;
+fold: TRAIN; iteration: 221; epoch: 0; loss: 3.2634999752044678;
+fold: TRAIN; iteration: 222; epoch: 0; loss: 3.4723477363586426;
+fold: TRAIN; iteration: 223; epoch: 0; loss: 3.5230371952056885;
+fold: TRAIN; iteration: 224; epoch: 0; loss: 3.172186851501465;
+fold: TRAIN; iteration: 225; epoch: 0; loss: 3.321277141571045;
+fold: TRAIN; iteration: 226; epoch: 0; loss: 3.2746992111206055;
+fold: TRAIN; iteration: 227; epoch: 0; loss: 3.2323224544525146;
+fold: TRAIN; iteration: 228; epoch: 0; loss: 3.3546435832977295;
+fold: TRAIN; iteration: 229; epoch: 0; loss: 3.2396535873413086;
+fold: TRAIN; iteration: 230; epoch: 0; loss: 3.376753568649292;
+fold: TRAIN; iteration: 231; epoch: 0; loss: 3.4088656902313232;
+fold: TRAIN; iteration: 232; epoch: 0; loss: 3.516594886779785;
+fold: TRAIN; iteration: 233; epoch: 0; loss: 3.2391862869262695;
+fold: TRAIN; iteration: 234; epoch: 0; loss: 3.2225165367126465;
+fold: TRAIN; iteration: 235; epoch: 0; loss: 3.2548558712005615;
+fold: TRAIN; iteration: 236; epoch: 0; loss: 3.1835718154907227;
+fold: TRAIN; iteration: 237; epoch: 0; loss: 3.2214670181274414;
+fold: TRAIN; iteration: 238; epoch: 0; loss: 3.2743096351623535;
+fold: TRAIN; iteration: 239; epoch: 0; loss: 3.299440622329712;
+fold: TRAIN; iteration: 240; epoch: 0; loss: 3.511467933654785;
+fold: TRAIN; iteration: 241; epoch: 0; loss: 3.394987106323242;
+fold: TRAIN; iteration: 242; epoch: 0; loss: 3.10738468170166;
+fold: TRAIN; iteration: 243; epoch: 0; loss: 3.0391674041748047;
+fold: TRAIN; iteration: 244; epoch: 0; loss: 3.403433322906494;
+fold: TRAIN; iteration: 245; epoch: 0; loss: 3.365834951400757;
+fold: TRAIN; iteration: 246; epoch: 0; loss: 3.3514182567596436;
+fold: TRAIN; iteration: 247; epoch: 0; loss: 3.3501293659210205;
+fold: TRAIN; iteration: 248; epoch: 0; loss: 3.0921831130981445;
+fold: TRAIN; iteration: 249; epoch: 0; loss: 3.2615363597869873;
+fold: TRAIN; iteration: 250; epoch: 0; loss: 3.245722770690918;
+fold: TRAIN; iteration: 251; epoch: 0; loss: 3.150395154953003;
+fold: TRAIN; iteration: 252; epoch: 0; loss: 3.304797410964966;
+fold: TRAIN; iteration: 253; epoch: 0; loss: 3.316222906112671;
+fold: TRAIN; iteration: 254; epoch: 0; loss: 3.283487319946289;
+fold: TRAIN; iteration: 255; epoch: 0; loss: 3.046431064605713;
+fold: TRAIN; iteration: 256; epoch: 0; loss: 3.1869192123413086;
+fold: TRAIN; iteration: 257; epoch: 0; loss: 3.0174922943115234;
+fold: TRAIN; iteration: 258; epoch: 0; loss: 2.9791510105133057;
+fold: TRAIN; iteration: 259; epoch: 0; loss: 3.2227485179901123;
+fold: TRAIN; iteration: 260; epoch: 0; loss: 3.39024019241333;
+fold: TRAIN; iteration: 261; epoch: 0; loss: 3.1745734214782715;
+fold: TRAIN; iteration: 262; epoch: 0; loss: 3.3314287662506104;
+fold: TRAIN; iteration: 263; epoch: 0; loss: 3.16196870803833;
+fold: TRAIN; iteration: 264; epoch: 0; loss: 2.950801134109497;
+fold: TRAIN; iteration: 265; epoch: 0; loss: 2.9569311141967773;
+fold: TRAIN; iteration: 266; epoch: 0; loss: 3.1307778358459473;
+fold: TRAIN; iteration: 267; epoch: 0; loss: 3.403296709060669;
+fold: TRAIN; iteration: 268; epoch: 0; loss: 3.004676580429077;
+fold: TRAIN; iteration: 269; epoch: 0; loss: 3.341376543045044;
+fold: TRAIN; iteration: 270; epoch: 0; loss: 3.255258798599243;
+fold: TRAIN; iteration: 271; epoch: 0; loss: 2.9690582752227783;
+fold: TRAIN; iteration: 272; epoch: 0; loss: 3.2135202884674072;
+fold: TRAIN; iteration: 273; epoch: 0; loss: 3.218686580657959;
+fold: TRAIN; iteration: 274; epoch: 0; loss: 3.0804641246795654;
+fold: TRAIN; iteration: 275; epoch: 0; loss: 3.4904227256774902;
+fold: TRAIN; iteration: 276; epoch: 0; loss: 3.4455883502960205;
+fold: TRAIN; iteration: 277; epoch: 0; loss: 3.307849407196045;
+fold: TRAIN; iteration: 278; epoch: 0; loss: 3.3280093669891357;
+fold: TRAIN; iteration: 279; epoch: 0; loss: 3.171449899673462;
+fold: TRAIN; iteration: 280; epoch: 0; loss: 3.3627376556396484;
+fold: TRAIN; iteration: 281; epoch: 0; loss: 3.1077630519866943;
+fold: TRAIN; iteration: 282; epoch: 0; loss: 3.163456916809082;
+fold: TRAIN; iteration: 283; epoch: 0; loss: 3.105837106704712;
+fold: TRAIN; iteration: 284; epoch: 0; loss: 2.942873001098633;
+fold: TRAIN; iteration: 285; epoch: 0; loss: 3.458785057067871;
+fold: TRAIN; iteration: 286; epoch: 0; loss: 3.488069534301758;
+fold: TRAIN; iteration: 287; epoch: 0; loss: 2.9822516441345215;
+fold: TRAIN; iteration: 288; epoch: 0; loss: 3.242814540863037;
+fold: TRAIN; iteration: 289; epoch: 0; loss: 3.208311080932617;
+fold: TRAIN; iteration: 290; epoch: 0; loss: 3.298940420150757;
+fold: TRAIN; iteration: 291; epoch: 0; loss: 3.3080925941467285;
+fold: TRAIN; iteration: 292; epoch: 0; loss: 3.3687970638275146;
+fold: TRAIN; iteration: 293; epoch: 0; loss: 2.988985538482666;
+fold: TRAIN; iteration: 294; epoch: 0; loss: 3.213611364364624;
+fold: TRAIN; iteration: 295; epoch: 0; loss: 3.1383819580078125;
+fold: TRAIN; iteration: 296; epoch: 0; loss: 3.4215099811553955;
+fold: TRAIN; iteration: 297; epoch: 0; loss: 2.9017159938812256;
+fold: TRAIN; iteration: 298; epoch: 0; loss: 3.6758594512939453;
+fold: TRAIN; iteration: 299; epoch: 0; loss: 3.0659496784210205;
+fold: TRAIN; iteration: 300; epoch: 0; loss: 3.047015428543091;
+fold: TRAIN; iteration: 301; epoch: 0; loss: 3.1991007328033447;
+fold: TRAIN; iteration: 302; epoch: 0; loss: 3.170192003250122;
+fold: TRAIN; iteration: 303; epoch: 0; loss: 3.0083208084106445;
+fold: TRAIN; iteration: 304; epoch: 0; loss: 3.413195848464966;
+fold: TRAIN; iteration: 305; epoch: 0; loss: 3.0913965702056885;
+fold: TRAIN; iteration: 306; epoch: 0; loss: 3.104809284210205;
+fold: TRAIN; iteration: 307; epoch: 0; loss: 3.0072460174560547;
+fold: TRAIN; iteration: 308; epoch: 0; loss: 2.886875867843628;
+fold: TRAIN; iteration: 309; epoch: 0; loss: 3.2736635208129883;
+fold: TRAIN; iteration: 310; epoch: 0; loss: 3.234184503555298;
+fold: TRAIN; iteration: 311; epoch: 0; loss: 3.326873540878296;
+fold: TRAIN; iteration: 312; epoch: 0; loss: 3.199481248855591;
+fold: TRAIN; iteration: 313; epoch: 0; loss: 3.1752753257751465;
+fold: TRAIN; iteration: 314; epoch: 0; loss: 3.0066606998443604;
+fold: TRAIN; iteration: 315; epoch: 0; loss: 3.1694231033325195;
+fold: TRAIN; iteration: 316; epoch: 0; loss: 2.844852924346924;
+fold: TRAIN; iteration: 317; epoch: 0; loss: 3.097464084625244;
+fold: TRAIN; iteration: 318; epoch: 0; loss: 3.0368738174438477;
+fold: TRAIN; iteration: 319; epoch: 0; loss: 3.335510492324829;
+fold: TRAIN; iteration: 320; epoch: 0; loss: 3.1677331924438477;
+fold: TRAIN; iteration: 321; epoch: 0; loss: 3.0905768871307373;
+fold: TRAIN; iteration: 322; epoch: 0; loss: 3.109553337097168;
+fold: TRAIN; iteration: 323; epoch: 0; loss: 3.3640570640563965;
+fold: TRAIN; iteration: 324; epoch: 0; loss: 2.950711250305176;
+fold: TRAIN; iteration: 325; epoch: 0; loss: 3.0376815795898438;
+fold: TRAIN; iteration: 326; epoch: 0; loss: 3.1562530994415283;
+fold: TRAIN; iteration: 327; epoch: 0; loss: 2.9929025173187256;
+fold: TRAIN; iteration: 328; epoch: 0; loss: 3.048687219619751;
+fold: TRAIN; iteration: 329; epoch: 0; loss: 2.8077774047851562;
+fold: TRAIN; iteration: 330; epoch: 0; loss: 3.0520238876342773;
+fold: TRAIN; iteration: 331; epoch: 0; loss: 3.2746875286102295;
+fold: TRAIN; iteration: 332; epoch: 0; loss: 3.255594491958618;
+fold: TRAIN; iteration: 333; epoch: 0; loss: 3.0651543140411377;
+fold: TRAIN; iteration: 334; epoch: 0; loss: 3.152484655380249;
+fold: TRAIN; iteration: 335; epoch: 0; loss: 2.932399272918701;
+fold: TRAIN; iteration: 336; epoch: 0; loss: 3.090439796447754;
+fold: TRAIN; iteration: 337; epoch: 0; loss: 3.0015981197357178;
+fold: TRAIN; iteration: 338; epoch: 0; loss: 2.861905813217163;
+fold: TRAIN; iteration: 339; epoch: 0; loss: 3.1804986000061035;
+fold: TRAIN; iteration: 340; epoch: 0; loss: 3.0485012531280518;
+fold: TRAIN; iteration: 341; epoch: 0; loss: 3.1619443893432617;
+fold: TRAIN; iteration: 342; epoch: 0; loss: 2.9750969409942627;
+fold: TRAIN; iteration: 343; epoch: 0; loss: 3.123638391494751;
+fold: TRAIN; iteration: 344; epoch: 0; loss: 3.083075523376465;
+fold: TRAIN; iteration: 345; epoch: 0; loss: 3.123889446258545;
+fold: TRAIN; iteration: 346; epoch: 0; loss: 3.0820136070251465;
+fold: TRAIN; iteration: 347; epoch: 0; loss: 2.897576332092285;
+fold: TRAIN; iteration: 348; epoch: 0; loss: 3.089010238647461;
+fold: TRAIN; iteration: 349; epoch: 0; loss: 3.1817667484283447;
+fold: TRAIN; iteration: 350; epoch: 0; loss: 3.1107120513916016;
+fold: TRAIN; iteration: 351; epoch: 0; loss: 2.9947328567504883;
+fold: TRAIN; iteration: 352; epoch: 0; loss: 3.076984167098999;
+fold: TRAIN; iteration: 353; epoch: 0; loss: 3.148763418197632;
+fold: TRAIN; iteration: 354; epoch: 0; loss: 3.0252227783203125;
+fold: TRAIN; iteration: 355; epoch: 0; loss: 2.8255372047424316;
+fold: TRAIN; iteration: 356; epoch: 0; loss: 2.8533098697662354;
+fold: TRAIN; iteration: 357; epoch: 0; loss: 2.963395118713379;
+fold: TRAIN; iteration: 358; epoch: 0; loss: 3.044147253036499;
+fold: TRAIN; iteration: 359; epoch: 0; loss: 2.830500602722168;
+fold: TRAIN; iteration: 360; epoch: 0; loss: 2.9794843196868896;
+fold: TRAIN; iteration: 361; epoch: 0; loss: 2.8681414127349854;
+fold: TRAIN; iteration: 362; epoch: 0; loss: 3.044079542160034;
+fold: TRAIN; iteration: 363; epoch: 0; loss: 3.0016112327575684;
+fold: TRAIN; iteration: 364; epoch: 0; loss: 3.2062954902648926;
+fold: TRAIN; iteration: 365; epoch: 0; loss: 3.037534475326538;
+fold: TRAIN; iteration: 366; epoch: 0; loss: 3.4322404861450195;
+fold: TRAIN; iteration: 367; epoch: 0; loss: 2.974029541015625;
+fold: TRAIN; iteration: 368; epoch: 0; loss: 2.8074374198913574;
+fold: TRAIN; iteration: 369; epoch: 0; loss: 2.8429555892944336;
+fold: TRAIN; iteration: 370; epoch: 0; loss: 3.08054256439209;
+fold: TRAIN; iteration: 371; epoch: 0; loss: 3.0489211082458496;
+fold: TRAIN; iteration: 372; epoch: 0; loss: 3.4379358291625977;
+fold: TRAIN; iteration: 373; epoch: 0; loss: 2.8972625732421875;
+fold: TRAIN; iteration: 374; epoch: 0; loss: 2.922351121902466;
+fold: TRAIN; iteration: 375; epoch: 0; loss: 3.0523836612701416;
+fold: TRAIN; iteration: 376; epoch: 0; loss: 3.0872457027435303;
+fold: TRAIN; iteration: 377; epoch: 0; loss: 3.033294916152954;
+fold: TRAIN; iteration: 378; epoch: 0; loss: 3.040717124938965;
+fold: TRAIN; iteration: 379; epoch: 0; loss: 2.84775447845459;
+fold: TRAIN; iteration: 380; epoch: 0; loss: 3.1283316612243652;
+fold: TRAIN; iteration: 381; epoch: 0; loss: 3.0966930389404297;
+fold: TRAIN; iteration: 382; epoch: 0; loss: 2.988734483718872;
+fold: TRAIN; iteration: 383; epoch: 0; loss: 2.9823389053344727;
+fold: TRAIN; iteration: 384; epoch: 0; loss: 3.112872838973999;
+fold: TRAIN; iteration: 385; epoch: 0; loss: 2.8623974323272705;
+fold: TRAIN; iteration: 386; epoch: 0; loss: 3.1511592864990234;
+fold: TRAIN; iteration: 387; epoch: 0; loss: 3.249635696411133;
+fold: TRAIN; iteration: 388; epoch: 0; loss: 3.0079565048217773;
+fold: TRAIN; iteration: 389; epoch: 0; loss: 3.047093152999878;
+fold: TRAIN; iteration: 390; epoch: 0; loss: 2.7310216426849365;
+fold: TRAIN; iteration: 391; epoch: 0; loss: 3.0594377517700195;
+fold: TRAIN; iteration: 392; epoch: 0; loss: 3.0424489974975586;
+fold: TRAIN; iteration: 393; epoch: 0; loss: 2.865476131439209;
+fold: TRAIN; iteration: 394; epoch: 0; loss: 2.9157068729400635;
+fold: TRAIN; iteration: 395; epoch: 0; loss: 2.823880672454834;
+fold: TRAIN; iteration: 396; epoch: 0; loss: 2.886425495147705;
+fold: TRAIN; iteration: 397; epoch: 0; loss: 2.684765577316284;
+fold: TRAIN; iteration: 398; epoch: 0; loss: 2.9353482723236084;
+fold: TRAIN; iteration: 399; epoch: 0; loss: 2.9358248710632324;
+validating model...
+saving
+fold: VALID; iteration: 400; epoch: 0; loss: 2.963171304726019;
+fold: TRAIN; iteration: 400; epoch: 0; loss: 2.834310293197632;
+fold: TRAIN; iteration: 401; epoch: 0; loss: 2.9664392471313477;
+fold: TRAIN; iteration: 402; epoch: 0; loss: 3.1288633346557617;
+fold: TRAIN; iteration: 403; epoch: 0; loss: 3.095541477203369;
+fold: TRAIN; iteration: 404; epoch: 0; loss: 2.9629340171813965;
+fold: TRAIN; iteration: 405; epoch: 0; loss: 3.096461296081543;
+fold: TRAIN; iteration: 406; epoch: 0; loss: 2.952122449874878;
+fold: TRAIN; iteration: 407; epoch: 0; loss: 2.829882860183716;
+fold: TRAIN; iteration: 408; epoch: 0; loss: 3.2341275215148926;
+fold: TRAIN; iteration: 409; epoch: 0; loss: 2.777686357498169;
+fold: TRAIN; iteration: 410; epoch: 0; loss: 2.547394037246704;
+fold: TRAIN; iteration: 411; epoch: 0; loss: 3.0346319675445557;
+fold: TRAIN; iteration: 412; epoch: 0; loss: 2.680434465408325;
+fold: TRAIN; iteration: 413; epoch: 0; loss: 3.2741990089416504;
+fold: TRAIN; iteration: 414; epoch: 0; loss: 3.097804307937622;
+fold: TRAIN; iteration: 415; epoch: 0; loss: 3.0642595291137695;
+fold: TRAIN; iteration: 416; epoch: 0; loss: 2.9026577472686768;
+fold: TRAIN; iteration: 417; epoch: 0; loss: 2.724334955215454;
+fold: TRAIN; iteration: 418; epoch: 0; loss: 3.0949063301086426;
+fold: TRAIN; iteration: 419; epoch: 0; loss: 2.9645986557006836;
+fold: TRAIN; iteration: 420; epoch: 0; loss: 3.1095266342163086;
+fold: TRAIN; iteration: 421; epoch: 0; loss: 2.756762742996216;
+fold: TRAIN; iteration: 422; epoch: 0; loss: 2.984139919281006;
+fold: TRAIN; iteration: 423; epoch: 0; loss: 2.8669748306274414;
+fold: TRAIN; iteration: 424; epoch: 0; loss: 2.786644220352173;
+fold: TRAIN; iteration: 425; epoch: 0; loss: 2.9474990367889404;
+fold: TRAIN; iteration: 426; epoch: 0; loss: 3.1099166870117188;
+fold: TRAIN; iteration: 427; epoch: 0; loss: 2.8145687580108643;
+fold: TRAIN; iteration: 428; epoch: 0; loss: 3.02632474899292;
+fold: TRAIN; iteration: 429; epoch: 0; loss: 2.7118353843688965;
+fold: TRAIN; iteration: 430; epoch: 0; loss: 3.0446770191192627;
+fold: TRAIN; iteration: 431; epoch: 0; loss: 2.9134082794189453;
+fold: TRAIN; iteration: 432; epoch: 0; loss: 3.079429864883423;
+fold: TRAIN; iteration: 433; epoch: 0; loss: 3.2184395790100098;
+fold: TRAIN; iteration: 434; epoch: 0; loss: 2.9988632202148438;
+fold: TRAIN; iteration: 435; epoch: 0; loss: 3.033224105834961;
+fold: TRAIN; iteration: 436; epoch: 0; loss: 2.7814464569091797;
+fold: TRAIN; iteration: 437; epoch: 0; loss: 3.0546035766601562;
+fold: TRAIN; iteration: 438; epoch: 0; loss: 2.7642791271209717;
+fold: TRAIN; iteration: 439; epoch: 0; loss: 2.7751681804656982;
+fold: TRAIN; iteration: 440; epoch: 0; loss: 2.7133681774139404;
+fold: TRAIN; iteration: 441; epoch: 0; loss: 2.738433599472046;
+fold: TRAIN; iteration: 442; epoch: 0; loss: 3.046780586242676;
+fold: TRAIN; iteration: 443; epoch: 0; loss: 3.122427463531494;
+fold: TRAIN; iteration: 444; epoch: 0; loss: 3.2301089763641357;
+fold: TRAIN; iteration: 445; epoch: 0; loss: 2.787071466445923;
+fold: TRAIN; iteration: 446; epoch: 0; loss: 3.178447961807251;
+fold: TRAIN; iteration: 447; epoch: 0; loss: 2.5113391876220703;
+fold: TRAIN; iteration: 448; epoch: 0; loss: 3.1383514404296875;
+fold: TRAIN; iteration: 449; epoch: 0; loss: 2.9923577308654785;
+fold: TRAIN; iteration: 450; epoch: 0; loss: 3.079188585281372;
+fold: TRAIN; iteration: 451; epoch: 0; loss: 2.876530170440674;
+fold: TRAIN; iteration: 452; epoch: 0; loss: 3.135322332382202;
+fold: TRAIN; iteration: 453; epoch: 0; loss: 2.91579532623291;
+fold: TRAIN; iteration: 454; epoch: 0; loss: 2.826737642288208;
+fold: TRAIN; iteration: 455; epoch: 0; loss: 3.088270902633667;
+fold: TRAIN; iteration: 456; epoch: 0; loss: 2.803643226623535;
+fold: TRAIN; iteration: 457; epoch: 0; loss: 2.950221538543701;
+fold: TRAIN; iteration: 458; epoch: 0; loss: 3.0529990196228027;
+fold: TRAIN; iteration: 459; epoch: 0; loss: 3.0313165187835693;
+fold: TRAIN; iteration: 460; epoch: 0; loss: 3.0388426780700684;
+fold: TRAIN; iteration: 461; epoch: 0; loss: 2.917412757873535;
+fold: TRAIN; iteration: 462; epoch: 0; loss: 2.948256254196167;
+fold: TRAIN; iteration: 463; epoch: 0; loss: 2.860652208328247;
+fold: TRAIN; iteration: 464; epoch: 0; loss: 3.0212066173553467;
+fold: TRAIN; iteration: 465; epoch: 0; loss: 3.402724027633667;
+fold: TRAIN; iteration: 466; epoch: 0; loss: 2.8859875202178955;
+fold: TRAIN; iteration: 467; epoch: 0; loss: 2.964118242263794;
+fold: TRAIN; iteration: 468; epoch: 0; loss: 2.9676544666290283;
+fold: TRAIN; iteration: 469; epoch: 0; loss: 3.143021821975708;
+fold: TRAIN; iteration: 470; epoch: 0; loss: 2.7229743003845215;
+fold: TRAIN; iteration: 471; epoch: 0; loss: 2.7287895679473877;
+fold: TRAIN; iteration: 472; epoch: 0; loss: 3.150475263595581;
+fold: TRAIN; iteration: 473; epoch: 0; loss: 2.637971878051758;
+fold: TRAIN; iteration: 474; epoch: 0; loss: 2.912961959838867;
+fold: TRAIN; iteration: 475; epoch: 0; loss: 2.8525872230529785;
+fold: TRAIN; iteration: 476; epoch: 0; loss: 3.0430409908294678;
+fold: TRAIN; iteration: 477; epoch: 0; loss: 3.0740954875946045;
+fold: TRAIN; iteration: 478; epoch: 0; loss: 2.884631633758545;
+fold: TRAIN; iteration: 479; epoch: 0; loss: 2.9407360553741455;
+fold: TRAIN; iteration: 480; epoch: 0; loss: 2.796715497970581;
+fold: TRAIN; iteration: 481; epoch: 0; loss: 2.8026769161224365;
+fold: TRAIN; iteration: 482; epoch: 0; loss: 2.523667335510254;
+fold: TRAIN; iteration: 483; epoch: 0; loss: 3.0297319889068604;
+fold: TRAIN; iteration: 484; epoch: 0; loss: 2.829362154006958;
+fold: TRAIN; iteration: 485; epoch: 0; loss: 3.276475429534912;
+fold: TRAIN; iteration: 486; epoch: 0; loss: 2.6499688625335693;
+fold: TRAIN; iteration: 487; epoch: 0; loss: 2.714553117752075;
+fold: TRAIN; iteration: 488; epoch: 0; loss: 2.8826141357421875;
+fold: TRAIN; iteration: 489; epoch: 0; loss: 2.9329280853271484;
+fold: TRAIN; iteration: 490; epoch: 0; loss: 2.818014144897461;
+fold: TRAIN; iteration: 491; epoch: 0; loss: 2.874974012374878;
+fold: TRAIN; iteration: 492; epoch: 0; loss: 2.7891910076141357;
+fold: TRAIN; iteration: 493; epoch: 0; loss: 2.869415044784546;
+fold: TRAIN; iteration: 494; epoch: 0; loss: 2.809246301651001;
+fold: TRAIN; iteration: 495; epoch: 0; loss: 3.0653188228607178;
+fold: TRAIN; iteration: 496; epoch: 0; loss: 2.9771792888641357;
+fold: TRAIN; iteration: 497; epoch: 0; loss: 3.1353588104248047;
+fold: TRAIN; iteration: 498; epoch: 0; loss: 2.8062753677368164;
+fold: TRAIN; iteration: 499; epoch: 0; loss: 2.8017477989196777;
+fold: TRAIN; iteration: 500; epoch: 0; loss: 2.971944570541382;
+fold: TRAIN; iteration: 501; epoch: 0; loss: 2.769804000854492;
+fold: TRAIN; iteration: 502; epoch: 0; loss: 2.7260425090789795;
+fold: TRAIN; iteration: 503; epoch: 0; loss: 2.8889107704162598;
+fold: TRAIN; iteration: 504; epoch: 0; loss: 3.067436456680298;
+fold: TRAIN; iteration: 505; epoch: 0; loss: 3.0645956993103027;
+fold: TRAIN; iteration: 506; epoch: 0; loss: 3.1150033473968506;
+fold: TRAIN; iteration: 507; epoch: 0; loss: 2.9359781742095947;
+fold: TRAIN; iteration: 508; epoch: 0; loss: 2.884749412536621;
+fold: TRAIN; iteration: 509; epoch: 0; loss: 2.948819637298584;
+fold: TRAIN; iteration: 510; epoch: 0; loss: 3.1375482082366943;
+fold: TRAIN; iteration: 511; epoch: 0; loss: 2.857940673828125;
+fold: TRAIN; iteration: 512; epoch: 0; loss: 2.728837251663208;
+fold: TRAIN; iteration: 513; epoch: 0; loss: 3.0512421131134033;
+fold: TRAIN; iteration: 514; epoch: 0; loss: 2.926278591156006;
+fold: TRAIN; iteration: 515; epoch: 0; loss: 2.9964141845703125;
+fold: TRAIN; iteration: 516; epoch: 0; loss: 2.6519391536712646;
+fold: TRAIN; iteration: 517; epoch: 0; loss: 2.9767425060272217;
+fold: TRAIN; iteration: 518; epoch: 0; loss: 2.7864441871643066;
+fold: TRAIN; iteration: 519; epoch: 0; loss: 2.7312939167022705;
+fold: TRAIN; iteration: 520; epoch: 0; loss: 2.7338640689849854;
+fold: TRAIN; iteration: 521; epoch: 0; loss: 2.6641290187835693;
+fold: TRAIN; iteration: 522; epoch: 0; loss: 2.8691344261169434;
+fold: TRAIN; iteration: 523; epoch: 0; loss: 2.771368980407715;
+fold: TRAIN; iteration: 524; epoch: 0; loss: 3.035665988922119;
+fold: TRAIN; iteration: 525; epoch: 0; loss: 2.828904628753662;
+fold: TRAIN; iteration: 526; epoch: 0; loss: 2.878173589706421;
+fold: TRAIN; iteration: 527; epoch: 0; loss: 2.9012818336486816;
+fold: TRAIN; iteration: 528; epoch: 0; loss: 3.142947196960449;
+fold: TRAIN; iteration: 529; epoch: 0; loss: 3.0936403274536133;
+fold: TRAIN; iteration: 530; epoch: 0; loss: 2.829073429107666;
+fold: TRAIN; iteration: 531; epoch: 0; loss: 2.687286615371704;
+fold: TRAIN; iteration: 532; epoch: 0; loss: 2.745553493499756;
+fold: TRAIN; iteration: 533; epoch: 0; loss: 2.9841790199279785;
+fold: TRAIN; iteration: 534; epoch: 0; loss: 2.7823615074157715;
+fold: TRAIN; iteration: 535; epoch: 0; loss: 3.055612087249756;
+fold: TRAIN; iteration: 536; epoch: 0; loss: 2.991894245147705;
+fold: TRAIN; iteration: 537; epoch: 0; loss: 2.69362211227417;
+fold: TRAIN; iteration: 538; epoch: 0; loss: 2.924583673477173;
+fold: TRAIN; iteration: 539; epoch: 0; loss: 3.0964765548706055;
+fold: TRAIN; iteration: 540; epoch: 0; loss: 2.7731857299804688;
+fold: TRAIN; iteration: 541; epoch: 0; loss: 3.3178648948669434;
+fold: TRAIN; iteration: 542; epoch: 0; loss: 3.0659148693084717;
+fold: TRAIN; iteration: 543; epoch: 0; loss: 2.9460997581481934;
+fold: TRAIN; iteration: 544; epoch: 0; loss: 2.9162280559539795;
+fold: TRAIN; iteration: 545; epoch: 0; loss: 3.165886878967285;
+fold: TRAIN; iteration: 546; epoch: 0; loss: 2.8357629776000977;
+fold: TRAIN; iteration: 547; epoch: 0; loss: 2.8498764038085938;
+fold: TRAIN; iteration: 548; epoch: 0; loss: 2.897395372390747;
+fold: TRAIN; iteration: 549; epoch: 0; loss: 2.9154746532440186;
+fold: TRAIN; iteration: 550; epoch: 0; loss: 2.8948240280151367;
+fold: TRAIN; iteration: 551; epoch: 0; loss: 3.0029265880584717;
+fold: TRAIN; iteration: 552; epoch: 0; loss: 2.832686185836792;
+fold: TRAIN; iteration: 553; epoch: 0; loss: 2.5932042598724365;
+fold: TRAIN; iteration: 554; epoch: 0; loss: 2.9549529552459717;
+fold: TRAIN; iteration: 555; epoch: 0; loss: 3.1436996459960938;
+fold: TRAIN; iteration: 556; epoch: 0; loss: 2.8333306312561035;
+fold: TRAIN; iteration: 557; epoch: 0; loss: 2.62424898147583;
+fold: TRAIN; iteration: 558; epoch: 0; loss: 2.791398048400879;
+fold: TRAIN; iteration: 559; epoch: 0; loss: 2.4252781867980957;
+fold: TRAIN; iteration: 560; epoch: 0; loss: 2.788942337036133;
+fold: TRAIN; iteration: 561; epoch: 0; loss: 3.144672155380249;
+fold: TRAIN; iteration: 562; epoch: 0; loss: 2.845205068588257;
+fold: TRAIN; iteration: 563; epoch: 0; loss: 2.8327057361602783;
+fold: TRAIN; iteration: 564; epoch: 0; loss: 2.8808794021606445;
+fold: TRAIN; iteration: 565; epoch: 0; loss: 2.861386299133301;
+fold: TRAIN; iteration: 566; epoch: 0; loss: 2.8586530685424805;
+fold: TRAIN; iteration: 567; epoch: 0; loss: 2.6814959049224854;
+fold: TRAIN; iteration: 568; epoch: 0; loss: 2.7053003311157227;
+fold: TRAIN; iteration: 569; epoch: 0; loss: 2.767490863800049;
+fold: TRAIN; iteration: 570; epoch: 0; loss: 2.7144200801849365;
+fold: TRAIN; iteration: 571; epoch: 0; loss: 2.7644033432006836;
+fold: TRAIN; iteration: 572; epoch: 0; loss: 2.5962271690368652;
+fold: TRAIN; iteration: 573; epoch: 0; loss: 2.78548002243042;
+fold: TRAIN; iteration: 574; epoch: 0; loss: 3.0732104778289795;
+fold: TRAIN; iteration: 575; epoch: 0; loss: 2.702650785446167;
+fold: TRAIN; iteration: 576; epoch: 0; loss: 2.8862509727478027;
+fold: TRAIN; iteration: 577; epoch: 0; loss: 3.1014509201049805;
+fold: TRAIN; iteration: 578; epoch: 0; loss: 2.78440523147583;
+fold: TRAIN; iteration: 579; epoch: 0; loss: 2.8317127227783203;
+fold: TRAIN; iteration: 580; epoch: 0; loss: 2.7782089710235596;
+fold: TRAIN; iteration: 581; epoch: 0; loss: 2.937391996383667;
+fold: TRAIN; iteration: 582; epoch: 0; loss: 2.881716251373291;
+fold: TRAIN; iteration: 583; epoch: 0; loss: 2.8823840618133545;
+fold: TRAIN; iteration: 584; epoch: 0; loss: 2.757512092590332;
+fold: TRAIN; iteration: 585; epoch: 0; loss: 2.7898976802825928;
+fold: TRAIN; iteration: 586; epoch: 0; loss: 2.9879872798919678;
+fold: TRAIN; iteration: 587; epoch: 0; loss: 2.9786787033081055;
+fold: TRAIN; iteration: 588; epoch: 0; loss: 2.8214216232299805;
+fold: TRAIN; iteration: 589; epoch: 0; loss: 3.1277401447296143;
+fold: TRAIN; iteration: 590; epoch: 0; loss: 2.5929040908813477;
+fold: TRAIN; iteration: 591; epoch: 0; loss: 2.92607045173645;
+fold: TRAIN; iteration: 592; epoch: 0; loss: 2.7812576293945312;
+fold: TRAIN; iteration: 593; epoch: 0; loss: 2.8834290504455566;
+fold: TRAIN; iteration: 594; epoch: 0; loss: 2.6743383407592773;
+fold: TRAIN; iteration: 595; epoch: 0; loss: 2.7409496307373047;
+fold: TRAIN; iteration: 596; epoch: 0; loss: 3.2962043285369873;
+fold: TRAIN; iteration: 597; epoch: 0; loss: 2.8986098766326904;
+fold: TRAIN; iteration: 598; epoch: 0; loss: 2.8575403690338135;
+fold: TRAIN; iteration: 599; epoch: 0; loss: 2.8370349407196045;
+validating model...
+saving
+fold: VALID; iteration: 600; epoch: 0; loss: 2.7979451795903647;
+fold: TRAIN; iteration: 600; epoch: 0; loss: 2.7560250759124756;
+fold: TRAIN; iteration: 601; epoch: 0; loss: 2.8879663944244385;
+fold: TRAIN; iteration: 602; epoch: 0; loss: 2.748215913772583;
+fold: TRAIN; iteration: 603; epoch: 0; loss: 2.91171932220459;
+fold: TRAIN; iteration: 604; epoch: 0; loss: 2.767638921737671;
+fold: TRAIN; iteration: 605; epoch: 0; loss: 2.8678765296936035;
+fold: TRAIN; iteration: 606; epoch: 0; loss: 2.72098445892334;
+fold: TRAIN; iteration: 607; epoch: 0; loss: 2.9028573036193848;
+fold: TRAIN; iteration: 608; epoch: 0; loss: 2.9602160453796387;
+fold: TRAIN; iteration: 609; epoch: 0; loss: 2.9311068058013916;
+fold: TRAIN; iteration: 610; epoch: 0; loss: 2.944843053817749;
+fold: TRAIN; iteration: 611; epoch: 0; loss: 2.835047960281372;
+fold: TRAIN; iteration: 612; epoch: 0; loss: 3.0140395164489746;
+fold: TRAIN; iteration: 613; epoch: 0; loss: 3.1169240474700928;
+fold: TRAIN; iteration: 614; epoch: 0; loss: 3.0059103965759277;
+fold: TRAIN; iteration: 615; epoch: 0; loss: 2.9118969440460205;
+fold: TRAIN; iteration: 616; epoch: 0; loss: 2.8461971282958984;
+fold: TRAIN; iteration: 617; epoch: 0; loss: 2.6793606281280518;
+fold: TRAIN; iteration: 618; epoch: 0; loss: 2.784510612487793;
+fold: TRAIN; iteration: 619; epoch: 0; loss: 2.8993523120880127;
+fold: TRAIN; iteration: 620; epoch: 0; loss: 2.6383283138275146;
+fold: TRAIN; iteration: 621; epoch: 0; loss: 2.7859373092651367;
+fold: TRAIN; iteration: 622; epoch: 0; loss: 3.023707389831543;
+fold: TRAIN; iteration: 623; epoch: 0; loss: 3.031019687652588;
+fold: TRAIN; iteration: 624; epoch: 0; loss: 2.731689214706421;
+fold: TRAIN; iteration: 625; epoch: 0; loss: 2.9413537979125977;
+fold: TRAIN; iteration: 626; epoch: 0; loss: 2.552863359451294;
+fold: TRAIN; iteration: 627; epoch: 0; loss: 3.1186251640319824;
+fold: TRAIN; iteration: 628; epoch: 0; loss: 2.998774766921997;
+fold: TRAIN; iteration: 629; epoch: 0; loss: 2.6586110591888428;
+fold: TRAIN; iteration: 630; epoch: 0; loss: 2.799041509628296;
+fold: TRAIN; iteration: 631; epoch: 0; loss: 2.8318891525268555;
+fold: TRAIN; iteration: 632; epoch: 0; loss: 3.007690668106079;
+fold: TRAIN; iteration: 633; epoch: 0; loss: 2.7760753631591797;
+fold: TRAIN; iteration: 634; epoch: 0; loss: 2.4775452613830566;
+fold: TRAIN; iteration: 635; epoch: 0; loss: 2.861445426940918;
+fold: TRAIN; iteration: 636; epoch: 0; loss: 2.6691253185272217;
+fold: TRAIN; iteration: 637; epoch: 0; loss: 2.8998987674713135;
+fold: TRAIN; iteration: 638; epoch: 0; loss: 2.7296581268310547;
+fold: TRAIN; iteration: 639; epoch: 0; loss: 2.8769495487213135;
+fold: TRAIN; iteration: 640; epoch: 0; loss: 2.8151800632476807;
+fold: TRAIN; iteration: 641; epoch: 0; loss: 2.7415802478790283;
+fold: TRAIN; iteration: 642; epoch: 0; loss: 2.7525503635406494;
+fold: TRAIN; iteration: 643; epoch: 0; loss: 2.822838544845581;
+fold: TRAIN; iteration: 644; epoch: 0; loss: 2.7517402172088623;
+fold: TRAIN; iteration: 645; epoch: 0; loss: 2.874906063079834;
+fold: TRAIN; iteration: 646; epoch: 0; loss: 2.8828558921813965;
+fold: TRAIN; iteration: 647; epoch: 0; loss: 2.8265297412872314;
+fold: TRAIN; iteration: 648; epoch: 0; loss: 2.4199416637420654;
+fold: TRAIN; iteration: 649; epoch: 0; loss: 2.9422032833099365;
+fold: TRAIN; iteration: 650; epoch: 0; loss: 3.083829402923584;
+fold: TRAIN; iteration: 651; epoch: 0; loss: 2.7954626083374023;
+fold: TRAIN; iteration: 652; epoch: 0; loss: 2.847062110900879;
+fold: TRAIN; iteration: 653; epoch: 0; loss: 2.645904779434204;
+fold: TRAIN; iteration: 654; epoch: 0; loss: 2.9120612144470215;
+fold: TRAIN; iteration: 655; epoch: 0; loss: 2.584338426589966;
+fold: TRAIN; iteration: 656; epoch: 0; loss: 2.828796148300171;
+fold: TRAIN; iteration: 657; epoch: 0; loss: 2.691333293914795;
+fold: TRAIN; iteration: 658; epoch: 0; loss: 3.150148868560791;
+fold: TRAIN; iteration: 659; epoch: 0; loss: 2.7514877319335938;
+fold: TRAIN; iteration: 660; epoch: 0; loss: 2.6201446056365967;
+fold: TRAIN; iteration: 661; epoch: 0; loss: 2.865604877471924;
+fold: TRAIN; iteration: 662; epoch: 0; loss: 2.854410171508789;
+fold: TRAIN; iteration: 663; epoch: 0; loss: 2.6821889877319336;
+fold: TRAIN; iteration: 664; epoch: 0; loss: 2.7078137397766113;
+fold: TRAIN; iteration: 665; epoch: 0; loss: 2.954998254776001;
+fold: TRAIN; iteration: 666; epoch: 0; loss: 2.765920400619507;
+fold: TRAIN; iteration: 667; epoch: 0; loss: 2.8388354778289795;
+fold: TRAIN; iteration: 668; epoch: 0; loss: 2.910870313644409;
+fold: TRAIN; iteration: 669; epoch: 0; loss: 2.819892168045044;
+fold: TRAIN; iteration: 670; epoch: 0; loss: 2.6767325401306152;
+fold: TRAIN; iteration: 671; epoch: 0; loss: 2.929610252380371;
+fold: TRAIN; iteration: 672; epoch: 0; loss: 2.9302148818969727;
+fold: TRAIN; iteration: 673; epoch: 0; loss: 2.8225467205047607;
+fold: TRAIN; iteration: 674; epoch: 0; loss: 3.0340030193328857;
+fold: TRAIN; iteration: 675; epoch: 0; loss: 2.825758934020996;
+fold: TRAIN; iteration: 676; epoch: 0; loss: 2.8807373046875;
+fold: TRAIN; iteration: 677; epoch: 0; loss: 2.7973787784576416;
+fold: TRAIN; iteration: 678; epoch: 0; loss: 2.8375542163848877;
+fold: TRAIN; iteration: 679; epoch: 0; loss: 2.6546475887298584;
+fold: TRAIN; iteration: 680; epoch: 0; loss: 2.616575241088867;
+fold: TRAIN; iteration: 681; epoch: 0; loss: 3.129132032394409;
+fold: TRAIN; iteration: 682; epoch: 0; loss: 2.815670967102051;
+fold: TRAIN; iteration: 683; epoch: 0; loss: 2.6291348934173584;
+fold: TRAIN; iteration: 684; epoch: 0; loss: 2.715754985809326;
+fold: TRAIN; iteration: 685; epoch: 0; loss: 2.7296090126037598;
+fold: TRAIN; iteration: 686; epoch: 0; loss: 2.744349479675293;
+fold: TRAIN; iteration: 687; epoch: 0; loss: 2.662271499633789;
+fold: TRAIN; iteration: 688; epoch: 0; loss: 2.804877996444702;
+fold: TRAIN; iteration: 689; epoch: 0; loss: 2.758286952972412;
+fold: TRAIN; iteration: 690; epoch: 0; loss: 2.836117744445801;
+fold: TRAIN; iteration: 691; epoch: 0; loss: 2.718304395675659;
+fold: TRAIN; iteration: 692; epoch: 0; loss: 2.9959707260131836;
+fold: TRAIN; iteration: 693; epoch: 0; loss: 2.885998010635376;
+fold: TRAIN; iteration: 694; epoch: 0; loss: 2.8119547367095947;
+fold: TRAIN; iteration: 695; epoch: 0; loss: 2.7241384983062744;
+fold: TRAIN; iteration: 696; epoch: 0; loss: 2.888871192932129;
+fold: TRAIN; iteration: 697; epoch: 0; loss: 2.9893689155578613;
+fold: TRAIN; iteration: 698; epoch: 0; loss: 2.874887466430664;
+fold: TRAIN; iteration: 699; epoch: 0; loss: 2.570547103881836;
+fold: TRAIN; iteration: 700; epoch: 0; loss: 2.8583922386169434;
+fold: TRAIN; iteration: 701; epoch: 0; loss: 2.7762439250946045;
+fold: TRAIN; iteration: 702; epoch: 0; loss: 2.813126564025879;
+fold: TRAIN; iteration: 703; epoch: 0; loss: 3.186565637588501;
+fold: TRAIN; iteration: 704; epoch: 0; loss: 2.5037848949432373;
+fold: TRAIN; iteration: 705; epoch: 0; loss: 2.8672754764556885;
+fold: TRAIN; iteration: 706; epoch: 0; loss: 2.8958749771118164;
+fold: TRAIN; iteration: 707; epoch: 0; loss: 2.6997201442718506;
+fold: TRAIN; iteration: 708; epoch: 0; loss: 2.5870718955993652;
+fold: TRAIN; iteration: 709; epoch: 0; loss: 2.5812551975250244;
+fold: TRAIN; iteration: 710; epoch: 0; loss: 2.6065564155578613;
+fold: TRAIN; iteration: 711; epoch: 0; loss: 2.907822847366333;
+fold: TRAIN; iteration: 712; epoch: 0; loss: 2.7210581302642822;
+fold: TRAIN; iteration: 713; epoch: 0; loss: 2.694730281829834;
+fold: TRAIN; iteration: 714; epoch: 0; loss: 3.001096725463867;
+fold: TRAIN; iteration: 715; epoch: 0; loss: 2.7195186614990234;
+fold: TRAIN; iteration: 716; epoch: 0; loss: 2.6706550121307373;
+fold: TRAIN; iteration: 717; epoch: 0; loss: 2.7219784259796143;
+fold: TRAIN; iteration: 718; epoch: 0; loss: 2.6511354446411133;
+fold: TRAIN; iteration: 719; epoch: 0; loss: 2.9971370697021484;
+fold: TRAIN; iteration: 720; epoch: 0; loss: 2.751094341278076;
+fold: TRAIN; iteration: 721; epoch: 0; loss: 2.676133632659912;
+fold: TRAIN; iteration: 722; epoch: 0; loss: 2.7835628986358643;
+fold: TRAIN; iteration: 723; epoch: 0; loss: 2.5703811645507812;
+fold: TRAIN; iteration: 724; epoch: 0; loss: 2.731771469116211;
+fold: TRAIN; iteration: 725; epoch: 0; loss: 2.7641425132751465;
+fold: TRAIN; iteration: 726; epoch: 0; loss: 2.920192241668701;
+fold: TRAIN; iteration: 727; epoch: 0; loss: 2.746305227279663;
+fold: TRAIN; iteration: 728; epoch: 0; loss: 2.6625428199768066;
+fold: TRAIN; iteration: 729; epoch: 0; loss: 2.7785089015960693;
+fold: TRAIN; iteration: 730; epoch: 0; loss: 2.328688383102417;
+fold: TRAIN; iteration: 731; epoch: 0; loss: 2.504983425140381;
+fold: TRAIN; iteration: 732; epoch: 0; loss: 2.8976149559020996;
+fold: TRAIN; iteration: 733; epoch: 0; loss: 2.757153272628784;
+fold: TRAIN; iteration: 734; epoch: 0; loss: 2.9161996841430664;
+fold: TRAIN; iteration: 735; epoch: 0; loss: 2.734135627746582;
+fold: TRAIN; iteration: 736; epoch: 0; loss: 2.8392930030822754;
+fold: TRAIN; iteration: 737; epoch: 0; loss: 2.512193202972412;
+fold: TRAIN; iteration: 738; epoch: 0; loss: 2.714735984802246;
+fold: TRAIN; iteration: 739; epoch: 0; loss: 2.7249159812927246;
+fold: TRAIN; iteration: 740; epoch: 0; loss: 2.770379066467285;
+fold: TRAIN; iteration: 741; epoch: 0; loss: 2.7517385482788086;
+fold: TRAIN; iteration: 742; epoch: 0; loss: 2.668447494506836;
+fold: TRAIN; iteration: 743; epoch: 0; loss: 2.8306849002838135;
+fold: TRAIN; iteration: 744; epoch: 0; loss: 2.5400948524475098;
+fold: TRAIN; iteration: 745; epoch: 0; loss: 2.596562147140503;
+fold: TRAIN; iteration: 746; epoch: 0; loss: 2.9630320072174072;
+fold: TRAIN; iteration: 747; epoch: 0; loss: 2.4864981174468994;
+fold: TRAIN; iteration: 748; epoch: 0; loss: 2.49448299407959;
+fold: TRAIN; iteration: 749; epoch: 0; loss: 2.613992214202881;
+fold: TRAIN; iteration: 750; epoch: 0; loss: 2.4576542377471924;
+fold: TRAIN; iteration: 751; epoch: 0; loss: 3.054056167602539;
+fold: TRAIN; iteration: 752; epoch: 0; loss: 2.749089002609253;
+fold: TRAIN; iteration: 753; epoch: 0; loss: 2.8477678298950195;
+fold: TRAIN; iteration: 754; epoch: 0; loss: 2.7634575366973877;
+fold: TRAIN; iteration: 755; epoch: 0; loss: 2.6110892295837402;
+fold: TRAIN; iteration: 756; epoch: 0; loss: 2.6286089420318604;
+fold: TRAIN; iteration: 757; epoch: 0; loss: 2.6510372161865234;
+fold: TRAIN; iteration: 758; epoch: 0; loss: 3.1263973712921143;
+fold: TRAIN; iteration: 759; epoch: 0; loss: 2.7466917037963867;
+fold: TRAIN; iteration: 760; epoch: 0; loss: 2.7164385318756104;
+fold: TRAIN; iteration: 761; epoch: 0; loss: 2.6721885204315186;
+fold: TRAIN; iteration: 762; epoch: 0; loss: 2.5136733055114746;
+fold: TRAIN; iteration: 763; epoch: 0; loss: 2.8646249771118164;
+fold: TRAIN; iteration: 764; epoch: 0; loss: 2.673245429992676;
+fold: TRAIN; iteration: 765; epoch: 0; loss: 2.8706555366516113;
+fold: TRAIN; iteration: 766; epoch: 0; loss: 2.763920545578003;
+fold: TRAIN; iteration: 767; epoch: 0; loss: 2.6526436805725098;
+fold: TRAIN; iteration: 768; epoch: 0; loss: 2.808281183242798;
+fold: TRAIN; iteration: 769; epoch: 0; loss: 2.7133851051330566;
+fold: TRAIN; iteration: 770; epoch: 0; loss: 2.7399659156799316;
+fold: TRAIN; iteration: 771; epoch: 0; loss: 2.979276657104492;
+fold: TRAIN; iteration: 772; epoch: 0; loss: 2.6082286834716797;
+fold: TRAIN; iteration: 773; epoch: 0; loss: 2.7064855098724365;
+fold: TRAIN; iteration: 774; epoch: 0; loss: 2.900362253189087;
+fold: TRAIN; iteration: 775; epoch: 0; loss: 2.5460498332977295;
+fold: TRAIN; iteration: 776; epoch: 0; loss: 2.4328179359436035;
+fold: TRAIN; iteration: 777; epoch: 0; loss: 2.840179204940796;
+fold: TRAIN; iteration: 778; epoch: 0; loss: 2.805424451828003;
+fold: TRAIN; iteration: 779; epoch: 0; loss: 2.8102617263793945;
+fold: TRAIN; iteration: 780; epoch: 0; loss: 2.8422582149505615;
+fold: TRAIN; iteration: 781; epoch: 0; loss: 2.4332809448242188;
+fold: TRAIN; iteration: 782; epoch: 0; loss: 2.873135566711426;
+fold: TRAIN; iteration: 783; epoch: 0; loss: 2.893718957901001;
+fold: TRAIN; iteration: 784; epoch: 0; loss: 2.4888193607330322;
+fold: TRAIN; iteration: 785; epoch: 0; loss: 2.6642181873321533;
+fold: TRAIN; iteration: 786; epoch: 0; loss: 2.7414655685424805;
+fold: TRAIN; iteration: 787; epoch: 0; loss: 2.686234474182129;
+fold: TRAIN; iteration: 788; epoch: 0; loss: 2.6329774856567383;
+fold: TRAIN; iteration: 789; epoch: 0; loss: 2.861581325531006;
+fold: TRAIN; iteration: 790; epoch: 0; loss: 2.748652458190918;
+fold: TRAIN; iteration: 791; epoch: 0; loss: 2.773951530456543;
+fold: TRAIN; iteration: 792; epoch: 0; loss: 2.5441136360168457;
+fold: TRAIN; iteration: 793; epoch: 0; loss: 2.6219699382781982;
+fold: TRAIN; iteration: 794; epoch: 0; loss: 2.7410593032836914;
+fold: TRAIN; iteration: 795; epoch: 0; loss: 2.7244036197662354;
+fold: TRAIN; iteration: 796; epoch: 0; loss: 2.756382703781128;
+fold: TRAIN; iteration: 797; epoch: 0; loss: 3.008765935897827;
+fold: TRAIN; iteration: 798; epoch: 0; loss: 2.727569580078125;
+fold: TRAIN; iteration: 799; epoch: 0; loss: 2.690903425216675;
+validating model...
+saving
+fold: VALID; iteration: 800; epoch: 0; loss: 2.6703065284868566;
+fold: TRAIN; iteration: 800; epoch: 0; loss: 2.7563390731811523;
+fold: TRAIN; iteration: 801; epoch: 0; loss: 2.7505393028259277;
+fold: TRAIN; iteration: 802; epoch: 0; loss: 2.668097734451294;
+fold: TRAIN; iteration: 803; epoch: 0; loss: 2.683793067932129;
+fold: TRAIN; iteration: 804; epoch: 0; loss: 2.4450745582580566;
+fold: TRAIN; iteration: 805; epoch: 0; loss: 2.7831499576568604;
+fold: TRAIN; iteration: 806; epoch: 0; loss: 2.904423236846924;
+fold: TRAIN; iteration: 807; epoch: 0; loss: 2.688875436782837;
+fold: TRAIN; iteration: 808; epoch: 0; loss: 2.4500069618225098;
+fold: TRAIN; iteration: 809; epoch: 0; loss: 2.8072900772094727;
+fold: TRAIN; iteration: 810; epoch: 0; loss: 2.748905897140503;
+fold: TRAIN; iteration: 811; epoch: 0; loss: 2.7092125415802;
+fold: TRAIN; iteration: 812; epoch: 0; loss: 2.680678606033325;
+fold: TRAIN; iteration: 813; epoch: 0; loss: 2.4686460494995117;
+fold: TRAIN; iteration: 814; epoch: 0; loss: 2.9273548126220703;
+fold: TRAIN; iteration: 815; epoch: 0; loss: 2.8206419944763184;
+fold: TRAIN; iteration: 816; epoch: 0; loss: 2.868058681488037;
+fold: TRAIN; iteration: 817; epoch: 0; loss: 2.716792106628418;
+fold: TRAIN; iteration: 818; epoch: 0; loss: 2.975099563598633;
+fold: TRAIN; iteration: 819; epoch: 0; loss: 2.677840232849121;
+fold: TRAIN; iteration: 820; epoch: 0; loss: 2.536532402038574;
+fold: TRAIN; iteration: 821; epoch: 0; loss: 2.8475141525268555;
+fold: TRAIN; iteration: 822; epoch: 0; loss: 2.7014763355255127;
+fold: TRAIN; iteration: 823; epoch: 0; loss: 2.8963277339935303;
+fold: TRAIN; iteration: 824; epoch: 0; loss: 2.5788071155548096;
+fold: TRAIN; iteration: 825; epoch: 0; loss: 3.163092851638794;
+fold: TRAIN; iteration: 826; epoch: 0; loss: 2.7460126876831055;
+fold: TRAIN; iteration: 827; epoch: 0; loss: 2.8128066062927246;
+fold: TRAIN; iteration: 828; epoch: 0; loss: 2.9534542560577393;
+fold: TRAIN; iteration: 829; epoch: 0; loss: 2.823437452316284;
+fold: TRAIN; iteration: 830; epoch: 0; loss: 2.6652398109436035;
+fold: TRAIN; iteration: 831; epoch: 0; loss: 2.7877755165100098;
+fold: TRAIN; iteration: 832; epoch: 0; loss: 2.852721929550171;
+fold: TRAIN; iteration: 833; epoch: 0; loss: 2.5727546215057373;
+fold: TRAIN; iteration: 834; epoch: 0; loss: 2.9584341049194336;
+fold: TRAIN; iteration: 835; epoch: 0; loss: 2.6685972213745117;
+fold: TRAIN; iteration: 836; epoch: 0; loss: 2.9742581844329834;
+fold: TRAIN; iteration: 837; epoch: 0; loss: 2.8046133518218994;
+fold: TRAIN; iteration: 838; epoch: 0; loss: 2.813796281814575;
+fold: TRAIN; iteration: 839; epoch: 0; loss: 2.6982131004333496;
+fold: TRAIN; iteration: 840; epoch: 0; loss: 2.6743457317352295;
+fold: TRAIN; iteration: 841; epoch: 0; loss: 2.864626407623291;
+fold: TRAIN; iteration: 842; epoch: 0; loss: 2.914360761642456;
+fold: TRAIN; iteration: 843; epoch: 0; loss: 2.500204563140869;
+fold: TRAIN; iteration: 844; epoch: 0; loss: 2.490096092224121;
+fold: TRAIN; iteration: 845; epoch: 0; loss: 2.6801888942718506;
+fold: TRAIN; iteration: 846; epoch: 0; loss: 2.764045476913452;
+fold: TRAIN; iteration: 847; epoch: 0; loss: 2.7809836864471436;
+fold: TRAIN; iteration: 848; epoch: 0; loss: 2.5906190872192383;
+fold: TRAIN; iteration: 849; epoch: 0; loss: 2.746262788772583;
+fold: TRAIN; iteration: 850; epoch: 0; loss: 2.5974929332733154;
+fold: TRAIN; iteration: 851; epoch: 0; loss: 2.6401190757751465;
+fold: TRAIN; iteration: 852; epoch: 0; loss: 2.398284912109375;
+fold: TRAIN; iteration: 853; epoch: 0; loss: 2.824709415435791;
+fold: TRAIN; iteration: 854; epoch: 0; loss: 2.598440647125244;
+fold: TRAIN; iteration: 855; epoch: 0; loss: 2.8486897945404053;
+fold: TRAIN; iteration: 856; epoch: 0; loss: 2.929025888442993;
+fold: TRAIN; iteration: 857; epoch: 0; loss: 2.662339687347412;
+fold: TRAIN; iteration: 858; epoch: 0; loss: 2.6907272338867188;
+fold: TRAIN; iteration: 859; epoch: 0; loss: 2.765559434890747;
+fold: TRAIN; iteration: 860; epoch: 0; loss: 2.7070212364196777;
+fold: TRAIN; iteration: 861; epoch: 0; loss: 2.676459312438965;
+fold: TRAIN; iteration: 862; epoch: 0; loss: 2.5438926219940186;
+fold: TRAIN; iteration: 863; epoch: 0; loss: 2.7968590259552;
+fold: TRAIN; iteration: 864; epoch: 0; loss: 2.6924023628234863;
+fold: TRAIN; iteration: 865; epoch: 0; loss: 2.9059228897094727;
+fold: TRAIN; iteration: 866; epoch: 0; loss: 2.617889642715454;
+fold: TRAIN; iteration: 867; epoch: 0; loss: 2.8866043090820312;
+fold: TRAIN; iteration: 868; epoch: 0; loss: 2.6600000858306885;
+fold: TRAIN; iteration: 869; epoch: 0; loss: 2.746657609939575;
+fold: TRAIN; iteration: 870; epoch: 0; loss: 2.783247470855713;
+fold: TRAIN; iteration: 871; epoch: 0; loss: 2.8882334232330322;
+fold: TRAIN; iteration: 872; epoch: 0; loss: 2.716243028640747;
+fold: TRAIN; iteration: 873; epoch: 0; loss: 2.676027297973633;
+fold: TRAIN; iteration: 874; epoch: 0; loss: 2.7020514011383057;
+fold: TRAIN; iteration: 875; epoch: 0; loss: 2.4539453983306885;
+fold: TRAIN; iteration: 876; epoch: 0; loss: 2.5937023162841797;
+fold: TRAIN; iteration: 877; epoch: 0; loss: 2.664433002471924;
+fold: TRAIN; iteration: 878; epoch: 0; loss: 3.001476526260376;
+fold: TRAIN; iteration: 879; epoch: 0; loss: 2.5808043479919434;
+fold: TRAIN; iteration: 880; epoch: 0; loss: 2.7736191749572754;
+fold: TRAIN; iteration: 881; epoch: 0; loss: 2.8249127864837646;
+fold: TRAIN; iteration: 882; epoch: 0; loss: 2.936105251312256;
+fold: TRAIN; iteration: 883; epoch: 0; loss: 2.6777594089508057;
+fold: TRAIN; iteration: 884; epoch: 0; loss: 2.6495742797851562;
+fold: TRAIN; iteration: 885; epoch: 0; loss: 2.8342199325561523;
+fold: TRAIN; iteration: 886; epoch: 0; loss: 3.105529546737671;
+fold: TRAIN; iteration: 887; epoch: 0; loss: 2.7392261028289795;
+fold: TRAIN; iteration: 888; epoch: 0; loss: 2.788973093032837;
+fold: TRAIN; iteration: 889; epoch: 0; loss: 2.961275339126587;
+fold: TRAIN; iteration: 890; epoch: 0; loss: 2.6787936687469482;
+fold: TRAIN; iteration: 891; epoch: 0; loss: 2.5265297889709473;
+fold: TRAIN; iteration: 892; epoch: 0; loss: 2.4495911598205566;
+fold: TRAIN; iteration: 893; epoch: 0; loss: 2.597259283065796;
+fold: TRAIN; iteration: 894; epoch: 0; loss: 2.536921739578247;
+fold: TRAIN; iteration: 895; epoch: 0; loss: 2.49507212638855;
+fold: TRAIN; iteration: 896; epoch: 0; loss: 2.9541120529174805;
+fold: TRAIN; iteration: 897; epoch: 0; loss: 2.72581148147583;
+fold: TRAIN; iteration: 898; epoch: 0; loss: 2.8164665699005127;
+fold: TRAIN; iteration: 899; epoch: 0; loss: 2.656416654586792;
+fold: TRAIN; iteration: 900; epoch: 0; loss: 2.6460299491882324;
+fold: TRAIN; iteration: 901; epoch: 0; loss: 2.857008457183838;
+fold: TRAIN; iteration: 902; epoch: 0; loss: 2.846252679824829;
+fold: TRAIN; iteration: 903; epoch: 0; loss: 2.691742181777954;
+fold: TRAIN; iteration: 904; epoch: 0; loss: 2.737375259399414;
+fold: TRAIN; iteration: 905; epoch: 0; loss: 2.650942802429199;
+fold: TRAIN; iteration: 906; epoch: 0; loss: 2.4791228771209717;
+fold: TRAIN; iteration: 907; epoch: 0; loss: 2.5060677528381348;
+fold: TRAIN; iteration: 908; epoch: 0; loss: 2.8745980262756348;
+fold: TRAIN; iteration: 909; epoch: 0; loss: 2.639677047729492;
+fold: TRAIN; iteration: 910; epoch: 0; loss: 2.666734218597412;
+fold: TRAIN; iteration: 911; epoch: 0; loss: 2.5122921466827393;
+fold: TRAIN; iteration: 912; epoch: 0; loss: 2.814013957977295;
+fold: TRAIN; iteration: 913; epoch: 0; loss: 2.4131836891174316;
+fold: TRAIN; iteration: 914; epoch: 0; loss: 2.6995389461517334;
+fold: TRAIN; iteration: 915; epoch: 0; loss: 2.964869737625122;
+fold: TRAIN; iteration: 916; epoch: 0; loss: 2.702592134475708;
+fold: TRAIN; iteration: 917; epoch: 0; loss: 2.6628589630126953;
+fold: TRAIN; iteration: 918; epoch: 0; loss: 2.5835025310516357;
+fold: TRAIN; iteration: 919; epoch: 0; loss: 2.781250238418579;
+fold: TRAIN; iteration: 920; epoch: 0; loss: 2.9540021419525146;
+fold: TRAIN; iteration: 921; epoch: 0; loss: 2.4879961013793945;
+fold: TRAIN; iteration: 922; epoch: 0; loss: 2.64304780960083;
+fold: TRAIN; iteration: 923; epoch: 0; loss: 2.425053596496582;
+fold: TRAIN; iteration: 924; epoch: 0; loss: 2.651679277420044;
+fold: TRAIN; iteration: 925; epoch: 0; loss: 2.5084145069122314;
+fold: TRAIN; iteration: 926; epoch: 0; loss: 2.7347259521484375;
+fold: TRAIN; iteration: 927; epoch: 0; loss: 2.6960289478302;
+fold: TRAIN; iteration: 928; epoch: 0; loss: 2.7599921226501465;
+fold: TRAIN; iteration: 929; epoch: 0; loss: 2.504395008087158;
+fold: TRAIN; iteration: 930; epoch: 0; loss: 2.614121675491333;
+fold: TRAIN; iteration: 931; epoch: 0; loss: 2.650222063064575;
+fold: TRAIN; iteration: 932; epoch: 0; loss: 2.5744714736938477;
+fold: TRAIN; iteration: 933; epoch: 0; loss: 2.4994564056396484;
+fold: TRAIN; iteration: 934; epoch: 0; loss: 2.4784865379333496;
+fold: TRAIN; iteration: 935; epoch: 0; loss: 2.893862724304199;
+fold: TRAIN; iteration: 936; epoch: 0; loss: 2.821073532104492;
+fold: TRAIN; iteration: 937; epoch: 0; loss: 2.627114772796631;
+fold: TRAIN; iteration: 938; epoch: 0; loss: 2.6357083320617676;
+fold: TRAIN; iteration: 939; epoch: 0; loss: 3.2064757347106934;
+fold: TRAIN; iteration: 940; epoch: 0; loss: 2.9169411659240723;
+fold: TRAIN; iteration: 941; epoch: 0; loss: 2.9177300930023193;
+fold: TRAIN; iteration: 942; epoch: 0; loss: 2.7296996116638184;
+fold: TRAIN; iteration: 943; epoch: 0; loss: 2.606900691986084;
+fold: TRAIN; iteration: 944; epoch: 0; loss: 2.6489782333374023;
+fold: TRAIN; iteration: 945; epoch: 0; loss: 2.766885995864868;
+fold: TRAIN; iteration: 946; epoch: 0; loss: 2.8567328453063965;
+fold: TRAIN; iteration: 947; epoch: 0; loss: 2.6368212699890137;
+fold: TRAIN; iteration: 948; epoch: 0; loss: 2.8066070079803467;
+fold: TRAIN; iteration: 949; epoch: 0; loss: 2.7855162620544434;
+fold: TRAIN; iteration: 950; epoch: 0; loss: 2.808825969696045;
+fold: TRAIN; iteration: 951; epoch: 0; loss: 2.7339556217193604;
+fold: TRAIN; iteration: 952; epoch: 0; loss: 2.3811352252960205;
+fold: TRAIN; iteration: 953; epoch: 0; loss: 2.6778528690338135;
+fold: TRAIN; iteration: 954; epoch: 0; loss: 2.669528007507324;
+fold: TRAIN; iteration: 955; epoch: 0; loss: 2.588716983795166;
+fold: TRAIN; iteration: 956; epoch: 0; loss: 2.6260623931884766;
+fold: TRAIN; iteration: 957; epoch: 0; loss: 2.64035701751709;
+fold: TRAIN; iteration: 958; epoch: 0; loss: 2.7682669162750244;
+fold: TRAIN; iteration: 959; epoch: 0; loss: 2.635363817214966;
+fold: TRAIN; iteration: 960; epoch: 0; loss: 2.5039074420928955;
+fold: TRAIN; iteration: 961; epoch: 0; loss: 2.7853143215179443;
+fold: TRAIN; iteration: 962; epoch: 0; loss: 2.8989875316619873;
+fold: TRAIN; iteration: 963; epoch: 0; loss: 2.7232160568237305;
+fold: TRAIN; iteration: 964; epoch: 0; loss: 2.646416664123535;
+fold: TRAIN; iteration: 965; epoch: 0; loss: 2.5754711627960205;
+fold: TRAIN; iteration: 966; epoch: 0; loss: 2.7364675998687744;
+fold: TRAIN; iteration: 967; epoch: 0; loss: 2.832456588745117;
+fold: TRAIN; iteration: 968; epoch: 0; loss: 2.9579105377197266;
+fold: TRAIN; iteration: 969; epoch: 0; loss: 2.675858497619629;
+fold: TRAIN; iteration: 970; epoch: 0; loss: 2.9984793663024902;
+fold: TRAIN; iteration: 971; epoch: 0; loss: 2.745668888092041;
+fold: TRAIN; iteration: 972; epoch: 0; loss: 2.5753085613250732;
+fold: TRAIN; iteration: 973; epoch: 0; loss: 2.70039701461792;
+fold: TRAIN; iteration: 974; epoch: 0; loss: 2.5475990772247314;
+fold: TRAIN; iteration: 975; epoch: 0; loss: 2.8487071990966797;
+fold: TRAIN; iteration: 976; epoch: 0; loss: 2.697530746459961;
+fold: TRAIN; iteration: 977; epoch: 0; loss: 2.772376298904419;
+fold: TRAIN; iteration: 978; epoch: 0; loss: 2.7790274620056152;
+fold: TRAIN; iteration: 979; epoch: 0; loss: 2.551509141921997;
+fold: TRAIN; iteration: 980; epoch: 0; loss: 2.6996703147888184;
+fold: TRAIN; iteration: 981; epoch: 0; loss: 2.7587499618530273;
+fold: TRAIN; iteration: 982; epoch: 0; loss: 2.669447898864746;
+fold: TRAIN; iteration: 983; epoch: 0; loss: 2.5982961654663086;
+fold: TRAIN; iteration: 984; epoch: 0; loss: 2.5697638988494873;
+fold: TRAIN; iteration: 985; epoch: 0; loss: 2.5578417778015137;
+fold: TRAIN; iteration: 986; epoch: 0; loss: 2.545288324356079;
+fold: TRAIN; iteration: 987; epoch: 0; loss: 2.4302103519439697;
+fold: TRAIN; iteration: 988; epoch: 0; loss: 2.8462984561920166;
+fold: TRAIN; iteration: 989; epoch: 0; loss: 2.4564626216888428;
+fold: TRAIN; iteration: 990; epoch: 0; loss: 2.736171245574951;
+fold: TRAIN; iteration: 991; epoch: 0; loss: 2.7080321311950684;
+fold: TRAIN; iteration: 992; epoch: 0; loss: 2.5325729846954346;
+fold: TRAIN; iteration: 993; epoch: 0; loss: 2.740736961364746;
+fold: TRAIN; iteration: 994; epoch: 0; loss: 2.6021475791931152;
+fold: TRAIN; iteration: 995; epoch: 0; loss: 2.7225615978240967;
+fold: TRAIN; iteration: 996; epoch: 0; loss: 2.577481269836426;
+fold: TRAIN; iteration: 997; epoch: 0; loss: 2.4060218334198;
+fold: TRAIN; iteration: 998; epoch: 0; loss: 2.6872928142547607;
+fold: TRAIN; iteration: 999; epoch: 0; loss: 2.665224552154541;
+validating model...
+saving
+fold: VALID; iteration: 1000; epoch: 0; loss: 2.637474132747185;
+fold: TRAIN; iteration: 1000; epoch: 0; loss: 2.5780746936798096;
+fold: TRAIN; iteration: 1001; epoch: 0; loss: 2.6775317192077637;
+fold: TRAIN; iteration: 1002; epoch: 0; loss: 2.790898323059082;
+fold: TRAIN; iteration: 1003; epoch: 0; loss: 2.505816698074341;
+fold: TRAIN; iteration: 1004; epoch: 0; loss: 2.6787378787994385;
+fold: TRAIN; iteration: 1005; epoch: 0; loss: 2.685173749923706;
+fold: TRAIN; iteration: 1006; epoch: 0; loss: 2.5173392295837402;
+fold: TRAIN; iteration: 1007; epoch: 0; loss: 2.6436033248901367;
+fold: TRAIN; iteration: 1008; epoch: 0; loss: 2.6293442249298096;
+fold: TRAIN; iteration: 1009; epoch: 0; loss: 2.6855411529541016;
+fold: TRAIN; iteration: 1010; epoch: 0; loss: 2.6323535442352295;
+fold: TRAIN; iteration: 1011; epoch: 0; loss: 2.371741771697998;
+fold: TRAIN; iteration: 1012; epoch: 0; loss: 2.6933159828186035;
+fold: TRAIN; iteration: 1013; epoch: 0; loss: 2.667313575744629;
+fold: TRAIN; iteration: 1014; epoch: 0; loss: 2.706831693649292;
+fold: TRAIN; iteration: 1015; epoch: 0; loss: 2.8729944229125977;
+fold: TRAIN; iteration: 1016; epoch: 0; loss: 2.355269432067871;
+fold: TRAIN; iteration: 1017; epoch: 0; loss: 2.7818007469177246;
+fold: TRAIN; iteration: 1018; epoch: 0; loss: 2.4016945362091064;
+fold: TRAIN; iteration: 1019; epoch: 0; loss: 2.6600427627563477;
+fold: TRAIN; iteration: 1020; epoch: 0; loss: 2.9010989665985107;
+fold: TRAIN; iteration: 1021; epoch: 0; loss: 2.791722297668457;
+fold: TRAIN; iteration: 1022; epoch: 0; loss: 2.702077865600586;
+fold: TRAIN; iteration: 1023; epoch: 0; loss: 2.6511542797088623;
+fold: TRAIN; iteration: 1024; epoch: 0; loss: 2.4717373847961426;
+fold: TRAIN; iteration: 1025; epoch: 0; loss: 2.741290807723999;
+fold: TRAIN; iteration: 1026; epoch: 0; loss: 2.9242560863494873;
+fold: TRAIN; iteration: 1027; epoch: 0; loss: 2.452787160873413;
+fold: TRAIN; iteration: 1028; epoch: 0; loss: 2.8217906951904297;
+fold: TRAIN; iteration: 1029; epoch: 0; loss: 2.611257553100586;
+fold: TRAIN; iteration: 1030; epoch: 0; loss: 2.612030267715454;
+fold: TRAIN; iteration: 1031; epoch: 0; loss: 2.7121145725250244;
+fold: TRAIN; iteration: 1032; epoch: 0; loss: 2.660130500793457;
+fold: TRAIN; iteration: 1033; epoch: 0; loss: 2.416867971420288;
+fold: TRAIN; iteration: 1034; epoch: 0; loss: 2.832808017730713;
+fold: TRAIN; iteration: 1035; epoch: 0; loss: 2.346458911895752;
+fold: TRAIN; iteration: 1036; epoch: 0; loss: 2.70048451423645;
+fold: TRAIN; iteration: 1037; epoch: 0; loss: 3.037213087081909;
+fold: TRAIN; iteration: 1038; epoch: 0; loss: 2.505094289779663;
+fold: TRAIN; iteration: 1039; epoch: 0; loss: 2.513606309890747;
+fold: TRAIN; iteration: 1040; epoch: 0; loss: 2.716252326965332;
+fold: TRAIN; iteration: 1041; epoch: 0; loss: 2.574080228805542;
+fold: TRAIN; iteration: 1042; epoch: 0; loss: 2.5704925060272217;
+fold: TRAIN; iteration: 1043; epoch: 0; loss: 2.8307712078094482;
+fold: TRAIN; iteration: 1044; epoch: 0; loss: 2.85368275642395;
+fold: TRAIN; iteration: 1045; epoch: 0; loss: 2.744626998901367;
+fold: TRAIN; iteration: 1046; epoch: 0; loss: 2.66831636428833;
+fold: TRAIN; iteration: 1047; epoch: 0; loss: 2.6792187690734863;
+fold: TRAIN; iteration: 1048; epoch: 0; loss: 2.5793981552124023;
+fold: TRAIN; iteration: 1049; epoch: 0; loss: 2.759855270385742;
+fold: TRAIN; iteration: 1050; epoch: 0; loss: 2.7368805408477783;
+fold: TRAIN; iteration: 1051; epoch: 0; loss: 2.4163994789123535;
+fold: TRAIN; iteration: 1052; epoch: 0; loss: 2.670626640319824;
+fold: TRAIN; iteration: 1053; epoch: 0; loss: 2.6345250606536865;
+fold: TRAIN; iteration: 1054; epoch: 0; loss: 2.4305920600891113;
+fold: TRAIN; iteration: 1055; epoch: 0; loss: 2.4307796955108643;
+fold: TRAIN; iteration: 1056; epoch: 0; loss: 2.7215728759765625;
+fold: TRAIN; iteration: 1057; epoch: 0; loss: 2.547886610031128;
+fold: TRAIN; iteration: 1058; epoch: 0; loss: 2.957221269607544;
+fold: TRAIN; iteration: 1059; epoch: 0; loss: 2.833167314529419;
+fold: TRAIN; iteration: 1060; epoch: 0; loss: 2.7495315074920654;
+fold: TRAIN; iteration: 1061; epoch: 0; loss: 2.8705193996429443;
+fold: TRAIN; iteration: 1062; epoch: 0; loss: 2.7341420650482178;
+fold: TRAIN; iteration: 1063; epoch: 0; loss: 2.6632490158081055;
+fold: TRAIN; iteration: 1064; epoch: 0; loss: 2.66098690032959;
+fold: TRAIN; iteration: 1065; epoch: 0; loss: 2.481985330581665;
+fold: TRAIN; iteration: 1066; epoch: 0; loss: 2.61796236038208;
+fold: TRAIN; iteration: 1067; epoch: 0; loss: 2.6554291248321533;
+fold: TRAIN; iteration: 1068; epoch: 0; loss: 2.707549810409546;
+fold: TRAIN; iteration: 1069; epoch: 0; loss: 2.4103660583496094;
+fold: TRAIN; iteration: 1070; epoch: 0; loss: 2.5938985347747803;
+fold: TRAIN; iteration: 1071; epoch: 0; loss: 2.7014758586883545;
+fold: TRAIN; iteration: 1072; epoch: 0; loss: 2.67374324798584;
+fold: TRAIN; iteration: 1073; epoch: 0; loss: 2.629755973815918;
+fold: TRAIN; iteration: 1074; epoch: 0; loss: 2.7623443603515625;
+fold: TRAIN; iteration: 1075; epoch: 0; loss: 2.6888022422790527;
+fold: TRAIN; iteration: 1076; epoch: 0; loss: 2.5022237300872803;
+fold: TRAIN; iteration: 1077; epoch: 0; loss: 2.915135383605957;
+fold: TRAIN; iteration: 1078; epoch: 0; loss: 2.573143720626831;
+fold: TRAIN; iteration: 1079; epoch: 0; loss: 2.606248378753662;
+fold: TRAIN; iteration: 1080; epoch: 0; loss: 2.836475133895874;
+fold: TRAIN; iteration: 1081; epoch: 0; loss: 2.6147453784942627;
+fold: TRAIN; iteration: 1082; epoch: 0; loss: 2.6687848567962646;
+fold: TRAIN; iteration: 1083; epoch: 0; loss: 2.862135648727417;
+fold: TRAIN; iteration: 1084; epoch: 0; loss: 2.8670897483825684;
+fold: TRAIN; iteration: 1085; epoch: 0; loss: 2.5879018306732178;
+fold: TRAIN; iteration: 1086; epoch: 0; loss: 2.5259900093078613;
+fold: TRAIN; iteration: 1087; epoch: 0; loss: 2.6383140087127686;
+fold: TRAIN; iteration: 1088; epoch: 0; loss: 2.712369680404663;
+fold: TRAIN; iteration: 1089; epoch: 0; loss: 2.7754716873168945;
+fold: TRAIN; iteration: 1090; epoch: 0; loss: 2.7833502292633057;
+fold: TRAIN; iteration: 1091; epoch: 0; loss: 2.551091194152832;
+fold: TRAIN; iteration: 1092; epoch: 0; loss: 2.637787103652954;
+fold: TRAIN; iteration: 1093; epoch: 0; loss: 2.533250331878662;
+fold: TRAIN; iteration: 1094; epoch: 0; loss: 2.9062554836273193;
+fold: TRAIN; iteration: 1095; epoch: 0; loss: 2.579033613204956;
+fold: TRAIN; iteration: 1096; epoch: 0; loss: 2.5766916275024414;
+fold: TRAIN; iteration: 1097; epoch: 0; loss: 2.4358315467834473;
+fold: TRAIN; iteration: 1098; epoch: 0; loss: 2.658881902694702;
+fold: TRAIN; iteration: 1099; epoch: 0; loss: 2.570521831512451;
+fold: TRAIN; iteration: 1100; epoch: 0; loss: 2.579618453979492;
+fold: TRAIN; iteration: 1101; epoch: 0; loss: 2.621410608291626;
+fold: TRAIN; iteration: 1102; epoch: 0; loss: 2.657125473022461;
+fold: TRAIN; iteration: 1103; epoch: 0; loss: 2.589367151260376;
+fold: TRAIN; iteration: 1104; epoch: 0; loss: 2.7105774879455566;
+fold: TRAIN; iteration: 1105; epoch: 0; loss: 2.568526029586792;
+fold: TRAIN; iteration: 1106; epoch: 0; loss: 2.8593804836273193;
+fold: TRAIN; iteration: 1107; epoch: 0; loss: 2.552107572555542;
+fold: TRAIN; iteration: 1108; epoch: 0; loss: 2.691342353820801;
+fold: TRAIN; iteration: 1109; epoch: 0; loss: 2.7467968463897705;
+fold: TRAIN; iteration: 1110; epoch: 0; loss: 2.6672170162200928;
+fold: TRAIN; iteration: 1111; epoch: 0; loss: 2.364691734313965;
+fold: TRAIN; iteration: 1112; epoch: 0; loss: 2.650928258895874;
+fold: TRAIN; iteration: 1113; epoch: 0; loss: 2.408642530441284;
+fold: TRAIN; iteration: 1114; epoch: 0; loss: 2.74957275390625;
+fold: TRAIN; iteration: 1115; epoch: 0; loss: 2.7156195640563965;
+fold: TRAIN; iteration: 1116; epoch: 0; loss: 2.4222970008850098;
+fold: TRAIN; iteration: 1117; epoch: 0; loss: 2.6150903701782227;
+fold: TRAIN; iteration: 1118; epoch: 0; loss: 2.7267205715179443;
+fold: TRAIN; iteration: 1119; epoch: 0; loss: 2.589371681213379;
+fold: TRAIN; iteration: 1120; epoch: 0; loss: 2.722296953201294;
+fold: TRAIN; iteration: 1121; epoch: 0; loss: 2.5673770904541016;
+fold: TRAIN; iteration: 1122; epoch: 0; loss: 2.697737216949463;
+fold: TRAIN; iteration: 1123; epoch: 0; loss: 2.589914321899414;
+fold: TRAIN; iteration: 1124; epoch: 0; loss: 2.385110855102539;
+fold: TRAIN; iteration: 1125; epoch: 0; loss: 2.6769115924835205;
+fold: TRAIN; iteration: 1126; epoch: 0; loss: 2.7288293838500977;
+fold: TRAIN; iteration: 1127; epoch: 0; loss: 2.81435489654541;
+fold: TRAIN; iteration: 1128; epoch: 0; loss: 2.4930264949798584;
+fold: TRAIN; iteration: 1129; epoch: 0; loss: 2.7948169708251953;
+fold: TRAIN; iteration: 1130; epoch: 0; loss: 2.4806466102600098;
+fold: TRAIN; iteration: 1131; epoch: 0; loss: 2.76884388923645;
+fold: TRAIN; iteration: 1132; epoch: 0; loss: 2.930609703063965;
+fold: TRAIN; iteration: 1133; epoch: 0; loss: 2.682218313217163;
+fold: TRAIN; iteration: 1134; epoch: 0; loss: 2.6088616847991943;
+fold: TRAIN; iteration: 1135; epoch: 0; loss: 2.427002191543579;
+fold: TRAIN; iteration: 1136; epoch: 0; loss: 2.4240691661834717;
+fold: TRAIN; iteration: 1137; epoch: 0; loss: 2.4597396850585938;
+fold: TRAIN; iteration: 1138; epoch: 0; loss: 2.579641103744507;
+fold: TRAIN; iteration: 1139; epoch: 0; loss: 2.8050668239593506;
+fold: TRAIN; iteration: 1140; epoch: 0; loss: 2.5538604259490967;
+fold: TRAIN; iteration: 1141; epoch: 0; loss: 2.757716178894043;
+fold: TRAIN; iteration: 1142; epoch: 0; loss: 2.536806106567383;
+fold: TRAIN; iteration: 1143; epoch: 0; loss: 2.7185986042022705;
+fold: TRAIN; iteration: 1144; epoch: 0; loss: 2.567775011062622;
+fold: TRAIN; iteration: 1145; epoch: 0; loss: 2.742419958114624;
+fold: TRAIN; iteration: 1146; epoch: 0; loss: 2.601450204849243;
+fold: TRAIN; iteration: 1147; epoch: 0; loss: 2.880476713180542;
+fold: TRAIN; iteration: 1148; epoch: 0; loss: 2.640254497528076;
+fold: TRAIN; iteration: 1149; epoch: 0; loss: 2.7748327255249023;
+fold: TRAIN; iteration: 1150; epoch: 0; loss: 2.6770129203796387;
+fold: TRAIN; iteration: 1151; epoch: 0; loss: 2.9685263633728027;
+fold: TRAIN; iteration: 1152; epoch: 0; loss: 2.635561943054199;
+fold: TRAIN; iteration: 1153; epoch: 0; loss: 2.646935224533081;
+fold: TRAIN; iteration: 1154; epoch: 0; loss: 2.6204681396484375;
+fold: TRAIN; iteration: 1155; epoch: 0; loss: 2.4438252449035645;
+fold: TRAIN; iteration: 1156; epoch: 0; loss: 2.617443799972534;
+fold: TRAIN; iteration: 1157; epoch: 0; loss: 2.740175485610962;
+fold: TRAIN; iteration: 1158; epoch: 0; loss: 2.5022130012512207;
+fold: TRAIN; iteration: 1159; epoch: 0; loss: 2.730670213699341;
+fold: TRAIN; iteration: 1160; epoch: 0; loss: 2.673532485961914;
+fold: TRAIN; iteration: 1161; epoch: 0; loss: 2.555511713027954;
+fold: TRAIN; iteration: 1162; epoch: 0; loss: 2.6037070751190186;
+fold: TRAIN; iteration: 1163; epoch: 0; loss: 2.5408387184143066;
+fold: TRAIN; iteration: 1164; epoch: 0; loss: 2.603501796722412;
+fold: TRAIN; iteration: 1165; epoch: 0; loss: 2.689870834350586;
+fold: TRAIN; iteration: 1166; epoch: 0; loss: 2.5032553672790527;
+fold: TRAIN; iteration: 1167; epoch: 0; loss: 2.7388901710510254;
+fold: TRAIN; iteration: 1168; epoch: 0; loss: 2.677495002746582;
+fold: TRAIN; iteration: 1169; epoch: 0; loss: 2.7492308616638184;
+fold: TRAIN; iteration: 1170; epoch: 0; loss: 2.5608277320861816;
+fold: TRAIN; iteration: 1171; epoch: 0; loss: 2.808763027191162;
+fold: TRAIN; iteration: 1172; epoch: 0; loss: 2.6750683784484863;
+fold: TRAIN; iteration: 1173; epoch: 0; loss: 2.842949867248535;
+fold: TRAIN; iteration: 1174; epoch: 0; loss: 2.7216320037841797;
+fold: TRAIN; iteration: 1175; epoch: 0; loss: 2.451888084411621;
+fold: TRAIN; iteration: 1176; epoch: 0; loss: 2.640488386154175;
+fold: TRAIN; iteration: 1177; epoch: 0; loss: 2.7147531509399414;
+fold: TRAIN; iteration: 1178; epoch: 0; loss: 2.73429799079895;
+fold: TRAIN; iteration: 1179; epoch: 0; loss: 2.59440541267395;
+fold: TRAIN; iteration: 1180; epoch: 0; loss: 2.31886625289917;
+fold: TRAIN; iteration: 1181; epoch: 0; loss: 2.902266263961792;
+fold: TRAIN; iteration: 1182; epoch: 0; loss: 2.585819721221924;
+fold: TRAIN; iteration: 1183; epoch: 0; loss: 2.4666833877563477;
+fold: TRAIN; iteration: 1184; epoch: 0; loss: 2.63436222076416;
+fold: TRAIN; iteration: 1185; epoch: 0; loss: 2.5773427486419678;
+fold: TRAIN; iteration: 1186; epoch: 0; loss: 2.5894179344177246;
+fold: TRAIN; iteration: 1187; epoch: 0; loss: 2.588000774383545;
+fold: TRAIN; iteration: 1188; epoch: 0; loss: 2.610644817352295;
+fold: TRAIN; iteration: 1189; epoch: 0; loss: 2.674473762512207;
+fold: TRAIN; iteration: 1190; epoch: 0; loss: 2.709562301635742;
+fold: TRAIN; iteration: 1191; epoch: 0; loss: 2.620547294616699;
+fold: TRAIN; iteration: 1192; epoch: 0; loss: 2.8896164894104004;
+fold: TRAIN; iteration: 1193; epoch: 0; loss: 2.6292712688446045;
+fold: TRAIN; iteration: 1194; epoch: 0; loss: 2.7813808917999268;
+fold: TRAIN; iteration: 1195; epoch: 0; loss: 2.6973013877868652;
+fold: TRAIN; iteration: 1196; epoch: 0; loss: 2.510979652404785;
+fold: TRAIN; iteration: 1197; epoch: 0; loss: 2.4704065322875977;
+fold: TRAIN; iteration: 1198; epoch: 0; loss: 2.558520555496216;
+fold: TRAIN; iteration: 1199; epoch: 0; loss: 2.668227434158325;
+validating model...
+saving
+fold: VALID; iteration: 1200; epoch: 0; loss: 2.5869989714971404;
+fold: TRAIN; iteration: 1200; epoch: 0; loss: 2.6345858573913574;
+fold: TRAIN; iteration: 1201; epoch: 0; loss: 2.630232810974121;
+fold: TRAIN; iteration: 1202; epoch: 0; loss: 2.6041512489318848;
+fold: TRAIN; iteration: 1203; epoch: 0; loss: 2.8942034244537354;
+fold: TRAIN; iteration: 1204; epoch: 0; loss: 2.34782075881958;
+fold: TRAIN; iteration: 1205; epoch: 0; loss: 2.5236897468566895;
+fold: TRAIN; iteration: 1206; epoch: 0; loss: 2.437230110168457;
+fold: TRAIN; iteration: 1207; epoch: 0; loss: 2.8156800270080566;
+fold: TRAIN; iteration: 1208; epoch: 0; loss: 2.6250832080841064;
+fold: TRAIN; iteration: 1209; epoch: 0; loss: 2.5984537601470947;
+fold: TRAIN; iteration: 1210; epoch: 0; loss: 2.6781344413757324;
+fold: TRAIN; iteration: 1211; epoch: 0; loss: 2.3964719772338867;
+fold: TRAIN; iteration: 1212; epoch: 0; loss: 2.5877692699432373;
+fold: TRAIN; iteration: 1213; epoch: 0; loss: 2.4595706462860107;
+fold: TRAIN; iteration: 1214; epoch: 0; loss: 2.204962968826294;
+fold: TRAIN; iteration: 1215; epoch: 0; loss: 2.8884222507476807;
+fold: TRAIN; iteration: 1216; epoch: 0; loss: 2.71052622795105;
+fold: TRAIN; iteration: 1217; epoch: 0; loss: 2.6639764308929443;
+fold: TRAIN; iteration: 1218; epoch: 0; loss: 2.664515972137451;
+fold: TRAIN; iteration: 1219; epoch: 0; loss: 2.5598325729370117;
+fold: TRAIN; iteration: 1220; epoch: 0; loss: 2.7897119522094727;
+fold: TRAIN; iteration: 1221; epoch: 0; loss: 2.5477495193481445;
+fold: TRAIN; iteration: 1222; epoch: 0; loss: 2.5369646549224854;
+fold: TRAIN; iteration: 1223; epoch: 0; loss: 2.7095839977264404;
+fold: TRAIN; iteration: 1224; epoch: 0; loss: 2.9182825088500977;
+fold: TRAIN; iteration: 1225; epoch: 0; loss: 2.624001979827881;
+fold: TRAIN; iteration: 1226; epoch: 0; loss: 2.665729284286499;
+fold: TRAIN; iteration: 1227; epoch: 0; loss: 2.655585289001465;
+fold: TRAIN; iteration: 1228; epoch: 0; loss: 2.6429378986358643;
+fold: TRAIN; iteration: 1229; epoch: 0; loss: 2.7628023624420166;
+fold: TRAIN; iteration: 1230; epoch: 0; loss: 2.378525733947754;
+fold: TRAIN; iteration: 1231; epoch: 0; loss: 2.5351884365081787;
+fold: TRAIN; iteration: 1232; epoch: 0; loss: 2.7442357540130615;
+fold: TRAIN; iteration: 1233; epoch: 0; loss: 2.5054235458374023;
+fold: TRAIN; iteration: 1234; epoch: 0; loss: 2.592938184738159;
+fold: TRAIN; iteration: 1235; epoch: 0; loss: 2.453566074371338;
+fold: TRAIN; iteration: 1236; epoch: 0; loss: 2.8468689918518066;
+fold: TRAIN; iteration: 1237; epoch: 0; loss: 2.488717555999756;
+fold: TRAIN; iteration: 1238; epoch: 0; loss: 2.739699602127075;
+fold: TRAIN; iteration: 1239; epoch: 0; loss: 2.5565335750579834;
+fold: TRAIN; iteration: 1240; epoch: 0; loss: 2.361401319503784;
+fold: TRAIN; iteration: 1241; epoch: 0; loss: 2.6356420516967773;
+fold: TRAIN; iteration: 1242; epoch: 0; loss: 2.568796396255493;
+fold: TRAIN; iteration: 1243; epoch: 0; loss: 2.471062421798706;
+fold: TRAIN; iteration: 1244; epoch: 0; loss: 2.7734246253967285;
+fold: TRAIN; iteration: 1245; epoch: 0; loss: 2.550157070159912;
+fold: TRAIN; iteration: 1246; epoch: 0; loss: 2.693120002746582;
+fold: TRAIN; iteration: 1247; epoch: 0; loss: 2.516845464706421;
+fold: TRAIN; iteration: 1248; epoch: 0; loss: 2.673577308654785;
+fold: TRAIN; iteration: 1249; epoch: 0; loss: 2.651980400085449;
+fold: TRAIN; iteration: 1250; epoch: 0; loss: 2.493715286254883;
+fold: TRAIN; iteration: 1251; epoch: 0; loss: 2.8302130699157715;
+fold: TRAIN; iteration: 1252; epoch: 0; loss: 2.630265235900879;
+fold: TRAIN; iteration: 1253; epoch: 0; loss: 2.7053208351135254;
+fold: TRAIN; iteration: 1254; epoch: 0; loss: 2.6142284870147705;
+fold: TRAIN; iteration: 1255; epoch: 0; loss: 2.4568686485290527;
+fold: TRAIN; iteration: 1256; epoch: 0; loss: 2.57338809967041;
+fold: TRAIN; iteration: 1257; epoch: 0; loss: 2.586629867553711;
+fold: TRAIN; iteration: 1258; epoch: 0; loss: 2.9978244304656982;
+fold: TRAIN; iteration: 1259; epoch: 0; loss: 2.623776912689209;
+fold: TRAIN; iteration: 1260; epoch: 0; loss: 2.6655685901641846;
+fold: TRAIN; iteration: 1261; epoch: 0; loss: 2.4619672298431396;
+fold: TRAIN; iteration: 1262; epoch: 0; loss: 2.658656597137451;
+fold: TRAIN; iteration: 1263; epoch: 0; loss: 2.6248059272766113;
+fold: TRAIN; iteration: 1264; epoch: 0; loss: 2.7252538204193115;
+fold: TRAIN; iteration: 1265; epoch: 0; loss: 2.7350122928619385;
+fold: TRAIN; iteration: 1266; epoch: 0; loss: 2.5256950855255127;
+fold: TRAIN; iteration: 1267; epoch: 0; loss: 2.37943959236145;
+fold: TRAIN; iteration: 1268; epoch: 0; loss: 2.328436851501465;
+fold: TRAIN; iteration: 1269; epoch: 0; loss: 2.4882497787475586;
+fold: TRAIN; iteration: 1270; epoch: 0; loss: 2.481971025466919;
+fold: TRAIN; iteration: 1271; epoch: 0; loss: 2.6110334396362305;
+fold: TRAIN; iteration: 1272; epoch: 0; loss: 2.4358935356140137;
+fold: TRAIN; iteration: 1273; epoch: 0; loss: 2.711519479751587;
+fold: TRAIN; iteration: 1274; epoch: 0; loss: 2.810310125350952;
+fold: TRAIN; iteration: 1275; epoch: 0; loss: 2.418658494949341;
+fold: TRAIN; iteration: 1276; epoch: 0; loss: 2.428061008453369;
+fold: TRAIN; iteration: 1277; epoch: 0; loss: 2.6969571113586426;
+fold: TRAIN; iteration: 1278; epoch: 0; loss: 2.411722183227539;
+fold: TRAIN; iteration: 1279; epoch: 0; loss: 2.573380470275879;
+fold: TRAIN; iteration: 1280; epoch: 0; loss: 2.6766769886016846;
+fold: TRAIN; iteration: 1281; epoch: 0; loss: 2.503229856491089;
+fold: TRAIN; iteration: 1282; epoch: 0; loss: 2.505453586578369;
+fold: TRAIN; iteration: 1283; epoch: 0; loss: 2.625020742416382;
+fold: TRAIN; iteration: 1284; epoch: 0; loss: 2.763394832611084;
+fold: TRAIN; iteration: 1285; epoch: 0; loss: 2.5731656551361084;
+fold: TRAIN; iteration: 1286; epoch: 0; loss: 2.9872374534606934;
+fold: TRAIN; iteration: 1287; epoch: 0; loss: 2.6402595043182373;
+aborting training early...
+</pre></div></div>
+</div>
+<p>Let’s test the model on a sample data point:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">test_docs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+<span class="n">images</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">({},</span> <span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">apply_model</span><span class="p">(</span><span class="s1">&#39;conditional_lm&#39;</span><span class="p">,</span> <span class="n">test_docs</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00&lt;00:00, 20.96it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_1.png" src="../../_images/examples_coco_image-captioning_21_1.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a table with a bunch of flowers in it
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_3.png" src="../../_images/examples_coco_image-captioning_21_3.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a person holding a piece of cake on a &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_5.png" src="../../_images/examples_coco_image-captioning_21_5.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man in a suit is standing next to a &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_7.png" src="../../_images/examples_coco_image-captioning_21_7.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a kitchen with a stove and oven &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_9.png" src="../../_images/examples_coco_image-captioning_21_9.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man and woman standing next to a woman holding a &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_11.png" src="../../_images/examples_coco_image-captioning_21_11.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man in a suit and tie standing in front of a &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_13.png" src="../../_images/examples_coco_image-captioning_21_13.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a living room with a table and a clock &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_15.png" src="../../_images/examples_coco_image-captioning_21_15.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a person walking down a street with a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_17.png" src="../../_images/examples_coco_image-captioning_21_17.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a black and white image of a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_19.png" src="../../_images/examples_coco_image-captioning_21_19.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man in a kitchen preparing food
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_21.png" src="../../_images/examples_coco_image-captioning_21_21.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man in a suit is standing in front of a &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_23.png" src="../../_images/examples_coco_image-captioning_21_23.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man is making a sandwich on a &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_25.png" src="../../_images/examples_coco_image-captioning_21_25.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a kitchen with a stove and oven &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_27.png" src="../../_images/examples_coco_image-captioning_21_27.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a kitchen with a stove and a refrigerator
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_29.png" src="../../_images/examples_coco_image-captioning_21_29.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man in a kitchen preparing food
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_31.png" src="../../_images/examples_coco_image-captioning_21_31.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man is sitting on a laptop &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_33.png" src="../../_images/examples_coco_image-captioning_21_33.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a group of people standing around a table with a &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_35.png" src="../../_images/examples_coco_image-captioning_21_35.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a man is standing in front of a &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_37.png" src="../../_images/examples_coco_image-captioning_21_37.png" />
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a large group of people standing around a &lt;unk&gt;
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_coco_image-captioning_21_39.png" src="../../_images/examples_coco_image-captioning_21_39.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+a living room with a large &lt;unk&gt; &lt;unk&gt; and &lt;unk&gt; &lt;unk&gt; &lt;unk&gt;
+</pre></div></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="attribute-prediction.html" class="btn btn-neutral float-left" title="Attribute prediction using “imputations” with preparation in SpaCy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../concepts.html" class="btn btn-neutral float-right" title="Concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Duncan Blythe duncan@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

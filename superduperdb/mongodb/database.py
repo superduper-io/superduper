@@ -70,7 +70,10 @@ class Database(MongoDatabase, BaseDatabase):
     def create_semantic_index(self, identifier, models, keys, measure, collection, validation_sets=(),
                               metrics=(), objective=None, filter_=None, splitter=None,
                               projection=None,
-                              loader_kwargs=None, **trainer_kwargs):
+                              loader_kwargs=None,
+                              index_type='vanilla',
+                              index_kwargs=None,
+                              **trainer_kwargs):
         query_params = [collection]
         if filter_ is None:
             query_params.append({})
@@ -86,6 +89,7 @@ class Database(MongoDatabase, BaseDatabase):
                                            validation_sets=validation_sets,
                                            metrics=metrics, objective=objective,
                                            splitter=splitter, loader_kwargs=loader_kwargs,
+                                           index_type=index_type, index_kwargs=index_kwargs,
                                            **trainer_kwargs)
 
     def create_watcher(self, identifier, model, collection, filter_=None, projection=None,

@@ -2,7 +2,7 @@ from tests.fixtures.collection import (
     float_tensors, empty, a_model, b_model, c_model, random_data,
     si_validation, measure, metric, my_rank_obj, a_classifier, a_target, accuracy_metric,
     my_class_obj, imputation_validation, with_semantic_index, an_update, a_watcher, image_type,
-    n_data_points
+    n_data_points, with_faiss_semantic_index
 )
 import PIL.PngImagePlugin
 import os
@@ -30,6 +30,16 @@ def test_find(with_semantic_index, remote):
     print(with_semantic_index.count_documents({}))
     r = with_semantic_index.find_one()
     s = with_semantic_index.find_one(like={'x': r['x']})
+    assert s['_id'] == r['_id']
+
+
+@pytest.mark.parametrize('remote', remote_values)
+def test_find_faiss(with_faiss_semantic_index, remote):
+    with_faiss_semantic_index.remote = remote
+    print(with_faiss_semantic_index.count_documents({}))
+    h = with_faiss_semantic_index._all_hash_sets['test_semantic_index']
+    r = with_faiss_semantic_index.find_one()
+    s = with_faiss_semantic_index.find_one(like={'x': r['x']})
     assert s['_id'] == r['_id']
 
 
@@ -126,7 +136,6 @@ def test_imputation(imputation_validation, a_classifier, a_target, my_class_obj,
                            accuracy_metric, remote):
 
     imputation_validation.remote = remote
-
     jobs = imputation_validation.create_imputation('my_imputation',
                                                    model='classifier',
                                                    model_key='x',

@@ -54,8 +54,10 @@ class FaissHashSet(HashSet):
                 h = h / (numpy.linalg.norm(h, axis=1)[:, None])
             if measure == 'l2':
                 faiss_index = faiss.index_factory(self.h.shape[1], 'Flat', faiss.METRIC_L2)
-            if measure in {'css', 'dot'}:
+            elif measure in {'css', 'dot'}:
                 faiss_index = faiss.index_factory(self.h.shape[1], 'Flat', faiss.METRIC_INNER_PRODUCT)
+            else:
+                raise NotImplementedError(f'"{measure}" not a supported measure for faiss')
             faiss_index.add(h)
         self.faiss_index = faiss_index
 

@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MNIST: Handwritten digit recognition with SuperDuperDB &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CoCo (Common Objects in Context) Dataset" href="coco/index.html" />
+    <link rel="prev" title="Examples" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MNIST: Handwritten digit recognition with SuperDuperDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coco/index.html">CoCo (Common Objects in Context) Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../types.html">Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../content.html">Content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../semantic_indexes.html">Semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../imputations.html">Imputations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../full_usage.html">Full usage</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Examples</a></li>
+      <li class="breadcrumb-item active">MNIST: Handwritten digit recognition with SuperDuperDB</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/mnist-notebook.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="MNIST:-Handwritten-digit-recognition-with-SuperDuperDB">
+<h1>MNIST: Handwritten digit recognition with SuperDuperDB<a class="headerlink" href="#MNIST:-Handwritten-digit-recognition-with-SuperDuperDB" title="Permalink to this heading"></a></h1>
+<p>The <a class="reference external" href="https://en.wikipedia.org/wiki/MNIST_database">MNIST dataset</a> is the classic hello-world for machine learning and AI.</p>
+<p>In this tutorial we implement MNIST classification using the paradigmatic “LeNet” based on the un-preprocessed images.</p>
+<p>First we import the SuperDuperDB client, and create a fresh collection.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.mongodb.client</span> <span class="kn">import</span> <span class="n">SuperDuperClient</span>
+
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">PIL.Image</span>
+<span class="kn">import</span> <span class="nn">PIL.JpegImagePlugin</span>
+<span class="kn">import</span> <span class="nn">PIL.PngImagePlugin</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">transforms</span>
+<span class="kn">import</span> <span class="nn">torchvision</span>
+
+<span class="n">the_client</span> <span class="o">=</span> <span class="n">SuperDuperClient</span><span class="p">()</span>
+<span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">mnist</span><span class="o">.</span><span class="n">digits</span>
+</pre></div>
+</div>
+</div>
+<p>The data is available as <code class="docutils literal notranslate"><span class="pre">PIL.Image</span></code> images with labels in the <code class="docutils literal notranslate"><span class="pre">torchvision</span></code> package:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
+
+<span class="n">mnist_data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">torchvision</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s1">&#39;./data&#39;</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">mnist_data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>SuperDuperDB is based on MongoDB, which does not support images and tensors and other special data types out of the box. In order to remedy this, we create custom SuperDuperDB <strong>types</strong>. These types handle:</p>
+<ul class="simple">
+<li><p>How to store images as bytes in SuperDuperDB and how to reinstantiate the images from the bytes</p></li>
+<li><p>How to store tensors in SuperDuperDB and how to retrieve these from the database again</p></li>
+</ul>
+<p>We do this by creating the classes in python with <code class="docutils literal notranslate"><span class="pre">.encode</span></code> and <code class="docutils literal notranslate"><span class="pre">.decode</span></code> methods:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Image</span><span class="p">:</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="n">PIL</span><span class="o">.</span><span class="n">JpegImagePlugin</span><span class="o">.</span><span class="n">JpegImageFile</span><span class="p">,</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span>
+             <span class="n">PIL</span><span class="o">.</span><span class="n">PngImagePlugin</span><span class="o">.</span><span class="n">PngImageFile</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;png&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">bytes_</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">bytes_</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">FloatTensor</span><span class="p">:</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span>
+        <span class="k">return</span> <span class="nb">memoryview</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">bytes_</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">bytes_</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">array</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Once these classes are ready, we can add instances of these to SuperDuperDB, giving each type a suitable name:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="n">Image</span><span class="p">(),</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span> <span class="n">FloatTensor</span><span class="p">(),</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now we have these custom types, we can insert the data into SuperDuperDB:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">jobs</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">([{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mnist_data</span><span class="p">[:</span><span class="o">-</span><span class="mi">1000</span><span class="p">]])</span>
+</pre></div>
+</div>
+</div>
+<p>When data is inserted into SuperDuperDB, certain actions/ jobs are triggered. These include downloading content into the database from provided URIs, and running model <strong>watchers</strong> over the added data, if these have been added.</p>
+<p>The second output from the <code class="docutils literal notranslate"><span class="pre">insert_many</span></code> statement give a dictionary of ids of the asynchronous jobs which were created. These can also be seen in the job list:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">list_jobs</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[{&#39;identifier&#39;: &#39;94756b3a-2202-433c-b003-9f84fd21c004&#39;,
+  &#39;time&#39;: datetime.datetime(2023, 3, 27, 17, 2, 56, 739000),
+  &#39;status&#39;: &#39;pending&#39;,
+  &#39;method&#39;: &#39;_download_content&#39;}]
+</pre></div></div>
+</div>
+<p>In this case, only one job was created - to download content. We can watch the stdout/stderr of this job like this:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="s1">&#39;download&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+found 0 urls
+</pre></div></div>
+</div>
+<p>You can see that all data apart from the final 1000 have been added:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({})</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+59000
+</pre></div></div>
+</div>
+<p>You’ll see that when we fetch data from the database, it’s in exactly the form that we want. For example, the images have been saved and recalled as <code class="docutils literal notranslate"><span class="pre">PIL.Image</span></code> types.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_mnist-notebook_18_0.png" src="../_images/examples_mnist-notebook_18_0.png" />
+</div>
+</div>
+<p>Now that we’ve added the data to SuperDuperDB, we’re ready to create a model. This is a simple PyTorch model implementing the iconic <a class="reference external" href="https://en.wikipedia.org/wiki/LeNet">LeNet architecture</a>. In addition to the standard PyTorch <code class="docutils literal notranslate"><span class="pre">.forward</span></code> method, SuperDuperDB allows users to specify <code class="docutils literal notranslate"><span class="pre">.preprocess</span></code> and <code class="docutils literal notranslate"><span class="pre">.postprocess</span></code> methods which define respectively:</p>
+<ul class="simple">
+<li><p>how the data is converted from the in-database form, to tensor</p></li>
+<li><p>from the output form back into the form to be stored in the database</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">label</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">LeNet5</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="mi">16</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relu</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">84</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relu1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">84</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">([</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">((</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">)),</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1307</span><span class="p">,),</span> <span class="n">std</span><span class="o">=</span><span class="p">(</span><span class="mf">0.3081</span><span class="p">,))]</span>
+        <span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relu1</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s test this model on a single image. <code class="docutils literal notranslate"><span class="pre">Collection.apply_model</span></code> applies the <code class="docutils literal notranslate"><span class="pre">preprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">forward</span></code> and <code class="docutils literal notranslate"><span class="pre">postprocess</span></code> methods serially, creating a singleton batch prior to the <code class="docutils literal notranslate"><span class="pre">forward</span></code> and unpacking the batch after the <code class="docutils literal notranslate"><span class="pre">forward</span></code>. A similar logic is applied in all functionality which involves applying a model to the data.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">apply_model</span><span class="p">(</span><span class="n">LeNet5</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">()[</span><span class="mi">23</span><span class="p">][</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+9
+</pre></div></div>
+</div>
+<p>Now that we have our model we need a target for learning - for this we use <code class="docutils literal notranslate"><span class="pre">label</span></code>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;lenet&#39;</span><span class="p">,</span> <span class="n">LeNet5</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_function</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Finally we need a loss function - this is a vanilla <code class="docutils literal notranslate"><span class="pre">torch</span></code> function, so we don’t need to write extra code:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_objective</span><span class="p">(</span><span class="s1">&#39;classification&#39;</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(),</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>And a metric to measure performance. Defined metrics are applied serially over individual data points, and the results are averaged:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">accuracy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>When measuring performance, SuperDuperDB requires users to create a separate validation set, which is saved for posterity and reproducibility reasons - edits and deletes on the main collection don’t affect this validation set.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_validation_set</span><span class="p">(</span><span class="s1">&#39;classification&#39;</span><span class="p">,</span> <span class="n">sample_size</span><span class="o">=</span><span class="mi">250</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+250it [00:00, 25826.36it/s]
+</pre></div></div>
+</div>
+<p>Now we’re ready to create the model using the <code class="docutils literal notranslate"><span class="pre">Collection.create_imputation</span></code>. This trains a model to predict one part of the data using another part, specified respectively by <code class="docutils literal notranslate"><span class="pre">model_key</span></code> and <code class="docutils literal notranslate"><span class="pre">target_key</span></code>; these are subkeys of the collection documents.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jobs</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">create_imputation</span><span class="p">(</span>
+    <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;predictor&#39;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s1">&#39;lenet&#39;</span><span class="p">,</span>
+    <span class="n">model_key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span>
+    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;label&#39;</span><span class="p">,</span>
+    <span class="n">target_key</span><span class="o">=</span><span class="s1">&#39;class&#39;</span><span class="p">,</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;classification&#39;</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">],</span>
+    <span class="n">n_iterations</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">validation_interval</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;classification&#39;</span><span class="p">,)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>This command creates two jobs, one to train the model, and another to apply the model to the data after training. As before, the jobs are spawned asynchronously. We can watch the output of the jobs, but in the meantime we can also do other things in our environment, and with the database. Stopping the <code class="docutils literal notranslate"><span class="pre">watch_job</span></code> command, simply breaks the connection to the logs (doesn’t stop the job).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+fold: VALID; iteration: 0; epoch: 0; classification/accuracy: 0.048; objective: 2.3110132773717242;
+fold: TRAIN; iteration: 0; epoch: 0; objective: 2.308685064315796;
+fold: TRAIN; iteration: 1; epoch: 0; objective: 2.297574758529663;
+fold: TRAIN; iteration: 2; epoch: 0; objective: 2.2829301357269287;
+fold: TRAIN; iteration: 3; epoch: 0; objective: 2.3012170791625977;
+fold: TRAIN; iteration: 4; epoch: 0; objective: 2.284682273864746;
+fold: TRAIN; iteration: 5; epoch: 0; objective: 2.2731776237487793;
+fold: TRAIN; iteration: 6; epoch: 0; objective: 2.2876882553100586;
+fold: TRAIN; iteration: 7; epoch: 0; objective: 2.291152238845825;
+fold: TRAIN; iteration: 8; epoch: 0; objective: 2.2720654010772705;
+fold: TRAIN; iteration: 9; epoch: 0; objective: 2.2809369564056396;
+fold: TRAIN; iteration: 10; epoch: 0; objective: 2.2670164108276367;
+fold: TRAIN; iteration: 11; epoch: 0; objective: 2.2795052528381348;
+fold: TRAIN; iteration: 12; epoch: 0; objective: 2.2532029151916504;
+fold: TRAIN; iteration: 13; epoch: 0; objective: 2.2409369945526123;
+fold: TRAIN; iteration: 14; epoch: 0; objective: 2.2381467819213867;
+fold: TRAIN; iteration: 15; epoch: 0; objective: 2.2466988563537598;
+fold: TRAIN; iteration: 16; epoch: 0; objective: 2.228008508682251;
+fold: TRAIN; iteration: 17; epoch: 0; objective: 2.2353744506835938;
+fold: TRAIN; iteration: 18; epoch: 0; objective: 2.233978748321533;
+fold: TRAIN; iteration: 19; epoch: 0; objective: 2.220913887023926;
+fold: TRAIN; iteration: 20; epoch: 0; objective: 2.2235710620880127;
+fold: TRAIN; iteration: 21; epoch: 0; objective: 2.2159011363983154;
+fold: TRAIN; iteration: 22; epoch: 0; objective: 2.2194619178771973;
+fold: TRAIN; iteration: 23; epoch: 0; objective: 2.2242653369903564;
+fold: TRAIN; iteration: 24; epoch: 0; objective: 2.2201812267303467;
+fold: TRAIN; iteration: 25; epoch: 0; objective: 2.1877024173736572;
+fold: TRAIN; iteration: 26; epoch: 0; objective: 2.1867330074310303;
+fold: TRAIN; iteration: 27; epoch: 0; objective: 2.1860411167144775;
+fold: TRAIN; iteration: 28; epoch: 0; objective: 2.2026491165161133;
+fold: TRAIN; iteration: 29; epoch: 0; objective: 2.1925694942474365;
+fold: TRAIN; iteration: 30; epoch: 0; objective: 2.177600622177124;
+fold: TRAIN; iteration: 31; epoch: 0; objective: 2.184030055999756;
+fold: TRAIN; iteration: 32; epoch: 0; objective: 2.1714212894439697;
+fold: TRAIN; iteration: 33; epoch: 0; objective: 2.166768789291382;
+fold: TRAIN; iteration: 34; epoch: 0; objective: 2.163599967956543;
+fold: TRAIN; iteration: 35; epoch: 0; objective: 2.178396701812744;
+fold: TRAIN; iteration: 36; epoch: 0; objective: 2.1369612216949463;
+fold: TRAIN; iteration: 37; epoch: 0; objective: 2.1408331394195557;
+fold: TRAIN; iteration: 38; epoch: 0; objective: 2.1341922283172607;
+fold: TRAIN; iteration: 39; epoch: 0; objective: 2.1425812244415283;
+fold: TRAIN; iteration: 40; epoch: 0; objective: 2.118696928024292;
+fold: TRAIN; iteration: 41; epoch: 0; objective: 2.120541572570801;
+fold: TRAIN; iteration: 42; epoch: 0; objective: 2.0664491653442383;
+fold: TRAIN; iteration: 43; epoch: 0; objective: 2.111994743347168;
+fold: TRAIN; iteration: 44; epoch: 0; objective: 2.1069254875183105;
+fold: TRAIN; iteration: 45; epoch: 0; objective: 2.0793323516845703;
+fold: TRAIN; iteration: 46; epoch: 0; objective: 2.1000640392303467;
+fold: TRAIN; iteration: 47; epoch: 0; objective: 2.090277671813965;
+fold: TRAIN; iteration: 48; epoch: 0; objective: 2.0750815868377686;
+fold: TRAIN; iteration: 49; epoch: 0; objective: 2.068101406097412;
+validating model...
+saving
+fold: VALID; iteration: 50; epoch: 0; classification/accuracy: 0.584; objective: 2.0651561578114825;
+fold: TRAIN; iteration: 50; epoch: 0; objective: 2.0772299766540527;
+fold: TRAIN; iteration: 51; epoch: 0; objective: 2.077511787414551;
+fold: TRAIN; iteration: 52; epoch: 0; objective: 2.061453342437744;
+fold: TRAIN; iteration: 53; epoch: 0; objective: 2.0282208919525146;
+fold: TRAIN; iteration: 54; epoch: 0; objective: 2.0522677898406982;
+fold: TRAIN; iteration: 55; epoch: 0; objective: 2.0470306873321533;
+fold: TRAIN; iteration: 56; epoch: 0; objective: 2.026196241378784;
+fold: TRAIN; iteration: 57; epoch: 0; objective: 1.9833694696426392;
+fold: TRAIN; iteration: 58; epoch: 0; objective: 1.9961957931518555;
+fold: TRAIN; iteration: 59; epoch: 0; objective: 1.9861377477645874;
+fold: TRAIN; iteration: 60; epoch: 0; objective: 1.9589751958847046;
+fold: TRAIN; iteration: 61; epoch: 0; objective: 1.9920473098754883;
+fold: TRAIN; iteration: 62; epoch: 0; objective: 1.9533600807189941;
+fold: TRAIN; iteration: 63; epoch: 0; objective: 1.9611096382141113;
+fold: TRAIN; iteration: 64; epoch: 0; objective: 1.9264737367630005;
+fold: TRAIN; iteration: 65; epoch: 0; objective: 1.937672734260559;
+fold: TRAIN; iteration: 66; epoch: 0; objective: 1.910826563835144;
+fold: TRAIN; iteration: 67; epoch: 0; objective: 1.932340145111084;
+fold: TRAIN; iteration: 68; epoch: 0; objective: 1.9167404174804688;
+fold: TRAIN; iteration: 69; epoch: 0; objective: 1.8899414539337158;
+fold: TRAIN; iteration: 70; epoch: 0; objective: 1.8750643730163574;
+fold: TRAIN; iteration: 71; epoch: 0; objective: 1.8703351020812988;
+fold: TRAIN; iteration: 72; epoch: 0; objective: 1.816910982131958;
+fold: TRAIN; iteration: 73; epoch: 0; objective: 1.833722710609436;
+fold: TRAIN; iteration: 74; epoch: 0; objective: 1.856638789176941;
+fold: TRAIN; iteration: 75; epoch: 0; objective: 1.827927827835083;
+fold: TRAIN; iteration: 76; epoch: 0; objective: 1.8312007188796997;
+fold: TRAIN; iteration: 77; epoch: 0; objective: 1.7847802639007568;
+fold: TRAIN; iteration: 78; epoch: 0; objective: 1.7991377115249634;
+fold: TRAIN; iteration: 79; epoch: 0; objective: 1.8079094886779785;
+fold: TRAIN; iteration: 80; epoch: 0; objective: 1.7577625513076782;
+fold: TRAIN; iteration: 81; epoch: 0; objective: 1.7854645252227783;
+fold: TRAIN; iteration: 82; epoch: 0; objective: 1.7817187309265137;
+fold: TRAIN; iteration: 83; epoch: 0; objective: 1.7233870029449463;
+fold: TRAIN; iteration: 84; epoch: 0; objective: 1.7469534873962402;
+fold: TRAIN; iteration: 85; epoch: 0; objective: 1.7285447120666504;
+fold: TRAIN; iteration: 86; epoch: 0; objective: 1.753340244293213;
+fold: TRAIN; iteration: 87; epoch: 0; objective: 1.69362211227417;
+fold: TRAIN; iteration: 88; epoch: 0; objective: 1.6487454175949097;
+fold: TRAIN; iteration: 89; epoch: 0; objective: 1.712538242340088;
+</pre></div></div>
+</div>
+<p>We can continue watching the job, by executing the command again:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+fold: VALID; iteration: 0; epoch: 0; classification/accuracy: 0.048; objective: 2.3110132773717242;
+fold: TRAIN; iteration: 0; epoch: 0; objective: 2.308685064315796;
+fold: TRAIN; iteration: 1; epoch: 0; objective: 2.297574758529663;
+fold: TRAIN; iteration: 2; epoch: 0; objective: 2.2829301357269287;
+fold: TRAIN; iteration: 3; epoch: 0; objective: 2.3012170791625977;
+fold: TRAIN; iteration: 4; epoch: 0; objective: 2.284682273864746;
+fold: TRAIN; iteration: 5; epoch: 0; objective: 2.2731776237487793;
+fold: TRAIN; iteration: 6; epoch: 0; objective: 2.2876882553100586;
+fold: TRAIN; iteration: 7; epoch: 0; objective: 2.291152238845825;
+fold: TRAIN; iteration: 8; epoch: 0; objective: 2.2720654010772705;
+fold: TRAIN; iteration: 9; epoch: 0; objective: 2.2809369564056396;
+fold: TRAIN; iteration: 10; epoch: 0; objective: 2.2670164108276367;
+fold: TRAIN; iteration: 11; epoch: 0; objective: 2.2795052528381348;
+fold: TRAIN; iteration: 12; epoch: 0; objective: 2.2532029151916504;
+fold: TRAIN; iteration: 13; epoch: 0; objective: 2.2409369945526123;
+fold: TRAIN; iteration: 14; epoch: 0; objective: 2.2381467819213867;
+fold: TRAIN; iteration: 15; epoch: 0; objective: 2.2466988563537598;
+fold: TRAIN; iteration: 16; epoch: 0; objective: 2.228008508682251;
+fold: TRAIN; iteration: 17; epoch: 0; objective: 2.2353744506835938;
+fold: TRAIN; iteration: 18; epoch: 0; objective: 2.233978748321533;
+fold: TRAIN; iteration: 19; epoch: 0; objective: 2.220913887023926;
+fold: TRAIN; iteration: 20; epoch: 0; objective: 2.2235710620880127;
+fold: TRAIN; iteration: 21; epoch: 0; objective: 2.2159011363983154;
+fold: TRAIN; iteration: 22; epoch: 0; objective: 2.2194619178771973;
+fold: TRAIN; iteration: 23; epoch: 0; objective: 2.2242653369903564;
+fold: TRAIN; iteration: 24; epoch: 0; objective: 2.2201812267303467;
+fold: TRAIN; iteration: 25; epoch: 0; objective: 2.1877024173736572;
+fold: TRAIN; iteration: 26; epoch: 0; objective: 2.1867330074310303;
+fold: TRAIN; iteration: 27; epoch: 0; objective: 2.1860411167144775;
+fold: TRAIN; iteration: 28; epoch: 0; objective: 2.2026491165161133;
+fold: TRAIN; iteration: 29; epoch: 0; objective: 2.1925694942474365;
+fold: TRAIN; iteration: 30; epoch: 0; objective: 2.177600622177124;
+fold: TRAIN; iteration: 31; epoch: 0; objective: 2.184030055999756;
+fold: TRAIN; iteration: 32; epoch: 0; objective: 2.1714212894439697;
+fold: TRAIN; iteration: 33; epoch: 0; objective: 2.166768789291382;
+fold: TRAIN; iteration: 34; epoch: 0; objective: 2.163599967956543;
+fold: TRAIN; iteration: 35; epoch: 0; objective: 2.178396701812744;
+fold: TRAIN; iteration: 36; epoch: 0; objective: 2.1369612216949463;
+fold: TRAIN; iteration: 37; epoch: 0; objective: 2.1408331394195557;
+fold: TRAIN; iteration: 38; epoch: 0; objective: 2.1341922283172607;
+fold: TRAIN; iteration: 39; epoch: 0; objective: 2.1425812244415283;
+fold: TRAIN; iteration: 40; epoch: 0; objective: 2.118696928024292;
+fold: TRAIN; iteration: 41; epoch: 0; objective: 2.120541572570801;
+fold: TRAIN; iteration: 42; epoch: 0; objective: 2.0664491653442383;
+fold: TRAIN; iteration: 43; epoch: 0; objective: 2.111994743347168;
+fold: TRAIN; iteration: 44; epoch: 0; objective: 2.1069254875183105;
+fold: TRAIN; iteration: 45; epoch: 0; objective: 2.0793323516845703;
+fold: TRAIN; iteration: 46; epoch: 0; objective: 2.1000640392303467;
+fold: TRAIN; iteration: 47; epoch: 0; objective: 2.090277671813965;
+fold: TRAIN; iteration: 48; epoch: 0; objective: 2.0750815868377686;
+fold: TRAIN; iteration: 49; epoch: 0; objective: 2.068101406097412;
+validating model...
+saving
+fold: VALID; iteration: 50; epoch: 0; classification/accuracy: 0.584; objective: 2.0651561578114825;
+fold: TRAIN; iteration: 50; epoch: 0; objective: 2.0772299766540527;
+fold: TRAIN; iteration: 51; epoch: 0; objective: 2.077511787414551;
+fold: TRAIN; iteration: 52; epoch: 0; objective: 2.061453342437744;
+fold: TRAIN; iteration: 53; epoch: 0; objective: 2.0282208919525146;
+fold: TRAIN; iteration: 54; epoch: 0; objective: 2.0522677898406982;
+fold: TRAIN; iteration: 55; epoch: 0; objective: 2.0470306873321533;
+fold: TRAIN; iteration: 56; epoch: 0; objective: 2.026196241378784;
+fold: TRAIN; iteration: 57; epoch: 0; objective: 1.9833694696426392;
+fold: TRAIN; iteration: 58; epoch: 0; objective: 1.9961957931518555;
+fold: TRAIN; iteration: 59; epoch: 0; objective: 1.9861377477645874;
+fold: TRAIN; iteration: 60; epoch: 0; objective: 1.9589751958847046;
+fold: TRAIN; iteration: 61; epoch: 0; objective: 1.9920473098754883;
+fold: TRAIN; iteration: 62; epoch: 0; objective: 1.9533600807189941;
+fold: TRAIN; iteration: 63; epoch: 0; objective: 1.9611096382141113;
+fold: TRAIN; iteration: 64; epoch: 0; objective: 1.9264737367630005;
+fold: TRAIN; iteration: 65; epoch: 0; objective: 1.937672734260559;
+fold: TRAIN; iteration: 66; epoch: 0; objective: 1.910826563835144;
+fold: TRAIN; iteration: 67; epoch: 0; objective: 1.932340145111084;
+fold: TRAIN; iteration: 68; epoch: 0; objective: 1.9167404174804688;
+fold: TRAIN; iteration: 69; epoch: 0; objective: 1.8899414539337158;
+fold: TRAIN; iteration: 70; epoch: 0; objective: 1.8750643730163574;
+fold: TRAIN; iteration: 71; epoch: 0; objective: 1.8703351020812988;
+fold: TRAIN; iteration: 72; epoch: 0; objective: 1.816910982131958;
+fold: TRAIN; iteration: 73; epoch: 0; objective: 1.833722710609436;
+fold: TRAIN; iteration: 74; epoch: 0; objective: 1.856638789176941;
+fold: TRAIN; iteration: 75; epoch: 0; objective: 1.827927827835083;
+fold: TRAIN; iteration: 76; epoch: 0; objective: 1.8312007188796997;
+fold: TRAIN; iteration: 77; epoch: 0; objective: 1.7847802639007568;
+fold: TRAIN; iteration: 78; epoch: 0; objective: 1.7991377115249634;
+fold: TRAIN; iteration: 79; epoch: 0; objective: 1.8079094886779785;
+fold: TRAIN; iteration: 80; epoch: 0; objective: 1.7577625513076782;
+fold: TRAIN; iteration: 81; epoch: 0; objective: 1.7854645252227783;
+fold: TRAIN; iteration: 82; epoch: 0; objective: 1.7817187309265137;
+fold: TRAIN; iteration: 83; epoch: 0; objective: 1.7233870029449463;
+fold: TRAIN; iteration: 84; epoch: 0; objective: 1.7469534873962402;
+fold: TRAIN; iteration: 85; epoch: 0; objective: 1.7285447120666504;
+fold: TRAIN; iteration: 86; epoch: 0; objective: 1.753340244293213;
+fold: TRAIN; iteration: 87; epoch: 0; objective: 1.69362211227417;
+fold: TRAIN; iteration: 88; epoch: 0; objective: 1.6487454175949097;
+fold: TRAIN; iteration: 89; epoch: 0; objective: 1.712538242340088;
+fold: TRAIN; iteration: 90; epoch: 0; objective: 1.7086501121520996;
+fold: TRAIN; iteration: 91; epoch: 0; objective: 1.691982626914978;
+fold: TRAIN; iteration: 92; epoch: 0; objective: 1.6723966598510742;
+fold: TRAIN; iteration: 93; epoch: 0; objective: 1.6283453702926636;
+fold: TRAIN; iteration: 94; epoch: 0; objective: 1.6149089336395264;
+fold: TRAIN; iteration: 95; epoch: 0; objective: 1.653446078300476;
+fold: TRAIN; iteration: 96; epoch: 0; objective: 1.648511528968811;
+fold: TRAIN; iteration: 97; epoch: 0; objective: 1.5106571912765503;
+fold: TRAIN; iteration: 98; epoch: 0; objective: 1.5759865045547485;
+fold: TRAIN; iteration: 99; epoch: 0; objective: 1.6457374095916748;
+validating model...
+saving
+fold: VALID; iteration: 100; epoch: 0; classification/accuracy: 0.736; objective: 1.5489568869272867;
+fold: TRAIN; iteration: 100; epoch: 0; objective: 1.5388517379760742;
+fold: TRAIN; iteration: 101; epoch: 0; objective: 1.5783321857452393;
+fold: TRAIN; iteration: 102; epoch: 0; objective: 1.459061622619629;
+fold: TRAIN; iteration: 103; epoch: 0; objective: 1.5350021123886108;
+fold: TRAIN; iteration: 104; epoch: 0; objective: 1.485479712486267;
+fold: TRAIN; iteration: 105; epoch: 0; objective: 1.5092706680297852;
+fold: TRAIN; iteration: 106; epoch: 0; objective: 1.4164519309997559;
+fold: TRAIN; iteration: 107; epoch: 0; objective: 1.493746280670166;
+fold: TRAIN; iteration: 108; epoch: 0; objective: 1.464590311050415;
+fold: TRAIN; iteration: 109; epoch: 0; objective: 1.4190788269042969;
+fold: TRAIN; iteration: 110; epoch: 0; objective: 1.3700015544891357;
+fold: TRAIN; iteration: 111; epoch: 0; objective: 1.3817120790481567;
+fold: TRAIN; iteration: 112; epoch: 0; objective: 1.498458743095398;
+fold: TRAIN; iteration: 113; epoch: 0; objective: 1.363298773765564;
+fold: TRAIN; iteration: 114; epoch: 0; objective: 1.414991021156311;
+fold: TRAIN; iteration: 115; epoch: 0; objective: 1.3477489948272705;
+fold: TRAIN; iteration: 116; epoch: 0; objective: 1.3577934503555298;
+fold: TRAIN; iteration: 117; epoch: 0; objective: 1.333818793296814;
+fold: TRAIN; iteration: 118; epoch: 0; objective: 1.2973687648773193;
+fold: TRAIN; iteration: 119; epoch: 0; objective: 1.3838218450546265;
+fold: TRAIN; iteration: 120; epoch: 0; objective: 1.3362393379211426;
+fold: TRAIN; iteration: 121; epoch: 0; objective: 1.3427870273590088;
+fold: TRAIN; iteration: 122; epoch: 0; objective: 1.3146530389785767;
+fold: TRAIN; iteration: 123; epoch: 0; objective: 1.3212884664535522;
+fold: TRAIN; iteration: 124; epoch: 0; objective: 1.2648059129714966;
+fold: TRAIN; iteration: 125; epoch: 0; objective: 1.1792470216751099;
+fold: TRAIN; iteration: 126; epoch: 0; objective: 1.3255343437194824;
+fold: TRAIN; iteration: 127; epoch: 0; objective: 1.2521576881408691;
+fold: TRAIN; iteration: 128; epoch: 0; objective: 1.1828417778015137;
+fold: TRAIN; iteration: 129; epoch: 0; objective: 1.1941351890563965;
+fold: TRAIN; iteration: 130; epoch: 0; objective: 1.2203545570373535;
+fold: TRAIN; iteration: 131; epoch: 0; objective: 1.2901480197906494;
+fold: TRAIN; iteration: 132; epoch: 0; objective: 1.1473500728607178;
+fold: TRAIN; iteration: 133; epoch: 0; objective: 1.21315336227417;
+fold: TRAIN; iteration: 134; epoch: 0; objective: 1.0979293584823608;
+fold: TRAIN; iteration: 135; epoch: 0; objective: 1.204796552658081;
+fold: TRAIN; iteration: 136; epoch: 0; objective: 1.18722665309906;
+fold: TRAIN; iteration: 137; epoch: 0; objective: 1.2087420225143433;
+fold: TRAIN; iteration: 138; epoch: 0; objective: 1.148308515548706;
+fold: TRAIN; iteration: 139; epoch: 0; objective: 1.1596767902374268;
+fold: TRAIN; iteration: 140; epoch: 0; objective: 1.0537848472595215;
+fold: TRAIN; iteration: 141; epoch: 0; objective: 1.059078335762024;
+fold: TRAIN; iteration: 142; epoch: 0; objective: 1.1056193113327026;
+fold: TRAIN; iteration: 143; epoch: 0; objective: 1.0761150121688843;
+fold: TRAIN; iteration: 144; epoch: 0; objective: 0.9907460808753967;
+fold: TRAIN; iteration: 145; epoch: 0; objective: 1.0361244678497314;
+fold: TRAIN; iteration: 146; epoch: 0; objective: 1.111603856086731;
+fold: TRAIN; iteration: 147; epoch: 0; objective: 0.8748308420181274;
+fold: TRAIN; iteration: 148; epoch: 0; objective: 1.0344175100326538;
+fold: TRAIN; iteration: 149; epoch: 0; objective: 1.0673104524612427;
+validating model...
+saving
+fold: VALID; iteration: 150; epoch: 0; classification/accuracy: 0.808; objective: 0.9873368521531423;
+fold: TRAIN; iteration: 150; epoch: 0; objective: 0.9553033709526062;
+fold: TRAIN; iteration: 151; epoch: 0; objective: 0.9281198978424072;
+fold: TRAIN; iteration: 152; epoch: 0; objective: 1.0514863729476929;
+fold: TRAIN; iteration: 153; epoch: 0; objective: 0.9282118082046509;
+fold: TRAIN; iteration: 154; epoch: 0; objective: 1.0207396745681763;
+fold: TRAIN; iteration: 155; epoch: 0; objective: 0.8938087224960327;
+fold: TRAIN; iteration: 156; epoch: 0; objective: 1.0280849933624268;
+fold: TRAIN; iteration: 157; epoch: 0; objective: 1.024795651435852;
+fold: TRAIN; iteration: 158; epoch: 0; objective: 0.9485607743263245;
+fold: TRAIN; iteration: 159; epoch: 0; objective: 0.9444960951805115;
+fold: TRAIN; iteration: 160; epoch: 0; objective: 0.9559438228607178;
+fold: TRAIN; iteration: 161; epoch: 0; objective: 0.883927583694458;
+fold: TRAIN; iteration: 162; epoch: 0; objective: 0.8086864948272705;
+fold: TRAIN; iteration: 163; epoch: 0; objective: 0.8442445993423462;
+fold: TRAIN; iteration: 164; epoch: 0; objective: 0.8373837471008301;
+fold: TRAIN; iteration: 165; epoch: 0; objective: 0.8384016156196594;
+fold: TRAIN; iteration: 166; epoch: 0; objective: 0.8444591760635376;
+fold: TRAIN; iteration: 167; epoch: 0; objective: 0.7695553302764893;
+fold: TRAIN; iteration: 168; epoch: 0; objective: 0.8766631484031677;
+fold: TRAIN; iteration: 169; epoch: 0; objective: 0.8856397271156311;
+fold: TRAIN; iteration: 170; epoch: 0; objective: 0.8711178302764893;
+fold: TRAIN; iteration: 171; epoch: 0; objective: 0.7945302724838257;
+fold: TRAIN; iteration: 172; epoch: 0; objective: 0.74613356590271;
+fold: TRAIN; iteration: 173; epoch: 0; objective: 0.7815412282943726;
+fold: TRAIN; iteration: 174; epoch: 0; objective: 0.8006216287612915;
+fold: TRAIN; iteration: 175; epoch: 0; objective: 0.795737624168396;
+fold: TRAIN; iteration: 176; epoch: 0; objective: 0.8316761255264282;
+fold: TRAIN; iteration: 177; epoch: 0; objective: 0.7394404411315918;
+fold: TRAIN; iteration: 178; epoch: 0; objective: 0.664289116859436;
+fold: TRAIN; iteration: 179; epoch: 0; objective: 0.9171271324157715;
+fold: TRAIN; iteration: 180; epoch: 0; objective: 0.7596015334129333;
+fold: TRAIN; iteration: 181; epoch: 0; objective: 0.6966711282730103;
+fold: TRAIN; iteration: 182; epoch: 0; objective: 0.6404881477355957;
+fold: TRAIN; iteration: 183; epoch: 0; objective: 0.7150827050209045;
+fold: TRAIN; iteration: 184; epoch: 0; objective: 0.7412192821502686;
+fold: TRAIN; iteration: 185; epoch: 0; objective: 0.7173486351966858;
+fold: TRAIN; iteration: 186; epoch: 0; objective: 0.6350332498550415;
+fold: TRAIN; iteration: 187; epoch: 0; objective: 0.6974350214004517;
+fold: TRAIN; iteration: 188; epoch: 0; objective: 0.7056358456611633;
+fold: TRAIN; iteration: 189; epoch: 0; objective: 0.7059516310691833;
+fold: TRAIN; iteration: 190; epoch: 0; objective: 0.6726677417755127;
+fold: TRAIN; iteration: 191; epoch: 0; objective: 0.7273571491241455;
+fold: TRAIN; iteration: 192; epoch: 0; objective: 0.6550860404968262;
+fold: TRAIN; iteration: 193; epoch: 0; objective: 0.7349218726158142;
+fold: TRAIN; iteration: 194; epoch: 0; objective: 0.6709476709365845;
+fold: TRAIN; iteration: 195; epoch: 0; objective: 0.6846724152565002;
+fold: TRAIN; iteration: 196; epoch: 0; objective: 0.6110948324203491;
+fold: TRAIN; iteration: 197; epoch: 0; objective: 0.6061646938323975;
+fold: TRAIN; iteration: 198; epoch: 0; objective: 0.5485150218009949;
+fold: TRAIN; iteration: 199; epoch: 0; objective: 0.5606725215911865;
+validating model...
+saving
+fold: VALID; iteration: 200; epoch: 0; classification/accuracy: 0.864; objective: 0.6416231413682302;
+fold: TRAIN; iteration: 200; epoch: 0; objective: 0.5524110198020935;
+fold: TRAIN; iteration: 201; epoch: 0; objective: 0.5731329917907715;
+fold: TRAIN; iteration: 202; epoch: 0; objective: 0.5998770594596863;
+fold: TRAIN; iteration: 203; epoch: 0; objective: 0.6987865567207336;
+fold: TRAIN; iteration: 204; epoch: 0; objective: 0.584966242313385;
+fold: TRAIN; iteration: 205; epoch: 0; objective: 0.544420599937439;
+fold: TRAIN; iteration: 206; epoch: 0; objective: 0.6289203763008118;
+fold: TRAIN; iteration: 207; epoch: 0; objective: 0.5928811430931091;
+fold: TRAIN; iteration: 208; epoch: 0; objective: 0.5664693713188171;
+fold: TRAIN; iteration: 209; epoch: 0; objective: 0.6178005933761597;
+fold: TRAIN; iteration: 210; epoch: 0; objective: 0.5685259699821472;
+fold: TRAIN; iteration: 211; epoch: 0; objective: 0.5617220997810364;
+fold: TRAIN; iteration: 212; epoch: 0; objective: 0.6207371950149536;
+fold: TRAIN; iteration: 213; epoch: 0; objective: 0.5728380680084229;
+fold: TRAIN; iteration: 214; epoch: 0; objective: 0.6330482363700867;
+fold: TRAIN; iteration: 215; epoch: 0; objective: 0.6580941081047058;
+fold: TRAIN; iteration: 216; epoch: 0; objective: 0.5361674427986145;
+fold: TRAIN; iteration: 217; epoch: 0; objective: 0.5886209607124329;
+fold: TRAIN; iteration: 218; epoch: 0; objective: 0.5150170922279358;
+fold: TRAIN; iteration: 219; epoch: 0; objective: 0.5986332297325134;
+fold: TRAIN; iteration: 220; epoch: 0; objective: 0.5638222098350525;
+fold: TRAIN; iteration: 221; epoch: 0; objective: 0.5477975606918335;
+fold: TRAIN; iteration: 222; epoch: 0; objective: 0.5144258141517639;
+fold: TRAIN; iteration: 223; epoch: 0; objective: 0.5075914263725281;
+fold: TRAIN; iteration: 224; epoch: 0; objective: 0.5279732346534729;
+fold: TRAIN; iteration: 225; epoch: 0; objective: 0.5959885716438293;
+fold: TRAIN; iteration: 226; epoch: 0; objective: 0.5398979783058167;
+fold: TRAIN; iteration: 227; epoch: 0; objective: 0.4430556893348694;
+fold: TRAIN; iteration: 228; epoch: 0; objective: 0.47684070467948914;
+fold: TRAIN; iteration: 229; epoch: 0; objective: 0.5749251842498779;
+fold: TRAIN; iteration: 230; epoch: 0; objective: 0.5780391097068787;
+fold: TRAIN; iteration: 231; epoch: 0; objective: 0.6113887429237366;
+fold: TRAIN; iteration: 232; epoch: 0; objective: 0.4975585639476776;
+fold: TRAIN; iteration: 233; epoch: 0; objective: 0.48368850350379944;
+fold: TRAIN; iteration: 234; epoch: 0; objective: 0.41788777709007263;
+fold: TRAIN; iteration: 235; epoch: 0; objective: 0.5862511992454529;
+fold: TRAIN; iteration: 236; epoch: 0; objective: 0.5322731137275696;
+fold: TRAIN; iteration: 237; epoch: 0; objective: 0.4178231358528137;
+fold: TRAIN; iteration: 238; epoch: 0; objective: 0.580333948135376;
+fold: TRAIN; iteration: 239; epoch: 0; objective: 0.497701495885849;
+fold: TRAIN; iteration: 240; epoch: 0; objective: 0.5496392250061035;
+fold: TRAIN; iteration: 241; epoch: 0; objective: 0.5565035343170166;
+fold: TRAIN; iteration: 242; epoch: 0; objective: 0.4882383644580841;
+fold: TRAIN; iteration: 243; epoch: 0; objective: 0.6302251219749451;
+fold: TRAIN; iteration: 244; epoch: 0; objective: 0.46008768677711487;
+fold: TRAIN; iteration: 245; epoch: 0; objective: 0.439983069896698;
+fold: TRAIN; iteration: 246; epoch: 0; objective: 0.5037180185317993;
+fold: TRAIN; iteration: 247; epoch: 0; objective: 0.4908507466316223;
+fold: TRAIN; iteration: 248; epoch: 0; objective: 0.4270007312297821;
+fold: TRAIN; iteration: 249; epoch: 0; objective: 0.48576876521110535;
+validating model...
+saving
+fold: VALID; iteration: 250; epoch: 0; classification/accuracy: 0.884; objective: 0.451803328593572;
+fold: TRAIN; iteration: 250; epoch: 0; objective: 0.4691663980484009;
+fold: TRAIN; iteration: 251; epoch: 0; objective: 0.576862633228302;
+fold: TRAIN; iteration: 252; epoch: 0; objective: 0.404197096824646;
+fold: TRAIN; iteration: 253; epoch: 0; objective: 0.3991774618625641;
+fold: TRAIN; iteration: 254; epoch: 0; objective: 0.37582331895828247;
+fold: TRAIN; iteration: 255; epoch: 0; objective: 0.5221420526504517;
+fold: TRAIN; iteration: 256; epoch: 0; objective: 0.43266594409942627;
+fold: TRAIN; iteration: 257; epoch: 0; objective: 0.4960709512233734;
+fold: TRAIN; iteration: 258; epoch: 0; objective: 0.48083826899528503;
+fold: TRAIN; iteration: 259; epoch: 0; objective: 0.3852514326572418;
+fold: TRAIN; iteration: 260; epoch: 0; objective: 0.3466404378414154;
+fold: TRAIN; iteration: 261; epoch: 0; objective: 0.39219409227371216;
+fold: TRAIN; iteration: 262; epoch: 0; objective: 0.4777238965034485;
+fold: TRAIN; iteration: 263; epoch: 0; objective: 0.44763603806495667;
+fold: TRAIN; iteration: 264; epoch: 0; objective: 0.4250473380088806;
+fold: TRAIN; iteration: 265; epoch: 0; objective: 0.3971410393714905;
+fold: TRAIN; iteration: 266; epoch: 0; objective: 0.40332740545272827;
+fold: TRAIN; iteration: 267; epoch: 0; objective: 0.3768453896045685;
+fold: TRAIN; iteration: 268; epoch: 0; objective: 0.38706374168395996;
+fold: TRAIN; iteration: 269; epoch: 0; objective: 0.37947556376457214;
+fold: TRAIN; iteration: 270; epoch: 0; objective: 0.452815443277359;
+fold: TRAIN; iteration: 271; epoch: 0; objective: 0.493867963552475;
+fold: TRAIN; iteration: 272; epoch: 0; objective: 0.3992939293384552;
+fold: TRAIN; iteration: 273; epoch: 0; objective: 0.3131028413772583;
+fold: TRAIN; iteration: 274; epoch: 0; objective: 0.4151868522167206;
+fold: TRAIN; iteration: 275; epoch: 0; objective: 0.4162626266479492;
+fold: TRAIN; iteration: 276; epoch: 0; objective: 0.3619062304496765;
+fold: TRAIN; iteration: 277; epoch: 0; objective: 0.37764960527420044;
+fold: TRAIN; iteration: 278; epoch: 0; objective: 0.2639358639717102;
+fold: TRAIN; iteration: 279; epoch: 0; objective: 0.35389968752861023;
+fold: TRAIN; iteration: 280; epoch: 0; objective: 0.4452621042728424;
+fold: TRAIN; iteration: 281; epoch: 0; objective: 0.4970174729824066;
+fold: TRAIN; iteration: 282; epoch: 0; objective: 0.46091488003730774;
+fold: TRAIN; iteration: 283; epoch: 0; objective: 0.3952816426753998;
+fold: TRAIN; iteration: 284; epoch: 0; objective: 0.4577915668487549;
+fold: TRAIN; iteration: 285; epoch: 0; objective: 0.4291832745075226;
+fold: TRAIN; iteration: 286; epoch: 0; objective: 0.2811763286590576;
+fold: TRAIN; iteration: 287; epoch: 0; objective: 0.4609934985637665;
+fold: TRAIN; iteration: 288; epoch: 0; objective: 0.34105420112609863;
+fold: TRAIN; iteration: 289; epoch: 0; objective: 0.46035289764404297;
+fold: TRAIN; iteration: 290; epoch: 0; objective: 0.39008629322052;
+fold: TRAIN; iteration: 291; epoch: 0; objective: 0.460020512342453;
+fold: TRAIN; iteration: 292; epoch: 0; objective: 0.36825576424598694;
+fold: TRAIN; iteration: 293; epoch: 0; objective: 0.4127294421195984;
+fold: TRAIN; iteration: 294; epoch: 0; objective: 0.39770039916038513;
+fold: TRAIN; iteration: 295; epoch: 0; objective: 0.3827143609523773;
+fold: TRAIN; iteration: 296; epoch: 0; objective: 0.31575194001197815;
+fold: TRAIN; iteration: 297; epoch: 0; objective: 0.3411363363265991;
+fold: TRAIN; iteration: 298; epoch: 0; objective: 0.3008173704147339;
+fold: TRAIN; iteration: 299; epoch: 0; objective: 0.32981377840042114;
+validating model...
+saving
+fold: VALID; iteration: 300; epoch: 0; classification/accuracy: 0.896; objective: 0.35037993391354877;
+fold: TRAIN; iteration: 300; epoch: 0; objective: 0.3884207606315613;
+fold: TRAIN; iteration: 301; epoch: 0; objective: 0.4104924499988556;
+fold: TRAIN; iteration: 302; epoch: 0; objective: 0.3189840018749237;
+fold: TRAIN; iteration: 303; epoch: 0; objective: 0.49520379304885864;
+fold: TRAIN; iteration: 304; epoch: 0; objective: 0.3654320240020752;
+fold: TRAIN; iteration: 305; epoch: 0; objective: 0.36922839283943176;
+fold: TRAIN; iteration: 306; epoch: 0; objective: 0.3083850145339966;
+fold: TRAIN; iteration: 307; epoch: 0; objective: 0.21791332960128784;
+fold: TRAIN; iteration: 308; epoch: 0; objective: 0.25590789318084717;
+fold: TRAIN; iteration: 309; epoch: 0; objective: 0.32256436347961426;
+fold: TRAIN; iteration: 310; epoch: 0; objective: 0.41546449065208435;
+fold: TRAIN; iteration: 311; epoch: 0; objective: 0.4138581454753876;
+fold: TRAIN; iteration: 312; epoch: 0; objective: 0.44572311639785767;
+fold: TRAIN; iteration: 313; epoch: 0; objective: 0.3566538095474243;
+fold: TRAIN; iteration: 314; epoch: 0; objective: 0.31700828671455383;
+fold: TRAIN; iteration: 315; epoch: 0; objective: 0.27538084983825684;
+fold: TRAIN; iteration: 316; epoch: 0; objective: 0.38182908296585083;
+fold: TRAIN; iteration: 317; epoch: 0; objective: 0.3178442120552063;
+fold: TRAIN; iteration: 318; epoch: 0; objective: 0.3055446743965149;
+fold: TRAIN; iteration: 319; epoch: 0; objective: 0.4917789697647095;
+fold: TRAIN; iteration: 320; epoch: 0; objective: 0.3592788279056549;
+fold: TRAIN; iteration: 321; epoch: 0; objective: 0.3168669641017914;
+fold: TRAIN; iteration: 322; epoch: 0; objective: 0.3328417241573334;
+fold: TRAIN; iteration: 323; epoch: 0; objective: 0.31958815455436707;
+fold: TRAIN; iteration: 324; epoch: 0; objective: 0.2781318426132202;
+fold: TRAIN; iteration: 325; epoch: 0; objective: 0.2303498089313507;
+fold: TRAIN; iteration: 326; epoch: 0; objective: 0.3737356662750244;
+fold: TRAIN; iteration: 327; epoch: 0; objective: 0.30438005924224854;
+fold: TRAIN; iteration: 328; epoch: 0; objective: 0.3121303617954254;
+fold: TRAIN; iteration: 329; epoch: 0; objective: 0.3315315246582031;
+fold: TRAIN; iteration: 330; epoch: 0; objective: 0.3182876408100128;
+fold: TRAIN; iteration: 331; epoch: 0; objective: 0.34026435017585754;
+fold: TRAIN; iteration: 332; epoch: 0; objective: 0.25233665108680725;
+fold: TRAIN; iteration: 333; epoch: 0; objective: 0.30373942852020264;
+fold: TRAIN; iteration: 334; epoch: 0; objective: 0.3453518748283386;
+fold: TRAIN; iteration: 335; epoch: 0; objective: 0.27508705854415894;
+fold: TRAIN; iteration: 336; epoch: 0; objective: 0.25642529129981995;
+fold: TRAIN; iteration: 337; epoch: 0; objective: 0.2675687074661255;
+fold: TRAIN; iteration: 338; epoch: 0; objective: 0.3089216351509094;
+fold: TRAIN; iteration: 339; epoch: 0; objective: 0.3620477020740509;
+fold: TRAIN; iteration: 340; epoch: 0; objective: 0.32604044675827026;
+fold: TRAIN; iteration: 341; epoch: 0; objective: 0.31357109546661377;
+fold: TRAIN; iteration: 342; epoch: 0; objective: 0.24581754207611084;
+fold: TRAIN; iteration: 343; epoch: 0; objective: 0.2585369050502777;
+fold: TRAIN; iteration: 344; epoch: 0; objective: 0.20343568921089172;
+fold: TRAIN; iteration: 345; epoch: 0; objective: 0.33888623118400574;
+fold: TRAIN; iteration: 346; epoch: 0; objective: 0.33794358372688293;
+fold: TRAIN; iteration: 347; epoch: 0; objective: 0.29893505573272705;
+fold: TRAIN; iteration: 348; epoch: 0; objective: 0.2963196039199829;
+fold: TRAIN; iteration: 349; epoch: 0; objective: 0.34523075819015503;
+validating model...
+saving
+fold: VALID; iteration: 350; epoch: 0; classification/accuracy: 0.912; objective: 0.29230905175209043;
+fold: TRAIN; iteration: 350; epoch: 0; objective: 0.2768441140651703;
+fold: TRAIN; iteration: 351; epoch: 0; objective: 0.3161417543888092;
+fold: TRAIN; iteration: 352; epoch: 0; objective: 0.23402588069438934;
+fold: TRAIN; iteration: 353; epoch: 0; objective: 0.35462820529937744;
+fold: TRAIN; iteration: 354; epoch: 0; objective: 0.26664280891418457;
+fold: TRAIN; iteration: 355; epoch: 0; objective: 0.22250282764434814;
+fold: TRAIN; iteration: 356; epoch: 0; objective: 0.26922518014907837;
+fold: TRAIN; iteration: 357; epoch: 0; objective: 0.3312653601169586;
+fold: TRAIN; iteration: 358; epoch: 0; objective: 0.306863009929657;
+fold: TRAIN; iteration: 359; epoch: 0; objective: 0.2578064799308777;
+fold: TRAIN; iteration: 360; epoch: 0; objective: 0.34224486351013184;
+fold: TRAIN; iteration: 361; epoch: 0; objective: 0.187997967004776;
+fold: TRAIN; iteration: 362; epoch: 0; objective: 0.32630929350852966;
+fold: TRAIN; iteration: 363; epoch: 0; objective: 0.25733163952827454;
+fold: TRAIN; iteration: 364; epoch: 0; objective: 0.31608423590660095;
+fold: TRAIN; iteration: 365; epoch: 0; objective: 0.366179883480072;
+fold: TRAIN; iteration: 366; epoch: 0; objective: 0.33990100026130676;
+fold: TRAIN; iteration: 367; epoch: 0; objective: 0.3026387691497803;
+fold: TRAIN; iteration: 368; epoch: 0; objective: 0.18078182637691498;
+fold: TRAIN; iteration: 369; epoch: 0; objective: 0.31508690118789673;
+fold: TRAIN; iteration: 370; epoch: 0; objective: 0.3361470699310303;
+fold: TRAIN; iteration: 371; epoch: 0; objective: 0.20317630469799042;
+fold: TRAIN; iteration: 372; epoch: 0; objective: 0.2807629704475403;
+fold: TRAIN; iteration: 373; epoch: 0; objective: 0.3306344151496887;
+fold: TRAIN; iteration: 374; epoch: 0; objective: 0.2602258622646332;
+fold: TRAIN; iteration: 375; epoch: 0; objective: 0.294003963470459;
+fold: TRAIN; iteration: 376; epoch: 0; objective: 0.32854458689689636;
+fold: TRAIN; iteration: 377; epoch: 0; objective: 0.2110057771205902;
+fold: TRAIN; iteration: 378; epoch: 0; objective: 0.27702534198760986;
+fold: TRAIN; iteration: 379; epoch: 0; objective: 0.26298296451568604;
+fold: TRAIN; iteration: 380; epoch: 0; objective: 0.44413691759109497;
+fold: TRAIN; iteration: 381; epoch: 0; objective: 0.2480943650007248;
+fold: TRAIN; iteration: 382; epoch: 0; objective: 0.24809619784355164;
+fold: TRAIN; iteration: 383; epoch: 0; objective: 0.1918671578168869;
+fold: TRAIN; iteration: 384; epoch: 0; objective: 0.2477605640888214;
+fold: TRAIN; iteration: 385; epoch: 0; objective: 0.2528572380542755;
+fold: TRAIN; iteration: 386; epoch: 0; objective: 0.1984337866306305;
+fold: TRAIN; iteration: 387; epoch: 0; objective: 0.2470925748348236;
+fold: TRAIN; iteration: 388; epoch: 0; objective: 0.20278017222881317;
+fold: TRAIN; iteration: 389; epoch: 0; objective: 0.24604254961013794;
+fold: TRAIN; iteration: 390; epoch: 0; objective: 0.31949999928474426;
+fold: TRAIN; iteration: 391; epoch: 0; objective: 0.337195485830307;
+fold: TRAIN; iteration: 392; epoch: 0; objective: 0.3418445885181427;
+fold: TRAIN; iteration: 393; epoch: 0; objective: 0.3306071162223816;
+fold: TRAIN; iteration: 394; epoch: 0; objective: 0.2407837063074112;
+fold: TRAIN; iteration: 395; epoch: 0; objective: 0.36058586835861206;
+fold: TRAIN; iteration: 396; epoch: 0; objective: 0.26730090379714966;
+fold: TRAIN; iteration: 397; epoch: 0; objective: 0.3105281889438629;
+fold: TRAIN; iteration: 398; epoch: 0; objective: 0.25328680872917175;
+fold: TRAIN; iteration: 399; epoch: 0; objective: 0.2442336082458496;
+validating model...
+saving
+fold: VALID; iteration: 400; epoch: 0; classification/accuracy: 0.916; objective: 0.24675621291001637;
+fold: TRAIN; iteration: 400; epoch: 0; objective: 0.2625192403793335;
+fold: TRAIN; iteration: 401; epoch: 0; objective: 0.2856789827346802;
+fold: TRAIN; iteration: 402; epoch: 0; objective: 0.2593337893486023;
+fold: TRAIN; iteration: 403; epoch: 0; objective: 0.3368138372898102;
+fold: TRAIN; iteration: 404; epoch: 0; objective: 0.21703064441680908;
+fold: TRAIN; iteration: 405; epoch: 0; objective: 0.30032292008399963;
+fold: TRAIN; iteration: 406; epoch: 0; objective: 0.2777790129184723;
+fold: TRAIN; iteration: 407; epoch: 0; objective: 0.24385595321655273;
+fold: TRAIN; iteration: 408; epoch: 0; objective: 0.34384241700172424;
+fold: TRAIN; iteration: 409; epoch: 0; objective: 0.23612819612026215;
+fold: TRAIN; iteration: 410; epoch: 0; objective: 0.2894740104675293;
+fold: TRAIN; iteration: 411; epoch: 0; objective: 0.26173990964889526;
+fold: TRAIN; iteration: 412; epoch: 0; objective: 0.2930750250816345;
+fold: TRAIN; iteration: 413; epoch: 0; objective: 0.2808097004890442;
+fold: TRAIN; iteration: 414; epoch: 0; objective: 0.2790738344192505;
+fold: TRAIN; iteration: 415; epoch: 0; objective: 0.25176265835762024;
+fold: TRAIN; iteration: 416; epoch: 0; objective: 0.2805478274822235;
+fold: TRAIN; iteration: 417; epoch: 0; objective: 0.18595218658447266;
+fold: TRAIN; iteration: 418; epoch: 0; objective: 0.2885960638523102;
+fold: TRAIN; iteration: 419; epoch: 0; objective: 0.2728252112865448;
+fold: TRAIN; iteration: 420; epoch: 0; objective: 0.14040805399417877;
+fold: TRAIN; iteration: 421; epoch: 0; objective: 0.2693161070346832;
+fold: TRAIN; iteration: 422; epoch: 0; objective: 0.2252017855644226;
+fold: TRAIN; iteration: 423; epoch: 0; objective: 0.16970288753509521;
+fold: TRAIN; iteration: 424; epoch: 0; objective: 0.20474845170974731;
+fold: TRAIN; iteration: 425; epoch: 0; objective: 0.2338188737630844;
+fold: TRAIN; iteration: 426; epoch: 0; objective: 0.2860945761203766;
+fold: TRAIN; iteration: 427; epoch: 0; objective: 0.22340461611747742;
+fold: TRAIN; iteration: 428; epoch: 0; objective: 0.21929721534252167;
+fold: TRAIN; iteration: 429; epoch: 0; objective: 0.1729525774717331;
+fold: TRAIN; iteration: 430; epoch: 0; objective: 0.1452544629573822;
+fold: TRAIN; iteration: 431; epoch: 0; objective: 0.2521149516105652;
+fold: TRAIN; iteration: 432; epoch: 0; objective: 0.30004021525382996;
+fold: TRAIN; iteration: 433; epoch: 0; objective: 0.18049336969852448;
+fold: TRAIN; iteration: 434; epoch: 0; objective: 0.25346001982688904;
+fold: TRAIN; iteration: 435; epoch: 0; objective: 0.2329639196395874;
+fold: TRAIN; iteration: 436; epoch: 0; objective: 0.23564575612545013;
+fold: TRAIN; iteration: 437; epoch: 0; objective: 0.2699601948261261;
+fold: TRAIN; iteration: 438; epoch: 0; objective: 0.26351380348205566;
+fold: TRAIN; iteration: 439; epoch: 0; objective: 0.1844683587551117;
+fold: TRAIN; iteration: 440; epoch: 0; objective: 0.27691227197647095;
+fold: TRAIN; iteration: 441; epoch: 0; objective: 0.1639537811279297;
+fold: TRAIN; iteration: 442; epoch: 0; objective: 0.286668062210083;
+fold: TRAIN; iteration: 443; epoch: 0; objective: 0.2069004476070404;
+fold: TRAIN; iteration: 444; epoch: 0; objective: 0.23070532083511353;
+fold: TRAIN; iteration: 445; epoch: 0; objective: 0.1823454052209854;
+fold: TRAIN; iteration: 446; epoch: 0; objective: 0.257651686668396;
+fold: TRAIN; iteration: 447; epoch: 0; objective: 0.20659533143043518;
+fold: TRAIN; iteration: 448; epoch: 0; objective: 0.2471970170736313;
+fold: TRAIN; iteration: 449; epoch: 0; objective: 0.17757461965084076;
+validating model...
+saving
+fold: VALID; iteration: 450; epoch: 0; classification/accuracy: 0.92; objective: 0.21056613624095916;
+fold: TRAIN; iteration: 450; epoch: 0; objective: 0.3436805307865143;
+fold: TRAIN; iteration: 451; epoch: 0; objective: 0.23695938289165497;
+fold: TRAIN; iteration: 452; epoch: 0; objective: 0.29445770382881165;
+fold: TRAIN; iteration: 453; epoch: 0; objective: 0.2298242151737213;
+fold: TRAIN; iteration: 454; epoch: 0; objective: 0.16260269284248352;
+fold: TRAIN; iteration: 455; epoch: 0; objective: 0.1670287847518921;
+fold: TRAIN; iteration: 456; epoch: 0; objective: 0.29464030265808105;
+fold: TRAIN; iteration: 457; epoch: 0; objective: 0.26952311396598816;
+fold: TRAIN; iteration: 458; epoch: 0; objective: 0.25887927412986755;
+fold: TRAIN; iteration: 459; epoch: 0; objective: 0.2283255159854889;
+fold: TRAIN; iteration: 460; epoch: 0; objective: 0.20522798597812653;
+fold: TRAIN; iteration: 461; epoch: 0; objective: 0.24169865250587463;
+fold: TRAIN; iteration: 462; epoch: 0; objective: 0.16830572485923767;
+fold: TRAIN; iteration: 463; epoch: 0; objective: 0.21455959975719452;
+fold: TRAIN; iteration: 464; epoch: 0; objective: 0.15567980706691742;
+fold: TRAIN; iteration: 465; epoch: 0; objective: 0.25333526730537415;
+fold: TRAIN; iteration: 466; epoch: 0; objective: 0.22035934031009674;
+fold: TRAIN; iteration: 467; epoch: 0; objective: 0.1339200735092163;
+fold: TRAIN; iteration: 468; epoch: 0; objective: 0.12972094118595123;
+fold: TRAIN; iteration: 469; epoch: 0; objective: 0.2563173174858093;
+fold: TRAIN; iteration: 470; epoch: 0; objective: 0.27959388494491577;
+fold: TRAIN; iteration: 471; epoch: 0; objective: 0.17715391516685486;
+fold: TRAIN; iteration: 472; epoch: 0; objective: 0.22243236005306244;
+fold: TRAIN; iteration: 473; epoch: 0; objective: 0.2017333060503006;
+fold: TRAIN; iteration: 474; epoch: 0; objective: 0.19562242925167084;
+fold: TRAIN; iteration: 475; epoch: 0; objective: 0.29030925035476685;
+fold: TRAIN; iteration: 476; epoch: 0; objective: 0.2628055810928345;
+fold: TRAIN; iteration: 477; epoch: 0; objective: 0.2315705120563507;
+fold: TRAIN; iteration: 478; epoch: 0; objective: 0.20442894101142883;
+fold: TRAIN; iteration: 479; epoch: 0; objective: 0.16538427770137787;
+fold: TRAIN; iteration: 480; epoch: 0; objective: 0.17901235818862915;
+fold: TRAIN; iteration: 481; epoch: 0; objective: 0.22716030478477478;
+fold: TRAIN; iteration: 482; epoch: 0; objective: 0.1822156012058258;
+fold: TRAIN; iteration: 483; epoch: 0; objective: 0.2607152462005615;
+fold: TRAIN; iteration: 484; epoch: 0; objective: 0.1956377476453781;
+fold: TRAIN; iteration: 485; epoch: 0; objective: 0.23572520911693573;
+fold: TRAIN; iteration: 486; epoch: 0; objective: 0.20163284242153168;
+fold: TRAIN; iteration: 487; epoch: 0; objective: 0.2183588743209839;
+fold: TRAIN; iteration: 488; epoch: 0; objective: 0.24798429012298584;
+fold: TRAIN; iteration: 489; epoch: 0; objective: 0.2613402307033539;
+fold: TRAIN; iteration: 490; epoch: 0; objective: 0.2674197852611542;
+fold: TRAIN; iteration: 491; epoch: 0; objective: 0.23024417459964752;
+fold: TRAIN; iteration: 492; epoch: 0; objective: 0.1974906176328659;
+fold: TRAIN; iteration: 493; epoch: 0; objective: 0.1252833902835846;
+fold: TRAIN; iteration: 494; epoch: 0; objective: 0.15930241346359253;
+fold: TRAIN; iteration: 495; epoch: 0; objective: 0.21083824336528778;
+fold: TRAIN; iteration: 496; epoch: 0; objective: 0.22166134417057037;
+fold: TRAIN; iteration: 497; epoch: 0; objective: 0.1736297607421875;
+fold: TRAIN; iteration: 498; epoch: 0; objective: 0.2207067906856537;
+fold: TRAIN; iteration: 499; epoch: 0; objective: 0.25420472025871277;
+validating model...
+saving
+fold: VALID; iteration: 500; epoch: 0; classification/accuracy: 0.924; objective: 0.19069528977076214;
+fold: TRAIN; iteration: 500; epoch: 0; objective: 0.18816803395748138;
+fold: TRAIN; iteration: 501; epoch: 0; objective: 0.12287291884422302;
+fold: TRAIN; iteration: 502; epoch: 0; objective: 0.18035119771957397;
+fold: TRAIN; iteration: 503; epoch: 0; objective: 0.2056800276041031;
+fold: TRAIN; iteration: 504; epoch: 0; objective: 0.15656442940235138;
+fold: TRAIN; iteration: 505; epoch: 0; objective: 0.1946607530117035;
+fold: TRAIN; iteration: 506; epoch: 0; objective: 0.12684255838394165;
+fold: TRAIN; iteration: 507; epoch: 0; objective: 0.28900614380836487;
+fold: TRAIN; iteration: 508; epoch: 0; objective: 0.12665358185768127;
+fold: TRAIN; iteration: 509; epoch: 0; objective: 0.17089062929153442;
+fold: TRAIN; iteration: 510; epoch: 0; objective: 0.1135038211941719;
+fold: TRAIN; iteration: 511; epoch: 0; objective: 0.1541869044303894;
+fold: TRAIN; iteration: 512; epoch: 0; objective: 0.3308180868625641;
+fold: TRAIN; iteration: 513; epoch: 0; objective: 0.19410045444965363;
+fold: TRAIN; iteration: 514; epoch: 0; objective: 0.1776244342327118;
+fold: TRAIN; iteration: 515; epoch: 0; objective: 0.1789172738790512;
+fold: TRAIN; iteration: 516; epoch: 0; objective: 0.26673102378845215;
+fold: TRAIN; iteration: 517; epoch: 0; objective: 0.20096160471439362;
+fold: TRAIN; iteration: 518; epoch: 0; objective: 0.19312679767608643;
+fold: TRAIN; iteration: 519; epoch: 0; objective: 0.262199342250824;
+fold: TRAIN; iteration: 520; epoch: 0; objective: 0.279582142829895;
+fold: TRAIN; iteration: 521; epoch: 0; objective: 0.28095564246177673;
+fold: TRAIN; iteration: 522; epoch: 0; objective: 0.2268110066652298;
+fold: TRAIN; iteration: 523; epoch: 0; objective: 0.2171192765235901;
+fold: TRAIN; iteration: 524; epoch: 0; objective: 0.2572196424007416;
+fold: TRAIN; iteration: 525; epoch: 0; objective: 0.23556096851825714;
+fold: TRAIN; iteration: 526; epoch: 0; objective: 0.2469976395368576;
+fold: TRAIN; iteration: 527; epoch: 0; objective: 0.2866179347038269;
+fold: TRAIN; iteration: 528; epoch: 0; objective: 0.11958278715610504;
+fold: TRAIN; iteration: 529; epoch: 0; objective: 0.17499998211860657;
+fold: TRAIN; iteration: 530; epoch: 0; objective: 0.23000793159008026;
+fold: TRAIN; iteration: 531; epoch: 0; objective: 0.19682151079177856;
+fold: TRAIN; iteration: 532; epoch: 0; objective: 0.2520036995410919;
+fold: TRAIN; iteration: 533; epoch: 0; objective: 0.18876145780086517;
+fold: TRAIN; iteration: 534; epoch: 0; objective: 0.18374605476856232;
+fold: TRAIN; iteration: 535; epoch: 0; objective: 0.14497922360897064;
+fold: TRAIN; iteration: 536; epoch: 0; objective: 0.16958293318748474;
+fold: TRAIN; iteration: 537; epoch: 0; objective: 0.24014291167259216;
+fold: TRAIN; iteration: 538; epoch: 0; objective: 0.11821747571229935;
+fold: TRAIN; iteration: 539; epoch: 0; objective: 0.18703846633434296;
+fold: TRAIN; iteration: 540; epoch: 0; objective: 0.14011511206626892;
+fold: TRAIN; iteration: 541; epoch: 0; objective: 0.2513301968574524;
+fold: TRAIN; iteration: 542; epoch: 0; objective: 0.3050746023654938;
+fold: TRAIN; iteration: 543; epoch: 0; objective: 0.17944732308387756;
+fold: TRAIN; iteration: 544; epoch: 0; objective: 0.23783716559410095;
+fold: TRAIN; iteration: 545; epoch: 0; objective: 0.20185483992099762;
+fold: TRAIN; iteration: 546; epoch: 0; objective: 0.1575520634651184;
+fold: TRAIN; iteration: 547; epoch: 0; objective: 0.15601468086242676;
+fold: TRAIN; iteration: 548; epoch: 0; objective: 0.21435560286045074;
+fold: TRAIN; iteration: 549; epoch: 0; objective: 0.11053474247455597;
+validating model...
+saving
+fold: VALID; iteration: 550; epoch: 0; classification/accuracy: 0.936; objective: 0.1713645281891028;
+fold: TRAIN; iteration: 550; epoch: 0; objective: 0.15319792926311493;
+fold: TRAIN; iteration: 551; epoch: 0; objective: 0.1813705861568451;
+fold: TRAIN; iteration: 552; epoch: 0; objective: 0.13642333447933197;
+fold: TRAIN; iteration: 553; epoch: 0; objective: 0.1771029680967331;
+fold: TRAIN; iteration: 554; epoch: 0; objective: 0.17172956466674805;
+fold: TRAIN; iteration: 555; epoch: 0; objective: 0.2103656828403473;
+fold: TRAIN; iteration: 556; epoch: 0; objective: 0.2354395091533661;
+fold: TRAIN; iteration: 557; epoch: 0; objective: 0.1517806202173233;
+fold: TRAIN; iteration: 558; epoch: 0; objective: 0.21146036684513092;
+fold: TRAIN; iteration: 559; epoch: 0; objective: 0.1926959753036499;
+fold: TRAIN; iteration: 560; epoch: 0; objective: 0.34162163734436035;
+fold: TRAIN; iteration: 561; epoch: 1; objective: 0.19660839438438416;
+fold: TRAIN; iteration: 562; epoch: 1; objective: 0.23113185167312622;
+fold: TRAIN; iteration: 563; epoch: 1; objective: 0.1668144166469574;
+fold: TRAIN; iteration: 564; epoch: 1; objective: 0.31791746616363525;
+fold: TRAIN; iteration: 565; epoch: 1; objective: 0.18624214828014374;
+fold: TRAIN; iteration: 566; epoch: 1; objective: 0.18381690979003906;
+fold: TRAIN; iteration: 567; epoch: 1; objective: 0.22024613618850708;
+fold: TRAIN; iteration: 568; epoch: 1; objective: 0.11072888970375061;
+fold: TRAIN; iteration: 569; epoch: 1; objective: 0.15904298424720764;
+fold: TRAIN; iteration: 570; epoch: 1; objective: 0.16242468357086182;
+fold: TRAIN; iteration: 571; epoch: 1; objective: 0.1903500109910965;
+fold: TRAIN; iteration: 572; epoch: 1; objective: 0.14506056904792786;
+fold: TRAIN; iteration: 573; epoch: 1; objective: 0.12776921689510345;
+fold: TRAIN; iteration: 574; epoch: 1; objective: 0.17519502341747284;
+fold: TRAIN; iteration: 575; epoch: 1; objective: 0.23584085702896118;
+fold: TRAIN; iteration: 576; epoch: 1; objective: 0.25147339701652527;
+fold: TRAIN; iteration: 577; epoch: 1; objective: 0.12743651866912842;
+fold: TRAIN; iteration: 578; epoch: 1; objective: 0.1451735943555832;
+fold: TRAIN; iteration: 579; epoch: 1; objective: 0.16156630218029022;
+fold: TRAIN; iteration: 580; epoch: 1; objective: 0.2701037526130676;
+fold: TRAIN; iteration: 581; epoch: 1; objective: 0.14835213124752045;
+fold: TRAIN; iteration: 582; epoch: 1; objective: 0.14147645235061646;
+fold: TRAIN; iteration: 583; epoch: 1; objective: 0.36205077171325684;
+fold: TRAIN; iteration: 584; epoch: 1; objective: 0.12842820584774017;
+fold: TRAIN; iteration: 585; epoch: 1; objective: 0.18731723725795746;
+fold: TRAIN; iteration: 586; epoch: 1; objective: 0.15742945671081543;
+fold: TRAIN; iteration: 587; epoch: 1; objective: 0.1970420628786087;
+fold: TRAIN; iteration: 588; epoch: 1; objective: 0.18344341218471527;
+fold: TRAIN; iteration: 589; epoch: 1; objective: 0.20230752229690552;
+fold: TRAIN; iteration: 590; epoch: 1; objective: 0.2499934434890747;
+fold: TRAIN; iteration: 591; epoch: 1; objective: 0.12143583595752716;
+fold: TRAIN; iteration: 592; epoch: 1; objective: 0.3028263747692108;
+fold: TRAIN; iteration: 593; epoch: 1; objective: 0.1849934160709381;
+fold: TRAIN; iteration: 594; epoch: 1; objective: 0.10593089461326599;
+fold: TRAIN; iteration: 595; epoch: 1; objective: 0.13589748740196228;
+fold: TRAIN; iteration: 596; epoch: 1; objective: 0.2509782314300537;
+fold: TRAIN; iteration: 597; epoch: 1; objective: 0.18752656877040863;
+fold: TRAIN; iteration: 598; epoch: 1; objective: 0.1089424416422844;
+fold: TRAIN; iteration: 599; epoch: 1; objective: 0.25208061933517456;
+validating model...
+saving
+fold: VALID; iteration: 600; epoch: 1; classification/accuracy: 0.944; objective: 0.15632830535372097;
+fold: TRAIN; iteration: 600; epoch: 1; objective: 0.10893958061933517;
+fold: TRAIN; iteration: 601; epoch: 1; objective: 0.09291502088308334;
+fold: TRAIN; iteration: 602; epoch: 1; objective: 0.0882015973329544;
+fold: TRAIN; iteration: 603; epoch: 1; objective: 0.1744246482849121;
+fold: TRAIN; iteration: 604; epoch: 1; objective: 0.09488404542207718;
+fold: TRAIN; iteration: 605; epoch: 1; objective: 0.23921199142932892;
+fold: TRAIN; iteration: 606; epoch: 1; objective: 0.1643109768629074;
+fold: TRAIN; iteration: 607; epoch: 1; objective: 0.13356739282608032;
+fold: TRAIN; iteration: 608; epoch: 1; objective: 0.17709778249263763;
+fold: TRAIN; iteration: 609; epoch: 1; objective: 0.11702609807252884;
+fold: TRAIN; iteration: 610; epoch: 1; objective: 0.10526110976934433;
+fold: TRAIN; iteration: 611; epoch: 1; objective: 0.1292509138584137;
+fold: TRAIN; iteration: 612; epoch: 1; objective: 0.17154918611049652;
+fold: TRAIN; iteration: 613; epoch: 1; objective: 0.17711523175239563;
+fold: TRAIN; iteration: 614; epoch: 1; objective: 0.17529067397117615;
+fold: TRAIN; iteration: 615; epoch: 1; objective: 0.16650797426700592;
+fold: TRAIN; iteration: 616; epoch: 1; objective: 0.16770608723163605;
+fold: TRAIN; iteration: 617; epoch: 1; objective: 0.11272963881492615;
+fold: TRAIN; iteration: 618; epoch: 1; objective: 0.22953489422798157;
+fold: TRAIN; iteration: 619; epoch: 1; objective: 0.15911659598350525;
+fold: TRAIN; iteration: 620; epoch: 1; objective: 0.10743838548660278;
+fold: TRAIN; iteration: 621; epoch: 1; objective: 0.10768947005271912;
+fold: TRAIN; iteration: 622; epoch: 1; objective: 0.11082758009433746;
+fold: TRAIN; iteration: 623; epoch: 1; objective: 0.12226519733667374;
+fold: TRAIN; iteration: 624; epoch: 1; objective: 0.21235467493534088;
+fold: TRAIN; iteration: 625; epoch: 1; objective: 0.1655896157026291;
+fold: TRAIN; iteration: 626; epoch: 1; objective: 0.25862300395965576;
+fold: TRAIN; iteration: 627; epoch: 1; objective: 0.2016104906797409;
+fold: TRAIN; iteration: 628; epoch: 1; objective: 0.18204741179943085;
+fold: TRAIN; iteration: 629; epoch: 1; objective: 0.15625448524951935;
+fold: TRAIN; iteration: 630; epoch: 1; objective: 0.11947419494390488;
+fold: TRAIN; iteration: 631; epoch: 1; objective: 0.16354504227638245;
+fold: TRAIN; iteration: 632; epoch: 1; objective: 0.14476747810840607;
+fold: TRAIN; iteration: 633; epoch: 1; objective: 0.15738779306411743;
+fold: TRAIN; iteration: 634; epoch: 1; objective: 0.2598494589328766;
+fold: TRAIN; iteration: 635; epoch: 1; objective: 0.1517832726240158;
+fold: TRAIN; iteration: 636; epoch: 1; objective: 0.15745992958545685;
+fold: TRAIN; iteration: 637; epoch: 1; objective: 0.23074007034301758;
+fold: TRAIN; iteration: 638; epoch: 1; objective: 0.17373384535312653;
+fold: TRAIN; iteration: 639; epoch: 1; objective: 0.0903640165925026;
+fold: TRAIN; iteration: 640; epoch: 1; objective: 0.14537380635738373;
+fold: TRAIN; iteration: 641; epoch: 1; objective: 0.1595802754163742;
+fold: TRAIN; iteration: 642; epoch: 1; objective: 0.16200529038906097;
+fold: TRAIN; iteration: 643; epoch: 1; objective: 0.2612053155899048;
+fold: TRAIN; iteration: 644; epoch: 1; objective: 0.14188505709171295;
+fold: TRAIN; iteration: 645; epoch: 1; objective: 0.1646387130022049;
+fold: TRAIN; iteration: 646; epoch: 1; objective: 0.19076788425445557;
+fold: TRAIN; iteration: 647; epoch: 1; objective: 0.22356298565864563;
+fold: TRAIN; iteration: 648; epoch: 1; objective: 0.24653072655200958;
+fold: TRAIN; iteration: 649; epoch: 1; objective: 0.20611131191253662;
+validating model...
+saving
+fold: VALID; iteration: 650; epoch: 1; classification/accuracy: 0.94; objective: 0.14958817288279533;
+fold: TRAIN; iteration: 650; epoch: 1; objective: 0.1685531586408615;
+fold: TRAIN; iteration: 651; epoch: 1; objective: 0.13237009942531586;
+fold: TRAIN; iteration: 652; epoch: 1; objective: 0.16990141570568085;
+fold: TRAIN; iteration: 653; epoch: 1; objective: 0.19682398438453674;
+fold: TRAIN; iteration: 654; epoch: 1; objective: 0.21055985987186432;
+fold: TRAIN; iteration: 655; epoch: 1; objective: 0.1812974512577057;
+fold: TRAIN; iteration: 656; epoch: 1; objective: 0.09736501425504684;
+fold: TRAIN; iteration: 657; epoch: 1; objective: 0.16760192811489105;
+fold: TRAIN; iteration: 658; epoch: 1; objective: 0.12057533860206604;
+fold: TRAIN; iteration: 659; epoch: 1; objective: 0.1542319357395172;
+fold: TRAIN; iteration: 660; epoch: 1; objective: 0.16806240379810333;
+fold: TRAIN; iteration: 661; epoch: 1; objective: 0.15364564955234528;
+fold: TRAIN; iteration: 662; epoch: 1; objective: 0.13764359056949615;
+fold: TRAIN; iteration: 663; epoch: 1; objective: 0.25643807649612427;
+fold: TRAIN; iteration: 664; epoch: 1; objective: 0.20973533391952515;
+fold: TRAIN; iteration: 665; epoch: 1; objective: 0.11687085777521133;
+fold: TRAIN; iteration: 666; epoch: 1; objective: 0.12486947327852249;
+fold: TRAIN; iteration: 667; epoch: 1; objective: 0.09650582075119019;
+fold: TRAIN; iteration: 668; epoch: 1; objective: 0.20230558514595032;
+fold: TRAIN; iteration: 669; epoch: 1; objective: 0.29987436532974243;
+fold: TRAIN; iteration: 670; epoch: 1; objective: 0.14417432248592377;
+fold: TRAIN; iteration: 671; epoch: 1; objective: 0.2259042114019394;
+fold: TRAIN; iteration: 672; epoch: 1; objective: 0.11589309573173523;
+fold: TRAIN; iteration: 673; epoch: 1; objective: 0.16616685688495636;
+fold: TRAIN; iteration: 674; epoch: 1; objective: 0.1127064898610115;
+fold: TRAIN; iteration: 675; epoch: 1; objective: 0.20488925278186798;
+fold: TRAIN; iteration: 676; epoch: 1; objective: 0.14638490974903107;
+fold: TRAIN; iteration: 677; epoch: 1; objective: 0.17875489592552185;
+fold: TRAIN; iteration: 678; epoch: 1; objective: 0.2335738241672516;
+fold: TRAIN; iteration: 679; epoch: 1; objective: 0.22855086624622345;
+fold: TRAIN; iteration: 680; epoch: 1; objective: 0.18123401701450348;
+fold: TRAIN; iteration: 681; epoch: 1; objective: 0.11808343231678009;
+fold: TRAIN; iteration: 682; epoch: 1; objective: 0.12892501056194305;
+fold: TRAIN; iteration: 683; epoch: 1; objective: 0.14797315001487732;
+fold: TRAIN; iteration: 684; epoch: 1; objective: 0.11681315302848816;
+fold: TRAIN; iteration: 685; epoch: 1; objective: 0.1503961682319641;
+fold: TRAIN; iteration: 686; epoch: 1; objective: 0.11396897584199905;
+fold: TRAIN; iteration: 687; epoch: 1; objective: 0.16025026142597198;
+fold: TRAIN; iteration: 688; epoch: 1; objective: 0.16644158959388733;
+fold: TRAIN; iteration: 689; epoch: 1; objective: 0.23167762160301208;
+fold: TRAIN; iteration: 690; epoch: 1; objective: 0.12443263828754425;
+fold: TRAIN; iteration: 691; epoch: 1; objective: 0.1370309293270111;
+fold: TRAIN; iteration: 692; epoch: 1; objective: 0.16375400125980377;
+fold: TRAIN; iteration: 693; epoch: 1; objective: 0.10679502785205841;
+fold: TRAIN; iteration: 694; epoch: 1; objective: 0.14102119207382202;
+fold: TRAIN; iteration: 695; epoch: 1; objective: 0.1513970047235489;
+fold: TRAIN; iteration: 696; epoch: 1; objective: 0.119949571788311;
+fold: TRAIN; iteration: 697; epoch: 1; objective: 0.23090091347694397;
+fold: TRAIN; iteration: 698; epoch: 1; objective: 0.1412595510482788;
+fold: TRAIN; iteration: 699; epoch: 1; objective: 0.20753636956214905;
+validating model...
+saving
+fold: VALID; iteration: 700; epoch: 1; classification/accuracy: 0.944; objective: 0.13812173306941986;
+fold: TRAIN; iteration: 700; epoch: 1; objective: 0.1289389580488205;
+fold: TRAIN; iteration: 701; epoch: 1; objective: 0.13147209584712982;
+fold: TRAIN; iteration: 702; epoch: 1; objective: 0.1674077808856964;
+fold: TRAIN; iteration: 703; epoch: 1; objective: 0.09001180529594421;
+fold: TRAIN; iteration: 704; epoch: 1; objective: 0.1864451766014099;
+fold: TRAIN; iteration: 705; epoch: 1; objective: 0.1703319102525711;
+fold: TRAIN; iteration: 706; epoch: 1; objective: 0.16362975537776947;
+fold: TRAIN; iteration: 707; epoch: 1; objective: 0.15422700345516205;
+fold: TRAIN; iteration: 708; epoch: 1; objective: 0.11790715903043747;
+fold: TRAIN; iteration: 709; epoch: 1; objective: 0.12545333802700043;
+fold: TRAIN; iteration: 710; epoch: 1; objective: 0.10765758156776428;
+fold: TRAIN; iteration: 711; epoch: 1; objective: 0.09828315675258636;
+fold: TRAIN; iteration: 712; epoch: 1; objective: 0.15410426259040833;
+fold: TRAIN; iteration: 713; epoch: 1; objective: 0.14943593740463257;
+fold: TRAIN; iteration: 714; epoch: 1; objective: 0.10752546042203903;
+fold: TRAIN; iteration: 715; epoch: 1; objective: 0.17003817856311798;
+fold: TRAIN; iteration: 716; epoch: 1; objective: 0.1417105793952942;
+fold: TRAIN; iteration: 717; epoch: 1; objective: 0.12122239172458649;
+fold: TRAIN; iteration: 718; epoch: 1; objective: 0.12645508348941803;
+fold: TRAIN; iteration: 719; epoch: 1; objective: 0.08219695836305618;
+fold: TRAIN; iteration: 720; epoch: 1; objective: 0.15993089973926544;
+fold: TRAIN; iteration: 721; epoch: 1; objective: 0.12479905784130096;
+fold: TRAIN; iteration: 722; epoch: 1; objective: 0.12595804035663605;
+fold: TRAIN; iteration: 723; epoch: 1; objective: 0.194790780544281;
+fold: TRAIN; iteration: 724; epoch: 1; objective: 0.13562926650047302;
+fold: TRAIN; iteration: 725; epoch: 1; objective: 0.19529980421066284;
+fold: TRAIN; iteration: 726; epoch: 1; objective: 0.11100974678993225;
+fold: TRAIN; iteration: 727; epoch: 1; objective: 0.13537734746932983;
+fold: TRAIN; iteration: 728; epoch: 1; objective: 0.1437075436115265;
+fold: TRAIN; iteration: 729; epoch: 1; objective: 0.09550482779741287;
+fold: TRAIN; iteration: 730; epoch: 1; objective: 0.16775350272655487;
+fold: TRAIN; iteration: 731; epoch: 1; objective: 0.12777629494667053;
+fold: TRAIN; iteration: 732; epoch: 1; objective: 0.11964801698923111;
+fold: TRAIN; iteration: 733; epoch: 1; objective: 0.19649846851825714;
+fold: TRAIN; iteration: 734; epoch: 1; objective: 0.10971193015575409;
+fold: TRAIN; iteration: 735; epoch: 1; objective: 0.06122550368309021;
+fold: TRAIN; iteration: 736; epoch: 1; objective: 0.2458687573671341;
+fold: TRAIN; iteration: 737; epoch: 1; objective: 0.1621508002281189;
+fold: TRAIN; iteration: 738; epoch: 1; objective: 0.1297336220741272;
+fold: TRAIN; iteration: 739; epoch: 1; objective: 0.23219338059425354;
+fold: TRAIN; iteration: 740; epoch: 1; objective: 0.1714615672826767;
+fold: TRAIN; iteration: 741; epoch: 1; objective: 0.09712234139442444;
+fold: TRAIN; iteration: 742; epoch: 1; objective: 0.07767872512340546;
+fold: TRAIN; iteration: 743; epoch: 1; objective: 0.1458274871110916;
+fold: TRAIN; iteration: 744; epoch: 1; objective: 0.23351623117923737;
+fold: TRAIN; iteration: 745; epoch: 1; objective: 0.12255015224218369;
+fold: TRAIN; iteration: 746; epoch: 1; objective: 0.18870453536510468;
+fold: TRAIN; iteration: 747; epoch: 1; objective: 0.13486440479755402;
+fold: TRAIN; iteration: 748; epoch: 1; objective: 0.10258689522743225;
+fold: TRAIN; iteration: 749; epoch: 1; objective: 0.12704649567604065;
+validating model...
+saving
+fold: VALID; iteration: 750; epoch: 1; classification/accuracy: 0.956; objective: 0.128486542776227;
+fold: TRAIN; iteration: 750; epoch: 1; objective: 0.06878325343132019;
+fold: TRAIN; iteration: 751; epoch: 1; objective: 0.1557641625404358;
+fold: TRAIN; iteration: 752; epoch: 1; objective: 0.1398836374282837;
+fold: TRAIN; iteration: 753; epoch: 1; objective: 0.07038429379463196;
+fold: TRAIN; iteration: 754; epoch: 1; objective: 0.10159873217344284;
+fold: TRAIN; iteration: 755; epoch: 1; objective: 0.10534096509218216;
+fold: TRAIN; iteration: 756; epoch: 1; objective: 0.11897348612546921;
+fold: TRAIN; iteration: 757; epoch: 1; objective: 0.21758918464183807;
+fold: TRAIN; iteration: 758; epoch: 1; objective: 0.19209179282188416;
+fold: TRAIN; iteration: 759; epoch: 1; objective: 0.16308867931365967;
+fold: TRAIN; iteration: 760; epoch: 1; objective: 0.198269322514534;
+fold: TRAIN; iteration: 761; epoch: 1; objective: 0.11670015007257462;
+fold: TRAIN; iteration: 762; epoch: 1; objective: 0.12662391364574432;
+fold: TRAIN; iteration: 763; epoch: 1; objective: 0.2153349071741104;
+fold: TRAIN; iteration: 764; epoch: 1; objective: 0.11075376719236374;
+fold: TRAIN; iteration: 765; epoch: 1; objective: 0.12707208096981049;
+fold: TRAIN; iteration: 766; epoch: 1; objective: 0.1574176698923111;
+fold: TRAIN; iteration: 767; epoch: 1; objective: 0.10650072991847992;
+fold: TRAIN; iteration: 768; epoch: 1; objective: 0.10659666359424591;
+fold: TRAIN; iteration: 769; epoch: 1; objective: 0.1855711191892624;
+fold: TRAIN; iteration: 770; epoch: 1; objective: 0.0994005799293518;
+fold: TRAIN; iteration: 771; epoch: 1; objective: 0.14187289774417877;
+fold: TRAIN; iteration: 772; epoch: 1; objective: 0.11422357708215714;
+fold: TRAIN; iteration: 773; epoch: 1; objective: 0.11628158390522003;
+fold: TRAIN; iteration: 774; epoch: 1; objective: 0.20183557271957397;
+fold: TRAIN; iteration: 775; epoch: 1; objective: 0.12819184362888336;
+fold: TRAIN; iteration: 776; epoch: 1; objective: 0.10076212137937546;
+fold: TRAIN; iteration: 777; epoch: 1; objective: 0.1602238118648529;
+fold: TRAIN; iteration: 778; epoch: 1; objective: 0.141201913356781;
+fold: TRAIN; iteration: 779; epoch: 1; objective: 0.11036372184753418;
+fold: TRAIN; iteration: 780; epoch: 1; objective: 0.07315479218959808;
+fold: TRAIN; iteration: 781; epoch: 1; objective: 0.13184456527233124;
+fold: TRAIN; iteration: 782; epoch: 1; objective: 0.09887400269508362;
+fold: TRAIN; iteration: 783; epoch: 1; objective: 0.13747304677963257;
+fold: TRAIN; iteration: 784; epoch: 1; objective: 0.23779016733169556;
+fold: TRAIN; iteration: 785; epoch: 1; objective: 0.152564138174057;
+fold: TRAIN; iteration: 786; epoch: 1; objective: 0.09740526229143143;
+fold: TRAIN; iteration: 787; epoch: 1; objective: 0.14189839363098145;
+fold: TRAIN; iteration: 788; epoch: 1; objective: 0.17323049902915955;
+fold: TRAIN; iteration: 789; epoch: 1; objective: 0.18614999949932098;
+fold: TRAIN; iteration: 790; epoch: 1; objective: 0.118673175573349;
+fold: TRAIN; iteration: 791; epoch: 1; objective: 0.06569784879684448;
+fold: TRAIN; iteration: 792; epoch: 1; objective: 0.08111973851919174;
+fold: TRAIN; iteration: 793; epoch: 1; objective: 0.05389862135052681;
+fold: TRAIN; iteration: 794; epoch: 1; objective: 0.18034929037094116;
+fold: TRAIN; iteration: 795; epoch: 1; objective: 0.09387907385826111;
+fold: TRAIN; iteration: 796; epoch: 1; objective: 0.10985305160284042;
+fold: TRAIN; iteration: 797; epoch: 1; objective: 0.14562161266803741;
+fold: TRAIN; iteration: 798; epoch: 1; objective: 0.13265781104564667;
+fold: TRAIN; iteration: 799; epoch: 1; objective: 0.143087238073349;
+validating model...
+saving
+fold: VALID; iteration: 800; epoch: 1; classification/accuracy: 0.948; objective: 0.12267384454607963;
+fold: TRAIN; iteration: 800; epoch: 1; objective: 0.04794096574187279;
+fold: TRAIN; iteration: 801; epoch: 1; objective: 0.08904367685317993;
+fold: TRAIN; iteration: 802; epoch: 1; objective: 0.06422405689954758;
+fold: TRAIN; iteration: 803; epoch: 1; objective: 0.09254947304725647;
+fold: TRAIN; iteration: 804; epoch: 1; objective: 0.084577776491642;
+fold: TRAIN; iteration: 805; epoch: 1; objective: 0.22379350662231445;
+fold: TRAIN; iteration: 806; epoch: 1; objective: 0.06612815707921982;
+fold: TRAIN; iteration: 807; epoch: 1; objective: 0.1615714132785797;
+fold: TRAIN; iteration: 808; epoch: 1; objective: 0.17293350398540497;
+fold: TRAIN; iteration: 809; epoch: 1; objective: 0.12996412813663483;
+fold: TRAIN; iteration: 810; epoch: 1; objective: 0.1358276605606079;
+fold: TRAIN; iteration: 811; epoch: 1; objective: 0.15332189202308655;
+fold: TRAIN; iteration: 812; epoch: 1; objective: 0.20626980066299438;
+fold: TRAIN; iteration: 813; epoch: 1; objective: 0.13348388671875;
+fold: TRAIN; iteration: 814; epoch: 1; objective: 0.10417395830154419;
+fold: TRAIN; iteration: 815; epoch: 1; objective: 0.15679752826690674;
+fold: TRAIN; iteration: 816; epoch: 1; objective: 0.13112320005893707;
+fold: TRAIN; iteration: 817; epoch: 1; objective: 0.14422506093978882;
+fold: TRAIN; iteration: 818; epoch: 1; objective: 0.18124322593212128;
+fold: TRAIN; iteration: 819; epoch: 1; objective: 0.05801723897457123;
+fold: TRAIN; iteration: 820; epoch: 1; objective: 0.1921648234128952;
+fold: TRAIN; iteration: 821; epoch: 1; objective: 0.10081424564123154;
+fold: TRAIN; iteration: 822; epoch: 1; objective: 0.08513560891151428;
+fold: TRAIN; iteration: 823; epoch: 1; objective: 0.15235203504562378;
+fold: TRAIN; iteration: 824; epoch: 1; objective: 0.13689284026622772;
+fold: TRAIN; iteration: 825; epoch: 1; objective: 0.07998739182949066;
+fold: TRAIN; iteration: 826; epoch: 1; objective: 0.13779029250144958;
+fold: TRAIN; iteration: 827; epoch: 1; objective: 0.18583449721336365;
+fold: TRAIN; iteration: 828; epoch: 1; objective: 0.10142841190099716;
+fold: TRAIN; iteration: 829; epoch: 1; objective: 0.06453096121549606;
+fold: TRAIN; iteration: 830; epoch: 1; objective: 0.1574546843767166;
+fold: TRAIN; iteration: 831; epoch: 1; objective: 0.10104119032621384;
+fold: TRAIN; iteration: 832; epoch: 1; objective: 0.12013337761163712;
+fold: TRAIN; iteration: 833; epoch: 1; objective: 0.2115945816040039;
+fold: TRAIN; iteration: 834; epoch: 1; objective: 0.13004842400550842;
+fold: TRAIN; iteration: 835; epoch: 1; objective: 0.12500661611557007;
+fold: TRAIN; iteration: 836; epoch: 1; objective: 0.08954302966594696;
+fold: TRAIN; iteration: 837; epoch: 1; objective: 0.1890771985054016;
+fold: TRAIN; iteration: 838; epoch: 1; objective: 0.1452314406633377;
+fold: TRAIN; iteration: 839; epoch: 1; objective: 0.0791919082403183;
+fold: TRAIN; iteration: 840; epoch: 1; objective: 0.12602508068084717;
+fold: TRAIN; iteration: 841; epoch: 1; objective: 0.09921921044588089;
+fold: TRAIN; iteration: 842; epoch: 1; objective: 0.12302646785974503;
+fold: TRAIN; iteration: 843; epoch: 1; objective: 0.10379386693239212;
+fold: TRAIN; iteration: 844; epoch: 1; objective: 0.1416131556034088;
+fold: TRAIN; iteration: 845; epoch: 1; objective: 0.07149297744035721;
+fold: TRAIN; iteration: 846; epoch: 1; objective: 0.20595374703407288;
+fold: TRAIN; iteration: 847; epoch: 1; objective: 0.07534826546907425;
+fold: TRAIN; iteration: 848; epoch: 1; objective: 0.15342207252979279;
+fold: TRAIN; iteration: 849; epoch: 1; objective: 0.1700284332036972;
+validating model...
+saving
+fold: VALID; iteration: 850; epoch: 1; classification/accuracy: 0.96; objective: 0.11529961849252383;
+fold: TRAIN; iteration: 850; epoch: 1; objective: 0.12458385527133942;
+fold: TRAIN; iteration: 851; epoch: 1; objective: 0.1165638417005539;
+fold: TRAIN; iteration: 852; epoch: 1; objective: 0.11174970865249634;
+fold: TRAIN; iteration: 853; epoch: 1; objective: 0.08795932680368423;
+fold: TRAIN; iteration: 854; epoch: 1; objective: 0.17541278898715973;
+fold: TRAIN; iteration: 855; epoch: 1; objective: 0.059431955218315125;
+fold: TRAIN; iteration: 856; epoch: 1; objective: 0.10430639237165451;
+fold: TRAIN; iteration: 857; epoch: 1; objective: 0.09203962236642838;
+fold: TRAIN; iteration: 858; epoch: 1; objective: 0.1933131068944931;
+fold: TRAIN; iteration: 859; epoch: 1; objective: 0.12853002548217773;
+fold: TRAIN; iteration: 860; epoch: 1; objective: 0.09275965392589569;
+fold: TRAIN; iteration: 861; epoch: 1; objective: 0.0839027464389801;
+fold: TRAIN; iteration: 862; epoch: 1; objective: 0.13826438784599304;
+fold: TRAIN; iteration: 863; epoch: 1; objective: 0.07391397655010223;
+fold: TRAIN; iteration: 864; epoch: 1; objective: 0.05146666616201401;
+fold: TRAIN; iteration: 865; epoch: 1; objective: 0.09822347015142441;
+fold: TRAIN; iteration: 866; epoch: 1; objective: 0.1481657326221466;
+fold: TRAIN; iteration: 867; epoch: 1; objective: 0.16074323654174805;
+fold: TRAIN; iteration: 868; epoch: 1; objective: 0.2789253890514374;
+fold: TRAIN; iteration: 869; epoch: 1; objective: 0.11004828661680222;
+fold: TRAIN; iteration: 870; epoch: 1; objective: 0.128606379032135;
+fold: TRAIN; iteration: 871; epoch: 1; objective: 0.15882521867752075;
+fold: TRAIN; iteration: 872; epoch: 1; objective: 0.16376952826976776;
+fold: TRAIN; iteration: 873; epoch: 1; objective: 0.08681439608335495;
+fold: TRAIN; iteration: 874; epoch: 1; objective: 0.06408138573169708;
+fold: TRAIN; iteration: 875; epoch: 1; objective: 0.15039800107479095;
+fold: TRAIN; iteration: 876; epoch: 1; objective: 0.18948297202587128;
+fold: TRAIN; iteration: 877; epoch: 1; objective: 0.10984615981578827;
+fold: TRAIN; iteration: 878; epoch: 1; objective: 0.0702902153134346;
+fold: TRAIN; iteration: 879; epoch: 1; objective: 0.2011478990316391;
+fold: TRAIN; iteration: 880; epoch: 1; objective: 0.1090683713555336;
+fold: TRAIN; iteration: 881; epoch: 1; objective: 0.13955482840538025;
+fold: TRAIN; iteration: 882; epoch: 1; objective: 0.045337628573179245;
+fold: TRAIN; iteration: 883; epoch: 1; objective: 0.1272427886724472;
+fold: TRAIN; iteration: 884; epoch: 1; objective: 0.1271839737892151;
+fold: TRAIN; iteration: 885; epoch: 1; objective: 0.10607051849365234;
+fold: TRAIN; iteration: 886; epoch: 1; objective: 0.07240686565637589;
+fold: TRAIN; iteration: 887; epoch: 1; objective: 0.09002117067575455;
+fold: TRAIN; iteration: 888; epoch: 1; objective: 0.10036548972129822;
+fold: TRAIN; iteration: 889; epoch: 1; objective: 0.09829268604516983;
+fold: TRAIN; iteration: 890; epoch: 1; objective: 0.056093811988830566;
+fold: TRAIN; iteration: 891; epoch: 1; objective: 0.06804635375738144;
+fold: TRAIN; iteration: 892; epoch: 1; objective: 0.10310211032629013;
+fold: TRAIN; iteration: 893; epoch: 1; objective: 0.10771840065717697;
+fold: TRAIN; iteration: 894; epoch: 1; objective: 0.11638223379850388;
+fold: TRAIN; iteration: 895; epoch: 1; objective: 0.14846248924732208;
+fold: TRAIN; iteration: 896; epoch: 1; objective: 0.19367000460624695;
+fold: TRAIN; iteration: 897; epoch: 1; objective: 0.13899487257003784;
+fold: TRAIN; iteration: 898; epoch: 1; objective: 0.07462486624717712;
+fold: TRAIN; iteration: 899; epoch: 1; objective: 0.07321488857269287;
+validating model...
+saving
+fold: VALID; iteration: 900; epoch: 1; classification/accuracy: 0.956; objective: 0.111064034452041;
+fold: TRAIN; iteration: 900; epoch: 1; objective: 0.11119247227907181;
+fold: TRAIN; iteration: 901; epoch: 1; objective: 0.11276919394731522;
+fold: TRAIN; iteration: 902; epoch: 1; objective: 0.18270067870616913;
+fold: TRAIN; iteration: 903; epoch: 1; objective: 0.1605682224035263;
+fold: TRAIN; iteration: 904; epoch: 1; objective: 0.18194636702537537;
+fold: TRAIN; iteration: 905; epoch: 1; objective: 0.2519947290420532;
+fold: TRAIN; iteration: 906; epoch: 1; objective: 0.0801284983754158;
+fold: TRAIN; iteration: 907; epoch: 1; objective: 0.08317182213068008;
+fold: TRAIN; iteration: 908; epoch: 1; objective: 0.09610769897699356;
+fold: TRAIN; iteration: 909; epoch: 1; objective: 0.09538796544075012;
+fold: TRAIN; iteration: 910; epoch: 1; objective: 0.13364484906196594;
+fold: TRAIN; iteration: 911; epoch: 1; objective: 0.14276300370693207;
+fold: TRAIN; iteration: 912; epoch: 1; objective: 0.152669757604599;
+fold: TRAIN; iteration: 913; epoch: 1; objective: 0.09654391556978226;
+fold: TRAIN; iteration: 914; epoch: 1; objective: 0.1480209231376648;
+fold: TRAIN; iteration: 915; epoch: 1; objective: 0.16727419197559357;
+fold: TRAIN; iteration: 916; epoch: 1; objective: 0.04253733530640602;
+fold: TRAIN; iteration: 917; epoch: 1; objective: 0.1013895720243454;
+fold: TRAIN; iteration: 918; epoch: 1; objective: 0.1188376247882843;
+fold: TRAIN; iteration: 919; epoch: 1; objective: 0.1959676295518875;
+fold: TRAIN; iteration: 920; epoch: 1; objective: 0.18813055753707886;
+fold: TRAIN; iteration: 921; epoch: 1; objective: 0.138977512717247;
+fold: TRAIN; iteration: 922; epoch: 1; objective: 0.09787044674158096;
+fold: TRAIN; iteration: 923; epoch: 1; objective: 0.10234566777944565;
+fold: TRAIN; iteration: 924; epoch: 1; objective: 0.10249777883291245;
+fold: TRAIN; iteration: 925; epoch: 1; objective: 0.09958508610725403;
+fold: TRAIN; iteration: 926; epoch: 1; objective: 0.18672549724578857;
+fold: TRAIN; iteration: 927; epoch: 1; objective: 0.11923650652170181;
+fold: TRAIN; iteration: 928; epoch: 1; objective: 0.10452506691217422;
+fold: TRAIN; iteration: 929; epoch: 1; objective: 0.12707503139972687;
+fold: TRAIN; iteration: 930; epoch: 1; objective: 0.09352007508277893;
+fold: TRAIN; iteration: 931; epoch: 1; objective: 0.21486322581768036;
+fold: TRAIN; iteration: 932; epoch: 1; objective: 0.1143263503909111;
+fold: TRAIN; iteration: 933; epoch: 1; objective: 0.19857051968574524;
+fold: TRAIN; iteration: 934; epoch: 1; objective: 0.10841557383537292;
+fold: TRAIN; iteration: 935; epoch: 1; objective: 0.09357528388500214;
+fold: TRAIN; iteration: 936; epoch: 1; objective: 0.05374349281191826;
+fold: TRAIN; iteration: 937; epoch: 1; objective: 0.12246647477149963;
+fold: TRAIN; iteration: 938; epoch: 1; objective: 0.17148302495479584;
+fold: TRAIN; iteration: 939; epoch: 1; objective: 0.10028500854969025;
+fold: TRAIN; iteration: 940; epoch: 1; objective: 0.045712485909461975;
+fold: TRAIN; iteration: 941; epoch: 1; objective: 0.12463263422250748;
+fold: TRAIN; iteration: 942; epoch: 1; objective: 0.18518508970737457;
+fold: TRAIN; iteration: 943; epoch: 1; objective: 0.15412026643753052;
+fold: TRAIN; iteration: 944; epoch: 1; objective: 0.07894029468297958;
+fold: TRAIN; iteration: 945; epoch: 1; objective: 0.16395077109336853;
+fold: TRAIN; iteration: 946; epoch: 1; objective: 0.07111410796642303;
+fold: TRAIN; iteration: 947; epoch: 1; objective: 0.12555839121341705;
+fold: TRAIN; iteration: 948; epoch: 1; objective: 0.07046852260828018;
+fold: TRAIN; iteration: 949; epoch: 1; objective: 0.13916334509849548;
+validating model...
+saving
+fold: VALID; iteration: 950; epoch: 1; classification/accuracy: 0.968; objective: 0.10500108115375043;
+fold: TRAIN; iteration: 950; epoch: 1; objective: 0.0698646605014801;
+fold: TRAIN; iteration: 951; epoch: 1; objective: 0.15812452137470245;
+fold: TRAIN; iteration: 952; epoch: 1; objective: 0.07121609896421432;
+fold: TRAIN; iteration: 953; epoch: 1; objective: 0.12433992326259613;
+fold: TRAIN; iteration: 954; epoch: 1; objective: 0.10460558533668518;
+fold: TRAIN; iteration: 955; epoch: 1; objective: 0.08054246008396149;
+fold: TRAIN; iteration: 956; epoch: 1; objective: 0.18473631143569946;
+fold: TRAIN; iteration: 957; epoch: 1; objective: 0.0599062442779541;
+fold: TRAIN; iteration: 958; epoch: 1; objective: 0.1089591309428215;
+fold: TRAIN; iteration: 959; epoch: 1; objective: 0.13315069675445557;
+fold: TRAIN; iteration: 960; epoch: 1; objective: 0.1842081993818283;
+fold: TRAIN; iteration: 961; epoch: 1; objective: 0.11287536472082138;
+fold: TRAIN; iteration: 962; epoch: 1; objective: 0.03955932706594467;
+fold: TRAIN; iteration: 963; epoch: 1; objective: 0.09791155904531479;
+fold: TRAIN; iteration: 964; epoch: 1; objective: 0.134857177734375;
+fold: TRAIN; iteration: 965; epoch: 1; objective: 0.26304906606674194;
+fold: TRAIN; iteration: 966; epoch: 1; objective: 0.08222357928752899;
+fold: TRAIN; iteration: 967; epoch: 1; objective: 0.11362408846616745;
+fold: TRAIN; iteration: 968; epoch: 1; objective: 0.06256677210330963;
+fold: TRAIN; iteration: 969; epoch: 1; objective: 0.09759458899497986;
+fold: TRAIN; iteration: 970; epoch: 1; objective: 0.07316237688064575;
+fold: TRAIN; iteration: 971; epoch: 1; objective: 0.06417205184698105;
+fold: TRAIN; iteration: 972; epoch: 1; objective: 0.14569762349128723;
+fold: TRAIN; iteration: 973; epoch: 1; objective: 0.13515864312648773;
+fold: TRAIN; iteration: 974; epoch: 1; objective: 0.1661347597837448;
+fold: TRAIN; iteration: 975; epoch: 1; objective: 0.04158425331115723;
+fold: TRAIN; iteration: 976; epoch: 1; objective: 0.18941934406757355;
+fold: TRAIN; iteration: 977; epoch: 1; objective: 0.199094757437706;
+fold: TRAIN; iteration: 978; epoch: 1; objective: 0.17562156915664673;
+fold: TRAIN; iteration: 979; epoch: 1; objective: 0.11707187443971634;
+fold: TRAIN; iteration: 980; epoch: 1; objective: 0.06413491070270538;
+fold: TRAIN; iteration: 981; epoch: 1; objective: 0.1212422251701355;
+fold: TRAIN; iteration: 982; epoch: 1; objective: 0.14084430038928986;
+fold: TRAIN; iteration: 983; epoch: 1; objective: 0.06355411559343338;
+fold: TRAIN; iteration: 984; epoch: 1; objective: 0.08007050305604935;
+fold: TRAIN; iteration: 985; epoch: 1; objective: 0.2126658856868744;
+fold: TRAIN; iteration: 986; epoch: 1; objective: 0.0809231773018837;
+fold: TRAIN; iteration: 987; epoch: 1; objective: 0.19208309054374695;
+fold: TRAIN; iteration: 988; epoch: 1; objective: 0.0559694804251194;
+fold: TRAIN; iteration: 989; epoch: 1; objective: 0.12755157053470612;
+fold: TRAIN; iteration: 990; epoch: 1; objective: 0.09547761082649231;
+fold: TRAIN; iteration: 991; epoch: 1; objective: 0.07930473983287811;
+fold: TRAIN; iteration: 992; epoch: 1; objective: 0.07930286228656769;
+fold: TRAIN; iteration: 993; epoch: 1; objective: 0.0737217366695404;
+fold: TRAIN; iteration: 994; epoch: 1; objective: 0.10130125284194946;
+fold: TRAIN; iteration: 995; epoch: 1; objective: 0.12375953793525696;
+fold: TRAIN; iteration: 996; epoch: 1; objective: 0.11564025282859802;
+fold: TRAIN; iteration: 997; epoch: 1; objective: 0.07510849833488464;
+fold: TRAIN; iteration: 998; epoch: 1; objective: 0.12025919556617737;
+fold: TRAIN; iteration: 999; epoch: 1; objective: 0.10211549699306488;
+validating model...
+saving
+fold: VALID; iteration: 1000; epoch: 1; classification/accuracy: 0.956; objective: 0.10303800615171592;
+</pre></div></div>
+</div>
+<p>Now the training has finished, we can watch the computation of model outputs:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+computing chunk (1/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (2/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (3/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (4/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (5/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (6/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (7/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (8/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (9/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (10/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (11/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+computing chunk (12/12)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">info</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_object_info</span><span class="p">(</span><span class="s1">&#39;predictor&#39;</span><span class="p">,</span> <span class="s1">&#39;imputation&#39;</span><span class="p">)</span>
+<span class="n">info</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;_id&#39;: ObjectId(&#39;6421b023762a0ec3814f5359&#39;),
+ &#39;variety&#39;: &#39;imputation&#39;,
+ &#39;identifier&#39;: &#39;predictor&#39;,
+ &#39;model&#39;: &#39;lenet&#39;,
+ &#39;model_key&#39;: &#39;img&#39;,
+ &#39;target&#39;: &#39;label&#39;,
+ &#39;target_key&#39;: &#39;class&#39;,
+ &#39;query_params&#39;: [&#39;digits&#39;, {}],
+ &#39;metrics&#39;: [&#39;accuracy&#39;],
+ &#39;objective&#39;: &#39;classification&#39;,
+ &#39;splitter&#39;: None,
+ &#39;loader_kwargs&#39;: None,
+ &#39;trainer_kwargs&#39;: {&#39;n_iterations&#39;: 1000,
+  &#39;validation_interval&#39;: 50,
+  &#39;validation_sets&#39;: [&#39;classification&#39;],
+  &#39;loader_suppress&#39;: [&#39;_id&#39;]},
+ &#39;metric_values&#39;: {&#39;classification&#39;: {&#39;accuracy&#39;: [0.048,
+    0.584,
+    0.736,
+    0.808,
+    0.864,
+    0.884,
+    0.896,
+    0.912,
+    0.916,
+    0.92,
+    0.924,
+    0.936,
+    0.944,
+    0.94,
+    0.944,
+    0.956,
+    0.948,
+    0.96,
+    0.956,
+    0.968,
+    0.956]},
+  &#39;objective&#39;: [2.3110132773717242,
+   2.0651561578114825,
+   1.5489568869272867,
+   0.9873368521531423,
+   0.6416231413682302,
+   0.451803328593572,
+   0.35037993391354877,
+   0.29230905175209043,
+   0.24675621291001637,
+   0.21056613624095916,
+   0.19069528977076214,
+   0.1713645281891028,
+   0.15632830535372097,
+   0.14958817288279533,
+   0.13812173306941986,
+   0.128486542776227,
+   0.12267384454607963,
+   0.11529961849252383,
+   0.111064034452041,
+   0.10500108115375043,
+   0.10303800615171592]}}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="s1">&#39;classification&#39;</span><span class="p">][</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&lt;matplotlib.lines.Line2D at 0x168a6d8d0&gt;]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_mnist-notebook_40_1.png" src="../_images/examples_mnist-notebook_40_1.png" />
+</div>
+</div>
+<p>Accuracy is good, and we can see the outputs have been added to the documents (<code class="docutils literal notranslate"><span class="pre">_outputs.img.lenet</span></code>):</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;_id&#39;: ObjectId(&#39;6421b01f762a0ec3814e6cd1&#39;),
+ &#39;img&#39;: &lt;PIL.PngImagePlugin.PngImageFile image mode=L size=28x28&gt;,
+ &#39;class&#39;: 7,
+ &#39;_fold&#39;: &#39;train&#39;,
+ &#39;_outputs&#39;: {&#39;img&#39;: {&#39;lenet&#39;: 7}}}
+</pre></div></div>
+</div>
+<p>After training, you’ll see that a model <strong>watcher</strong> has been created, which keeps the <code class="docutils literal notranslate"><span class="pre">img</span></code> key up-to-date</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_watchers</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;predictor&#39;]
+</pre></div></div>
+</div>
+<p>When new data are added, the trained model kicks into action and it’s outputs are added/ enriched to the newly added data</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">jobs</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">([{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;update&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mnist_data</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:]])</span>
+</pre></div>
+</div>
+</div>
+<p>We can watch the progress of adding this new data as before:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="s1">&#39;watcher&#39;</span><span class="p">,</span> <span class="s1">&#39;predictor&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+computing chunk (1/1)
+finding documents under filter
+done.
+processing with lenet
+bulk writing...
+done.
+</pre></div></div>
+</div>
+<p>After inserting and training the model, the model is automatically served on the SuperDuperDB model-server. If you’re deployment is exposed to the internet, then these predictions are available anywhere:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">im</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;valid&#39;</span><span class="p">})[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span>
+<span class="n">im</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_mnist-notebook_50_0.png" src="../_images/examples_mnist-notebook_50_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">apply_model</span><span class="p">(</span><span class="s1">&#39;lenet&#39;</span><span class="p">,</span> <span class="n">im</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+9
+</pre></div></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="coco/index.html" class="btn btn-neutral float-right" title="CoCo (Common Objects in Context) Dataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Duncan Blythe duncan@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

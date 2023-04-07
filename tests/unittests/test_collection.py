@@ -87,6 +87,19 @@ def test_insert_from_urls(empty, image_type, remote):
     assert isinstance(empty.find_one()['other']['item'], PIL.PngImagePlugin.PngImageFile)
 
 
+# @pytest.mark.parametrize('remote', remote_values)
+# def test_update(random_data, a_watcher, remote, an_update):
+#     n = random_data.count_documents({})
+#     random_data.remote = remote
+#     jobs = random_data.update_many(an_update)
+#     if remote:
+#         jobs.
+#     n_new = random_data.count_documents({})
+#     r = random_data.find_one({'update': True})
+#     assert 'linear_a' in r['_outputs']['x']
+#     assert n_new > n
+
+
 @pytest.mark.parametrize('remote', remote_values)
 def test_watcher(random_data, a_model, b_model, remote):
 
@@ -118,14 +131,13 @@ def test_semantic_index(si_validation, a_model, c_model, measure, metric, my_ran
 
     si_validation.remote = remote
     jobs = si_validation.create_semantic_index('my_index',
-                                               models=['linear_a', 'linear_c'],
-                                               keys=['x', 'z'],
-                                               measure='css',
+                                               ['linear_a', 'linear_c'],
+                                               ['x', 'z'],
+                                               'css',
                                                metrics=['p_at_1'],
                                                objective='rank_obj',
                                                validation_sets=('my_valid',),
-                                               n_iterations=4,
-                                               validation_interval=2)
+                                               trainer_kwargs={'n_iterations': 4, 'validation_interval': 2})
     if remote:
         for job_id in jobs:
             si_validation.watch_job(job_id)
@@ -137,15 +149,14 @@ def test_imputation(imputation_validation, a_classifier, a_target, my_class_obj,
 
     imputation_validation.remote = remote
     jobs = imputation_validation.create_imputation('my_imputation',
-                                                   model='classifier',
-                                                   model_key='x',
-                                                   target='target',
-                                                   target_key='y',
+                                                   'classifier',
+                                                   'x',
+                                                   'target',
+                                                   'y',
                                                    metrics=['accuracy_metric'],
                                                    objective='class_obj',
                                                    validation_sets=('my_imputation_valid',),
-                                                   n_iterations=4,
-                                                   validation_interval=2)
+                                                   trainer_kwargs={'n_iterations': 4, 'validation_interval': 2})
     if remote:
         for job_id in jobs:
             imputation_validation.watch_job(job_id)

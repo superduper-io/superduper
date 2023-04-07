@@ -161,3 +161,5 @@ dmypy.json
 /*jd*
 /docs/examples/annotations
 /docs/examples/*.zip
+/notebooks/data
+

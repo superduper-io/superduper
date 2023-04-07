@@ -5,6 +5,12 @@ from torch.utils import data
 
 
 class BasicDataset(data.Dataset):
+    """
+    Basic database iterating over a list of documents and applying a transformation
+
+    :param documents: documents
+    :param transform: function
+    """
     def __init__(self, documents, transform):
         super().__init__()
         self.documents = documents
@@ -18,6 +24,13 @@ class BasicDataset(data.Dataset):
 
 
 class Container(torch.nn.Module):
+    """
+    Class wrapping a ``torch.nn.Module`` adding preprocessing and postprocessing
+
+    :param preprocessor: preprocessing function
+    :param forward: forward pass
+    :param postprocessor: postprocessing function
+    """
     def __init__(self, preprocessor=None, forward=None, postprocessor=None):
         super().__init__()
         self._preprocess = preprocessor
@@ -63,6 +76,8 @@ def apply_model(model, args, single=True, forward='forward', postprocess=True, *
     :param model: model object including methods *preprocess*, *forward* and *postprocess*
     :param args: single or multiple data points over which to evaluate model
     :param single: toggle to apply model to single or multiple (batched) datapoints.
+    :param forward: name of the forward pass
+    :param postprocess: toggle to ``False`` to get only forward outputs:w
     :param kwargs: key, value pairs to be passed to dataloader
 
     >>> from types import SimpleNamespace

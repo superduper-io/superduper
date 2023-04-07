@@ -1,18 +1,29 @@
+from flask_cors import CORS
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash
+
 from superduperdb.mongodb.client import SuperDuperClient
 from bson import BSON, ObjectId
 from flask import request, Flask, jsonify, make_response
 
-# https://flask.palletsprojects.com/en/2.1.x/patterns/streaming/ streaming for the find endpoint
-
 from superduperdb import cf
+from superduperdb.servers.utils import maybe_login_required
 
 app = Flask(__name__)
+CORS(app)
+auth = HTTPBasicAuth()
+
+if 'user' in cf['model_server']:
+    users = {
+        cf['model_server']['user']: generate_password_hash(cf['model_server']['password']),
+    }
 
 client = SuperDuperClient(**cf['mongodb'])
 collections = {}
 
 
 @app.route('/unset_hash_set', methods=['PUT'])
+@maybe_login_required(auth, 'linear_algebra')
 def unset_hash_set():
     data = request.get_json()
     database = data['database']
@@ -26,6 +37,7 @@ def unset_hash_set():
 
 
 @app.route('/clear_remote_cache', methods=['PUT'])
+@maybe_login_required(auth, 'linear_algebra')
 def clear_cache():
     keys = list(collections.keys())[:]
     for k in keys:
@@ -34,6 +46,7 @@ def clear_cache():
 
 
 @app.route('/count/<database>/<collection>', methods=['GET'])
+@maybe_login_required(auth, 'linear_algebra')
 def count(database, collection):
     collection = collections[f'{database}.{collection}']
     print(collection.database.models)
@@ -41,6 +54,7 @@ def count(database, collection):
 
 
 @app.route('/find_nearest', methods=['GET'])
+@maybe_login_required(auth, 'linear_algebra')
 def find_nearest():
     data = request.get_json()
     database = data['database']

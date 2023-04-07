@@ -21,17 +21,22 @@ from superduperdb.utils import ArgumentDefaultDict, progressbar, unpack_batch, D
 
 
 class BaseDatabase:
+    """
+    Base database connector for SuperDuperDB - all database types should subclass this
+    type.
+    """
     def __init__(self):
 
-        self.models = ArgumentDefaultDict(lambda x: self._load_model(x))
         self.functions = ArgumentDefaultDict(lambda x: self._load_object(x, 'function'))
-        self.preprocessors = ArgumentDefaultDict(lambda x: self._load_object(x, 'preprocessor'))
-        self.postprocessors = ArgumentDefaultDict(lambda x: self._load_object(x, 'postprocessor'))
-        self.types = ArgumentDefaultDict(lambda x: self._load_object(x, 'type'))
-        self.splitters = ArgumentDefaultDict(lambda x: self._load_object(x, 'splitter'))
-        self.objectives = ArgumentDefaultDict(lambda x: self._load_object(x, 'objective'))
         self.measures = ArgumentDefaultDict(lambda x: self._load_object(x, 'measure'))
         self.metrics = ArgumentDefaultDict(lambda x: self._load_object(x, 'metric'))
+        self.models = ArgumentDefaultDict(lambda x: self._load_model(x))
+        self.objectives = ArgumentDefaultDict(lambda x: self._load_object(x, 'objective'))
+        self.preprocessors = ArgumentDefaultDict(lambda x: self._load_object(x, 'preprocessor'))
+        self.postprocessors = ArgumentDefaultDict(lambda x: self._load_object(x, 'postprocessor'))
+        self.splitters = ArgumentDefaultDict(lambda x: self._load_object(x, 'splitter'))
+        self.trainers = ArgumentDefaultDict(lambda x: self._load_object(x, 'trainer'))
+        self.types = ArgumentDefaultDict(lambda x: self._load_object(x, 'type'))
 
         self.remote = cf.get('remote', False)
         self._type_lookup = None
@@ -55,6 +60,13 @@ class BaseDatabase:
         raise NotImplementedError
 
     def apply_model(self, model, input_, **kwargs):
+        """
+        Apply model to input.
+
+        :param model: PyTorch model or ``str`` referring to an uploaded model (see ``self.list_models``)
+        :param input_: input_ to be passed to the model. Must be possible to encode with registered types (``self.list_types``)
+        :param kwargs: key-values (see ``superduperdb.models.utils.apply_model``)
+        """
         if self.remote and isinstance(model, str):
             return our_client.apply_model(self._database_type, self.name, model, input_, **kwargs)
         if isinstance(model, str):
@@ -135,6 +147,11 @@ class BaseDatabase:
             self._update_neighbourhood(sub, similar_ids, identifier, *info['query_params'])
 
     def convert_from_types_to_bytes(self, r):
+        """
+        Convert the non-Jsonable python objects in a nested dictionary into ``bytes``
+
+        :param r: dictionary potentially containing non-Jsonable content
+        """
         if isinstance(r, dict):
             for k in r:
                 r[k] = self.convert_from_types_to_bytes(r[k])
@@ -147,83 +164,106 @@ class BaseDatabase:
             return {'_content': {'bytes': self.types[t].encode(r), 'type': t}}
         return r
 
-    def create_function(self, name, object, **kwargs):
-        return self._create_object(name, object, 'function', **kwargs)
+    def create_function(self, identifier, object, **kwargs):
+        """
+        Create function - callable function, which is not a PyTorch model.
+
+        :param identifier: identifier
+        :param object: Python object
+        """
+        return self._create_object(identifier, object, 'function', **kwargs)
+
+    def _create_imputation(self, identifier, model, model_key, target, target_key, query_params,
+                           objective=None, metrics=None, validation_sets=(),
+                           splitter=None, loader_kwargs=None, trainer_kwargs=None):
+        return self._create_learning_task(
+            identifier,
+            'ImputationTrainer',
+            'imputation',
+            models=[model, target],
+            keys=[model_key, target_key],
+            query_params=query_params,
+            objective=objective,
+            metrics=metrics,
+            validation_sets=validation_sets,
+            splitter=splitter,
+            loader_kwargs=loader_kwargs,
+            trainer_kwargs=trainer_kwargs,
+            keys_to_watch=[model_key],
+        )
 
     def _create_job_record(self, *args, **kwargs):
         raise NotImplementedError
 
-    def _create_imputation(self, identifier, model, model_key, target, target_key, query_params,
-                           objective=None, metrics=None,
-                           splitter=None, watch=True, loader_kwargs=None, **trainer_kwargs):
-        """
-        Create an imputation setup. This is any learning task where we have an input to the model
-        compared to the target.
+    def _create_learning_task(self, identifier, trainer, task_type, models, keys, query_params,
+                              verbose=False,
+                              validation_sets=(), metrics=(), objective=None, keys_to_watch=(),
+                              loader_kwargs=None, splitter=None, flags=None, trainer_kwargs=None):
 
-        :param identifier: Name of imputation
-        :param model: Model settings or model name
-        :param model_key: Key for model to injest
-        :param target: Target settings (input to ``create_model``) or target name
-        :param target_key: Key for model to predict
-        :param query_params: Query parameters
-        :param objective: Loss settings or objective
-        :param metrics: List of metric settings or metric names
-        :param splitter: Splitter name to use to prepare data points for insertion to model
-        :param loader_kwargs: Keyword-arguments for the watcher
-        :param trainer_kwargs: Keyword-arguments to forward to ``train_tools.ImputationTrainer``
-        :return: job_ids of jobs required to create the imputation
-        """
-
-        assert identifier not in self.list_imputations()
-        assert identifier not in self.list_watchers()
-        assert target in self.list_functions() or target in self.list_models()
-        assert model in self.list_models()
-        if objective is not None:
-            assert objective in self.list_objectives()
-        if metrics:
-            for metric in metrics:
-                assert metric in self.list_metrics()
+        assert trainer in [*self.list_trainers(), 'SemanticIndexTrainer', 'ImputationTrainer']
+        assert identifier not in self.list_learning_tasks()
+        for k in keys_to_watch:
+            assert f'{identifier}/{k}' not in self.list_watchers()
+        flags = flags or {}
+        trainer_kwargs = trainer_kwargs or {}
 
         self._create_object_entry({
-            'variety': 'imputation',
+            'variety': 'learning_task',
             'identifier': identifier,
-            'model': model,
-            'model_key': model_key,
-            'target': target,
-            'target_key': target_key,
             'query_params': query_params,
-            'metrics': metrics or [],
+            'models': models,
+            'keys': keys,
+            'metrics': metrics,
             'objective': objective,
             'splitter': splitter,
-            'loader_kwargs': loader_kwargs,
+            'validation_sets': validation_sets,
+            'keys_to_watch': keys_to_watch,
             'trainer_kwargs': trainer_kwargs,
+            'trainer': trainer,
+            'task_type': task_type,
+            **flags,
         })
 
-        if objective is None:
-            return
+        model_lookup = dict(zip(keys_to_watch, models))
+        jobs = []
+        if objective is not None:
+            try:
+                jobs.append(self._train(identifier, task_type))
+            except KeyboardInterrupt:
+                print('training aborted...')
 
-        try:
-            jobs = [self._train_imputation(identifier)]
-        except KeyboardInterrupt:
-            print('aborting training early...')
-            jobs = []
-        if watch:
+        for k in keys_to_watch:
             jobs.append(self._create_watcher(
-                identifier,
-                model,
+                f'{identifier}/{k}',
+                model_lookup[k],
                 query_params,
-                key=model_key,
+                key=k,
                 features=trainer_kwargs.get('features', {}),
+                loader_kwargs=loader_kwargs,
                 dependencies=jobs,
-                verbose=True,
+                verbose=verbose
             ))
         return jobs
 
-    def create_measure(self, name, object, **kwargs):
-        return self._create_object(name, object, 'measure', **kwargs)
+    def create_measure(self, identifier, object, **kwargs):
+        """
+        Create measure function, called by ``self.create_semantic_index``, to measure similarity
+        between model outputs.
 
-    def create_metric(self, name, object, **kwargs):
-        return self._create_object(name, object, 'metric', **kwargs)
+        :param identifier: identifier
+        :param object: Python object
+        """
+        return self._create_object(identifier, object, 'measure', **kwargs)
+
+    def create_metric(self, identifier, object, **kwargs):
+        """
+        Create metric, called by ``self.create_learning_task``, to measure performance of
+        learning on validation_sets (see ``self.list_validation_sets``)
+
+        :param identifier: identifier
+        :param object: Python object
+        """
+        return self._create_object(identifier, object, 'metric', **kwargs)
 
     def create_model(self, identifier, object=None, preprocessor=None, postprocessor=None,
                      type=None, **kwargs):
@@ -262,6 +302,13 @@ class BaseDatabase:
         })
 
     def create_neighbourhood(self, identifier, n=10, batch_size=100):
+        """
+        Cache similarity between items of model watcher (see ``self.list_watchers``)
+
+        :param identifier: identifier of watcher to use
+        :param n: number of similar items
+        :param batch_size: batch_size used in computation
+        """
         assert identifier in self.list_watchers()
         assert identifier not in self.list_neighbourhoods()
         self._create_object_entry({
@@ -301,8 +348,15 @@ class BaseDatabase:
             **secrets,
         })
 
-    def create_objective(self, name, object, **kwargs):
-        return self._create_object(name, object, 'objective', **kwargs)
+    def create_objective(self, identifier, object, **kwargs):
+        """
+        Create differentiable objective function, called by ``self.create_learning_task``,
+        to smoothly measure performance of learning on training set for back-propagation.
+
+        :param identifier: identifier
+        :param object: Python object
+        """
+        return self._create_object(identifier, object, 'objective', **kwargs)
 
     def _create_plan(self):
         G = networkx.DiGraph()
@@ -317,6 +371,51 @@ class BaseDatabase:
             G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
         assert networkx.is_directed_acyclic_graph(G)
         return G
+
+    def create_postprocessor(self, identifier, object, **kwargs):
+        return self._create_object(identifier, object, 'postprocessor', **kwargs)
+
+    def create_preprocessor(self, identifier, object, **kwargs):
+        return self._create_object(identifier, object, 'preprocessor', **kwargs)
+
+    def _create_semantic_index(self, identifier, models, keys, measure, query_params,
+                               validation_sets=(), metrics=(), objective=None, index_type='vanilla',
+                               verbose=False,
+                               index_kwargs=None, splitter=None, loader_kwargs=None,
+                               trainer_kwargs=None):
+
+        for vs in validation_sets:
+            tmp_query_params = self.get_query_params_for_validation_set(vs)
+            self._create_semantic_index(
+                identifier + f'/{vs}',
+                models,
+                keys,
+                measure,
+                tmp_query_params,
+                loader_kwargs=loader_kwargs,
+            )
+
+        return self._create_learning_task(
+            identifier,
+            trainer='SemanticIndexTrainer',
+            task_type='semantic_index',
+            models=models,
+            keys=keys,
+            query_params=query_params,
+            validation_sets=validation_sets,
+            metrics=metrics,
+            objective=objective,
+            flags={
+                'index_type': index_type,
+                'index_kwargs': index_kwargs,
+                'measure': measure,
+            },
+            splitter=splitter,
+            loader_kwargs=loader_kwargs,
+            trainer_kwargs=trainer_kwargs,
+            keys_to_watch=[keys[0]],
+            verbose=verbose,
+        )
 
     def _create_serialized_file(self, object, serializer='pickle', serializer_kwargs=None):
         serializer_kwargs = serializer_kwargs or {}
@@ -335,83 +434,26 @@ class BaseDatabase:
             raise NotImplementedError
         return self._save_blob_of_bytes(bytes_)
 
-    def create_postprocessor(self, name, object, **kwargs):
-        return self._create_object(name, object, 'postprocessor', **kwargs)
+    def create_splitter(self, identifier, object, **kwargs):
+        return self._create_object(identifier, object, 'splitter', **kwargs)
 
-    def create_preprocessor(self, name, object, **kwargs):
-        return self._create_object(name, object, 'preprocessor', **kwargs)
-
-    def _create_semantic_index(self, identifier, query_params, models, keys, measure,
-                               validation_sets=(), metrics=(), objective=None, index_type='vanilla',
-                               index_kwargs=None,
-                               splitter=None, loader_kwargs=None, **trainer_kwargs):
+    def create_trainer(self, identifier, object, **kwargs):
         """
-        :param identifier: Name/ unique id to assign to index
-        :param models: List of existing models
-        :param keys: Keys in incoming data to listen to
-        :param measure: Measure name
-        :param query_params: How to specify the data (collection/filter or SQL query...)
-        :param validation_sets: Name of immutable validation set to be used to evaluate performance
-        :param metrics: List of existing metrics,
-        :param objective: Loss name
-        :param filter_: Filter on which to train
-        :param splitter: Splitter name
-        :param loader_kwargs: Keyword arguments to be passed to
-        :param trainer_kwargs: Keyword arguments to be passed to ``training.train_tools.RepresentationTrainer``
-        :return: List of job identifiers if ``self.remote``
+        Create trainer class, called by ``self.create_learning_task``.
+
+        :param identifier: identifier
+        :param object: Python object
         """
-        assert identifier not in self.list_semantic_indexes()
-        assert identifier not in self.list_watchers()
+        return self._create_object(identifier, object, 'trainer', **kwargs)
 
-        if objective is not None:  # pragma: no cover
-            if len(models) == 1:
-                assert splitter is not None, 'need a splitter for self-supervised ranking...'
+    def create_type(self, identifier, object, **kwargs):
+        """
+        Create datatype, in order to serialize python object data in the database.
 
-        self._create_object_entry({
-            'variety': 'semantic_index',
-            'identifier': identifier,
-            'query_params': query_params,
-            'models': models,
-            'keys': keys,
-            'metrics': metrics,
-            'objective': objective,
-            'measure': measure,
-            'splitter': splitter,
-            'validation_sets': validation_sets,
-            'index_type': index_type,
-            'index_kwargs': index_kwargs or {},
-            'trainer_kwargs': trainer_kwargs,
-        })
-
-        for vs in validation_sets:
-            tmp_query_params = self.get_query_params_for_validation_set(vs)
-            self._create_semantic_index(
-                identifier + f'/{vs}',
-                tmp_query_params,
-                models,
-                keys,
-                measure,
-                loader_kwargs=loader_kwargs,
-            )
-
-        self._create_watcher(identifier, models[0], query_params, key=keys[0],
-                             process_docs=False, features=trainer_kwargs.get('features', {}),
-                             loader_kwargs=loader_kwargs or {})
-        if objective is None:
-            return [self.refresh_watcher(identifier, dependencies=())]
-        try:
-            jobs = [self._train_semantic_index(identifier)]
-        except KeyboardInterrupt:
-            print('training aborted...')
-            jobs = []
-        jobs.append(self.refresh_watcher(identifier, dependencies=jobs))
-        return jobs
-
-    def create_splitter(self, name, object, **kwargs):
-        return self._create_object(name, object, 'splitter', **kwargs)
-
-    def create_type(self, name, object, **kwargs):
-        return self._create_object(name, object, 'type', **kwargs)
+        :param identifier: identifier
+        :param object: Python object
+        """
+        return self._create_object(identifier, object, 'type', **kwargs)
 
     def _create_validation_set(self, identifier, *query_params, chunk_size=1000, splitter=None):
         if identifier in self.list_validation_sets():
@@ -470,12 +512,18 @@ class BaseDatabase:
                     dependencies=dependencies,
                 )
 
-    def delete_function(self, name, force=False):
-        return self._delete_object('function', name, force=force)
+    def delete_function(self, identifier, force=False):
+        """
+        Delete function.
+
+        :param identifier: identifier of function
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'function', force=force)
 
     def delete_imputation(self, identifier, force=False):
         """
-        Delete imputation from collection
+        Delete imputation
 
         :param identifier: Identifier of imputation
         :param force: Toggle to ``True`` to skip confirmation
@@ -487,23 +535,69 @@ class BaseDatabase:
         if not do_delete:
             return
 
-        info = self.get_object_info(identifier, 'imputation')
+        info = self.get_object_info(identifier, 'learning_task')
         if info is None and force:
             return
 
-        self._delete_object_info(info['identifier'], 'watcher')
-        self._delete_object_info(info['identifier'], 'imputation')
+        self._delete_object_info(f'{info["identifier"]}/{info["keys"][0]}', 'watcher')
+        self._delete_object_info(info['identifier'], 'learning_task')
 
-    def delete_measure(self, name, force=False):
-        return self._delete_object(name, ['measure'], force=force)
+    def delete_learning_task(self, identifier, force=False):
+        """
+        Delete function.
 
-    def delete_metric(self, name, force=False):
-        return self._delete_object(name, ['metric'], force=force)
+        :param name: name of function
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        do_delete = False
+        if force or click.confirm(f'Are you sure you want to delete the imputation "{identifier}"?',
+                                  default=False):
+            do_delete = True
+        if not do_delete:
+            return
 
-    def delete_model(self, name, force=False):
-        return self._delete_object('model', name, force=force)
+        info = self.get_object_info(identifier, 'learning_task')
+        if info is None and force:
+            return
+
+        for k in info['keys_to_watch']:
+            self._delete_object_info(f'{info["identifier"]}/{k}', 'watcher')
+        self._delete_object_info(info['identifier'], 'learning_task')
+
+    def delete_measure(self, identifier, force=False):
+        """
+        Delete measure.
+
+        :param identifier: identifier of measure
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'measure', force=force)
+
+    def delete_metric(self, identifier, force=False):
+        """
+        Delete metric.
+
+        :param identifier: identifier of metric
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'metric', force=force)
+
+    def delete_model(self, identifier, force=False):
+        """
+        Delete model.
+
+        :param identifier: identifier of model
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'model', force=force)
 
     def delete_neighbourhood(self, identifier, force=False):
+        """
+        Delete neighbourhood.
+
+        :param name: name of neighbourhood
+        :param force: toggle to ``True`` to skip confirmation step
+        """
         info = self.get_object_info(identifier, 'neighbourhood')
         watcher_info = self.get_object_info(info['watcher_identifier'], 'watcher')
         if force or click.confirm(f'Removing neighbourhood "{identifier}"'
@@ -517,53 +611,99 @@ class BaseDatabase:
         info = self.get_object_info(identifier, variety)
         if not info:
             if not force:
-                raise Exception(f'{variety} "{identifier}" does not exist...')
+                raise Exception(f'"{identifier}": {variety} does not exist...')
             return
         if force or click.confirm(f'You are about to delete {variety}: {identifier}, are you sure?',
                                   default=False):
+            if hasattr(self, variety + 's') and identifier in getattr(self, variety + 's'):
+                del getattr(self, variety + 's')[identifier]
             self.filesystem.delete(info['object'])
             self._delete_object_info(identifier, variety)
 
     def _delete_object_info(self, identifier, variety):
         raise NotImplementedError
 
-    def delete_objective(self, name, force=False):
-        return self._delete_object(name, 'objective', force=force)
+    def delete_objective(self, identifier, force=False):
+        """
+        Delete objective.
 
-    def delete_postprocessor(self, name, force=False):
-        return self._delete_object(name, 'postprocessor', force=force)
+        :param identifier: name of objective
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'objective', force=force)
 
-    def delete_preprocessor(self, name, force=False):
-        return self._delete_object(name, 'preprocessor', force=force)
+    def delete_postprocessor(self, identifier, force=False):
+        """
+        Delete postprocessor.
+
+        :param identifier: name of postprocessor
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'postprocessor', force=force)
+
+    def delete_preprocessor(self, identifier, force=False):
+        """
+        Delete preprocessor.
+
+        :param identifier: name of preprocessor
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'preprocessor', force=force)
 
     def delete_semantic_index(self, identifier, force=False):
-        info = self.get_object_info(identifier, 'semantic_index')
-        watcher_info = self.get_object_info(identifier, 'watcher')
+        """
+        Delete semantic-index.
+
+        :param name: name of semantic-index
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        info = self.get_object_info(identifier, 'learning_task')
+        watcher_info = self.get_object_info(f'{identifier}/{info["keys"][0]}', 'watcher')
         if info is None:  # pragma: no cover
             return
         do_delete = False
-        if force or \
-                click.confirm(f'Are you sure you want to delete this semantic index: "{identifier}"; '):
+        if force or click.confirm(f'Are you sure you want to delete this semantic index: '
+                                  f'"{identifier}"; '):
             do_delete = True
 
         if not do_delete:
             return
 
         if watcher_info:
-            self.delete_watcher(identifier, force=True)
-        self._delete_object_info(identifier, 'semantic_index')
+            self.delete_watcher(f'{identifier}/{info["keys"][0]}', force=True)
+        self._delete_object_info(identifier, 'learning_task')
 
-    def delete_splitter(self, name, force=False):
-        return self._delete_object(name, 'splitter', force=force)
+    def delete_splitter(self, identifier, force=False):
+        """
+        Delete splitter.
 
-    def delete_type(self, name, force=False):
-        return self._delete_object(name, 'type', force=force)
+        :param identifier: identifier of splitter
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'splitter', force=force)
+
+    def delete_trainer(self, identifier, force=False):
+        """
+        Delete trainer.
+
+        :param identifier: identifier of trainer
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'trainer', force=force)
+
+    def delete_type(self, identifier, force=False):
+        """
+        Delete type.
+
+        :param identifier: identifier of type
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'type', force=force)
 
     def delete_watcher(self, identifier, force=False, delete_outputs=True):
         """
-        Delete model from collection
+        Delete watcher
 
-        :param collection: Collection name
         :param name: Name of model
         :param force: Toggle to ``True`` to skip confirmation
         """
@@ -595,19 +735,19 @@ class BaseDatabase:
 
         if n_download_workers is None:
             try:
-                n_download_workers = self.get_meta_data('n_download_workers')
+                n_download_workers = self.get_meta_data(key='n_download_workers')
             except TypeError:
                 n_download_workers = 0
 
         if headers is None:
             try:
-                headers = self.get_meta_data('headers')
+                headers = self.get_meta_data(key='headers')
             except TypeError:
                 headers = 0
 
         if timeout is None:
             try:
-                timeout = self.get_meta_data('download_timeout')
+                timeout = self.get_meta_data(key='download_timeout')
             except TypeError:
                 timeout = None
 
@@ -685,8 +825,14 @@ class BaseDatabase:
     def get_meta_data(self, **kwargs):
         raise NotImplementedError
 
-    def get_object_info(self, identifier, variety):
+    def _get_object_info(self, identifier, variety, **kwargs):
         raise NotImplementedError
+
+    def get_object_info(self, identifier, variety, decode_types=False, **kwargs):
+        r = self._get_object_info(identifier, variety, **kwargs)
+        if decode_types:
+            r = convert_from_bytes_to_types(r, converters=self.types)
+        return r
 
     def get_query_params_for_validation_set(self, validation_set):
         raise NotImplementedError
@@ -698,61 +844,119 @@ class BaseDatabase:
         raise NotImplementedError
 
     def list_functions(self):
+        """
+        List functions.
+        """
         return self._list_objects('function')
 
     def list_imputations(self):
-        return self._list_objects('imputation')
+        """
+        List imputations.
+        """
+        return self._list_objects('learning_task', task_type='imputation')
 
     def list_jobs(self):
+        """
+        List jobs
+        """
         raise NotImplementedError
 
+    def list_learning_tasks(self):
+        """
+        List learning tasks.
+        """
+        return self._list_objects('learning_task')
+
     def list_measures(self):
+        """
+        List measures.
+        """
         return self._list_objects('measure')
 
     def list_metrics(self):
+        """
+        List metrics.
+        """
         return self._list_objects('metric')
 
     def list_models(self):
+        """
+        List models.
+        """
         return self._list_objects('model')
 
     def list_neighbourhoods(self):
+        """
+        List neighbourhoods.
+        """
         return self._list_objects('neighbourhood')
 
-    def _list_objects(self, variety):
+    def _list_objects(self, variety, **kwargs):
         raise NotImplementedError
 
     def list_objectives(self):
+        """
+        List objectives.
+        """
         return self._list_objects('objective')
 
     def list_splitters(self):
+        """
+        List splitters.
+        """
         return self._list_objects('splitter')
 
     def list_postprocessors(self):
+        """
+        List postprocesors.
+        """
         return self._list_objects('postprocessor')
 
     def list_preprocessors(self):
+        """
+        List preprocessors.
+        """
         return self._list_objects('preprocessor')
 
     def list_semantic_indexes(self):
-        return self._list_objects('semantic_index')
+        """
+        List semantic indexes.
+        """
+        return self._list_objects('learning_task', task_type='semantic_index')
+
+    def list_trainers(self):
+        """
+        List trainers.
+        """
+        return self._list_objects('trainer')
 
     def list_types(self):
+        """
+        List types.
+        """
         return self._list_objects('type')
 
     def list_validation_sets(self):
+        """
+        List validation sets.
+        """
         raise NotImplementedError
 
     def list_watchers(self):
+        """
+        List watchers.
+        """
         return self._list_objects('watcher')
 
     def _load_blob_of_bytes(self, file_id):
         raise NotImplementedError
 
     def _load_hashes(self, identifier):
-        info = self.get_object_info(identifier, 'semantic_index')
+        info = self.get_object_info(identifier, 'learning_task', task_type='semantic_index')
         index_type = info.get('index_type', 'vanilla')
         index_kwargs = info.get('index_kwargs', {}) or {}
-        watcher_info = self.get_object_info(identifier, 'watcher')
+        key_to_watch = info['keys_to_watch'][0]
+        watcher_info = self.get_object_info(f'{identifier}/{key_to_watch}', 'watcher')
         filter = watcher_info.get('filter', {})
         key = watcher_info.get('key', '_base')
         filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
@@ -804,16 +1008,14 @@ class BaseDatabase:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
-        m = self._load_pickled_file(info['object'], serializer=info['serializer'],
-                                    serializer_kwargs=info['serializer_kwargs'])
+        m = self._load_pickled_file(info['object'], serializer=info['serializer'])
         if isinstance(m, CallableWithSecret) and 'secrets' in info:
             m.secrets = info['secrets']
         if isinstance(m, torch.nn.Module):
             m.eval()
         return m
 
-    def _load_pickled_file(self, file_id, serializer='pickle', serializer_kwargs=None):
-        serializer_kwargs = serializer_kwargs or {}
+    def _load_pickled_file(self, file_id, serializer='pickle'):
         bytes_ = self._load_blob_of_bytes(file_id)
         f = io.BytesIO(bytes_)
         if serializer == 'pickle':
@@ -869,10 +1071,10 @@ class BaseDatabase:
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
 
-    def _process_documents(self, *query_params, ids=None, verbose=False):
+    def _process_documents(self, *query_params, ids=None, verbose=False, dependencies=()):
         job_ids = defaultdict(lambda: [])
-        download_id = self._submit_download_content(*query_params, ids=ids)
-        job_ids['download'].append(download_id)
+        job_ids.update(dependencies)
+        dependencies = sum([list(v) for k, v in dependencies.items()], [])
         if not self.list_watchers():
             return job_ids
         G = self._create_plan()
@@ -882,18 +1084,18 @@ class BaseDatabase:
         while current:
             for (variety, identifier) in current:
                 job_ids.update(self._process_single_item(variety, identifier, iteration, job_ids,
-                                                         download_id, ids=ids, verbose=verbose))
+                                                         dependencies, ids=ids, verbose=verbose))
             current = sum([list(G.successors((variety, identifier)))
                            for (variety, identifier) in current], [])
             iteration += 1
         return job_ids
 
-    def _process_single_item(self, variety, identifier, iteration, job_ids, download_id, ids=None,
+    def _process_single_item(self, variety, identifier, iteration, job_ids, dependencies, ids=None,
                              verbose=True):
         if variety == 'watcher':
             watcher_info = self.get_object_info(identifier, 'watcher')
             if iteration == 0:
-                dependencies = [download_id]
+                pass
             else:
                 model_dependencies = \
                     self._get_dependencies_for_watcher(identifier)
@@ -905,7 +1107,7 @@ class BaseDatabase:
                 self._submit_process_documents_with_watcher(identifier, dependencies,
                                                             verbose=verbose, ids=ids)
             job_ids[(variety, identifier)].append(process_id)
-            if watcher_info.get('download', False):  # pragma: no cover
+            if watcher_info.get('_download', False):  # pragma: no cover
                 download_id = \
                     self._submit_download_content(*watcher_info['query_params'], ids=ids,
                                                   dependencies=(process_id,))
@@ -918,6 +1120,12 @@ class BaseDatabase:
         return job_ids
 
     def refresh_watcher(self, identifier, dependencies=()):
+        """
+        Recompute outputs of watcher
+
+        :param identifier: identifier of watcher
+        :param dependencies: job-ids on which computation should depend
+        """
         return self._submit_process_documents_with_watcher(identifier, dependencies=dependencies)
 
     def _replace_model(self, identifier, object):
@@ -946,12 +1154,33 @@ class BaseDatabase:
         raise NotImplementedError
 
     def save_metrics(self, identifier, variety, metrics):
+        """
+        Save metrics (during learning) into learning-task record.
+
+        :param identifier: identifier of object record
+        :param variety: variety of object record
+        :param metrics: values of metrics to save
+        """
         raise NotImplementedError
 
     def separate_query_part_from_validation_record(self, r):
+        """
+        Separate the info in the record after splitting.
+
+        :param r: record
+        """
         raise NotImplementedError
 
     def _set_content_bytes(self, r, key, bytes_):
+        raise NotImplementedError
+
+    def set_job_flag(self, identifier, kw):
+        """
+        Set key-value pair in job record
+
+        :param identifier: id of job
+        :param kw: tuple of key-value pair
+        """
         raise NotImplementedError
 
     def _submit_compute_neighbourhood(self, identifier, dependencies):
@@ -985,7 +1214,7 @@ class BaseDatabase:
         watcher_info = self.get_object_info(identifier, 'watcher')
         if not self.remote:
             self._process_documents_with_watcher(identifier, verbose=verbose, ids=ids)
-            if watcher_info.get('download', False):  # pragma: no cover
+            if watcher_info.get('_download', False):  # pragma: no cover
                 self._download_content(*watcher_info['query_params'])
         else:
             return jobs.process(
@@ -998,77 +1227,54 @@ class BaseDatabase:
                 dependencies=dependencies,
             )
 
-    def _train_imputation(self, identifier):
+    def _train(self, identifier, train_type):
         if self.remote:
-            return jobs.process(self._database_type, self.name, '_train_imputation', identifier)
+            return jobs.process(self._database_type, self.name, '_train', identifier, train_type)
 
-        info = self.get_object_info(identifier, 'imputation')
+        info = self.get_object_info(identifier, 'learning_task')
         splitter = None
         if info.get('splitter'):
             splitter = self.splitters[info['splitter']]
 
-        model = self.models[info['model']]
-        target = self.functions[info['target']]
+        if info['trainer'] == 'SemanticIndexTrainer':
+            trainer_cls = training.trainer.SemanticIndexTrainer
+        elif info['trainer'] == 'ImputationTrainer':
+            trainer_cls = training.trainer.ImputationTrainer
+        else:
+            trainer_cls = self._load_object(info['trainer'], 'trainer')
+
+        models = []
+        for m in info['models']:
+            try:
+                models.append(self.models[m])
+            except:
+                models.append(self.functions[m])
         objective = self.objectives[info['objective']]
         metrics = {k: self.metrics[k] for k in info['metrics']}
-        keys = (info['model_key'], info['target_key'])
 
-        training.train_tools.ImputationTrainer(
-            identifier,
-            models=(model, target),
-            database_type=self._database_type,
-            database=self.name,
-            keys=keys,
-            model_names=(info['model'], info['target']),
-            query_params=info['query_params'],
-            objective=objective,
-            metrics=metrics,
-            **info['trainer_kwargs'],
-            save=self._replace_model,
-            splitter=splitter,
-        ).train()
-
-    def _train_semantic_index(self, identifier):
-
-        if self.remote:
-            return jobs.process(self._database_type,
-                                self.name,
-                                '_train_semantic_index',
-                                identifier)
-
-        info = self.get_object_info(identifier, 'semantic_index')
-        models = []
-        for mn in info['models']:
-            models.append(self.models[mn])
-
-        metrics = {}
-        for metric in info['metrics']:
-            metrics[metric] = self.metrics[metric]
-
-        objective = self.objectives[info['objective']]
-        splitter = info.get('splitter')
-        if splitter:
-            splitter = self.splitters[info['splitter']]
-
-        t = training.train_tools.SemanticIndexTrainer(
+        trainer = trainer_cls(
             identifier,
             models=models,
+            database_type=self._database_type,
+            database=self.name,
             keys=info['keys'],
             model_names=info['models'],
-            database_type='mongodb',
-            database=self.name,
             query_params=info['query_params'],
-            splitter=splitter,
             objective=objective,
-            save=self._replace_model,
-            watch='objective',
             metrics=metrics,
+            save=self._replace_model,
+            splitter=splitter,
             validation_sets=info.get('validation_sets', ()),
             **info.get('trainer_kwargs', {}),
         )
-        t.train()
+        trainer.train()
 
     def unset_hash_set(self, identifier):
+        """
+        Remove hash-set from memory
+
+        :param identifier: identifier of corresponding semantic-index
+        """
         try:
             del self._all_hash_sets[identifier]
         except KeyError:
@@ -1081,6 +1287,13 @@ class BaseDatabase:
         raise NotImplementedError
 
     def validate_semantic_index(self, identifier, validation_sets, metrics):
+        """
+        Evaluate quality of semantic-index
+
+        :param identifier: identifier of semantic index
+        :param validation_sets: validation-sets on which to validate
+        :param metrics: metric functions to compute
+        """
         results = {}
         for vs in validation_sets:
             results[vs] = validate_representations(self, vs, identifier, metrics)
@@ -1092,16 +1305,25 @@ class BaseDatabase:
                 )
 
     def watch_job(self, identifier):
+        """
+        Watch stdout/stderr of worker job.
+
+        :param identifier: job-id
+        """
         try:
             status = 'pending'
             n_lines = 0
+            n_lines_stderr = 0
             while status in {'pending', 'running'}:
                 r = self._get_job_info(identifier)
                 status = r['status']
                 if status == 'running':
                     if len(r['stdout']) > n_lines:
                         print(''.join(r['stdout'][n_lines:]), end='')
-                    n_lines = len(r['stdout'])
+                        n_lines = len(r['stdout'])
+                    if len(r['stderr']) > n_lines_stderr:
+                        print(''.join(r['stderr'][n_lines_stderr:]), end='')
+                        n_lines_stderr = len(r['stderr'])
                     time.sleep(0.2)
                 else:
                     time.sleep(0.2)
@@ -1109,10 +1331,22 @@ class BaseDatabase:
             if status == 'success':
                 if len(r['stdout']) > n_lines:
                     print(''.join(r['stdout'][n_lines:]), end='')
+                if len(r['stderr']) > n_lines_stderr:
+                    print(''.join(r['stderr'][n_lines_stderr:]), end='')
             elif status == 'failed': # pragma: no cover
                 print(r['msg'])
         except KeyboardInterrupt: # pragma: no cover
             return
+
+    def write_output_to_job(self, identifier, msg, stream):
+        """
+        Write stdout/ stderr to database
+
+        :param identifier: job identifier
+        :param msg: msg to write
+        :param stream: {'stdout', 'stderr'}
+        """
+        raise NotImplementedError
 
     def _write_watcher_outputs(self, info, outputs, ids):
         raise NotImplementedError

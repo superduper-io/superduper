@@ -86,8 +86,8 @@ def with_semantic_index(random_data, a_model, measure):
     random_data.create_semantic_index(
         'test_semantic_index',
         ['linear_a'],
-        keys=['x'],
-        measure='css',
+        ['x'],
+        'css',
     )
     random_data.database['_meta'].insert_one({'key': 'semantic_index', 'collection': 'documents',
                                               'value': 'test_semantic_index'})
@@ -104,8 +104,8 @@ def with_faiss_semantic_index(random_data, a_model, measure):
     random_data.create_semantic_index(
         'test_semantic_index',
         ['linear_a'],
-        keys=['x'],
-        measure='css',
+        ['x'],
+        'css',
         index_type='faiss',
         index_kwargs={'measure': 'css'}
     )
@@ -162,7 +162,7 @@ def a_model(float_tensors):
 
 @pytest.fixture()
 def a_watcher(a_model):
-    a_model.create_watcher('linear_a/x', 'linear_a', 'x')
+    a_model.create_watcher('linear_a/x', 'linear_a', key='x')
     yield a_model
     a_model.delete_watcher('linear_a/x', force=True)
 

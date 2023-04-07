@@ -16,6 +16,7 @@ class SuperDuperCursor(Cursor):
 
         :param collection: collection
         :param *args: args to pass to super()
+        :param features: dictionary of features to set (replace record entries with model outputs)
         :param scores: similarity scores to add to records
         :param similar_join: replace ids by documents in subfield of _like
         :param **kwargs: kwargs to pass to super() (see pymongo.cursor.Cursor)

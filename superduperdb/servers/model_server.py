@@ -1,23 +1,36 @@
 import pickle
 import flask
+from flask_cors import CORS
+from flask import request, Flask
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from superduperdb.mongodb.client import SuperDuperClient
-from flask import request, Flask
-
-# TODO - use torchserve...
-
-# https://flask.palletsprojects.com/en/2.1.x/patterns/streaming/ streaming for the find endpoint
-
 from superduperdb import cf
-from superduperdb.types.utils import convert_from_bytes_to_types
+from superduperdb.servers.utils import maybe_login_required
 
 app = Flask(__name__)
+CORS(app)
+auth = HTTPBasicAuth()
+
+if 'user' in cf['model_server']:
+    users = {
+        cf['model_server']['user']: generate_password_hash(cf['model_server']['password']),
+    }
 
 client = SuperDuperClient(**cf['mongodb'])
 databases = {}
 
 
+@auth.verify_password
+def verify_password(username, password):
+    if username in users and \
+            check_password_hash(users.get(username), password):
+        return username
+
+
 @app.route('/apply_model', methods=['GET'])
+@maybe_login_required(auth, 'model_server')
 def apply_model():
     data = request.get_json()
     database = data['database']

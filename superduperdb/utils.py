@@ -146,38 +146,13 @@ def timeout(seconds):  # pragma: no cover
         signal.signal(signal.SIGALRM, old_handler)
 
 
-class Downloader:
-    def __init__(
-        self,
-        table,
-        urls,
-        update_one=None,
-        ids=None,
-        keys=None,
-        n_workers=20,
-        raises=True,
-        max_queue=10,
-        headers=None,
-        skip_existing=True,
-        timeout=None,
-    ):
-        self.table = table
-        self.urls = urls
-        self.ids = ids
-        self.keys = keys
-        self.n_workers = n_workers
-        self.raises = raises
-        self.max_queue = max_queue
-        self.failed = 0
-        self.headers = headers
-        self.skip_existing = skip_existing
+class BaseDownloader:
+    def __init__(self, urls, n_workers=0, timeout=None, headers=None, raises=True):
         self.timeout = timeout
-        self.update_db = update_one is not None
-        self.update_one = update_one
-        if not self.update_db:  # pragma: no cover
-            self.results = {}
-
-        assert len(ids) == len(urls)
+        self.n_workers = n_workers
+        self.urls = urls
+        self.headers = headers or {}
+        self.raises = raises
 
     def go(self):
         """
@@ -205,9 +180,9 @@ class Downloader:
             try:
                 if self.timeout is not None:  # pragma: no cover
                     with timeout(self.timeout):
-                        self.download(i, request_session=request_session)
+                        self._download(i, request_session=request_session)
                 else:
-                    self.download(i, request_session=request_session)
+                    self._download(i, request_session=request_session)
             except TimeoutException:  # pragma: no cover
                 print(f'timed out {i}')
             except KeyboardInterrupt:  # pragma: no cover
@@ -242,10 +217,46 @@ class Downloader:
         for i in range(len(self.urls)):
             f(i)
 
-    def download(self, i, request_session):
-        """
-        Download i-th url file
-        """
+
+class Downloader(BaseDownloader):
+    """
+
+    :param table: table or collection to _download items
+    :param urls: list of urls/ file names to fetch
+    :param update_one: function to call to insert data into table
+    :param ids: list of ids of rows/ documents to update
+    :param keys: list of keys in rows/ documents to insert to
+    :param n_workers: number of multiprocessing workers
+    :param raises: raises error ``True``/``False``
+    :param headers: dictionary of request headers passed to``requests`` package
+    :param skip_existing: if ``True`` then don't bother getting already present data
+    :param timeout: set seconds until request times out
+    """
+    def __init__(
+        self,
+        table,
+        urls,
+        update_one=None,
+        ids=None,
+        keys=None,
+        n_workers=20,
+        headers=None,
+        skip_existing=True,
+        timeout=None,
+        raises=True,
+    ):
+        super().__init__(urls, n_workers=n_workers, timeout=timeout, headers=headers,
+                         raises=raises)
+        self.table = table
+        self.ids = ids
+        self.keys = keys
+        self.failed = 0
+        self.skip_existing = skip_existing
+        self.update_one = update_one
+
+        assert len(ids) == len(urls)
+
+    def _download(self, i, request_session):
         url = self.urls[i]
         _id = self.ids[i]
 
@@ -262,10 +273,30 @@ class Downloader:
         if r.status_code != 200:  # pragma: no cover
             raise Exception(f"Non-200 response. ({r.status_code})")
 
-        if self.update_db:
-            self.update_one(self.table, self.ids[i], self.keys[i], r.content)
-        else:  # pragma: no cover
-            self.results[self.ids[i]] = r.content
+        self.update_one(self.table, self.ids[i], self.keys[i], r.content)
+
+
+class InMemoryDownloader(BaseDownloader):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.results = {}
+
+    def _download(self, i, request_session):
+        url = self.urls[i]
+        if url.startswith('http'):
+            r = request_session.get(url, headers=self.headers)
+        elif url.startswith('file'):
+            with open(url.split('file://')[-1], 'rb') as f:
+                r = lambda: None
+                r.content = f.read()
+                r.status_code = 200
+        else:
+            raise NotImplementedError('unknown URL type...')
+
+        if r.status_code != 200:  # pragma: no cover
+            raise Exception(f"Non-200 response. ({r.status_code})")
+
+        self.results[i] = r.content
 
 
 def progressbar(*args, **kwargs):
@@ -279,13 +310,21 @@ class ArgumentDefaultDict(defaultdict):
         return super().__getitem__(item)
 
 
-def gather_urls(documents):
+def gather_urls(documents, gather_ids=True):
+    """
+    Get the URLS out of all documents as denoted by ``{"_content": ...}``
+
+    :param documents: list of dictionaries
+    """
     urls = []
     mongo_keys = []
     ids = []
-    for r in documents:
+    for i, r in enumerate(documents):
         sub_urls, sub_mongo_keys = _gather_urls_for_document(r)
-        ids.extend([r['_id'] for _ in sub_urls])
+        if gather_ids:
+            ids.extend([r['_id'] for _ in sub_urls])
+        else:
+            ids.append(i)
         urls.extend(sub_urls)
         mongo_keys.extend(sub_mongo_keys)
     return urls, mongo_keys, ids
@@ -317,6 +356,12 @@ def _gather_urls_for_document(r):
 
 
 def get_database_from_database_type(database_type, database_name):
+    """
+    Import the database connection from ``superduperdb``
+
+    :param database_type: type of database (supported: ['mongodb'])
+    :param database_name: name of database
+    """
     module = importlib.import_module(f'superduperdb.{database_type}.client')
     client_cls = getattr(module, 'SuperDuperClient')
     client = client_cls(**cf.get(database_type, {}))
@@ -324,7 +369,14 @@ def get_database_from_database_type(database_type, database_name):
 
 
 class CallableWithSecret:
+    """
+    Class allowing functions to use secrets which are then saved separately/ or potentially
+    not at all.
+    """
     def __init__(self, secrets):
+        """
+        :param secrets: dictionary of secrets - are added as environment variables
+        """
         self._secrets = secrets
 
     @property
@@ -347,6 +399,12 @@ class CallableWithSecret:
 
 
 def to_device(item, device):
+    """
+    Send tensor leaves of nested list/ dictionaries/ tensors to device.
+
+    :param item: torch.Tensor instance
+    :param device: device to which one would like to send
+    """
     if isinstance(item, tuple):
         item = list(item)
     if isinstance(item, list):
@@ -361,11 +419,22 @@ def to_device(item, device):
 
 
 def device_of(model):
-    return next(model.parameters()).device
+    """
+    Get device of a model.
+
+    :param model: PyTorch model
+    """
+    return next(iter(model.state_dict().values())).device
 
 
 @contextmanager
 def set_device(model, device):
+    """
+    Temporarily set a device of a model.
+
+    :param model: PyTorch model
+    :param device: Device to set
+    """
     device_before = device_of(model)
     try:
         model.to(device)

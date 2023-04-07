@@ -11,7 +11,7 @@ from superduperdb.training.validation import validate_representations, validate_
 
 class Trainer:
     def __init__(self,
-                 train_name,
+                 identifier,
                  models,
                  keys,
                  model_names,
@@ -27,6 +27,7 @@ class Trainer:
                  optimizers=(),
                  loader_suppress=None,
                  lr=0.0001,
+                 betas=(0.5, 0.999),
                  num_workers=0,
                  projection=None,
                  features=None,
@@ -40,7 +41,7 @@ class Trainer:
                  download=False):
 
         self.id = uuid.uuid4()
-        self.train_name = train_name
+        self.train_name = identifier
 
         if use_grads is None:
             self.use_grads = {mn: True for mn in model_names}
@@ -91,7 +92,7 @@ class Trainer:
             self.learn_encoders = (self.models[0], self.models[0])
 
         self.optimizers = optimizers if optimizers else [
-            self._get_optimizer(model, lr) for model, mn in zip(self.models, self.model_names)
+            self._get_optimizer(model, lr, betas) for model, mn in zip(self.models, self.model_names)
             if isinstance(model, torch.nn.Module) and list(model.parameters())
                and self.use_grads[mn]
         ]
@@ -157,18 +158,36 @@ class Trainer:
                 continue
             self._weights_choices[i] = {}
             for p in sd:
-                if len(sd[p].shape) == 2:
-                    indexes = [
-                        (random.randrange(sd[p].shape[0]), random.randrange(sd[p].shape[1]))
-                        for _ in range(min(10, max(sd[p].shape[0], sd[p].shape[1])))
-                    ]
-                elif len(sd[p].shape) == 1:
+                if len(sd[p].shape) == 1:
                     assert len(sd[p].shape) == 1
                     indexes = [
                         (random.randrange(sd[p].shape[0]),)
                         for _ in range(min(10, sd[p].shape[0]))
                     ]
-                self._weights_choices[i][p] = indexes
+                    self._weights_choices[i][p] = indexes
+                elif len(sd[p].shape) == 2:
+                    indexes = [
+                        (random.randrange(sd[p].shape[0]), random.randrange(sd[p].shape[1]))
+                        for _ in range(min(10, max(sd[p].shape[0], sd[p].shape[1])))
+                    ]
+                    self._weights_choices[i][p] = indexes
+                elif len(sd[p].shape) == 3:
+                    indexes = [
+                        (random.randrange(sd[p].shape[0]),
+                         random.randrange(sd[p].shape[1]),
+                         random.randrange(sd[p].shape[2]))
+                        for _ in range(min(10, max(sd[p].shape)))
+                    ]
+                    self._weights_choices[i][p] = indexes
+                elif len(sd[p].shape) == 4:
+                    indexes = [
+                        (random.randrange(sd[p].shape[0]),
+                         random.randrange(sd[p].shape[1]),
+                         random.randrange(sd[p].shape[2]),
+                         random.randrange(sd[p].shape[3]))
+                        for _ in range(min(10, max(sd[p].shape)))
+                    ]
+                    self._weights_choices[i][p] = indexes
 
     def log_weight_traces(self):
         for i, f in enumerate(self._weights_choices):
@@ -182,6 +201,10 @@ class Trainer:
                         tmp.append(param[ind[0]].item())
                     elif len(ind) == 2:
                         tmp.append(param[ind[0], ind[1]].item())
+                    elif len(ind) == 3:
+                        tmp.append(param[ind[0], ind[1], ind[2]].item())
+                    elif len(ind) == 4:
+                        tmp.append(param[ind[0], ind[1], ind[2], ind[3]].item())
                     else:  # pragma: no cover
                         raise Exception('3d tensors not supported')
                 self.weights_dict[f'{f}.{p}'].append(tmp)
@@ -189,7 +212,7 @@ class Trainer:
     def _save_metrics(self):
         self.database.save_metrics(
             self.train_name,
-            self.variety,
+            'learning_task',
             self.metric_values
         )
 
@@ -210,9 +233,9 @@ class Trainer:
             return
         raise NotImplementedError  # pragma: no cover
 
-    def _get_optimizer(self, encoder, lr):
+    def _get_optimizer(self, encoder, lr, betas):
         learnable_parameters = [x for x in encoder.parameters() if x.requires_grad]
-        return torch.optim.Adam(learnable_parameters, lr=lr)
+        return torch.optim.Adam(learnable_parameters, lr=lr, betas=betas)
 
     def apply_splitter_and_encoders(self, sample):
         if hasattr(self, 'splitter') and self.splitter is not None:

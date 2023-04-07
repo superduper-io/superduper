@@ -10,27 +10,33 @@ from pymongo.collection import Collection as MongoCollection
 from pymongo.cursor import Cursor
 import torch.utils.data
 
-from superduperdb.utils import MongoStyleDict
+from superduperdb.utils import MongoStyleDict, gather_urls, InMemoryDownloader
 from superduperdb.models.utils import apply_model
 from superduperdb.getters import client as our_client
 
 
 class Collection(MongoCollection):
+    """
+    Collection building on top of ``pymongo.collection.Collection``.
+    Implements additional methods required by ``superduperdb`` for AI/ machine learning.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._hash_set = None
         self._semantic_index = None
 
-        self.models = self.database.models
         self.functions = self.database.functions
-        self.preprocessors = self.database.preprocessors
-        self.postprocessors = self.database.postprocessors
-        self.types = self.database.types
-        self.splitters = self.database.splitters
-        self.objectives = self.database.objectives
         self.measures = self.database.measures
         self.metrics = self.database.metrics
+        self.models = self.database.models
+        self.objectives = self.database.objectives
+        self.preprocessors = self.database.preprocessors
+        self.postprocessors = self.database.postprocessors
+        self.splitters = self.database.splitters
+        self.trainers = self.database.trainers
+        self.types = self.database.types
+
         self._all_hash_sets = self.database._all_hash_sets
 
     @property
@@ -74,122 +80,285 @@ class Collection(MongoCollection):
     def create_function(self, *args, **kwargs):
         return self.database.create_function(*args, **kwargs)
 
-    def create_imputation(self, identifier, model, model_key, target, target_key, *args, **kwargs):
-        return self.database.create_imputation(identifier, model, model_key, target, target_key,
-                                               self.name, *args, **kwargs)
+    def create_imputation(self, *args, **kwargs):
+        return self.database.create_imputation(self.name, *args, **kwargs)
+
+    def create_learning_task(self, *args, **kwargs):
+        """
+        Create learning task.
+
+        :param args: positional arguments to ``self.database.create_learning_task``
+        :param kwargs: passed to ``self.database.create_learning_task``
+        """
+        return self.database.create_learning_task(self.name, *args, **kwargs)
 
     def create_measure(self, *args, **kwargs):
+        """
+        Create measure.
+
+        :param args: positional arguments to ``self.database.create_measure``
+        :param kwargs: passed to ``self.database.create_measure``
+        """
         return self.database.create_measure(*args, **kwargs)
 
     def create_metric(self, *args, **kwargs):
+        """
+        Create metric.
+
+        :param args: positional arguments to ``self.database.create_metric``
+        :param kwargs: passed to ``self.database.create_metric``
+        """
         return self.database.create_metric(*args, **kwargs)
 
     def create_model(self, *args, **kwargs):
+        """
+        Create a model.
+
+        :param args: positional arguments to ``self.database.create_model``
+        :param kwargs: passed to ``self.database.create_model``
+        """
         return self.database.create_model(*args, **kwargs)
 
     def create_neighbourhood(self, *args, **kwargs):
+        """
+        Create neighbourhood.
+
+        :param args: positional arguments to ``self.database.create_neighbourhood``
+        :param kwargs: passed to ``self.database.create_neighbourhood``
+        """
         return self.database.create_neighbourhood(*args, **kwargs)
 
     def create_objective(self, *args, **kwargs):
+        """
+        Create objective.
+
+        :param args: positional arguments to ``self.database.create_objective``
+        :param kwargs: passed to ``self.database.create_objective``
+        """
         return self.database.create_objective(*args, **kwargs)
 
-    def create_semantic_index(self, identifier, models, keys, measure, *args, **kwargs):
-        return self.database.create_semantic_index(identifier, models, keys, measure,
-                                                   collection=self.name,
+    def create_semantic_index(self, *args, **kwargs):
+        """
+        Create semantic-index.
+
+        :param args: positional arguments to ``self.database.create_semantic_index``
+        :param kwargs: passed to ``self.database.create_semantic_index``
+        """
+        return self.database.create_semantic_index(self.name,
                                                    *args,
                                                    **kwargs)
 
+    def create_trainer(self, *args, **kwargs):
+        """
+        Create trainer.
+
+        :param args: positional arguments to ``self.database.create_trainer``
+        :param kwargs: passed to ``self.database.create_trainer``
+        """
+        return self.database.create_trainer(*args, **kwargs)
+
     def create_type(self, *args, **kwargs):
+        """
+        Create type.
+
+        :param args: positional arguments to ``self.database.create_type``
+        :param kwargs: passed to ``self.database.create_type``
+        """
         return self.database.create_type(*args, **kwargs)
 
     def create_validation_set(self, identifier, filter_=None, *args, **kwargs):
+        """
+        Create validation set.
+
+        :param identifier: identifier of validation-set
+        :param filter_: filter_ defining where to get data from
+        :param args: positional arguments to ``self.database.create_validation_set``
+        :param kwargs: passed to ``self.database.create_validation_set``
+        """
         if filter_ is None:
             filter_ = {'_fold': 'valid'}
         else:
             filter_['_fold'] = 'valid'
         return self.database.create_validation_set(identifier, self.name, filter_, *args, **kwargs)
 
-    def create_watcher(self, identifier, model, *args, **kwargs):
-        return self.database.create_watcher(identifier, model, self.name, *args, **kwargs)
+    def create_watcher(self, *args, **kwargs):
+        """
+        Create watcher.
+
+        :param args: positional arguments to ``self.database.create_watcher``
+        :param kwargs: passed to ``self.database.create_watcher``
+        """
+        return self.database.create_watcher(self.name, *args, **kwargs)
 
     def delete_function(self, *args, **kwargs):
+        """
+        Delete function
+        """
         return self.database.delete_function(*args, **kwargs)
 
     def delete_imputation(self, *args, **kwargs):
+        """
+        Delete imputation
+        """
         return self.database.delete_imputation(*args, **kwargs)
 
+    def delete_learning_task(self, *args, **kwargs):
+        """
+        Delete learning task
+        """
+        return self.database.delete_learning_task(*args, **kwargs)
+
     def delete_measure(self, *args, **kwargs):
+        """
+        Delete measure
+        """
         return self.database.delete_measure(*args, **kwargs)
 
     def delete_metric(self, *args, **kwargs):
+        """
+        Delete metric
+        """
         return self.database.delete_metric(*args, **kwargs)
 
     def delete_model(self, *args, **kwargs):
+        """
+        Delete model
+        """
         return self.database.delete_model(*args, **kwargs)
 
     def delete_neighbourhood(self, *args, **kwargs):
+        """
+        Delete neighbourhood
+        """
         return self.database.delete_neighbourhood(*args, **kwargs)
 
     def delete_objective(self, *args, **kwargs):
+        """
+        Delete objective
+        """
         return self.database.delete_objective(*args, **kwargs)
 
     def delete_semantic_index(self, *args, **kwargs):
+        """
+        Delete semantic index
+        """
         return self.database.delete_semantic_index(*args, **kwargs)
 
+    def delete_trainer(self, *args, **kwargs):
+        """
+        Delete trainer
+        """
+        return self.database.delete_trainer(*args, **kwargs)
+
     def delete_type(self, *args, **kwargs):
+        """
+        Delete type
+        """
         return self.database.delete_type(*args, **kwargs)
 
     def delete_validation_set(self, *args, **kwargs):
+        """
+        Delete validation-set
+        """
         return self.database.delete_validation_set(*args, **kwargs)
 
     def delete_watcher(self, *args, **kwargs):
+        """
+        Delete watcher
+        """
         return self.database.delete_watcher(*args, **kwargs)
 
     def list_functions(self):
+        """
+        List functions.
+        """
         return self.database.list_functions()
 
     def list_imputations(self):
+        """
+        List imputations.
+        """
         return self.database.list_imputations()
 
+    def list_learning_tasks(self):
+        """
+        List learning-tasks.
+        """
+        return self.database.list_learning_tasks()
+
     def list_jobs(self):
+        """
+        List jobs.
+        """
         return self.database.list_jobs()
 
     def list_metrics(self):
+        """
+        List metrics.
+        """
         return self.database.list_metrics()
 
     def list_models(self):
+        """
+        List models.
+        """
         return self.database.list_models()
 
     def list_objectives(self):
+        """
+        List objectives.
+        """
         return self.database.list_objectives()
 
     def list_preprocessors(self):
+        """
+        List preprocessors.
+        """
         return self.database.preprocessors()
 
     def list_postprocessors(self):
+        """
+        List postprocessors.
+        """
         return self.database.preprocessors()
 
     def list_semantic_indexes(self):
+        """
+        List semantic-indexes.
+        """
         return self.database.list_semantic_indexes()
 
+    def list_trainers(self):
+        """
+        List trainers.
+        """
+        return self.database.list_trainers()
+
     def list_types(self):
+        """
+        List types.
+        """
         return self.database.list_types()
 
     def list_watchers(self):
+        """
+        List watchers.
+        """
         return self.database.list_watchers()
 
     def _get_content_for_filter(self, filter):
-        if '_id' not in filter:
-            filter['_id'] = 0
-        urls = self._gather_urls([filter])[0]
+        urls = gather_urls([filter], gather_ids=False)[0]
         if urls:
-            filter = self.database._download_content(self.name,
-                                                     documents=[filter],
-                                                     timeout=None, raises=True)[0]
-            filter = convert_from_bytes_to_types(filter, converters=self.types)
+            filter = MongoStyleDict(filter)
+            urls, keys, _ = gather_urls([filter], gather_ids=False)
+            downloader = InMemoryDownloader(urls)
+            downloader.go()
+            for i, (k, url) in enumerate(zip(keys, urls)):
+                filter[k]['_content']['bytes'] = downloader.results[i]
+            filter = convert_from_bytes_to_types(filter, self.types)
         return filter
 
-    def find(self, filter=None, *args, like=None, similar_first=False, raw=False,
+    def find(self, filter=None, *args, like=None, n=10, similar_first=False, raw=False,
              features=None, download=False, similar_join=None, semantic_index=None, **kwargs):
         """
         Behaves like MongoDB ``find`` with similarity search as additional option.
@@ -209,8 +378,6 @@ class Collection(MongoCollection):
             filter = {}
         if download and like is not None:
             like = self._get_content_for_filter(like)    # pragma: no cover
-            if '_id' in like:
-                del like['_id']
         if like is not None:
             if semantic_index is None:
                 semantic_index = self.database.get_meta_data(key='semantic_index',
@@ -218,9 +385,12 @@ class Collection(MongoCollection):
             if similar_first:
                 return self._find_similar_then_matches(filter, like, *args, raw=raw,
                                                        features=features, like=like,
-                                                       semantic_index=semantic_index, **kwargs)
+                                                       semantic_index=semantic_index,
+                                                       n=n,
+                                                       **kwargs)
             else:
                 return self._find_matches_then_similar(filter, like, *args, raw=raw,
+                                                       n=n,
                                                        features=features, semantic_index=semantic_index,
                                                        **kwargs)
         else:
@@ -274,10 +444,19 @@ class Collection(MongoCollection):
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover
             return output
+        download_id = self.database._submit_download_content(
+            self.name,
+            self.name,
+            ids=output.inserted_ids,
+        )
+        dependencies = {}
+        if self.remote:
+            dependencies = {'_download_content': [download_id]}
         job_ids = self.database._process_documents(self.name,
                                                    self.name,
                                                    ids=output.inserted_ids,
-                                                   verbose=verbose)
+                                                   verbose=verbose,
+                                                   dependencies=dependencies)
         if not self.remote:
             return output
         return output, job_ids
@@ -286,7 +465,8 @@ class Collection(MongoCollection):
         """
         Recompute model outputs.
 
-        :param model: Name of model.
+        :param args: position args passed to ``self.database.refresh_watcher``
+        :param kwargs: kwargs passed to ``self.database.refresh_watcher``
         """
         return self.database.refresh_watcher(self.name, *args, **kwargs)
 
@@ -335,7 +515,7 @@ class Collection(MongoCollection):
         args = tuple(args)
         result = super().update_many(filter, *args, **kwargs)
         if refresh and self.list_models():
-            job_ids = self.database._process_documents(self.name, ids)
+            job_ids = self.database._process_documents(self.name, ids=ids)
             return result, job_ids
         return result
 
@@ -359,16 +539,6 @@ class Collection(MongoCollection):
         if self.remote:
             return our_client.clear_remote_cache()
 
-    def unset_hash_set(self):
-        """
-        Drop the hash_set currently in-use.
-        """
-        if self.remote:
-            return our_client.unset_hash_set(self.database.name, self.name)
-        if self.semantic_index in self._all_hash_sets:
-            del self._all_hash_sets[self.semantic_index]
-            self._semantic_index = None
-
     def _find_nearest(self, like, ids=None, n=10, semantic_index=None):
         if self.remote:
             like = self.convert_from_types_to_bytes(like)
@@ -384,7 +554,8 @@ class Collection(MongoCollection):
         else:
             if semantic_index is None:
                 semantic_index = self.database._get_meta_data('semantic_index')
-            si_info = self.database.get_object_info(semantic_index, 'semantic_index')
+            si_info = self.database.get_object_info(semantic_index, 'learning_task',
+                                                    task_type='semantic_index')
             models = si_info['models']
             keys = si_info['keys']
             available_keys = list(like.keys()) + ['_base']
@@ -392,7 +563,9 @@ class Collection(MongoCollection):
             document = MongoStyleDict(like)
             if '_outputs' not in document:
                 document['_outputs'] = {}
-            watcher_info = self.database.get_object_info(semantic_index, 'watcher')
+            key_to_watch = si_info['keys_to_watch'][0]
+            watcher_info = self.database.get_object_info(f'{semantic_index}/{key_to_watch}',
+                                                         'watcher')
             features = watcher_info.get('features', {})
             for subkey in features:
                 if subkey not in document:
@@ -403,7 +576,7 @@ class Collection(MongoCollection):
                     document['_outputs'][subkey][features[subkey]] = \
                         apply_model(self.models[features[subkey]], document[subkey])
                 document[subkey] = document['_outputs'][subkey][features[subkey]]
-            model_input = document[key if key != '_base' else document]
+            model_input = document[key] if key != '_base' else document
             model = self.models[model]
             with torch.no_grad():
                 h = apply_model(model, model_input, True)
@@ -460,4 +633,7 @@ class Collection(MongoCollection):
         return documents
 
     def watch_job(self, *args, **kwargs):
+        """
+        Watch stdout/stderr of worker job.
+        """
         return self.database.watch_job(*args, **kwargs)

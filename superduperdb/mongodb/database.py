@@ -1,15 +1,13 @@
 import math
 
 import gridfs
-import torch
 from pymongo import UpdateOne
 from pymongo.database import Database as MongoDatabase
 import superduperdb.mongodb.collection
 from superduperdb.database import BaseDatabase
-from superduperdb.lookup import hashes
 from superduperdb.mongodb import loading
 from superduperdb.training.validation import validate_representations
-from superduperdb.utils import MongoStyleDict, progressbar
+from superduperdb.utils import MongoStyleDict
 
 
 class Database(MongoDatabase, BaseDatabase):
@@ -43,9 +41,19 @@ class Database(MongoDatabase, BaseDatabase):
         r['_other'] = other
         return r
 
-    def create_imputation(self, identifier, model, model_key, target, target_key, collection, filter_=None,
-                          objective=None, metrics=None, projection=None,
-                          splitter=None, watch=True, loader_kwargs=None, **trainer_kwargs):
+    def create_imputation(self, collection, *args, filter_=None, projection=None,
+                          trainer_kwargs=None, **kwargs):
+        """
+        Create imputation on collection; predict on field on the basis of other fields.
+
+        :param collection:
+        :param args: positional arguments to ``self._create_imputation``
+        :param filter_: dictionary for a MongoDB query
+        :param projection: dictionary for projection MongoDB output
+        :param trainer_kwargs: passed to trainer class
+        :param kwargs: passed to ``self._create_imputation``
+        """
+        trainer_kwargs = trainer_kwargs or {}
         if 'loader_suppress' not in trainer_kwargs:
             trainer_kwargs['loader_suppress'] = []
         if '_id' not in trainer_kwargs['loader_suppress']:
@@ -55,11 +63,7 @@ class Database(MongoDatabase, BaseDatabase):
         if projection is not None:
             query_params.append(projection)
 
-        return self._create_imputation(
-            identifier, model, model_key, target, target_key, query_params,
-            objective=objective, metrics=metrics,
-            splitter=splitter, watch=watch, loader_kwargs=loader_kwargs, **trainer_kwargs
-        )
+        return self._create_imputation(*args, query_params, trainer_kwargs=trainer_kwargs, **kwargs)
 
     def _create_job_record(self, r):
         self['_jobs'].insert_one(r)
@@ -67,13 +71,18 @@ class Database(MongoDatabase, BaseDatabase):
     def _create_object_entry(self, info):
         return self['_objects'].insert_one(info)
 
-    def create_semantic_index(self, identifier, models, keys, measure, collection, validation_sets=(),
-                              metrics=(), objective=None, filter_=None, splitter=None,
-                              projection=None,
-                              loader_kwargs=None,
-                              index_type='vanilla',
-                              index_kwargs=None,
-                              **trainer_kwargs):
+    def create_learning_task(self, collection, *args, filter_=None, projection=None,
+                             trainer_kwargs=None, **kwargs):
+        """
+        Create learning task on the basis of data in ``collection``.
+
+        :param collection:
+        :param args: positional arguments to ``self._create_imputation``
+        :param filter_: dictionary for a MongoDB query
+        :param projection: dictionary for projection MongoDB output
+        :param trainer_kwargs: kwargs passed to trainer class see ``BaseDatabase._create_learning_task``
+        :param kwargs: passed to ``self._create_imputation``
+        """
         query_params = [collection]
         if filter_ is None:
             query_params.append({})
@@ -81,18 +90,32 @@ class Database(MongoDatabase, BaseDatabase):
             query_params.append(filter_)
         if projection is not None:
             query_params.append(projection)
+        trainer_kwargs = trainer_kwargs or {}
         if 'loader_suppress' not in trainer_kwargs:
             trainer_kwargs['loader_suppress'] = []
         if '_id' not in trainer_kwargs['loader_suppress']:
             trainer_kwargs['loader_suppress'].append('_id')
-        return self._create_semantic_index(identifier, query_params, models, keys, measure,
-                                           validation_sets=validation_sets,
-                                           metrics=metrics, objective=objective,
-                                           splitter=splitter, loader_kwargs=loader_kwargs,
-                                           index_type=index_type, index_kwargs=index_kwargs,
-                                           **trainer_kwargs)
+        return self._create_learning_task(*args, query_params=query_params,
+                                          trainer_kwargs=trainer_kwargs, **kwargs)
 
-    def create_watcher(self, identifier, model, collection, filter_=None, projection=None,
+    def create_semantic_index(self, collection, *args, filter_=None, projection=None,
+                              trainer_kwargs=None, **kwargs):
+        query_params = [collection]
+        if filter_ is None:
+            query_params.append({})
+        else:
+            query_params.append(filter_)
+        if projection is not None:
+            query_params.append(projection)
+        trainer_kwargs = trainer_kwargs or {}
+        if 'loader_suppress' not in trainer_kwargs:
+            trainer_kwargs['loader_suppress'] = []
+        if '_id' not in trainer_kwargs['loader_suppress']:
+            trainer_kwargs['loader_suppress'].append('_id')
+        return self._create_semantic_index(*args, query_params, trainer_kwargs=trainer_kwargs,
+                                           **kwargs)
+
+    def create_watcher(self, collection, identifier, model, filter_=None, projection=None,
                        key='_base', verbose=False,
                        target=None, process_docs=True, features=None, loader_kwargs=None,
                        dependencies=()):
@@ -129,7 +152,8 @@ class Database(MongoDatabase, BaseDatabase):
         return self['_objects'].delete_one({'identifier': identifier, 'variety': variety})
 
     def _download_update(self, collection, _id, key, bytes_):
-        self[collection].update_one({'_id': _id}, {'$set': {f'{key}._content.bytes': bytes_}})
+        self[collection].update_one({'_id': _id}, {'$set': {f'{key}._content.bytes': bytes_}},
+                                    refresh=False)
 
     def _execute_query_to_get_hashes(self, *query_params):
         query_params = list(query_params)
@@ -170,8 +194,8 @@ class Database(MongoDatabase, BaseDatabase):
     def get_meta_data(self, **kwargs):
         return self['_meta'].find_one(kwargs)['value']
 
-    def get_object_info(self, identifier, variety):
-        return self['_objects'].find_one({'identifier': identifier, 'variety': variety})
+    def _get_object_info(self, identifier, variety, **kwargs):
+        return self['_objects'].find_one({'identifier': identifier, 'variety': variety, **kwargs})
 
     def get_query_params_for_validation_set(self, validation_set):
         return ('_validation_sets', {'identifier': validation_set})
@@ -185,14 +209,10 @@ class Database(MongoDatabase, BaseDatabase):
         return list(self['_jobs'].find(status, {'identifier': 1, '_id': 0, 'method': 1,
                                                 'status': 1, 'time': 1}))
 
-    def _list_objects(self, variety):
-        return self['_objects'].distinct('identifier', {'variety': variety})
+    def _list_objects(self, variety, **kwargs):
+        return self['_objects'].distinct('identifier', {'variety': variety, **kwargs})
 
     def list_validation_sets(self):
-        """
-        List validation sets
-        :return: list of validation sets
-        """
         return self['_validation_sets'].distinct('identifier')
 
     def _load_blob_of_bytes(self, file_id):
@@ -220,6 +240,9 @@ class Database(MongoDatabase, BaseDatabase):
             r = MongoStyleDict(r)
         r[f'{key}._content.bytes'] = bytes_
         return r
+
+    def set_job_flag(self, identifier, kw):
+        self['_jobs'].update_one({'identifier': identifier}, {'$set': {kw[0]: kw[1]}})
 
     def _unset_neighbourhood_data(self, info, watcher_info):
         collection, filter_ = watcher_info['query_params']
@@ -262,6 +285,13 @@ class Database(MongoDatabase, BaseDatabase):
                     {'name': name, 'variety': 'semantic_index'},
                     {'$set': {f'final_metrics.{vs}.{m}': results[vs][m]}}
                 )
+
+    def write_output_to_job(self, identifier, msg, stream):
+        assert stream in {'stdout', 'stderr'}
+        self['_jobs'].update_one(
+            {'identifier': identifier},
+            {'$push': {stream: msg}}
+        )
 
     def _write_watcher_outputs(self, watcher_info, outputs, ids):
         collection = watcher_info['query_params'][0]

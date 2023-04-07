@@ -5,11 +5,11 @@ from superduperdb.models.utils import apply_model
 
 def validate_imputation(database, validation_set, imputation, metrics, model=None, features=None):
 
-    info = database.get_object_info(identifier=imputation, variety='imputation')
+    info = database.get_object_info(identifier=imputation, variety='learning_task')
     if model is None:
-        model = database.models[info['model']]
-    model_key = info['model_key']
-    target_key = info['target_key']
+        model = database.models[info['models'][0]]
+    model_key = info['keys'][0]
+    target_key = info['keys'][1]
     loader_kwargs = info.get('loader_kwargs') or {}
 
     if isinstance(metrics, list):
@@ -50,8 +50,7 @@ def validate_imputation(database, validation_set, imputation, metrics, model=Non
 def validate_representations(database, validation_set, semantic_index,
                              metrics, encoders=None):
 
-    info = database.get_object_info(identifier=semantic_index, variety='semantic_index')
-
+    info = database.get_object_info(identifier=semantic_index, variety='learning_task')
     encoder_names = info['models']
     if encoders is None:
         encoders = []
@@ -70,8 +69,10 @@ def validate_representations(database, validation_set, semantic_index,
         if not 'semantic_index' in str(e):
             raise e
 
+    ktw = info['keys'][0]
     database.remote = False
-    database._process_documents_with_watcher(f'{semantic_index}/{validation_set}', model=encoders[0])
+    database._process_documents_with_watcher(f'{semantic_index}/{validation_set}/{ktw}',
+                                             model=encoders[0])
     query_params = database.get_query_params_for_validation_set(validation_set)
 
     anchors = list(database.execute_query(*query_params))

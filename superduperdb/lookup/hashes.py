@@ -1,4 +1,3 @@
-import faiss
 import numpy
 import os
 import torch
@@ -7,6 +6,13 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
 class HashSet:
+    """
+    Simple hash-set for looking up with vector similarity.
+
+    :param h: ``torch.Tensor``
+    :param index: list of IDs
+    :param measure: measure to assess similarity
+    """
     def __init__(self, h, index, measure):
         self.h = h
         self.index = index
@@ -43,12 +49,23 @@ class HashSet:
 
 
 class FaissHashSet(HashSet):
+    """
+    Faiss hash-set for looking up with vector similarity.
+
+    https://github.com/facebookresearch/faiss
+
+    :param h: ``torch.Tensor``
+    :param index: list of IDs
+    :param measure: measure to assess similarity {'l2', 'dot', 'css'}
+    :param faiss_index: Faiss index object if available (prevents need to fit anew)
+    """
     def __init__(self, h, index, measure='l2', faiss_index=None):
         super().__init__(h, index, None)
         if isinstance(h, torch.Tensor):
             h = h.numpy().astype('float32')
         self.h = h
         self.index = index
+        import faiss
         if faiss_index is None:
             if measure == 'css':
                 h = h / (numpy.linalg.norm(h, axis=1)[:, None])

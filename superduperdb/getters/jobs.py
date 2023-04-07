@@ -9,7 +9,10 @@ from superduperdb.jobs import process as process_jobs
 from superduperdb import cf
 from superduperdb.utils import get_database_from_database_type
 
-q = Queue(connection=Redis(port=cf.get('redis', {}).get('port', 6379)), default_timeout=24 * 60 * 60)
+# by default insecure on localhost - add user/ password for security
+redis_cf = cf.get('redis', {'port': 6379, 'host': 'localhost'})
+
+q = Queue(connection=Redis(**redis_cf), default_timeout=24 * 60 * 60)
 
 
 def process(database_type, database_name, method, *args, dependencies=(),
@@ -28,6 +31,7 @@ def process(database_type, database_name, method, *args, dependencies=(),
     })
     job = q.enqueue(
         process_jobs._function_job,
+        database_type,
         database_name,
         method,
         job_id,

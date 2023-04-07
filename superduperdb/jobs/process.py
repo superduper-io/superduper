@@ -1,7 +1,7 @@
 import contextlib
 import traceback
 
-from superduperdb import cf
+from superduperdb.utils import get_database_from_database_type
 
 
 class Logger:
@@ -11,18 +11,7 @@ class Logger:
         self.stream = stream
 
     def write(self, message):
-        if self.stream == 'stdout':
-            self.database['_jobs'].update_one(
-                {'identifier': self.id_},
-                {'$push': {'stdout': message}}
-            )
-        elif self.stream == 'stderr':
-            self.database['_jobs'].update_one(
-                {'identifier': self.id_},
-                {'$push': {'stderr': message}}
-            )
-        else:
-            raise NotImplementedError
+        self.database.write_output_to_job(self.id_, message, stream=self.stream)
 
     def flush(self):
         pass
@@ -34,15 +23,12 @@ def handle_function_output(function, database, identifier, *args, **kwargs):
             return function(*args, **kwargs)
 
 
-def _function_job(database_name, function_name, identifier,
+def _function_job(database_type, database_name, function_name, identifier,
                   args_, kwargs_):
-    from superduperdb.mongodb.client import SuperDuperClient
-    the_client = SuperDuperClient(**cf.get('mongodb', {}))
-    database = the_client[database_name]
+    database = get_database_from_database_type(database_type, database_name)
     database.remote = False
     function = getattr(database, function_name)
-    database['_jobs'].update_one({'identifier': identifier},
-                                 {'$set': {'status': 'running'}})
+    database.set_job_flag(identifier, ('status', 'running'))
     try:
         handle_function_output(
             function,
@@ -53,13 +39,7 @@ def _function_job(database_name, function_name, identifier,
         )
     except Exception as e:
         tb = traceback.format_exc()
-        database['_jobs'].update_one(
-            {'identifier': identifier},
-            {'$set': {'status': 'failed', 'msg': tb}}
-        )
+        database.set_job_flag(identifier, ('status', 'failed'))
+        database.set_job_flag(identifier, ('msg', tb))
         raise e
-    database['_jobs'].update_one(
-        {'identifier': identifier},
-        {'$set': {'status': 'success'}}
-    )
-
+    database.set_job_flag(identifier, ('status', 'success'))

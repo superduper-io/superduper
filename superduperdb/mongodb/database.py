@@ -41,6 +41,10 @@ class Database(MongoDatabase, BaseDatabase):
         r['_other'] = other
         return r
 
+    def apply_agent(self, agent, filter_=None, projection=None, like=None):
+        query_params = (filter_ or {}, projection or {})
+        return self._apply_agent(agent, query_params, like=like)
+
     def create_imputation(self, collection, *args, filter_=None, projection=None,
                           trainer_kwargs=None, **kwargs):
         """

@@ -49,4 +49,4 @@ def apply_model():
 
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=cf['model_server']['port'])
+    app.run(host='0.0.0.0', port=cf['model_server']['port'])

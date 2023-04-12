@@ -377,7 +377,8 @@ class CallableWithSecret:
         """
         :param secrets: dictionary of secrets - are added as environment variables
         """
-        self._secrets = secrets
+        self._secrets = None
+        self.secrets = secrets
 
     @property
     def secrets(self):

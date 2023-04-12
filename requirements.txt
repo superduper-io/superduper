@@ -1,5 +1,7 @@
 dill
 flask
+flask_cors
+flask_httpauth
 matplotlib
 networkx
 numpy
@@ -10,3 +12,4 @@ requests
 rq
 torch
 tqdm
+werkzeug

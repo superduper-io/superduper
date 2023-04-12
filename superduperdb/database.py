@@ -27,6 +27,7 @@ class BaseDatabase:
     """
     def __init__(self):
 
+        self.agents = ArgumentDefaultDict(lambda x: self._load_object(x, 'agent'))
         self.functions = ArgumentDefaultDict(lambda x: self._load_object(x, 'function'))
         self.measures = ArgumentDefaultDict(lambda x: self._load_object(x, 'measure'))
         self.metrics = ArgumentDefaultDict(lambda x: self._load_object(x, 'metric'))
@@ -58,6 +59,18 @@ class BaseDatabase:
 
     def _add_split_to_row(self, r, other):
         raise NotImplementedError
+
+    def _apply_agent(self, agent, query_params, like=None):
+        if self.remote and isinstance(agent, str):
+            return our_client._apply_agent(self._database_type,
+                                           self.name,
+                                           agent,
+                                           query_params=query_params,
+                                           like=like)
+        docs = list(self.execute_query(*query_params, like=like))
+        if isinstance(agent, str):
+            agent = self.agents[agent]
+        return agent(docs)
 
     def apply_model(self, model, input_, **kwargs):
         """
@@ -163,6 +176,15 @@ class BaseDatabase:
         if t is not None:
             return {'_content': {'bytes': self.types[t].encode(r), 'type': t}}
         return r
+
+    def create_agent(self, identifier, object, **kwargs):
+        """
+        Create agent - callable function, which is not a PyTorch model.
+
+        :param identifier: identifier
+        :param object: Python object
+        """
+        return self._create_object(identifier, object, 'agent', **kwargs)
 
     def create_function(self, identifier, object, **kwargs):
         """
@@ -512,6 +534,15 @@ class BaseDatabase:
                     dependencies=dependencies,
                 )
 
+    def delete_agent(self, identifier, force=False):
+        """
+        Delete agent.
+
+        :param identifier: identifier of agent
+        :param force: toggle to ``True`` to skip confirmation step
+        """
+        return self._delete_object(identifier, 'agent', force=force)
+
     def delete_function(self, identifier, force=False):
         """
         Delete function.
@@ -842,6 +873,12 @@ class BaseDatabase:
 
     def _insert_validation_data(self, tmp, identifier):
         raise NotImplementedError
+
+    def list_agents(self):
+        """
+        List agents.
+        """
+        return self._list_objects('agent')
 
     def list_functions(self):
         """
@@ -1247,8 +1284,11 @@ class BaseDatabase:
         for m in info['models']:
             try:
                 models.append(self.models[m])
-            except:
-                models.append(self.functions[m])
+            except Exception as e:
+                if 'No such object of type' in str(e):
+                    models.append(self.functions[m])
+                else:
+                    raise e
         objective = self.objectives[info['objective']]
         metrics = {k: self.metrics[k] for k in info['metrics']}
 

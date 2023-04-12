@@ -77,6 +77,9 @@ class Collection(MongoCollection):
     def apply_model(self, *args, **kwargs):
         return self.database.apply_model(*args, **kwargs)
 
+    def create_agent(self, *args, **kwargs):
+        return self.database.create_agent(*args, **kwargs)
+
     def create_function(self, *args, **kwargs):
         return self.database.create_function(*args, **kwargs)
 
@@ -190,6 +193,12 @@ class Collection(MongoCollection):
         """
         return self.database.create_watcher(self.name, *args, **kwargs)
 
+    def delete_agent(self, *args, **kwargs):
+        """
+        Delete agent
+        """
+        return self.database.delete_agent(*args, **kwargs)
+
     def delete_function(self, *args, **kwargs):
         """
         Delete function
@@ -267,6 +276,12 @@ class Collection(MongoCollection):
         Delete watcher
         """
         return self.database.delete_watcher(*args, **kwargs)
+
+    def list_agents(self):
+        """
+        List agents.
+        """
+        return self.database.list_agents()
 
     def list_functions(self):
         """

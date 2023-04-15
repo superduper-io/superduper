@@ -87,19 +87,6 @@ def test_insert_from_urls(empty, image_type, remote):
     assert isinstance(empty.find_one()['other']['item'], PIL.PngImagePlugin.PngImageFile)
 
 
-# @pytest.mark.parametrize('remote', remote_values)
-# def test_update(random_data, a_watcher, remote, an_update):
-#     n = random_data.count_documents({})
-#     random_data.remote = remote
-#     jobs = random_data.update_many(an_update)
-#     if remote:
-#         jobs.
-#     n_new = random_data.count_documents({})
-#     r = random_data.find_one({'update': True})
-#     assert 'linear_a' in r['_outputs']['x']
-#     assert n_new > n
-
-
 @pytest.mark.parametrize('remote', remote_values)
 def test_watcher(random_data, a_model, b_model, remote):
 

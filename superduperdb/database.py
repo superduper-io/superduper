@@ -11,6 +11,7 @@ import torch
 
 from superduperdb import cf, training
 from superduperdb.getters import jobs
+from superduperdb.getters.jobs import stop_job
 from superduperdb.lookup import hashes
 from superduperdb.training.validation import validate_representations
 from superduperdb.types.utils import convert_from_bytes_to_types
@@ -86,6 +87,9 @@ class BaseDatabase:
             model = self.models[model]
         with torch.no_grad():
             return apply_model(model, input_, **kwargs)
+
+    def cancel_job(self, job_id):
+        stop_job(self._database_type, self.name, job_id)
 
     def _compute_model_outputs(self, model_info, _ids, *query_params, key='_base', features=None,
                                model=None, verbose=True, loader_kwargs=None):
@@ -256,7 +260,7 @@ class BaseDatabase:
 
         for k in keys_to_watch:
             jobs.append(self._create_watcher(
-                f'{identifier}/{k}',
+                f'{model_lookup[k]}/{k}',
                 model_lookup[k],
                 query_params,
                 key=k,
@@ -559,19 +563,7 @@ class BaseDatabase:
         :param identifier: Identifier of imputation
         :param force: Toggle to ``True`` to skip confirmation
         """
-        do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete the imputation "{identifier}"?',
-                                  default=False):
-            do_delete = True
-        if not do_delete:
-            return
-
-        info = self.get_object_info(identifier, 'learning_task')
-        if info is None and force:
-            return
-
-        self._delete_object_info(f'{info["identifier"]}/{info["keys"][0]}', 'watcher')
-        self._delete_object_info(info['identifier'], 'learning_task')
+        return self.delete_learning_task(identifier, force=force)
 
     def delete_learning_task(self, identifier, force=False):
         """
@@ -581,7 +573,7 @@ class BaseDatabase:
         :param force: toggle to ``True`` to skip confirmation step
         """
         do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete the imputation "{identifier}"?',
+        if force or click.confirm(f'Are you sure you want to delete the learning-task "{identifier}"?',
                                   default=False):
             do_delete = True
         if not do_delete:
@@ -591,8 +583,9 @@ class BaseDatabase:
         if info is None and force:
             return
 
+        model_lookup = dict(zip(info['models'], info['keys']))
         for k in info['keys_to_watch']:
-            self._delete_object_info(f'{info["identifier"]}/{k}', 'watcher')
+            self._delete_object_info(f'{model_lookup[k]}/{k}', 'watcher')
         self._delete_object_info(info['identifier'], 'learning_task')
 
     def delete_measure(self, identifier, force=False):
@@ -830,7 +823,11 @@ class BaseDatabase:
         if info is None:
             return []
         watcher_features = info.get('features', {})
-        return list(zip(watcher_features.values(), watcher_features.keys()))
+        dependencies = []
+        if watcher_features:
+            for key, model in watcher_features.items():
+                dependencies.append(f'{model}/{key}')
+        return dependencies
 
     def _get_docs_from_ids(self, ids, *query_params, features=None, raw=False):
         raise NotImplementedError
@@ -859,11 +856,17 @@ class BaseDatabase:
     def _get_object_info(self, identifier, variety, **kwargs):
         raise NotImplementedError
 
+    def _get_object_info_where(self, variety, **kwargs):
+        raise NotImplementedError
+
     def get_object_info(self, identifier, variety, decode_types=False, **kwargs):
         r = self._get_object_info(identifier, variety, **kwargs)
         if decode_types:
             r = convert_from_bytes_to_types(r, converters=self.types)
         return r
+
+    def get_object_info_where(self, variety, **kwargs):
+        return self._get_object_info_where(variety, **kwargs)
 
     def get_query_params_for_validation_set(self, validation_set):
         raise NotImplementedError
@@ -1137,7 +1140,7 @@ class BaseDatabase:
                 model_dependencies = \
                     self._get_dependencies_for_watcher(identifier)
                 dependencies = sum([
-                    job_ids[('watchers', dep)]
+                    job_ids[('watcher', dep)]
                     for dep in model_dependencies
                 ], [])
             process_id = \
@@ -1151,7 +1154,7 @@ class BaseDatabase:
                 job_ids[(variety, identifier)].append(download_id)
         elif variety == 'neighbourhoods':
             watcher_identifier = self._get_watcher_for_neighbourhood(identifier)
-            dependencies = job_ids[('watchers', watcher_identifier)]
+            dependencies = job_ids[('watcher', watcher_identifier)]
             process_id = self._submit_compute_neighbourhood(identifier, dependencies)
             job_ids[(variety, identifier)].append(process_id)
         return job_ids
@@ -1264,6 +1267,48 @@ class BaseDatabase:
                 dependencies=dependencies,
             )
 
+    def _get_trainer(self, identifier, train_type):
+        info = self.get_object_info(identifier, 'learning_task')
+        splitter = None
+        if info.get('splitter'):
+            splitter = self.splitters[info['splitter']]
+
+        if info['trainer'] == 'SemanticIndexTrainer':
+            trainer_cls = training.trainer.SemanticIndexTrainer
+        elif info['trainer'] == 'ImputationTrainer':
+            trainer_cls = training.trainer.ImputationTrainer
+        else:
+            trainer_cls = self._load_object(info['trainer'], 'trainer')
+
+        models = []
+        for m in info['models']:
+            try:
+                models.append(self.models[m])
+            except Exception as e:
+                if 'No such object of type' in str(e):
+                    models.append(self.functions[m])
+                else:
+                    raise e
+        objective = self.objectives[info['objective']]
+        metrics = {k: self.metrics[k] for k in info['metrics']}
+
+        trainer = trainer_cls(
+            identifier,
+            models=models,
+            database_type=self._database_type,
+            database=self.name,
+            keys=info['keys'],
+            model_names=info['models'],
+            query_params=info['query_params'],
+            objective=objective,
+            metrics=metrics,
+            save=self._replace_model,
+            splitter=splitter,
+            validation_sets=info.get('validation_sets', ()),
+            **info.get('trainer_kwargs', {}),
+        )
+        return trainer
+
     def _train(self, identifier, train_type):
         if self.remote:
             return jobs.process(self._database_type, self.name, '_train', identifier, train_type)
@@ -1319,6 +1364,9 @@ class BaseDatabase:
             del self._all_hash_sets[identifier]
         except KeyError:
             pass
+
+    def _update_job_info(self, identifier, key, value):
+        raise NotImplementedError
 
     def _update_neighbourhood(self, ids, similar_ids, identifier, *query_params):
         raise NotImplementedError

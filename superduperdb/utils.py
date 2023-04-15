@@ -425,7 +425,10 @@ def device_of(model):
 
     :param model: PyTorch model
     """
-    return next(iter(model.state_dict().values())).device
+    try:
+        return next(iter(model.state_dict().values())).device
+    except StopIteration:
+        return 'cpu'
 
 
 @contextmanager

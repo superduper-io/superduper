@@ -162,4 +162,6 @@ dmypy.json
 /docs/examples/annotations
 /docs/examples/*.zip
 /notebooks/data
-
+/custom_requirements.txt
+/notebooks/*.json
+/notebooks/*.bson

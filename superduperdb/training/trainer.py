@@ -22,7 +22,7 @@ class ImputationTrainer(Trainer):
                                                   features=self.features)
         objective_values = []
         for batch in data_loader:
-            outputs = self.apply_models_to_batch(batch, self.learn_encoders, self.device)
+            outputs = self.apply_models_to_batch(batch, self.models, self.device)
             objective_values.append(self.objective(*outputs).item())
         results['objective'] = sum(objective_values) / len(objective_values)
 
@@ -53,7 +53,7 @@ class SemanticIndexTrainer(Trainer):
                                                        self.models)
         objective_values = []
         for batch in data_loader:
-            outputs = self.apply_models_to_batch(batch, self.learn_encoders, self.device)
+            outputs = self.apply_models_to_batch(batch, self.models, self.device)
             objective_values.append(self.objective(*outputs).item())
         results['objective'] = sum(objective_values) / len(objective_values)
         for m in self.models:

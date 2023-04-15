@@ -39,7 +39,6 @@ class Trainer:
                  objective=None,
                  batch_size=100,
                  optimizers=(),
-                 loader_suppress=None,
                  lr=0.0001,
                  betas=(0.5, 0.999),
                  num_workers=0,
@@ -51,6 +50,7 @@ class Trainer:
                  watch='objective',
                  log_weights=False,
                  validation_interval=1000,
+                 log_interval=1,
                  no_improve_then_stop=10,
                  download=False):
 
@@ -81,29 +81,15 @@ class Trainer:
         self.n_epochs = n_epochs
         self.n_iterations = n_iterations
         self.download = download
-        self.loader_suppress = {} or loader_suppress
 
         self._database = None
         self._database_type = database_type
         self._database_name = database
         self.query_params = query_params
-        self.train_data, self.valid_data = self._get_data()
 
         self.best = []
         self.metrics = metrics if metrics is not None else {}
-
-        if isinstance(self.keys, str):  # pragma: no cover
-            self.keys = (self.keys,)
-
-        if not isinstance(self.models, tuple) and not isinstance(self.models, list):  # pragma: no cover
-            self.models = [self.models, ]
-        self.models = list(self.models)
-
-        self.learn_fields = self.keys
-        self.learn_encoders = self.models
-        if len(self.keys) == 1:
-            self.learn_fields = (self.keys[0], self.keys[0])
-            self.learn_encoders = (self.models[0], self.models[0])
+        self.train_data, self.valid_data = self._get_data()
 
         self.optimizers = optimizers if optimizers else [
             self._get_optimizer(model, lr, betas) for model, mn in zip(self.models, self.model_names)
@@ -123,6 +109,8 @@ class Trainer:
         self._log_weights = log_weights
         self.save = save
         self.validation_interval = validation_interval
+        self.log_interval = log_interval
+
         self.no_improve_then_stop = no_improve_then_stop
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -137,16 +125,17 @@ class Trainer:
         train_data = QueryDataset(self._database_type,
                                   self._database_name,
                                   self.query_params,
+                                  keys=self.keys,
                                   fold='train',
-                                  suppress=self.loader_suppress,
-                                  transform=self.apply_splitter_and_encoders)
+                                  transform=self.apply_splitter_and_encoders,
+                                  features=self.features)
         valid_data = QueryDataset(self._database_type,
                                   self._database_name,
                                   self.query_params,
+                                  keys=self.keys,
                                   fold='valid',
-                                  suppress=self.loader_suppress,
-                                  transform=self.apply_splitter_and_encoders)
-
+                                  transform=self.apply_splitter_and_encoders,
+                                  features=self.features)
         return train_data, valid_data
 
     def _early_stop(self):
@@ -253,13 +242,19 @@ class Trainer:
 
     def apply_splitter_and_encoders(self, sample):
         if hasattr(self, 'splitter') and self.splitter is not None:
-            sample = self.splitter(sample)
+            sample = [r[k] for r, k in zip(self.splitter(sample), self.keys)]
         else:
-            sample = [sample for _ in self.learn_fields]
-        return _Mapped([
-            x.preprocess if hasattr(x, 'preprocess') else lambda x: x
-            for x in self.learn_encoders
-        ], self.learn_fields)(sample)
+            sample = [sample[k] for k in self.keys]
+
+        out = []
+        for s, m in zip(sample, self.models):
+            try:
+                preprocess = m.preprocess
+            except AttributeError:
+                preprocess = lambda x: x
+            out.append(preprocess(s))
+
+        return out
 
     @property
     def data_loaders(self):
@@ -307,12 +302,12 @@ class Trainer:
         raise NotImplementedError  # pragma: no cover
 
     def train(self):
-        for encoder in self.models:
-            if isinstance(encoder, torch.nn.Module):
-                encoder.to(self.device)
+        for m in self.models:
+            if isinstance(m, torch.nn.Module):
+                m.to(self.device)
 
-        for encoder in self.models:
-            self.calibrate(encoder)
+        for m in self.models:
+            self.calibrate(m)
 
         it = 0
         epoch = 0
@@ -338,9 +333,10 @@ class Trainer:
             train_loader, valid_loader = self.data_loaders
 
             for batch in train_loader:
-                outputs = self.apply_models_to_batch(batch, self.learn_encoders, self.device)
+                outputs = self.apply_models_to_batch(batch, self.models, self.device)
                 l_ = self.take_step(self.objective(*outputs))
-                self.log_progress(fold='TRAIN', iteration=it, epoch=epoch, objective=l_.item())
+                if it % self.log_interval == 0:
+                    self.log_progress(fold='TRAIN', iteration=it, epoch=epoch, objective=l_.item())
                 it += 1
                 if it % self.validation_interval == 0:
                     print('validating model...')

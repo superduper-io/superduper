@@ -77,6 +77,9 @@ class Collection(MongoCollection):
     def apply_model(self, *args, **kwargs):
         return self.database.apply_model(*args, **kwargs)
 
+    def cancel_job(self, job_id):
+        return self.database.cancel_job(job_id)
+
     def create_agent(self, *args, **kwargs):
         return self.database.create_agent(*args, **kwargs)
 
@@ -84,6 +87,13 @@ class Collection(MongoCollection):
         return self.database.create_function(*args, **kwargs)
 
     def create_imputation(self, *args, **kwargs):
+        """
+        Create imputation
+
+        :param args: positional arguments to ``self.database.create_imputation``
+        :param kwargs: passed to ``self.database.create_imputation``
+
+        """
         return self.database.create_imputation(self.name, *args, **kwargs)
 
     def create_learning_task(self, *args, **kwargs):
@@ -459,6 +469,7 @@ class Collection(MongoCollection):
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover
             return output
+
         download_id = self.database._submit_download_content(
             self.name,
             self.name,

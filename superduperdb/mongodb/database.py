@@ -58,10 +58,6 @@ class Database(MongoDatabase, BaseDatabase):
         :param kwargs: passed to ``self._create_imputation``
         """
         trainer_kwargs = trainer_kwargs or {}
-        if 'loader_suppress' not in trainer_kwargs:
-            trainer_kwargs['loader_suppress'] = []
-        if '_id' not in trainer_kwargs['loader_suppress']:
-            trainer_kwargs['loader_suppress'].append('_id')
 
         query_params = [collection, filter_ or {}]
         if projection is not None:
@@ -95,10 +91,6 @@ class Database(MongoDatabase, BaseDatabase):
         if projection is not None:
             query_params.append(projection)
         trainer_kwargs = trainer_kwargs or {}
-        if 'loader_suppress' not in trainer_kwargs:
-            trainer_kwargs['loader_suppress'] = []
-        if '_id' not in trainer_kwargs['loader_suppress']:
-            trainer_kwargs['loader_suppress'].append('_id')
         return self._create_learning_task(*args, query_params=query_params,
                                           trainer_kwargs=trainer_kwargs, **kwargs)
 
@@ -112,14 +104,10 @@ class Database(MongoDatabase, BaseDatabase):
         if projection is not None:
             query_params.append(projection)
         trainer_kwargs = trainer_kwargs or {}
-        if 'loader_suppress' not in trainer_kwargs:
-            trainer_kwargs['loader_suppress'] = []
-        if '_id' not in trainer_kwargs['loader_suppress']:
-            trainer_kwargs['loader_suppress'].append('_id')
         return self._create_semantic_index(*args, query_params, trainer_kwargs=trainer_kwargs,
                                            **kwargs)
 
-    def create_watcher(self, collection, identifier, model, filter_=None, projection=None,
+    def create_watcher(self, collection, model, filter_=None, projection=None,
                        key='_base', verbose=False,
                        target=None, process_docs=True, features=None, loader_kwargs=None,
                        dependencies=()):
@@ -132,10 +120,10 @@ class Database(MongoDatabase, BaseDatabase):
         if projection is not None:
             query_params.append(projection)
 
-        return self._create_watcher(identifier, model, query_params=query_params, key=key,
-                                      verbose=verbose, target=target, process_docs=process_docs,
-                                      features=features, loader_kwargs=loader_kwargs,
-                                      dependencies=dependencies)
+        return self._create_watcher(f'{model}/{key}', model, query_params=query_params, key=key,
+                                    verbose=verbose, target=target, process_docs=process_docs,
+                                    features=features, loader_kwargs=loader_kwargs,
+                                    dependencies=dependencies)
 
     def create_validation_set(self, identifier, collection, filter_, chunk_size=1000,
                               splitter=None, sample_size=None):
@@ -201,6 +189,9 @@ class Database(MongoDatabase, BaseDatabase):
     def _get_object_info(self, identifier, variety, **kwargs):
         return self['_objects'].find_one({'identifier': identifier, 'variety': variety, **kwargs})
 
+    def _get_object_info_where(self, variety, **kwargs):
+        return self['_objects'].find_one({'variety': variety, **kwargs})
+
     def get_query_params_for_validation_set(self, validation_set):
         return ('_validation_sets', {'identifier': validation_set})
 
@@ -251,7 +242,8 @@ class Database(MongoDatabase, BaseDatabase):
     def _unset_neighbourhood_data(self, info, watcher_info):
         collection, filter_ = watcher_info['query_params']
         print(f'unsetting neighbourhood {info["info"]}')
-        self[collection].update_many(filter_, {'$unset': {f'_like.{info["identifier"]}': 1}},
+        self[collection].update_many(filter_,
+                                     {'$unset': {f'_like.{info["identifier"]}': 1}},
                                      refresh=False)
 
     def _unset_watcher_outputs(self, info):
@@ -269,6 +261,12 @@ class Database(MongoDatabase, BaseDatabase):
             UpdateOne({'_id': id_}, {'$set': {f'_like.{identifier}': sids}})
             for id_, sids in zip(ids, similar_ids)
         ])
+
+    def _update_job_info(self, identifier, key, value):
+        self['_jobs'].update_one(
+            {'identifier': identifier},
+            {'$set': {key: value}}
+        )
 
     def _update_object_info(self, identifier, variety, key, value):
         self['_objects'].update_one(

@@ -1,7 +1,7 @@
 import random
 
 from superduperdb.mongodb.client import SuperDuperClient
-from tests.material.models import BinaryClassifier, BinaryTarget
+from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
 from tests.material.types import FloatTensor, Image
 from tests.material.measures import css
 from tests.material.metrics import PatK, accuracy
@@ -161,10 +161,29 @@ def a_model(float_tensors):
 
 
 @pytest.fixture()
+def a_model_base(float_tensors):
+    float_tensors.create_model('linear_a_base', LinearBase(32, 16), type='float_tensor')
+    yield float_tensors
+    try:
+        float_tensors.delete_model('linear_a_base', force=True)
+    except TypeError as e:
+        if "'NoneType' object is not subscriptable" in str(e):
+            return
+        raise e
+
+
+@pytest.fixture()
 def a_watcher(a_model):
     a_model.create_watcher('linear_a/x', 'linear_a', key='x')
     yield a_model
     a_model.delete_watcher('linear_a/x', force=True)
+
+
+@pytest.fixture()
+def a_watcher_base(a_model_base):
+    a_model_base.create_watcher('linear_a_base/_base', 'linear_a_base', key='_base')
+    yield a_model_base
+    a_model_base.delete_watcher('linear_a_base/_base', force=True)
 
 
 @pytest.fixture()

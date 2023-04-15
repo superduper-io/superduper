@@ -15,17 +15,21 @@ class QueryDataset(data.Dataset):
     :param transform: function to apply to the output
     """
 
-    def __init__(self, database_type, database, query_params, fold='train', suppress=(), transform=None):
+    def __init__(self, database_type, database, query_params, keys=None, fold='train', suppress=(),
+                 transform=None,
+                 features=None):
         super().__init__()
 
         self._database = None
         self._database_type = database_type
         self._database_name = database
+        self.keys = keys
 
         self.transform = transform if transform else lambda x: x
         query_params = self.database._format_fold_to_query(query_params, fold)
         self._documents = list(self.database.execute_query(*query_params))
         self.suppress = suppress
+        self.features = features or {}
 
     @property
     def database(self):
@@ -38,6 +42,16 @@ class QueryDataset(data.Dataset):
 
     def __getitem__(self, item):
         r = MongoStyleDict(self._documents[item])
-        for k in self.suppress:
-            del r[k]
-        return self.transform(self._documents[item])
+        s = MongoStyleDict({})
+        for k in self.features:
+            r[k] = r['_outputs'][k][self.features[k]]
+
+        if self.keys is not None:
+            for k in self.keys:
+                if k == '_base' and k not in self.features:
+                    s[k] = r
+                else:
+                    s[k] = r[k]
+        else:
+            s = r
+        return self.transform(s)

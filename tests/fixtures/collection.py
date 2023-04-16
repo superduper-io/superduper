@@ -174,14 +174,14 @@ def a_model_base(float_tensors):
 
 @pytest.fixture()
 def a_watcher(a_model):
-    a_model.create_watcher('linear_a/x', 'linear_a', key='x')
+    a_model.create_watcher('linear_a', key='x')
     yield a_model
     a_model.delete_watcher('linear_a/x', force=True)
 
 
 @pytest.fixture()
 def a_watcher_base(a_model_base):
-    a_model_base.create_watcher('linear_a_base/_base', 'linear_a_base', key='_base')
+    a_model_base.create_watcher('linear_a_base', key='_base')
     yield a_model_base
     a_model_base.delete_watcher('linear_a_base/_base', force=True)
 

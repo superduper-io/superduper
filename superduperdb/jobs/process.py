@@ -1,7 +1,4 @@
 import contextlib
-import traceback
-
-from superduperdb.utils import get_database_from_database_type
 
 
 class Logger:
@@ -23,23 +20,3 @@ def handle_function_output(function, database, identifier, *args, **kwargs):
             return function(*args, **kwargs)
 
 
-def _function_job(database_type, database_name, function_name, identifier,
-                  args_, kwargs_):
-    database = get_database_from_database_type(database_type, database_name)
-    database.remote = False
-    function = getattr(database, function_name)
-    database.set_job_flag(identifier, ('status', 'running'))
-    try:
-        handle_function_output(
-            function,
-            database,
-            identifier,
-            *args_,
-            **kwargs_,
-        )
-    except Exception as e:
-        tb = traceback.format_exc()
-        database.set_job_flag(identifier, ('status', 'failed'))
-        database.set_job_flag(identifier, ('msg', tb))
-        raise e
-    database.set_job_flag(identifier, ('status', 'success'))

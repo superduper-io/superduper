@@ -1,6 +1,7 @@
 import math
 
 import gridfs
+from bson import ObjectId
 from pymongo import UpdateOne
 from pymongo.database import Database as MongoDatabase
 import superduperdb.mongodb.collection
@@ -44,6 +45,12 @@ class Database(MongoDatabase, BaseDatabase):
     def apply_agent(self, agent, filter_=None, projection=None, like=None):
         query_params = (filter_ or {}, projection or {})
         return self._apply_agent(agent, query_params, like=like)
+
+    def _convert_id_to_str(self, id_):
+        return str(id_)
+
+    def _convert_str_to_id(self, id_):
+        return ObjectId(id_)
 
     def create_imputation(self, collection, *args, filter_=None, projection=None,
                           trainer_kwargs=None, **kwargs):
@@ -300,6 +307,8 @@ class Database(MongoDatabase, BaseDatabase):
         key = watcher_info.get('key', '_base')
         model_name = watcher_info['model']
         print('bulk writing...')
+        print(outputs)
+        print(ids)
         if watcher_info.get('target') is None:
             self[collection].bulk_write([
                 UpdateOne({'_id': id},

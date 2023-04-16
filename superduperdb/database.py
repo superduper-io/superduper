@@ -181,6 +181,18 @@ class BaseDatabase:
             return {'_content': {'bytes': self.types[t].encode(r), 'type': t}}
         return r
 
+    def _convert_id_to_str(self, id_):
+        raise NotImplementedError
+
+    def _convert_ids_to_strs(self, ids):
+        return [self._convert_id_to_str(id_) for id_ in ids]
+
+    def _convert_str_to_id(self, id_):
+        raise NotImplementedError
+
+    def _convert_strs_to_ids(self, strs):
+        return [self._convert_str_to_id(id_) for id_ in strs]
+
     def create_agent(self, identifier, object, **kwargs):
         """
         Create agent - callable function, which is not a PyTorch model.
@@ -525,18 +537,13 @@ class BaseDatabase:
             ids = self._get_ids_from_query(*query_params)
             if not ids:
                 return
-            if not self.remote:
-                self._process_documents_with_watcher(identifier, ids, verbose=verbose)
-            else:  # pragma: no cover
-                return jobs.process(
-                    self._database_type,
-                    self.name,
-                    '_process_documents_with_watcher',
-                    identifier,
-                    ids,
-                    verbose=verbose,
-                    dependencies=dependencies,
-                )
+
+            return self._submit_process_documents_with_watcher(
+                identifier,
+                ids=ids,
+                verbose=verbose,
+                dependencies=dependencies,
+            )
 
     def delete_agent(self, identifier, force=False):
         """
@@ -1238,8 +1245,10 @@ class BaseDatabase:
     def _submit_download_content(self, *query_params, ids=None, dependencies=()):
         if not self.remote:
             print('downloading content from retrieved urls')
+            ids = self._convert_strs_to_ids(ids)
             self._download_content(*query_params, ids=ids)
         else:
+            ids = self._convert_ids_to_strs(ids)
             return jobs.process(
                 self._database_type,
                 self.name,
@@ -1253,10 +1262,13 @@ class BaseDatabase:
                                                verbose=True):
         watcher_info = self.get_object_info(identifier, 'watcher')
         if not self.remote:
+            if ids is not None:
+                ids = self._convert_strs_to_ids(ids)
             self._process_documents_with_watcher(identifier, verbose=verbose, ids=ids)
             if watcher_info.get('_download', False):  # pragma: no cover
                 self._download_content(*watcher_info['query_params'])
         else:
+            ids = self._convert_ids_to_strs(ids)
             return jobs.process(
                 self._database_type,
                 self.name,

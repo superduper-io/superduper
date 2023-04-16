@@ -10,12 +10,14 @@ import pytest
 import torch
 
 
-remote = os.environ.get('SUPERDUPERDB_REMOTE_TEST', 'false') == 'true'
+remote = os.environ.get('SUPERDUPERDB_REMOTE_TEST', 'local')
 image_url = 'https://www.superduperdb.com/logos/white.png'
 
-remote_values = [False]
-if remote:
-    remote_values = [False, True]
+remote_values = {
+    'local': [False],
+    'local+remote': [False, True],
+    'remote': [True]
+}[remote]
 
 
 @pytest.mark.parametrize('remote', remote_values)
@@ -44,11 +46,12 @@ def test_find_faiss(with_faiss_semantic_index, remote):
 
 
 @pytest.mark.parametrize('remote', remote_values)
-def test_insert(random_data, a_model, an_update, remote):
+def test_insert(random_data, a_watcher, an_update, remote):
     random_data.remote = remote
     output = random_data.insert_many(an_update)
     if remote:
         jobs = output[1]
+        print(jobs)
         for node in jobs:
             for job_id in jobs[node]:
                 random_data.watch_job(job_id)

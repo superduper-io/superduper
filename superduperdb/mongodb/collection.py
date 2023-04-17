@@ -567,6 +567,7 @@ class Collection(MongoCollection):
 
     def _find_nearest(self, like, ids=None, n=10, semantic_index=None):
         if self.remote:
+            self.database._reload_type_lookup()
             like = self.convert_from_types_to_bytes(like)
             return our_client.find_nearest(self.database.name, self.name, like,
                                            ids=ids, semantic_index=semantic_index)

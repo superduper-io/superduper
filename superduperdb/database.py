@@ -46,16 +46,19 @@ class BaseDatabase:
         self._hash_set = None
         self._all_hash_sets = ArgumentDefaultDict(self._load_hashes)
 
+    def _reload_type_lookup(self):
+        self._type_lookup = {}
+        for t in self.list_types():
+            try:
+                for s in self.types[t].types:
+                    self._type_lookup[s] = t
+            except AttributeError:
+                continue
+
     @property
     def type_lookup(self):
         if self._type_lookup is None:
-            self._type_lookup = {}
-            for t in self.list_types():
-                try:
-                    for s in self.types[t].types:
-                        self._type_lookup[s] = t
-                except AttributeError:
-                    continue
+            self._reload_type_lookup()
         return self._type_lookup
 
     def _add_split_to_row(self, r, other):
@@ -87,6 +90,9 @@ class BaseDatabase:
             model = self.models[model]
         with torch.no_grad():
             return apply_model(model, input_, **kwargs)
+
+    def _build_processing_graph(self):
+        ...
 
     def cancel_job(self, job_id):
         stop_job(self._database_type, self.name, job_id)
@@ -750,7 +756,7 @@ class BaseDatabase:
             self._unset_watcher_outputs(info)
         self._delete_object_info(identifier, 'watcher')
 
-    def _download_content(self, table, *query_params, ids=None, documents=None, timeout=None,
+    def _download_content(self, table, query_params, ids=None, documents=None, timeout=None,
                           raises=True, n_download_workers=None, headers=None):
         update_db = False
         if documents is None:
@@ -1118,7 +1124,7 @@ class BaseDatabase:
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
 
-    def _process_documents(self, *query_params, ids=None, verbose=False, dependencies=()):
+    def _process_documents(self, query_params, ids=None, verbose=False, dependencies=()):
         job_ids = defaultdict(lambda: [])
         job_ids.update(dependencies)
         dependencies = sum([list(v) for k, v in dependencies.items()], [])
@@ -1242,11 +1248,11 @@ class BaseDatabase:
                 dependencies=dependencies
             )
 
-    def _submit_download_content(self, *query_params, ids=None, dependencies=()):
+    def _submit_download_content(self, query_params, ids=None, dependencies=()):
         if not self.remote:
             print('downloading content from retrieved urls')
             ids = self._convert_strs_to_ids(ids)
-            self._download_content(*query_params, ids=ids)
+            self._download_content(query_params, ids=ids)
         else:
             ids = self._convert_ids_to_strs(ids)
             return jobs.process(

@@ -469,23 +469,12 @@ class Collection(MongoCollection):
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover
             return output
-
-        download_id = self.database._submit_download_content(
-            self.name,
-            self.name,
-            ids=output.inserted_ids,
-        )
-        dependencies = {}
-        if self.remote:
-            dependencies = {'_download_content': [download_id]}
-        job_ids = self.database._process_documents(self.name,
-                                                   self.name,
-                                                   ids=output.inserted_ids,
-                                                   verbose=verbose,
-                                                   dependencies=dependencies)
+        task_graph = self.database._build_task_workflow((self.name,),
+                                                        ids=output.inserted_ids,
+                                                        verbose=verbose)
         if not self.remote:
             return output
-        return output, job_ids
+        return output, task_graph
 
     def refresh_watcher(self, *args, **kwargs):
         """

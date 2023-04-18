@@ -33,10 +33,6 @@ app = Celery('superduperdb.getters.jobs', broker=f'redis://{redis_cf["host"]}:{r
 #     database._update_job_info({'identifier': job_id}, 'status', 'aborted')
 
 
-def create_task_graph_from_graph():
-    ...
-
-
 def stop_job(database_type, database_name, job_id):
     database = get_database_from_database_type(database_type, database_name)
     app.control.revoke(job_id, terminate=True)

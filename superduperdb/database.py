@@ -12,6 +12,7 @@ import torch
 from superduperdb import cf, training
 from superduperdb.getters import jobs
 from superduperdb.getters.jobs import stop_job
+from superduperdb.jobs.graph import TaskWorkflow
 from superduperdb.lookup import hashes
 from superduperdb.training.validation import validate_representations
 from superduperdb.types.utils import convert_from_bytes_to_types
@@ -756,7 +757,7 @@ class BaseDatabase:
             self._unset_watcher_outputs(info)
         self._delete_object_info(identifier, 'watcher')
 
-    def _download_content(self, table, query_params, ids=None, documents=None, timeout=None,
+    def _download_content(self, query_params, ids=None, documents=None, timeout=None,
                           raises=True, n_download_workers=None, headers=None):
         update_db = False
         if documents is None:
@@ -788,6 +789,7 @@ class BaseDatabase:
             except TypeError:
                 timeout = None
 
+        table = self._get_table_from_query_params(query_params)
         downloader = Downloader(
             table=table,
             urls=urls,
@@ -1124,53 +1126,72 @@ class BaseDatabase:
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
 
-    def _process_documents(self, query_params, ids=None, verbose=False, dependencies=()):
+    def _build_processing_workflow(self, query_params, ids=None, dependencies=()):
         job_ids = defaultdict(lambda: [])
         job_ids.update(dependencies)
-        dependencies = sum([list(v) for k, v in dependencies.items()], [])
+        G = TaskWorkflow(self)
         if not self.list_watchers():
-            return job_ids
-        G = self._create_plan()
-        current = [('watcher', watcher_identifier) for watcher_identifier in self.list_watchers()
-                   if not list(G.predecessors(('watcher', watcher_identifier)))]
-        iteration = 0
-        while current:
-            for (variety, identifier) in current:
-                job_ids.update(self._process_single_item(variety, identifier, iteration, job_ids,
-                                                         dependencies, ids=ids, verbose=verbose))
-            current = sum([list(G.successors((variety, identifier)))
-                           for (variety, identifier) in current], [])
-            iteration += 1
-        return job_ids
+            return None
+        if ids is None:
+            ids = self._get_ids_from_query(query_params)
 
-    def _process_single_item(self, variety, identifier, iteration, job_ids, dependencies, ids=None,
-                             verbose=True):
-        if variety == 'watcher':
-            watcher_info = self.get_object_info(identifier, 'watcher')
-            if iteration == 0:
-                pass
-            else:
-                model_dependencies = \
-                    self._get_dependencies_for_watcher(identifier)
-                dependencies = sum([
-                    job_ids[('watcher', dep)]
-                    for dep in model_dependencies
-                ], [])
-            process_id = \
-                self._submit_process_documents_with_watcher(identifier, dependencies,
-                                                            verbose=verbose, ids=ids)
-            job_ids[(variety, identifier)].append(process_id)
-            if watcher_info.get('_download', False):  # pragma: no cover
-                download_id = \
-                    self._submit_download_content(*watcher_info['query_params'], ids=ids,
-                                                  dependencies=(process_id,))
-                job_ids[(variety, identifier)].append(download_id)
-        elif variety == 'neighbourhoods':
+        G.add_node(
+            f'{self._download_content.__name__}',
+            data={
+                'task': self._download_content,
+                'args': [
+                    query_params,
+                ],
+                'kwargs': {
+                    'ids': ids,
+                }
+            }
+        )
+
+        for identifier in self.list_watchers():
+            G.add_node(
+                f'{self._process_documents_with_watcher.__name__}({identifier})',
+                data={
+                    'task': self._process_documents_with_watcher,
+                    'args': [identifier],
+                    'kwargs': {
+                        'ids': self._convert_ids_to_strs(ids),
+                        'verbose': False,
+                    }
+                }
+            )
+
+        for identifier in self.list_neighbourhoods():
+            G.add_node(
+                f'{self._compute_neighbourhood.__name__}({identifier})',
+                data={
+                    'task': self._compute_neighbourhood,
+                    'args': [identifier],
+                    'kwargs': {}
+                }
+            )
+
+        for identifier in self.list_watchers():
+            deps = self._get_dependencies_for_watcher(identifier)
+            for dep in deps:
+                G.add_edge(
+                    f'{self._process_documents_with_watcher.__name__}({dep})',
+                    f'{self._process_documents_with_watcher.__name__}({identifier})'
+                )
+                G.add_edge(
+                    f'{self._download_content.__name__}()',
+                    f'{self._process_documents_with_watcher.__name__}({identifier})'
+                )
+
+        for identifier in self.list_neighbourhoods():
             watcher_identifier = self._get_watcher_for_neighbourhood(identifier)
-            dependencies = job_ids[('watcher', watcher_identifier)]
-            process_id = self._submit_compute_neighbourhood(identifier, dependencies)
-            job_ids[(variety, identifier)].append(process_id)
-        return job_ids
+            G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
+            G.add_edge(
+                f'{self._process_documents_with_watcher.__name__}({watcher_identifier})',
+                f'{self._compute_neighbourhood.__name__}({identifier})'
+            )
+
+        return G
 
     def refresh_watcher(self, identifier, dependencies=()):
         """
@@ -1235,55 +1256,6 @@ class BaseDatabase:
         :param kw: tuple of key-value pair
         """
         raise NotImplementedError
-
-    def _submit_compute_neighbourhood(self, identifier, dependencies):
-        if not self.remote:
-            self._compute_neighbourhood(identifier)
-        else:
-            return jobs.process(
-                self._database_type,
-                self.name,
-                '_compute_neighbourhood',
-                identifier,
-                dependencies=dependencies
-            )
-
-    def _submit_download_content(self, query_params, ids=None, dependencies=()):
-        if not self.remote:
-            print('downloading content from retrieved urls')
-            ids = self._convert_strs_to_ids(ids)
-            self._download_content(query_params, ids=ids)
-        else:
-            ids = self._convert_ids_to_strs(ids)
-            return jobs.process(
-                self._database_type,
-                self.name,
-                '_download_content',
-                *query_params,
-                ids=ids,
-                dependencies=dependencies,
-            )
-
-    def _submit_process_documents_with_watcher(self, identifier, dependencies=(), ids=None,
-                                               verbose=True):
-        watcher_info = self.get_object_info(identifier, 'watcher')
-        if not self.remote:
-            if ids is not None:
-                ids = self._convert_strs_to_ids(ids)
-            self._process_documents_with_watcher(identifier, verbose=verbose, ids=ids)
-            if watcher_info.get('_download', False):  # pragma: no cover
-                self._download_content(*watcher_info['query_params'])
-        else:
-            ids = self._convert_ids_to_strs(ids)
-            return jobs.process(
-                self._database_type,
-                self.name,
-                '_process_documents_with_watcher',
-                identifier,
-                ids=ids,
-                verbose=verbose,
-                dependencies=dependencies,
-            )
 
     def _get_trainer(self, identifier, train_type):
         info = self.get_object_info(identifier, 'learning_task')

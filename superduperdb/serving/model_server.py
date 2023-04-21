@@ -1,5 +1,5 @@
-import pickle
 import flask
+from bson import BSON
 from flask_cors import CORS
 from flask import request, Flask
 from flask_httpauth import HTTPBasicAuth
@@ -7,7 +7,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from superduperdb.mongodb.client import SuperDuperClient
 from superduperdb import cf
-from superduperdb.servers.utils import maybe_login_required
+from superduperdb.serving.utils import maybe_login_required, decode_args_kwargs
+from superduperdb.utils import ArgumentDefaultDict
 
 app = Flask(__name__)
 CORS(app)
@@ -19,7 +20,7 @@ if 'user' in cf['model_server']:
     }
 
 client = SuperDuperClient(**cf['mongodb'])
-databases = {}
+databases = ArgumentDefaultDict(lambda name: client[name])
 
 
 @auth.verify_password
@@ -29,23 +30,24 @@ def verify_password(username, password):
         return username
 
 
-@app.route('/apply_model', methods=['GET'])
+@app.route('/', methods=['POST'])
 @maybe_login_required(auth, 'model_server')
-def apply_model():
-    data = request.get_json()
+def serve():
+    data = BSON.decode(request.get_data())
     database = data['database']
-    name = data['name']
-    kwargs = data.get('kwargs', {})
-    input_ = pickle.loads(data['input_'].encode('iso-8859-1'))
     if f'{database}' not in databases:
         databases[f'{database}'] = client[database]
-    print(input_)
-    database = databases[f'{database}']
-    database.remote = False
-    result = database.apply_model(name, input_, **kwargs)
-    result = database.convert_from_types_to_bytes(result)
-    response = flask.make_response(pickle.dumps(result))
-    return response
+    database = databases[data['database']]
+    method = getattr(database, data['method'])
+    args, kwargs = decode_args_kwargs(database,
+                                      data['args'],
+                                      {k: v for k, v in data['kwargs'].items() if k != 'remote'},
+                                      method.positional_convertible,
+                                      method.keyword_convertible)
+    result = method(*args, **kwargs, remote=False)
+    if method.return_convertible:
+        result = database.convert_from_types_to_bytes(result)
+    return flask.make_response(BSON.encode(result))
 
 
 if __name__ == '__main__':

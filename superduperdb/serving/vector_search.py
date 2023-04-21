@@ -7,7 +7,7 @@ from bson import BSON, ObjectId
 from flask import request, Flask, jsonify, make_response
 
 from superduperdb import cf
-from superduperdb.servers.utils import maybe_login_required
+from superduperdb.serving.utils import maybe_login_required
 
 app = Flask(__name__)
 CORS(app)
@@ -45,14 +45,6 @@ def clear_cache():
     return make_response('ok', 200)
 
 
-@app.route('/count/<database>/<collection>', methods=['GET'])
-@maybe_login_required(auth, 'linear_algebra')
-def count(database, collection):
-    collection = collections[f'{database}.{collection}']
-    print(collection.database.models)
-    return make_response(str(collection.count_documents({})), 200)
-
-
 @app.route('/find_nearest', methods=['GET'])
 @maybe_login_required(auth, 'linear_algebra')
 def find_nearest():
@@ -74,7 +66,7 @@ def find_nearest():
     collection.remote = False
     from superduperdb.types.utils import convert_from_bytes_to_types
     filter = convert_from_bytes_to_types(filter, converters=collection.types)
-    result = collection._find_nearest(filter, ids=ids, semantic_index=semantic_index)
+    result = collection.find_nearest(filter, ids=ids, semantic_index=semantic_index)
     for i, _id in enumerate(result['_ids']):
         result['_ids'][i] = str(_id)
     return jsonify(result)

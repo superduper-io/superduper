@@ -44,7 +44,7 @@ class Database(MongoDatabase, BaseDatabase):
 
     def apply_agent(self, agent, filter_=None, projection=None, like=None):
         query_params = (filter_ or {}, projection or {})
-        return self._apply_agent(agent, query_params, like=like)
+        return self.apply_agent(agent, query_params, like=like)
 
     def _convert_id_to_str(self, id_):
         return str(id_)

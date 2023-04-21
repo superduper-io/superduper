@@ -1,6 +1,8 @@
 import random
 import warnings
 
+from superduperdb.serving.client import vector_search, Convertible
+
 warnings.filterwarnings('ignore')
 
 from superduperdb.mongodb.cursor import SuperDuperCursor
@@ -12,7 +14,7 @@ import torch.utils.data
 
 from superduperdb.utils import MongoStyleDict, gather_urls, InMemoryDownloader
 from superduperdb.models.utils import apply_model
-from superduperdb.getters import client as our_client
+from superduperdb.serving import client as our_client
 
 
 class Collection(MongoCollection):
@@ -472,8 +474,8 @@ class Collection(MongoCollection):
         task_graph = self.database._build_task_workflow((self.name,),
                                                         ids=output.inserted_ids,
                                                         verbose=verbose)
-        if not self.remote:
-            return output
+        if task_graph is not None:
+            task_graph(remote=self.remote)
         return output, task_graph
 
     def refresh_watcher(self, *args, **kwargs):
@@ -554,12 +556,8 @@ class Collection(MongoCollection):
         if self.remote:
             return our_client.clear_remote_cache()
 
-    def _find_nearest(self, like, ids=None, n=10, semantic_index=None):
-        if self.remote:
-            self.database._reload_type_lookup()
-            like = self.convert_from_types_to_bytes(like)
-            return our_client.find_nearest(self.database.name, self.name, like,
-                                           ids=ids, semantic_index=semantic_index)
+    @vector_search
+    def find_nearest(self, like: Convertible, ids=None, n=10, semantic_index=None):
         hash_set = self.database._get_hash_set(semantic_index)
         if ids is not None:
             hash_set = hash_set[ids]
@@ -601,7 +599,7 @@ class Collection(MongoCollection):
     def _find_similar_then_matches(self, filter, like, *args, raw=False, features=None, n=10,
                                    semantic_index=None,
                                    **kwargs):
-        similar = self._find_nearest(like, n=n, semantic_index=semantic_index)
+        similar = self.find_nearest(like, n=n, semantic_index=semantic_index)
         filter = {
             '$and': [
                 filter,
@@ -632,9 +630,9 @@ class Collection(MongoCollection):
                 **kwargs,
             )
             ids = [x['_id'] for x in matches_cursor]
-            similar = self._find_nearest(like, ids=ids, n=n, semantic_index=semantic_index)
+            similar = self.find_nearest(like, ids=ids, n=n, semantic_index=semantic_index)
         else:  # pragma: no cover
-            similar = self._find_nearest(like, n=n, semantic_index=semantic_index)
+            similar = self.find_nearest(like, n=n, semantic_index=semantic_index)
 
         if raw:
             return Cursor(self, {'_id': {'$in': similar['_ids']}}, **kwargs)  # pragma: no cover

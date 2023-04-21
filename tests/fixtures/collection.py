@@ -174,6 +174,7 @@ def a_model_base(float_tensors):
 
 @pytest.fixture()
 def a_watcher(a_model):
+    a_model.remote = False
     a_model.create_watcher('linear_a', key='x')
     yield a_model
     a_model.delete_watcher('linear_a/x', force=True)

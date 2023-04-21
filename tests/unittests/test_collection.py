@@ -52,9 +52,9 @@ def test_insert(random_data, a_watcher, an_update, remote):
     if remote:
         jobs = output[1]
         print(jobs)
-        for node in jobs:
-            for job_id in jobs[node]:
-                random_data.watch_job(job_id)
+        for node in jobs.G.nodes:
+            node = jobs.G.nodes[node]
+            random_data.watch_job(node['job_id'])
     assert random_data.count_documents({}) == n_data_points + 10
 
 

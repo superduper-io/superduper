@@ -4,20 +4,21 @@ import multiprocessing
 import pickle
 import time
 from collections import defaultdict
+from typing import List
 
 import click
 import networkx
 import torch
+from bson import ObjectId
 
 from superduperdb import cf, training
-from superduperdb.getters import jobs
-from superduperdb.getters.jobs import stop_job
+from superduperdb.serving.client import model_server, Convertible
+from superduperdb.serving.jobs import stop_job, work
 from superduperdb.jobs.graph import TaskWorkflow
 from superduperdb.lookup import hashes
 from superduperdb.training.validation import validate_representations
 from superduperdb.types.utils import convert_from_bytes_to_types
 from superduperdb.utils import gather_urls, CallableWithSecret, to_device, set_device, device_of
-from superduperdb.getters import client as our_client
 from superduperdb.models.utils import BasicDataset, create_container, Container, apply_model
 from superduperdb.utils import ArgumentDefaultDict, progressbar, unpack_batch, Downloader
 
@@ -65,19 +66,15 @@ class BaseDatabase:
     def _add_split_to_row(self, r, other):
         raise NotImplementedError
 
-    def _apply_agent(self, agent, query_params, like=None):
-        if self.remote and isinstance(agent, str):
-            return our_client._apply_agent(self._database_type,
-                                           self.name,
-                                           agent,
-                                           query_params=query_params,
-                                           like=like)
+    @model_server
+    def apply_agent(self, agent, query_params, like=None):
         docs = list(self.execute_query(*query_params, like=like))
         if isinstance(agent, str):
             agent = self.agents[agent]
         return agent(docs)
 
-    def apply_model(self, model, input_, **kwargs):
+    @model_server
+    def apply_model(self, model, input_: Convertible, **kwargs) -> Convertible:
         """
         Apply model to input.
 
@@ -85,15 +82,10 @@ class BaseDatabase:
         :param input_: input_ to be passed to the model. Must be possible to encode with registered types (``self.list_types``)
         :param kwargs: key-values (see ``superduperdb.models.utils.apply_model``)
         """
-        if self.remote and isinstance(model, str):
-            return our_client.apply_model(self._database_type, self.name, model, input_, **kwargs)
         if isinstance(model, str):
             model = self.models[model]
         with torch.no_grad():
-            return apply_model(model, input_, **kwargs)
-
-    def _build_processing_graph(self):
-        ...
+            return apply_model(model, input_, **{k: v for k, v in kwargs.items() if k != 'remote'})
 
     def cancel_job(self, job_id):
         stop_job(self._database_type, self.name, job_id)
@@ -154,8 +146,8 @@ class BaseDatabase:
                     outputs.append(model.preprocess(r))
         return outputs
 
-    def _compute_neighbourhood(self, identifier):
-
+    @work
+    def compute_neighbourhood(self, identifier):
         info = self.get_object_info(identifier, 'neighbourhood')
         watcher_info = self.get_object_info(identifier, 'watcher')
         ids = self._get_ids_from_query(*watcher_info['query_params'])
@@ -188,18 +180,6 @@ class BaseDatabase:
             return {'_content': {'bytes': self.types[t].encode(r), 'type': t}}
         return r
 
-    def _convert_id_to_str(self, id_):
-        raise NotImplementedError
-
-    def _convert_ids_to_strs(self, ids):
-        return [self._convert_id_to_str(id_) for id_ in ids]
-
-    def _convert_str_to_id(self, id_):
-        raise NotImplementedError
-
-    def _convert_strs_to_ids(self, strs):
-        return [self._convert_str_to_id(id_) for id_ in strs]
-
     def create_agent(self, identifier, object, **kwargs):
         """
         Create agent - callable function, which is not a PyTorch model.
@@ -221,6 +201,7 @@ class BaseDatabase:
     def _create_imputation(self, identifier, model, model_key, target, target_key, query_params,
                            objective=None, metrics=None, validation_sets=(),
                            splitter=None, loader_kwargs=None, trainer_kwargs=None):
+
         return self._create_learning_task(
             identifier,
             'ImputationTrainer',
@@ -271,14 +252,20 @@ class BaseDatabase:
 
         model_lookup = dict(zip(keys_to_watch, models))
         jobs = []
+        task_workflow = TaskWorkflow(self)
         if objective is not None:
-            try:
-                jobs.append(self._train(identifier, task_type))
-            except KeyboardInterrupt:
-                print('training aborted...')
+            task_workflow.add_node(
+                f'{self.train.__name__}({identifier})',
+                data={
+                    'task': self.train,
+                    'args': [identifier],
+                    'kwargs': {},
+                }
+            )
 
+        to_add = TaskWorkflow(self)
         for k in keys_to_watch:
-            jobs.append(self._create_watcher(
+            to_add *= self._create_watcher(
                 f'{model_lookup[k]}/{k}',
                 model_lookup[k],
                 query_params,
@@ -286,9 +273,11 @@ class BaseDatabase:
                 features=trainer_kwargs.get('features', {}),
                 loader_kwargs=loader_kwargs,
                 dependencies=jobs,
-                verbose=verbose
-            ))
-        return jobs
+                verbose=verbose,
+                do_work=False,
+            )
+        task_workflow += to_add
+        return task_workflow
 
     def create_measure(self, identifier, object, **kwargs):
         """
@@ -346,7 +335,7 @@ class BaseDatabase:
             **kwargs,
         })
 
-    def create_neighbourhood(self, identifier, n=10, batch_size=100):
+    def create_neighbourhood(self, identifier, n=10, batch_size=100, do_work=True):
         """
         Cache similarity between items of model watcher (see ``self.list_watchers``)
 
@@ -362,15 +351,7 @@ class BaseDatabase:
             'batch_size': batch_size,
             'variety': 'neighbourhood',
         })
-        if not self.remote:
-            self._compute_neighbourhood(identifier)
-        else:
-            return jobs.process(
-                self._database_type,
-                self.name,
-                '_compute_neighbourhood',
-                identifier,
-            )
+        return self.compute_neighbourhood(identifier, do_work=do_work)
 
     def _create_object_entry(self, info):
         raise NotImplementedError
@@ -523,7 +504,7 @@ class BaseDatabase:
 
     def _create_watcher(self, identifier, model, query_params, key='_base', verbose=False,
                         target=None, process_docs=True, features=None, loader_kwargs=None,
-                        dependencies=()):
+                        dependencies=(), do_work=True):
 
         r = self.get_object_info(identifier, 'watcher')
         if r is not None:
@@ -544,12 +525,13 @@ class BaseDatabase:
             ids = self._get_ids_from_query(*query_params)
             if not ids:
                 return
-
-            return self._submit_process_documents_with_watcher(
+            return self.apply_watcher(
                 identifier,
                 ids=ids,
                 verbose=verbose,
                 dependencies=dependencies,
+                do_work=do_work,
+                remote=self.remote,
             )
 
     def delete_agent(self, identifier, force=False):
@@ -757,8 +739,9 @@ class BaseDatabase:
             self._unset_watcher_outputs(info)
         self._delete_object_info(identifier, 'watcher')
 
-    def _download_content(self, query_params, ids=None, documents=None, timeout=None,
-                          raises=True, n_download_workers=None, headers=None):
+    @work
+    def download_content(self, query_params, ids: List[ObjectId] = None, documents=None, timeout=None,
+                         raises=True, n_download_workers=None, headers=None, **kwargs):
         update_db = False
         if documents is None:
             update_db = True
@@ -827,9 +810,9 @@ class BaseDatabase:
             filter['_id'] = 0
         urls = gather_urls([filter])[0]
         if urls:
-            filter = self._download_content(self.name,
-                                            documents=[filter],
-                                            timeout=None, raises=True)[0]
+            filter = self.download_content(self.name,
+                                           documents=[filter],
+                                           timeout=None, raises=True)[0]
             filter = convert_from_bytes_to_types(filter, converters=self.types)
         return filter
 
@@ -1080,23 +1063,23 @@ class BaseDatabase:
             return dill.load(f)
         raise NotImplementedError
 
-    def _process_documents_with_watcher(self, identifier, ids=None, verbose=False,
-                                        max_chunk_size=5000, model=None, recompute=False):
+    @work
+    def apply_watcher(self, identifier, ids: List[ObjectId] = None, verbose=False,
+                      max_chunk_size=5000, model=None, recompute=False, **kwargs):
+
         watcher_info = self.get_object_info(identifier, 'watcher')
-        query_params = watcher_info['query_params']
-        if ids is None:
-            ids = self._get_ids_from_query(*query_params)
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
                 print('computing chunk '
                       f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
-                self._process_documents_with_watcher(
+                self.apply_watcher(
                     identifier,
                     ids[i: i + max_chunk_size],
                     verbose=verbose,
                     max_chunk_size=None,
                     model=model,
                     recompute=recompute,
+                    **kwargs,
                 )
             return
 
@@ -1109,7 +1092,6 @@ class BaseDatabase:
                                               model=model,
                                               loader_kwargs=watcher_info.get('loader_kwargs'),
                                               verbose=verbose)
-
         type_ = model_info.get('type')
         if type_ is not None:
             type_ = self.types[type_]
@@ -1126,7 +1108,7 @@ class BaseDatabase:
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
 
-    def _build_processing_workflow(self, query_params, ids=None, dependencies=()):
+    def _build_task_workflow(self, query_params, ids=None, dependencies=(), verbose=True):
         job_ids = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
@@ -1136,9 +1118,9 @@ class BaseDatabase:
             ids = self._get_ids_from_query(query_params)
 
         G.add_node(
-            f'{self._download_content.__name__}',
+            f'{self.download_content.__name__}()',
             data={
-                'task': self._download_content,
+                'task': self.download_content,
                 'args': [
                     query_params,
                 ],
@@ -1150,57 +1132,51 @@ class BaseDatabase:
 
         for identifier in self.list_watchers():
             G.add_node(
-                f'{self._process_documents_with_watcher.__name__}({identifier})',
+                f'{self.apply_watcher.__name__}({identifier})',
                 data={
-                    'task': self._process_documents_with_watcher,
+                    'task': self.apply_watcher,
                     'args': [identifier],
                     'kwargs': {
-                        'ids': self._convert_ids_to_strs(ids),
-                        'verbose': False,
+                        'ids': ids,
+                        'verbose': verbose,
                     }
                 }
             )
 
         for identifier in self.list_neighbourhoods():
             G.add_node(
-                f'{self._compute_neighbourhood.__name__}({identifier})',
+                f'{self.compute_neighbourhood.__name__}({identifier})',
                 data={
-                    'task': self._compute_neighbourhood,
+                    'task': self.compute_neighbourhood,
                     'args': [identifier],
                     'kwargs': {}
                 }
             )
 
         for identifier in self.list_watchers():
+            G.add_edge(
+                f'{self.download_content.__name__}()',
+                f'{self.apply_watcher.__name__}({identifier})'
+            )
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:
                 G.add_edge(
-                    f'{self._process_documents_with_watcher.__name__}({dep})',
-                    f'{self._process_documents_with_watcher.__name__}({identifier})'
+                    f'{self.apply_watcher.__name__}({dep})',
+                    f'{self.apply_watcher.__name__}({identifier})'
                 )
                 G.add_edge(
-                    f'{self._download_content.__name__}()',
-                    f'{self._process_documents_with_watcher.__name__}({identifier})'
+                    f'{self.download_content.__name__}()',
+                    f'{self.apply_watcher.__name__}({identifier})'
                 )
 
         for identifier in self.list_neighbourhoods():
             watcher_identifier = self._get_watcher_for_neighbourhood(identifier)
             G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
             G.add_edge(
-                f'{self._process_documents_with_watcher.__name__}({watcher_identifier})',
-                f'{self._compute_neighbourhood.__name__}({identifier})'
+                f'{self.apply_watcher.__name__}({watcher_identifier})',
+                f'{self.compute_neighbourhood.__name__}({identifier})'
             )
-
         return G
-
-    def refresh_watcher(self, identifier, dependencies=()):
-        """
-        Recompute outputs of watcher
-
-        :param identifier: identifier of watcher
-        :param dependencies: job-ids on which computation should depend
-        """
-        return self._submit_process_documents_with_watcher(identifier, dependencies=dependencies)
 
     def _replace_model(self, identifier, object):
         info = self.get_object_info(identifier, 'model')
@@ -1299,9 +1275,8 @@ class BaseDatabase:
         )
         return trainer
 
-    def _train(self, identifier, train_type):
-        if self.remote:
-            return jobs.process(self._database_type, self.name, '_train', identifier, train_type)
+    @work
+    def train(self, identifier):
 
         info = self.get_object_info(identifier, 'learning_task')
         splitter = None

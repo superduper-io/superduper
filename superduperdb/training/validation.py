@@ -71,8 +71,8 @@ def validate_representations(database, validation_set, semantic_index,
 
     ktw = info['keys'][0]
     database.remote = False
-    database._process_documents_with_watcher(f'{semantic_index}/{validation_set}/{ktw}',
-                                             model=encoders[0])
+    database.apply_watcher(f'{semantic_index}/{validation_set}/{ktw}',
+                           model=encoders[0])
     query_params = database.get_query_params_for_validation_set(validation_set)
 
     anchors = list(database.execute_query(*query_params))

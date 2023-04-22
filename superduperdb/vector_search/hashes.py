@@ -40,8 +40,7 @@ class HashSet:
         ix = ix.tolist()
         scores = scores.tolist()
         ids = [[self.index[i] for i in sub] for sub in ix]
-        return [{'scores': s, 'ix': i, '_ids': _id}
-                for s, i, _id in zip(scores, ix, ids)]
+        return scores, ids
 
     def __getitem__(self, item):
         ix = [self.lookup[i] for i in item]

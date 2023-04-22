@@ -5,9 +5,9 @@ from bson import BSON
 import requests
 
 from superduperdb import cf
-from superduperdb.serving.utils import encode_args_kwargs
+from superduperdb.cluster.utils import encode_args_kwargs
 from superduperdb.types.utils import convert_from_bytes_to_types
-from superduperdb.utils import get_database_from_database_type
+from superduperdb.database import get_database_from_database_type
 
 
 def get_convertible_parameters(f):
@@ -43,8 +43,26 @@ class Convertible:
 databases = {}
 
 
-def use_vector_search(_database_type, name, __name__, args, kwargs):
-    return {}
+def use_vector_search(database_type, database_name, method, args, kwargs):
+    if database_name not in databases:
+        database = get_database_from_database_type(database_type, database_name)
+        databases[database_name] = database
+    bson_ = {
+        'database': database_name,
+        'method': method,
+        'args': args,
+        'kwargs': {
+            **kwargs,
+            'remote': False,
+        },
+    }
+    body = BSON.encode(bson_)
+    response = requests.post(
+        f'http://{cf["model_server"]["host"]}:{cf["model_server"]["port"]}/',
+        data=body,
+    )
+    out = BSON.decode(response.content)
+    return out
 
 
 def vector_search(f):

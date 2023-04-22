@@ -1,11 +1,9 @@
 import datetime
-import uuid
-from collections import defaultdict
-
 import networkx
-from celery import chain, group
+import uuid
 
-from superduperdb.serving.utils import encode_ids_parameters
+from superduperdb.cluster.jobs import q, function_job
+from superduperdb.cluster.utils import encode_ids_parameters
 
 
 class TaskWorkflow:
@@ -60,20 +58,15 @@ class TaskWorkflow:
                                                     for n in self.G.predecessors(node)]) + 1
         return self._path_lengths
 
-    def compile(self, dry_run=False):
-        from superduperdb.serving.jobs import function_job
-        to_chain = []
-        lookup = defaultdict(lambda: [])
-        for n in self.G.nodes:
-            lookup[self.path_lengths[n]].append(n)
-        max_path_lengths = max(lookup.keys())
-        for i in range(max_path_lengths + 1):
-            current_nodes = lookup[i]
+    def __call__(self, remote=False):
+        current_group = \
+            [n for n in self.G.nodes if not networkx.ancestors(self.G, n)]
+        done = []
+        while current_group:
             job_id = str(uuid.uuid4())
-            current_group = []
-            for node in current_nodes:
+            for node in current_group:
                 node_object = self.G.nodes[node]
-                if not dry_run:
+                if remote:
                     self.database._create_job_record({
                         'identifier': job_id,
                         'time': datetime.datetime.now(),
@@ -84,44 +77,43 @@ class TaskWorkflow:
                         'stdout': [],
                         'stderr': [],
                     })
-                self.G.nodes[node]['job_id'] = job_id
-                args, kwargs = self.get_args_kwargs(node_object)
-                current_group.append(
-                    function_job.signature(
-                        args=[
-                            self.database._database_type,
-                            self.database.name,
-                            node_object['task'].__name__,
-                            args,
-                            {**kwargs, 'remote': False},
-                            job_id,
-                        ],
-                        task_id=job_id,
+                    self.G.nodes[node]['job_id'] = job_id
+                    args, kwargs = self.get_args_kwargs(node_object)
+                    dependencies = \
+                        [self.G.nodes[a]['job_id']
+                         for a in self.G.predecessors(node)]
+                    q.enqueue(
+                        function_job,
+                        self.database._database_type,
+                        self.database.name,
+                        node_object['task'].__name__,
+                        args,
+                        {**kwargs, 'remote': False},
+                        job_id,
+                        job_id=job_id,
+                        depends_on=dependencies,
                     )
-                )
-            current_group = group(*current_group)
-            to_chain.append(current_group)
-        entire_workflow = chain(*to_chain)
-        return entire_workflow
+                else:
+                    args = node_object['args']
+                    kwargs = node_object['kwargs']
+                    function_job(
+                        self.database._database_type,
+                        self.database.name,
+                        node_object['task'].__name__,
+                        args,
+                        {**kwargs, 'remote': False},
+                        job_id,
+                    )
+                done.append(node)
+            current_group = [n for n in self.G.nodes
+                             if set(self.G.predecessors(n)).issubset(set(done))
+                             and n not in set(done)]
+        return self.G
 
     def get_args_kwargs(self, n):
         return encode_ids_parameters(
-            n['args'], n['kwargs'], n['task'].positional_convertible,
+            n['args'],
+            n['kwargs'],
+            n['task'].positional_convertible,
             n['task'].keyword_convertible,
         )
-
-    def call_node(self, n):
-        return n['task'](*n['args'], **n['kwargs'])
-
-    def __call__(self, *args, remote=False, **kwargs):
-        if not remote:
-            nodes = [n for n in self.G.nodes if not networkx.ancestors(self.G, n)]
-            while nodes:
-                new_nodes = []
-                for n in nodes:
-                    self.call_node(self.G.nodes[n])
-                    new_nodes.extend([nn for nn in networkx.descendants(self.G, n)])
-                nodes = new_nodes
-        else:
-            workflow = self.compile()
-            workflow.apply_async()

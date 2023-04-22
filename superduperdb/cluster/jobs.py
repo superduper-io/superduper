@@ -10,9 +10,9 @@ from rq import Queue
 from redis import Redis
 
 from superduperdb import cf
-from superduperdb.jobs.process import handle_function_output
-from superduperdb.serving.utils import encode_ids_parameters
-from superduperdb.utils import get_database_from_database_type
+from superduperdb.cluster.process import handle_function_output
+from superduperdb.cluster.utils import encode_ids_parameters
+from superduperdb.database import get_database_from_database_type
 
 redis_cf = cf.get('redis', {'port': 6379, 'host': 'localhost'})
 

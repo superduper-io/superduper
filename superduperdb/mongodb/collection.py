@@ -1,7 +1,7 @@
 import random
 import warnings
 
-from superduperdb.serving.client import vector_search, Convertible
+from superduperdb.cluster.client import vector_search, Convertible
 
 warnings.filterwarnings('ignore')
 
@@ -14,7 +14,7 @@ import torch.utils.data
 
 from superduperdb.utils import MongoStyleDict, gather_urls, InMemoryDownloader
 from superduperdb.models.utils import apply_model
-from superduperdb.serving import client as our_client
+from superduperdb.cluster import client as our_client
 
 
 class Collection(MongoCollection):
@@ -475,8 +475,8 @@ class Collection(MongoCollection):
                                                         ids=output.inserted_ids,
                                                         verbose=verbose)
         if task_graph is not None:
-            task_graph(remote=self.remote)
-        return output, task_graph
+            G = task_graph(remote=self.remote)
+        return output, G
 
     def refresh_watcher(self, *args, **kwargs):
         """

@@ -3,7 +3,6 @@ from superduperdb.training.validation import validate_representations, validate_
 
 
 class ImputationTrainer(Trainer):
-
     variety = 'imputation'
 
     def __init__(self, *args, inference_model=None, **kwargs):

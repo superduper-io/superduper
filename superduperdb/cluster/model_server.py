@@ -7,8 +7,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from superduperdb.mongodb.client import SuperDuperClient
 from superduperdb import cf
-from superduperdb.serving.utils import maybe_login_required, decode_args_kwargs
-from superduperdb.utils import ArgumentDefaultDict
+from superduperdb.cluster.utils import maybe_login_required, decode_args_kwargs
+from superduperdb.special_dicts import ArgumentDefaultDict
 
 app = Flask(__name__)
 CORS(app)

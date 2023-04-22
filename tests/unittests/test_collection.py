@@ -48,12 +48,11 @@ def test_find_faiss(with_faiss_semantic_index, remote):
 @pytest.mark.parametrize('remote', remote_values)
 def test_insert(random_data, a_watcher, an_update, remote):
     random_data.remote = remote
-    output = random_data.insert_many(an_update)
+    _, G = random_data.insert_many(an_update)
     if remote:
-        jobs = output[1]
-        print(jobs)
-        for node in jobs.G.nodes:
-            node = jobs.G.nodes[node]
+        print(G)
+        for node in G.nodes:
+            node = G.nodes[node]
             random_data.watch_job(node['job_id'])
     assert random_data.count_documents({}) == n_data_points + 10
 

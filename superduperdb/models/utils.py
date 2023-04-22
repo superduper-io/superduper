@@ -1,6 +1,8 @@
+from contextlib import contextmanager
 import torch
 
-from superduperdb.utils import create_batch, unpack_batch, progressbar, to_device, device_of
+from superduperdb.models.apply import create_batch, unpack_batch
+from superduperdb import progress
 from torch.utils import data
 
 
@@ -132,7 +134,7 @@ def apply_model(model, args, single=True, forward='forward', postprocess=True, *
         else:
             loader = torch.utils.data.DataLoader(args, **kwargs)
         out = []
-        for batch in progressbar(loader, total=len(loader)):
+        for batch in progress.progressbar(loader, total=len(loader)):
             batch = to_device(batch, device_of(model))
             if hasattr(model, forward):
                 tmp = getattr(model, forward)(batch)
@@ -144,3 +146,52 @@ def apply_model(model, args, single=True, forward='forward', postprocess=True, *
                 tmp = list(map(model.postprocess, tmp))
             out.extend(tmp)
         return out
+
+
+def device_of(model):
+    """
+    Get device of a model.
+
+    :param model: PyTorch model
+    """
+    try:
+        return next(iter(model.state_dict().values())).device
+    except StopIteration:
+        return 'cpu'
+
+
+@contextmanager
+def set_device(model, device):
+    """
+    Temporarily set a device of a model.
+
+    :param model: PyTorch model
+    :param device: Device to set
+    """
+    device_before = device_of(model)
+    try:
+        model.to(device)
+        yield
+    finally:
+        model.to(device_before)
+
+
+def to_device(item, device):
+    """
+    Send tensor leaves of nested list/ dictionaries/ tensors to device.
+
+    :param item: torch.Tensor instance
+    :param device: device to which one would like to send
+    """
+    if isinstance(item, tuple):
+        item = list(item)
+    if isinstance(item, list):
+        for i, it in enumerate(item):
+            item[i] = to_device(it, device)
+        return item
+    if isinstance(item, dict):
+        for k in item:
+            item[k] = to_device(item[k], device)
+        return item
+    return item.to(device)
+

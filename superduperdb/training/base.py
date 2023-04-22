@@ -8,8 +8,9 @@ import torch.optim
 import torch.utils
 
 from superduperdb.training.loading import QueryDataset
-from superduperdb.utils import MongoStyleDict
-from superduperdb.utils import get_database_from_database_type, to_device
+from superduperdb.special_dicts import MongoStyleDict
+from superduperdb.database import get_database_from_database_type
+from superduperdb.models.utils import to_device
 
 
 class _Mapped:

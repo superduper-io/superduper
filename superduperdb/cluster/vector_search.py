@@ -7,7 +7,7 @@ from bson import BSON, ObjectId
 from flask import request, Flask, jsonify, make_response
 
 from superduperdb import cf
-from superduperdb.serving.utils import maybe_login_required
+from superduperdb.cluster.utils import maybe_login_required
 
 app = Flask(__name__)
 CORS(app)

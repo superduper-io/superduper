@@ -2,7 +2,7 @@ import os
 import torch
 import uuid
 
-from superduperdb.lookup.hashes import FaissHashSet, HashSet
+from superduperdb.vector_search.hashes import FaissHashSet, HashSet
 
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'

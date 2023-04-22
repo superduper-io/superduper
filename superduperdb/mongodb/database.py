@@ -1,5 +1,4 @@
 import math
-
 import gridfs
 from bson import ObjectId
 from pymongo import UpdateOne
@@ -8,7 +7,7 @@ import superduperdb.mongodb.collection
 from superduperdb.database import BaseDatabase
 from superduperdb.mongodb import loading
 from superduperdb.training.validation import validate_representations
-from superduperdb.utils import MongoStyleDict
+from superduperdb.special_dicts import MongoStyleDict
 
 
 class Database(MongoDatabase, BaseDatabase):

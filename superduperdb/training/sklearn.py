@@ -1,5 +1,15 @@
 from .base import Trainer
-from ..datasets.misc import arrays_from_iterator
+import numpy
+
+
+def arrays_from_iterator(it, keys):
+    out = {k: [] for k in keys}
+    for r in it:
+        for k in keys:
+            out[k].append(r[k])
+    for k in out:
+        out = numpy.stack(out[k])
+    return out
 
 
 class TrainerForModelWithBatchFitMethod(Trainer):

@@ -1,3 +1,4 @@
+import importlib
 import io
 import math
 import multiprocessing
@@ -12,15 +13,20 @@ import torch
 from bson import ObjectId
 
 from superduperdb import cf, training
-from superduperdb.serving.client import model_server, Convertible
-from superduperdb.serving.jobs import stop_job, work
-from superduperdb.jobs.graph import TaskWorkflow
-from superduperdb.lookup import hashes
+from superduperdb.cluster.client import model_server, Convertible
+from superduperdb.cluster.jobs import work
+from superduperdb.cluster.graph import TaskWorkflow
+from superduperdb.vector_search import hashes
 from superduperdb.training.validation import validate_representations
 from superduperdb.types.utils import convert_from_bytes_to_types
-from superduperdb.utils import gather_urls, CallableWithSecret, to_device, set_device, device_of
-from superduperdb.models.utils import BasicDataset, create_container, Container, apply_model
-from superduperdb.utils import ArgumentDefaultDict, progressbar, unpack_batch, Downloader
+from superduperdb.downloads import gather_urls
+from superduperdb.apis.secrets import CallableWithSecret
+from superduperdb.models.utils import BasicDataset, create_container, Container, apply_model, \
+    device_of, set_device, to_device
+from superduperdb.special_dicts import ArgumentDefaultDict
+from superduperdb.models.apply import unpack_batch
+from superduperdb.downloads import Downloader
+from superduperdb import progress
 
 
 class BaseDatabase:
@@ -119,7 +125,7 @@ class BaseDatabase:
             )
             if verbose:
                 print(f'processing with {model_identifier}')
-                loader = progressbar(loader)
+                loader = progress.progressbar(loader)
             outputs = []
             has_post = hasattr(model, 'postprocess')
             for batch in loader:
@@ -156,17 +162,33 @@ class BaseDatabase:
         print(f'computing neighbours based on neighbourhood "{identifier}" and '
               f'index "{info["semantic_index"]}"')
 
-        for i in progressbar(range(0, len(ids), info['batch_size'])):
+        for i in progress.progressbar(range(0, len(ids), info['batch_size'])):
             sub = ids[i: i + info['batch_size']]
             results = h.find_nearest_from_ids(sub, n=info['n'])
             similar_ids = [res['_ids'] for res in results]
             self._update_neighbourhood(sub, similar_ids, identifier, *info['query_params'])
 
+    def convert_from_bytes_to_types(self, r):
+        """
+        Convert the bson byte objects in a nested dictionary into python objects.
+
+        :param r: dictionary potentially containing non-Bsonable content
+        """
+        if isinstance(r, dict) and '_content' in r:
+            converter = self.types[r['_content']['type']]
+            return converter.decode(r['_content']['bytes'])
+        elif isinstance(r, list):
+            return [self.convert_from_bytes_to_types(x) for x in r]
+        elif isinstance(r, dict):
+            for k in r:
+                r[k] = self.convert_from_bytes_to_types(r[k])
+        return r
+
     def convert_from_types_to_bytes(self, r):
         """
-        Convert the non-Jsonable python objects in a nested dictionary into ``bytes``
+        Convert the non-Bsonable python objects in a nested dictionary into ``bytes``
 
-        :param r: dictionary potentially containing non-Jsonable content
+        :param r: dictionary potentially containing non-Bsonable content
         """
         if isinstance(r, dict):
             for k in r:
@@ -490,7 +512,7 @@ class BaseDatabase:
         data = self.execute_query(*query_params)
         it = 0
         tmp = []
-        for r in progressbar(data):
+        for r in progress.progressbar(data):
             if splitter is not None:
                 r, other = splitter(r)
                 r = self._add_split_to_row(r, other)
@@ -1002,7 +1024,7 @@ class BaseDatabase:
         measure = self.measures[info['measure']]
         loaded = []
         ids = []
-        docs = progressbar(c)
+        docs = progress.progressbar(c)
         print(f'loading hashes: "{identifier}"')
         for r in docs:
             h = self._get_hash_from_record(r, watcher_info)
@@ -1404,3 +1426,15 @@ class BaseDatabase:
     def _write_watcher_outputs(self, info, outputs, ids):
         raise NotImplementedError
 
+
+def get_database_from_database_type(database_type, database_name):
+    """
+    Import the database connection from ``superduperdb``
+
+    :param database_type: type of database (supported: ['mongodb'])
+    :param database_name: name of database
+    """
+    module = importlib.import_module(f'superduperdb.{database_type}.client')
+    client_cls = getattr(module, 'SuperDuperClient')
+    client = client_cls(**cf.get(database_type, {}))
+    return client.get_database_from_name(database_name)

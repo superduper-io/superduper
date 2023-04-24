@@ -1,6 +1,7 @@
 from torch.utils import data
 
-from superduperdb.utils import get_database_from_database_type, MongoStyleDict
+from superduperdb.base.imports import get_database_from_database_type
+from superduperdb.special_dicts import MongoStyleDict
 
 
 class QueryDataset(data.Dataset):

@@ -17,7 +17,6 @@ import torch.utils.data
 from superduperdb.special_dicts import MongoStyleDict
 from superduperdb.downloads import gather_urls, InMemoryDownloader
 from superduperdb.models.utils import apply_model
-from superduperdb.cluster import client as our_client
 
 
 class Collection(MongoCollection):
@@ -25,6 +24,9 @@ class Collection(MongoCollection):
     Collection building on top of ``pymongo.collection.Collection``.
     Implements additional methods required by ``superduperdb`` for AI/ machine learning.
     """
+
+    _id = '_id'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -84,6 +86,14 @@ class Collection(MongoCollection):
 
     def cancel_job(self, job_id):
         return self.database.cancel_job(job_id)
+
+    @vector_search
+    def clear_remote_cache(self):
+        """
+        Drop the hash_set currently in-use.
+        """
+        for k in self._all_hash_sets:
+            del self._all_hash_sets[k]
 
     def create_agent(self, *args, **kwargs):
         return self.database.create_agent(*args, **kwargs)
@@ -291,6 +301,9 @@ class Collection(MongoCollection):
         Delete watcher
         """
         return self.database.delete_watcher(*args, **kwargs)
+
+    def execute_query(self, filter_, projection=None):
+        return self.find(filter_, projection=projection)
 
     def list_agents(self):
         """
@@ -552,14 +565,6 @@ class Collection(MongoCollection):
         return self.update_many({'_id': id_}, *args, refresh=refresh, **kwargs)
 
     @vector_search
-    def clear_remote_cache(self):
-        """
-        Drop the hash_set currently in-use.
-        """
-        for k in self._all_hash_sets:
-            del self._all_hash_sets[k]
-
-    @vector_search
     def find_nearest(self, like: CustomConvertible(), ids=None, n=10, semantic_index=None,
                      remote=None) -> Tuple([Any, List(ObjectIdConvertible())]):
         hash_set = self.database._get_hash_set(semantic_index)
@@ -658,3 +663,10 @@ class Collection(MongoCollection):
         Watch stdout/stderr of worker job.
         """
         return self.database.watch_job(*args, **kwargs)
+
+    def _write_watcher_outputs(self, watcher_info, outputs, _ids):
+        return self.database._write_watcher_outputs(
+            {**watcher_info, 'query_params': (self.name, *watcher_info['query_params'])},
+            outputs,
+            _ids,
+        )

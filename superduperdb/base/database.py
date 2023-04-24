@@ -1402,7 +1402,7 @@ class BaseDatabase:
         """
         raise NotImplementedError
 
-    def _write_watcher_outputs(self, info, outputs, ids):
+    def _write_watcher_outputs(self, info, outputs, _ids):
         raise NotImplementedError
 
 

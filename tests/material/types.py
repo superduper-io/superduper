@@ -5,12 +5,21 @@ import PIL.JpegImagePlugin
 import torch
 
 
-class FloatTensor:
-    types = [torch.FloatTensor, torch.Tensor]
+class Array32:
+    types = [numpy.ndarray]
 
     @staticmethod
-    def isinstance(x):
-        return isinstance(x, torch.Tensor)
+    def encode(x):
+        assert x.dtype == numpy.float32
+        return memoryview(x).tobytes()
+
+    @staticmethod
+    def decode(bytes_):
+        return numpy.frombuffer(bytes_, dtype=numpy.float32)
+
+
+class FloatTensor:
+    types = [torch.FloatTensor, torch.Tensor]
 
     @staticmethod
     def encode(x):

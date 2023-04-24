@@ -4,7 +4,9 @@ from bson import ObjectId
 from pymongo import UpdateOne
 from pymongo.database import Database as MongoDatabase
 import superduperdb.mongodb.collection
-from superduperdb.database import BaseDatabase
+from superduperdb.base.database import BaseDatabase
+from superduperdb.cluster.annotations import ObjectIdConvertible, List
+from superduperdb.cluster.jobs import work
 from superduperdb.mongodb import loading
 from superduperdb.training.validation import validate_representations
 from superduperdb.special_dicts import MongoStyleDict
@@ -149,6 +151,13 @@ class Database(MongoDatabase, BaseDatabase):
     def _delete_object_info(self, identifier, variety):
         return self['_objects'].delete_one({'identifier': identifier, 'variety': variety})
 
+    @work
+    def download_content(self, query_params, ids: List(ObjectIdConvertible()) = None, documents=None,
+                         timeout=None, raises=True, n_download_workers=None, headers=None, **kwargs):
+        return super().download_content(query_params, ids=ids, documents=documents, timeout=None,
+                                        raises=raises, n_download_workers=n_download_workers,
+                                        headers=headers, remote=False, **kwargs)
+
     def _download_update(self, collection, _id, key, bytes_):
         self[collection].update_one({'_id': _id}, {'$set': {f'{key}._content.bytes': bytes_}},
                                     refresh=False)
@@ -200,6 +209,9 @@ class Database(MongoDatabase, BaseDatabase):
 
     def get_query_params_for_validation_set(self, validation_set):
         return ('_validation_sets', {'identifier': validation_set})
+
+    def _get_table_from_query_params(self, query_params):
+        return query_params[0]
 
     def _insert_validation_data(self, tmp, identifier):
         tmp = [{**r, 'identifier': identifier} for r in tmp]
@@ -306,8 +318,6 @@ class Database(MongoDatabase, BaseDatabase):
         key = watcher_info.get('key', '_base')
         model_name = watcher_info['model']
         print('bulk writing...')
-        print(outputs)
-        print(ids)
         if watcher_info.get('target') is None:
             self[collection].bulk_write([
                 UpdateOne({'_id': id},

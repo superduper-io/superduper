@@ -70,8 +70,9 @@ def validate_representations(database, validation_set, semantic_index,
             raise e
 
     ktw = info['keys'][0]
+    model = next(m for i, m in enumerate(info['models']) if info['keys'][i] == ktw)
     database.remote = False
-    database.apply_watcher(f'{semantic_index}/{validation_set}/{ktw}',
+    database.apply_watcher(f'[{semantic_index}/{validation_set}]:{model}/{ktw}',
                            model=encoders[0])
     query_params = database.get_query_params_for_validation_set(validation_set)
 

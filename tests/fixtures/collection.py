@@ -18,7 +18,9 @@ n_data_points = 250
 
 @pytest.fixture()
 def empty():
-    yield the_client.test_db.documents
+    db = the_client.test_db.documents
+    db.remote = False
+    yield db
     the_client.drop_database('test_db', force=True)
 
 

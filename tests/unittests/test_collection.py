@@ -1,3 +1,5 @@
+import networkx
+
 from tests.fixtures.collection import (
     float_tensors, empty, a_model, b_model, c_model, random_data,
     si_validation, measure, metric, my_rank_obj, a_classifier, a_target, accuracy_metric,
@@ -79,21 +81,18 @@ def test_insert_from_urls(empty, image_type, remote):
         }
         for _ in range(2)
     ]
-    output = empty.insert_many(to_insert)
+    output, G = empty.insert_many(to_insert)
     if remote:
-        jobs = output[1]
-        for node in jobs:
-            for job in jobs[node]:
-                empty.watch_job(job)
+        for node in networkx.topological_sort(G.nodes):
+            empty.watch_job(node['job_id'])
     assert isinstance(empty.find_one()['item'], PIL.PngImagePlugin.PngImageFile)
     assert isinstance(empty.find_one()['other']['item'], PIL.PngImagePlugin.PngImageFile)
 
 
 @pytest.mark.parametrize('remote', remote_values)
 def test_watcher(random_data, a_model, b_model, remote):
-
     random_data.remote = remote
-    job_id = random_data.create_watcher('linear_a/x', 'linear_a', key='x')
+    job_id = random_data.create_watcher('linear_a', key='x')
     if remote:
         random_data.watch_job(job_id)
 
@@ -108,7 +107,7 @@ def test_watcher(random_data, a_model, b_model, remote):
 
     assert 'linear_a' in random_data.find_one({'update': True})['_outputs']['x']
 
-    job_id = random_data.create_watcher('linear_b/x', 'linear_b', key='x', features={'x': 'linear_a'})
+    job_id = random_data.create_watcher('linear_b', key='x', features={'x': 'linear_a'})
     if remote:
         random_data.watch_job(job_id)
     assert 'linear_b' in random_data.find_one()['_outputs']['x']

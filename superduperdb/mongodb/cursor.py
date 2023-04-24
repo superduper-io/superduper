@@ -1,7 +1,6 @@
 from pymongo.cursor import Cursor
 
-from superduperdb.types.utils import convert_from_bytes_to_types
-from superduperdb.utils import MongoStyleDict
+from superduperdb.special_dicts import MongoStyleDict
 
 
 class SuperDuperCursor(Cursor):
@@ -84,6 +83,6 @@ class SuperDuperCursor(Cursor):
                 for i, id_ in enumerate(r['_like'][self.similar_join]):
                     r['_like'][self.similar_join][i] = lookup[id_]
 
-        return convert_from_bytes_to_types(r, converters=self.attr_collection.types)
+        return self.collection.database.convert_from_bytes_to_types(r)
 
     __next__ = next

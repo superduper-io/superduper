@@ -9,7 +9,7 @@ import torch.utils
 
 from superduperdb.training.loading import QueryDataset
 from superduperdb.special_dicts import MongoStyleDict
-from superduperdb.database import get_database_from_database_type
+from superduperdb.base.imports import get_database_from_database_type
 from superduperdb.models.utils import to_device
 
 

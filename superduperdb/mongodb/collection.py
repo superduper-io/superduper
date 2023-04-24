@@ -1,18 +1,21 @@
 import random
 import warnings
+from typing import Any
 
-from superduperdb.cluster.client import vector_search, Convertible
+from superduperdb.cluster.client import vector_search
+from superduperdb.cluster.annotations import Tuple, CustomConvertible, List, \
+    ObjectIdConvertible
 
 warnings.filterwarnings('ignore')
 
 from superduperdb.mongodb.cursor import SuperDuperCursor
-from superduperdb.types.utils import convert_from_bytes_to_types
 
 from pymongo.collection import Collection as MongoCollection
 from pymongo.cursor import Cursor
 import torch.utils.data
 
-from superduperdb.utils import MongoStyleDict, gather_urls, InMemoryDownloader
+from superduperdb.special_dicts import MongoStyleDict
+from superduperdb.downloads import gather_urls, InMemoryDownloader
 from superduperdb.models.utils import apply_model
 from superduperdb.cluster import client as our_client
 
@@ -382,7 +385,7 @@ class Collection(MongoCollection):
             downloader.go()
             for i, (k, url) in enumerate(zip(keys, urls)):
                 filter[k]['_content']['bytes'] = downloader.results[i]
-            filter = convert_from_bytes_to_types(filter, self.types)
+            filter = self.database.convert_from_bytes_to_types(filter)
         return filter
 
     def find(self, filter=None, *args, like=None, n=10, similar_first=False, raw=False,
@@ -470,13 +473,12 @@ class Collection(MongoCollection):
         documents = self._infer_types(documents)
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover
-            return output
+            return output, None
         task_graph = self.database._build_task_workflow((self.name,),
                                                         ids=output.inserted_ids,
                                                         verbose=verbose)
-        if task_graph is not None:
-            G = task_graph(remote=self.remote)
-        return output, G
+        task_graph()
+        return output, task_graph
 
     def refresh_watcher(self, *args, **kwargs):
         """
@@ -549,22 +551,23 @@ class Collection(MongoCollection):
         id_ = super().find_one(filter, {'_id': 1})['_id']
         return self.update_many({'_id': id_}, *args, refresh=refresh, **kwargs)
 
+    @vector_search
     def clear_remote_cache(self):
         """
         Drop the hash_set currently in-use.
         """
-        if self.remote:
-            return our_client.clear_remote_cache()
+        for k in self._all_hash_sets:
+            del self._all_hash_sets[k]
 
     @vector_search
-    def find_nearest(self, like: Convertible, ids=None, n=10, semantic_index=None):
+    def find_nearest(self, like: CustomConvertible(), ids=None, n=10, semantic_index=None,
+                     remote=None) -> Tuple([Any, List(ObjectIdConvertible())]):
         hash_set = self.database._get_hash_set(semantic_index)
         if ids is not None:
             hash_set = hash_set[ids]
 
         if '_id' in like:
-            return hash_set.find_nearest_from_id(like['_id'],
-                                                 n=n)
+            return hash_set.find_nearest_from_id(like['_id'], n=n)
         else:
             if semantic_index is None:
                 semantic_index = self.database._get_meta_data('semantic_index')
@@ -578,7 +581,9 @@ class Collection(MongoCollection):
             if '_outputs' not in document:
                 document['_outputs'] = {}
             key_to_watch = si_info['keys_to_watch'][0]
-            watcher_info = self.database.get_object_info(f'{semantic_index}/{key_to_watch}',
+            model_identifier = next(m for i, m in enumerate(si_info['models'])
+                                    if si_info['keys'][i] == key_to_watch)
+            watcher_info = self.database.get_object_info(f'[{semantic_index}]:{model_identifier}/{key_to_watch}',
                                                          'watcher')
             features = watcher_info.get('features', {})
             for subkey in features:
@@ -599,11 +604,11 @@ class Collection(MongoCollection):
     def _find_similar_then_matches(self, filter, like, *args, raw=False, features=None, n=10,
                                    semantic_index=None,
                                    **kwargs):
-        similar = self.find_nearest(like, n=n, semantic_index=semantic_index)
+        similar_ids, scores = self.find_nearest(like, n=n, semantic_index=semantic_index)
         filter = {
             '$and': [
                 filter,
-                {'_id': {'$in': similar['_ids']}}
+                {'_id': {'$in': similar_ids}}
             ]
         }
         if raw:
@@ -614,7 +619,7 @@ class Collection(MongoCollection):
                 filter,
                 *args,
                 features=features,
-                scores=dict(zip(similar['_ids'], similar['scores'])),
+                scores=dict(zip(similar_ids, scores)),
                 **kwargs,
             )
 
@@ -630,16 +635,18 @@ class Collection(MongoCollection):
                 **kwargs,
             )
             ids = [x['_id'] for x in matches_cursor]
-            similar = self.find_nearest(like, ids=ids, n=n, semantic_index=semantic_index)
+            similar_ids, scores = \
+                self.find_nearest(like, ids=ids, n=n, semantic_index=semantic_index)
         else:  # pragma: no cover
-            similar = self.find_nearest(like, n=n, semantic_index=semantic_index)
+            similar_ids, scores = \
+                self.find_nearest(like, n=n, semantic_index=semantic_index)
 
         if raw:
-            return Cursor(self, {'_id': {'$in': similar['_ids']}}, **kwargs)  # pragma: no cover
+            return Cursor(self, {'_id': {'$in': similar_ids}}, **kwargs)  # pragma: no cover
         else:
-            return SuperDuperCursor(self, {'_id': {'$in': similar['_ids']}},
+            return SuperDuperCursor(self, {'_id': {'$in': similar_ids}},
                                     features=features,
-                                    scores=dict(zip(similar['_ids'],similar['scores'])), **kwargs)
+                                    scores=dict(zip(similar_ids, scores)), **kwargs)
 
     def _infer_types(self, documents):
         for r in documents:

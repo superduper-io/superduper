@@ -1,8 +1,10 @@
 import random
 
+import numpy
+
 from superduperdb.mongodb.client import SuperDuperClient
 from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
-from tests.material.types import FloatTensor, Image
+from tests.material.types import FloatTensor, Image, Array32
 from tests.material.measures import css
 from tests.material.metrics import PatK, accuracy
 from tests.material.losses import ranking_loss
@@ -70,6 +72,18 @@ def random_data(float_tensors):
     float_tensors.insert_many(data, refresh=False)
     yield float_tensors
     float_tensors.delete_many({})
+
+
+@pytest.fixture()
+def random_arrays(arrays):
+    data = []
+    for i in range(n_data_points):
+        x = numpy.random.randn(32).astype(numpy.float32)
+        y = int(random.random() > 0.5)
+        data.append({'x': x, 'y': y})
+    arrays.insert_many(data, refresh=False)
+    yield arrays
+    arrays.delete_many({})
 
 
 @pytest.fixture()
@@ -141,6 +155,14 @@ def float_tensors(empty):
     t = empty.types['float_tensor']
     yield empty
     empty.delete_type('float_tensor', force=True)
+
+
+@pytest.fixture()
+def arrays(empty):
+    empty.create_type('array', Array32())
+    t = empty.types['array']
+    yield empty
+    empty.delete_type('array', force=True)
 
 
 @pytest.fixture()

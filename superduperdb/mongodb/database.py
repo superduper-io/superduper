@@ -18,6 +18,7 @@ class Database(MongoDatabase, BaseDatabase):
     database are SuperDuperDB objects :code:`superduperdb.collection.Collection`.
     """
 
+    _id = '_id'
     _database_type = 'mongodb'
 
     def __init__(self, *args, **kwargs):
@@ -313,7 +314,7 @@ class Database(MongoDatabase, BaseDatabase):
             {'$push': {stream: msg}}
         )
 
-    def _write_watcher_outputs(self, watcher_info, outputs, ids):
+    def _write_watcher_outputs(self, watcher_info, outputs, _ids):
         collection = watcher_info['query_params'][0]
         key = watcher_info.get('key', '_base')
         model_name = watcher_info['model']
@@ -322,7 +323,7 @@ class Database(MongoDatabase, BaseDatabase):
             self[collection].bulk_write([
                 UpdateOne({'_id': id},
                           {'$set': {f'_outputs.{key}.{model_name}': outputs[i]}})
-                for i, id in enumerate(ids)
+                for i, id in enumerate(_ids)
             ])
         else:  # pragma: no cover
             self[collection].bulk_write([
@@ -330,6 +331,6 @@ class Database(MongoDatabase, BaseDatabase):
                           {'$set': {
                               watcher_info['target']: outputs[i]
                           }})
-                for i, id in enumerate(ids)
+                for i, id in enumerate(_ids)
             ])
         print('done.')

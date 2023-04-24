@@ -9,6 +9,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 
 def test_faiss_hash_set():
+
     x = torch.randn(1000, 32)
     ids = [uuid.uuid4() for _ in range(x.shape[0])]
 
@@ -20,8 +21,7 @@ def test_faiss_hash_set():
 
     y = torch.randn(32)
 
-    res1 = h1.find_nearest_from_hash(y)
-    res2 = h2.find_nearest_from_hash(y)
+    res1, _ = h1.find_nearest_from_hash(y)
+    res2, _ = h2.find_nearest_from_hash(y)
 
-    assert res1['ix'][0] == res2['ix'][0]
-    assert res1['_ids'][0] == res2['_ids'][0]
+    assert res1[0] == res2[0]

@@ -1,9 +1,10 @@
+from asciinet import graph_to_ascii
 import datetime
 import networkx
 import uuid
 
+from superduperdb.cluster.annotations import encode_args, encode_kwargs
 from superduperdb.cluster.jobs import q, function_job
-from superduperdb.cluster.utils import encode_ids_parameters
 
 
 class TaskWorkflow:
@@ -46,6 +47,9 @@ class TaskWorkflow:
                 self.add_edge(node1, node2)
         return self
 
+    def __repr__(self):
+        return graph_to_ascii(self.G)
+
     @property
     def path_lengths(self):
         if self._path_lengths is None:
@@ -78,7 +82,10 @@ class TaskWorkflow:
                         'stderr': [],
                     })
                     self.G.nodes[node]['job_id'] = job_id
-                    args, kwargs = self.get_args_kwargs(node_object)
+                    args = encode_args(self.database, node_object['task'].signature,
+                                       node_object['args'])
+                    kwargs = encode_kwargs(self.database, node_object['task'].signature,
+                                           node_object['kwargs'])
                     dependencies = \
                         [self.G.nodes[a]['job_id']
                          for a in self.G.predecessors(node)]
@@ -110,10 +117,3 @@ class TaskWorkflow:
                              and n not in set(done)]
         return self.G
 
-    def get_args_kwargs(self, n):
-        return encode_ids_parameters(
-            n['args'],
-            n['kwargs'],
-            n['task'].positional_convertible,
-            n['task'].keyword_convertible,
-        )

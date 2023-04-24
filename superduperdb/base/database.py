@@ -1,4 +1,3 @@
-import importlib
 import io
 import math
 import multiprocessing
@@ -13,12 +12,12 @@ import torch
 from bson import ObjectId
 
 from superduperdb import cf, training
-from superduperdb.cluster.client import model_server, Convertible
+from superduperdb.cluster.client import model_server
+from superduperdb.cluster.annotations import Convertible
 from superduperdb.cluster.jobs import work
 from superduperdb.cluster.graph import TaskWorkflow
 from superduperdb.vector_search import hashes
 from superduperdb.training.validation import validate_representations
-from superduperdb.types.utils import convert_from_bytes_to_types
 from superduperdb.downloads import gather_urls
 from superduperdb.apis.secrets import CallableWithSecret
 from superduperdb.models.utils import BasicDataset, create_container, Container, apply_model, \
@@ -274,32 +273,21 @@ class BaseDatabase:
 
         model_lookup = dict(zip(keys_to_watch, models))
         jobs = []
-        task_workflow = TaskWorkflow(self)
         if objective is not None:
-            task_workflow.add_node(
-                f'{self.train.__name__}({identifier})',
-                data={
-                    'task': self.train,
-                    'args': [identifier],
-                    'kwargs': {},
-                }
-            )
+            jobs.append(self.train(identifier))
 
-        to_add = TaskWorkflow(self)
         for k in keys_to_watch:
-            to_add *= self._create_watcher(
-                f'{model_lookup[k]}/{k}',
+            jobs.append(self._create_watcher(
+                f'[{identifier}]:{model_lookup[k]}/{k}',
                 model_lookup[k],
                 query_params,
                 key=k,
                 features=trainer_kwargs.get('features', {}),
                 loader_kwargs=loader_kwargs,
-                dependencies=jobs,
+                dependencies=[jobs[0]] if jobs else (),
                 verbose=verbose,
-                do_work=False,
-            )
-        task_workflow += to_add
-        return task_workflow
+            ))
+        return jobs
 
     def create_measure(self, identifier, object, **kwargs):
         """
@@ -357,7 +345,7 @@ class BaseDatabase:
             **kwargs,
         })
 
-    def create_neighbourhood(self, identifier, n=10, batch_size=100, do_work=True):
+    def create_neighbourhood(self, identifier, n=10, batch_size=100):
         """
         Cache similarity between items of model watcher (see ``self.list_watchers``)
 
@@ -373,7 +361,7 @@ class BaseDatabase:
             'batch_size': batch_size,
             'variety': 'neighbourhood',
         })
-        return self.compute_neighbourhood(identifier, do_work=do_work)
+        return self.compute_neighbourhood(identifier)
 
     def _create_object_entry(self, info):
         raise NotImplementedError
@@ -526,7 +514,7 @@ class BaseDatabase:
 
     def _create_watcher(self, identifier, model, query_params, key='_base', verbose=False,
                         target=None, process_docs=True, features=None, loader_kwargs=None,
-                        dependencies=(), do_work=True):
+                        dependencies=()):
 
         r = self.get_object_info(identifier, 'watcher')
         if r is not None:
@@ -552,7 +540,6 @@ class BaseDatabase:
                 ids=ids,
                 verbose=verbose,
                 dependencies=dependencies,
-                do_work=do_work,
                 remote=self.remote,
             )
 
@@ -601,9 +588,9 @@ class BaseDatabase:
         if info is None and force:
             return
 
-        model_lookup = dict(zip(info['models'], info['keys']))
+        model_lookup = dict(zip(info['keys'], info['models']))
         for k in info['keys_to_watch']:
-            self._delete_object_info(f'{model_lookup[k]}/{k}', 'watcher')
+            self._delete_object_info(f'[{identifier}]:{model_lookup[k]}/{k}', 'watcher')
         self._delete_object_info(info['identifier'], 'learning_task')
 
     def delete_measure(self, identifier, force=False):
@@ -699,21 +686,7 @@ class BaseDatabase:
         :param name: name of semantic-index
         :param force: toggle to ``True`` to skip confirmation step
         """
-        info = self.get_object_info(identifier, 'learning_task')
-        watcher_info = self.get_object_info(f'{identifier}/{info["keys"][0]}', 'watcher')
-        if info is None:  # pragma: no cover
-            return
-        do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete this semantic index: '
-                                  f'"{identifier}"; '):
-            do_delete = True
-
-        if not do_delete:
-            return
-
-        if watcher_info:
-            self.delete_watcher(f'{identifier}/{info["keys"][0]}', force=True)
-        self._delete_object_info(identifier, 'learning_task')
+        return self.delete_learning_task(identifier, force=force)
 
     def delete_splitter(self, identifier, force=False):
         """
@@ -762,7 +735,7 @@ class BaseDatabase:
         self._delete_object_info(identifier, 'watcher')
 
     @work
-    def download_content(self, query_params, ids: List[ObjectId] = None, documents=None, timeout=None,
+    def download_content(self, query_params, ids=None, documents=None, timeout=None,
                          raises=True, n_download_workers=None, headers=None, **kwargs):
         update_db = False
         if documents is None:
@@ -882,7 +855,7 @@ class BaseDatabase:
     def get_object_info(self, identifier, variety, decode_types=False, **kwargs):
         r = self._get_object_info(identifier, variety, **kwargs)
         if decode_types:
-            r = convert_from_bytes_to_types(r, converters=self.types)
+            r = self.convert_from_bytes_to_types(r)
         return r
 
     def get_object_info_where(self, variety, **kwargs):
@@ -1016,7 +989,8 @@ class BaseDatabase:
         index_type = info.get('index_type', 'vanilla')
         index_kwargs = info.get('index_kwargs', {}) or {}
         key_to_watch = info['keys_to_watch'][0]
-        watcher_info = self.get_object_info(f'{identifier}/{key_to_watch}', 'watcher')
+        model_identifier = next(m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch)
+        watcher_info = self.get_object_info(f'[{identifier}]:{model_identifier}/{key_to_watch}', 'watcher')
         filter = watcher_info.get('filter', {})
         key = watcher_info.get('key', '_base')
         filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
@@ -1090,6 +1064,8 @@ class BaseDatabase:
                       max_chunk_size=5000, model=None, recompute=False, **kwargs):
 
         watcher_info = self.get_object_info(identifier, 'watcher')
+        if ids is None:
+            ids = self._get_ids_from_query(*watcher_info['query_params'])
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
                 print('computing chunk '
@@ -1134,8 +1110,6 @@ class BaseDatabase:
         job_ids = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
-        if not self.list_watchers():
-            return None
         if ids is None:
             ids = self._get_ids_from_query(query_params)
 
@@ -1151,6 +1125,8 @@ class BaseDatabase:
                 }
             }
         )
+        if not self.list_watchers():
+            return G
 
         for identifier in self.list_watchers():
             G.add_node(
@@ -1253,6 +1229,9 @@ class BaseDatabase:
         :param identifier: id of job
         :param kw: tuple of key-value pair
         """
+        raise NotImplementedError
+
+    def _get_table_from_query_params(self, query_params):
         raise NotImplementedError
 
     def _get_trainer(self, identifier, train_type):
@@ -1427,14 +1406,3 @@ class BaseDatabase:
         raise NotImplementedError
 
 
-def get_database_from_database_type(database_type, database_name):
-    """
-    Import the database connection from ``superduperdb``
-
-    :param database_type: type of database (supported: ['mongodb'])
-    :param database_name: name of database
-    """
-    module = importlib.import_module(f'superduperdb.{database_type}.client')
-    client_cls = getattr(module, 'SuperDuperClient')
-    client = client_cls(**cf.get(database_type, {}))
-    return client.get_database_from_name(database_name)

@@ -8,10 +8,10 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from superduperdb.cluster.annotations import decode_args, decode_kwargs, decode_result
-from superduperdb.mongodb.client import SuperDuperClient
+from superduperdb.dbs.mongodb.client import SuperDuperClient
 from superduperdb import cf
 from superduperdb.cluster.login import maybe_login_required
-from superduperdb.special_dicts import ArgumentDefaultDict
+from superduperdb.misc.special_dicts import ArgumentDefaultDict
 
 app = Flask(__name__)
 CORS(app)

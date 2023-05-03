@@ -1,6 +1,5 @@
 import io
 import math
-import multiprocessing
 import pickle
 import time
 from collections import defaultdict
@@ -11,21 +10,21 @@ import networkx
 import torch
 from bson import ObjectId
 
-from superduperdb import cf, training
-from superduperdb.cluster.client import model_server
+import superduperdb.vector_search.faiss.hashes
+import superduperdb.vector_search.vanilla.hashes
+from superduperdb import cf
+from superduperdb.cluster.client_decorators import model_server
 from superduperdb.cluster.annotations import Convertible
-from superduperdb.cluster.jobs import work
-from superduperdb.cluster.graph import TaskWorkflow
-from superduperdb.vector_search import hashes
-from superduperdb.training.validation import validate_representations
-from superduperdb.downloads import gather_urls
+from superduperdb.cluster.job_submission import work
+from superduperdb.cluster.task_workflow import TaskWorkflow
+from superduperdb.models.base import wrap_model
+from superduperdb.fetchers.web.downloads import gather_urls
 from superduperdb.apis.secrets import CallableWithSecret
-from superduperdb.models.utils import BasicDataset, create_container, Container, apply_model, \
-    device_of, set_device, to_device
-from superduperdb.special_dicts import ArgumentDefaultDict
-from superduperdb.models.apply import unpack_batch
-from superduperdb.downloads import Downloader
-from superduperdb import progress
+from superduperdb.models.utils import create_container, Container
+from superduperdb.misc.special_dicts import ArgumentDefaultDict
+from superduperdb.fetchers.web.downloads import Downloader
+from superduperdb.misc import progress
+from superduperdb.models.vanilla.wrapper import FunctionWrapper
 
 
 class BaseDatabase:
@@ -35,16 +34,9 @@ class BaseDatabase:
     """
     def __init__(self):
 
-        self.agents = ArgumentDefaultDict(lambda x: self._load_object(x, 'agent'))
-        self.functions = ArgumentDefaultDict(lambda x: self._load_object(x, 'function'))
         self.measures = ArgumentDefaultDict(lambda x: self._load_object(x, 'measure'))
         self.metrics = ArgumentDefaultDict(lambda x: self._load_object(x, 'metric'))
-        self.models = ArgumentDefaultDict(lambda x: self._load_model(x))
-        self.objectives = ArgumentDefaultDict(lambda x: self._load_object(x, 'objective'))
-        self.preprocessors = ArgumentDefaultDict(lambda x: self._load_object(x, 'preprocessor'))
-        self.postprocessors = ArgumentDefaultDict(lambda x: self._load_object(x, 'postprocessor'))
-        self.splitters = ArgumentDefaultDict(lambda x: self._load_object(x, 'splitter'))
-        self.trainers = ArgumentDefaultDict(lambda x: self._load_object(x, 'trainer'))
+        self.models = ArgumentDefaultDict(lambda x: self._load_object(x, 'model'))
         self.types = ArgumentDefaultDict(lambda x: self._load_object(x, 'type'))
 
         self.remote = cf.get('remote', False)
@@ -72,31 +64,24 @@ class BaseDatabase:
         raise NotImplementedError
 
     @model_server
-    def apply_agent(self, agent, query_params, like=None):
-        docs = list(self.execute_query(*query_params, like=like))
-        if isinstance(agent, str):
-            agent = self.agents[agent]
-        return agent(docs)
-
-    @model_server
     def apply_model(self, model, input_: Convertible, **kwargs) -> Convertible:
         """
         Apply model to input.
 
-        :param model: PyTorch model or ``str`` referring to an uploaded model (see ``self.list_models``)
-        :param input_: input_ to be passed to the model. Must be possible to encode with registered types (``self.list_types``)
+        :param model: model or ``str`` referring to an uploaded model (see ``self.list_models``)
+        :param input_: input_ to be passed to the model.
+                       Must be possible to encode with registered types (``self.list_types``)
         :param kwargs: key-values (see ``superduperdb.models.utils.apply_model``)
         """
         if isinstance(model, str):
             model = self.models[model]
-        with torch.no_grad():
-            return apply_model(model, input_, **{k: v for k, v in kwargs.items() if k != 'remote'})
+        return model.predict(input_, **{k: v for k, v in kwargs.items() if k != 'remote'})
 
     def cancel_job(self, job_id):
-        stop_job(self._database_type, self.name, job_id)
+        raise NotImplementedError
 
     def _compute_model_outputs(self, model_info, _ids, *query_params, key='_base', features=None,
-                               model=None, verbose=True, loader_kwargs=None):
+                               model=None, predict_kwargs=None):
 
         print('finding documents under filter')
         features = features or {}
@@ -110,46 +95,9 @@ class BaseDatabase:
             passed_docs = [r[key] for r in documents]
         else:  # pragma: no cover
             passed_docs = documents
-        if model is None:  # model is not None during training, since a suboptimal model may be in need of validation
+        if model is None:
             model = self.models[model_identifier]
-        inputs = BasicDataset(
-            passed_docs,
-            model.preprocess if hasattr(model, 'preprocess') else lambda x: x
-        )
-        loader_kwargs = loader_kwargs or {}
-        if isinstance(model, torch.nn.Module):
-            loader = torch.utils.data.DataLoader(
-                inputs,
-                **loader_kwargs,
-            )
-            if verbose:
-                print(f'processing with {model_identifier}')
-                loader = progress.progressbar(loader)
-            outputs = []
-            has_post = hasattr(model, 'postprocess')
-            for batch in loader:
-                batch = to_device(batch, device_of(model))
-                with torch.no_grad():
-                    output = model.forward(batch)
-                if has_post:
-                    unpacked = unpack_batch(output)
-                    unpacked = to_device(unpacked, 'cpu')
-                    outputs.extend([model.postprocess(x) for x in unpacked])
-                else:
-                    outputs.extend(unpack_batch(output))
-        else:
-            outputs = []
-            num_workers = loader_kwargs.get('num_workers', 0)
-            if num_workers:
-                pool = multiprocessing.Pool(processes=num_workers)
-                for r in pool.map(model.preprocess, passed_docs):
-                    outputs.append(r)
-                pool.close()
-                pool.join()
-            else:
-                for r in passed_docs:  # pragma: no cover
-                    outputs.append(model.preprocess(r))
-        return outputs
+        return model.predict(passed_docs, **(predict_kwargs or {}))
 
     @work
     def compute_neighbourhood(self, identifier):
@@ -201,89 +149,47 @@ class BaseDatabase:
             return {'_content': {'bytes': self.types[t].encode(r), 'type': t}}
         return r
 
-    def create_agent(self, identifier, object, **kwargs):
-        """
-        Create agent - callable function, which is not a PyTorch model.
-
-        :param identifier: identifier
-        :param object: Python object
-        """
-        return self._create_object(identifier, object, 'agent', **kwargs)
-
-    def create_function(self, identifier, object, **kwargs):
-        """
-        Create function - callable function, which is not a PyTorch model.
-
-        :param identifier: identifier
-        :param object: Python object
-        """
-        return self._create_object(identifier, object, 'function', **kwargs)
-
-    def _create_imputation(self, identifier, model, model_key, target, target_key, query_params,
-                           objective=None, metrics=None, validation_sets=(),
-                           splitter=None, loader_kwargs=None, trainer_kwargs=None):
-
-        return self._create_learning_task(
-            identifier,
-            'ImputationTrainer',
-            'imputation',
-            models=[model, target],
-            keys=[model_key, target_key],
-            query_params=query_params,
-            objective=objective,
-            metrics=metrics,
-            validation_sets=validation_sets,
-            splitter=splitter,
-            loader_kwargs=loader_kwargs,
-            trainer_kwargs=trainer_kwargs,
-            keys_to_watch=[model_key],
-        )
-
     def _create_job_record(self, *args, **kwargs):
         raise NotImplementedError
 
-    def _create_learning_task(self, identifier, trainer, task_type, models, keys, query_params,
-                              verbose=False,
-                              validation_sets=(), metrics=(), objective=None, keys_to_watch=(),
-                              loader_kwargs=None, splitter=None, flags=None, trainer_kwargs=None):
+    def create_learning_task(self, models, keys, *query_params, identifier=None,
+                            configuration=None, verbose=False, validation_sets=(), metrics=(),
+                            keys_to_watch=(), features=None, serializer='pickle'):
 
-        assert trainer in [*self.list_trainers(), 'SemanticIndexTrainer', 'ImputationTrainer']
+        if identifier is None:
+            identifier = '+'.join([f'{m}/{k}' for m, k in zip(models, keys)])
+
         assert identifier not in self.list_learning_tasks()
+
         for k in keys_to_watch:
             assert f'{identifier}/{k}' not in self.list_watchers()
-        flags = flags or {}
-        trainer_kwargs = trainer_kwargs or {}
+
+        file_id = self._create_serialized_file(configuration, serializer=serializer)
 
         self._create_object_entry({
             'variety': 'learning_task',
             'identifier': identifier,
             'query_params': query_params,
+            'configuration': {'_file_id': file_id},
             'models': models,
             'keys': keys,
             'metrics': metrics,
-            'objective': objective,
-            'splitter': splitter,
+            'features': features,
             'validation_sets': validation_sets,
             'keys_to_watch': keys_to_watch,
-            'trainer_kwargs': trainer_kwargs,
-            'trainer': trainer,
-            'task_type': task_type,
-            **flags,
         })
-
         model_lookup = dict(zip(keys_to_watch, models))
         jobs = []
-        if objective is not None:
-            jobs.append(self.train(identifier))
-
+        if configuration is not None:
+            jobs.append(self.fit(identifier))
         for k in keys_to_watch:
             jobs.append(self._create_watcher(
                 f'[{identifier}]:{model_lookup[k]}/{k}',
                 model_lookup[k],
                 query_params,
                 key=k,
-                features=trainer_kwargs.get('features', {}),
-                loader_kwargs=loader_kwargs,
+                features=features,
+                predict_kwargs=configuration.get('loader_kwargs', {}),
                 dependencies=[jobs[0]] if jobs else (),
                 verbose=verbose,
             ))
@@ -309,7 +215,7 @@ class BaseDatabase:
         """
         return self._create_object(identifier, object, 'metric', **kwargs)
 
-    def create_model(self, identifier, object=None, preprocessor=None, postprocessor=None,
+    def create_model(self, identifier, object, preprocessor=None, postprocessor=None,
                      type=None, **kwargs):
         """
         Create a model registered in the collection directly from a python session.
@@ -324,24 +230,26 @@ class BaseDatabase:
         :param type: type for converting model outputs back and forth from bytes
         """
 
+        if identifier.startswith('_'):
+            raise ValueError('Identifiers starting with "_" are reserved.')
+
         assert identifier not in self.list_models()
 
         if type is not None:
             assert type in self.list_types()
 
+        object = wrap_model(object, preprocessor, postprocessor)
+
         if isinstance(object, str):
             file_id = object
         else:
-            with set_device(object, 'cpu'):
-                file_id = self._create_serialized_file(object, **kwargs)
+            file_id = self._create_serialized_file(object, **kwargs)
 
         self._create_object_entry({
             'variety': 'model',
             'identifier': identifier,
             'object': file_id,
             'type': type,
-            'preprocessor': preprocessor,
-            'postprocessor': postprocessor,
             **kwargs,
         })
 
@@ -384,16 +292,6 @@ class BaseDatabase:
             **secrets,
         })
 
-    def create_objective(self, identifier, object, **kwargs):
-        """
-        Create differentiable objective function, called by ``self.create_learning_task``,
-        to smoothly measure performance of learning on training set for back-propagation.
-
-        :param identifier: identifier
-        :param object: Python object
-        """
-        return self._create_object(identifier, object, 'objective', **kwargs)
-
     def _create_plan(self):
         G = networkx.DiGraph()
         for identifier in self.list_watchers():
@@ -407,51 +305,6 @@ class BaseDatabase:
             G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
         assert networkx.is_directed_acyclic_graph(G)
         return G
-
-    def create_postprocessor(self, identifier, object, **kwargs):
-        return self._create_object(identifier, object, 'postprocessor', **kwargs)
-
-    def create_preprocessor(self, identifier, object, **kwargs):
-        return self._create_object(identifier, object, 'preprocessor', **kwargs)
-
-    def _create_semantic_index(self, identifier, models, keys, measure, query_params,
-                               validation_sets=(), metrics=(), objective=None, index_type='vanilla',
-                               verbose=False,
-                               index_kwargs=None, splitter=None, loader_kwargs=None,
-                               trainer_kwargs=None):
-
-        for vs in validation_sets:
-            tmp_query_params = self.get_query_params_for_validation_set(vs)
-            self._create_semantic_index(
-                identifier + f'/{vs}',
-                models,
-                keys,
-                measure,
-                tmp_query_params,
-                loader_kwargs=loader_kwargs,
-            )
-
-        return self._create_learning_task(
-            identifier,
-            trainer='SemanticIndexTrainer',
-            task_type='semantic_index',
-            models=models,
-            keys=keys,
-            query_params=query_params,
-            validation_sets=validation_sets,
-            metrics=metrics,
-            objective=objective,
-            flags={
-                'index_type': index_type,
-                'index_kwargs': index_kwargs,
-                'measure': measure,
-            },
-            splitter=splitter,
-            loader_kwargs=loader_kwargs,
-            trainer_kwargs=trainer_kwargs,
-            keys_to_watch=[keys[0]],
-            verbose=verbose,
-        )
 
     def _create_serialized_file(self, object, serializer='pickle', serializer_kwargs=None):
         serializer_kwargs = serializer_kwargs or {}
@@ -470,18 +323,6 @@ class BaseDatabase:
             raise NotImplementedError
         return self._save_blob_of_bytes(bytes_)
 
-    def create_splitter(self, identifier, object, **kwargs):
-        return self._create_object(identifier, object, 'splitter', **kwargs)
-
-    def create_trainer(self, identifier, object, **kwargs):
-        """
-        Create trainer class, called by ``self.create_learning_task``.
-
-        :param identifier: identifier
-        :param object: Python object
-        """
-        return self._create_object(identifier, object, 'trainer', **kwargs)
-
     def create_type(self, identifier, object, **kwargs):
         """
         Create datatype, in order to serialize python object data in the database.
@@ -491,19 +332,13 @@ class BaseDatabase:
         """
         return self._create_object(identifier, object, 'type', **kwargs)
 
-    def _create_validation_set(self, identifier, *query_params, chunk_size=1000, splitter=None):
+    def _create_validation_set(self, identifier, *query_params, chunk_size=1000):
         if identifier in self.list_validation_sets():
             raise Exception(f'validation set {identifier} already exists!')
-        if isinstance(splitter, str):
-            splitter = self.splitters[splitter]
-
         data = self.execute_query(*query_params)
         it = 0
         tmp = []
         for r in progress.progressbar(data):
-            if splitter is not None:
-                r, other = splitter(r)
-                r = self._add_split_to_row(r, other)
             tmp.append(r)
             it += 1
             if it % chunk_size == 0:
@@ -513,12 +348,10 @@ class BaseDatabase:
             self._insert_validation_data(tmp, identifier)
 
     def _create_watcher(self, identifier, model, query_params, key='_base', verbose=False,
-                        target=None, process_docs=True, features=None, loader_kwargs=None,
+                        target=None, process_docs=True, features=None, predict_kwargs=None,
                         dependencies=()):
 
-        r = self.get_object_info(identifier, 'watcher')
-        if r is not None:
-            raise Exception(f'Watcher {identifier} already exists!')
+        assert identifier not in self.list_watchers()
 
         self._create_object_entry({
             'identifier': identifier,
@@ -528,7 +361,7 @@ class BaseDatabase:
             'key': key,
             'features': features if features else {},
             'target': target,
-            'loader_kwargs': loader_kwargs or {},
+            'predict_kwargs': predict_kwargs or {},
         })
 
         if process_docs:
@@ -542,33 +375,6 @@ class BaseDatabase:
                 dependencies=dependencies,
                 remote=self.remote,
             )
-
-    def delete_agent(self, identifier, force=False):
-        """
-        Delete agent.
-
-        :param identifier: identifier of agent
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self._delete_object(identifier, 'agent', force=force)
-
-    def delete_function(self, identifier, force=False):
-        """
-        Delete function.
-
-        :param identifier: identifier of function
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self._delete_object(identifier, 'function', force=force)
-
-    def delete_imputation(self, identifier, force=False):
-        """
-        Delete imputation
-
-        :param identifier: Identifier of imputation
-        :param force: Toggle to ``True`` to skip confirmation
-        """
-        return self.delete_learning_task(identifier, force=force)
 
     def delete_learning_task(self, identifier, force=False):
         """
@@ -652,60 +458,6 @@ class BaseDatabase:
     def _delete_object_info(self, identifier, variety):
         raise NotImplementedError
 
-    def delete_objective(self, identifier, force=False):
-        """
-        Delete objective.
-
-        :param identifier: name of objective
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self._delete_object(identifier, 'objective', force=force)
-
-    def delete_postprocessor(self, identifier, force=False):
-        """
-        Delete postprocessor.
-
-        :param identifier: name of postprocessor
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self._delete_object(identifier, 'postprocessor', force=force)
-
-    def delete_preprocessor(self, identifier, force=False):
-        """
-        Delete preprocessor.
-
-        :param identifier: name of preprocessor
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self._delete_object(identifier, 'preprocessor', force=force)
-
-    def delete_semantic_index(self, identifier, force=False):
-        """
-        Delete semantic-index.
-
-        :param name: name of semantic-index
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self.delete_learning_task(identifier, force=force)
-
-    def delete_splitter(self, identifier, force=False):
-        """
-        Delete splitter.
-
-        :param identifier: identifier of splitter
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self._delete_object(identifier, 'splitter', force=force)
-
-    def delete_trainer(self, identifier, force=False):
-        """
-        Delete trainer.
-
-        :param identifier: identifier of trainer
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self._delete_object(identifier, 'trainer', force=force)
-
     def delete_type(self, identifier, force=False):
         """
         Delete type.
@@ -737,6 +489,8 @@ class BaseDatabase:
     @work
     def download_content(self, query_params, ids=None, documents=None, timeout=None,
                          raises=True, n_download_workers=None, headers=None, **kwargs):
+        print(query_params)
+        print(ids)
         update_db = False
         if documents is None:
             update_db = True
@@ -795,10 +549,7 @@ class BaseDatabase:
         raise NotImplementedError
 
     def _format_fold_to_query(self, query_params, fold):
-        # query_params = (collection, filter, [projection])
-        query_params = list(query_params)
-        query_params[1]['_fold'] = fold
-        return tuple(query_params)
+        raise NotImplementedError
 
     def _get_content_for_filter(self, filter):
         if '_id' not in filter:
@@ -808,7 +559,7 @@ class BaseDatabase:
             filter = self.download_content(self.name,
                                            documents=[filter],
                                            timeout=None, raises=True)[0]
-            filter = convert_from_bytes_to_types(filter, converters=self.types)
+            filter = self.convert_from_bytes_to_types(filter)
         return filter
 
     def _get_dependencies_for_watcher(self, identifier):
@@ -824,6 +575,15 @@ class BaseDatabase:
 
     def _get_docs_from_ids(self, ids, *query_params, features=None, raw=False):
         raise NotImplementedError
+
+    def _get_file_content(self, r):
+        for k in r:
+            if isinstance(r[k], dict):
+                if '_file_id' in r[k]:
+                    r[k] = self._load_serialized_file(r[k]['_file_id'])
+                else:
+                    r[k] = self._get_file_content(r[k])
+        return r
 
     def _get_hash_from_record(self, r, watcher_info):
         raise NotImplementedError
@@ -852,10 +612,13 @@ class BaseDatabase:
     def _get_object_info_where(self, variety, **kwargs):
         raise NotImplementedError
 
-    def get_object_info(self, identifier, variety, decode_types=False, **kwargs):
+    def get_object_info(self, identifier, variety, decode=True, **kwargs):
         r = self._get_object_info(identifier, variety, **kwargs)
-        if decode_types:
+        if r is None:
+            raise FileNotFoundError('Object doesn\'t exist')
+        if decode:
             r = self.convert_from_bytes_to_types(r)
+            r = self._get_file_content(r)
         return r
 
     def get_object_info_where(self, variety, **kwargs):
@@ -869,18 +632,6 @@ class BaseDatabase:
 
     def _insert_validation_data(self, tmp, identifier):
         raise NotImplementedError
-
-    def list_agents(self):
-        """
-        List agents.
-        """
-        return self._list_objects('agent')
-
-    def list_functions(self):
-        """
-        List functions.
-        """
-        return self._list_objects('function')
 
     def list_imputations(self):
         """
@@ -927,18 +678,6 @@ class BaseDatabase:
     def _list_objects(self, variety, **kwargs):
         raise NotImplementedError
 
-    def list_objectives(self):
-        """
-        List objectives.
-        """
-        return self._list_objects('objective')
-
-    def list_splitters(self):
-        """
-        List splitters.
-        """
-        return self._list_objects('splitter')
-
     def list_postprocessors(self):
         """
         List postprocesors.
@@ -950,12 +689,6 @@ class BaseDatabase:
         List preprocessors.
         """
         return self._list_objects('preprocessor')
-
-    def list_semantic_indexes(self):
-        """
-        List semantic indexes.
-        """
-        return self._list_objects('learning_task', task_type='semantic_index')
 
     def list_trainers(self):
         """
@@ -985,7 +718,7 @@ class BaseDatabase:
         raise NotImplementedError
 
     def _load_hashes(self, identifier):
-        info = self.get_object_info(identifier, 'learning_task', task_type='semantic_index')
+        info = self.get_object_info(identifier, 'learning_task')
         index_type = info.get('index_type', 'vanilla')
         index_kwargs = info.get('index_kwargs', {}) or {}
         key_to_watch = info['keys_to_watch'][0]
@@ -1004,34 +737,14 @@ class BaseDatabase:
             h = self._get_hash_from_record(r, watcher_info)
             loaded.append(h)
             ids.append(r['_id'])
-
         if index_type == 'vanilla':
-            return hashes.HashSet(torch.stack(loaded), ids, measure=measure)
+            return superduperdb.vector_search.vanilla.hashes.HashSet(torch.stack(loaded), ids, measure=measure)
         elif index_type == 'faiss':
-            return hashes.FaissHashSet(torch.stack(loaded), ids, **index_kwargs)
+            return superduperdb.vector_search.faiss.hashes.FaissHashSet(torch.stack(loaded),
+                                                                        ids,
+                                                                        **index_kwargs)
         else:
             raise NotImplementedError
-
-    def _load_model(self, identifier):
-        info = self.get_object_info(identifier, 'model')
-        if info is None:
-            raise Exception(f'No such object of type "model", "{identifier}" has been registered.') # pragma: no cover
-        info = dict(info)
-        model = self._load_pickled_file(info['object'])
-        model.eval()
-        if torch.cuda.is_available():
-            model.to('cuda')
-
-        if info.get('preprocessor') is None and info.get('postprocessor') is None:
-            return model
-
-        preprocessor = None
-        if info.get('preprocessor') is not None:
-            preprocessor = self._load_object('preprocessor', info['preprocessor'])
-        postprocessor = None
-        if info.get('postprocessor') is not None:
-            postprocessor = self._load_object('postprocessor', info['postprocessor'])
-        return create_container(preprocessor, model, postprocessor)
 
     def _load_object(self, identifier, variety):
         info = self.get_object_info(identifier, variety)
@@ -1042,14 +755,12 @@ class BaseDatabase:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
-        m = self._load_pickled_file(info['object'], serializer=info['serializer'])
+        m = self._load_serialized_file(info['object'], serializer=info['serializer'])
         if isinstance(m, CallableWithSecret) and 'secrets' in info:
             m.secrets = info['secrets']
-        if isinstance(m, torch.nn.Module):
-            m.eval()
         return m
 
-    def _load_pickled_file(self, file_id, serializer='pickle'):
+    def _load_serialized_file(self, file_id, serializer='pickle'):
         bytes_ = self._load_blob_of_bytes(file_id)
         f = io.BytesIO(bytes_)
         if serializer == 'pickle':
@@ -1061,9 +772,11 @@ class BaseDatabase:
 
     @work
     def apply_watcher(self, identifier, ids: List[ObjectId] = None, verbose=False,
-                      max_chunk_size=5000, model=None, recompute=False, **kwargs):
+                      max_chunk_size=5000, model=None, recompute=False, watcher_info=None,
+                      **kwargs):
 
-        watcher_info = self.get_object_info(identifier, 'watcher')
+        if watcher_info is None:
+            watcher_info = self.get_object_info(identifier, 'watcher')
         if ids is None:
             ids = self._get_ids_from_query(*watcher_info['query_params'])
         if max_chunk_size is not None:
@@ -1072,12 +785,14 @@ class BaseDatabase:
                       f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
                 self.apply_watcher(
                     identifier,
-                    ids[i: i + max_chunk_size],
+                    ids=ids[i: i + max_chunk_size],
                     verbose=verbose,
                     max_chunk_size=None,
                     model=model,
                     recompute=recompute,
-                    **kwargs,
+                    watcher_info=watcher_info,
+                    remote=False,
+                    **{k: v for k, v in kwargs if k != 'remote'},
                 )
             return
 
@@ -1088,8 +803,7 @@ class BaseDatabase:
                                               key=watcher_info['key'],
                                               features=watcher_info.get('features', {}),
                                               model=model,
-                                              loader_kwargs=watcher_info.get('loader_kwargs'),
-                                              verbose=verbose)
+                                              predict_kwargs=watcher_info.get('predict_kwargs', {}))
         type_ = model_info.get('type')
         if type_ is not None:
             type_ = self.types[type_]
@@ -1184,15 +898,12 @@ class BaseDatabase:
             info['serializer_kwargs'] = {}
         assert identifier in self.list_models(), f'model "{identifier}" doesn\'t exist to replace'
         if not isinstance(object, Container):
-            with set_device(object, 'cpu'):
-                file_id = self._create_serialized_file(object, serializer=info['serializer'],
-                                                       serializer_kwargs=info['serializer_kwargs'])
+            file_id = self._create_serialized_file(object,
+                                                   serializer=info['serializer'],
+                                                   serializer_kwargs=info['serializer_kwargs'])
             self._replace_object(info['object'], file_id, 'model', identifier)
             return
-
-        with set_device(object, 'cpu'):
-            file_id = self._create_serialized_file(object._forward)
-
+        file_id = self._create_serialized_file(object._forward)
         self._replace_object(info['object'], file_id, 'model', identifier)
 
     def _replace_object(self, file_id, new_file_id, variety, identifier):
@@ -1234,91 +945,26 @@ class BaseDatabase:
     def _get_table_from_query_params(self, query_params):
         raise NotImplementedError
 
-    def _get_trainer(self, identifier, train_type):
-        info = self.get_object_info(identifier, 'learning_task')
-        splitter = None
-        if info.get('splitter'):
-            splitter = self.splitters[info['splitter']]
-
-        if info['trainer'] == 'SemanticIndexTrainer':
-            trainer_cls = training.trainer.SemanticIndexTrainer
-        elif info['trainer'] == 'ImputationTrainer':
-            trainer_cls = training.trainer.ImputationTrainer
-        else:
-            trainer_cls = self._load_object(info['trainer'], 'trainer')
-
-        models = []
-        for m in info['models']:
-            try:
-                models.append(self.models[m])
-            except Exception as e:
-                if 'No such object of type' in str(e):
-                    models.append(self.functions[m])
-                else:
-                    raise e
-        objective = self.objectives[info['objective']]
-        metrics = {k: self.metrics[k] for k in info['metrics']}
-
-        trainer = trainer_cls(
-            identifier,
-            models=models,
-            database_type=self._database_type,
-            database=self.name,
-            keys=info['keys'],
-            model_names=info['models'],
-            query_params=info['query_params'],
-            objective=objective,
-            metrics=metrics,
-            save=self._replace_model,
-            splitter=splitter,
-            validation_sets=info.get('validation_sets', ()),
-            **info.get('trainer_kwargs', {}),
-        )
-        return trainer
-
     @work
-    def train(self, identifier):
+    def fit(self, identifier):
 
         info = self.get_object_info(identifier, 'learning_task')
-        splitter = None
-        if info.get('splitter'):
-            splitter = self.splitters[info['splitter']]
-
-        if info['trainer'] == 'SemanticIndexTrainer':
-            trainer_cls = training.trainer.SemanticIndexTrainer
-        elif info['trainer'] == 'ImputationTrainer':
-            trainer_cls = training.trainer.ImputationTrainer
-        else:
-            trainer_cls = self._load_object(info['trainer'], 'trainer')
-
-        models = []
-        for m in info['models']:
-            try:
-                models.append(self.models[m])
-            except Exception as e:
-                if 'No such object of type' in str(e):
-                    models.append(self.functions[m])
-                else:
-                    raise e
-        objective = self.objectives[info['objective']]
-        metrics = {k: self.metrics[k] for k in info['metrics']}
-
-        trainer = trainer_cls(
-            identifier,
-            models=models,
-            database_type=self._database_type,
-            database=self.name,
+        trainer = info['configuration'](
+            identifier=identifier,
+            models=[
+                self.models[m] if m != '_identity' else FunctionWrapper(lambda x: x)
+                for m in info['models']
+            ],
             keys=info['keys'],
             model_names=info['models'],
+            database_type=self._database_type,
+            database_name=self.name,
             query_params=info['query_params'],
-            objective=objective,
-            metrics=metrics,
-            save=self._replace_model,
-            splitter=splitter,
-            validation_sets=info.get('validation_sets', ()),
-            **info.get('trainer_kwargs', {}),
+            validation_sets=info['validation_sets'],
+            metrics={k: self.metrics[k] for k in info['metrics']},
+            features=info['features'],
         )
-        trainer.train()
+        trainer()
 
     def unset_hash_set(self, identifier):
         """

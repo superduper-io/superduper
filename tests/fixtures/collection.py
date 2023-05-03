@@ -1,10 +1,11 @@
 import random
 
+import lorem
 import numpy
 
-from superduperdb.mongodb.client import SuperDuperClient
+from superduperdb.dbs.mongodb.client import SuperDuperClient
 from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
-from tests.material.types import FloatTensor, Image, Array32
+from tests.material.types import FloatTensor, Image, Array32, Int64
 from tests.material.measures import css
 from tests.material.metrics import PatK, accuracy
 from tests.material.losses import ranking_loss
@@ -99,7 +100,7 @@ def an_update():
 
 @pytest.fixture()
 def with_semantic_index(random_data, a_model, measure):
-    random_data.create_semantic_index(
+    random_data.create_learning_task(
         'test_semantic_index',
         ['linear_a'],
         ['x'],
@@ -110,7 +111,7 @@ def with_semantic_index(random_data, a_model, measure):
     yield random_data
     if random_data.remote:
         random_data.clear_remote_cache()
-    random_data.delete_semantic_index('test_semantic_index', force=True)
+    random_data.delete_learning_task('test_semantic_index', force=True)
     random_data['_meta'].delete_one({'key': 'semantic_index'})
 
 
@@ -137,8 +138,7 @@ def with_faiss_semantic_index(random_data, a_model, measure):
 
 @pytest.fixture()
 def si_validation(random_data):
-    random_data.create_validation_set('my_valid', {'_fold': 'valid'}, chunk_size=100,
-                                      splitter=lambda r: ({'x': r['x'], '_fold': 'valid'}, {'z': r['z']}))
+    random_data.create_validation_set('my_valid', {'_fold': 'valid'}, chunk_size=100)
 
     yield random_data
 
@@ -163,6 +163,25 @@ def arrays(empty):
     t = empty.types['array']
     yield empty
     empty.delete_type('array', force=True)
+
+
+@pytest.fixture()
+def sentences(empty):
+    data = []
+    for _ in range(100):
+        data.append(
+            {'text': lorem.sentence()}
+        )
+    empty.insert_many(data)
+    yield empty
+
+
+@pytest.fixture()
+def int64(empty):
+    empty.create_type('int64', Int64())
+    t = empty.types['int64']
+    yield empty
+    empty.delete_type('int64', force=True)
 
 
 @pytest.fixture()

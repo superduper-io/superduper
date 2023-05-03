@@ -1,45 +1,17 @@
+import random
 from collections import defaultdict
 
-from superduperdb.models.utils import apply_model
 
-
-def validate_imputation(database, validation_set, imputation, metrics, model=None, features=None):
-
-    info = database.get_object_info(identifier=imputation, variety='learning_task')
-    if model is None:
-        model = database.models[info['models'][0]]
-    model_key = info['keys'][0]
-    target_key = info['keys'][1]
-    loader_kwargs = info.get('loader_kwargs') or {}
-
-    if isinstance(metrics, list):
-        _save = metrics[:]
-        metrics = {}
-        for m in _save:
-            metrics[m] = database.metrics[m]
-
-    query_params = database.get_query_params_for_validation_set(validation_set)
-    docs = list(database.execute_query(*query_params, features=features))
-    if model_key != '_base':
-        inputs_ = [r[model_key] for r in docs]
-    elif '_base' in features:
-        inputs_ = [r['_base'] for r in docs]
-    else:  # pragma: no cover
-        inputs_ = docs
-
-    if target_key != '_base':
-        targets = [r[target_key] for r in docs]
-    else:  # pragma: no cover
-        targets = docs
-
-    outputs = apply_model(
-        model,
-        inputs_,
-        single=False,
-        **loader_kwargs,
-    )
+def validate_imputation(validation_data, models, keys, metrics, splitter, predict_kwargs=None):
+    inputs = []
+    targets = []
+    for i in range(len(validation_data)):
+        r = validation_data[i]
+        inputs.append(r[keys[0]] if keys[0] != '_base' else r)
+        targets.append(r[keys[1]] if keys[1] != '_base' else r)
+    predictions = models[0].predict(inputs, **(predict_kwargs or {}))
     metric_values = defaultdict(lambda: [])
-    for o, t in zip(outputs, targets):
+    for o, t in zip(predictions, targets):
         for metric in metrics:
             metric_values[metric].append(metrics[metric](o, t))
     for k in metric_values:
@@ -47,47 +19,30 @@ def validate_imputation(database, validation_set, imputation, metrics, model=Non
     return metric_values
 
 
-def validate_representations(database, validation_set, semantic_index,
-                             metrics, encoders=None):
+def validate_semantic_index(validation_data, models, keys, metrics, hash_set_cls, measure,
+                            splitter=None, predict_kwargs=None):
 
-    info = database.get_object_info(identifier=semantic_index, variety='learning_task')
-    encoder_names = info['models']
-    if encoders is None:
-        encoders = []
-        for e in encoder_names:
-            encoders.append(database.models[e])
+    inputs = [[] for _ in models]
+    for i in range(len(validation_data)):
+        r = validation_data[i]
+        if splitter is not None:
+            all_r = splitter(r)
+        else:
+            all_r = [r for _ in models]
+        for j, m in enumerate(models):
+            inputs[j].append(all_r[j][keys[j]])
 
-    if isinstance(metrics, list):
-        _save = metrics[:]
-        metrics = {}
-        for m in _save:
-            metrics[m] = database.metrics[m]
-
-    try:
-        database.unset_hash_set(semantic_index)
-    except KeyError as e:  # pragma: no cover
-        if not 'semantic_index' in str(e):
-            raise e
-
-    ktw = info['keys'][0]
-    model = next(m for i, m in enumerate(info['models']) if info['keys'][i] == ktw)
-    database.remote = False
-    database.apply_watcher(f'[{semantic_index}/{validation_set}]:{model}/{ktw}',
-                           model=encoders[0])
-    query_params = database.get_query_params_for_validation_set(validation_set)
-
-    anchors = list(database.execute_query(*query_params))
-    _ids = database.get_ids_from_result(query_params, anchors)
-
+    random.shuffle(inputs)
+    predictions = [
+        model.predict(inputs[i], **(predict_kwargs or {}))
+        for i, model in enumerate(models)
+    ]
+    h = hash_set_cls(predictions[1], list(range(len(predictions[1]))), measure)
     metric_values = defaultdict(lambda: [])
-    for _id, r in zip(_ids, anchors):
-        query_part, r = database.separate_query_part_from_validation_record(r)
-        result = list(database.execute_query(*query_params, like=query_part, n=100,
-                                             semantic_index=f'{semantic_index}/{validation_set}'))
-        result = sorted(result, key=lambda r: -r['_score'])
-        result = database.get_ids_from_result(query_params, result)
+    for i in range(len(predictions[0])):
+        ix, _ = h.find_nearest_from_hash(predictions[0][i], n=100)
         for metric in metrics:
-            metric_values[metric].append(metrics[metric](result, _id))
+            metric_values[metric].append(metrics[metric](ix, i))
 
     for k in metric_values:
         metric_values[k] = sum(metric_values[k]) / len(metric_values[k])

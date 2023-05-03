@@ -1,17 +1,14 @@
-from tests.fixtures.collection import arrays, empty, random_arrays
+import numpy
 from sklearn.svm import SVC
-from superduperdb.models.sklearn import Pipeline
+from tests.fixtures.collection import random_arrays, arrays, empty, int64
 
 
-def test_predict(random_arrays):
-
-    pl = Pipeline(random_arrays,
-                  'svm',
-                  steps=[('svm', SVC())],
-                  verbose=True,
-                  postprocessor=lambda x: list([int(y) for y in x]))
-    pl.fit('x', 'y', {'_fold': 'train'})
-    pl.predict_and_update('x', 'y', {})
-
-    r = random_arrays.find_one()
-    _ = r['_outputs']['y']['svm']
+def test_pipeline(random_arrays, int64):
+    X = numpy.random.randn(100, 32)
+    y = (numpy.random.rand(100) > 0.5).astype(int)
+    est = SVC()
+    est.fit(X, y)
+    random_arrays.create_model('test_sklearn', est, type='int64')
+    pl = random_arrays.models['test_sklearn']
+    print(pl)
+    random_arrays.create_watcher('test_sklearn', key='x')

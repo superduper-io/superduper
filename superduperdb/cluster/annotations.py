@@ -1,5 +1,5 @@
 import inspect
-from typing import List as BaseList, Tuple as BaseTuple, Optional as BaseOptional
+from typing import Tuple as BaseTuple
 
 from bson import ObjectId
 
@@ -10,12 +10,10 @@ def encode_args(database, signature, args):
                              if parameters[k].default == inspect.Parameter.empty
                              and parameters[k].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
                              and k != 'self']
-    out = []
+    out = list(args)[:]
     for i, arg in enumerate(args):
         if isinstance(parameters[positional_parameters[i]].annotation, Convertible):
-            out.append(parameters[positional_parameters[i]].annotation.encode(database, arg))
-        else:
-            out.append(arg)
+            out[i] = parameters[positional_parameters[i]].annotation.encode(database, arg)
     return out
 
 
@@ -42,12 +40,10 @@ def decode_args(database, signature, args):
                              if parameters[k].default == inspect.Parameter.empty
                              and parameters[k].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
                              and k != 'self']
-    out = []
+    out = list(args)[:]
     for i, arg in enumerate(args):
         if isinstance(parameters[positional_parameters[i]].annotation, Convertible):
-            out.append(parameters[positional_parameters[i]].annotation.decode(database, arg))
-        else:
-            out.append(arg)
+            out[i] = parameters[positional_parameters[i]].annotation.decode(database, arg)
     return out
 
 

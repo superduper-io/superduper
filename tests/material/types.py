@@ -18,6 +18,19 @@ class Array32:
         return numpy.frombuffer(bytes_, dtype=numpy.float32)
 
 
+class Int64:
+    types = [numpy.int64]
+
+    @staticmethod
+    def encode(x):
+        assert x.dtype == numpy.int64
+        return memoryview(x).tobytes()
+
+    @staticmethod
+    def decode(bytes_):
+        return numpy.frombuffer(bytes_, dtype=numpy.int64)
+
+
 class FloatTensor:
     types = [torch.FloatTensor, torch.Tensor]
 

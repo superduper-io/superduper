@@ -17,7 +17,7 @@ from pymongo.cursor import Cursor
 import torch.utils.data
 
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.fetchers.downloads import gather_urls, InMemoryDownloader
+from superduperdb.fetchers.downloads import gather_uris, InMemoryDownloader
 from superduperdb.models.torch.wrapper import apply_model
 
 
@@ -289,13 +289,13 @@ class Collection(MongoCollection):
         return self.database.list_watchers()
 
     def _get_content_for_filter(self, filter):
-        urls = gather_urls([filter], gather_ids=False)[0]
-        if urls:
+        uris = gather_uris([filter], gather_ids=False)[0]
+        if uris:
             filter = MongoStyleDict(filter)
-            urls, keys, _ = gather_urls([filter], gather_ids=False)
-            downloader = InMemoryDownloader(urls)
+            uris, keys, _ = gather_uris([filter], gather_ids=False)
+            downloader = InMemoryDownloader(uris)
             downloader.go()
-            for i, (k, url) in enumerate(zip(keys, urls)):
+            for i, (k, uri) in enumerate(zip(keys, uris)):
                 filter[k]['_content']['bytes'] = downloader.results[i]
             filter = self.database.convert_from_bytes_to_types(filter)
         return filter

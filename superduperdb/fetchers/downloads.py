@@ -30,7 +30,7 @@ def timeout(seconds):  # pragma: no cover
 
 
 class Fetcher:
-    def __init__(self, headers, n_workers):
+    def __init__(self, headers=None, n_workers=0):
         session = boto3.Session()
         self.headers = headers
         self.s3_client = session.client("s3")
@@ -55,8 +55,8 @@ class Fetcher:
         with open(path, 'rb') as f:
             return f.read()
 
-    def _download_from_url(self, url):
-        return self.request_session.get(url, headers=self.headers).content
+    def _download_from_uri(self, uri):
+        return self.request_session.get(uri, headers=self.headers).content
 
     def __call__(self, uri):
         if uri.startswith('file://'):
@@ -64,16 +64,16 @@ class Fetcher:
         elif uri.startswith('s3://'):
             return self._download_s3_object(uri)
         elif uri.startswith('http://') or uri.startswith('https://'):
-            return self._download_from_url(uri)
+            return self._download_from_uri(uri)
         else:
             raise NotImplementedError(f'unknown type of URI "{uri}"')
 
 
 class BaseDownloader:
-    def __init__(self, urls, n_workers=0, timeout=None, headers=None, raises=True):
+    def __init__(self, uris, n_workers=0, timeout=None, headers=None, raises=True):
         self.timeout = timeout
         self.n_workers = n_workers
-        self.urls = urls
+        self.uris = uris
         self.headers = headers or {}
         self.raises = raises
 
@@ -85,8 +85,8 @@ class BaseDownloader:
         :param test: If *True* perform a test run.
         """
         print(f'number of workers {self.n_workers}')
-        prog = progressbar(total=len(self.urls))
-        prog.prefix = 'downloading from urls'
+        prog = progressbar(total=len(self.uris))
+        prog.prefix = 'downloading from uris'
         self.failed = 0
         prog.prefx = "failed: 0"
 
@@ -118,7 +118,7 @@ class BaseDownloader:
     def _parallel_go(self, f):
         pool = ThreadPool(self.n_workers)
         try:
-            pool.map(f, range(len(self.urls)))
+            pool.map(f, range(len(self.uris)))
         except KeyboardInterrupt:  # pragma: no cover
             print("--keyboard interrupt--")
             pool.terminate()
@@ -129,7 +129,7 @@ class BaseDownloader:
         pool.join()
 
     def _sequential_go(self, f):
-        for i in range(len(self.urls)):
+        for i in range(len(self.uris)):
             f(i)
 
 
@@ -137,7 +137,7 @@ class Downloader(BaseDownloader):
     """
 
     :param table: table or collection to _download items
-    :param urls: list of urls/ file names to fetch
+    :param uris: list of uris/ file names to fetch
     :param update_one: function to call to insert data into table
     :param ids: list of ids of rows/ documents to update
     :param keys: list of keys in rows/ documents to insert to
@@ -150,7 +150,7 @@ class Downloader(BaseDownloader):
     def __init__(
         self,
         table,
-        urls,
+        uris,
         update_one=None,
         ids=None,
         keys=None,
@@ -160,7 +160,7 @@ class Downloader(BaseDownloader):
         timeout=None,
         raises=True,
     ):
-        super().__init__(urls, n_workers=n_workers, timeout=timeout, headers=headers,
+        super().__init__(uris, n_workers=n_workers, timeout=timeout, headers=headers,
                          raises=raises)
         self.table = table
         self.ids = ids
@@ -170,82 +170,66 @@ class Downloader(BaseDownloader):
         self.update_one = update_one
         self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
 
-        assert len(ids) == len(urls)
+        assert len(ids) == len(uris)
 
     def _download(self, i):
-        url = self.urls[i]
+        uri = self.uris[i]
         _id = self.ids[i]
-        content = self.fetcher(url)
+        content = self.fetcher(uri)
         self.update_one(self.table, self.ids[i], self.keys[i], content)
 
 
 class InMemoryDownloader(BaseDownloader):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, headers=None, n_workers=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.results = {}
+        self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
 
-    def _download(self, i, request_session):
-        url = self.urls[i]
-        if url.startswith('http://') or url.startswith('https://'):
-            r = request_session.get(url, headers=self.headers)
-        elif url.startswith('s3://'):
-            ...
-        elif url.startswith('file://'):
-            with open(url.split('file://')[-1], 'rb') as f:
-                r = lambda: None
-                r.content = f.read()
-                r.status_code = 200
-        else:
-            raise NotImplementedError('unknown URL type...')
-
-        if r.status_code != 200:  # pragma: no cover
-            raise Exception(f"Non-200 response. ({r.status_code})")
-
-        self.results[i] = r.content
+    def _download(self, i):
+        content = self.fetcher(self.uris[i])
+        self.results[i] = content
 
 
-def gather_urls(documents, gather_ids=True):
+def gather_uris(documents, gather_ids=True):
     """
     Get the URLS out of all documents as denoted by ``{"_content": ...}``
 
     :param documents: list of dictionaries
     """
-    urls = []
+    uris = []
     mongo_keys = []
     ids = []
     for i, r in enumerate(documents):
-        sub_urls, sub_mongo_keys = _gather_urls_for_document(r)
+        sub_uris, sub_mongo_keys = _gather_uris_for_document(r)
         if gather_ids:
-            ids.extend([r['_id'] for _ in sub_urls])
+            ids.extend([r['_id'] for _ in sub_uris])
         else:
             ids.append(i)
-        urls.extend(sub_urls)
+        uris.extend(sub_uris)
         mongo_keys.extend(sub_mongo_keys)
-    return urls, mongo_keys, ids
+    return uris, mongo_keys, ids
 
 
-def _gather_urls_for_document(r):
+def _gather_uris_for_document(r):
     '''
-    >>> _gather_urls_for_document({'a': {'_content': {'url': 'test'}}})
+    >>> _gather_uris_for_document({'a': {'_content': {'uri': 'test'}}})
     (['test'], ['a'])
-    >>> d = {'b': {'a': {'_content': {'url': 'test'}}}}
-    >>> _gather_urls_for_document(d)
+    >>> d = {'b': {'a': {'_content': {'uri': 'test'}}}}
+    >>> _gather_uris_for_document(d)
     (['test'], ['b.a'])
-    >>> d = {'b': {'a': {'_content': {'url': 'test', 'bytes': b'abc'}}}}
-    >>> _gather_urls_for_document(d)
+    >>> d = {'b': {'a': {'_content': {'uri': 'test', 'bytes': b'abc'}}}}
+    >>> _gather_uris_for_document(d)
     ([], [])
     '''
-    urls = []
+    uris = []
     keys = []
     for k in r:
         if isinstance(r[k], dict) and '_content' in r[k]:
-            if 'url' in r[k]['_content'] and 'bytes' not in r[k]['_content']:
+            if 'uri' in r[k]['_content'] and 'bytes' not in r[k]['_content']:
                 keys.append(k)
-                urls.append(r[k]['_content']['url'])
+                uris.append(r[k]['_content']['uri'])
         elif isinstance(r[k], dict) and '_content' not in r[k]:
-            sub_urls, sub_keys = _gather_urls_for_document(r[k])
-            urls.extend(sub_urls)
+            sub_uris, sub_keys = _gather_uris_for_document(r[k])
+            uris.extend(sub_uris)
             keys.extend([f'{k}.{key}' for key in sub_keys])
-    return urls, keys
-
-
+    return uris, keys

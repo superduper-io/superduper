@@ -7,7 +7,7 @@ from flask import request, Flask
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from superduperdb.cluster.annotations import decode_args, decode_kwargs, decode_result
+from superduperdb.cluster.annotations import decode_args, decode_kwargs, encode_result
 from superduperdb.datalayer.mongodb.client import SuperDuperClient
 from superduperdb import cf
 from superduperdb.cluster.login import maybe_login_required
@@ -37,10 +37,10 @@ def verify_password(username, password):
 @maybe_login_required(auth, 'model_server')
 def serve():
     data = BSON.decode(request.get_data())
-    database = data['database']
+    database = data['database_name']
     if f'{database}' not in databases:
         databases[f'{database}'] = client[database]
-    database = databases[data['database']]
+    database = databases[database]
     method = getattr(database, data['method']).f
     args = decode_args(database,
                        inspect.signature(method),
@@ -48,8 +48,8 @@ def serve():
     kwargs = decode_kwargs(database,
                            inspect.signature(method),
                            data['kwargs'])
-    result = method(*args, **kwargs)
-    result = decode_result(database, inspect.signature(method), result)
+    result = method(database, *args, **kwargs)
+    result = encode_result(database, inspect.signature(method), result)
     return flask.make_response(BSON.encode(result))
 
 

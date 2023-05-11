@@ -65,6 +65,12 @@ def decode_result(database, signature, result):
 
 
 class Convertible:
+    def _encode(self, database, x):
+        return database.convert_from_types_to_bytes(x)
+
+    def _decode(self, database, x):
+        return database.convert_from_bytes_to_types(x)
+
     def encode(self, database, x):
         if x is None:
             return
@@ -74,20 +80,6 @@ class Convertible:
         if x is None:
             return
         return self._decode(database, x)
-
-    def _encode(self, database, x):
-        raise NotImplementedError
-
-    def _decode(self, database, x):
-        raise NotImplementedError
-
-
-class CustomConvertible(Convertible):
-    def _encode(self, database, x):
-        return database.convert_from_types_to_bytes(x)
-
-    def _decode(self, database, x):
-        return database.convert_from_bytes_to_types(x)
 
 
 class ObjectIdConvertible(Convertible):
@@ -120,7 +112,7 @@ class Tuple(BaseTuple, Convertible):
     >>> from typing import Any
     >>> database = lambda: None
     >>> database.convert_from_types_to_bytes = lambda x: x + ': encoded'
-    >>> Tuple([CustomConvertible(), Any]).encode(database, ('this is a test', 'this is another'))
+    >>> Tuple([Convertible(), Any]).encode(database, ('this is a test', 'this is another'))
     ('this is a test: encoded', 'this is another')
 
     """

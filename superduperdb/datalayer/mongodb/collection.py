@@ -5,8 +5,8 @@ from typing import Any
 
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.cluster.client_decorators import vector_search
-from superduperdb.cluster.annotations import Tuple, CustomConvertible, List, \
-    ObjectIdConvertible
+from superduperdb.cluster.annotations import Tuple, List, \
+    ObjectIdConvertible, Convertible
 
 warnings.filterwarnings('ignore')
 
@@ -465,7 +465,7 @@ class Collection(MongoCollection):
         return self.update_many({'_id': id_}, *args, refresh=refresh, **kwargs)
 
     @vector_search
-    def find_nearest(self, like: CustomConvertible(), ids=None, n=10, semantic_index=None) -> Tuple([List(ObjectIdConvertible()), Any]):
+    def find_nearest(self, like: Convertible(), ids=None, n=10, semantic_index=None) -> Tuple([List(ObjectIdConvertible()), Any]):
         hash_set = self.database._get_hash_set(semantic_index)
         if ids is not None:
             hash_set = hash_set[ids]

@@ -12,6 +12,7 @@ from superduperdb.training.base.config import TrainerConfiguration
 from superduperdb.misc.special_dicts import ExtensibleDict
 from superduperdb.models.torch.utils import to_device, device_of
 from superduperdb.training.query_dataset import QueryDataset
+from superduperdb.misc.logger import logging
 
 
 def _default_optimizer():
@@ -90,7 +91,7 @@ class TorchTrainerConfiguration(TrainerConfiguration):
                 to_watch = metrics[watch]
 
             if max(to_watch[-no_improve_then_stop:]) < max(to_watch):
-                print('early stopping triggered!')
+                logging.info('early stopping triggered!')
                 return True
 
         return False
@@ -203,7 +204,7 @@ class Trainer:
                     out += f'{k}/{kk}: {vv}; '
             else:
                 out += f'{k}: {v}; '
-        print(out)
+        logging.info(out)
 
     @staticmethod
     def apply_models_to_batch(batch, models):

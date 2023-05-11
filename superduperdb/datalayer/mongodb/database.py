@@ -2,12 +2,14 @@ import gridfs
 from bson import ObjectId
 from pymongo import UpdateOne
 from pymongo.database import Database as MongoDatabase
+
 import superduperdb.datalayer.mongodb.collection
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.cluster.annotations import ObjectIdConvertible, List
 from superduperdb.cluster.job_submission import work
 from superduperdb.datalayer.mongodb import loading
 from superduperdb.misc.special_dicts import MongoStyleDict
+from superduperdb.misc.logger import logging
 
 
 class Database(MongoDatabase, BaseDatabase):
@@ -212,14 +214,14 @@ class Database(MongoDatabase, BaseDatabase):
 
     def _unset_neighbourhood_data(self, info, watcher_info):
         collection, filter_ = watcher_info['query_params']
-        print(f'unsetting neighbourhood {info["info"]}')
+        logging.info(f'unsetting neighbourhood {info["info"]}')
         self[collection].update_many(filter_,
                                      {'$unset': {f'_like.{info["identifier"]}': 1}},
                                      refresh=False)
 
     def _unset_watcher_outputs(self, info):
         collection, filter_ = info['query_params']
-        print(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
+        logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
         self[collection].update_many(
             filter_,
             {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}},
@@ -245,20 +247,6 @@ class Database(MongoDatabase, BaseDatabase):
             {'$set': {key: value}}
         )
 
-    def validate_semantic_index(self, name, validation_sets, metrics):
-        results = {}
-        features = self['_objects'].find_one({'name': name,
-                                              'variety': 'semantic_index'}).get('features')
-        for vs in validation_sets:
-            results[vs] = validate_representations(self, vs, name, metrics, features=features)
-
-        for vs in results:
-            for m in results[vs]:
-                self['_objects'].update_one(
-                    {'name': name, 'variety': 'semantic_index'},
-                    {'$set': {f'final_metrics.{vs}.{m}': results[vs][m]}}
-                )
-
     def write_output_to_job(self, identifier, msg, stream):
         assert stream in {'stdout', 'stderr'}
         self['_jobs'].update_one(
@@ -270,7 +258,7 @@ class Database(MongoDatabase, BaseDatabase):
         collection = watcher_info['query_params'][0]
         key = watcher_info.get('key', '_base')
         model_name = watcher_info['model']
-        print('bulk writing...')
+        logging.info('bulk writing...')
         if watcher_info.get('target') is None:
             self[collection].bulk_write([
                 UpdateOne({'_id': id},
@@ -285,4 +273,4 @@ class Database(MongoDatabase, BaseDatabase):
                           }})
                 for i, id in enumerate(_ids)
             ])
-        print('done.')
+        logging.info('done.')

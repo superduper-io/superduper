@@ -63,20 +63,20 @@ def test_insert(random_data, a_watcher, an_update, remote):
 
 
 @pytest.mark.parametrize('remote', remote_values)
-def test_insert_from_urls(empty, image_type, remote):
+def test_insert_from_uris(empty, image_type, remote):
     empty.remote = remote
     to_insert = [
         {
             'item': {
                     '_content': {
-                    'url': image_url,
+                    'uri': image_url,
                     'type': 'image',
                 }
             },
             'other': {
                 'item': {
                     '_content': {
-                        'url': image_url,
+                        'uri': image_url,
                         'type': 'image',
                     }
                 }
@@ -86,8 +86,8 @@ def test_insert_from_urls(empty, image_type, remote):
     ]
     output, G = empty.insert_many(to_insert)
     if remote:
-        for node in networkx.topological_sort(G.nodes):
-            empty.watch_job(node['job_id'])
+        for node in G.G.nodes:
+            empty.watch_job(G.G.nodes[node]['job_id'])
     assert isinstance(empty.find_one()['item'], PIL.PngImagePlugin.PngImageFile)
     assert isinstance(empty.find_one()['other']['item'], PIL.PngImagePlugin.PngImageFile)
 
@@ -95,7 +95,7 @@ def test_insert_from_urls(empty, image_type, remote):
 @pytest.mark.parametrize('remote', remote_values)
 def test_watcher(random_data, a_model, b_model, remote):
     random_data.remote = remote
-    job_id = random_data.create_watcher('linear_a', key='x')
+    job_id = random_data.create_watcher('linear_a', key='x').key
     if remote:
         random_data.watch_job(job_id)
 
@@ -104,13 +104,12 @@ def test_watcher(random_data, a_model, b_model, remote):
     outputs = random_data.insert_many([{'x': torch.randn(32), 'update': True}
                                       for _ in range(5)])
     if remote:
-        for node in outputs[1]:
-            for job_id in outputs[1][node]:
-                random_data.watch_job(job_id)
+        for node in outputs[1].G.nodes:
+            random_data.watch_job(outputs[1].G.nodes[node]['job_id'])
 
     assert 'linear_a' in random_data.find_one({'update': True})['_outputs']['x']
 
-    job_id = random_data.create_watcher('linear_b', key='x', features={'x': 'linear_a'})
+    job_id = random_data.create_watcher('linear_b', key='x', features={'x': 'linear_a'}).key
     if remote:
         random_data.watch_job(job_id)
     assert 'linear_b' in random_data.find_one()['_outputs']['x']
@@ -145,8 +144,9 @@ def test_learning_task(si_validation, a_model, c_model, measure, metric, remote)
     )
 
     if remote:
-        for job_id in jobs:
-            si_validation.watch_job(job_id)
+        for job in jobs:
+            si_validation.watch_job(job.key)
+
 
 
 @pytest.mark.parametrize('remote', remote_values)

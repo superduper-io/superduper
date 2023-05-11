@@ -2,12 +2,11 @@ import gridfs
 from bson import ObjectId
 from pymongo import UpdateOne
 from pymongo.database import Database as MongoDatabase
-import superduperdb.dbs.mongodb.collection
-from superduperdb.base.database import BaseDatabase
+import superduperdb.datalayer.mongodb.collection
+from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.cluster.annotations import ObjectIdConvertible, List
 from superduperdb.cluster.job_submission import work
-from superduperdb.dbs.mongodb import loading
-from superduperdb.training.validation import validate_semantic_index
+from superduperdb.datalayer.mongodb import loading
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 
@@ -111,8 +110,9 @@ class Database(MongoDatabase, BaseDatabase):
             query_params[2]['_id'] = 1
         return self.execute_query(*query_params)
 
-    def execute_query(self, collection, filter_, *args, **kwargs):
-        return self[collection].find(filter_, *args, **kwargs)
+    def execute_query(self, collection, filter_=None, projection=None, **kwargs):
+        filter_ = filter_ or {}
+        return self[collection].find(filter_, projection=projection, **kwargs)
 
     def _format_fold_to_query(self, query_params, fold):
         if not query_params[1:]:

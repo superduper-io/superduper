@@ -8,7 +8,7 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from superduperdb.cluster.annotations import decode_args, decode_kwargs, decode_result
-from superduperdb.dbs.mongodb.client import SuperDuperClient
+from superduperdb.datalayer.mongodb.client import SuperDuperClient
 from superduperdb import cf
 from superduperdb.cluster.login import maybe_login_required
 from superduperdb.misc.special_dicts import ArgumentDefaultDict
@@ -41,14 +41,14 @@ def serve():
     if f'{database}' not in databases:
         databases[f'{database}'] = client[database]
     database = databases[data['database']]
-    method = getattr(database, data['method'])
+    method = getattr(database, data['method']).f
     args = decode_args(database,
                        inspect.signature(method),
                        data['args'])
     kwargs = decode_kwargs(database,
                            inspect.signature(method),
                            data['kwargs'])
-    result = method(*args, **kwargs, remote=False)
+    result = method(*args, **kwargs)
     result = decode_result(database, inspect.signature(method), result)
     return flask.make_response(BSON.encode(result))
 

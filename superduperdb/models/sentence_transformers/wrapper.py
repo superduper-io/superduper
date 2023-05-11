@@ -1,4 +1,3 @@
-
 class SentenceTransformerWrapper:
     def __init__(self, pl):
         self.pl = pl

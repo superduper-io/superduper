@@ -3,23 +3,10 @@ import inspect
 from functools import wraps
 import uuid
 
-from rq import Queue
-from redis import Redis
 
-from superduperdb import cf
 from superduperdb.cluster.annotations import encode_args, encode_kwargs
 from superduperdb.cluster.function_job import function_job
-
-ENGINE = cf.get('job_engine', 'rq')
-
-
-if ENGINE == 'rq':
-    redis_cf = cf.get('redis', {'port': 6379, 'host': 'localhost'})
-    q = Queue(connection=Redis(port=cf.get('redis', {}).get('port', 6379)), default_timeout=24 * 60 * 60)
-elif ENGINE == 'dask':
-    from superduperdb.cluster.dask.dask_client import dask_client
-else:
-    raise NotImplementedError(f'The engine {ENGINE} has not been implemented...')
+from superduperdb.cluster.dask.dask_client import dask_client
 
 
 def work(f):
@@ -43,32 +30,15 @@ def work(f):
                 'stderr': [],
             })
             kwargs['remote'] = False
-            if ENGINE == 'rq':
-                job = q.enqueue(
-                    function_job,
-                    database._database_type,
-                    database.name,
-                    f.__name__,
-                    args,
-                    kwargs,
-                    job_id,
-                    job_id=job_id,
-                    depends_on=dependencies,
-                )
-                return job
-            elif ENGINE == 'dask':
-                job = dask_client.submit(
-                    function_job,
-                    database._database_type,
-                    database.name,
-                    f.__name__,
-                    args,
-                    kwargs,
-                    job_id,
-                )
-            else:
-                raise NotImplementedError(f'That engine: {ENGINE} hasn\'t been implemented...')
-            return job
+            return dask_client.submit(
+                function_job,
+                database._database_type,
+                database.name,
+                f.__name__,
+                args,
+                kwargs,
+                job_id,
+            )
         else:
             print(database)
             print(args)

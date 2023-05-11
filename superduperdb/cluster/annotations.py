@@ -116,19 +116,35 @@ class List(Convertible):
 
 
 class Tuple(BaseTuple, Convertible):
+    """
+    >>> from typing import Any
+    >>> database = lambda: None
+    >>> database.convert_from_types_to_bytes = lambda x: x + ': encoded'
+    >>> Tuple([CustomConvertible(), Any]).encode(database, ('this is a test', 'this is another'))
+    ('this is a test: encoded', 'this is another')
+
+    """
     def __init__(self, item_types):
         self.item_types = item_types
 
     def _encode(self, database, x):
         out = []
-        for y, t in zip(self.item_types, x):
+        for t, y in zip(self.item_types, x):
             if hasattr(t, 'encode'):
-                out.append(t.encode(database, y))
+                try:
+                    out.append(t.encode(database, y))
+                except Exception as e:
+                    # import pdb; pdb.set_trace()
+                    raise e
+            else:
+                out.append(y)
         return tuple(out)
 
     def _decode(self, database, x):
         out = []
-        for y, t in zip(self.item_types, x):
+        for t, y in zip(self.item_types, x):
             if hasattr(t, 'decode'):
                 out.append(t.decode(database, y))
+            else:
+                out.append(y)
         return tuple(out)

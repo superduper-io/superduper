@@ -7,11 +7,19 @@ import torch.optim
 import torch.utils
 from torch.utils.data import DataLoader
 
-from superduperdb.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.imports import get_database_from_database_type
 from superduperdb.training.base.config import TrainerConfiguration
 from superduperdb.misc.special_dicts import ExtensibleDict
 from superduperdb.models.torch.utils import to_device, device_of
 from superduperdb.training.query_dataset import QueryDataset
+
+
+def _default_optimizer():
+    return torch.optim.Adam
+
+
+def _default_kwargs():
+    return {'lr': 0.0001}
 
 
 class TorchTrainerConfiguration(TrainerConfiguration):
@@ -21,6 +29,12 @@ class TorchTrainerConfiguration(TrainerConfiguration):
                  validation_interval=100,
                  watch='objective',
                  **kwargs):
+        _optimizer_classes = optimizer_classes or {}
+        optimizer_classes = defaultdict(_default_optimizer)
+        optimizer_classes.update(_optimizer_classes)
+        _optimizer_kwargs = optimizer_kwargs or {}
+        optimizer_kwargs = defaultdict(_default_kwargs)
+        optimizer_kwargs.update(_optimizer_kwargs)
         super().__init__(loader_kwargs=loader_kwargs,
                          objective=objective,
                          optimizer_classes=optimizer_classes or {},
@@ -108,7 +122,7 @@ class TorchTrainerConfiguration(TrainerConfiguration):
         optimizers = []
         for k in optimizer_classes:
             optimizers.append(
-                optimizer_classes[k](lookup[k].parameters(), self.optimizer_kwargs[k])
+                optimizer_classes[k](lookup[k].parameters(), **self.optimizer_kwargs[k])
             )
 
         transform = lambda x: self.split_and_preprocess(x, models, keys, self.splitter)
@@ -119,8 +133,7 @@ class TorchTrainerConfiguration(TrainerConfiguration):
         valid_dataloader = DataLoader(valid_data, **self.loader_kwargs)
 
         parameters = inspect.signature(self.compute_metrics).parameters
-        compute_metrics_kwargs = {k: getattr(self, k) for k in parameters if hasattr(self, k)
-                                  and k not in {'splitter', 'predict_kwargs'}}
+        compute_metrics_kwargs = {k: getattr(self, k) for k in parameters if hasattr(self, k)}
 
         validation_sets = {vs: self.get_validation_dataset(database_type, database_name, vs)
                            for vs in validation_sets}
@@ -137,7 +150,6 @@ class TorchTrainerConfiguration(TrainerConfiguration):
                 models=models,
                 keys=keys,
                 metrics=metrics,
-                splitter=self.splitter,
                 predict_kwargs=self.loader_kwargs,
                 **compute_metrics_kwargs
             ),

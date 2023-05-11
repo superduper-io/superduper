@@ -1,4 +1,4 @@
-from superduperdb.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.imports import get_database_from_database_type
 from superduperdb.cluster.annotations import decode_args, decode_kwargs
 import traceback
 from superduperdb.cluster.logging import handle_function_output

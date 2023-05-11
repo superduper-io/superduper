@@ -11,6 +11,7 @@ from superduperdb.misc.logger import logging
 
 def work(f):
     sig = inspect.signature(f)
+    _dask_client = dask_client()
     @wraps(f)
     def work_wrapper(database, *args, remote=None, dependencies=(), **kwargs):
         if remote is None:
@@ -30,7 +31,7 @@ def work(f):
                 'stderr': [],
             })
             kwargs['remote'] = False
-            return dask_client.submit(
+            return _dask_client.submit(
                 function_job,
                 database._database_type,
                 database.name,
@@ -38,6 +39,7 @@ def work(f):
                 args,
                 kwargs,
                 job_id,
+                key=job_id,
             )
         else:
             logging.debug(database)

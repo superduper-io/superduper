@@ -3,10 +3,10 @@ import inspect
 from functools import wraps
 import uuid
 
-
 from superduperdb.cluster.annotations import encode_args, encode_kwargs
 from superduperdb.cluster.function_job import function_job
 from superduperdb.cluster.dask.dask_client import dask_client
+from superduperdb.misc.logger import logging
 
 
 def work(f):
@@ -40,9 +40,9 @@ def work(f):
                 job_id,
             )
         else:
-            print(database)
-            print(args)
-            print(kwargs)
+            logging.debug(database)
+            logging.debug(args)
+            logging.debug(kwargs)
             return f(database, *args, **kwargs)
     work_wrapper.signature = sig
     return work_wrapper

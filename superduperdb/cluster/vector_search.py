@@ -12,6 +12,7 @@ from flask import request, Flask, make_response
 
 from superduperdb import cf
 from superduperdb.cluster.login import maybe_login_required
+from superduperdb.misc.logger import logging
 
 app = Flask(__name__)
 CORS(app)
@@ -41,10 +42,10 @@ def serve():
                            inspect.signature(method),
                            data['kwargs'])
     result = method.f(table, *args, **kwargs)
-    print('results')
-    print(result)
+    logging.info('results')
+    logging.info(result)
     result = encode_result(database, method.signature, result)
-    print(result)
+    logging.info(result)
     return make_response(BSON.encode({'_out': result}))
 
 

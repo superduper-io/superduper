@@ -73,8 +73,7 @@ def model_server(f):
                 args,
                 kwargs,
             )
-            if f.return_convertible:
-                out = database.convert_from_bytes_to_types(out)
+            out = decode_result(database, sig, out)
             return out
         else:
             return f(database, *args, **kwargs)

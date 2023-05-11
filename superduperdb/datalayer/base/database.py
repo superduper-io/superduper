@@ -957,7 +957,11 @@ class BaseDatabase:
             metrics={k: self.metrics[k] for k in info['metrics']},
             features=info['features'],
         )
-        trainer()
+        try:
+            trainer()
+        except Exception as e:
+            self.delete_learning_task(identifier, force=True)
+            raise e
 
     def unset_hash_set(self, identifier):
         """

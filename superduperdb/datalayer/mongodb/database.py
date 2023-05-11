@@ -28,7 +28,7 @@ class Database(MongoDatabase, BaseDatabase):
     def __getitem__(self, name: str):
         if name != '_validation_sets' and name.startswith('_'):
             return super().__getitem__(name)
-        return superduperdb.dbs.mongodb.collection.Collection(self, name)
+        return superduperdb.datalayer.mongodb.collection.Collection(self, name)
 
     @property
     def filesystem(self):

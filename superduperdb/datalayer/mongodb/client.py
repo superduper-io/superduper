@@ -2,6 +2,7 @@ import click
 from pymongo.mongo_client import MongoClient
 
 import superduperdb.datalayer.mongodb.database
+from superduperdb.misc.logger import logging
 
 
 class SuperDuperClient(MongoClient):
@@ -39,4 +40,4 @@ class SuperDuperClient(MongoClient):
             super().drop_database(f'_{name}:files')
             super().drop_database(name)
         else:
-            print('aborting...')
+            logging.warning('aborting...')

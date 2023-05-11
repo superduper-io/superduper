@@ -1,7 +1,7 @@
 import click
 from pymongo.mongo_client import MongoClient
 
-import superduperdb.dbs.mongodb.database
+import superduperdb.datalayer.mongodb.database
 
 
 class SuperDuperClient(MongoClient):

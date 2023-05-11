@@ -1,10 +1,12 @@
 import networkx
 
-import superduperdb.models.torch.wrapper
+from superduperdb.training.torch.trainer import TorchTrainerConfiguration
+from superduperdb.training.validation import validate_semantic_index
+from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.fixtures.collection import (
     float_tensors, empty, a_model, b_model, c_model, random_data,
-    si_validation, measure, metric, my_rank_obj, a_classifier, a_target, accuracy_metric,
-    my_class_obj, imputation_validation, with_semantic_index, an_update, a_watcher, image_type,
+    si_validation, measure, metric, a_classifier, a_target, accuracy_metric,
+    imputation_validation, with_semantic_index, an_update, a_watcher, image_type,
     n_data_points, with_faiss_semantic_index
 )
 import PIL.PngImagePlugin
@@ -12,6 +14,8 @@ import os
 import pytest
 import torch
 
+from tests.material.losses import ranking_loss
+from tests.material.measures import css
 
 remote = os.environ.get('SUPERDUPERDB_REMOTE_TEST', 'local')
 image_url = 'https://www.superduperdb.com/logos/white.png'
@@ -113,47 +117,39 @@ def test_watcher(random_data, a_model, b_model, remote):
 
 
 @pytest.mark.parametrize('remote', remote_values)
-def test_semantic_index(si_validation, a_model, c_model, measure, metric, my_rank_obj,
-                        remote):
-
+def test_learning_task(si_validation, a_model, c_model, measure, metric, remote):
     si_validation.remote = remote
-    jobs = si_validation.create_semantic_index(
-        'm'
+    jobs = si_validation.create_learning_task(
+        ['linear_a', 'linear_c'],
+        ['x', 'z'],
+        identifier='my_index',
+        metrics=['p_at_1'],
+        configuration=TorchTrainerConfiguration(
+            objective=ranking_loss,
+            n_iterations=4,
+            validation_interval=20,
+            loader_kwargs={'batch_size': 10, 'num_workers': 0},
+            optimizer_classes={
+                'linear_a': torch.optim.Adam,
+                'linear_c': torch.optim.Adam,
+            },
+            optimizer_kwargs={
+                'linear_a': {'lr': 0.001},
+                'linear_c': {'lr': 0.001},
+            },
+            compute_metrics=validate_semantic_index,
+            hash_set_cls=VanillaHashSet,
+            measure=css,
+        ),
+        validation_sets=('my_valid',)
     )
-    jobs = si_validation.create_semantic_index('my_index',
-                                               ['linear_a', 'linear_c'],
-                                               ['x', 'z'],
-                                               'css',
-                                               metrics=['p_at_1'],
-                                               objective='rank_obj',
-                                               validation_sets=('my_valid',),
-                                               trainer_kwargs={'n_iterations': 4, 'validation_interval': 2})
+
     if remote:
         for job_id in jobs:
             si_validation.watch_job(job_id)
 
 
 @pytest.mark.parametrize('remote', remote_values)
-def test_imputation(imputation_validation, a_classifier, a_target, my_class_obj,
-                           accuracy_metric, remote):
-
-    imputation_validation.remote = remote
-    jobs = imputation_validation.create_imputation('my_imputation',
-                                                   'classifier',
-                                                   'x',
-                                                   'target',
-                                                   'y',
-                                                   metrics=['accuracy_metric'],
-                                                   objective='class_obj',
-                                                   validation_sets=('my_imputation_valid',),
-                                                   trainer_kwargs={'n_iterations': 4, 'validation_interval': 2})
-    if remote:
-        for job_id in jobs:
-            imputation_validation.watch_job(job_id)
-
-
-@pytest.mark.parametrize('remote', remote_values)
-def test_apply_model(a_model, remote):
+def test_predict(a_model, remote):
     a_model.remote = remote
-    out = superduperdb.models.torch.wrapper.apply_model('linear_a', torch.randn(32))
-    print(out)
+    a_model.predict_one('linear_a', torch.randn(32))

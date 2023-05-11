@@ -3,12 +3,13 @@ import random
 import lorem
 import numpy
 
-from superduperdb.dbs.mongodb.client import SuperDuperClient
+from superduperdb.datalayer.mongodb.client import SuperDuperClient
+from superduperdb.vector_search.faiss.hashes import FaissHashSet
+from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
 from tests.material.types import FloatTensor, Image, Array32, Int64
-from tests.material.measures import css
+from tests.material.measures import css, dot
 from tests.material.metrics import PatK, accuracy
-from tests.material.losses import ranking_loss
 
 import pytest
 import torch
@@ -46,20 +47,6 @@ def accuracy_metric(empty):
     empty.create_metric('accuracy_metric', accuracy)
     yield empty
     empty.delete_metric('accuracy_metric', force=True)
-
-
-@pytest.fixture()
-def my_rank_obj(empty):
-    empty.create_objective('rank_obj', ranking_loss)
-    yield empty
-    empty.delete_objective('rank_obj', force=True)
-
-
-@pytest.fixture()
-def my_class_obj(empty):
-    empty.create_objective('class_obj', torch.nn.BCEWithLogitsLoss())
-    yield empty
-    empty.delete_objective('class_obj', force=True)
 
 
 @pytest.fixture()
@@ -101,38 +88,39 @@ def an_update():
 @pytest.fixture()
 def with_semantic_index(random_data, a_model, measure):
     random_data.create_learning_task(
-        'test_semantic_index',
         ['linear_a'],
         ['x'],
-        'css',
+        keys_to_watch=['x'],
+        identifier='test_learning_task',
+        configuration={'hash_set_cls': VanillaHashSet, 'measure': css},
     )
-    random_data.database['_meta'].insert_one({'key': 'semantic_index', 'collection': 'documents',
-                                              'value': 'test_semantic_index'})
+    random_data.database['_meta'].insert_one({'key': 'semantic_index',
+                                              'collection': 'documents',
+                                              'value': 'test_learning_task'})
     yield random_data
     if random_data.remote:
         random_data.clear_remote_cache()
-    random_data.delete_learning_task('test_semantic_index', force=True)
+    random_data.delete_learning_task('test_learning_task', force=True)
     random_data['_meta'].delete_one({'key': 'semantic_index'})
 
 
 
 @pytest.fixture()
 def with_faiss_semantic_index(random_data, a_model, measure):
-    random_data.create_semantic_index(
-        'test_semantic_index',
+    random_data.create_learning_task(
         ['linear_a'],
         ['x'],
-        'css',
-        index_type='faiss',
-        index_kwargs={'measure': 'css'}
+        keys_to_watch=['x'],
+        identifier='test_learning_task',
+        configuration={'hash_set_cls': FaissHashSet, 'measure': 'css'},
     )
     random_data.database['_meta'].insert_one({'key': 'semantic_index',
                                               'collection': 'documents',
-                                              'value': 'test_semantic_index'})
+                                              'value': 'test_learning_task'})
     yield random_data
     if random_data.remote:
         random_data.clear_remote_cache()
-    random_data.delete_semantic_index('test_semantic_index', force=True)
+    random_data.delete_learning_task('test_learning_task', force=True)
     random_data['_meta'].delete_one({'key': 'semantic_index'})
 
 

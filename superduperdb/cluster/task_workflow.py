@@ -3,13 +3,8 @@ import networkx
 import uuid
 
 from superduperdb.cluster.annotations import encode_args, encode_kwargs
-from superduperdb.cluster.job_submission import ENGINE
 from superduperdb.cluster.function_job import function_job
-
-if ENGINE == 'rq':
-    from superduperdb.cluster.job_submission import q
-elif ENGINE == 'dask':
-    from superduperdb.cluster.job_submission import dask_client
+from superduperdb.cluster.job_submission import dask_client
 
 
 class TaskWorkflow:
@@ -65,6 +60,7 @@ class TaskWorkflow:
         return self._path_lengths
 
     def __call__(self, remote=None):
+        _dask_client = dask_client()
         if remote is None:
             remote = self.database.remote
         current_group = \
@@ -84,7 +80,6 @@ class TaskWorkflow:
                         'kwargs': node_object['kwargs'],
                         'stdout': [],
                         'stderr': [],
-                        'engine': ENGINE,
                     })
                     self.G.nodes[node]['job_id'] = job_id
                     args = encode_args(self.database, node_object['task'].signature,
@@ -92,39 +87,21 @@ class TaskWorkflow:
                     kwargs = encode_kwargs(self.database, node_object['task'].signature,
                                            node_object['kwargs'])
 
-                    if ENGINE == 'rq':
-                        dependencies = \
-                            [self.G.nodes[a]['job_id']
-                             for a in self.G.predecessors(node)]
-                        q.enqueue(
-                            function_job,
-                            self.database._database_type,
-                            self.database.name,
-                            node_object['task'].__name__,
-                            args,
-                            {**kwargs, 'remote': False},
-                            job_id,
-                            job_id=job_id,
-                            depends_on=dependencies,
-                        )
-                        return job_id
-                    elif ENGINE == 'dask':
-                        dependencies = \
-                            [self.G.nodes[a]['future']
-                             for a in self.G.predecessors(node)]
-                        node_object['future'] = dask_client.submit(
-                            function_job,
-                            self.database._database_type,
-                            self.database.name,
-                            node_object['task'].__name__,
-                            args,
-                            {**kwargs, 'remote': False, 'dependencies': dependencies},
-                            job_id,
-                            key=job_id,
-                        )
-                        node_object['job_id'] = job_id
-                    else:
-                        raise NotImplementedError
+                    dependencies = \
+                        [self.G.nodes[a]['future']
+                         for a in self.G.predecessors(node)]
+
+                    node_object['future'] = _dask_client.submit(
+                        function_job,
+                        self.database._database_type,
+                        self.database.name,
+                        node_object['task'].__name__,
+                        args,
+                        {**kwargs, 'remote': False, 'dependencies': dependencies},
+                        job_id,
+                        key=job_id,
+                    )
+                    node_object['job_id'] = job_id
                 else:
                     args = node_object['args']
                     kwargs = node_object['kwargs']

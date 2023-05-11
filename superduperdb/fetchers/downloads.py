@@ -1,3 +1,5 @@
+import boto3
+from io import BytesIO
 from contextlib import contextmanager
 from multiprocessing.pool import ThreadPool
 import requests
@@ -27,6 +29,46 @@ def timeout(seconds):  # pragma: no cover
         signal.signal(signal.SIGALRM, old_handler)
 
 
+class Fetcher:
+    def __init__(self, headers, n_workers):
+        session = boto3.Session()
+        self.headers = headers
+        self.s3_client = session.client("s3")
+        self.request_session = requests.Session()
+        self.request_adapter = requests.adapters.HTTPAdapter(
+            max_retries=3,
+            pool_connections=n_workers if n_workers else 1,
+            pool_maxsize=n_workers * 10
+        )
+        self.request_session.mount("http://", self.request_adapter)
+        self.request_session.mount("https://", self.request_adapter)
+
+    def _download_s3_object(self, uri):
+        f = BytesIO()
+        path = uri.split('s3://')[-1]
+        bucket_name = path.split('/')[0]
+        file = '/'.join(path.split('/')[1:])
+        self.s3_client.download_fileobj(bucket_name, file, f)
+        return f.getvalue()
+
+    def _download_file(self, path):
+        with open(path, 'rb') as f:
+            return f.read()
+
+    def _download_from_url(self, url):
+        return self.request_session.get(url, headers=self.headers).content
+
+    def __call__(self, uri):
+        if uri.startswith('file://'):
+            return self._download_file(uri)
+        elif uri.startswith('s3://'):
+            return self._download_s3_object(uri)
+        elif uri.startswith('http://') or uri.startswith('https://'):
+            return self._download_from_url(uri)
+        else:
+            raise NotImplementedError(f'unknown type of URI "{uri}"')
+
+
 class BaseDownloader:
     def __init__(self, urls, n_workers=0, timeout=None, headers=None, raises=True):
         self.timeout = timeout
@@ -47,23 +89,15 @@ class BaseDownloader:
         prog.prefix = 'downloading from urls'
         self.failed = 0
         prog.prefx = "failed: 0"
-        request_session = requests.Session()
-        request_adapter = requests.adapters.HTTPAdapter(
-            max_retries=3,
-            pool_connections=self.n_workers if self.n_workers else 1,
-            pool_maxsize=self.n_workers * 10
-        )
-        request_session.mount("http://", request_adapter)
-        request_session.mount("https://", request_adapter)
 
         def f(i):
             prog.update()
             try:
                 if self.timeout is not None:  # pragma: no cover
                     with timeout(self.timeout):
-                        self._download(i, request_session=request_session)
+                        self._download(i)
                 else:
-                    self._download(i, request_session=request_session)
+                    self._download(i)
             except TimeoutException:  # pragma: no cover
                 print(f'timed out {i}')
             except KeyboardInterrupt:  # pragma: no cover
@@ -134,27 +168,15 @@ class Downloader(BaseDownloader):
         self.failed = 0
         self.skip_existing = skip_existing
         self.update_one = update_one
+        self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
 
         assert len(ids) == len(urls)
 
-    def _download(self, i, request_session):
+    def _download(self, i):
         url = self.urls[i]
         _id = self.ids[i]
-
-        if url.startswith('http'):
-            r = request_session.get(url, headers=self.headers)
-        elif url.startswith('file'):
-            with open(url.split('file://')[-1], 'rb') as f:
-                r = lambda: None
-                r.content = f.read()
-                r.status_code = 200
-        else:
-            raise NotImplementedError('unknown URL type...')
-
-        if r.status_code != 200:  # pragma: no cover
-            raise Exception(f"Non-200 response. ({r.status_code})")
-
-        self.update_one(self.table, self.ids[i], self.keys[i], r.content)
+        content = self.fetcher(url)
+        self.update_one(self.table, self.ids[i], self.keys[i], content)
 
 
 class InMemoryDownloader(BaseDownloader):
@@ -164,9 +186,11 @@ class InMemoryDownloader(BaseDownloader):
 
     def _download(self, i, request_session):
         url = self.urls[i]
-        if url.startswith('http'):
+        if url.startswith('http://') or url.startswith('https://'):
             r = request_session.get(url, headers=self.headers)
-        elif url.startswith('file'):
+        elif url.startswith('s3://'):
+            ...
+        elif url.startswith('file://'):
             with open(url.split('file://')[-1], 'rb') as f:
                 r = lambda: None
                 r.content = f.read()

@@ -2,14 +2,15 @@ dill
 flask
 flask_cors
 flask_httpauth
+lightning
 matplotlib
 networkx
 numpy
 pillow
 pymongo
-redis
 requests
-rq
+sklearn
 torch
+transformers
 tqdm
 werkzeug

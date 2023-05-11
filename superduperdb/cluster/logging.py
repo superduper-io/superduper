@@ -1,7 +1,7 @@
 import contextlib
 
 
-class Logger:
+class DBLogger:
     def __init__(self, database, id_, stream='stdout'):
         self.database = database
         self.id_ = id_
@@ -15,8 +15,8 @@ class Logger:
 
 
 def handle_function_output(function, database, identifier, *args, **kwargs):
-    with contextlib.redirect_stdout(Logger(database, identifier)):
-        with contextlib.redirect_stderr(Logger(database, identifier, stream='stderr')):
+    with contextlib.redirect_stdout(DBLogger(database, identifier)):
+        with contextlib.redirect_stderr(DBLogger(database, identifier, stream='stderr')):
             return function(*args, **kwargs)
 
 

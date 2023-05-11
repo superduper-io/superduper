@@ -8,6 +8,7 @@ import sys
 import warnings
 
 from superduperdb.misc.progress import progressbar
+from superduperdb.misc.logger import logging
 
 
 class TimeoutException(Exception):
@@ -84,7 +85,7 @@ class BaseDownloader:
                           connections.
         :param test: If *True* perform a test run.
         """
-        print(f'number of workers {self.n_workers}')
+        logging.info(f'number of workers {self.n_workers}')
         prog = progressbar(total=len(self.uris))
         prog.prefix = 'downloading from uris'
         self.failed = 0
@@ -99,7 +100,7 @@ class BaseDownloader:
                 else:
                     self._download(i)
             except TimeoutException:  # pragma: no cover
-                print(f'timed out {i}')
+                logging.warning(f'timed out {i}')
             except KeyboardInterrupt:  # pragma: no cover
                 raise
             except Exception as e:  # pragma: no cover
@@ -120,7 +121,7 @@ class BaseDownloader:
         try:
             pool.map(f, range(len(self.uris)))
         except KeyboardInterrupt:  # pragma: no cover
-            print("--keyboard interrupt--")
+            logging.warning("--keyboard interrupt--")
             pool.terminate()
             pool.join()
             sys.exit(1)

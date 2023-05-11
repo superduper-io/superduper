@@ -23,6 +23,7 @@ from superduperdb.misc.special_dicts import ArgumentDefaultDict
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.misc import progress
 from superduperdb.models.vanilla.wrapper import FunctionWrapper
+from superduperdb.misc.logger import logging
 
 
 class BaseDatabase:
@@ -87,14 +88,14 @@ class BaseDatabase:
     def _compute_model_outputs(self, model_info, _ids, *query_params, key='_base', features=None,
                                model=None, predict_kwargs=None):
 
-        print('finding documents under filter')
+        logging.info('finding documents under filter')
         features = features or {}
         model_identifier = model_info['identifier']
         if features is None:
             features = {}  # pragma: no cover
 
         documents = self._get_docs_from_ids(_ids, *query_params, features=features)
-        print('done.')
+        logging.info('done.')
         if key != '_base' or '_base' in features:
             passed_docs = [r[key] for r in documents]
         else:  # pragma: no cover
@@ -108,10 +109,10 @@ class BaseDatabase:
         info = self.get_object_info(identifier, 'neighbourhood')
         watcher_info = self.get_object_info(identifier, 'watcher')
         ids = self._get_ids_from_query(*watcher_info['query_params'])
-        print('getting hash set')
+        logging.info(f'getting hash set')
         h = self._get_hashes_for_query_parameters(info['semantic_index'], *info['query_params'])
-        print(f'computing neighbours based on neighbourhood "{identifier}" and '
-              f'index "{info["semantic_index"]}"')
+        logging.info(f'computing neighbours based on neighbourhood "{identifier}" and '
+                     f'index "{info["semantic_index"]}"')
 
         for i in progress.progressbar(range(0, len(ids), info['batch_size'])):
             sub = ids[i: i + info['batch_size']]
@@ -444,7 +445,7 @@ class BaseDatabase:
             self._unset_neighbourhood_data(info, watcher_info)
             self._delete_object_info(identifier, 'neighbourhood')
         else:
-            print('aborting') # pragma: no cover
+            logging.info('aborting') # pragma: no cover
 
     def _delete_object(self, identifier, variety, force=False):
         info = self.get_object_info(identifier, variety)
@@ -493,8 +494,8 @@ class BaseDatabase:
     @work
     def download_content(self, query_params, ids=None, documents=None, timeout=None,
                          raises=True, n_download_workers=None, headers=None, **kwargs):
-        print(query_params)
-        print(ids)
+        logging.debug(query_params)
+        logging.debug(ids)
         update_db = False
         if documents is None:
             update_db = True
@@ -503,7 +504,7 @@ class BaseDatabase:
             else:
                 documents = self._get_docs_from_ids(ids, *query_params, raw=True)
         uris, keys, place_ids = gather_uris(documents)
-        print(f'found {len(uris)} uris')
+        logging.info(f'found {len(uris)} uris')
         if not uris:
             return
 
@@ -729,7 +730,7 @@ class BaseDatabase:
         loaded = []
         ids = []
         docs = progress.progressbar(c)
-        print(f'loading hashes: "{identifier}"')
+        logging.info(f'loading hashes: "{identifier}"')
         for r in docs:
             h = self._get_hash_from_record(r, watcher_info)
             loaded.append(h)
@@ -777,8 +778,8 @@ class BaseDatabase:
             ids = self._get_ids_from_query(*watcher_info['query_params'])
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                print('computing chunk '
-                      f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
+                logging.info('computing chunk '
+                             f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
                 self.apply_watcher(
                     identifier,
                     ids=ids[i: i + max_chunk_size],

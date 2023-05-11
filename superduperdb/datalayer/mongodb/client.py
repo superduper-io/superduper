@@ -15,7 +15,7 @@ class SuperDuperClient(MongoClient):
         self.kwargs = kwargs
 
     def __getitem__(self, name: str):
-        return superduperdb.dbs.mongodb.database.Database(self, name)
+        return superduperdb.datalayer.mongodb.database.Database(self, name)
 
     def get_database_from_name(self, name):
         return self[name]

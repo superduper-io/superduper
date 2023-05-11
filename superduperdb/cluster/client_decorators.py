@@ -4,28 +4,25 @@ import inspect
 import requests
 
 from superduperdb import cf
-from superduperdb.cluster.annotations import encode_args, encode_kwargs
+from superduperdb.cluster.annotations import encode_args, encode_kwargs, decode_result
 
 
 def use_vector_search(database_type, database_name, table_name, method, args, kwargs):
     bson_ = {
-        'database': database_name,
+        'database_name': database_name,
         'database_type': database_type,
         'table': table_name,
         'method': method,
         'args': args,
-        'kwargs': {
-            **kwargs,
-            'remote': False,
-        },
+        'kwargs': kwargs,
     }
     body = BSON.encode(bson_)
     response = requests.post(
-        f'http://{cf["model_server"]["host"]}:{cf["model_server"]["port"]}/',
+        f'http://{cf["model_server"]["host"]}:{cf["vector_search"]["port"]}/',
         data=body,
     )
     out = BSON.decode(response.content)
-    return out
+    return out['_out']
 
 
 def vector_search(f):
@@ -45,10 +42,12 @@ def vector_search(f):
                 args,
                 kwargs,
             )
+            out = decode_result(table.database, sig, out)
             return out
         else:
-            return f(table, *args, **kwargs, remote=False)
+            return f(table, *args, **kwargs)
     vector_search_wrapper.signature = sig
+    vector_search_wrapper.f = f
     return vector_search_wrapper
 
 
@@ -78,7 +77,8 @@ def model_server(f):
                 out = database.convert_from_bytes_to_types(out)
             return out
         else:
-            return f(database, *args, **kwargs, remote=False)
+            return f(database, *args, **kwargs)
+    model_server_wrapper.f = f
     return model_server_wrapper
 
 
@@ -88,10 +88,7 @@ def use_model_server(database_type, database_name, method, args, kwargs):
         'database_name': database_name,
         'method': method,
         'args': args,
-        'kwargs': {
-            **kwargs,
-            'remote': False,
-        },
+        'kwargs': kwargs,
     }
     body = BSON.encode(bson_)
     response = requests.post(

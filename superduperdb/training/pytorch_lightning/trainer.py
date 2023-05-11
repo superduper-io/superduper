@@ -2,7 +2,7 @@ import inspect
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
-from superduperdb.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.imports import get_database_from_database_type
 from superduperdb.training.base.config import TrainerConfiguration
 from superduperdb.models.torch.utils import eval
 

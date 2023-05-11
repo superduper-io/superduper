@@ -22,8 +22,17 @@ class FaissHashSet(BaseHashSet):
     """
     def __init__(self, h, index, measure='l2', faiss_index=None):
         super().__init__(h, index)
+        if isinstance(h, list):
+            if isinstance(h[0], torch.Tensor):
+                h = torch.stack(h)
+            elif isinstance(h[0], numpy.ndarray):
+                h = numpy.stack(h)
+            else:
+                NotImplementedError('No support for this array/ tensor type')
+
         if isinstance(h, torch.Tensor):
             h = h.numpy().astype('float32')
+
         self.h = h
         self.index = index
         if faiss_index is None:

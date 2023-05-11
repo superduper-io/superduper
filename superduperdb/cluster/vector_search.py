@@ -4,9 +4,9 @@ from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash
 
-from superduperdb.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.imports import get_database_from_database_type
 from superduperdb.cluster.annotations import decode_args, decode_kwargs, encode_result
-from superduperdb.dbs.mongodb.client import SuperDuperClient
+from superduperdb.datalayer.mongodb.client import SuperDuperClient
 from bson import BSON
 from flask import request, Flask, make_response
 
@@ -40,10 +40,12 @@ def serve():
     kwargs = decode_kwargs(database,
                            inspect.signature(method),
                            data['kwargs'])
-    result = method(*args, **kwargs)
-    result = encode_result(database, result)
-    if isinstance(result, tuple):
-        return make_response(BSON.dumps({'_out': result}))
+    result = method.f(table, *args, **kwargs)
+    print('results')
+    print(result)
+    result = encode_result(database, method.signature, result)
+    print(result)
+    return make_response(BSON.encode({'_out': result}))
 
 
 if __name__ == '__main__':

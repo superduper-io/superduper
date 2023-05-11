@@ -1,4 +1,4 @@
-from superduperdb.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.imports import get_database_from_database_type
 from superduperdb.misc import progress
 from superduperdb.training.base.config import TrainerConfiguration
 import numpy

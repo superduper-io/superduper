@@ -3,21 +3,21 @@ import random
 import warnings
 from typing import Any
 
-from superduperdb.base.database import BaseDatabase
+from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.cluster.client_decorators import vector_search
 from superduperdb.cluster.annotations import Tuple, CustomConvertible, List, \
     ObjectIdConvertible
 
 warnings.filterwarnings('ignore')
 
-from superduperdb.dbs.mongodb.cursor import SuperDuperCursor
+from superduperdb.datalayer.mongodb.cursor import SuperDuperCursor
 
 from pymongo.collection import Collection as MongoCollection
 from pymongo.cursor import Cursor
 import torch.utils.data
 
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.fetchers.web.downloads import gather_urls, InMemoryDownloader
+from superduperdb.fetchers.downloads import gather_urls, InMemoryDownloader
 from superduperdb.models.torch.wrapper import apply_model
 
 
@@ -77,8 +77,11 @@ class Collection(MongoCollection):
     def semantic_index(self, value):
         self._semantic_index = value
 
-    def apply_model(self, *args, **kwargs):
-        return self.database.apply_model(*args, **kwargs)
+    def predict(self, *args, **kwargs):
+        return self.database.predict(*args, **kwargs)
+
+    def predict_one(self, *args, **kwargs):
+        return self.database.predict_one(*args, **kwargs)
 
     def cancel_job(self, job_id):
         return self.database.cancel_job(job_id)
@@ -380,6 +383,7 @@ class Collection(MongoCollection):
             if '_fold' not in document:
                 document['_fold'] = 'valid' if r < valid_probability else 'train'
         documents = self._infer_types(documents)
+
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover
             return output, None
@@ -461,8 +465,7 @@ class Collection(MongoCollection):
         return self.update_many({'_id': id_}, *args, refresh=refresh, **kwargs)
 
     @vector_search
-    def find_nearest(self, like: CustomConvertible(), ids=None, n=10, semantic_index=None,
-                     remote=None) -> Tuple([Any, List(ObjectIdConvertible())]):
+    def find_nearest(self, like: CustomConvertible(), ids=None, n=10, semantic_index=None) -> Tuple([List(ObjectIdConvertible()), Any]):
         hash_set = self.database._get_hash_set(semantic_index)
         if ids is not None:
             hash_set = hash_set[ids]
@@ -472,8 +475,7 @@ class Collection(MongoCollection):
         else:
             if semantic_index is None:
                 semantic_index = self.database._get_meta_data('semantic_index')
-            si_info = self.database.get_object_info(semantic_index, 'learning_task',
-                                                    task_type='semantic_index')
+            si_info = self.database.get_object_info(semantic_index, 'learning_task')
             models = si_info['models']
             keys = si_info['keys']
             available_keys = list(like.keys()) + ['_base']

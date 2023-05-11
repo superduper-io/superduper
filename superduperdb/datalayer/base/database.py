@@ -63,13 +63,13 @@ class BaseDatabase:
         raise NotImplementedError
 
     @model_server
-    def predict_one(self, model, input_: Convertible, **kwargs) -> Convertible:
+    def predict_one(self, model, input_: Convertible(), **kwargs) -> Convertible():
         if isinstance(model, str):
             model = self.models[model]
         return model.predict_one(input_, **{k: v for k, v in kwargs.items() if k != 'remote'})
 
     @model_server
-    def predict(self, model, input_: Convertible, **kwargs) -> Convertible:
+    def predict(self, model, input_: Convertible(), **kwargs) -> Convertible():
         """
         Apply model to input.
 
@@ -80,7 +80,7 @@ class BaseDatabase:
         """
         if isinstance(model, str):
             model = self.models[model]
-        return model.predict(input_, **{k: v for k, v in kwargs.items() if k != 'remote'})
+        return model.predict(input_, **kwargs)
 
     def cancel_job(self, job_id):
         raise NotImplementedError

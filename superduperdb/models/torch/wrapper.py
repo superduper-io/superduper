@@ -26,6 +26,10 @@ class SuperDuperWrapper(SuperDuperModule):
     def __init__(self, layer, preprocess=None, postprocess=None):
         super().__init__()
         self.layer = layer
+        if hasattr(self.layer, 'preprocess') and preprocess is None:
+            preprocess = self.layer.preprocess
+        if hasattr(self.layer, 'postprocess') and postprocess is None:
+            postprocess = self.layer.postprocess
         self._preprocess = preprocess
         self._postprocess = postprocess
 

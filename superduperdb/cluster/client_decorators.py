@@ -5,6 +5,7 @@ import requests
 
 from superduperdb import cf
 from superduperdb.cluster.annotations import encode_args, encode_kwargs, decode_result
+from superduperdb.misc.logger import logging
 
 
 def use_vector_search(database_type, database_name, table_name, method, args, kwargs):
@@ -81,19 +82,34 @@ def model_server(f):
     return model_server_wrapper
 
 
+RAY_MODELS = [
+    (r['database'], r['model'])
+    for r in cf.get('ray', {})['deployments']
+]
+
+logging.info(f'These are the RAY_MODELS: {RAY_MODELS}')
+
+
 def use_model_server(database_type, database_name, method, args, kwargs):
-    bson_ = {
-        'database_type': database_type,
-        'database_name': database_name,
-        'method': method,
-        'args': args,
-        'kwargs': kwargs,
-    }
-    body = BSON.encode(bson_)
-    response = requests.post(
-        f'http://{cf["model_server"]["host"]}:{cf["model_server"]["port"]}/',
-        data=body,
-    )
-    out = BSON.decode(response.content)
+    if method in {'predict', 'predict_one'} and (database_name, args[0]) in RAY_MODELS:
+        logging.debug('using Ray server')
+        response = requests.post(
+            f'http://{cf["ray"]["host"]}:{cf["ray"]["port"]}/{method}/{args[0]}',
+            data=BSON.encode({'input_': args[1]})
+        )
+    else:
+        bson_ = {
+            'database_type': database_type,
+            'database_name': database_name,
+            'method': method,
+            'args': args,
+            'kwargs': kwargs,
+        }
+        body = BSON.encode(bson_)
+        response = requests.post(
+            f'http://{cf["model_server"]["host"]}:{cf["model_server"]["port"]}/',
+            data=body,
+        )
+    out = BSON.decode(response.content)['output']
     return out
 

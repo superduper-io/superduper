@@ -7,13 +7,15 @@ from superduperdb.cluster.annotations import encode_args, encode_kwargs
 from superduperdb.cluster.function_job import function_job
 from superduperdb.cluster.dask.dask_client import dask_client
 from superduperdb.misc.logger import logging
+from superduperdb import cf
 
 
 def work(f):
     sig = inspect.signature(f)
-    _dask_client = dask_client()
+    if cf['remote']:
+        _dask_client = dask_client()
     @wraps(f)
-    def work_wrapper(database, *args, remote=None, dependencies=(), **kwargs):
+    def work_wrapper(database, *args, remote=None, **kwargs):
         if remote is None:
             remote = database.remote
         if remote:

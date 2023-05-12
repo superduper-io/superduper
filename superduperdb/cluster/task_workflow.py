@@ -60,9 +60,10 @@ class TaskWorkflow:
         return self._path_lengths
 
     def __call__(self, remote=None):
-        _dask_client = dask_client()
         if remote is None:
             remote = self.database.remote
+        if remote:
+            _dask_client = dask_client()
         current_group = \
             [n for n in self.G.nodes if not networkx.ancestors(self.G, n)]
         done = []

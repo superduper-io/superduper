@@ -49,7 +49,7 @@ def serve():
                            inspect.signature(method),
                            data['kwargs'])
     result = method(database, *args, **kwargs)
-    result = encode_result(database, inspect.signature(method), result)
+    result = encode_result(database, inspect.signature(method), {'output': result})
     return flask.make_response(BSON.encode(result))
 
 

@@ -1,3 +1,4 @@
+dask
 dill
 faiss-cpu
 flask
@@ -9,8 +10,10 @@ networkx
 numpy
 pillow
 pymongo
+pytorch-lightning
 requests
 scikit-learn
+sentence-transformers
 torch
 transformers
 tqdm

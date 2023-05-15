@@ -1,3 +1,4 @@
+import numpy
 import torch
 
 
@@ -5,6 +6,8 @@ class BaseHashSet:
     def __init__(self, h, index, *args, **kwargs):
         if isinstance(h, list) and isinstance(h[0], torch.Tensor):
             h = torch.stack(h)
+        elif isinstance(h, list) and isinstance(h[0], numpy.ndarray):
+            h = numpy.stack(h)
         self.h = h
         self.index = index
         if index is not None:

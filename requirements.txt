@@ -1,4 +1,7 @@
+boto3
+dask[distributed]
 dill
+faiss-cpu
 flask
 flask_cors
 flask_httpauth
@@ -8,8 +11,10 @@ networkx
 numpy
 pillow
 pymongo
+pytorch-lightning
 requests
-sklearn
+scikit-learn
+sentence-transformers
 torch
 transformers
 tqdm

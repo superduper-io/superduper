@@ -54,19 +54,6 @@ Support for [cohere.ai]()
 1. Compare with OpenAI
 1. Arbitrary API
 
-Llamaindex
-
-Reimplement entire use-case:
-https://gpt-index.readthedocs.io/en/latest/guides/tutorials/building_a_chatbot.html
-
-Unstructured
-
-Dump of pdfs and apply unstructured.io or arxiv.org pdfs
-
-Potentially build examples with retool
-
-https://retool.com/?_keyword=retool&adgroupid=133907531011&utm_source=google&utm_medium=search&utm_campaign=14901002285&utm_term=retool&utm_content=651513675598&hsa_acc=7420316652&hsa_cam=14901002285&hsa_grp=133907531011&hsa_ad=651513675598&hsa_src=g&hsa_tgt=kwd-395242915847&hsa_kw=retool&hsa_mt=e&hsa_net=adwords&hsa_ver=3&gad=1&gclid=CjwKCAjwge2iBhBBEiwAfXDBR17UdmTipws28yPI3vINR2YLcnnX1ln6oahaHc_T6yOBWAvP7Wx1BRoClCwQAvD_BwE
-
 RSS news feeds
 
 Talk to these in real time
@@ -85,18 +72,3 @@ Time-series analysis with Sktime
 ...
 
 
-## Project organization
-
-```
-|_models
-|_providers
-| |_openai
-| |_cohereai
-|_apps
-| |_langchain
-| |_llamaindex
-|_vectorsearch
-|_...
-```
-
-```

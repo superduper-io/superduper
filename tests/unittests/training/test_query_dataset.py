@@ -7,16 +7,16 @@ def test_query_dataset(random_data, a_watcher):
 
     train_data = QueryDataset(
         query_params=('documents', {}, {'_id': 0, 'x': 1, '_fold': 1, '_outputs': 1}),
-        database='test_db', database_type='mongodb', fold='fit', features={'x': 'linear_a'})
+        database='test_db', database_type='mongodb', fold='train', features={'x': 'linear_a'})
 
     r = train_data[0]
     assert '_id' not in r
-    assert r['_fold'] == 'fit'
+    assert r['_fold'] == 'train'
     assert 'y' not in r
     assert r['x'].shape[0] == 16
 
     train_data = QueryDataset(query_params=('documents', {}), database='test_db',
-                              database_type='mongodb', keys=['x', 'y'], fold='fit')
+                              database_type='mongodb', keys=['x', 'y'], fold='train')
 
     r = train_data[0]
     assert '_id' not in r
@@ -31,7 +31,7 @@ def test_query_dataset(random_data, a_watcher):
 def test_query_dataset_base(random_data, a_watcher_base):
 
     train_data = QueryDataset(query_params=('documents', {}), database='test_db',
-                              database_type='mongodb', keys=['_base', 'y'], fold='fit',
+                              database_type='mongodb', keys=['_base', 'y'], fold='train',
                               features={'_base': 'linear_a_base'})
 
     r = train_data[0]

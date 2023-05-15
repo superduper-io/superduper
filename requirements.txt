@@ -1,3 +1,4 @@
+boto3
 dask[distributed]
 dill
 faiss-cpu

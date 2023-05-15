@@ -1,4 +1,5 @@
 dill
+faiss-cpu
 flask
 flask_cors
 flask_httpauth

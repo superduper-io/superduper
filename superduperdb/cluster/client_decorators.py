@@ -84,7 +84,7 @@ def model_server(f):
 
 RAY_MODELS = [
     (r['database'], r['model'])
-    for r in cf.get('ray', {})['deployments']
+    for r in cf.get('ray', {}).get('deployments', [])
 ]
 
 logging.info(f'These are the RAY_MODELS: {RAY_MODELS}')

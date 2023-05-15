@@ -1,4 +1,4 @@
-dask
+dask[distributed]
 dill
 faiss-cpu
 flask

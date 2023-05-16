@@ -165,3 +165,7 @@ dmypy.json
 /custom_requirements.txt
 /notebooks/*.json
 /notebooks/*.bson
+
+# direnv
+.direnv/
+.envrc

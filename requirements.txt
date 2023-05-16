@@ -9,6 +9,7 @@ lightning
 matplotlib
 networkx
 numpy
+openai
 pillow
 pymongo
 pytorch-lightning

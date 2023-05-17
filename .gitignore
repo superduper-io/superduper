@@ -169,3 +169,4 @@ dmypy.json
 # direnv
 .direnv/
 .envrc
+lightning_logs/

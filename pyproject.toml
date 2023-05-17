@@ -1,3 +1,7 @@
+[tool.black]
+skip-string-normalization = true
+target-version = ['py38']
+
 [tool.poetry]
 name = "superduperdb"
 version = "0.0.3dev1"

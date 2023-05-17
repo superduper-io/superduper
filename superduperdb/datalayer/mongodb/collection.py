@@ -301,7 +301,8 @@ class Collection(MongoCollection):
         return filter
 
     def find(self, filter=None, *args, like=None, n=10, similar_first=False, raw=False,
-             features=None, download=False, similar_join=None, semantic_index=None, **kwargs):
+             features=None, download=False, similar_join=None, semantic_index=None,
+             watcher=None, hash_set_cls=None, hash_set_kwargs=None, **kwargs):
         """
         Behaves like MongoDB ``find`` with similarity search as additional option.
 
@@ -329,11 +330,18 @@ class Collection(MongoCollection):
                                                        features=features, like=like,
                                                        semantic_index=semantic_index,
                                                        n=n,
+                                                       watcher=watcher,
+                                                       hash_set_cls=hash_set_cls,
+                                                       hash_set_kwargs=hash_set_kwargs,
                                                        **kwargs)
             else:
                 return self._find_matches_then_similar(filter, like, *args, raw=raw,
                                                        n=n,
-                                                       features=features, semantic_index=semantic_index,
+                                                       features=features,
+                                                       semantic_index=semantic_index,
+                                                       hash_set_cls=hash_set_cls,
+                                                       hash_set_kwargs=hash_set_kwargs,
+                                                       watcher=watcher,
                                                        **kwargs)
         else:
             if raw:
@@ -465,43 +473,56 @@ class Collection(MongoCollection):
         return self.update_many({'_id': id_}, *args, refresh=refresh, **kwargs)
 
     @vector_search
-    def find_nearest(self, like: Convertible(), ids=None, n=10, semantic_index=None) -> Tuple([List(ObjectIdConvertible()), Any]):
-        hash_set = self.database._get_hash_set(semantic_index)
+    def find_nearest(self, like: Convertible(), ids=None, n=10,
+                     watcher=None,
+                     semantic_index=None,
+                     measure=None,
+                     hash_set_cls=None,
+                     hash_set_kwargs=None) -> Tuple([List(ObjectIdConvertible()), Any]):
+
+        if semantic_index is None:
+            semantic_index = self.database._get_meta_data('semantic_index')
+            si_info = self.database.get_object_info(semantic_index, variety='learning_task')
+            models = si_info['models']
+            keys = si_info['keys']
+            watcher = self.database._get_watcher_for_learning_task(semantic_index)
+            watcher_info = self.database.get_object_info(watcher, variety='watcher')
+        else:
+            watcher_info = self.database.get_object_info(watcher, variety='watcher')
+            models = [watcher_info['model']]
+            keys = [watcher_info['key']]
+
+        if watcher not in self.database._all_hash_sets:
+            self.database._load_hashes(watcher=watcher, measure=measure,
+                                       hash_set_cls=hash_set_cls,
+                                       hash_set_kwargs=hash_set_kwargs)
+
+        hash_set = self.database._all_hash_sets[watcher]
         if ids is not None:
             hash_set = hash_set[ids]
 
         if '_id' in like:
             return hash_set.find_nearest_from_id(like['_id'], n=n)
-        else:
-            if semantic_index is None:
-                semantic_index = self.database._get_meta_data('semantic_index')
-            si_info = self.database.get_object_info(semantic_index, 'learning_task')
-            models = si_info['models']
-            keys = si_info['keys']
-            available_keys = list(like.keys()) + ['_base']
-            model, key = next((m, k) for m, k in zip(models, keys) if k in available_keys)
-            document = MongoStyleDict(like)
-            if '_outputs' not in document:
-                document['_outputs'] = {}
-            key_to_watch = si_info['keys_to_watch'][0]
-            model_identifier = next(m for i, m in enumerate(si_info['models'])
-                                    if si_info['keys'][i] == key_to_watch)
-            watcher_info = self.database.get_object_info(f'[{semantic_index}]:{model_identifier}/{key_to_watch}',
-                                                         'watcher')
-            features = watcher_info.get('features', {})
-            for subkey in features:
-                if subkey not in document:
-                    continue
-                if subkey not in document['_outputs']:
-                    document['_outputs'][subkey] = {}
-                if features[subkey] not in document['_outputs'][subkey]:
-                    document['_outputs'][subkey][features[subkey]] = \
-                        apply_model(self.models[features[subkey]], document[subkey])
-                document[subkey] = document['_outputs'][subkey][features[subkey]]
-            model_input = document[key] if key != '_base' else document
-            model = self.models[model]
-            with torch.no_grad():
-                h = apply_model(model, model_input, True)
+
+        available_keys = list(like.keys()) + ['_base']
+        model, key = next((m, k) for m, k in zip(models, keys) if k in available_keys)
+        document = MongoStyleDict(like)
+        if '_outputs' not in document:
+            document['_outputs'] = {}
+        features = watcher_info.get('features', {})
+        for subkey in features:
+            if subkey not in document:
+                continue
+            if subkey not in document['_outputs']:
+                document['_outputs'][subkey] = {}
+            if features[subkey] not in document['_outputs'][subkey]:
+                document['_outputs'][subkey][features[subkey]] = \
+                    apply_model(self.models[features[subkey]], document[subkey])
+            document[subkey] = document['_outputs'][subkey][features[subkey]]
+        model_input = document[key] if key != '_base' else document
+        model = self.models[model]
+        with torch.no_grad():
+            h = apply_model(model, model_input, True)
         return hash_set.find_nearest_from_hash(h, n=n)
 
     def _find_similar_then_matches(self, filter, like, *args, raw=False, features=None, n=10,

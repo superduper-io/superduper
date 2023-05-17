@@ -19,7 +19,6 @@ from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
 from superduperdb.models.base import wrap_model
 from superduperdb.fetchers.downloads import gather_uris
-from superduperdb.apis.secrets import CallableWithSecret
 from superduperdb.misc.special_dicts import ArgumentDefaultDict
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.misc import progress
@@ -43,7 +42,7 @@ class BaseDatabase:
         self._type_lookup = None
 
         self._hash_set = None
-        self._all_hash_sets = ArgumentDefaultDict(self._load_hashes)
+        self._all_hash_sets = {}
 
     def _reload_type_lookup(self):
         self._type_lookup = {}
@@ -284,9 +283,6 @@ class BaseDatabase:
         serializer_kwargs = serializer_kwargs or {}
         assert identifier not in self._list_objects(variety)
         secrets = {}
-        if isinstance(object, CallableWithSecret):
-            secrets = {'secrets': object.secrets}
-            object.secrets = None
         file_id = self._create_serialized_file(object, serializer=serializer,
                                                serializer_kwargs=serializer_kwargs)
         self._create_object_entry({
@@ -597,9 +593,6 @@ class BaseDatabase:
     def _get_hashes_for_query_parameters(self, semantic_index, *query_params):
         raise NotImplementedError
 
-    def _get_hash_set(self, semantic_index):
-        return self._all_hash_sets[semantic_index]
-
     def _get_job_info(self, identifier):
         raise NotImplementedError
 
@@ -717,7 +710,40 @@ class BaseDatabase:
     def _load_blob_of_bytes(self, file_id):
         raise NotImplementedError
 
-    def _load_hashes(self, identifier):
+    def _load_hashes(self, watcher=None, measure=None, hash_set_cls=None,
+                     hash_set_kwargs=None):
+        watcher_info = self.get_object_info(watcher, 'watcher')
+        filter = watcher_info.get('filter', {})
+        key = watcher_info.get('key', '_base')
+        filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
+        c = self.execute_query(*watcher_info['query_params'])
+        loaded = []
+        ids = []
+        docs = progress.progressbar(c)
+        logging.info(f'loading hashes: "{watcher["identifier"]}"')
+        for r in docs:
+            h = self._get_hash_from_record(r, watcher_info)
+            loaded.append(h)
+            ids.append(r['_id'])
+        h = hash_set_cls(
+            loaded,
+            ids,
+            measure=measure,
+            **hash_set_kwargs,
+        )
+        self._all_hash_sets[watcher] = h
+
+    def _get_watcher_for_learning_task(self, learning_task):
+        info = self.get_object_info(learning_task, 'learning_task')
+        key_to_watch = info['keys_to_watch'][0]
+        model_identifier = next(
+            m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch)
+        return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
+
+    def _load_hashes_from_watcher_info(self):
+        ...
+
+    def _load_hashes_from_learning_task(self, identifier):
         info = self.get_object_info(identifier, 'learning_task')
         key_to_watch = info['keys_to_watch'][0]
         model_identifier = next(m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch)
@@ -758,8 +784,6 @@ class BaseDatabase:
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
         m = self._load_serialized_file(info['object'], serializer=info['serializer'])
-        if isinstance(m, CallableWithSecret) and 'secrets' in info:
-            m.secrets = info['secrets']
         return m
 
     def _load_serialized_file(self, file_id, serializer='pickle'):

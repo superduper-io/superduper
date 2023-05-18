@@ -17,7 +17,7 @@ AVAILABLE_MODELS = [r['id'] for r in Model.list()['data']]
 class BaseOpenAI(SuperDuperModel):
     def __init__(self, model_id):
         self.model_id = model_id
-        assert model_id in AVAILABLE_MODELS
+        assert model_id in AVAILABLE_MODELS, "model not in list of OpenAI available models"
         assert 'OPENAI_API_KEY' in os.environ, "OPENAI_API_KEY not set"
 
 

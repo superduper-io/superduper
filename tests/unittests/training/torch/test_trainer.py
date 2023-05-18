@@ -1,11 +1,12 @@
 from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_semantic_index
-from tests.fixtures.collection import random_data, float_tensors, empty, a_model, c_model
 from tests.material.losses import ranking_loss
 from tests.material.metrics import PatK
 from tests.material.measures import dot
+from superduperdb.vector_search.vanilla.measures import dot
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 
+from tests.fixtures.collection import random_data, float_tensors, empty, a_model, c_model
 
 def test_semantic_index(random_data, a_model, c_model):
 
@@ -21,7 +22,6 @@ def test_semantic_index(random_data, a_model, c_model):
     )
 
     random_data.create_validation_set('test_validation', sample_size=10)
-
     random_data.create_metric('p_at_1', PatK(1))
     random_data.create_learning_task(
         ['linear_a', 'linear_c'],

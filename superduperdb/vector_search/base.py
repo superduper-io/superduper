@@ -10,6 +10,8 @@ class BaseHashSet:
             h = numpy.stack(h)
         elif isinstance(h, list) and isinstance(h[0], list):
             h = numpy.array(h)
+        elif isinstance(h, torch.Tensor):
+            h = h.numpy()
         self.h = h
         self.index = index
         if index is not None:

@@ -24,6 +24,8 @@ from superduperdb.fetchers.downloads import Downloader
 from superduperdb.misc import progress
 from superduperdb.models.vanilla.wrapper import FunctionWrapper
 from superduperdb.misc.logger import logging
+from superduperdb.vector_search import hash_set_classes
+from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 
 
 class BaseDatabase:
@@ -710,8 +712,7 @@ class BaseDatabase:
     def _load_blob_of_bytes(self, file_id):
         raise NotImplementedError
 
-    def _load_hashes(self, watcher=None, measure=None, hash_set_cls=None,
-                     hash_set_kwargs=None):
+    def _load_hashes(self, watcher, measure='css', hash_set_cls='vanilla'):
         watcher_info = self.get_object_info(watcher, 'watcher')
         filter = watcher_info.get('filter', {})
         key = watcher_info.get('key', '_base')
@@ -720,16 +721,18 @@ class BaseDatabase:
         loaded = []
         ids = []
         docs = progress.progressbar(c)
-        logging.info(f'loading hashes: "{watcher["identifier"]}"')
+        logging.info(f'loading hashes: "{watcher_info["identifier"]}"')
         for r in docs:
             h = self._get_hash_from_record(r, watcher_info)
             loaded.append(h)
             ids.append(r['_id'])
+        if hash_set_cls is None:
+            hash_set_cls = VanillaHashSet
+        hash_set_cls = hash_set_classes[hash_set_cls]
         h = hash_set_cls(
             loaded,
             ids,
             measure=measure,
-            **hash_set_kwargs,
         )
         self._all_hash_sets[watcher] = h
 
@@ -771,7 +774,6 @@ class BaseDatabase:
             loaded,
             ids,
             measure=configuration.get('measure', superduperdb.vector_search.vanilla.measures.css),
-            **configuration.get('hash_set_kwargs', {})
         )
 
     def _load_object(self, identifier, variety):

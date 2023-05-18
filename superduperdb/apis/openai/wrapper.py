@@ -10,6 +10,7 @@ from superduperdb.models.base import SuperDuperModel
 
 
 do_retry = DoRetry((Timeout, RateLimitError, TryAgain, ServiceUnavailableError))
+
 AVAILABLE_MODELS = [r['id'] for r in Model.list()['data']]
 
 
@@ -21,6 +22,7 @@ class BaseOpenAI(SuperDuperModel):
 
 
 class Embedding(BaseOpenAI):
+
     @do_retry
     def predict_one(self, text, **kwargs):
         return _Embedding.create(input=text, model=self.model_id, **kwargs)['data'][0]['embedding']

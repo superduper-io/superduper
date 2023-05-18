@@ -35,7 +35,6 @@ class Collection(MongoCollection):
         self._hash_set = None
         self._semantic_index = None
 
-        self.measures = self.database.measures
         self.metrics = self.database.metrics
         self.models = self.database.models
         self.types = self.database.types
@@ -104,15 +103,6 @@ class Collection(MongoCollection):
         """
         return self.database.create_learning_task(models, keys, *(self.name, *query_params),
                                                   **kwargs)
-
-    def create_measure(self, *args, **kwargs):
-        """
-        Create measure.
-
-        :param args: positional arguments to ``self.database.create_measure``
-        :param kwargs: passed to ``self.database.create_measure``
-        """
-        return self.database.create_measure(*args, **kwargs)
 
     def create_metric(self, *args, **kwargs):
         """
@@ -207,12 +197,6 @@ class Collection(MongoCollection):
         """
         return self.database.delete_learning_task(*args, **kwargs)
 
-    def delete_measure(self, *args, **kwargs):
-        """
-        Delete measure
-        """
-        return self.database.delete_measure(*args, **kwargs)
-
     def delete_metric(self, *args, **kwargs):
         """
         Delete metric
@@ -302,7 +286,7 @@ class Collection(MongoCollection):
 
     def find(self, filter=None, *args, like=None, n=10, similar_first=False, raw=False,
              features=None, download=False, similar_join=None, semantic_index=None,
-             watcher=None, hash_set_cls=None, hash_set_kwargs=None, **kwargs):
+             watcher=None, hash_set_cls='vanilla', measure='css', **kwargs):
         """
         Behaves like MongoDB ``find`` with similarity search as additional option.
 
@@ -322,25 +306,22 @@ class Collection(MongoCollection):
         if download and like is not None:
             like = self._get_content_for_filter(like)    # pragma: no cover
         if like is not None:
-            if semantic_index is None:
-                semantic_index = self.database.get_meta_data(key='semantic_index',
-                                                             collection=self.name)
             if similar_first:
                 return self._find_similar_then_matches(filter, like, *args, raw=raw,
                                                        features=features, like=like,
                                                        semantic_index=semantic_index,
                                                        n=n,
+                                                       measure=measure,
                                                        watcher=watcher,
                                                        hash_set_cls=hash_set_cls,
-                                                       hash_set_kwargs=hash_set_kwargs,
                                                        **kwargs)
             else:
                 return self._find_matches_then_similar(filter, like, *args, raw=raw,
                                                        n=n,
                                                        features=features,
+                                                       measure=measure,
                                                        semantic_index=semantic_index,
                                                        hash_set_cls=hash_set_cls,
-                                                       hash_set_kwargs=hash_set_kwargs,
                                                        watcher=watcher,
                                                        **kwargs)
         else:
@@ -476,12 +457,10 @@ class Collection(MongoCollection):
     def find_nearest(self, like: Convertible(), ids=None, n=10,
                      watcher=None,
                      semantic_index=None,
-                     measure=None,
-                     hash_set_cls=None,
-                     hash_set_kwargs=None) -> Tuple([List(ObjectIdConvertible()), Any]):
+                     measure='css',
+                     hash_set_cls='vanilla') -> Tuple([List(ObjectIdConvertible()), Any]):
 
-        if semantic_index is None:
-            semantic_index = self.database._get_meta_data('semantic_index')
+        if semantic_index is not None:
             si_info = self.database.get_object_info(semantic_index, variety='learning_task')
             models = si_info['models']
             keys = si_info['keys']
@@ -494,8 +473,7 @@ class Collection(MongoCollection):
 
         if watcher not in self.database._all_hash_sets:
             self.database._load_hashes(watcher=watcher, measure=measure,
-                                       hash_set_cls=hash_set_cls,
-                                       hash_set_kwargs=hash_set_kwargs)
+                                       hash_set_cls=hash_set_cls)
 
         hash_set = self.database._all_hash_sets[watcher]
         if ids is not None:
@@ -521,14 +499,14 @@ class Collection(MongoCollection):
             document[subkey] = document['_outputs'][subkey][features[subkey]]
         model_input = document[key] if key != '_base' else document
         model = self.models[model]
-        with torch.no_grad():
-            h = apply_model(model, model_input, True)
+        h = model.predict_one(model_input)
         return hash_set.find_nearest_from_hash(h, n=n)
 
     def _find_similar_then_matches(self, filter, like, *args, raw=False, features=None, n=10,
-                                   semantic_index=None,
+                                   semantic_index=None, watcher=None, hash_set_cls='vanilla',
                                    **kwargs):
-        similar_ids, scores = self.find_nearest(like, n=n, semantic_index=semantic_index)
+        similar_ids, scores = self.find_nearest(like, n=n, semantic_index=semantic_index,
+                                                watcher=watcher, hash_set_cls='vanilla')
         filter = {
             '$and': [
                 filter,
@@ -548,7 +526,8 @@ class Collection(MongoCollection):
             )
 
     def _find_matches_then_similar(self, filter, like, *args, raw=False, features=None, n=10,
-                                   semantic_index=None, **kwargs):
+                                   semantic_index=None, watcher=None, hash_set_cls='vanilla',
+                                   measure='css', **kwargs):
         if filter:
             matches_cursor = SuperDuperCursor(
                 self,
@@ -560,15 +539,19 @@ class Collection(MongoCollection):
             )
             ids = [x['_id'] for x in matches_cursor]
             similar_ids, scores = \
-                self.find_nearest(like, ids=ids, n=n, semantic_index=semantic_index)
+                self.find_nearest(like, ids=ids, n=n, semantic_index=semantic_index,
+                                  watcher=watcher, hash_set_cls=hash_set_cls,
+                                  measure=measure)
         else:  # pragma: no cover
             similar_ids, scores = \
-                self.find_nearest(like, n=n, semantic_index=semantic_index)
+                self.find_nearest(like, n=n, semantic_index=semantic_index,
+                                  watcher=watcher, hash_set_cls=hash_set_cls,
+                                  measure=measure)
 
         if raw:
-            return Cursor(self, {'_id': {'$in': similar_ids}}, **kwargs)  # pragma: no cover
+            return Cursor(self, {'_id': {'$in': similar_ids}}, *args, **kwargs)  # pragma: no cover
         else:
-            return SuperDuperCursor(self, {'_id': {'$in': similar_ids}},
+            return SuperDuperCursor(self, {'_id': {'$in': similar_ids}}, *args,
                                     features=features,
                                     scores=dict(zip(similar_ids, scores)), **kwargs)
 

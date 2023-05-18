@@ -15,7 +15,7 @@ class FaissHashSet(BaseHashSet):
 
     https://github.com/facebookresearch/faiss
 
-    :param h: ``numpy.array``, ``torch.Tensor` or ``list``
+    :param h: ``numpy.array``, ``torch.Tensor`` or ``list``
     :param index: list of IDs
     :param measure: measure to assess similarity {'l2', 'dot', 'css'}
     :param faiss_index: Faiss index object if available (prevents need to fit anew)

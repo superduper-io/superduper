@@ -743,9 +743,6 @@ class BaseDatabase:
             m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch)
         return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
 
-    def _load_hashes_from_watcher_info(self):
-        ...
-
     def _load_hashes_from_learning_task(self, identifier):
         info = self.get_object_info(identifier, 'learning_task')
         key_to_watch = info['keys_to_watch'][0]

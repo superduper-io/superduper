@@ -29,13 +29,6 @@ def empty():
 
 
 @pytest.fixture()
-def measure(empty):
-    empty.create_measure('css', css)
-    yield empty
-    empty.delete_measure('css', force=True)
-
-
-@pytest.fixture()
 def metric(empty):
     empty.create_metric('p_at_1', PatK(1))
     yield empty
@@ -86,33 +79,13 @@ def an_update():
 
 
 @pytest.fixture()
-def with_semantic_index(random_data, a_model, measure):
+def with_semantic_index(random_data, a_model):
     random_data.create_learning_task(
         ['linear_a'],
         ['x'],
         keys_to_watch=['x'],
         identifier='test_learning_task',
         configuration={'hash_set_cls': VanillaHashSet, 'measure': css},
-    )
-    random_data.database['_meta'].insert_one({'key': 'semantic_index',
-                                              'collection': 'documents',
-                                              'value': 'test_learning_task'})
-    yield random_data
-    if random_data.remote:
-        random_data.clear_remote_cache()
-    random_data.delete_learning_task('test_learning_task', force=True)
-    random_data['_meta'].delete_one({'key': 'semantic_index'})
-
-
-
-@pytest.fixture()
-def with_faiss_semantic_index(random_data, a_model, measure):
-    random_data.create_learning_task(
-        ['linear_a'],
-        ['x'],
-        keys_to_watch=['x'],
-        identifier='test_learning_task',
-        configuration={'hash_set_cls': FaissHashSet, 'measure': 'css'},
     )
     random_data.database['_meta'].insert_one({'key': 'semantic_index',
                                               'collection': 'documents',

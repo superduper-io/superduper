@@ -1,6 +1,5 @@
 import numpy
 from sklearn.svm import SVC
-from tests.fixtures.collection import random_arrays, arrays, empty, int64
 
 
 def test_pipeline(random_arrays, int64):

@@ -5,7 +5,8 @@ from warnings import warn
 cf_logging = cf.get('logging', {'type': 'stdout', 'level': 'INFO'})
 
 if cf_logging['type'] == 'stdout':
-    logging = lambda: None
+    def logging():
+        return None
     logging.info = (
         print if cf_logging['level'] in {'DEBUG', 'INFO'} else lambda x: None
     )

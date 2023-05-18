@@ -4,11 +4,10 @@ import lorem
 import numpy
 
 from superduperdb.datalayer.mongodb.client import SuperDuperClient
-from superduperdb.vector_search.faiss.hashes import FaissHashSet
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
 from tests.material.types import FloatTensor, Image, Array32, Int64
-from tests.material.measures import css, dot
+from tests.material.measures import css
 from tests.material.metrics import PatK, accuracy
 
 import pytest
@@ -119,7 +118,7 @@ def imputation_validation(random_data):
 @pytest.fixture()
 def float_tensors(empty):
     empty.create_type('float_tensor', FloatTensor())
-    t = empty.types['float_tensor']
+    empty.types['float_tensor']
     yield empty
     empty.delete_type('float_tensor', force=True)
 
@@ -127,7 +126,7 @@ def float_tensors(empty):
 @pytest.fixture()
 def arrays(empty):
     empty.create_type('array', Array32())
-    t = empty.types['array']
+    empty.types['array']
     yield empty
     empty.delete_type('array', force=True)
 
@@ -144,7 +143,7 @@ def sentences(empty):
 @pytest.fixture()
 def int64(empty):
     empty.create_type('int64', Int64())
-    t = empty.types['int64']
+    empty.types['int64']
     yield empty
     empty.delete_type('int64', force=True)
 

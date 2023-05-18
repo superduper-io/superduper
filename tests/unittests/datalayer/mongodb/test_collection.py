@@ -2,22 +2,6 @@ from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_semantic_index
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.fixtures.collection import (
-    float_tensors,
-    empty,
-    a_model,
-    b_model,
-    c_model,
-    random_data,
-    si_validation,
-    metric,
-    a_classifier,
-    a_target,
-    accuracy_metric,
-    imputation_validation,
-    with_semantic_index,
-    an_update,
-    a_watcher,
-    image_type,
     n_data_points,
 )
 import PIL.PngImagePlugin

@@ -1,12 +1,3 @@
-from tests.fixtures.collection import (
-    empty,
-    float_tensors,
-    random_data,
-    a_watcher,
-    a_model,
-    a_watcher_base,
-    a_model_base,
-)
 
 from superduperdb.training.query_dataset import QueryDataset
 

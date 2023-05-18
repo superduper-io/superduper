@@ -1,4 +1,3 @@
-from tests.fixtures.collection import sentences, empty, arrays
 from sentence_transformers import SentenceTransformer
 
 

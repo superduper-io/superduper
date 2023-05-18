@@ -1,4 +1,3 @@
-from tests.fixtures.collection import random_data, float_tensors, empty
 from superduperdb.training.pytorch_lightning.trainer import (
     LightningConfiguration,
 )

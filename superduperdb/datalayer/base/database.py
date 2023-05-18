@@ -85,9 +85,12 @@ class BaseDatabase:
         """
         Apply model to input.
 
-        :param model: model or ``str`` referring to an uploaded model (see ``self.list_models``)
+        :param model: model or ``str`` referring to an uploaded model
+            (see ``self.list_models``)
+
         :param input_: input_ to be passed to the model.
-                       Must be possible to encode with registered types (``self.list_types``)
+            Must be possible to encode with registered types (``self.list_types``)
+
         :param kwargs: key-values (see ``superduperdb.models.utils.predict``)
         """
         if isinstance(model, str):
@@ -130,7 +133,7 @@ class BaseDatabase:
         info = self.get_object_info(identifier, 'neighbourhood')
         watcher_info = self.get_object_info(identifier, 'watcher')
         ids = self._get_ids_from_query(*watcher_info['query_params'])
-        logging.info(f'getting hash set')
+        logging.info('getting hash set')
         h = self._get_hashes_for_query_parameters(
             info['semantic_index'], *info['query_params']
         )
@@ -247,8 +250,8 @@ class BaseDatabase:
 
     def create_metric(self, identifier, object, **kwargs):
         """
-        Create metric, called by ``self.create_learning_task``, to measure performance of
-        learning on validation_sets (see ``self.list_validation_sets``)
+        Create metric, called by ``self.create_learning_task``, to measure
+        performance of learning on validation_sets (see ``self.list_validation_sets``)
 
         :param identifier: identifier
         :param object: Python object

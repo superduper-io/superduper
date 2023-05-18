@@ -1,4 +1,3 @@
-from tests.fixtures.collection import random_arrays, arrays, empty
 from sklearn.svm import SVC
 from superduperdb.training.sklearn.trainer import SklearnTrainerConfiguration
 

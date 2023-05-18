@@ -18,7 +18,6 @@ from superduperdb.datalayer.mongodb.cursor import SuperDuperCursor
 
 from pymongo.collection import Collection as MongoCollection
 from pymongo.cursor import Cursor
-import torch.utils.data
 
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.fetchers.downloads import gather_uris, InMemoryDownloader

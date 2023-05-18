@@ -1,13 +1,11 @@
-import networkx
-
 from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_semantic_index
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.fixtures.collection import (
     float_tensors, empty, a_model, b_model, c_model, random_data,
-    si_validation, measure, metric, a_classifier, a_target, accuracy_metric,
+    si_validation, metric, a_classifier, a_target, accuracy_metric,
     imputation_validation, with_semantic_index, an_update, a_watcher, image_type,
-    n_data_points, with_faiss_semantic_index
+    n_data_points
 )
 import PIL.PngImagePlugin
 import os
@@ -15,7 +13,7 @@ import pytest
 import torch
 
 from tests.material.losses import ranking_loss
-from tests.material.measures import css
+from superduperdb.vector_search.vanilla.measures import css
 
 remote = os.environ.get('SUPERDUPERDB_REMOTE_TEST', 'local')
 image_url = 'https://www.superduperdb.com/logos/white.png'
@@ -38,16 +36,18 @@ def test_find(with_semantic_index, remote):
     with_semantic_index.remote = remote
     print(with_semantic_index.count_documents({}))
     r = with_semantic_index.find_one()
-    s = with_semantic_index.find_one(like={'x': r['x']})
+    s = with_semantic_index.find_one(like={'x': r['x']}, semantic_index='test_learning_task')
     assert s['_id'] == r['_id']
 
 
 @pytest.mark.parametrize('remote', remote_values)
-def test_find_faiss(with_faiss_semantic_index, remote):
-    with_faiss_semantic_index.remote = remote
-    print(with_faiss_semantic_index.count_documents({}))
-    r = with_faiss_semantic_index.find_one()
-    s = with_faiss_semantic_index.find_one(like={'x': r['x']})
+def test_find_faiss(with_semantic_index, remote):
+    with_semantic_index.remote = remote
+    print(with_semantic_index.count_documents({}))
+    r = with_semantic_index.find_one()
+    s = with_semantic_index.find_one(like={'x': r['x']},
+                                           semantic_index='test_learning_task',
+                                           hash_set_cls='faiss')
     assert s['_id'] == r['_id']
 
 
@@ -120,7 +120,7 @@ def test_watcher(random_data, a_model, b_model, remote):
 
 
 @pytest.mark.parametrize('remote', remote_values)
-def test_learning_task(si_validation, a_model, c_model, measure, metric, remote):
+def test_learning_task(si_validation, a_model, c_model, metric, remote):
     si_validation.remote = remote
     jobs = si_validation.create_learning_task(
         ['linear_a', 'linear_c'],

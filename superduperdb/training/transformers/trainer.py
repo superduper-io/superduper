@@ -7,30 +7,38 @@ class TransformersTrainerConfiguration(TrainerConfiguration):
     def __init__(self, training_arguments: TrainingArguments, **kwargs):
         super().__init__(training_arguments=training_arguments, **kwargs)
 
-    def __call__(self,
-                 identifier,
-                 models,
-                 keys,
-                 model_names,
-                 database_type,
-                 database_name,
-                 query_params,
-                 splitter=None,
-                 validation_sets=(),
-                 metrics=None,
-                 features=None,
-                 save=None,
-                 download=False):
-
+    def __call__(
+        self,
+        identifier,
+        models,
+        keys,
+        model_names,
+        database_type,
+        database_name,
+        query_params,
+        splitter=None,
+        validation_sets=(),
+        metrics=None,
+        features=None,
+        save=None,
+        download=False,
+    ):
         tokenizing_function = TokenizingFunction(models[0].tokenizer)
-        train_data, valid_data = \
-            self._get_data(database_type, database_name, query_params,
-                           keys, features=features, transform=tokenizing_function)
+        train_data, valid_data = self._get_data(
+            database_type,
+            database_name,
+            query_params,
+            keys,
+            features=features,
+            transform=tokenizing_function,
+        )
         optimizers = self.get('optimizers')
 
         args = self.training_arguments
         assert args.save_total_limit == 1, "Only top model saving supported..."
-        assert args.save_strategy == 'epoch', "Only 'epoch' save strategy supported..."
+        assert (
+            args.save_strategy == 'epoch'
+        ), "Only 'epoch' save strategy supported..."
 
         TrainerWithSaving(
             model=models[0],
@@ -49,5 +57,3 @@ class TrainerWithSaving(Trainer):
     def _save_checkpoint(self, model, trial, metrics=None):
         super()._save_checkpoint(model, trial, metrics=metrics)
         self.custom_saver(self.args.output_dir, self.model)
-
-

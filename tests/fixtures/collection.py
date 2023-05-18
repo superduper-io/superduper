@@ -87,9 +87,13 @@ def with_semantic_index(random_data, a_model):
         identifier='test_learning_task',
         configuration={'hash_set_cls': VanillaHashSet, 'measure': css},
     )
-    random_data.database['_meta'].insert_one({'key': 'semantic_index',
-                                              'collection': 'documents',
-                                              'value': 'test_learning_task'})
+    random_data.database['_meta'].insert_one(
+        {
+            'key': 'semantic_index',
+            'collection': 'documents',
+            'value': 'test_learning_task',
+        }
+    )
     yield random_data
     if random_data.remote:
         random_data.clear_remote_cache()
@@ -99,7 +103,9 @@ def with_semantic_index(random_data, a_model):
 
 @pytest.fixture()
 def si_validation(random_data):
-    random_data.create_validation_set('my_valid', {'_fold': 'valid'}, chunk_size=100)
+    random_data.create_validation_set(
+        'my_valid', {'_fold': 'valid'}, chunk_size=100
+    )
 
     yield random_data
 
@@ -130,9 +136,7 @@ def arrays(empty):
 def sentences(empty):
     data = []
     for _ in range(100):
-        data.append(
-            {'text': lorem.sentence()}
-        )
+        data.append({'text': lorem.sentence()})
     empty.insert_many(data)
     yield empty
 
@@ -154,7 +158,9 @@ def image_type(empty):
 
 @pytest.fixture()
 def a_model(float_tensors):
-    float_tensors.create_model('linear_a', torch.nn.Linear(32, 16), type='float_tensor')
+    float_tensors.create_model(
+        'linear_a', torch.nn.Linear(32, 16), type='float_tensor'
+    )
     yield float_tensors
     try:
         float_tensors.delete_model('linear_a', force=True)
@@ -166,7 +172,9 @@ def a_model(float_tensors):
 
 @pytest.fixture()
 def a_model_base(float_tensors):
-    float_tensors.create_model('linear_a_base', LinearBase(32, 16), type='float_tensor')
+    float_tensors.create_model(
+        'linear_a_base', LinearBase(32, 16), type='float_tensor'
+    )
     yield float_tensors
     try:
         float_tensors.delete_model('linear_a_base', force=True)
@@ -193,8 +201,7 @@ def a_watcher_base(a_model_base):
 
 @pytest.fixture()
 def a_classifier(float_tensors):
-    float_tensors.create_model('classifier',
-                               BinaryClassifier(32))
+    float_tensors.create_model('classifier', BinaryClassifier(32))
     yield float_tensors
     try:
         float_tensors.delete_model('classifier', force=True)
@@ -206,8 +213,7 @@ def a_classifier(float_tensors):
 
 @pytest.fixture()
 def a_target(float_tensors):
-    float_tensors.create_function('target',
-                                  BinaryTarget())
+    float_tensors.create_function('target', BinaryTarget())
     yield float_tensors
     try:
         float_tensors.delete_function('target', force=True)
@@ -219,7 +225,9 @@ def a_target(float_tensors):
 
 @pytest.fixture()
 def b_model(float_tensors):
-    float_tensors.create_model('linear_b', torch.nn.Linear(16, 8), type='float_tensor')
+    float_tensors.create_model(
+        'linear_b', torch.nn.Linear(16, 8), type='float_tensor'
+    )
     yield float_tensors
     try:
         float_tensors.delete_model('linear_b', force=True)
@@ -231,7 +239,9 @@ def b_model(float_tensors):
 
 @pytest.fixture()
 def c_model(float_tensors):
-    float_tensors.create_model('linear_c', torch.nn.Linear(32, 16), type='float_tensor')
+    float_tensors.create_model(
+        'linear_c', torch.nn.Linear(32, 16), type='float_tensor'
+    )
     yield float_tensors
     try:
         float_tensors.delete_model('linear_c', force=True)
@@ -239,5 +249,3 @@ def c_model(float_tensors):
         if "'NoneType' object is not subscriptable" in str(e):
             return
         raise e
-
-

@@ -2,10 +2,23 @@ from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_semantic_index
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.fixtures.collection import (
-    float_tensors, empty, a_model, b_model, c_model, random_data,
-    si_validation, metric, a_classifier, a_target, accuracy_metric,
-    imputation_validation, with_semantic_index, an_update, a_watcher, image_type,
-    n_data_points
+    float_tensors,
+    empty,
+    a_model,
+    b_model,
+    c_model,
+    random_data,
+    si_validation,
+    metric,
+    a_classifier,
+    a_target,
+    accuracy_metric,
+    imputation_validation,
+    with_semantic_index,
+    an_update,
+    a_watcher,
+    image_type,
+    n_data_points,
 )
 import PIL.PngImagePlugin
 import os
@@ -21,7 +34,7 @@ image_url = 'https://www.superduperdb.com/logos/white.png'
 remote_values = {
     'local': [False],
     'local+remote': [False, True],
-    'remote': [True]
+    'remote': [True],
 }[remote]
 
 
@@ -36,7 +49,9 @@ def test_find(with_semantic_index, remote):
     with_semantic_index.remote = remote
     print(with_semantic_index.count_documents({}))
     r = with_semantic_index.find_one()
-    s = with_semantic_index.find_one(like={'x': r['x']}, semantic_index='test_learning_task')
+    s = with_semantic_index.find_one(
+        like={'x': r['x']}, semantic_index='test_learning_task'
+    )
     assert s['_id'] == r['_id']
 
 
@@ -45,9 +60,11 @@ def test_find_faiss(with_semantic_index, remote):
     with_semantic_index.remote = remote
     print(with_semantic_index.count_documents({}))
     r = with_semantic_index.find_one()
-    s = with_semantic_index.find_one(like={'x': r['x']},
-                                           semantic_index='test_learning_task',
-                                           hash_set_cls='faiss')
+    s = with_semantic_index.find_one(
+        like={'x': r['x']},
+        semantic_index='test_learning_task',
+        hash_set_cls='faiss',
+    )
     assert s['_id'] == r['_id']
 
 
@@ -68,7 +85,7 @@ def test_insert_from_uris(empty, image_type, remote):
     to_insert = [
         {
             'item': {
-                    '_content': {
+                '_content': {
                     'uri': image_url,
                     'type': 'image',
                 }
@@ -80,7 +97,7 @@ def test_insert_from_uris(empty, image_type, remote):
                         'type': 'image',
                     }
                 }
-            }
+            },
         }
         for _ in range(2)
     ]
@@ -89,7 +106,9 @@ def test_insert_from_uris(empty, image_type, remote):
         for node in G.G.nodes:
             empty.watch_job(G.G.nodes[node]['job_id'])
     assert isinstance(empty.find_one()['item'], PIL.PngImagePlugin.PngImageFile)
-    assert isinstance(empty.find_one()['other']['item'], PIL.PngImagePlugin.PngImageFile)
+    assert isinstance(
+        empty.find_one()['other']['item'], PIL.PngImagePlugin.PngImageFile
+    )
 
 
 @pytest.mark.parametrize('remote', remote_values)
@@ -103,8 +122,9 @@ def test_watcher(random_data, a_model, b_model, remote):
 
     assert 'linear_a' in random_data.find_one()['_outputs']['x']
 
-    outputs = random_data.insert_many([{'x': torch.randn(32), 'update': True}
-                                      for _ in range(5)])
+    outputs = random_data.insert_many(
+        [{'x': torch.randn(32), 'update': True} for _ in range(5)]
+    )
     if remote:
         for node in outputs[1].G.nodes:
             random_data.watch_job(outputs[1].G.nodes[node]['job_id'])
@@ -112,10 +132,14 @@ def test_watcher(random_data, a_model, b_model, remote):
     assert 'linear_a' in random_data.find_one({'update': True})['_outputs']['x']
 
     if remote:
-        job_id = random_data.create_watcher('linear_b', key='x', features={'x': 'linear_a'}).key
+        job_id = random_data.create_watcher(
+            'linear_b', key='x', features={'x': 'linear_a'}
+        ).key
         random_data.watch_job(job_id)
     else:
-        random_data.create_watcher('linear_b', key='x', features={'x': 'linear_a'})
+        random_data.create_watcher(
+            'linear_b', key='x', features={'x': 'linear_a'}
+        )
     assert 'linear_b' in random_data.find_one()['_outputs']['x']
 
 
@@ -144,13 +168,12 @@ def test_learning_task(si_validation, a_model, c_model, metric, remote):
             hash_set_cls=VanillaHashSet,
             measure=css,
         ),
-        validation_sets=('my_valid',)
+        validation_sets=('my_valid',),
     )
 
     if remote:
         for job in jobs:
             si_validation.watch_job(job.key)
-
 
 
 @pytest.mark.parametrize('remote', remote_values)

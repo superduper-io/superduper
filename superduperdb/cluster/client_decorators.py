@@ -4,11 +4,17 @@ import inspect
 import requests
 
 from superduperdb import cf
-from superduperdb.cluster.annotations import encode_args, encode_kwargs, decode_result
+from superduperdb.cluster.annotations import (
+    encode_args,
+    encode_kwargs,
+    decode_result,
+)
 from superduperdb.misc.logger import logging
 
 
-def use_vector_search(database_type, database_name, table_name, method, args, kwargs):
+def use_vector_search(
+    database_type, database_name, table_name, method, args, kwargs
+):
     bson_ = {
         'database_name': database_name,
         'database_type': database_type,
@@ -28,6 +34,7 @@ def use_vector_search(database_type, database_name, table_name, method, args, kw
 
 def vector_search(f):
     sig = inspect.signature(f)
+
     @wraps(f)
     def vector_search_wrapper(table, *args, remote=None, **kwargs):
         if remote is None:
@@ -47,6 +54,7 @@ def vector_search(f):
             return out
         else:
             return f(table, *args, **kwargs)
+
     vector_search_wrapper.signature = sig
     vector_search_wrapper.f = f
     return vector_search_wrapper
@@ -60,6 +68,7 @@ def model_server(f):
     """
 
     sig = inspect.signature(f)
+
     @wraps(f)
     def model_server_wrapper(database, *args, remote=None, **kwargs):
         if remote is None:
@@ -78,6 +87,7 @@ def model_server(f):
             return out
         else:
             return f(database, *args, **kwargs)
+
     model_server_wrapper.f = f
     return model_server_wrapper
 
@@ -91,11 +101,14 @@ logging.info(f'These are the RAY_MODELS: {RAY_MODELS}')
 
 
 def use_model_server(database_type, database_name, method, args, kwargs):
-    if method in {'predict', 'predict_one'} and (database_name, args[0]) in RAY_MODELS:
+    if (
+        method in {'predict', 'predict_one'}
+        and (database_name, args[0]) in RAY_MODELS
+    ):
         logging.debug('using Ray server')
         response = requests.post(
             f'http://{cf["ray"]["host"]}:{cf["ray"]["port"]}/{method}/{args[0]}',
-            data=BSON.encode({'input_': args[1]})
+            data=BSON.encode({'input_': args[1]}),
         )
     else:
         bson_ = {
@@ -112,4 +125,3 @@ def use_model_server(database_type, database_name, method, args, kwargs):
         )
     out = BSON.decode(response.content)['output']
     return out
-

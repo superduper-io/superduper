@@ -6,7 +6,7 @@ import torch
 from superduperdb.vector_search.base import BaseHashSet
 
 
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 
 class FaissHashSet(BaseHashSet):
@@ -20,6 +20,7 @@ class FaissHashSet(BaseHashSet):
     :param measure: measure to assess similarity {'l2', 'dot', 'css'}
     :param faiss_index: Faiss index object if available (prevents need to fit anew)
     """
+
     def __init__(self, h, index, measure='l2', faiss_index=None):
         super().__init__(h, index, measure)
         self.h = self.h.astype('float32')
@@ -27,11 +28,17 @@ class FaissHashSet(BaseHashSet):
             if measure == 'css':
                 self.h = self.h / (numpy.linalg.norm(self.h, axis=1)[:, None])
             if measure == 'l2':
-                faiss_index = faiss.index_factory(self.h.shape[1], 'Flat', faiss.METRIC_L2)
+                faiss_index = faiss.index_factory(
+                    self.h.shape[1], 'Flat', faiss.METRIC_L2
+                )
             elif measure in {'css', 'dot'}:
-                faiss_index = faiss.index_factory(self.h.shape[1], 'Flat', faiss.METRIC_INNER_PRODUCT)
+                faiss_index = faiss.index_factory(
+                    self.h.shape[1], 'Flat', faiss.METRIC_INNER_PRODUCT
+                )
             else:
-                raise NotImplementedError(f'"{measure}" not a supported measure for faiss')
+                raise NotImplementedError(
+                    f'"{measure}" not a supported measure for faiss'
+                )
             faiss_index.add(self.h)
         self.faiss_index = faiss_index
 

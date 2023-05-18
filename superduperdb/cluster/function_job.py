@@ -4,8 +4,9 @@ import traceback
 from superduperdb.cluster.logging import handle_function_output
 
 
-def function_job(database_type, database_name, function_name,
-                 args_, kwargs_, job_id):
+def function_job(
+    database_type, database_name, function_name, args_, kwargs_, job_id
+):
     database = get_database_from_database_type(database_type, database_name)
     database.remote = False
     function = getattr(database, function_name)
@@ -26,4 +27,3 @@ def function_job(database_type, database_name, function_name,
         database.set_job_flag(job_id, ('msg', tb))
         raise e
     database.set_job_flag(job_id, ('status', 'success'))
-

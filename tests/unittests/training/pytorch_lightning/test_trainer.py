@@ -1,5 +1,7 @@
 from tests.fixtures.collection import random_data, float_tensors, empty
-from superduperdb.training.pytorch_lightning.trainer import LightningConfiguration
+from superduperdb.training.pytorch_lightning.trainer import (
+    LightningConfiguration,
+)
 
 import pytorch_lightning as pl
 import torch
@@ -38,9 +40,9 @@ class LightningModule(pl.LightningModule):
 
 
 def test_classification(random_data):
-
-    cf = LightningConfiguration(loader_kwargs={'batch_size': 5, 'num_workers': 0},
-                                max_epochs=10)
+    cf = LightningConfiguration(
+        loader_kwargs={'batch_size': 5, 'num_workers': 0}, max_epochs=10
+    )
 
     random_data.create_model('lightning_classifier', LightningModule())
 

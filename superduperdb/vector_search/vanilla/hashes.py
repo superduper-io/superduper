@@ -13,6 +13,7 @@ class VanillaHashSet(BaseHashSet):
     :param index: list of IDs
     :param measure: measure to assess similarity
     """
+
     def __init__(self, h, index, measure='css'):
         if isinstance(measure, str):
             measure = getattr(measures, measure)

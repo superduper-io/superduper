@@ -4,8 +4,15 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 
 
 class SuperDuperCursor(Cursor):
-    def __init__(self, collection, *args, features=None, scores=None,
-                 similar_join=None, **kwargs):
+    def __init__(
+        self,
+        collection,
+        *args,
+        features=None,
+        scores=None,
+        similar_join=None,
+        **kwargs,
+    ):
         """
         Cursor subclassing *pymongo.cursor.Cursor*.
         If *features* are specified, these are substituted in the records
@@ -34,7 +41,9 @@ class SuperDuperCursor(Cursor):
                     self._results.append(super().next())
                 except StopIteration:
                     break
-            self._results = sorted(self._results, key=lambda r: -self.scores[r['_id']])
+            self._results = sorted(
+                self._results, key=lambda r: -self.scores[r['_id']]
+            )
             self.it = 0
 
     def limit(self, limit: int):
@@ -77,9 +86,12 @@ class SuperDuperCursor(Cursor):
         if self.similar_join is not None:
             if self.similar_join in r.get('_like', {}):
                 ids = r['_like'][self.similar_join]
-                lookup = {r['_id']: r for r in self.collection.find({'_id': {'$in': ids}},
-                                                                    *self._args[1:],
-                                                                    **self._kwargs)}
+                lookup = {
+                    r['_id']: r
+                    for r in self.collection.find(
+                        {'_id': {'$in': ids}}, *self._args[1:], **self._kwargs
+                    )
+                }
                 for i, id_ in enumerate(r['_like'][self.similar_join]):
                     r['_like'][self.similar_join][i] = lookup[id_]
 

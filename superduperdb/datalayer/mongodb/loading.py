@@ -22,7 +22,10 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
     """
     Dataset iterating over a query without needing to download the whole thing first.
     """
-    def __init__(self, client, database, collection, transform=None, filter=None):
+
+    def __init__(
+        self, client, database, collection, transform=None, filter=None
+    ):
         super().__init__()
         self._client = client
         self._database = database
@@ -59,12 +62,16 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
                 n_documents // worker_info.num_workers
                 if worker_info.id < worker_info.num_workers - 1
                 else (
-                        len(self) % n_documents // worker_info.num_workers
-                        + n_documents // worker_info.num_workers
+                    len(self) % n_documents // worker_info.num_workers
+                    + n_documents // worker_info.num_workers
                 )
             )
             skip = worker_info.id * per_worker
-            for r in self.collection.find(self.filter, {'_id': 0}).skip(skip).limit(per_worker):
+            for r in (
+                self.collection.find(self.filter, {'_id': 0})
+                .skip(skip)
+                .limit(per_worker)
+            ):
                 if self.transform is not None:
                     yield self.transform(r)
                 else:

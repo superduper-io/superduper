@@ -3,7 +3,9 @@ from sentence_transformers import SentenceTransformer
 
 
 def test_transformers(sentences, arrays):
-    model = SentenceTransformer('sentence-transformers/bert-base-nli-mean-tokens')
+    model = SentenceTransformer(
+        'sentence-transformers/bert-base-nli-mean-tokens'
+    )
     sentences.create_model('bert_embeddings', model, type='array')
     sentences.create_watcher('bert_embeddings', key='text')
     r = sentences.find_one()

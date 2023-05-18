@@ -21,8 +21,8 @@ class VanillaHashSet(BaseHashSet):
     def find_nearest_from_hashes(self, h, n=100):
         similarities = self.measure(h, self.h)
         logging.debug(similarities)
-        scores = numpy.sort(similarities, axis=1)
-        ix = numpy.argsort(similarities, axis=1)
+        scores = -numpy.sort(-similarities, axis=1)[:, :n]
+        ix = numpy.argsort(-similarities, axis=1)[:, :n]
         ix = ix.tolist()
         scores = scores.tolist()
         _ids = [[self.index[i] for i in sub] for sub in ix]

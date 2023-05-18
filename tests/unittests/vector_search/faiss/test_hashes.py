@@ -1,4 +1,5 @@
 import os
+from scipy.spatial.distance import cdist
 import torch
 import uuid
 
@@ -14,7 +15,7 @@ def test_faiss_hash_set():
     ids = [uuid.uuid4() for _ in range(x.shape[0])]
 
     def l2(x, y):
-        return -torch.cdist(x, y, 2)
+        return -cdist(x, y)
 
     h1 = FaissHashSet(x, ids, 'l2')
     h2 = VanillaHashSet(x, ids, l2)

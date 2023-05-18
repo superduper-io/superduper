@@ -33,6 +33,8 @@ class BaseHashSet:
     def find_nearest_from_hash(self, h, n=100):
         if isinstance(h, list):
             h = numpy.array(h)
+        elif isinstance(h, torch.Tensor):
+            h = h.numpy()
         _ids, scores = self.find_nearest_from_hashes(h[None, :], n=n)
         return _ids[0], scores[0]
 

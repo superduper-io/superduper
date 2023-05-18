@@ -28,9 +28,15 @@ class Embedding(BaseOpenAI):
         return _Embedding.create(input=text, model=self.model_id, **kwargs)['data'][0]['embedding']
 
     @do_retry
-    def predict(self, texts, **kwargs):  # asyncio?
+    def _predict_a_batch(self, texts, **kwargs):
         out = _Embedding.create(input=texts, model=self.model_id, **kwargs)['data']
         return [r['embedding'] for r in out]
+
+    def predict(self, texts, batch_size=100, **kwargs):  # asyncio?
+        out = []
+        for i in range(0, len(texts), batch_size):
+            out.extend(self._predict_a_batch(texts[i: i + batch_size], **kwargs))
+        return out
 
 
 class ChatCompletion(BaseOpenAI):
@@ -43,7 +49,6 @@ class ChatCompletion(BaseOpenAI):
             **kwargs
         )['choices'][0]['message']['content']
 
-    @do_retry
     def predict(self, messages, **kwargs):
         return [self.predict_one(msg) for msg in messages]  # use asyncio
 

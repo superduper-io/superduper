@@ -202,16 +202,6 @@ class BaseDatabase:
             ))
         return jobs
 
-    def create_measure(self, identifier, object, **kwargs):
-        """
-        Create measure function, called by ``self.create_semantic_index``, to measure similarity
-        between model outputs.
-
-        :param identifier: identifier
-        :param object: Python object
-        """
-        return self._create_object(identifier, object, 'measure', **kwargs)
-
     def create_metric(self, identifier, object, **kwargs):
         """
         Create metric, called by ``self.create_learning_task``, to measure performance of
@@ -402,15 +392,6 @@ class BaseDatabase:
         for k in info['keys_to_watch']:
             self._delete_object_info(f'[{identifier}]:{model_lookup[k]}/{k}', 'watcher')
         self._delete_object_info(info['identifier'], 'learning_task')
-
-    def delete_measure(self, identifier, force=False):
-        """
-        Delete measure.
-
-        :param identifier: identifier of measure
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self._delete_object(identifier, 'measure', force=force)
 
     def delete_metric(self, identifier, force=False):
         """
@@ -645,12 +626,6 @@ class BaseDatabase:
         List learning tasks.
         """
         return self._list_objects('learning_task')
-
-    def list_measures(self):
-        """
-        List measures.
-        """
-        return self._list_objects('measure')
 
     def list_metrics(self):
         """

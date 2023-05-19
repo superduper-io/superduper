@@ -1,6 +1,10 @@
 import json
 import os
+from . misc import configs
 
+__all__ = 'cf', 'CF', 'SECRET'
+
+CFG = configs.CONFIG.config
 
 try:
     with open('config.json') as f:

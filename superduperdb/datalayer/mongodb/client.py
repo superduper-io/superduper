@@ -10,6 +10,7 @@ class SuperDuperClient(MongoClient):
     Client building on top of :code:`pymongo.MongoClient`. Databases and collections in the
     client are SuperDuperDB objects.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.args = args
@@ -21,13 +22,13 @@ class SuperDuperClient(MongoClient):
     def get_database_from_name(self, name):
         return self[name]
 
-    def list_database_names(
-        self,
-        **kwargs
-    ):
+    def list_database_names(self, **kwargs):
         names = super().list_database_names(**kwargs)
-        names = [x for x in names if (not x.endswith(':files') and x not in {'admin', 'local',
-                                                                             'config'})]
+        names = [
+            x
+            for x in names
+            if (not x.endswith(':files') and x not in {'admin', 'local', 'config'})
+        ]
         return names
 
     def drop_database(
@@ -36,7 +37,10 @@ class SuperDuperClient(MongoClient):
         force=False,
         **kwargs,
     ):
-        if force or click.confirm('are you sure you want to delete this database and all of the models, etc. in it?', default=False):
+        if force or click.confirm(
+            'are you sure you want to delete this database and all of the models, etc. in it?',
+            default=False,
+        ):
             super().drop_database(f'_{name}:files')
             super().drop_database(name)
         else:

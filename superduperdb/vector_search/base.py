@@ -43,4 +43,3 @@ class BaseHashSet:
 
     def __getitem__(self, item):
         raise NotImplementedError
-

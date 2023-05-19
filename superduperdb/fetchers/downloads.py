@@ -39,7 +39,7 @@ class Fetcher:
         self.request_adapter = requests.adapters.HTTPAdapter(
             max_retries=3,
             pool_connections=n_workers if n_workers else 1,
-            pool_maxsize=n_workers * 10
+            pool_maxsize=n_workers * 10,
         )
         self.request_session.mount("http://", self.request_adapter)
         self.request_session.mount("https://", self.request_adapter)
@@ -148,6 +148,7 @@ class Downloader(BaseDownloader):
     :param skip_existing: if ``True`` then don't bother getting already present data
     :param timeout: set seconds until request times out
     """
+
     def __init__(
         self,
         table,
@@ -161,8 +162,9 @@ class Downloader(BaseDownloader):
         timeout=None,
         raises=True,
     ):
-        super().__init__(uris, n_workers=n_workers, timeout=timeout, headers=headers,
-                         raises=raises)
+        super().__init__(
+            uris, n_workers=n_workers, timeout=timeout, headers=headers, raises=raises
+        )
         self.table = table
         self.ids = ids
         self.keys = keys

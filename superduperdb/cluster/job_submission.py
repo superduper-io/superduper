@@ -14,6 +14,7 @@ def work(f):
     sig = inspect.signature(f)
     if cf['remote']:
         _dask_client = dask_client()
+
     @wraps(f)
     def work_wrapper(database, *args, remote=None, **kwargs):
         if remote is None:
@@ -22,16 +23,18 @@ def work(f):
             args = encode_args(database, sig, args)
             kwargs = encode_kwargs(database, sig, kwargs)
             job_id = str(uuid.uuid4())
-            database._create_job_record({
-                'identifier': job_id,
-                'time': datetime.datetime.now(),
-                'status': 'pending',
-                'method': f.__name__,
-                'args': args,
-                'kwargs': kwargs,
-                'stdout': [],
-                'stderr': [],
-            })
+            database._create_job_record(
+                {
+                    'identifier': job_id,
+                    'time': datetime.datetime.now(),
+                    'status': 'pending',
+                    'method': f.__name__,
+                    'args': args,
+                    'kwargs': kwargs,
+                    'stdout': [],
+                    'stderr': [],
+                }
+            )
             kwargs['remote'] = False
             return _dask_client.submit(
                 function_job,
@@ -48,6 +51,6 @@ def work(f):
             logging.debug(args)
             logging.debug(kwargs)
             return f(database, *args, **kwargs)
+
     work_wrapper.signature = sig
     return work_wrapper
-

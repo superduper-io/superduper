@@ -2,7 +2,9 @@ import random
 from collections import defaultdict
 
 
-def validate_imputation(validation_data, models, keys, metrics, splitter, predict_kwargs=None):
+def validate_imputation(
+    validation_data, models, keys, metrics, splitter, predict_kwargs=None
+):
     inputs = []
     targets = []
     for i in range(len(validation_data)):
@@ -19,9 +21,16 @@ def validate_imputation(validation_data, models, keys, metrics, splitter, predic
     return metric_values
 
 
-def validate_semantic_index(validation_data, models, keys, metrics, hash_set_cls, measure,
-                            splitter=None, predict_kwargs=None):
-
+def validate_semantic_index(
+    validation_data,
+    models,
+    keys,
+    metrics,
+    hash_set_cls,
+    measure,
+    splitter=None,
+    predict_kwargs=None,
+):
     inputs = [[] for _ in models]
     for i in range(len(validation_data)):
         r = validation_data[i]

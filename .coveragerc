@@ -1,5 +1,17 @@
+# Configuration file for coverage.py
+
+[run]
+
+branch = True
+source = impall
+
 [report]
-omit = 
-    superduperdb/servers/*
-    superduperdb/jobs/*
-    superduperdb/requests/*
+
+fail_under = 50
+skip_covered = True
+
+exclude_lines =
+    pragma: no cover
+    if False:
+    if __name__ == .__main__.:
+    raise NotImplementedError

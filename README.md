@@ -1,4 +1,10 @@
-<a href="https://www.superduperdb.com"><img src="https://raw.githubusercontent.com/blythed/superduperdb/main/img/symbol_purple.png" width="150" align="right" /></a>
+<a href="https://www.superduperdb.com">
+  <img
+    src="https://raw.githubusercontent.com/superduperdb/superduperdb-stealth/img/symbol_purple.png"
+    width="150"
+    align="right"
+    />
+</a>
 
 # Welcome to SuperDuperDB!
 
@@ -55,6 +61,30 @@ If you'd like to contribute to the project we need help in many places:
 - Adding additional unittests and doctests
 - Augmenting doc-strings to make the usage patterns clearer for the uninitiated
 - Expanding the documentation, tutorials and examples
+
+## Using configs
+
+SuperDuperDB has "config variables" that can be set to customize its operation.
+
+You can see a list of their default values in this file https://github.com/SuperDuperDB/superduperdb-stealth/blob/main/default-configs.json.
+
+In the code, configs are simple data classes, defined here: https://github.com/SuperDuperDB/superduperdb-stealth/blob/main/superduperdb/misc/config.py
+
+There are three ways to set a config variable
+
+* put just the values you want to change in a file `configs.json` at the room of `superduperdb-stealth`
+* set an environment variable with the value
+* set it in code
+
+For example, these three forms are identical:
+
+* Storing `{"remote": True, "dask": {"ip": "1.1.1.1"}}` in `configs.json`
+* Setting environment variables `SUPERDUPERDB_REMOTE=true` and
+  `SUPERDUPERDB_DASK_IP=1.1.1.1`
+* In Python, `CFG.remote = True; CFG.dask.ip = '1.1.1.1'`
+
+[TBD: Secrets are just the same, except we don't even have one yet.]
+
 
 ## Use Cases
 

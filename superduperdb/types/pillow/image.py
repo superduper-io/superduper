@@ -1,5 +1,6 @@
-import PIL.JpegImagePlugin, PIL.PngImagePlugin
 import PIL.Image
+import PIL.JpegImagePlugin
+import PIL.PngImagePlugin
 import io
 
 

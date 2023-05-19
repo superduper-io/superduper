@@ -13,12 +13,11 @@ from superduperdb.cluster.annotations import (
 )
 
 warnings.filterwarnings('ignore')
-
+# ruff: noqa: E402
 from superduperdb.datalayer.mongodb.cursor import SuperDuperCursor
 
 from pymongo.collection import Collection as MongoCollection
 from pymongo.cursor import Cursor
-import torch.utils.data
 
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.fetchers.downloads import gather_uris, InMemoryDownloader
@@ -318,9 +317,12 @@ class Collection(MongoCollection):
         :param like: item to which the results of the find should be similar
         :param similar_first: toggle to ``True`` to first find similar things, and then
                               apply filter to these things
-        :param raw: toggle to ``True`` to not convert bytes to Python objects but return raw bytes
-        :param features: dictionary of model outputs to replace for dictionary elements
-        :param download: toggle to ``True`` in case query has downloadable "_content" components
+        :param raw: toggle to ``True`` to not convert bytes to Python objects
+                    but return raw bytes
+        :param features: dictionary of model outputs to replace for
+                         dictionary elements
+        :param download: toggle to ``True`` in case query has downloadable
+                         "_content" components
         :param similar_join: replace ids by documents
         :param kwargs: kwargs to be passed to super()
         """
@@ -435,8 +437,8 @@ class Collection(MongoCollection):
 
     def replace_one(self, filter, replacement, *args, refresh=True, **kwargs):
         """
-        Replace a document in the database. The outputs of models will be refreshed for this
-        document.
+        Replace a document in the database.
+        The outputs of models will be refreshed for this document.
 
         :param filter: MongoDB like filter
         :param replacement: Replacement document
@@ -453,7 +455,8 @@ class Collection(MongoCollection):
 
     def convert_from_types_to_bytes(self, r):
         """
-        Convert non MongoDB types to bytes using types already registered with collection.
+        Convert non MongoDB types to bytes using types already registered
+        with collection.
 
         :param r: record in which to convert types
         :return modified record
@@ -462,12 +465,13 @@ class Collection(MongoCollection):
 
     def update_many(self, filter, *args, refresh=True, **kwargs):
         """
-        Update the collection at the documents specified by the filter. If there are active
-        models these are applied to the updated documents.
+        Update the collection at the documents specified by the filter.
+        If there are active models these are applied to the updated documents.
 
         :param filter: Filter dictionary selecting documents to be updated
         :param args: Arguments to be passed to ``super()``
-        :param refresh: Toggle to ``False`` to stop models being applied to updated documents
+        :param refresh: Toggle to ``False`` to stop models being applied to
+                        updated documents
         :param kwargs: Keyword arguments to be passed to ``super()``
         :return: ``result`` or ``(result, job_ids)`` depending on ``self.remote``
         """
@@ -488,7 +492,8 @@ class Collection(MongoCollection):
 
         :param filter: Filter dictionary selecting documents to be updated
         :param args: Arguments to be passed to ``super()``
-        :param refresh: Toggle to ``False`` to stop models being applied to updated documents
+        :param refresh: Toggle to ``False`` to stop models being applied to
+                        updated documents
         :param kwargs: Keyword arguments to be passed to ``super()``
         :return: ``result`` or ``(result, job_ids)`` depending on ``self.remote``
         """

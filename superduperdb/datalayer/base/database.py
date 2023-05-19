@@ -28,6 +28,10 @@ from superduperdb.vector_search import hash_set_classes
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 
 
+def validate_representations(database, vs, identifier, metrics):
+    raise NotImplementedError
+
+
 class BaseDatabase:
     """
     Base database connector for SuperDuperDB - all database types should subclass this
@@ -77,9 +81,11 @@ class BaseDatabase:
         """
         Apply model to input.
 
-        :param model: model or ``str`` referring to an uploaded model (see ``self.list_models``)
+        :param model: model or ``str`` referring to an uploaded model
+            (see ``self.list_models``)
         :param input_: input_ to be passed to the model.
-                       Must be possible to encode with registered types (``self.list_types``)
+                       Must be possible to encode with registered types
+                       (``self.list_types``)
         :param kwargs: key-values (see ``superduperdb.models.utils.predict``)
         """
         if isinstance(model, str):
@@ -120,7 +126,7 @@ class BaseDatabase:
         info = self.get_object_info(identifier, 'neighbourhood')
         watcher_info = self.get_object_info(identifier, 'watcher')
         ids = self._get_ids_from_query(*watcher_info['query_params'])
-        logging.info(f'getting hash set')
+        logging.info('getting hash set')
         h = self._get_hashes_for_query_parameters(
             info['semantic_index'], *info['query_params']
         )
@@ -235,8 +241,9 @@ class BaseDatabase:
 
     def create_metric(self, identifier, object, **kwargs):
         """
-        Create metric, called by ``self.create_learning_task``, to measure performance of
-        learning on validation_sets (see ``self.list_validation_sets``)
+        Create metric, called by ``self.create_learning_task``, to measure
+        performance of learning on validation_sets
+        (see ``self.list_validation_sets``)
 
         :param identifier: identifier
         :param object: Python object
@@ -253,13 +260,18 @@ class BaseDatabase:
         **kwargs,
     ):
         """
-        Create a model registered in the collection directly from a python session.
-        The added model will then watch incoming records and add outputs computed on those
-        records into the ``"_outputs"`` fields of the records.
-        The model is then stored inside MongoDB and can be accessed using the ``SuperDuperClient``.
+        Create a model registered in the collection directly from a python
+        session.
+
+        The added model will then watch incoming records and add outputs computed on
+        those records into the ``"_outputs"`` fields of the records.
+
+        The model is then stored inside MongoDB and can be accessed using the
+        ``SuperDuperClient``.
 
         :param identifier: name of model
-        :param object: if specified the model object (pickle-able) else None if model already exists
+        :param object: if specified the model object (pickle-able)
+                       else None if model already exists
         :param preprocessor: separate preprocessing
         :param postprocessor: separate postprocessing
         :param type: type for converting model outputs back and forth from bytes

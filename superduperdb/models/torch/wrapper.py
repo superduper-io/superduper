@@ -53,7 +53,8 @@ def apply_model(
     """
     Apply model to args including pre-processing, forward pass and post-processing.
 
-    :param model: model object including methods *preprocess*, *forward* and *postprocess*
+    :param model: model object including methods *preprocess*, *forward* and
+                  *postprocess*
     :param args: single or multiple data points over which to evaluate model
     :param single: toggle to apply model to single or multiple (batched) datapoints.
     :param forward: name of the forward pass
@@ -69,7 +70,8 @@ def apply_model(
     >>> out = apply_model(model, torch.randn(16))
     >>> isinstance(out, int)
     True
-    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)], single=False, batch_size=2)
+    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)],
+                          single=False, batch_size=2)
     >>> isinstance(out, list)
     True
     >>> len(out)
@@ -90,7 +92,8 @@ def apply_model(
     ...     forward=torch.nn.Linear(16, 4),
     ...     postprocess=lambda x: x.topk(1)[1].item()
     ... )
-    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)], single=False, batch_size=2)
+    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)],
+                          single=False, batch_size=2)
 
     """
     if single:

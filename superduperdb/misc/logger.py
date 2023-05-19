@@ -1,11 +1,13 @@
-import logging
 from superduperdb import cf
 from warnings import warn
 
 cf_logging = cf.get('logging', {'type': 'stdout', 'level': 'INFO'})
 
 if cf_logging['type'] == 'stdout':
-    logging = lambda: None
+
+    def logging():
+        return None
+
     logging.info = print if cf_logging['level'] in {'DEBUG', 'INFO'} else lambda x: None
     logging.debug = print if cf_logging['level'] == 'DEBUG' else lambda x: None
     logging.warn = (
@@ -13,6 +15,8 @@ if cf_logging['type'] == 'stdout':
     )
     logging.error = warn
 else:
+    import logging
+
     cf_logging = cf.get('logging', {})
     logging.basicConfig(
         level=getattr(logging, cf_logging.get('level', 'INFO')),

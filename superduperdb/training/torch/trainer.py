@@ -70,7 +70,10 @@ class TorchTrainerConfiguration(TrainerConfiguration):
             try:
                 preprocess = m.preprocess
             except AttributeError:
-                preprocess = lambda x: x
+
+                def preprocess(x):
+                    return x
+
             out.append(preprocess(s))
         return out
 
@@ -139,7 +142,9 @@ class TorchTrainerConfiguration(TrainerConfiguration):
                 optimizer_classes[k](lookup[k].parameters(), **self.optimizer_kwargs[k])
             )
 
-        transform = lambda x: self.split_and_preprocess(x, models, keys, self.splitter)
+        def transform(x):
+            return self.split_and_preprocess(x, models, keys, self.splitter)
+
         train_data, valid_data = self._get_data(
             database_type,
             database_name,

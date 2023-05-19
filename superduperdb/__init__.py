@@ -15,5 +15,3 @@ except FileNotFoundError:  # pragma: no cover
 if 'openai' in cf.get('apis', {}):
     assert 'api_key' in cf['apis']['openai']
     os.environ['OPENAI_API_KEY'] = cf['apis']['openai']['api_key']
-
-from .version import __version__

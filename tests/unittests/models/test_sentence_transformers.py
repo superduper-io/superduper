@@ -1,4 +1,6 @@
-from tests.fixtures.collection import sentences, empty, arrays
+# ruff: noqa: F401, F811
+
+from tests.fixtures.collection import arrays, empty, sentences
 from sentence_transformers import SentenceTransformer
 
 

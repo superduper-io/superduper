@@ -7,8 +7,9 @@ from superduperdb.misc.logger import logging
 
 class SuperDuperClient(MongoClient):
     """
-    Client building on top of :code:`pymongo.MongoClient`. Databases and collections in the
-    client are SuperDuperDB objects.
+    Client building on top of :code:`pymongo.MongoClient`.
+
+    Databases and collections in the client are SuperDuperDB objects.
     """
 
     def __init__(self, *args, **kwargs):
@@ -38,7 +39,7 @@ class SuperDuperClient(MongoClient):
         **kwargs,
     ):
         if force or click.confirm(
-            'are you sure you want to delete this database and all of the models, etc. in it?',
+            'Are you sure you want to delete this database and all its models?',
             default=False,
         ):
             super().drop_database(f'_{name}:files')

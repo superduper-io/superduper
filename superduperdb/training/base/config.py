@@ -16,19 +16,28 @@ class TrainerConfiguration:
             database._replace_model(model, mn)
 
     @classmethod
-    def _get_data(cls,
-                  database_type,
-                  database_name,
-                  query_params,
-                  keys,
-                  features,
-                  transform):
+    def _get_data(
+        cls, database_type, database_name, query_params, keys, features, transform
+    ):
+        train_data = QueryDataset(
+            query_params,
+            database_name,
+            database_type,
+            keys=keys,
+            fold='train',
+            transform=transform,
+            features=features,
+        )
 
-        train_data = QueryDataset(query_params, database_name, database_type, keys=keys,
-                                  fold='train', transform=transform, features=features)
-
-        valid_data = QueryDataset(query_params, database_name, database_type, keys=keys,
-                                  fold='valid', transform=transform, features=features)
+        valid_data = QueryDataset(
+            query_params,
+            database_name,
+            database_type,
+            keys=keys,
+            fold='valid',
+            transform=transform,
+            features=features,
+        )
 
         return train_data, valid_data
 
@@ -38,17 +47,18 @@ class TrainerConfiguration:
         except:
             return default
 
-    def __call__(self,
-                 identifier,
-                 models,
-                 keys,
-                 model_names,
-                 database_type,
-                 database_name,
-                 query_params,
-                 validation_sets=(),
-                 metrics=None,
-                 features=None,
-                 download=False):
-
+    def __call__(
+        self,
+        identifier,
+        models,
+        keys,
+        model_names,
+        database_type,
+        database_name,
+        query_params,
+        validation_sets=(),
+        metrics=None,
+        features=None,
+        download=False,
+    ):
         raise NotImplementedError

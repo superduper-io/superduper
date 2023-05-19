@@ -1,4 +1,3 @@
-
 def dot(x, y):
     return x.matmul(y.T)
 

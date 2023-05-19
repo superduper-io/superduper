@@ -55,8 +55,10 @@ class TaskWorkflow:
                 if not self._path_lengths:
                     self._path_lengths[node] = 0
                 else:
-                    self._path_lengths[node] = min([self._path_lengths[n]
-                                                    for n in self.G.predecessors(node)]) + 1
+                    self._path_lengths[node] = (
+                        min([self._path_lengths[n] for n in self.G.predecessors(node)])
+                        + 1
+                    )
         return self._path_lengths
 
     def __call__(self, remote=None):
@@ -64,33 +66,40 @@ class TaskWorkflow:
             remote = self.database.remote
         if remote:
             _dask_client = dask_client()
-        current_group = \
-            [n for n in self.G.nodes if not networkx.ancestors(self.G, n)]
+        current_group = [n for n in self.G.nodes if not networkx.ancestors(self.G, n)]
         done = []
         while current_group:
             job_id = str(uuid.uuid4())
             for node in current_group:
                 node_object = self.G.nodes[node]
                 if remote:
-                    self.database._create_job_record({
-                        'identifier': job_id,
-                        'time': datetime.datetime.now(),
-                        'status': 'pending',
-                        'method': node_object['task'].__name__,
-                        'args': node_object['args'],
-                        'kwargs': node_object['kwargs'],
-                        'stdout': [],
-                        'stderr': [],
-                    })
+                    self.database._create_job_record(
+                        {
+                            'identifier': job_id,
+                            'time': datetime.datetime.now(),
+                            'status': 'pending',
+                            'method': node_object['task'].__name__,
+                            'args': node_object['args'],
+                            'kwargs': node_object['kwargs'],
+                            'stdout': [],
+                            'stderr': [],
+                        }
+                    )
                     self.G.nodes[node]['job_id'] = job_id
-                    args = encode_args(self.database, node_object['task'].signature,
-                                       node_object['args'])
-                    kwargs = encode_kwargs(self.database, node_object['task'].signature,
-                                           node_object['kwargs'])
+                    args = encode_args(
+                        self.database,
+                        node_object['task'].signature,
+                        node_object['args'],
+                    )
+                    kwargs = encode_kwargs(
+                        self.database,
+                        node_object['task'].signature,
+                        node_object['kwargs'],
+                    )
 
-                    dependencies = \
-                        [self.G.nodes[a]['future']
-                         for a in self.G.predecessors(node)]
+                    dependencies = [
+                        self.G.nodes[a]['future'] for a in self.G.predecessors(node)
+                    ]
 
                     node_object['future'] = _dask_client.submit(
                         function_job,
@@ -108,8 +117,10 @@ class TaskWorkflow:
                     kwargs = node_object['kwargs']
                     node_object['task'](*args, **{**kwargs, 'remote': False})
                 done.append(node)
-            current_group = [n for n in self.G.nodes
-                             if set(self.G.predecessors(n)).issubset(set(done))
-                             and n not in set(done)]
+            current_group = [
+                n
+                for n in self.G.nodes
+                if set(self.G.predecessors(n)).issubset(set(done))
+                and n not in set(done)
+            ]
         return self.G
-

@@ -6,10 +6,16 @@ from tests.material.measures import dot
 from superduperdb.vector_search.vanilla.measures import dot
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 
-from tests.fixtures.collection import random_data, float_tensors, empty, a_model, c_model
+from tests.fixtures.collection import (
+    random_data,
+    float_tensors,
+    empty,
+    a_model,
+    c_model,
+)
+
 
 def test_semantic_index(random_data, a_model, c_model):
-
     cf = TorchTrainerConfiguration(
         objective=ranking_loss,
         optimizer_kwargs={'lr': 0.0001},

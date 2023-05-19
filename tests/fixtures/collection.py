@@ -87,9 +87,13 @@ def with_semantic_index(random_data, a_model):
         identifier='test_learning_task',
         configuration={'hash_set_cls': VanillaHashSet, 'measure': css},
     )
-    random_data.database['_meta'].insert_one({'key': 'semantic_index',
-                                              'collection': 'documents',
-                                              'value': 'test_learning_task'})
+    random_data.database['_meta'].insert_one(
+        {
+            'key': 'semantic_index',
+            'collection': 'documents',
+            'value': 'test_learning_task',
+        }
+    )
     yield random_data
     if random_data.remote:
         random_data.clear_remote_cache()
@@ -130,9 +134,7 @@ def arrays(empty):
 def sentences(empty):
     data = []
     for _ in range(100):
-        data.append(
-            {'text': lorem.sentence()}
-        )
+        data.append({'text': lorem.sentence()})
     empty.insert_many(data)
     yield empty
 
@@ -193,8 +195,7 @@ def a_watcher_base(a_model_base):
 
 @pytest.fixture()
 def a_classifier(float_tensors):
-    float_tensors.create_model('classifier',
-                               BinaryClassifier(32))
+    float_tensors.create_model('classifier', BinaryClassifier(32))
     yield float_tensors
     try:
         float_tensors.delete_model('classifier', force=True)
@@ -206,8 +207,7 @@ def a_classifier(float_tensors):
 
 @pytest.fixture()
 def a_target(float_tensors):
-    float_tensors.create_function('target',
-                                  BinaryTarget())
+    float_tensors.create_function('target', BinaryTarget())
     yield float_tensors
     try:
         float_tensors.delete_function('target', force=True)
@@ -239,5 +239,3 @@ def c_model(float_tensors):
         if "'NoneType' object is not subscriptable" in str(e):
             return
         raise e
-
-

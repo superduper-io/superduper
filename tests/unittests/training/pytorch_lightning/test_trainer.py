@@ -38,9 +38,9 @@ class LightningModule(pl.LightningModule):
 
 
 def test_classification(random_data):
-
-    cf = LightningConfiguration(loader_kwargs={'batch_size': 5, 'num_workers': 0},
-                                max_epochs=10)
+    cf = LightningConfiguration(
+        loader_kwargs={'batch_size': 5, 'num_workers': 0}, max_epochs=10
+    )
 
     random_data.create_model('lightning_classifier', LightningModule())
 

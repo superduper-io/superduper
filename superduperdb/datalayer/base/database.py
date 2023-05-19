@@ -33,8 +33,8 @@ class BaseDatabase:
     Base database connector for SuperDuperDB - all database types should subclass this
     type.
     """
-    def __init__(self):
 
+    def __init__(self):
         self.measures = ArgumentDefaultDict(lambda x: self._load_object(x, 'measure'))
         self.metrics = ArgumentDefaultDict(lambda x: self._load_object(x, 'metric'))
         self.models = ArgumentDefaultDict(lambda x: self._load_object(x, 'model'))
@@ -68,7 +68,9 @@ class BaseDatabase:
     def predict_one(self, model, input_: Convertible(), **kwargs) -> Convertible():
         if isinstance(model, str):
             model = self.models[model]
-        return model.predict_one(input_, **{k: v for k, v in kwargs.items() if k != 'remote'})
+        return model.predict_one(
+            input_, **{k: v for k, v in kwargs.items() if k != 'remote'}
+        )
 
     @model_server
     def predict(self, model, input_: Convertible(), **kwargs) -> Convertible():
@@ -87,9 +89,16 @@ class BaseDatabase:
     def cancel_job(self, job_id):
         raise NotImplementedError
 
-    def _compute_model_outputs(self, model_info, _ids, *query_params, key='_base', features=None,
-                               model=None, predict_kwargs=None):
-
+    def _compute_model_outputs(
+        self,
+        model_info,
+        _ids,
+        *query_params,
+        key='_base',
+        features=None,
+        model=None,
+        predict_kwargs=None,
+    ):
         logging.info('finding documents under filter')
         features = features or {}
         model_identifier = model_info['identifier']
@@ -112,15 +121,21 @@ class BaseDatabase:
         watcher_info = self.get_object_info(identifier, 'watcher')
         ids = self._get_ids_from_query(*watcher_info['query_params'])
         logging.info(f'getting hash set')
-        h = self._get_hashes_for_query_parameters(info['semantic_index'], *info['query_params'])
-        logging.info(f'computing neighbours based on neighbourhood "{identifier}" and '
-                     f'index "{info["semantic_index"]}"')
+        h = self._get_hashes_for_query_parameters(
+            info['semantic_index'], *info['query_params']
+        )
+        logging.info(
+            f'computing neighbours based on neighbourhood "{identifier}" and '
+            f'index "{info["semantic_index"]}"'
+        )
 
         for i in progress.progressbar(range(0, len(ids), info['batch_size'])):
-            sub = ids[i: i + info['batch_size']]
+            sub = ids[i : i + info['batch_size']]
             results = h.find_nearest_from_ids(sub, n=info['n'])
             similar_ids = [res['_ids'] for res in results]
-            self._update_neighbourhood(sub, similar_ids, identifier, *info['query_params'])
+            self._update_neighbourhood(
+                sub, similar_ids, identifier, *info['query_params']
+            )
 
     def convert_from_bytes_to_types(self, r):
         """
@@ -159,10 +174,20 @@ class BaseDatabase:
     def _create_job_record(self, *args, **kwargs):
         raise NotImplementedError
 
-    def create_learning_task(self, models, keys, *query_params, identifier=None,
-                             configuration=None, verbose=False, validation_sets=(), metrics=(),
-                             keys_to_watch=(), features=None, serializer='pickle'):
-
+    def create_learning_task(
+        self,
+        models,
+        keys,
+        *query_params,
+        identifier=None,
+        configuration=None,
+        verbose=False,
+        validation_sets=(),
+        metrics=(),
+        keys_to_watch=(),
+        features=None,
+        serializer='pickle',
+    ):
         if identifier is None:
             identifier = '+'.join([f'{m}/{k}' for m, k in zip(models, keys)])
 
@@ -173,33 +198,39 @@ class BaseDatabase:
 
         file_id = self._create_serialized_file(configuration, serializer=serializer)
 
-        self._create_object_entry({
-            'variety': 'learning_task',
-            'identifier': identifier,
-            'query_params': query_params,
-            'configuration': {'_file_id': file_id},
-            'models': models,
-            'keys': keys,
-            'metrics': metrics,
-            'features': features,
-            'validation_sets': validation_sets,
-            'keys_to_watch': keys_to_watch,
-        })
+        self._create_object_entry(
+            {
+                'variety': 'learning_task',
+                'identifier': identifier,
+                'query_params': query_params,
+                'configuration': {'_file_id': file_id},
+                'models': models,
+                'keys': keys,
+                'metrics': metrics,
+                'features': features,
+                'validation_sets': validation_sets,
+                'keys_to_watch': keys_to_watch,
+            }
+        )
         model_lookup = dict(zip(keys_to_watch, models))
         jobs = []
         if callable(configuration):
             jobs.append(self.fit(identifier))
         for k in keys_to_watch:
-            jobs.append(self._create_watcher(
-                f'[{identifier}]:{model_lookup[k]}/{k}',
-                model_lookup[k],
-                query_params,
-                key=k,
-                features=features,
-                predict_kwargs=configuration.get('loader_kwargs', {}) if configuration is not None else {},
-                dependencies=[jobs[0]] if jobs else (),
-                verbose=verbose,
-            ))
+            jobs.append(
+                self._create_watcher(
+                    f'[{identifier}]:{model_lookup[k]}/{k}',
+                    model_lookup[k],
+                    query_params,
+                    key=k,
+                    features=features,
+                    predict_kwargs=configuration.get('loader_kwargs', {})
+                    if configuration is not None
+                    else {},
+                    dependencies=[jobs[0]] if jobs else (),
+                    verbose=verbose,
+                )
+            )
         return jobs
 
     def create_metric(self, identifier, object, **kwargs):
@@ -212,8 +243,15 @@ class BaseDatabase:
         """
         return self._create_object(identifier, object, 'metric', **kwargs)
 
-    def create_model(self, identifier, object, preprocessor=None, postprocessor=None, type=None,
-                     **kwargs):
+    def create_model(
+        self,
+        identifier,
+        object,
+        preprocessor=None,
+        postprocessor=None,
+        type=None,
+        **kwargs,
+    ):
         """
         Create a model registered in the collection directly from a python session.
         The added model will then watch incoming records and add outputs computed on those
@@ -242,13 +280,15 @@ class BaseDatabase:
         else:
             file_id = self._create_serialized_file(object, **kwargs)
 
-        self._create_object_entry({
-            'variety': 'model',
-            'identifier': identifier,
-            'object': file_id,
-            'type': type,
-            **kwargs,
-        })
+        self._create_object_entry(
+            {
+                'variety': 'model',
+                'identifier': identifier,
+                'object': file_id,
+                'type': type,
+                **kwargs,
+            }
+        )
 
     def create_neighbourhood(self, identifier, n=10, batch_size=100):
         """
@@ -260,31 +300,38 @@ class BaseDatabase:
         """
         assert identifier in self.list_watchers()
         assert identifier not in self.list_neighbourhoods()
-        self._create_object_entry({
-            'identifier': identifier,
-            'n': n,
-            'batch_size': batch_size,
-            'variety': 'neighbourhood',
-        })
+        self._create_object_entry(
+            {
+                'identifier': identifier,
+                'n': n,
+                'batch_size': batch_size,
+                'variety': 'neighbourhood',
+            }
+        )
         return self.compute_neighbourhood(identifier)
 
     def _create_object_entry(self, info):
         raise NotImplementedError
 
-    def _create_object(self, identifier, object, variety, serializer='pickle', serializer_kwargs=None):
+    def _create_object(
+        self, identifier, object, variety, serializer='pickle', serializer_kwargs=None
+    ):
         serializer_kwargs = serializer_kwargs or {}
         assert identifier not in self._list_objects(variety)
         secrets = {}
-        file_id = self._create_serialized_file(object, serializer=serializer,
-                                               serializer_kwargs=serializer_kwargs)
-        self._create_object_entry({
-            'identifier': identifier,
-            'object': file_id,
-            'variety': variety,
-            'serializer': serializer,
-            'serializer_kwargs': serializer_kwargs,
-            **secrets,
-        })
+        file_id = self._create_serialized_file(
+            object, serializer=serializer, serializer_kwargs=serializer_kwargs
+        )
+        self._create_object_entry(
+            {
+                'identifier': identifier,
+                'object': file_id,
+                'variety': variety,
+                'serializer': serializer,
+                'serializer_kwargs': serializer_kwargs,
+                **secrets,
+            }
+        )
 
     def _create_plan(self):
         G = networkx.DiGraph()
@@ -300,7 +347,9 @@ class BaseDatabase:
         assert networkx.is_directed_acyclic_graph(G)
         return G
 
-    def _create_serialized_file(self, object, serializer='pickle', serializer_kwargs=None):
+    def _create_serialized_file(
+        self, object, serializer='pickle', serializer_kwargs=None
+    ):
         serializer_kwargs = serializer_kwargs or {}
         if serializer == 'pickle':
             with io.BytesIO() as f:
@@ -308,6 +357,7 @@ class BaseDatabase:
                 bytes_ = f.getvalue()
         elif serializer == 'dill':
             import dill
+
             if not serializer_kwargs:
                 serializer_kwargs['recurse'] = True
             with io.BytesIO() as f:
@@ -341,22 +391,33 @@ class BaseDatabase:
         if tmp:
             self._insert_validation_data(tmp, identifier)
 
-    def _create_watcher(self, identifier, model, query_params, key='_base', verbose=False,
-                        target=None, process_docs=True, features=None, predict_kwargs=None,
-                        dependencies=()):
-
+    def _create_watcher(
+        self,
+        identifier,
+        model,
+        query_params,
+        key='_base',
+        verbose=False,
+        target=None,
+        process_docs=True,
+        features=None,
+        predict_kwargs=None,
+        dependencies=(),
+    ):
         assert identifier not in self.list_watchers()
 
-        self._create_object_entry({
-            'identifier': identifier,
-            'variety': 'watcher',
-            'model': model,
-            'query_params': query_params,
-            'key': key,
-            'features': features if features else {},
-            'target': target,
-            'predict_kwargs': predict_kwargs or {},
-        })
+        self._create_object_entry(
+            {
+                'identifier': identifier,
+                'variety': 'watcher',
+                'model': model,
+                'query_params': query_params,
+                'key': key,
+                'features': features if features else {},
+                'target': target,
+                'predict_kwargs': predict_kwargs or {},
+            }
+        )
 
         if process_docs:
             ids = self._get_ids_from_query(*query_params)
@@ -378,8 +439,10 @@ class BaseDatabase:
         :param force: toggle to ``True`` to skip confirmation step
         """
         do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete the learning-task "{identifier}"?',
-                                  default=False):
+        if force or click.confirm(
+            f'Are you sure you want to delete the learning-task "{identifier}"?',
+            default=False,
+        ):
             do_delete = True
         if not do_delete:
             return
@@ -420,12 +483,14 @@ class BaseDatabase:
         """
         info = self.get_object_info(identifier, 'neighbourhood')
         watcher_info = self.get_object_info(info['watcher_identifier'], 'watcher')
-        if force or click.confirm(f'Removing neighbourhood "{identifier}"'
-                                  ' documents. Are you sure?', default=False):
+        if force or click.confirm(
+            f'Removing neighbourhood "{identifier}"' ' documents. Are you sure?',
+            default=False,
+        ):
             self._unset_neighbourhood_data(info, watcher_info)
             self._delete_object_info(identifier, 'neighbourhood')
         else:
-            logging.info('aborting') # pragma: no cover
+            logging.info('aborting')  # pragma: no cover
 
     def _delete_object(self, identifier, variety, force=False):
         info = self.get_object_info(identifier, variety)
@@ -433,9 +498,13 @@ class BaseDatabase:
             if not force:
                 raise Exception(f'"{identifier}": {variety} does not exist...')
             return
-        if force or click.confirm(f'You are about to delete {variety}: {identifier}, are you sure?',
-                                  default=False):
-            if hasattr(self, variety + 's') and identifier in getattr(self, variety + 's'):
+        if force or click.confirm(
+            f'You are about to delete {variety}: {identifier}, are you sure?',
+            default=False,
+        ):
+            if hasattr(self, variety + 's') and identifier in getattr(
+                self, variety + 's'
+            ):
                 del getattr(self, variety + 's')[identifier]
             self.filesystem.delete(info['object'])
             self._delete_object_info(identifier, variety)
@@ -461,8 +530,10 @@ class BaseDatabase:
         """
         info = self.get_object_info(identifier, 'watcher')
         do_delete = False
-        if force or click.confirm(f'Are you sure you want to delete this watcher: {identifier}; ',
-                                  default=False):
+        if force or click.confirm(
+            f'Are you sure you want to delete this watcher: {identifier}; ',
+            default=False,
+        ):
             do_delete = True
         if not do_delete:
             return
@@ -472,8 +543,17 @@ class BaseDatabase:
         self._delete_object_info(identifier, 'watcher')
 
     @work
-    def download_content(self, query_params, ids=None, documents=None, timeout=None,
-                         raises=True, n_download_workers=None, headers=None, **kwargs):
+    def download_content(
+        self,
+        query_params,
+        ids=None,
+        documents=None,
+        timeout=None,
+        raises=True,
+        n_download_workers=None,
+        headers=None,
+        **kwargs,
+    ):
         logging.debug(query_params)
         logging.debug(ids)
         update_db = False
@@ -541,9 +621,9 @@ class BaseDatabase:
             filter['_id'] = 0
         uris = gather_uris([filter])[0]
         if uris:
-            filter = self.download_content(self.name,
-                                           documents=[filter],
-                                           timeout=None, raises=True)[0]
+            filter = self.download_content(
+                self.name, documents=[filter], timeout=None, raises=True
+            )[0]
             filter = self.convert_from_bytes_to_types(filter)
         return filter
 
@@ -715,14 +795,19 @@ class BaseDatabase:
         info = self.get_object_info(learning_task, 'learning_task')
         key_to_watch = info['keys_to_watch'][0]
         model_identifier = next(
-            m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch)
+            m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch
+        )
         return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
 
     def _load_hashes_from_learning_task(self, identifier):
         info = self.get_object_info(identifier, 'learning_task')
         key_to_watch = info['keys_to_watch'][0]
-        model_identifier = next(m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch)
-        watcher_info = self.get_object_info(f'[{identifier}]:{model_identifier}/{key_to_watch}', 'watcher')
+        model_identifier = next(
+            m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch
+        )
+        watcher_info = self.get_object_info(
+            f'[{identifier}]:{model_identifier}/{key_to_watch}', 'watcher'
+        )
         filter = watcher_info.get('filter', {})
         key = watcher_info.get('key', '_base')
         filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
@@ -740,19 +825,23 @@ class BaseDatabase:
 
         hash_set_cls = configuration.get(
             'hash_set_cls',
-             superduperdb.vector_search.vanilla.hashes.VanillaHashSet,
+            superduperdb.vector_search.vanilla.hashes.VanillaHashSet,
         )
         return hash_set_cls(
             loaded,
             ids,
-            measure=configuration.get('measure', superduperdb.vector_search.vanilla.measures.css),
+            measure=configuration.get(
+                'measure', superduperdb.vector_search.vanilla.measures.css
+            ),
         )
 
     def _load_object(self, identifier, variety):
         info = self.get_object_info(identifier, variety)
         if info is None:
-            raise Exception(f'No such object of type "{variety}", '
-                            f'"{identifier}" has been registered.')  # pragma: no cover
+            raise Exception(
+                f'No such object of type "{variety}", '
+                f'"{identifier}" has been registered.'
+            )  # pragma: no cover
         if 'serializer' not in info:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
@@ -767,25 +856,35 @@ class BaseDatabase:
             return pickle.load(f)
         elif serializer == 'dill':
             import dill
+
             return dill.load(f)
         raise NotImplementedError
 
     @work
-    def apply_watcher(self, identifier, ids: List[ObjectId] = None, verbose=False,
-                      max_chunk_size=5000, model=None, recompute=False, watcher_info=None,
-                      **kwargs):
-
+    def apply_watcher(
+        self,
+        identifier,
+        ids: List[ObjectId] = None,
+        verbose=False,
+        max_chunk_size=5000,
+        model=None,
+        recompute=False,
+        watcher_info=None,
+        **kwargs,
+    ):
         if watcher_info is None:
             watcher_info = self.get_object_info(identifier, 'watcher')
         if ids is None:
             ids = self._get_ids_from_query(*watcher_info['query_params'])
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                logging.info('computing chunk '
-                             f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
+                logging.info(
+                    'computing chunk '
+                    f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
+                )
                 self.apply_watcher(
                     identifier,
-                    ids=ids[i: i + max_chunk_size],
+                    ids=ids[i : i + max_chunk_size],
                     verbose=verbose,
                     max_chunk_size=None,
                     model=model,
@@ -797,30 +896,29 @@ class BaseDatabase:
             return
 
         model_info = self.get_object_info(watcher_info['model'], 'model')
-        outputs = self._compute_model_outputs(model_info,
-                                              ids,
-                                              *watcher_info['query_params'],
-                                              key=watcher_info['key'],
-                                              features=watcher_info.get('features', {}),
-                                              model=model,
-                                              predict_kwargs=watcher_info.get('predict_kwargs', {}))
+        outputs = self._compute_model_outputs(
+            model_info,
+            ids,
+            *watcher_info['query_params'],
+            key=watcher_info['key'],
+            features=watcher_info.get('features', {}),
+            model=model,
+            predict_kwargs=watcher_info.get('predict_kwargs', {}),
+        )
         type_ = model_info.get('type')
         if type_ is not None:
             type_ = self.types[type_]
             outputs = [
-                {
-                    '_content': {
-                        'bytes': type_.encode(x),
-                        'type': model_info['type']
-                    }
-                }
+                {'_content': {'bytes': type_.encode(x), 'type': model_info['type']}}
                 for x in outputs
             ]
 
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
 
-    def _build_task_workflow(self, query_params, ids=None, dependencies=(), verbose=True):
+    def _build_task_workflow(
+        self, query_params, ids=None, dependencies=(), verbose=True
+    ):
         job_ids = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
@@ -836,8 +934,8 @@ class BaseDatabase:
                 ],
                 'kwargs': {
                     'ids': ids,
-                }
-            }
+                },
+            },
         )
         if not self.list_watchers():
             return G
@@ -851,8 +949,8 @@ class BaseDatabase:
                     'kwargs': {
                         'ids': ids,
                         'verbose': verbose,
-                    }
-                }
+                    },
+                },
             )
 
         for identifier in self.list_neighbourhoods():
@@ -861,24 +959,24 @@ class BaseDatabase:
                 data={
                     'task': self.compute_neighbourhood,
                     'args': [identifier],
-                    'kwargs': {}
-                }
+                    'kwargs': {},
+                },
             )
 
         for identifier in self.list_watchers():
             G.add_edge(
                 f'{self.download_content.__name__}()',
-                f'{self.apply_watcher.__name__}({identifier})'
+                f'{self.apply_watcher.__name__}({identifier})',
             )
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:
                 G.add_edge(
                     f'{self.apply_watcher.__name__}({dep})',
-                    f'{self.apply_watcher.__name__}({identifier})'
+                    f'{self.apply_watcher.__name__}({identifier})',
                 )
                 G.add_edge(
                     f'{self.download_content.__name__}()',
-                    f'{self.apply_watcher.__name__}({identifier})'
+                    f'{self.apply_watcher.__name__}({identifier})',
                 )
 
         for identifier in self.list_neighbourhoods():
@@ -886,7 +984,7 @@ class BaseDatabase:
             G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
             G.add_edge(
                 f'{self.apply_watcher.__name__}({watcher_identifier})',
-                f'{self.compute_neighbourhood.__name__}({identifier})'
+                f'{self.compute_neighbourhood.__name__}({identifier})',
             )
         return G
 
@@ -896,10 +994,14 @@ class BaseDatabase:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
-        assert identifier in self.list_models(), f'model "{identifier}" doesn\'t exist to replace'
-        file_id = self._create_serialized_file(object,
-                                               serializer=info['serializer'],
-                                               serializer_kwargs=info['serializer_kwargs'])
+        assert (
+            identifier in self.list_models()
+        ), f'model "{identifier}" doesn\'t exist to replace'
+        file_id = self._create_serialized_file(
+            object,
+            serializer=info['serializer'],
+            serializer_kwargs=info['serializer_kwargs'],
+        )
         self._replace_object(info['object'], file_id, 'model', identifier)
 
     def _replace_object(self, file_id, new_file_id, variety, identifier):
@@ -943,7 +1045,6 @@ class BaseDatabase:
 
     @work
     def fit(self, identifier):
-
         info = self.get_object_info(identifier, 'learning_task')
         trainer = info['configuration'](
             identifier=identifier,
@@ -1000,8 +1101,10 @@ class BaseDatabase:
         for vs in results:
             for m in results[vs]:
                 self._update_object_info(
-                    identifier, 'semantic_index',
-                    f'final_metrics.{vs}.{m}', results[vs][m],
+                    identifier,
+                    'semantic_index',
+                    f'final_metrics.{vs}.{m}',
+                    results[vs][m],
                 )
 
     def watch_job(self, identifier):
@@ -1033,9 +1136,9 @@ class BaseDatabase:
                     print(''.join(r['stdout'][n_lines:]), end='')
                 if len(r['stderr']) > n_lines_stderr:
                     print(''.join(r['stderr'][n_lines_stderr:]), end='')
-            elif status == 'failed': # pragma: no cover
+            elif status == 'failed':  # pragma: no cover
                 print(r['msg'])
-        except KeyboardInterrupt: # pragma: no cover
+        except KeyboardInterrupt:  # pragma: no cover
             return
 
     def write_output_to_job(self, identifier, msg, stream):
@@ -1050,5 +1153,3 @@ class BaseDatabase:
 
     def _write_watcher_outputs(self, info, outputs, _ids):
         raise NotImplementedError
-
-

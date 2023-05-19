@@ -1,0 +1,32 @@
+{
+  "apis": {},
+  "dask": {
+    "port": 8786,
+    "ip": "localhost",
+    "serializers": [],
+    "deserializers": []
+  },
+  "model_server": {
+    "port": 5001,
+    "host": "127.0.0.1"
+  },
+  "mongodb": {
+    "port": 27017,
+    "host": "localhost"
+  },
+  "notebook": {
+    "port": 8888,
+    "ip": "0.0.0.0",
+    "token": "...bad.key..."
+  },
+  "ray": {
+    "port": 0,
+    "host": "127.0.0.1",
+    "deployments": []
+  },
+  "remote": false,
+  "vector_search": {
+    "port": 5001,
+    "host": "localhost"
+  }
+}

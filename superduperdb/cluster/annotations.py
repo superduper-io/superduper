@@ -6,21 +6,29 @@ from bson import ObjectId
 
 def encode_args(database, signature, args):
     parameters = signature.parameters
-    positional_parameters = [k for k in parameters
-                             if parameters[k].default == inspect.Parameter.empty
-                             and parameters[k].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
-                             and k != 'self']
+    positional_parameters = [
+        k
+        for k in parameters
+        if parameters[k].default == inspect.Parameter.empty
+        and parameters[k].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        and k != 'self'
+    ]
     out = list(args)[:]
     for i, arg in enumerate(args):
         if isinstance(parameters[positional_parameters[i]].annotation, Convertible):
-            out[i] = parameters[positional_parameters[i]].annotation.encode(database, arg)
+            out[i] = parameters[positional_parameters[i]].annotation.encode(
+                database, arg
+            )
     return out
 
 
 def encode_kwargs(database, signature, kwargs):
     parameters = signature.parameters
-    keyword_parameters = [param for param, details in parameters.items() if
-                          details.default != inspect.Parameter.empty]
+    keyword_parameters = [
+        param
+        for param, details in parameters.items()
+        if details.default != inspect.Parameter.empty
+    ]
     out = kwargs.copy()
     for k in keyword_parameters:
         if isinstance(parameters[k].annotation, Convertible):
@@ -36,21 +44,29 @@ def encode_result(database, signature, result):
 
 def decode_args(database, signature, args):
     parameters = signature.parameters
-    positional_parameters = [k for k in parameters
-                             if parameters[k].default == inspect.Parameter.empty
-                             and parameters[k].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
-                             and k != 'self']
+    positional_parameters = [
+        k
+        for k in parameters
+        if parameters[k].default == inspect.Parameter.empty
+        and parameters[k].kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        and k != 'self'
+    ]
     out = list(args)[:]
     for i, arg in enumerate(args):
         if isinstance(parameters[positional_parameters[i]].annotation, Convertible):
-            out[i] = parameters[positional_parameters[i]].annotation.decode(database, arg)
+            out[i] = parameters[positional_parameters[i]].annotation.decode(
+                database, arg
+            )
     return out
 
 
 def decode_kwargs(database, signature, kwargs):
     parameters = signature.parameters
-    keyword_parameters = [param for param, details in parameters.items() if
-                          details.default != inspect.Parameter.empty]
+    keyword_parameters = [
+        param
+        for param, details in parameters.items()
+        if details.default != inspect.Parameter.empty
+    ]
     out = kwargs.copy()
     for k in keyword_parameters:
         if isinstance(parameters[k].annotation, Convertible):
@@ -116,6 +132,7 @@ class Tuple(BaseTuple, Convertible):
     ('this is a test: encoded', 'this is another')
 
     """
+
     def __init__(self, item_types):
         self.item_types = item_types
 

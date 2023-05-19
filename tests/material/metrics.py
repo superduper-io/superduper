@@ -14,4 +14,4 @@ class PatK:
         self.k = k
 
     def __call__(self, x, y):
-        return y in x[:self.k]
+        return y in x[: self.k]

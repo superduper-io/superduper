@@ -27,29 +27,34 @@ class LightningConfiguration(TrainerConfiguration):
             sample = splitter(sample)
         return model.preprocess(sample)
 
-    def __call__(self,
-                 identifier,
-                 models,
-                 keys,
-                 model_names,
-                 database_type,
-                 database_name,
-                 query_params,
-                 splitter=None,
-                 validation_sets=(),
-                 metrics=None,
-                 features=None,
-                 download=False):
-
+    def __call__(
+        self,
+        identifier,
+        models,
+        keys,
+        model_names,
+        database_type,
+        database_name,
+        query_params,
+        splitter=None,
+        validation_sets=(),
+        metrics=None,
+        features=None,
+        download=False,
+    ):
         assert len(models) == 1
         model = models[0].layer
         database = get_database_from_database_type(database_type, database_name)
 
         with eval(model):
-            train_data, valid_data = self._get_data(database_type, database_name, query_params,
-                                                    keys=None,
-                                                    features=features,
-                                                    transform=model.preprocess_for_training)
+            train_data, valid_data = self._get_data(
+                database_type,
+                database_name,
+                query_params,
+                keys=None,
+                features=features,
+                transform=model.preprocess_for_training,
+            )
 
         train_dataloader = DataLoader(train_data, **self.loader_kwargs)
         valid_dataloader = DataLoader(valid_data, **self.loader_kwargs)
@@ -65,11 +70,13 @@ class LightningConfiguration(TrainerConfiguration):
         )
 
         parameters = inspect.signature(pl.Trainer.__init__).parameters
-        kwargs = {k: getattr(self, k) for k in parameters if k != 'self' and hasattr(self, k)}
+        kwargs = {
+            k: getattr(self, k) for k in parameters if k != 'self' and hasattr(self, k)
+        }
 
         callbacks = self.get('callbacks', [])
         callbacks.append(checkpoint_callback)
         trainer = pl.Trainer(callbacks=callbacks, **kwargs)
-        return lambda: trainer.fit(model, train_dataloaders=train_dataloader,
-                                   val_dataloaders=valid_dataloader)
-
+        return lambda: trainer.fit(
+            model, train_dataloaders=train_dataloader, val_dataloaders=valid_dataloader
+        )

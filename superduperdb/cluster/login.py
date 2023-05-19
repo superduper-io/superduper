@@ -8,8 +8,10 @@ def maybe_login_required(auth, service):
     :param auth: basic auth instance
     :param service: name of the service on question
     """
+
     def decorator(f):
         if 'user' in cf[service]:
             return auth.login_required(f)
         return f
+
     return decorator

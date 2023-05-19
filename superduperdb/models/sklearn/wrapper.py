@@ -3,9 +3,7 @@ from superduperdb.models.base import SuperDuperModel
 
 
 class Pipeline(BasePipeline, SuperDuperModel):
-    def __init__(self, steps, memory=None,
-                 verbose=False, postprocessor=None):
-
+    def __init__(self, steps, memory=None, verbose=False, postprocessor=None):
         BasePipeline.__init__(self, steps=steps, memory=memory, verbose=verbose)
         SuperDuperModel.__init__(self)
         self.postprocessor = postprocessor

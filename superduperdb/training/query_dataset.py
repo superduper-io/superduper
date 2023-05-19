@@ -14,8 +14,17 @@ class QueryDataset:
     :param transform: function to apply to the output
     """
 
-    def __init__(self, query_params, database, database_type=None, keys=None, fold='train', suppress=(),
-                 transform=None, features=None):
+    def __init__(
+        self,
+        query_params,
+        database,
+        database_type=None,
+        keys=None,
+        fold='train',
+        suppress=(),
+        transform=None,
+        features=None,
+    ):
         super().__init__()
 
         if isinstance(database, str):
@@ -35,7 +44,9 @@ class QueryDataset:
     @property
     def database(self):
         if self._database is None:
-            self._database = get_database_from_database_type(self._database_type, self._database_name)
+            self._database = get_database_from_database_type(
+                self._database_type, self._database_name
+            )
         return self._database
 
     def __len__(self):

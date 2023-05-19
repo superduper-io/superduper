@@ -2,7 +2,6 @@ import torch
 
 
 class BinaryTarget(torch.nn.Module):
-
     def forward(self, x):
         return x.type(torch.float)
 

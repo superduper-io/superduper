@@ -27,6 +27,7 @@ class MongoStyleDict(dict):
     ...
     KeyError: 'd'
     """
+
     def __getitem__(self, item):
         if '.' not in item:
             return super().__getitem__(item)

@@ -58,4 +58,3 @@ class Image:
     @staticmethod
     def decode(bytes_):
         return PIL.Image.open(io.BytesIO(bytes_))
-

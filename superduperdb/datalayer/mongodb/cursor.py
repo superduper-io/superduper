@@ -10,13 +10,14 @@ class SuperDuperCursor(Cursor):
         """
         Cursor subclassing *pymongo.cursor.Cursor*.
         If *features* are specified, these are substituted in the records
-        for the raw data. This is useful, for instance if images are present, and they should
-        be featurized by a certain model. If *scores* are added, these are added to the results
-        records.
+        for the raw data. This is useful, for instance if images are present, and they
+        should be featurized by a certain model. If *scores* are added, these are added
+        to the results records.
 
         :param collection: collection
         :param *args: args to pass to super()
-        :param features: dictionary of features to set (replace record entries with model outputs)
+        :param features: dictionary of features to set (replace record entries with
+                         model outputs)
         :param scores: similarity scores to add to records
         :param similar_join: replace ids by documents in subfield of _like
         :param **kwargs: kwargs to pass to super() (see pymongo.cursor.Cursor)

@@ -42,10 +42,7 @@ class TrainerConfiguration:
         return train_data, valid_data
 
     def get(self, k, default=None):
-        try:
-            return getattr(self, k)
-        except:
-            return default
+        return getattr(self, k, default)
 
     def __call__(
         self,

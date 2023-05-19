@@ -1,8 +1,11 @@
+# ruff: noqa: F401, F811
+
 from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_semantic_index
 from tests.material.losses import ranking_loss
 from tests.material.metrics import PatK
-from tests.material.measures import dot
+
+# from tests.material.measures import dot  # or is this one right??
 from superduperdb.vector_search.vanilla.measures import dot
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 

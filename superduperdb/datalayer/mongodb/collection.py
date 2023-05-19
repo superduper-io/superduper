@@ -12,22 +12,25 @@ from superduperdb.cluster.annotations import (
     Convertible,
 )
 
-warnings.filterwarnings('ignore')
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
 
-from superduperdb.datalayer.mongodb.cursor import SuperDuperCursor
+    from superduperdb.datalayer.mongodb.cursor import SuperDuperCursor
 
-from pymongo.collection import Collection as MongoCollection
-from pymongo.cursor import Cursor
+    from pymongo.collection import Collection as MongoCollection
+    from pymongo.cursor import Cursor
 
-from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.fetchers.downloads import gather_uris, InMemoryDownloader
-from superduperdb.models.torch.wrapper import apply_model
+    from superduperdb.misc.special_dicts import MongoStyleDict
+    from superduperdb.fetchers.downloads import gather_uris, InMemoryDownloader
+    from superduperdb.models.torch.wrapper import apply_model
 
 
 class Collection(MongoCollection):
     """
     Collection building on top of ``pymongo.collection.Collection``.
-    Implements additional methods required by ``superduperdb`` for AI/ machine learning.
+
+    Implements additional methods required by ``superduperdb`` for AI/ machine
+    learning.
     """
 
     _id = '_id'
@@ -103,8 +106,11 @@ class Collection(MongoCollection):
         """
         Create learning task.
 
-        :param args: positional arguments to ``self.database.create_learning_task``
-        :param kwargs: passed to ``self.database.create_learning_task``
+        :param args:
+            positional arguments to ``self.database.create_learning_task``
+
+        :param kwargs:
+            passed to ``self.database.create_learning_task``
         """
         return self.database.create_learning_task(
             models, keys, *(self.name, *query_params), **kwargs
@@ -132,8 +138,11 @@ class Collection(MongoCollection):
         """
         Create neighbourhood.
 
-        :param args: positional arguments to ``self.database.create_neighbourhood``
-        :param kwargs: passed to ``self.database.create_neighbourhood``
+        :param args:
+            positional arguments to ``self.database.create_neighbourhood``
+
+        :param kwargs:
+            passed to ``self.database.create_neighbourhood``
         """
         return self.database.create_neighbourhood(*args, **kwargs)
 
@@ -161,7 +170,8 @@ class Collection(MongoCollection):
 
         :param identifier: identifier of validation-set
         :param filter_: filter_ defining where to get data from
-        :param args: positional arguments to ``self.database.create_validation_set``
+        :param args:
+           positional arguments to ``self.database.create_validation_set``
         :param kwargs: passed to ``self.database.create_validation_set``
         """
         if filter_ is None:
@@ -310,17 +320,29 @@ class Collection(MongoCollection):
         **kwargs,
     ):
         """
-        Behaves like MongoDB ``find`` with similarity search as additional option.
+        Behaves like MongoDB ``find`` with similarity search as
+        an additional option.
 
         :param filter: filter dictionary
+
         :param args: args passed to super()
+
         :param like: item to which the results of the find should be similar
-        :param similar_first: toggle to ``True`` to first find similar things, and then
-                              apply filter to these things
-        :param raw: toggle to ``True`` to not convert bytes to Python objects but return raw bytes
-        :param features: dictionary of model outputs to replace for dictionary elements
-        :param download: toggle to ``True`` in case query has downloadable "_content" components
+
+        :param similar_first: toggle to ``True`` to first find similar things,
+            and then apply filter to these things
+
+        :param raw: toggle to ``True`` to not convert bytes to Python objects
+            but return raw bytes
+
+        :param features: dictionary of model outputs to replace for
+            dictionary elements
+
+        :param download: toggle to ``True`` in case query has
+            downloadable "_content" components
+
         :param similar_join: replace ids by documents
+
         :param kwargs: kwargs to be passed to super()
         """
         if filter is None:
@@ -438,13 +460,15 @@ class Collection(MongoCollection):
 
     def replace_one(self, filter, replacement, *args, refresh=True, **kwargs):
         """
-        Replace a document in the database. The outputs of models will be refreshed for this
-        document.
+        Replace a document in the database.
+
+        The outputs of models will be refreshed for this document.
 
         :param filter: MongoDB like filter
         :param replacement: Replacement document
         :param args: args to be passed to super()
-        :param refresh: Toggle to *False* to not process document again with models.
+        :param refresh: Toggle to *False* to not process document again
+            with models.
         :param kwargs: kwargs to be passed to super()
         """
         id_ = super().find_one(filter, *args, **kwargs)['_id']
@@ -456,7 +480,8 @@ class Collection(MongoCollection):
 
     def convert_from_types_to_bytes(self, r):
         """
-        Convert non MongoDB types to bytes using types already registered with collection.
+        Convert non MongoDB types to bytes using types already registered
+        with ``collection``.
 
         :param r: record in which to convert types
         :return modified record
@@ -465,14 +490,17 @@ class Collection(MongoCollection):
 
     def update_many(self, filter, *args, refresh=True, **kwargs):
         """
-        Update the collection at the documents specified by the filter. If there are active
-        models these are applied to the updated documents.
+        Update the collection at the documents specified by the filter.
+
+        If there are active models these are applied to the updated documents.
 
         :param filter: Filter dictionary selecting documents to be updated
         :param args: Arguments to be passed to ``super()``
-        :param refresh: Toggle to ``False`` to stop models being applied to updated documents
+        :param refresh: Toggle to ``False`` to stop models being applied
+            to updated documents
         :param kwargs: Keyword arguments to be passed to ``super()``
-        :return: ``result`` or ``(result, job_ids)`` depending on ``self.remote``
+        :return: ``result`` or ``(result, job_ids)``
+            depending on ``self.remote``
         """
         if refresh and self.list_models():
             ids = [r['_id'] for r in super().find(filter, {'_id': 1})]
@@ -491,9 +519,11 @@ class Collection(MongoCollection):
 
         :param filter: Filter dictionary selecting documents to be updated
         :param args: Arguments to be passed to ``super()``
-        :param refresh: Toggle to ``False`` to stop models being applied to updated documents
+        :param refresh: Toggle to ``False`` to stop models being applied
+            to updated documents
         :param kwargs: Keyword arguments to be passed to ``super()``
-        :return: ``result`` or ``(result, job_ids)`` depending on ``self.remote``
+        :return: ``result`` or ``(result, job_ids)``
+            depending on ``self.remote``
         """
         id_ = super().find_one(filter, {'_id': 1})['_id']
         return self.update_many({'_id': id_}, *args, refresh=refresh, **kwargs)

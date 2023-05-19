@@ -28,10 +28,14 @@ from superduperdb.vector_search import hash_set_classes
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 
 
+def validate_representations(database, vs, identifier, metrics):
+    raise NotImplementedError
+
+
 class BaseDatabase:
     """
-    Base database connector for SuperDuperDB - all database types should subclass this
-    type.
+    Base database connector for SuperDuperDB - all database types should
+    subclass this type.
     """
 
     def __init__(self):
@@ -89,7 +93,8 @@ class BaseDatabase:
             (see ``self.list_models``)
 
         :param input_: input_ to be passed to the model.
-            Must be possible to encode with registered types (``self.list_types``)
+            Must be possible to encode with registered types
+            (``self.list_types``)
 
         :param kwargs: key-values (see ``superduperdb.models.utils.predict``)
         """
@@ -152,7 +157,7 @@ class BaseDatabase:
 
     def convert_from_bytes_to_types(self, r):
         """
-        Convert the bson byte objects in a nested dictionary into python objects.
+        Convert bson byte objects in a nested dictionary into python objects.
 
         :param r: dictionary potentially containing non-Bsonable content
         """
@@ -168,7 +173,8 @@ class BaseDatabase:
 
     def convert_from_types_to_bytes(self, r):
         """
-        Convert the non-Bsonable python objects in a nested dictionary into ``bytes``
+        Convert the non-Bsonable python objects in a nested dictionary into
+        ``bytes``
 
         :param r: dictionary potentially containing non-Bsonable content
         """
@@ -251,7 +257,8 @@ class BaseDatabase:
     def create_metric(self, identifier, object, **kwargs):
         """
         Create metric, called by ``self.create_learning_task``, to measure
-        performance of learning on validation_sets (see ``self.list_validation_sets``)
+        performance of learning on validation_sets
+        (see ``self.list_validation_sets``)
 
         :param identifier: identifier
         :param object: Python object
@@ -268,15 +275,24 @@ class BaseDatabase:
         **kwargs,
     ):
         """
-        Create a model registered in the collection directly from a python session.
-        The added model will then watch incoming records and add outputs computed on those
-        records into the ``"_outputs"`` fields of the records.
-        The model is then stored inside MongoDB and can be accessed using the ``SuperDuperClient``.
+        Create a model registered in the collection directly from a python
+        session.
+
+        The added model will then watch incoming records and add outputs
+        computed on those records into the ``"_outputs"`` fields of the records.
+
+        The model is then stored inside MongoDB and can be accessed using the
+        ``SuperDuperClient``.
 
         :param identifier: name of model
-        :param object: if specified the model object (pickle-able) else None if model already exists
+
+        :param object: if specified the model object (pickle-able) else None
+            if model already exists
+
         :param preprocessor: separate preprocessing
+
         :param postprocessor: separate postprocessing
+
         :param type: type for converting model outputs back and forth from bytes
         """
 
@@ -307,7 +323,8 @@ class BaseDatabase:
 
     def create_neighbourhood(self, identifier, n=10, batch_size=100):
         """
-        Cache similarity between items of model watcher (see ``self.list_watchers``)
+        Cache similarity between items of model watcher
+        (see ``self.list_watchers``)
 
         :param identifier: identifier of watcher to use
         :param n: number of similar items
@@ -391,7 +408,7 @@ class BaseDatabase:
 
     def create_type(self, identifier, object, **kwargs):
         """
-        Create datatype, in order to serialize python object data in the database.
+        Create datatype that serializes python object data in the database
 
         :param identifier: identifier
         :param object: Python object
@@ -462,13 +479,8 @@ class BaseDatabase:
         :param name: name of function
         :param force: toggle to ``True`` to skip confirmation step
         """
-        do_delete = False
-        if force or click.confirm(
-            f'Are you sure you want to delete the learning-task "{identifier}"?',
-            default=False,
-        ):
-            do_delete = True
-        if not do_delete:
+        m = f'Are you sure you want to delete the learning-task "{identifier}"?'
+        if not (force or click.confirm(m, default=False)):
             return
 
         info = self.get_object_info(identifier, 'learning_task')

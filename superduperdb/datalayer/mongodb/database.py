@@ -14,8 +14,10 @@ from superduperdb.misc.logger import logging
 
 class Database(MongoDatabase, BaseDatabase):
     """
-    Database building on top of :code:`pymongo.database.Database`. Collections in the
-    database are SuperDuperDB objects :code:`superduperdb.collection.Collection`.
+    Database building on top of :code:`pymongo.database.Database`.
+
+    Collections in the database are SuperDuperDB objects
+    :code:`superduperdb.collection.Collection`.
     """
 
     _id = '_id'

@@ -20,7 +20,7 @@ def save(bytes_, filesystem):
 
 class MongoIterable(data.IterableDataset):  # pragma: no cover
     """
-    Dataset iterating over a query without needing to download the whole thing first.
+    A class that lazily iterates over a query
     """
 
     def __init__(

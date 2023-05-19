@@ -147,7 +147,8 @@ class Downloader(BaseDownloader):
     :param n_workers: number of multiprocessing workers
     :param raises: raises error ``True``/``False``
     :param headers: dictionary of request headers passed to``requests`` package
-    :param skip_existing: if ``True`` then don't bother getting already present data
+    :param skip_existing: if ``True`` then don't bother getting already
+        present data
     :param timeout: set seconds until request times out
     """
 

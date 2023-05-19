@@ -4,11 +4,13 @@ from pymongo.mongo_client import MongoClient
 import superduperdb.datalayer.mongodb.database
 from superduperdb.misc.logger import logging
 
+DROP_MSG = 'Are you sure you want to delete this database and all its models?'
+
 
 class SuperDuperClient(MongoClient):
     """
-    Client building on top of :code:`pymongo.MongoClient`. Databases and collections in the
-    client are SuperDuperDB objects.
+    Client building on top of :code:`pymongo.MongoClient`.
+    Databases and collections in the client are SuperDuperDB objects.
     """
 
     def __init__(self, *args, **kwargs):
@@ -40,10 +42,7 @@ class SuperDuperClient(MongoClient):
         force=False,
         **kwargs,
     ):
-        if force or click.confirm(
-            'are you sure you want to delete this database and all of the models, etc. in it?',
-            default=False,
-        ):
+        if force or click.confirm(DROP_MSG, default=False):
             super().drop_database(f'_{name}:files')
             super().drop_database(name)
         else:

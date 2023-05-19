@@ -62,7 +62,8 @@ def vector_search(f):
 
 def model_server(f):
     """
-    Method decorator to posit that function is called on the remote, not on the client.
+    Method decorator to posit that function is called on the remote, not on the
+    client.
 
     :param f: method object
     """

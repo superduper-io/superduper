@@ -51,11 +51,14 @@ def apply_model(
     model, args, single=True, forward='forward', postprocess=True, **kwargs
 ):
     """
-    Apply model to args including pre-processing, forward pass and post-processing.
+    Apply model to args including pre-processing, forward pass
+    and post-processing.
 
-    :param model: model object including methods *preprocess*, *forward* and *postprocess*
+    :param model: model object including methods *preprocess*, *forward* and
+        *postprocess*
     :param args: single or multiple data points over which to evaluate model
-    :param single: toggle to apply model to single or multiple (batched) datapoints.
+    :param single: toggle to apply model to single or multiple (batched)
+        datapoints.
     :param forward: name of the forward pass
     :param postprocess: toggle to ``False`` to get only forward outputs:w
     :param kwargs: key, value pairs to be passed to dataloader
@@ -69,7 +72,8 @@ def apply_model(
     >>> out = apply_model(model, torch.randn(16))
     >>> isinstance(out, int)
     True
-    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)], single=False, batch_size=2)
+    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)],
+                          single=False, batch_size=2)
     >>> isinstance(out, list)
     True
     >>> len(out)
@@ -82,7 +86,8 @@ def apply_model(
     >>> out = apply_model(model, torch.randn(16))
     >>> out.shape
     torch.Size([32])
-    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)], single=False)
+    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)],
+                          single=False)
     >>> out[0].shape
     torch.Size([32])
 
@@ -90,7 +95,8 @@ def apply_model(
     ...     forward=torch.nn.Linear(16, 4),
     ...     postprocess=lambda x: x.topk(1)[1].item()
     ... )
-    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)], single=False, batch_size=2)
+    >>> out = apply_model(model, [torch.randn(16), torch.randn(16)],
+                          single=False, batch_size=2)
 
     """
     if single:
@@ -128,7 +134,7 @@ def apply_model(
 
 class BasicDataset(data.Dataset):
     """
-    Basic database iterating over a list of documents and applying a transformation
+    Iterate over a list of documents and apply a transformation
 
     :param documents: documents
     :param transform: function

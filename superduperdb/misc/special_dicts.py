@@ -10,7 +10,7 @@ class ArgumentDefaultDict(defaultdict):
 
 class MongoStyleDict(dict):
     """
-    Dictionary object mirroring how fields can be referred to and set in MongoDB.
+    Dictionary object allowing fields to be set in MongoDB.
 
     >>> d = MongoStyleDict({'a': {'b': 1}})
     >>> d['a.b']

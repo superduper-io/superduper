@@ -12,6 +12,7 @@ class WavAudio:
     >>> nbs == bs
     True
     """
+
     def __init__(self, types=()):
         self.types = types
 

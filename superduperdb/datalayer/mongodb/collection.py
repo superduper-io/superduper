@@ -5,8 +5,12 @@ from typing import Any
 
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.cluster.client_decorators import vector_search
-from superduperdb.cluster.annotations import Tuple, List, \
-    ObjectIdConvertible, Convertible
+from superduperdb.cluster.annotations import (
+    Tuple,
+    List,
+    ObjectIdConvertible,
+    Convertible,
+)
 
 warnings.filterwarnings('ignore')
 
@@ -56,10 +60,12 @@ class Collection(MongoCollection):
 
     @property
     def hash_set(self):
-        return self.database._get_hash_set(self.database._get_meta_data(
-            key='semantic_index',
-            collection=self.name,
-        )['value'])
+        return self.database._get_hash_set(
+            self.database._get_meta_data(
+                key='semantic_index',
+                collection=self.name,
+            )['value']
+        )
 
     @property
     def semantic_index(self):
@@ -101,8 +107,9 @@ class Collection(MongoCollection):
         :param args: positional arguments to ``self.database.create_learning_task``
         :param kwargs: passed to ``self.database.create_learning_task``
         """
-        return self.database.create_learning_task(models, keys, *(self.name, *query_params),
-                                                  **kwargs)
+        return self.database.create_learning_task(
+            models, keys, *(self.name, *query_params), **kwargs
+        )
 
     def create_metric(self, *args, **kwargs):
         """
@@ -162,7 +169,9 @@ class Collection(MongoCollection):
             filter_ = {'_fold': 'valid'}
         else:
             filter_['_fold'] = 'valid'
-        return self.database.create_validation_set(identifier, self.name, filter_, *args, **kwargs)
+        return self.database.create_validation_set(
+            identifier, self.name, filter_, *args, **kwargs
+        )
 
     def create_watcher(self, *args, **kwargs):
         """
@@ -284,9 +293,23 @@ class Collection(MongoCollection):
             filter = self.database.convert_from_bytes_to_types(filter)
         return filter
 
-    def find(self, filter=None, *args, like=None, n=10, similar_first=False, raw=False,
-             features=None, download=False, similar_join=None, semantic_index=None,
-             watcher=None, hash_set_cls='vanilla', measure='css', **kwargs):
+    def find(
+        self,
+        filter=None,
+        *args,
+        like=None,
+        n=10,
+        similar_first=False,
+        raw=False,
+        features=None,
+        download=False,
+        similar_join=None,
+        semantic_index=None,
+        watcher=None,
+        hash_set_cls='vanilla',
+        measure='css',
+        **kwargs,
+    ):
         """
         Behaves like MongoDB ``find`` with similarity search as additional option.
 
@@ -304,32 +327,49 @@ class Collection(MongoCollection):
         if filter is None:
             filter = {}
         if download and like is not None:
-            like = self._get_content_for_filter(like)    # pragma: no cover
+            like = self._get_content_for_filter(like)  # pragma: no cover
         if like is not None:
             if similar_first:
-                return self._find_similar_then_matches(filter, like, *args, raw=raw,
-                                                       features=features, like=like,
-                                                       semantic_index=semantic_index,
-                                                       n=n,
-                                                       measure=measure,
-                                                       watcher=watcher,
-                                                       hash_set_cls=hash_set_cls,
-                                                       **kwargs)
+                return self._find_similar_then_matches(
+                    filter,
+                    like,
+                    *args,
+                    raw=raw,
+                    features=features,
+                    like=like,
+                    semantic_index=semantic_index,
+                    n=n,
+                    measure=measure,
+                    watcher=watcher,
+                    hash_set_cls=hash_set_cls,
+                    **kwargs,
+                )
             else:
-                return self._find_matches_then_similar(filter, like, *args, raw=raw,
-                                                       n=n,
-                                                       features=features,
-                                                       measure=measure,
-                                                       semantic_index=semantic_index,
-                                                       hash_set_cls=hash_set_cls,
-                                                       watcher=watcher,
-                                                       **kwargs)
+                return self._find_matches_then_similar(
+                    filter,
+                    like,
+                    *args,
+                    raw=raw,
+                    n=n,
+                    features=features,
+                    measure=measure,
+                    semantic_index=semantic_index,
+                    hash_set_cls=hash_set_cls,
+                    watcher=watcher,
+                    **kwargs,
+                )
         else:
             if raw:
                 return Cursor(self, filter, *args, **kwargs)
             else:
-                return SuperDuperCursor(self, filter, *args, features=features,
-                                        similar_join=similar_join, **kwargs)
+                return SuperDuperCursor(
+                    self,
+                    filter,
+                    *args,
+                    features=features,
+                    similar_join=similar_join,
+                    **kwargs,
+                )
 
     def find_one(self, *args, **kwargs):
         """
@@ -366,7 +406,9 @@ class Collection(MongoCollection):
         for document in documents:
             r = random.random()
             try:
-                valid_probability = self['_meta'].find_one({'key': 'valid_probability'})['value']
+                valid_probability = self['_meta'].find_one(
+                    {'key': 'valid_probability'}
+                )['value']
             except TypeError:
                 valid_probability = 0.05
             if '_fold' not in document:
@@ -376,9 +418,9 @@ class Collection(MongoCollection):
         output = super().insert_many(documents, *args, **kwargs)
         if not refresh:  # pragma: no cover
             return output, None
-        task_graph = self.database._build_task_workflow((self.name,),
-                                                        ids=output.inserted_ids,
-                                                        verbose=verbose)
+        task_graph = self.database._build_task_workflow(
+            (self.name,), ids=output.inserted_ids, verbose=verbose
+        )
         task_graph()
         return output, task_graph
 
@@ -454,14 +496,20 @@ class Collection(MongoCollection):
         return self.update_many({'_id': id_}, *args, refresh=refresh, **kwargs)
 
     @vector_search
-    def find_nearest(self, like: Convertible(), ids=None, n=10,
-                     watcher=None,
-                     semantic_index=None,
-                     measure='css',
-                     hash_set_cls='vanilla') -> Tuple([List(ObjectIdConvertible()), Any]):
-
+    def find_nearest(
+        self,
+        like: Convertible(),
+        ids=None,
+        n=10,
+        watcher=None,
+        semantic_index=None,
+        measure='css',
+        hash_set_cls='vanilla',
+    ) -> Tuple([List(ObjectIdConvertible()), Any]):
         if semantic_index is not None:
-            si_info = self.database.get_object_info(semantic_index, variety='learning_task')
+            si_info = self.database.get_object_info(
+                semantic_index, variety='learning_task'
+            )
             models = si_info['models']
             keys = si_info['keys']
             watcher = self.database._get_watcher_for_learning_task(semantic_index)
@@ -472,8 +520,9 @@ class Collection(MongoCollection):
             keys = [watcher_info['key']]
 
         if watcher not in self.database._all_hash_sets:
-            self.database._load_hashes(watcher=watcher, measure=measure,
-                                       hash_set_cls=hash_set_cls)
+            self.database._load_hashes(
+                watcher=watcher, measure=measure, hash_set_cls=hash_set_cls
+            )
 
         hash_set = self.database._all_hash_sets[watcher]
         if ids is not None:
@@ -494,25 +543,36 @@ class Collection(MongoCollection):
             if subkey not in document['_outputs']:
                 document['_outputs'][subkey] = {}
             if features[subkey] not in document['_outputs'][subkey]:
-                document['_outputs'][subkey][features[subkey]] = \
-                    apply_model(self.models[features[subkey]], document[subkey])
+                document['_outputs'][subkey][features[subkey]] = apply_model(
+                    self.models[features[subkey]], document[subkey]
+                )
             document[subkey] = document['_outputs'][subkey][features[subkey]]
         model_input = document[key] if key != '_base' else document
         model = self.models[model]
         h = model.predict_one(model_input)
         return hash_set.find_nearest_from_hash(h, n=n)
 
-    def _find_similar_then_matches(self, filter, like, *args, raw=False, features=None, n=10,
-                                   semantic_index=None, watcher=None, hash_set_cls='vanilla',
-                                   **kwargs):
-        similar_ids, scores = self.find_nearest(like, n=n, semantic_index=semantic_index,
-                                                watcher=watcher, hash_set_cls='vanilla')
-        filter = {
-            '$and': [
-                filter,
-                {'_id': {'$in': similar_ids}}
-            ]
-        }
+    def _find_similar_then_matches(
+        self,
+        filter,
+        like,
+        *args,
+        raw=False,
+        features=None,
+        n=10,
+        semantic_index=None,
+        watcher=None,
+        hash_set_cls='vanilla',
+        **kwargs,
+    ):
+        similar_ids, scores = self.find_nearest(
+            like,
+            n=n,
+            semantic_index=semantic_index,
+            watcher=watcher,
+            hash_set_cls='vanilla',
+        )
+        filter = {'$and': [filter, {'_id': {'$in': similar_ids}}]}
         if raw:
             return Cursor(self, filter, *args, **kwargs)  # pragma: no cover
         else:
@@ -525,9 +585,20 @@ class Collection(MongoCollection):
                 **kwargs,
             )
 
-    def _find_matches_then_similar(self, filter, like, *args, raw=False, features=None, n=10,
-                                   semantic_index=None, watcher=None, hash_set_cls='vanilla',
-                                   measure='css', **kwargs):
+    def _find_matches_then_similar(
+        self,
+        filter,
+        like,
+        *args,
+        raw=False,
+        features=None,
+        n=10,
+        semantic_index=None,
+        watcher=None,
+        hash_set_cls='vanilla',
+        measure='css',
+        **kwargs,
+    ):
         if filter:
             matches_cursor = SuperDuperCursor(
                 self,
@@ -538,22 +609,38 @@ class Collection(MongoCollection):
                 **kwargs,
             )
             ids = [x['_id'] for x in matches_cursor]
-            similar_ids, scores = \
-                self.find_nearest(like, ids=ids, n=n, semantic_index=semantic_index,
-                                  watcher=watcher, hash_set_cls=hash_set_cls,
-                                  measure=measure)
+            similar_ids, scores = self.find_nearest(
+                like,
+                ids=ids,
+                n=n,
+                semantic_index=semantic_index,
+                watcher=watcher,
+                hash_set_cls=hash_set_cls,
+                measure=measure,
+            )
         else:  # pragma: no cover
-            similar_ids, scores = \
-                self.find_nearest(like, n=n, semantic_index=semantic_index,
-                                  watcher=watcher, hash_set_cls=hash_set_cls,
-                                  measure=measure)
+            similar_ids, scores = self.find_nearest(
+                like,
+                n=n,
+                semantic_index=semantic_index,
+                watcher=watcher,
+                hash_set_cls=hash_set_cls,
+                measure=measure,
+            )
 
         if raw:
-            return Cursor(self, {'_id': {'$in': similar_ids}}, *args, **kwargs)  # pragma: no cover
+            return Cursor(
+                self, {'_id': {'$in': similar_ids}}, *args, **kwargs
+            )  # pragma: no cover
         else:
-            return SuperDuperCursor(self, {'_id': {'$in': similar_ids}}, *args,
-                                    features=features,
-                                    scores=dict(zip(similar_ids, scores)), **kwargs)
+            return SuperDuperCursor(
+                self,
+                {'_id': {'$in': similar_ids}},
+                *args,
+                features=features,
+                scores=dict(zip(similar_ids, scores)),
+                **kwargs,
+            )
 
     def _infer_types(self, documents):
         for r in documents:
@@ -568,7 +655,10 @@ class Collection(MongoCollection):
 
     def _write_watcher_outputs(self, watcher_info, outputs, _ids):
         return self.database._write_watcher_outputs(
-            {**watcher_info, 'query_params': (self.name, *watcher_info['query_params'])},
+            {
+                **watcher_info,
+                'query_params': (self.name, *watcher_info['query_params']),
+            },
             outputs,
             _ids,
         )

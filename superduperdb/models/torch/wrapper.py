@@ -47,7 +47,9 @@ class SuperDuperWrapper(SuperDuperModule):
         return self._postprocess(out)
 
 
-def apply_model(model, args, single=True, forward='forward', postprocess=True, **kwargs):
+def apply_model(
+    model, args, single=True, forward='forward', postprocess=True, **kwargs
+):
     """
     Apply model to args including pre-processing, forward pass and post-processing.
 
@@ -131,6 +133,7 @@ class BasicDataset(data.Dataset):
     :param documents: documents
     :param transform: function
     """
+
     def __init__(self, documents, transform):
         super().__init__()
         self.documents = documents
@@ -181,7 +184,7 @@ def unpack_batch(args):
             tmp = {k: unpack_batch(v) for k, v in args.items()}
             batch_size = len(next(iter(tmp.values())))
             return [{k: v[i] for k, v in tmp.items()} for i in range(batch_size)]
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise NotImplementedError
 
 
@@ -210,4 +213,6 @@ def create_batch(args):
         return args.unsqueeze(0)
     if isinstance(args, (float, int)):
         return torch.tensor([args])
-    raise TypeError('only tensors and tuples of tensors recursively supported...')  # pragma: no cover
+    raise TypeError(
+        'only tensors and tuples of tensors recursively supported...'
+    )  # pragma: no cover

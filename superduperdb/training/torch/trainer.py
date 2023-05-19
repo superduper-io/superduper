@@ -24,28 +24,39 @@ def _default_kwargs():
 
 
 class TorchTrainerConfiguration(TrainerConfiguration):
-    def __init__(self, objective, loader_kwargs, optimizer_classes=None,
-                 optimizer_kwargs=None, max_iterations=float('inf'),
-                 no_improve_then_stop=5, splitter=None, download=False,
-                 validation_interval=100,
-                 watch='objective',
-                 **kwargs):
+    def __init__(
+        self,
+        objective,
+        loader_kwargs,
+        optimizer_classes=None,
+        optimizer_kwargs=None,
+        max_iterations=float('inf'),
+        no_improve_then_stop=5,
+        splitter=None,
+        download=False,
+        validation_interval=100,
+        watch='objective',
+        **kwargs,
+    ):
         _optimizer_classes = optimizer_classes or {}
         optimizer_classes = defaultdict(_default_optimizer)
         optimizer_classes.update(_optimizer_classes)
         _optimizer_kwargs = optimizer_kwargs or {}
         optimizer_kwargs = defaultdict(_default_kwargs)
         optimizer_kwargs.update(_optimizer_kwargs)
-        super().__init__(loader_kwargs=loader_kwargs,
-                         objective=objective,
-                         optimizer_classes=optimizer_classes or {},
-                         optimizer_kwargs=optimizer_kwargs or {},
-                         no_improve_then_stop=no_improve_then_stop,
-                         max_iterations=max_iterations,
-                         splitter=splitter, download=download,
-                         validation_interval=validation_interval,
-                         watch=watch,
-                         **kwargs)
+        super().__init__(
+            loader_kwargs=loader_kwargs,
+            objective=objective,
+            optimizer_classes=optimizer_classes or {},
+            optimizer_kwargs=optimizer_kwargs or {},
+            no_improve_then_stop=no_improve_then_stop,
+            max_iterations=max_iterations,
+            splitter=splitter,
+            download=download,
+            validation_interval=validation_interval,
+            watch=watch,
+            **kwargs,
+        )
 
     @classmethod
     def split_and_preprocess(cls, sample, models, keys, splitter=None):
@@ -74,13 +85,14 @@ class TorchTrainerConfiguration(TrainerConfiguration):
             return True
 
     @classmethod
-    def stopping_criterion(cls,
-                           metrics,
-                           iterations,
-                           no_improve_then_stop=None,
-                           watch='objective',
-                           max_iterations=None):
-
+    def stopping_criterion(
+        cls,
+        metrics,
+        iterations,
+        no_improve_then_stop=None,
+        watch='objective',
+        max_iterations=None,
+    ):
         if isinstance(max_iterations, int) and iterations >= max_iterations:
             return True
 
@@ -102,19 +114,20 @@ class TorchTrainerConfiguration(TrainerConfiguration):
         query_params = database.get_query_params_for_validation_set(validation_set)
         return QueryDataset(query_params, database_name, database_type, fold='valid')
 
-    def __call__(self,
-                 identifier,
-                 models,
-                 keys,
-                 model_names,
-                 database_type,
-                 database_name,
-                 query_params,
-                 validation_sets=(),
-                 metrics=None,
-                 features=None,
-                 download=False):
-
+    def __call__(
+        self,
+        identifier,
+        models,
+        keys,
+        model_names,
+        database_type,
+        database_name,
+        query_params,
+        validation_sets=(),
+        metrics=None,
+        features=None,
+        download=False,
+    ):
         database = get_database_from_database_type(database_type, database_name)
 
         lookup = dict(zip(model_names, models))
@@ -127,17 +140,26 @@ class TorchTrainerConfiguration(TrainerConfiguration):
             )
 
         transform = lambda x: self.split_and_preprocess(x, models, keys, self.splitter)
-        train_data, valid_data = self._get_data(database_type, database_name, query_params, keys,
-                                                features=features,
-                                                transform=transform)
+        train_data, valid_data = self._get_data(
+            database_type,
+            database_name,
+            query_params,
+            keys,
+            features=features,
+            transform=transform,
+        )
         train_dataloader = DataLoader(train_data, **self.loader_kwargs)
         valid_dataloader = DataLoader(valid_data, **self.loader_kwargs)
 
         parameters = inspect.signature(self.compute_metrics).parameters
-        compute_metrics_kwargs = {k: getattr(self, k) for k in parameters if hasattr(self, k)}
+        compute_metrics_kwargs = {
+            k: getattr(self, k) for k in parameters if hasattr(self, k)
+        }
 
-        validation_sets = {vs: self.get_validation_dataset(database_type, database_name, vs)
-                           for vs in validation_sets}
+        validation_sets = {
+            vs: self.get_validation_dataset(database_type, database_name, vs)
+            for vs in validation_sets
+        }
 
         return Trainer(
             models,
@@ -152,11 +174,14 @@ class TorchTrainerConfiguration(TrainerConfiguration):
                 keys=keys,
                 metrics=metrics,
                 predict_kwargs=self.loader_kwargs,
-                **compute_metrics_kwargs
+                **compute_metrics_kwargs,
             ),
             save=lambda x, y: self.save_models(database, x, y),
             stopping_criterion=lambda x, y: self.stopping_criterion(
-                x, y, watch=self.watch, max_iterations=self.max_iterations,
+                x,
+                y,
+                watch=self.watch,
+                max_iterations=self.max_iterations,
                 no_improve_then_stop=self.no_improve_then_stop,
             ),
             saving_criterion=lambda x: self.saving_criterion(x, watch=self.watch),

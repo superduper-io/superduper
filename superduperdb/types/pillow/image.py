@@ -9,6 +9,7 @@ class Image:
     >>> im = Image.decode(bs)
     >>> bs = Image.encode(im)
     """
+
     types = (PIL.JpegImagePlugin.JpegImageFile, PIL.PngImagePlugin.PngImageFile)
 
     @staticmethod

@@ -10,7 +10,6 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 
 def test_faiss_hash_set():
-
     x = torch.randn(1000, 32)
     ids = [uuid.uuid4() for _ in range(x.shape[0])]
 

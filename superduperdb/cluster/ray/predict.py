@@ -7,8 +7,10 @@ from bson import BSON
 from superduperdb.datalayer.base.imports import get_database_from_database_type
 
 
-@serve.deployment(route_prefix=f'/predict/{os.environ["SUPERDUPERDB_MODEL"]}',
-                  num_replicas=int(os.environ.get("SUPERDUPERDB_NUM_REPLICAS", "1")))
+@serve.deployment(
+    route_prefix=f'/predict/{os.environ["SUPERDUPERDB_MODEL"]}',
+    num_replicas=int(os.environ.get("SUPERDUPERDB_NUM_REPLICAS", "1")),
+)
 class Server:
     def __init__(self):
         database_type = os.environ['SUPERDUPERDB_DATABASE_TYPE']

@@ -20,7 +20,9 @@ auth = HTTPBasicAuth()
 
 if 'user' in cf['vector_search']:
     users = {
-        cf['vector_search']['user']: generate_password_hash(cf['vector_search']['password']),
+        cf['vector_search']['user']: generate_password_hash(
+            cf['vector_search']['password']
+        ),
     }
 
 client = SuperDuperClient(**cf['mongodb'])
@@ -31,16 +33,14 @@ collections = {}
 @maybe_login_required(auth, 'vector_search')
 def serve():
     data = BSON.decode(request.get_data())
-    database = get_database_from_database_type(data['database_type'], data['database_name'])
+    database = get_database_from_database_type(
+        data['database_type'], data['database_name']
+    )
     table = getattr(database, data['table'])
     method = getattr(table, data['method'])
     table.remote = False
-    args = decode_args(database,
-                       inspect.signature(method),
-                       data['args'])
-    kwargs = decode_kwargs(database,
-                           inspect.signature(method),
-                           data['kwargs'])
+    args = decode_args(database, inspect.signature(method), data['args'])
+    kwargs = decode_kwargs(database, inspect.signature(method), data['kwargs'])
     result = method.f(table, *args, **kwargs)
     logging.info('results')
     logging.info(result)

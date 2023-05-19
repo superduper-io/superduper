@@ -8,6 +8,7 @@ class Array:
     >>> Array(numpy.float64).decode(bs) == x
     True
     """
+
     def __init__(self, dtype, types=()):
         self.types = types
         self.dtype = dtype
@@ -18,4 +19,3 @@ class Array:
 
     def decode(self, bytes_):
         return numpy.frombuffer(bytes_, dtype=self.dtype)
-

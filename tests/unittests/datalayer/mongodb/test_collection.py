@@ -1,24 +1,22 @@
+# ruff: noqa: F401, F811
+
 from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_semantic_index
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.fixtures.collection import (
-    float_tensors,
-    empty,
     a_model,
+    a_watcher,
+    an_update,
     b_model,
     c_model,
+    empty,
+    float_tensors,  # Not directly used but tests fail if not included
+    image_type,
+    metric,
+    n_data_points,  # Not directly used but tests fail if not included
     random_data,
     si_validation,
-    metric,
-    a_classifier,
-    a_target,
-    accuracy_metric,
-    imputation_validation,
     with_semantic_index,
-    an_update,
-    a_watcher,
-    image_type,
-    n_data_points,
 )
 import PIL.PngImagePlugin
 import os

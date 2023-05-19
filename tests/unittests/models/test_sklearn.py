@@ -1,3 +1,5 @@
+# ruff: noqa: F401, F811
+
 import numpy
 from sklearn.svm import SVC
 from tests.fixtures.collection import random_arrays, arrays, empty, int64

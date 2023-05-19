@@ -128,8 +128,8 @@ class Tuple(BaseTuple, Convertible):
     >>> from typing import Any
     >>> database = lambda: None
     >>> database.convert_from_types_to_bytes = lambda x: x + ': encoded'
-    >>> Tuple([Convertible(), Any]).encode(database, ('this is a test', 'this is another'))
-    ('this is a test: encoded', 'this is another')
+    >>> Tuple([Convertible(), Any]).encode(database, ('a test', 'another'))
+    ('a test: encoded', 'another')
 
     """
 

@@ -86,18 +86,8 @@ def with_semantic_index(random_data, a_model):
         identifier='test_learning_task',
         configuration={'hash_set_cls': VanillaHashSet, 'measure': css},
     )
-    random_data.database['_meta'].insert_one(
-        {
-            'key': 'semantic_index',
-            'collection': 'documents',
-            'value': 'test_learning_task',
-        }
-    )
     yield random_data
-    if random_data.remote:
-        random_data.clear_remote_cache()
     random_data.delete_learning_task('test_learning_task', force=True)
-    random_data['_meta'].delete_one({'key': 'semantic_index'})
 
 
 @pytest.fixture()

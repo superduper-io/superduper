@@ -1,9 +1,10 @@
 import io
 import math
 import pickle
+import random
 import time
 from collections import defaultdict
-from typing import List
+from typing import Any
 
 import click
 import networkx
@@ -13,13 +14,13 @@ import superduperdb.vector_search.faiss.hashes
 import superduperdb.vector_search.vanilla.hashes
 import superduperdb.vector_search.vanilla.measures
 from superduperdb import cf
-from superduperdb.cluster.client_decorators import model_server
-from superduperdb.cluster.annotations import Convertible
+from superduperdb.cluster.client_decorators import model_server, vector_search
+from superduperdb.cluster.annotations import Convertible, Tuple, List
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
 from superduperdb.models.base import wrap_model
 from superduperdb.fetchers.downloads import gather_uris
-from superduperdb.misc.special_dicts import ArgumentDefaultDict
+from superduperdb.misc.special_dicts import ArgumentDefaultDict, MongoStyleDict
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.misc import progress
 from superduperdb.models.vanilla.wrapper import FunctionWrapper
@@ -60,12 +61,19 @@ class BaseDatabase:
                 continue
 
     @property
+    def filesystem(self):
+        raise NotImplementedError
+
+    @property
     def type_lookup(self):
         if self._type_lookup is None:
             self._reload_type_lookup()
         return self._type_lookup
 
     def _add_split_to_row(self, r, other):
+        raise NotImplementedError
+
+    def _base_insert(self, items, *args, **kwargs):
         raise NotImplementedError
 
     @model_server
@@ -92,7 +100,129 @@ class BaseDatabase:
             model = self.models[model]
         return model.predict(input_, **kwargs)
 
+    @work
+    def apply_watcher(self, identifier, ids=None, verbose=False,
+                      max_chunk_size=5000, model=None, recompute=False, watcher_info=None,
+                      **kwargs):
+
+        if watcher_info is None:
+            watcher_info = self.get_object_info(identifier, 'watcher')
+        if ids is None:
+            ids = self._get_ids_from_query(*watcher_info['query_params'])
+        if max_chunk_size is not None:
+            for it, i in enumerate(range(0, len(ids), max_chunk_size)):
+                logging.info('computing chunk '
+                             f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
+                self.apply_watcher(
+                    identifier,
+                    ids=ids[i: i + max_chunk_size],
+                    verbose=verbose,
+                    max_chunk_size=None,
+                    model=model,
+                    recompute=recompute,
+                    watcher_info=watcher_info,
+                    remote=False,
+                    **kwargs,
+                )
+            return
+
+        model_info = self.get_object_info(watcher_info['model'], 'model')
+        outputs = self._compute_model_outputs(model_info,
+                                              ids,
+                                              *watcher_info['query_params'],
+                                              key=watcher_info['key'],
+                                              features=watcher_info.get('features', {}),
+                                              model=model,
+                                              predict_kwargs=watcher_info.get('predict_kwargs', {}))
+        type_ = model_info.get('type')
+        if type_ is not None:
+            type_ = self.types[type_]
+            outputs = [
+                {
+                    '_content': {
+                        'bytes': type_.encode(x),
+                        'type': model_info['type']
+                    }
+                }
+                for x in outputs
+            ]
+
+        self._write_watcher_outputs(watcher_info, outputs, ids)
+        return outputs
+
+    def _build_task_workflow(self, query_params, ids=None, dependencies=(), verbose=True):
+        job_ids = defaultdict(lambda: [])
+        job_ids.update(dependencies)
+        G = TaskWorkflow(self)
+        if ids is None:
+            ids = self._get_ids_from_query(query_params)
+
+        G.add_node(
+            f'{self.download_content.__name__}()',
+            data={
+                'task': self.download_content,
+                'args': [
+                    query_params,
+                ],
+                'kwargs': {
+                    'ids': ids,
+                }
+            }
+        )
+        if not self.list_watchers():
+            return G
+
+        for identifier in self.list_watchers():
+            G.add_node(
+                f'{self.apply_watcher.__name__}({identifier})',
+                data={
+                    'task': self.apply_watcher,
+                    'args': [identifier],
+                    'kwargs': {
+                        'ids': ids,
+                        'verbose': verbose,
+                    }
+                }
+            )
+
+        for identifier in self.list_neighbourhoods():
+            G.add_node(
+                f'{self.compute_neighbourhood.__name__}({identifier})',
+                data={
+                    'task': self.compute_neighbourhood,
+                    'args': [identifier],
+                    'kwargs': {}
+                }
+            )
+
+        for identifier in self.list_watchers():
+            G.add_edge(
+                f'{self.download_content.__name__}()',
+                f'{self.apply_watcher.__name__}({identifier})'
+            )
+            deps = self._get_dependencies_for_watcher(identifier)
+            for dep in deps:
+                G.add_edge(
+                    f'{self.apply_watcher.__name__}({dep})',
+                    f'{self.apply_watcher.__name__}({identifier})'
+                )
+                G.add_edge(
+                    f'{self.download_content.__name__}()',
+                    f'{self.apply_watcher.__name__}({identifier})'
+                )
+
+        for identifier in self.list_neighbourhoods():
+            watcher_identifier = self._get_watcher_for_neighbourhood(identifier)
+            G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
+            G.add_edge(
+                f'{self.apply_watcher.__name__}({watcher_identifier})',
+                f'{self.compute_neighbourhood.__name__}({identifier})'
+            )
+        return G
+
     def cancel_job(self, job_id):
+        raise NotImplementedError
+    def _classify_query(self, *args, **kwargs):
         raise NotImplementedError
 
     def _compute_model_outputs(
@@ -110,7 +240,6 @@ class BaseDatabase:
         model_identifier = model_info['identifier']
         if features is None:
             features = {}  # pragma: no cover
-
         documents = self._get_docs_from_ids(_ids, *query_params, features=features)
         logging.info('done.')
         if key != '_base' or '_base' in features:
@@ -443,6 +572,9 @@ class BaseDatabase:
                 remote=self.remote,
             )
 
+    def _delete(self, *args, **kwargs):
+        return self._base_delete(*args, **kwargs)
+
     def delete_learning_task(self, identifier, force=False):
         """
         Delete function.
@@ -622,8 +754,18 @@ class BaseDatabase:
     def _download_update(self, table, _id, key, bytes_):
         raise NotImplementedError
 
-    def execute_query(self, *args, **kwargs):
-        raise NotImplementedError
+    def execute_query(self, *args, items=None, **kwargs):
+        query_type = self._classify_query(*args, **kwargs)
+        if query_type == 'SELECT':
+            return self._select(*args, **kwargs)
+        elif query_type == 'INSERT':
+            return self._insert(items, *args, **kwargs)
+        elif query_type == 'UPDATE':
+            return self._update(*args, **kwargs)
+        elif query_type == 'DELETE':
+            return self._delete(*args, **kwargs)
+        else:
+            raise ValueError(f'Unknown query type {query_type}')
 
     def _format_fold_to_query(self, query_params, fold):
         raise NotImplementedError
@@ -674,7 +816,7 @@ class BaseDatabase:
     def get_ids_from_result(self, query_params, result):
         raise NotImplementedError
 
-    def _get_ids_from_query(self, *query_params):
+    def _get_ids_from_query(self, *query_params, **kwargs):
         raise NotImplementedError
 
     def get_meta_data(self, **kwargs):
@@ -701,8 +843,35 @@ class BaseDatabase:
     def get_query_params_for_validation_set(self, validation_set):
         raise NotImplementedError
 
+    def _get_watcher_for_learning_task(self, learning_task):
+        info = self.get_object_info(learning_task, 'learning_task')
+        key_to_watch = info['keys_to_watch'][0]
+        model_identifier = next(
+            m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch
+        )
+        return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
+
     def _get_watcher_for_neighbourhood(self, identifier):
         return self.get_object_info(identifier, 'neighbourhood')['watcher_identifier']
+
+    def _insert(self, items, *args, refresh=True, verbose=True, **kwargs):
+        for item in items:
+            r = random.random()
+            try:
+                valid_probability = self.get_meta_data(key='valid_probability')
+            except TypeError:
+                valid_probability = 0.05
+            if '_fold' not in item:
+                item['_fold'] = 'valid' if r < valid_probability else 'train'
+
+        for i, r in enumerate(items):
+            items[i] = self.convert_from_types_to_bytes(r)
+        output = self._base_insert(items, *args, **kwargs)
+        if not refresh:  # pragma: no cover
+            return output, None
+        task_graph = self._build_task_workflow(args, ids=output.inserted_ids, verbose=verbose)
+        task_graph()
+        return output, task_graph
 
     def _insert_validation_data(self, tmp, identifier):
         raise NotImplementedError
@@ -803,14 +972,6 @@ class BaseDatabase:
         )
         self._all_hash_sets[watcher] = h
 
-    def _get_watcher_for_learning_task(self, learning_task):
-        info = self.get_object_info(learning_task, 'learning_task')
-        key_to_watch = info['keys_to_watch'][0]
-        model_identifier = next(
-            m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch
-        )
-        return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
-
     def _load_hashes_from_learning_task(self, identifier):
         info = self.get_object_info(identifier, 'learning_task')
         key_to_watch = info['keys_to_watch'][0]
@@ -876,7 +1037,7 @@ class BaseDatabase:
     def apply_watcher(
         self,
         identifier,
-        ids: List[ObjectId] = None,
+        ids: List(ObjectId) = None,
         verbose=False,
         max_chunk_size=5000,
         model=None,
@@ -1000,6 +1161,15 @@ class BaseDatabase:
             )
         return G
 
+    def _modify_query_params_for_search(self, similar_ids, *args, **kwargs):
+        raise NotImplementedError
+
+    def _modify_query_params_for_id_only(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def _query_is_trivial(self, *args, **kwargs):
+        raise NotImplementedError
+
     def _replace_model(self, identifier, object):
         info = self.get_object_info(identifier, 'model')
         if 'serializer' not in info:
@@ -1032,6 +1202,124 @@ class BaseDatabase:
         """
         raise NotImplementedError
 
+    def _select(self, *args, like=None, download=False, semantic_index=None, watcher=None,
+                measure=None, similar_first=False, features=None, raw=False, n=100,
+                hash_set_cls='vanilla', **kwargs):
+        if download and like is not None:
+            like = self._get_content_for_filter(like)  # pragma: no cover
+        if like is not None:
+            if similar_first:
+                return self._select_similar_then_matches(like, *args, raw=raw,
+                                                         features=features, like=like,
+                                                         semantic_index=semantic_index,
+                                                         watcher=watcher, measure=measure,
+                                                         hash_set_cls=hash_set_cls,
+                                                         n=n, **kwargs)
+            else:
+                return self._select_matches_then_similar(like, *args, raw=raw,
+                                                         n=n, features=features,
+                                                         semantic_index=semantic_index,
+                                                         watcher=watcher, measure=measure,
+                                                         hash_set_cls=hash_set_cls,
+                                                         **kwargs)
+        else:
+            if raw:
+                return self._get_raw_cursor(*args, **kwargs)
+            else:
+                return self._get_cursor(*args, features=features, **kwargs)
+
+    def _select_matches_then_similar(self, like, *args, raw=False, n=100, features=None,
+                                     semantic_index=None, watcher=None, measure=None,
+                                     hash_set_cls='vanilla', **kwargs):
+        if not self._query_is_trivial(*args, **kwargs):
+            id_args, id_kwargs = self._modify_query_params_for_id_only(*args, **kwargs)
+            id_cursor = self._get_raw_cursor(id_args, id_kwargs)
+            ids = [x['_id'] for x in id_cursor]
+            similar_ids, scores = \
+                self.select_nearest(like, ids=ids, n=n, semantic_index=semantic_index,
+                                  watcher=watcher, hash_set_cls=hash_set_cls,
+                                  measure=measure)
+        else:  # pragma: no cover
+            similar_ids, scores = \
+                self.select_nearest(like, n=n, semantic_index=semantic_index,
+                                    watcher=watcher, hash_set_cls=hash_set_cls,
+                                    measure=measure)
+
+        args, kwargs = self._modify_query_params_for_search(similar_ids, *args, **kwargs)
+
+        if raw:
+            return self._get_raw_cursor(*args, **kwargs)  # pragma: no cover
+        else:
+            return self._get_cursor(*args, features=features,
+                                    scores=dict(zip(similar_ids, scores)), **kwargs)
+
+    def _select_similar_then_matches(self, like, *args, raw=False, n=100, features=None,
+                                     semantic_index=None, watcher=None, measure=None,
+                                     **kwargs):
+        similar_ids, scores = self.select_nearest(like, n=n, semantic_index=semantic_index,
+                                                  watcher=watcher, measure=measure,
+                                                  hash_set_cls='vanilla')
+        args, kwargs = self._modify_query_params_for_search(similar_ids, *args, **kwargs)
+        if raw:
+            return self._get_raw_cursor(*args, **kwargs)
+        else:
+            return self._get_cursor(
+                filter,
+                *args,
+                features=features,
+                scores=dict(zip(similar_ids, scores)),
+                **kwargs,
+            )
+
+    @vector_search
+    def select_nearest(self, like: Convertible(), ids=None, n=10, watcher=None, semantic_index=None,
+                       measure='css', hash_set_cls='vanilla') -> Tuple([List(Convertible()), Any]):
+
+        # TODO a bit big and complex this method
+
+        if semantic_index is not None:
+            si_info = self.get_object_info(semantic_index, variety='learning_task')
+            models = si_info['models']
+            keys = si_info['keys']
+            watcher = self._get_watcher_for_learning_task(semantic_index)
+            watcher_info = self.get_object_info(watcher, variety='watcher')
+        else:
+            watcher_info = self.get_object_info(watcher, variety='watcher')
+            models = [watcher_info['model']]
+            keys = [watcher_info['key']]
+
+        if watcher not in self._all_hash_sets:
+            self._load_hashes(watcher=watcher, measure=measure, hash_set_cls=hash_set_cls)
+
+        hash_set = self._all_hash_sets[watcher]
+        if ids is not None:
+            hash_set = hash_set[ids]
+
+        if '_id' in like:
+            return hash_set.find_nearest_from_id(like['_id'], n=n)
+
+        available_keys = list(like.keys()) + ['_base']
+        model, key = next((m, k) for m, k in zip(models, keys) if k in available_keys)
+        document = MongoStyleDict(like)
+        if '_outputs' not in document:
+            document['_outputs'] = {}
+        features = watcher_info.get('features', {})
+
+        for subkey in features:
+            if subkey not in document:
+                continue
+            if subkey not in document['_outputs']:
+                document['_outputs'][subkey] = {}
+            if features[subkey] not in document['_outputs'][subkey]:
+                document['_outputs'][subkey][features[subkey]] = \
+                    self.models[features[subkey]].predict_one(document[subkey])
+            document[subkey] = document['_outputs'][subkey][features[subkey]]
+        model_input = document[key] if key != '_base' else document
+
+        model = self.models[model]
+        h = model.predict_one(model_input)
+        return hash_set.find_nearest_from_hash(h, n=n)
+
     def separate_query_part_from_validation_record(self, r):
         """
         Separate the info in the record after splitting.
@@ -1050,6 +1338,12 @@ class BaseDatabase:
         :param identifier: id of job
         :param kw: tuple of key-value pair
         """
+        return
+
+    def _get_cursor(self, *args, features=None, **kwargs):
+        raise NotImplementedError
+
+    def _get_raw_cursor(self, *args, **kwargs):
         raise NotImplementedError
 
     def _get_table_from_query_params(self, query_params):
@@ -1090,6 +1384,19 @@ class BaseDatabase:
         except KeyError:
             pass
 
+    def _update(self, *args, refresh=True, verbose=True, **kwargs):
+        args = list(args)
+        args, kwargs = self._convert_query_params_to_bytes(*args, **kwargs)
+        if refresh and self.list_models():
+            ids = self._get_ids_from_query(*args, **kwargs)
+        result = self._base_update(*args, **kwargs)
+        if refresh and self.list_models():
+            args, kwargs = self._update_to_select(*args, **kwargs)
+            task_graph = self._build_task_workflow(args, ids=ids, verbose=verbose)
+            task_graph()
+            return result, task_graph
+        return result
+
     def _update_job_info(self, identifier, key, value):
         raise NotImplementedError
 
@@ -1097,6 +1404,9 @@ class BaseDatabase:
         raise NotImplementedError
 
     def _update_object_info(self, identifier, variety, key, value):
+        raise NotImplementedError
+
+    def _update_to_select(self, *args, **kwargs):
         raise NotImplementedError
 
     def validate_semantic_index(self, identifier, validation_sets, metrics):
@@ -1164,4 +1474,13 @@ class BaseDatabase:
         raise NotImplementedError
 
     def _write_watcher_outputs(self, info, outputs, _ids):
+        raise NotImplementedError
+
+    def _convert_query_params_to_bytes(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def _base_update(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def _base_delete(self, *args, **kwargs):
         raise NotImplementedError

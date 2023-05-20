@@ -36,12 +36,15 @@ def serve():
     database = get_database_from_database_type(
         data['database_type'], data['database_name']
     )
-    table = getattr(database, data['table'])
-    method = getattr(table, data['method'])
-    table.remote = False
-    args = decode_args(database, inspect.signature(method), data['args'])
-    kwargs = decode_kwargs(database, inspect.signature(method), data['kwargs'])
-    result = method.f(table, *args, **kwargs)
+    database.remote = False
+    method = getattr(database, data['method'])
+    args = decode_args(database,
+                       inspect.signature(method),
+                       data['args'])
+    kwargs = decode_kwargs(database,
+                           inspect.signature(method),
+                           data['kwargs'])
+    result = method.f(database, *args, **kwargs)
     logging.info('results')
     logging.info(result)
     result = encode_result(database, method.signature, result)

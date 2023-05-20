@@ -1,6 +1,7 @@
 import gridfs
 from bson import ObjectId
 from pymongo import UpdateOne
+from pymongo.cursor import Cursor
 from pymongo.database import Database as MongoDatabase
 
 import superduperdb.datalayer.mongodb.collection
@@ -8,6 +9,7 @@ from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.cluster.annotations import ObjectIdConvertible, List
 from superduperdb.cluster.job_submission import work
 from superduperdb.datalayer.mongodb import loading
+from superduperdb.datalayer.mongodb.cursor import SuperDuperCursor
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.misc.logger import logging
 
@@ -46,6 +48,35 @@ class Database(MongoDatabase, BaseDatabase):
         query_params = (filter_ or {}, projection or {})
         return self.apply_agent(agent, query_params, like=like)
 
+    def _base_delete(self, method, collection, filter_=None, *args, **kwargs):
+        assert method == 'delete_many'
+        filter_ = filter_ or {}
+        self[collection]._base_delete(filter_, *args, **kwargs)
+
+    def _base_insert(self, items, *args, **kwargs):
+        return self[args[1]]._base_insert_many(items, *args[2:], **kwargs)
+
+    def _base_update(self, *args, **kwargs):
+        op, collection, filter_, update = args[:4]
+        args = args[4:]
+        return self[collection]._base_update(op, filter_, update, *args, **kwargs)
+
+    def _classify_query(self, method, *args, **kwargs):
+        if method == 'find':
+            return 'SELECT'
+        elif method == 'insert_many':
+            return 'INSERT'
+        elif method in {'replace_one', 'update_many'}:
+            return 'UPDATE'
+        elif method == 'delete_many':
+            return 'DELETE'
+        else:
+            raise NotImplementedError(f'{method} not recognized.')
+
+    def _convert_query_params_to_bytes(self, method, collection, filter_, update, *args, **kwargs):
+        update = self.convert_from_types_to_bytes(update)
+        return (method, collection, filter_, update, *args), kwargs
+
     def _convert_id_to_str(self, id_):
         return str(id_)
 
@@ -72,7 +103,7 @@ class Database(MongoDatabase, BaseDatabase):
         loader_kwargs=None,
         dependencies=(),
     ):
-        query_params = [collection]
+        query_params = ['find', collection]
         if filter_ is None:
             query_params.append({})
         else:
@@ -109,7 +140,7 @@ class Database(MongoDatabase, BaseDatabase):
             _ids = [r['_id'] for r in sample]
             filter_['_id'] = {'$in': _ids}
         return super()._create_validation_set(
-            identifier, collection, filter_, chunk_size=chunk_size
+            identifier, 'find', collection, filter_, chunk_size=chunk_size
         )
 
     def _delete_object_info(self, identifier, variety):
@@ -152,25 +183,25 @@ class Database(MongoDatabase, BaseDatabase):
             query_params[2]['_id'] = 1
         return self.execute_query(*query_params)
 
-    def execute_query(self, collection, filter_=None, projection=None, **kwargs):
-        filter_ = filter_ or {}
-        return self[collection].find(filter_, projection=projection, **kwargs)
-
     def _format_fold_to_query(self, query_params, fold):
-        if not query_params[1:]:
+        if not query_params[2:]:
             query_params = (*query_params, {})
         query_params = list(query_params)
-        query_params[1]['_fold'] = fold
+        query_params[2]['_fold'] = fold
         return tuple(query_params)
+
+    def _get_cursor(self, *args, features=None, **kwargs):
+        collection = self[args[1]]
+        return SuperDuperCursor(collection, *args[2:], features=features, **kwargs)
 
     def _get_docs_from_ids(self, _ids, *query_params, features=None, raw=False):
         query_params = list(query_params)
-        if query_params[1:]:
-            query_params[1] = {'_id': {'$in': _ids}, **query_params[1]}
+        if query_params[2:]:
+            query_params[2] = {'_id': {'$in': _ids}, **query_params[2]}
         else:
             query_params.append({})
         return list(
-            self[query_params[0]].find(*query_params[1:], features=features, raw=raw)
+            self[query_params[1]].find(*query_params[2:], features=features, raw=raw)
         )
 
     def _get_hash_from_record(self, r, watcher_info):
@@ -184,13 +215,14 @@ class Database(MongoDatabase, BaseDatabase):
             _ids.append(r['_id'])
         return _ids
 
-    def _get_ids_from_query(self, *query_params):
-        assert query_params
-        if not query_params[1:]:
-            query_params = (*query_params, {})
-        collection, filter_ = query_params[:2]
-        _ids = [r['_id'] for r in self[collection].find(filter_, {'_id': 1})]
-        return _ids
+    def _get_ids_from_query(self, op, collection, filter_=None, *args, **kwargs):
+        filter_ = filter_ or {}
+        if op.endswith('_one'):
+            _id = self[collection].find_one(filter_, {'_id': 1})['_id']
+            return [_id]
+        else:
+            _ids = [r['_id'] for r in self[collection].find(filter_, {'_id': 1})]
+            return _ids
 
     def _get_job_info(self, identifier):
         return self['_jobs'].find_one({'identifier': identifier})
@@ -206,11 +238,16 @@ class Database(MongoDatabase, BaseDatabase):
     def _get_object_info_where(self, variety, **kwargs):
         return self['_objects'].find_one({'variety': variety, **kwargs})
 
+    def _get_raw_cursor(self, *args, **kwargs):
+        collection = self[args[1]]
+        args = args[2:]
+        return Cursor(collection, *args, **kwargs)
+
     def get_query_params_for_validation_set(self, validation_set):
-        return ('_validation_sets', {'identifier': validation_set})
+        return ('find', '_validation_sets', {'identifier': validation_set})
 
     def _get_table_from_query_params(self, query_params):
-        return query_params[0]
+        return query_params[1]
 
     def _insert_validation_data(self, tmp, identifier):
         tmp = [{**r, 'identifier': identifier} for r in tmp]
@@ -232,6 +269,37 @@ class Database(MongoDatabase, BaseDatabase):
 
     def _load_blob_of_bytes(self, file_id):
         return loading.load(file_id, filesystem=self.filesystem)
+
+    def _modify_query_params_for_id_only(self, *args, **kwargs):
+        method = args[0]
+        collection = args[1]
+        if len(args) >= 3:
+            filter_ = args[2]
+        else:
+            filter_ = {}
+        projection = {'_id': 1}
+        return (method, collection, filter_, projection), kwargs
+
+    def _modify_query_params_for_search(self, similar_ids, *args, **kwargs):
+        method = args[0]
+        collection = args[1]
+        filter_ = {}
+        projection = None
+        if len(args) >= 3:
+            filter_ = args[2]
+        elif len(args) >= 4:
+            projection = args[3]
+        filter_ = {'_id': {'$in': similar_ids}, **filter_}
+        return (method, collection, filter_, projection), kwargs
+
+    def _query_is_trivial(self, *args, **kwargs):
+        if len(args) <= 2:
+            return True
+        elif len(args) == 3:
+            _, _, filter_ = args
+        else:
+            _, _, filter_, projection = args
+        return bool(filter_)
 
     def _replace_object(self, file_id, new_file_id, variety, identifier):
         self.filesystem.delete(file_id)
@@ -267,17 +335,20 @@ class Database(MongoDatabase, BaseDatabase):
     def _unset_neighbourhood_data(self, info, watcher_info):
         collection, filter_ = watcher_info['query_params']
         logging.info(f'unsetting neighbourhood {info["info"]}')
-        self[collection].update_many(
-            filter_, {'$unset': {f'_like.{info["identifier"]}': 1}}, refresh=False
+        return self[collection]._base_update(
+            'update_many',
+            filter_,
+            {'$unset': {f'_like.{info["identifier"]}': 1}},
+            refresh=False
         )
 
     def _unset_watcher_outputs(self, info):
-        collection, filter_ = info['query_params']
+        _, collection, filter_ = info['query_params']
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
-        self[collection].update_many(
+        self[collection]._base_update(
+            'update_many',
             filter_,
             {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}},
-            refresh=False,
         )
 
     def _update_neighbourhood(self, ids, similar_ids, identifier, *query_params):
@@ -297,12 +368,15 @@ class Database(MongoDatabase, BaseDatabase):
             {'identifier': identifier, 'variety': variety}, {'$set': {key: value}}
         )
 
+    def _update_to_select(self, method, collection, filter_, update, *args, **kwargs):
+        return ('find', collection, filter_, *args), kwargs
+
     def write_output_to_job(self, identifier, msg, stream):
         assert stream in {'stdout', 'stderr'}
         self['_jobs'].update_one({'identifier': identifier}, {'$push': {stream: msg}})
 
     def _write_watcher_outputs(self, watcher_info, outputs, _ids):
-        collection = watcher_info['query_params'][0]
+        collection = watcher_info['query_params'][1]
         key = watcher_info.get('key', '_base')
         model_name = watcher_info['model']
         logging.info('bulk writing...')
@@ -326,3 +400,4 @@ class Database(MongoDatabase, BaseDatabase):
                 ]
             )
         logging.info('done.')
+

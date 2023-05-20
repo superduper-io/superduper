@@ -46,7 +46,7 @@ def test_find(with_semantic_index, remote):
     print(with_semantic_index.count_documents({}))
     r = with_semantic_index.find_one()
     s = with_semantic_index.find_one(
-        like={'x': r['x']}, semantic_index='test_learning_task'
+        like={'x': r['x']}, semantic_index='test_learning_task', measure='css'
     )
     assert s['_id'] == r['_id']
 
@@ -57,7 +57,10 @@ def test_find_faiss(with_semantic_index, remote):
     print(with_semantic_index.count_documents({}))
     r = with_semantic_index.find_one()
     s = with_semantic_index.find_one(
-        like={'x': r['x']}, semantic_index='test_learning_task', hash_set_cls='faiss'
+        like={'x': r['x']},
+        semantic_index='test_learning_task',
+        hash_set_cls='faiss',
+        measure='css',
     )
     assert s['_id'] == r['_id']
 

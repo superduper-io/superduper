@@ -4,7 +4,11 @@ from tests.fixtures.collection import random_data, float_tensors, empty
 from superduperdb.training.pytorch_lightning.trainer import LightningConfiguration
 
 import pytorch_lightning as pl
+import os
+import pytest
 import torch
+
+DISABLE_TEST = os.environ.get('DISABLE_PYTORCH_LIGHTNING', '').lower().startswith('t')
 
 
 class LightningModule(pl.LightningModule):
@@ -39,6 +43,7 @@ class LightningModule(pl.LightningModule):
         return int((out.exp() > 0.5).item())
 
 
+@pytest.mark.xfail(DISABLE_TEST, reason='See issue #94')
 def test_classification(random_data):
     cf = LightningConfiguration(
         loader_kwargs={'batch_size': 5, 'num_workers': 0}, max_epochs=10

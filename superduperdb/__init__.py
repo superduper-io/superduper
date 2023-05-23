@@ -1,10 +1,13 @@
+from pathlib import Path
 import json
 import os
 from . misc import configs
 
-__all__ = 'cf', 'CF', 'SECRET'
+__all__ = 'CFG', 'ICON', 'ROOT', 'cf',
 
 CFG = configs.CONFIG.config
+ICON = '🔮'
+ROOT = Path(__file__).parent
 
 try:
     with open('config.json') as f:

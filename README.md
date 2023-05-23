@@ -18,11 +18,29 @@ Requires:
 
 - MongoDB
 - RedisDB
+- poetry
 
 Then install the python requirements
 
 ```
-pip install -r requirements.txt
+poetry install
+```
+
+## Running the CLI
+
+To run the superduperdb cli, from the root directory of the project, type
+
+```
+python -m superduperdb
+```
+
+#### Examples:
+
+```
+python -m superduperdb -h       # Get help
+python -m superduperdb configs  # Print current configuration variables
+python -m superduperdb info     # Print info on platform and installation
+python -m superduperdb test     # Run tests
 ```
 
 ## Development

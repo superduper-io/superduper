@@ -1,0 +1,14 @@
+version: "3.9"
+networks:
+  default:
+    name: sddb
+services:
+  mongodb:
+    image: mongo:6
+    container_name: sddb-mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: testmongodbuser
+      MONGO_INITDB_ROOT_PASSWORD: testmongodbpassword
+    ports:
+      - "27017:27017"

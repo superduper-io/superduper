@@ -19,6 +19,16 @@ Then install the python requirements
 pip install -r requirements.txt
 ```
 
+## Development
+
+### Running Tests
+
+Our test suite relies on `docker` to run 3rd-party services.
+
+```shell
+make test
+```
+
 ## Contributing
 
 SuperDuperDB is in *alpha*. Please expect:

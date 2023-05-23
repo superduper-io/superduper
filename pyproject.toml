@@ -5,7 +5,7 @@ target-version = ['py38']
 [tool.poetry]
 name = "superduperdb"
 version = "0.0.3dev1"
-description = "🔮 Super power your database with AI 🔮"
+description = "🔮 Super-power your database with AI 🔮"
 authors = ["Duncan Blythe <opensource@superduperdb.com>"]
 license = "Apache 2.0"
 readme = "README.md"

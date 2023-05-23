@@ -14,17 +14,15 @@ import pytest
 import torch
 
 
-the_client = SuperDuperClient()
-
 n_data_points = 250
 
 
 @pytest.fixture()
-def empty():
-    db = the_client.test_db.documents
+def empty(client: SuperDuperClient):
+    db = client.test_db.documents
     db.remote = False
     yield db
-    the_client.drop_database('test_db', force=True)
+    client.drop_database('test_db', force=True)
 
 
 @pytest.fixture()

@@ -137,7 +137,6 @@ class BaseDownloader:
 class Downloader(BaseDownloader):
     """
 
-    :param table: table or collection to _download items
     :param uris: list of uris/ file names to fetch
     :param update_one: function to call to insert data into table
     :param ids: list of ids of rows/ documents to update
@@ -151,7 +150,6 @@ class Downloader(BaseDownloader):
 
     def __init__(
         self,
-        table,
         uris,
         update_one=None,
         ids=None,
@@ -165,7 +163,6 @@ class Downloader(BaseDownloader):
         super().__init__(
             uris, n_workers=n_workers, timeout=timeout, headers=headers, raises=raises
         )
-        self.table = table
         self.ids = ids
         self.keys = keys
         self.failed = 0
@@ -179,7 +176,7 @@ class Downloader(BaseDownloader):
         uri = self.uris[i]
         _id = self.ids[i]
         content = self.fetcher(uri)
-        self.update_one(self.table, self.ids[i], self.keys[i], content)
+        self.update_one(self.ids[i], self.keys[i], content)
 
 
 class InMemoryDownloader(BaseDownloader):

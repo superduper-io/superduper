@@ -1,4 +1,5 @@
 from superduperdb.datalayer.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.query import Select
 from superduperdb.misc import progress
 from superduperdb.training.base.config import TrainerConfiguration
 import numpy
@@ -11,11 +12,9 @@ class SklearnTrainerConfiguration(TrainerConfiguration):
         )
 
     @classmethod
-    def _get_data(cls, database, X, query_params, y=None, y_preprocess=None):
-        if not isinstance(query_params, tuple):
-            query_params = (query_params,)
+    def _get_data(cls, database, X, select: Select, y=None, y_preprocess=None):
         documents = []
-        for r in progress.progressbar(database.execute_query(*query_params)):
+        for r in progress.progressbar(database.select(select)):
             documents.append(r)
         X = [r[X] for r in documents]
         if isinstance(X[0], numpy.ndarray):
@@ -36,7 +35,7 @@ class SklearnTrainerConfiguration(TrainerConfiguration):
         model_names,
         database_type,
         database_name,
-        query_params,
+        select: Select,
         splitter=None,
         validation_sets=(),
         metrics=None,
@@ -44,19 +43,17 @@ class SklearnTrainerConfiguration(TrainerConfiguration):
         download=False,
     ):
         database = get_database_from_database_type(database_type, database_name)
-        train_query_params = database._format_fold_to_query(query_params, 'train')
-        valid_query_params = database._format_fold_to_query(query_params, 'valid')
         X_train, y_train = self._get_data(
             database,
             keys[0],
-            train_query_params,
+            select.add_fold('train'),
             keys[1] if keys[1:] else None,
             y_preprocess=models[1].predict_one,
         )
         X_valid, y_valid = self._get_data(
             database,
             keys[0],
-            valid_query_params,
+            select.add_fold('valid'),
             y=keys[1] if keys[1:] else None,
             y_preprocess=models[1].predict_one,
         )

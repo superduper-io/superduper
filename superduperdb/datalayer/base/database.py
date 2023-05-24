@@ -1,10 +1,11 @@
+from collections import defaultdict
+from dataclasses import asdict
 import io
 import math
 import pickle
 import random
 import time
-from collections import defaultdict
-from typing import Any
+from typing import Any, Union
 
 import click
 import networkx
@@ -13,11 +14,12 @@ from bson import ObjectId
 import superduperdb.vector_search.faiss.hashes
 import superduperdb.vector_search.vanilla.hashes
 import superduperdb.vector_search.vanilla.measures
-from superduperdb import cf
+from superduperdb import cf, misc
 from superduperdb.cluster.client_decorators import model_server, vector_search
 from superduperdb.cluster.annotations import Convertible, Tuple, List
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
+from superduperdb.datalayer.base.query import Insert, Select, Delete, Update
 from superduperdb.models.base import wrap_model
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.special_dicts import ArgumentDefaultDict, MongoStyleDict
@@ -38,6 +40,8 @@ class BaseDatabase:
     Base database connector for SuperDuperDB - all database types should subclass this
     type.
     """
+
+    select_cls = Select
 
     def __init__(self):
         self.measures = ArgumentDefaultDict(lambda x: self._load_object(x, 'measure'))
@@ -73,7 +77,7 @@ class BaseDatabase:
     def _add_split_to_row(self, r, other):
         raise NotImplementedError
 
-    def _base_insert(self, items, *args, **kwargs):
+    def _base_insert(self, insert: Insert):
         raise NotImplementedError
 
     @model_server
@@ -105,10 +109,12 @@ class BaseDatabase:
                       max_chunk_size=5000, model=None, recompute=False, watcher_info=None,
                       **kwargs):
 
+        select = self.select_cls(**watcher_info['select'])
+
         if watcher_info is None:
             watcher_info = self.get_object_info(identifier, 'watcher')
         if ids is None:
-            ids = self._get_ids_from_query(*watcher_info['query_params'])
+            ids = self._get_ids_from_select(select.select_only_id)
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
                 logging.info('computing chunk '
@@ -127,13 +133,15 @@ class BaseDatabase:
             return
 
         model_info = self.get_object_info(watcher_info['model'], 'model')
-        outputs = self._compute_model_outputs(model_info,
-                                              ids,
-                                              *watcher_info['query_params'],
-                                              key=watcher_info['key'],
-                                              features=watcher_info.get('features', {}),
-                                              model=model,
-                                              predict_kwargs=watcher_info.get('predict_kwargs', {}))
+        outputs = self._compute_model_outputs(
+            model_info,
+            ids,
+            select,
+            key=watcher_info['key'],
+            features=watcher_info.get('features', {}),
+            model=model,
+            predict_kwargs=watcher_info.get('predict_kwargs', {})
+        )
         type_ = model_info.get('type')
         if type_ is not None:
             type_ = self.types[type_]
@@ -150,19 +158,19 @@ class BaseDatabase:
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
 
-    def _build_task_workflow(self, query_params, ids=None, dependencies=(), verbose=True):
+    def _build_task_workflow(self, select: Select, ids=None, dependencies=(), verbose=True):
         job_ids = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
         if ids is None:
-            ids = self._get_ids_from_query(query_params)
+            ids = self._get_ids_from_select(select.select_only_id)
 
         G.add_node(
             f'{self.download_content.__name__}()',
             data={
                 'task': self.download_content,
                 'args': [
-                    query_params,
+                    select,
                 ],
                 'kwargs': {
                     'ids': ids,
@@ -222,14 +230,12 @@ class BaseDatabase:
 
     def cancel_job(self, job_id):
         raise NotImplementedError
-    def _classify_query(self, *args, **kwargs):
-        raise NotImplementedError
 
     def _compute_model_outputs(
         self,
         model_info,
         _ids,
-        *query_params,
+        select: Select,
         key='_base',
         features=None,
         model=None,
@@ -240,7 +246,7 @@ class BaseDatabase:
         model_identifier = model_info['identifier']
         if features is None:
             features = {}  # pragma: no cover
-        documents = self._get_docs_from_ids(_ids, *query_params, features=features)
+        documents = list(self.select(select.select_using_ids(_ids), features=features))
         logging.info('done.')
         if key != '_base' or '_base' in features:
             passed_docs = [r[key] for r in documents]
@@ -252,13 +258,15 @@ class BaseDatabase:
 
     @work
     def compute_neighbourhood(self, identifier):
+        # TODO testing, refactoring...
         info = self.get_object_info(identifier, 'neighbourhood')
         watcher_info = self.get_object_info(identifier, 'watcher')
-        ids = self._get_ids_from_query(*watcher_info['query_params'])
+        select = self.select_cls(**watcher_info['query'])
+        ids = self._get_ids_from_select(select.select_only_id)
         logging.info('getting hash set')
-        h = self._get_hashes_for_query_parameters(
-            info['semantic_index'], *info['query_params']
-        )
+        self._load_hashes(identifier, measure=info['measure'], hash_set_cls=info['hash_set_cls'])
+        h = self._all_hash_sets[identifier]
+        h = h[ids]
         logging.info(
             f'computing neighbours based on neighbourhood "{identifier}" and '
             f'index "{info["semantic_index"]}"'
@@ -269,7 +277,7 @@ class BaseDatabase:
             results = h.find_nearest_from_ids(sub, n=info['n'])
             similar_ids = [res['_ids'] for res in results]
             self._update_neighbourhood(
-                sub, similar_ids, identifier, *info['query_params']
+                sub, similar_ids, identifier, select
             )
 
     def convert_from_bytes_to_types(self, r):
@@ -278,15 +286,7 @@ class BaseDatabase:
 
         :param r: dictionary potentially containing non-Bsonable content
         """
-        if isinstance(r, dict) and '_content' in r:
-            converter = self.types[r['_content']['type']]
-            return converter.decode(r['_content']['bytes'])
-        elif isinstance(r, list):
-            return [self.convert_from_bytes_to_types(x) for x in r]
-        elif isinstance(r, dict):
-            for k in r:
-                r[k] = self.convert_from_bytes_to_types(r[k])
-        return r
+        return misc.serialization.convert_from_bytes_to_types(r, self.types)
 
     def convert_from_types_to_bytes(self, r):
         """
@@ -294,17 +294,7 @@ class BaseDatabase:
 
         :param r: dictionary potentially containing non-Bsonable content
         """
-        if isinstance(r, dict):
-            for k in r:
-                r[k] = self.convert_from_types_to_bytes(r[k])
-            return r
-        try:
-            t = self.type_lookup[type(r)]
-        except KeyError:
-            t = None
-        if t is not None:
-            return {'_content': {'bytes': self.types[t].encode(r), 'type': t}}
-        return r
+        return misc.serialization.convert_from_types_to_bytes(r, self.types, self.type_lookup)
 
     def _create_job_record(self, *args, **kwargs):
         raise NotImplementedError
@@ -313,7 +303,7 @@ class BaseDatabase:
         self,
         models,
         keys,
-        *query_params,
+        select,
         identifier=None,
         configuration=None,
         verbose=False,
@@ -337,7 +327,7 @@ class BaseDatabase:
             {
                 'variety': 'learning_task',
                 'identifier': identifier,
-                'query_params': query_params,
+                'select': asdict(select),
                 'configuration': {'_file_id': file_id},
                 'models': models,
                 'keys': keys,
@@ -353,10 +343,10 @@ class BaseDatabase:
             jobs.append(self.fit(identifier))
         for k in keys_to_watch:
             jobs.append(
-                self._create_watcher(
+                self.create_watcher(
                     f'[{identifier}]:{model_lookup[k]}/{k}',
                     model_lookup[k],
-                    query_params,
+                    select,
                     key=k,
                     features=features,
                     predict_kwargs=configuration.get('loader_kwargs', {})
@@ -517,10 +507,11 @@ class BaseDatabase:
         """
         return self._create_object(identifier, object, 'type', **kwargs)
 
-    def _create_validation_set(self, identifier, *query_params, chunk_size=1000):
+    def create_validation_set(self, identifier, select: Select, chunk_size=1000):
         if identifier in self.list_validation_sets():
             raise Exception(f'validation set {identifier} already exists!')
-        data = self.execute_query(*query_params)
+
+        data = self.select(select)
         it = 0
         tmp = []
         for r in progress.progressbar(data):
@@ -532,11 +523,11 @@ class BaseDatabase:
         if tmp:
             self._insert_validation_data(tmp, identifier)
 
-    def _create_watcher(
+    def create_watcher(
         self,
         identifier,
         model,
-        query_params,
+        select,
         key='_base',
         verbose=False,
         target=None,
@@ -552,7 +543,7 @@ class BaseDatabase:
                 'identifier': identifier,
                 'variety': 'watcher',
                 'model': model,
-                'query_params': query_params,
+                'select': asdict(select),
                 'key': key,
                 'features': features if features else {},
                 'target': target,
@@ -561,7 +552,7 @@ class BaseDatabase:
         )
 
         if process_docs:
-            ids = self._get_ids_from_query(*query_params)
+            ids = self._get_ids_from_select(select)
             if not ids:
                 return
             return self.apply_watcher(
@@ -572,8 +563,8 @@ class BaseDatabase:
                 remote=self.remote,
             )
 
-    def _delete(self, *args, **kwargs):
-        return self._base_delete(*args, **kwargs)
+    def delete(self, delete: Delete):
+        return self._base_delete(delete)
 
     def delete_learning_task(self, identifier, force=False):
         """
@@ -689,7 +680,7 @@ class BaseDatabase:
     @work
     def download_content(
         self,
-        query_params,
+        query: Union[Select, Insert],
         ids=None,
         documents=None,
         timeout=None,
@@ -698,15 +689,21 @@ class BaseDatabase:
         headers=None,
         **kwargs,
     ):
-        logging.debug(query_params)
+        logging.debug(query)
         logging.debug(ids)
         update_db = False
-        if documents is None:
+
+        if documents is not None:
+            pass
+        elif isinstance(query, Select):
             update_db = True
             if ids is None:
-                documents = list(self.execute_query(*query_params))
+                documents = list(self.select(query))
             else:
-                documents = self._get_docs_from_ids(ids, *query_params, raw=True)
+                documents = list(self.select(query.select_using_ids(ids), raw=True))
+        else:
+            documents = query.documents
+
         uris, keys, place_ids = gather_uris(documents)
         logging.info(f'found {len(uris)} uris')
         if not uris:
@@ -730,13 +727,14 @@ class BaseDatabase:
             except TypeError:
                 timeout = None
 
-        table = self._get_table_from_query_params(query_params)
+        def update_one(id, key, bytes):
+            return self.update(self._download_update(query.table, id, key, bytes))
+
         downloader = Downloader(
-            table=table,
             uris=uris,
             ids=place_ids,
             keys=keys,
-            update_one=self._download_update,
+            update_one=update_one,
             n_workers=n_download_workers,
             timeout=timeout,
             headers=headers,
@@ -746,28 +744,10 @@ class BaseDatabase:
         if update_db:
             return
         for id_, key in zip(place_ids, keys):
-            documents[id_] = self._set_content_bytes(
-                documents[id_], key, downloader.results[id_]
-            )
+            documents[id_] = self._set_content_bytes(documents[id_], key, downloader.results[id_])
         return documents
 
-    def _download_update(self, table, _id, key, bytes_):
-        raise NotImplementedError
-
-    def execute_query(self, *args, items=None, **kwargs):
-        query_type = self._classify_query(*args, **kwargs)
-        if query_type == 'SELECT':
-            return self._select(*args, **kwargs)
-        elif query_type == 'INSERT':
-            return self._insert(items, *args, **kwargs)
-        elif query_type == 'UPDATE':
-            return self._update(*args, **kwargs)
-        elif query_type == 'DELETE':
-            return self._delete(*args, **kwargs)
-        else:
-            raise ValueError(f'Unknown query type {query_type}')
-
-    def _format_fold_to_query(self, query_params, fold):
+    def _download_update(self, table, id, key, bytes):
         raise NotImplementedError
 
     def _get_content_for_filter(self, filter):
@@ -781,6 +761,9 @@ class BaseDatabase:
             filter = self.convert_from_bytes_to_types(filter)
         return filter
 
+    def _get_cursor(self, select: Select, features=None, scores=None):
+        raise NotImplementedError
+
     def _get_dependencies_for_watcher(self, identifier):
         info = self.get_object_info(identifier, 'watcher')
         if info is None:
@@ -792,9 +775,6 @@ class BaseDatabase:
                 dependencies.append(f'{model}/{key}')
         return dependencies
 
-    def _get_docs_from_ids(self, ids, *query_params, features=None, raw=False):
-        raise NotImplementedError
-
     def _get_file_content(self, r):
         for k in r:
             if isinstance(r[k], dict):
@@ -804,19 +784,16 @@ class BaseDatabase:
                     r[k] = self._get_file_content(r[k])
         return r
 
-    def _get_hash_from_record(self, r, watcher_info):
-        raise NotImplementedError
-
-    def _get_hashes_for_query_parameters(self, semantic_index, *query_params):
+    def _get_hash_from_document(self, r, watcher_info):
         raise NotImplementedError
 
     def _get_job_info(self, identifier):
         raise NotImplementedError
 
-    def get_ids_from_result(self, query_params, result):
+    def _get_ids_from_select(self, select: Select):
         raise NotImplementedError
 
-    def _get_ids_from_query(self, *query_params, **kwargs):
+    def _get_raw_cursor(self, select: Select):
         raise NotImplementedError
 
     def get_meta_data(self, **kwargs):
@@ -840,7 +817,7 @@ class BaseDatabase:
     def get_object_info_where(self, variety, **kwargs):
         return self._get_object_info_where(variety, **kwargs)
 
-    def get_query_params_for_validation_set(self, validation_set):
+    def get_query_for_validation_set(self, validation_set):
         raise NotImplementedError
 
     def _get_watcher_for_learning_task(self, learning_task):
@@ -854,8 +831,8 @@ class BaseDatabase:
     def _get_watcher_for_neighbourhood(self, identifier):
         return self.get_object_info(identifier, 'neighbourhood')['watcher_identifier']
 
-    def _insert(self, items, *args, refresh=True, verbose=True, **kwargs):
-        for item in items:
+    def insert(self, insert: Insert, refresh=True, verbose=True):
+        for item in insert.documents:
             r = random.random()
             try:
                 valid_probability = self.get_meta_data(key='valid_probability')
@@ -864,12 +841,14 @@ class BaseDatabase:
             if '_fold' not in item:
                 item['_fold'] = 'valid' if r < valid_probability else 'train'
 
-        for i, r in enumerate(items):
-            items[i] = self.convert_from_types_to_bytes(r)
-        output = self._base_insert(items, *args, **kwargs)
+        output = self._base_insert(insert.to_raw(self.types, self.type_lookup))
         if not refresh:  # pragma: no cover
             return output, None
-        task_graph = self._build_task_workflow(args, ids=output.inserted_ids, verbose=verbose)
+        task_graph = self._build_task_workflow(
+            insert.select_table,
+            ids=output.inserted_ids,
+            verbose=verbose
+        )
         task_graph()
         return output, task_graph
 
@@ -950,16 +929,13 @@ class BaseDatabase:
 
     def _load_hashes(self, watcher, measure='css', hash_set_cls='vanilla'):
         watcher_info = self.get_object_info(watcher, 'watcher')
-        filter = watcher_info.get('filter', {})
-        key = watcher_info.get('key', '_base')
-        filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
-        c = self.execute_query(*watcher_info['query_params'])
+        c = self.select(self.select_cls(**watcher_info['select']))
         loaded = []
         ids = []
         docs = progress.progressbar(c)
         logging.info(f'loading hashes: "{watcher_info["identifier"]}"')
         for r in docs:
-            h = self._get_hash_from_record(r, watcher_info)
+            h = self._get_hash_from_document(r, watcher_info)
             loaded.append(h)
             ids.append(r['_id'])
         if hash_set_cls is None:
@@ -984,7 +960,7 @@ class BaseDatabase:
         filter = watcher_info.get('filter', {})
         key = watcher_info.get('key', '_base')
         filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
-        c = self.execute_query(*watcher_info['query_params'])
+        c = self.select(self.select_cls(**watcher_info['select']))
 
         configuration = info.get('configuration', {}) or {}
         loaded = []
@@ -992,7 +968,7 @@ class BaseDatabase:
         docs = progress.progressbar(c)
         logging.info(f'loading hashes: "{identifier}"')
         for r in docs:
-            h = self._get_hash_from_record(r, watcher_info)
+            h = self._get_hash_from_document(r, watcher_info)
             loaded.append(h)
             ids.append(r['_id'])
 
@@ -1014,7 +990,7 @@ class BaseDatabase:
             raise Exception(
                 f'No such object of type "{variety}", '
                 f'"{identifier}" has been registered.'
-            )  # pragma: no cover
+            )
         if 'serializer' not in info:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
@@ -1047,8 +1023,9 @@ class BaseDatabase:
     ):
         if watcher_info is None:
             watcher_info = self.get_object_info(identifier, 'watcher')
+        select = self.select_cls(**watcher_info['select'])
         if ids is None:
-            ids = self._get_ids_from_query(*watcher_info['query_params'])
+            ids = self._get_ids_from_select(select.select_only_id)
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
                 logging.info(
@@ -1072,7 +1049,7 @@ class BaseDatabase:
         outputs = self._compute_model_outputs(
             model_info,
             ids,
-            *watcher_info['query_params'],
+            select,
             key=watcher_info['key'],
             features=watcher_info.get('features', {}),
             model=model,
@@ -1088,87 +1065,6 @@ class BaseDatabase:
 
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
-
-    def _build_task_workflow(
-        self, query_params, ids=None, dependencies=(), verbose=True
-    ):
-        job_ids = defaultdict(lambda: [])
-        job_ids.update(dependencies)
-        G = TaskWorkflow(self)
-        if ids is None:
-            ids = self._get_ids_from_query(query_params)
-
-        G.add_node(
-            f'{self.download_content.__name__}()',
-            data={
-                'task': self.download_content,
-                'args': [
-                    query_params,
-                ],
-                'kwargs': {
-                    'ids': ids,
-                },
-            },
-        )
-        if not self.list_watchers():
-            return G
-
-        for identifier in self.list_watchers():
-            G.add_node(
-                f'{self.apply_watcher.__name__}({identifier})',
-                data={
-                    'task': self.apply_watcher,
-                    'args': [identifier],
-                    'kwargs': {
-                        'ids': ids,
-                        'verbose': verbose,
-                    },
-                },
-            )
-
-        for identifier in self.list_neighbourhoods():
-            G.add_node(
-                f'{self.compute_neighbourhood.__name__}({identifier})',
-                data={
-                    'task': self.compute_neighbourhood,
-                    'args': [identifier],
-                    'kwargs': {},
-                },
-            )
-
-        for identifier in self.list_watchers():
-            G.add_edge(
-                f'{self.download_content.__name__}()',
-                f'{self.apply_watcher.__name__}({identifier})',
-            )
-            deps = self._get_dependencies_for_watcher(identifier)
-            for dep in deps:
-                G.add_edge(
-                    f'{self.apply_watcher.__name__}({dep})',
-                    f'{self.apply_watcher.__name__}({identifier})',
-                )
-                G.add_edge(
-                    f'{self.download_content.__name__}()',
-                    f'{self.apply_watcher.__name__}({identifier})',
-                )
-
-        for identifier in self.list_neighbourhoods():
-            watcher_identifier = self._get_watcher_for_neighbourhood(identifier)
-            G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
-            G.add_edge(
-                f'{self.apply_watcher.__name__}({watcher_identifier})',
-                f'{self.compute_neighbourhood.__name__}({identifier})',
-            )
-        return G
-
-    def _modify_query_params_for_search(self, similar_ids, *args, **kwargs):
-        raise NotImplementedError
-
-    def _modify_query_params_for_id_only(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def _query_is_trivial(self, *args, **kwargs):
-        raise NotImplementedError
 
     def _replace_model(self, identifier, object):
         info = self.get_object_info(identifier, 'model')
@@ -1202,80 +1098,137 @@ class BaseDatabase:
         """
         raise NotImplementedError
 
-    def _select(self, *args, like=None, download=False, semantic_index=None, watcher=None,
-                measure=None, similar_first=False, features=None, raw=False, n=100,
-                hash_set_cls='vanilla', **kwargs):
+    def select(
+        self,
+        select: Select,
+        like=None,
+        download=False,
+        semantic_index=None,
+        watcher=None,
+        measure=None,
+        similar_first=False,
+        features=None,
+        raw=False,
+        n=100,
+        hash_set_cls='vanilla',
+    ):
         if download and like is not None:
             like = self._get_content_for_filter(like)  # pragma: no cover
         if like is not None:
             if similar_first:
-                return self._select_similar_then_matches(like, *args, raw=raw,
-                                                         features=features, like=like,
-                                                         semantic_index=semantic_index,
-                                                         watcher=watcher, measure=measure,
-                                                         hash_set_cls=hash_set_cls,
-                                                         n=n, **kwargs)
+                return self._select_similar_then_matches(
+                    like,
+                    select,
+                    raw=raw,
+                    features=features,
+                    semantic_index=semantic_index,
+                    watcher=watcher,
+                    measure=measure,
+                    hash_set_cls=hash_set_cls,
+                    n=n,
+                )
             else:
-                return self._select_matches_then_similar(like, *args, raw=raw,
-                                                         n=n, features=features,
-                                                         semantic_index=semantic_index,
-                                                         watcher=watcher, measure=measure,
-                                                         hash_set_cls=hash_set_cls,
-                                                         **kwargs)
+                return self._select_matches_then_similar(
+                    like,
+                    select,
+                    raw=raw,
+                    n=n,
+                    features=features,
+                    semantic_index=semantic_index,
+                    watcher=watcher,
+                    measure=measure,
+                    hash_set_cls=hash_set_cls,
+                )
         else:
             if raw:
-                return self._get_raw_cursor(*args, **kwargs)
+                return self._get_raw_cursor(select)
             else:
-                return self._get_cursor(*args, features=features, **kwargs)
+                return self._get_cursor(select, features=features)
 
-    def _select_matches_then_similar(self, like, *args, raw=False, n=100, features=None,
-                                     semantic_index=None, watcher=None, measure=None,
-                                     hash_set_cls='vanilla', **kwargs):
-        if not self._query_is_trivial(*args, **kwargs):
-            id_args, id_kwargs = self._modify_query_params_for_id_only(*args, **kwargs)
-            id_cursor = self._get_raw_cursor(id_args, id_kwargs)
+    def _select_matches_then_similar(
+        self,
+        like,
+        select: Select,
+        raw=False,
+        n=100,
+        features=None,
+        semantic_index=None,
+        watcher=None,
+        measure=None,
+        hash_set_cls='vanilla'
+    ):
+        if not select.is_trivial:
+            id_cursor = self._get_raw_cursor(select.select_only_id)
             ids = [x['_id'] for x in id_cursor]
-            similar_ids, scores = \
-                self.select_nearest(like, ids=ids, n=n, semantic_index=semantic_index,
-                                  watcher=watcher, hash_set_cls=hash_set_cls,
-                                  measure=measure)
-        else:  # pragma: no cover
-            similar_ids, scores = \
-                self.select_nearest(like, n=n, semantic_index=semantic_index,
-                                    watcher=watcher, hash_set_cls=hash_set_cls,
-                                    measure=measure)
-
-        args, kwargs = self._modify_query_params_for_search(similar_ids, *args, **kwargs)
-
-        if raw:
-            return self._get_raw_cursor(*args, **kwargs)  # pragma: no cover
+            similar_ids, scores = self.select_nearest(
+                like,
+                ids=ids,
+                n=n,
+                semantic_index=semantic_index,
+                watcher=watcher,
+                hash_set_cls=hash_set_cls,
+                measure=measure,
+            )
         else:
-            return self._get_cursor(*args, features=features,
-                                    scores=dict(zip(similar_ids, scores)), **kwargs)
+            similar_ids, scores = self.select_nearest(
+                like,
+                n=n,
+                semantic_index=semantic_index,
+                watcher=watcher,
+                hash_set_cls=hash_set_cls,
+                measure=measure,
+            )
 
-    def _select_similar_then_matches(self, like, *args, raw=False, n=100, features=None,
-                                     semantic_index=None, watcher=None, measure=None,
-                                     **kwargs):
-        similar_ids, scores = self.select_nearest(like, n=n, semantic_index=semantic_index,
-                                                  watcher=watcher, measure=measure,
-                                                  hash_set_cls='vanilla')
-        args, kwargs = self._modify_query_params_for_search(similar_ids, *args, **kwargs)
         if raw:
-            return self._get_raw_cursor(*args, **kwargs)
+            return self._get_raw_cursor(select.select_using_ids(similar_ids))
         else:
             return self._get_cursor(
-                filter,
-                *args,
+                select.select_using_ids(similar_ids),
                 features=features,
                 scores=dict(zip(similar_ids, scores)),
-                **kwargs,
+            )
+
+    def _select_similar_then_matches(
+        self,
+        like,
+        select: Select,
+        raw=False,
+        n=100,
+        features=None,
+        semantic_index=None,
+        watcher=None,
+        measure=None,
+        hash_set_cls='vanilla',
+    ):
+        similar_ids, scores = self.select_nearest(
+            like,
+            n=n,
+            semantic_index=semantic_index,
+            watcher=watcher,
+            measure=measure,
+            hash_set_cls=hash_set_cls,
+        )
+
+        if raw:
+            return self._get_raw_cursor(select.select_using_ids(similar_ids))
+        else:
+            return self._get_cursor(
+                select.select_using_ids(similar_ids),
+                features=features,
+                scores=dict(zip(similar_ids, scores)),
             )
 
     @vector_search
-    def select_nearest(self, like: Convertible(), ids=None, n=10, watcher=None, semantic_index=None,
-                       measure='css', hash_set_cls='vanilla') -> Tuple([List(Convertible()), Any]):
-
-        # TODO a bit big and complex this method
+    def select_nearest(
+        self,
+        like: Convertible(),
+        ids=None,
+        n=10,
+        watcher=None,
+        semantic_index=None,
+        measure='css',
+        hash_set_cls='vanilla',
+    ) -> Tuple([List(Convertible()), Any]):
 
         if semantic_index is not None:
             si_info = self.get_object_info(semantic_index, variety='learning_task')
@@ -1340,18 +1293,11 @@ class BaseDatabase:
         """
         return
 
-    def _get_cursor(self, *args, features=None, **kwargs):
-        raise NotImplementedError
-
-    def _get_raw_cursor(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def _get_table_from_query_params(self, query_params):
-        raise NotImplementedError
-
     @work
     def fit(self, identifier):
+
         info = self.get_object_info(identifier, 'learning_task')
+
         trainer = info['configuration'](
             identifier=identifier,
             models=[
@@ -1362,7 +1308,7 @@ class BaseDatabase:
             model_names=info['models'],
             database_type=self._database_type,
             database_name=self.name,
-            query_params=info['query_params'],
+            select=self.select_cls(**info['select']),
             validation_sets=info['validation_sets'],
             metrics={k: self.metrics[k] for k in info['metrics']},
             features=info['features'],
@@ -1384,15 +1330,12 @@ class BaseDatabase:
         except KeyError:
             pass
 
-    def _update(self, *args, refresh=True, verbose=True, **kwargs):
-        args = list(args)
-        args, kwargs = self._convert_query_params_to_bytes(*args, **kwargs)
+    def update(self, update: Update, refresh=True, verbose=True):
         if refresh and self.list_models():
-            ids = self._get_ids_from_query(*args, **kwargs)
-        result = self._base_update(*args, **kwargs)
+            ids = self._get_ids_from_select(update.select_ids)
+        result = self._base_update(update.to_raw(self.types, self.type_lookup))
         if refresh and self.list_models():
-            args, kwargs = self._update_to_select(*args, **kwargs)
-            task_graph = self._build_task_workflow(args, ids=ids, verbose=verbose)
+            task_graph = self._build_task_workflow(update.select, ids=ids, verbose=verbose)
             task_graph()
             return result, task_graph
         return result
@@ -1400,13 +1343,10 @@ class BaseDatabase:
     def _update_job_info(self, identifier, key, value):
         raise NotImplementedError
 
-    def _update_neighbourhood(self, ids, similar_ids, identifier, *query_params):
+    def _update_neighbourhood(self, ids, similar_ids, identifier, select: Select):
         raise NotImplementedError
 
     def _update_object_info(self, identifier, variety, key, value):
-        raise NotImplementedError
-
-    def _update_to_select(self, *args, **kwargs):
         raise NotImplementedError
 
     def validate_semantic_index(self, identifier, validation_sets, metrics):
@@ -1476,11 +1416,11 @@ class BaseDatabase:
     def _write_watcher_outputs(self, info, outputs, _ids):
         raise NotImplementedError
 
-    def _convert_query_params_to_bytes(self, *args, **kwargs):
+    def _base_update(self, update: Update):
         raise NotImplementedError
 
-    def _base_update(self, *args, **kwargs):
+    def _base_delete(self, delete: Delete):
         raise NotImplementedError
 
-    def _base_delete(self, *args, **kwargs):
+    def _unset_watcher_outputs(self, info):
         raise NotImplementedError

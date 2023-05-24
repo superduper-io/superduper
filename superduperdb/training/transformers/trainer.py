@@ -1,3 +1,4 @@
+from superduperdb.datalayer.base.query import Select
 from superduperdb.models.transformers.wrapper import TokenizingFunction
 from superduperdb.training.base.config import TrainerConfiguration
 from transformers import Trainer, TrainingArguments
@@ -15,7 +16,7 @@ class TransformersTrainerConfiguration(TrainerConfiguration):
         model_names,
         database_type,
         database_name,
-        query_params,
+        select: Select,
         splitter=None,
         validation_sets=(),
         metrics=None,
@@ -27,7 +28,7 @@ class TransformersTrainerConfiguration(TrainerConfiguration):
         train_data, valid_data = self._get_data(
             database_type,
             database_name,
-            query_params,
+            select,
             keys,
             features=features,
             transform=tokenizing_function,

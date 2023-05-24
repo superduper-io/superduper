@@ -8,6 +8,7 @@ import torch.utils
 from torch.utils.data import DataLoader
 
 from superduperdb.datalayer.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.query import Select
 from superduperdb.training.base.config import TrainerConfiguration
 from superduperdb.misc.special_dicts import ExtensibleDict
 from superduperdb.models.torch.utils import to_device, device_of
@@ -114,8 +115,8 @@ class TorchTrainerConfiguration(TrainerConfiguration):
     @classmethod
     def get_validation_dataset(cls, database_type, database_name, validation_set):
         database = get_database_from_database_type(database_type, database_name)
-        query_params = database.get_query_params_for_validation_set(validation_set)
-        return QueryDataset(query_params, database_name, database_type, fold='valid')
+        select: Select = database.get_query_for_validation_set(validation_set)
+        return QueryDataset(select, database_name, database_type, fold='valid')
 
     def __call__(
         self,
@@ -125,7 +126,7 @@ class TorchTrainerConfiguration(TrainerConfiguration):
         model_names,
         database_type,
         database_name,
-        query_params,
+        select: Select,
         validation_sets=(),
         metrics=None,
         features=None,
@@ -148,7 +149,7 @@ class TorchTrainerConfiguration(TrainerConfiguration):
         train_data, valid_data = self._get_data(
             database_type,
             database_name,
-            query_params,
+            select,
             keys,
             features=features,
             transform=transform,

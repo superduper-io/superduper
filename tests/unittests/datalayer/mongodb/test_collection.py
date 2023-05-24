@@ -112,10 +112,10 @@ def test_insert_from_uris(empty, image_type, remote):
 def test_watcher(random_data, a_model, b_model, remote):
     random_data.remote = remote
     if remote:
-        job_id = random_data.create_watcher('linear_a', key='x').key
+        job_id = random_data.create_watcher('linear_a/x', 'linear_a', key='x').key
         random_data.watch_job(job_id)
     else:
-        random_data.create_watcher('linear_a', key='x')
+        random_data.create_watcher('linear_a/x', 'linear_a', key='x')
 
     assert 'linear_a' in random_data.find_one()['_outputs']['x']
 
@@ -130,11 +130,11 @@ def test_watcher(random_data, a_model, b_model, remote):
 
     if remote:
         job_id = random_data.create_watcher(
-            'linear_b', key='x', features={'x': 'linear_a'}
+            'linear_b/x', 'linear_b', key='x', features={'x': 'linear_a'}
         ).key
         random_data.watch_job(job_id)
     else:
-        random_data.create_watcher('linear_b', key='x', features={'x': 'linear_a'})
+        random_data.create_watcher('linear_b/x', 'linear_b', key='x', features={'x': 'linear_a'})
     assert 'linear_b' in random_data.find_one()['_outputs']['x']
 
 

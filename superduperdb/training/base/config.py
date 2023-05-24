@@ -17,10 +17,10 @@ class TrainerConfiguration:
 
     @classmethod
     def _get_data(
-        cls, database_type, database_name, query_params, keys, features, transform
+        cls, database_type, database_name, select, keys, features, transform
     ):
         train_data = QueryDataset(
-            query_params,
+            select,
             database_name,
             database_type,
             keys=keys,
@@ -30,7 +30,7 @@ class TrainerConfiguration:
         )
 
         valid_data = QueryDataset(
-            query_params,
+            select,
             database_name,
             database_type,
             keys=keys,
@@ -52,7 +52,7 @@ class TrainerConfiguration:
         model_names,
         database_type,
         database_name,
-        query_params,
+        select,
         validation_sets=(),
         metrics=None,
         features=None,

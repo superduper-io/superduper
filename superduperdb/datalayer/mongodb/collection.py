@@ -1,9 +1,9 @@
-import functools
+from typing import List, Any, Optional
 
 from pymongo.collection import Collection as MongoCollection
 
-from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.cluster.client_decorators import vector_search
+from superduperdb.datalayer.mongodb.query import Insert, Select, Update, Delete
 
 
 class Collection(MongoCollection):
@@ -26,14 +26,22 @@ class Collection(MongoCollection):
 
         self._all_hash_sets = self.database._all_hash_sets
 
-    def _base_delete(self, filter_, *args, **kwargs):
-        return super().delete_many(filter_, *args, **kwargs)
+    def _base_delete(self, delete: Delete):
+        if delete.one:
+            return super().delete_one(delete.filter)
+        else:
+            return super().delete_many(delete.filter)
 
-    def _base_update(self, op, filter_, update, *args, **kwargs):
-        if op == 'update_many':
-            return super().update_many(filter_, update, *args, **kwargs)
-        elif op == 'replace_one':
-            return super().replace_one(filter_, update, *args, **kwargs)
+    def _base_find(self, *args, **kwargs):
+        return super().find(*args, **kwargs)
+
+    def _base_update(self, update: Update):
+        if update.replacement is not None:
+            return super().replace_one(update.filter, update.replacement)
+        if update.one:
+            return super().update_one(update.filter, update.update)
+
+        return super().update_many(update.filter, update.update)
 
     @property
     def remote(self):
@@ -54,8 +62,12 @@ class Collection(MongoCollection):
     def predict_one(self, *args, **kwargs):
         return self.database.predict_one(*args, **kwargs)
 
-    def _base_insert_many(self, *args, **kwargs):
-        return super().insert_many(*args, **kwargs)
+    def _base_insert_many(self, insert: Insert):
+        return super().insert_many(
+            insert.documents,
+            ordered=insert.ordered,
+            bypass_document_validation=insert.bypass_document_validation,
+        )
 
     def cancel_job(self, job_id):
         return self.database.cancel_job(job_id)
@@ -68,16 +80,16 @@ class Collection(MongoCollection):
         for k in self._all_hash_sets:
             del self._all_hash_sets[k]
 
-    @functools.wraps(BaseDatabase.create_learning_task)
-    def create_learning_task(self, models, keys, *query_params, **kwargs):
+    def create_learning_task(self, models, keys, filter=None, projection=None, **kwargs):
         """
         Create learning task.
 
         :param args: positional arguments to ``self.database.create_learning_task``
         :param kwargs: passed to ``self.database.create_learning_task``
         """
+        select = Select(collection=self.name, filter=filter, projection=projection)
         return self.database.create_learning_task(
-            models, keys, *('find', self.name, *query_params), **kwargs
+            models, keys, select, **kwargs
         )
 
     def create_metric(self, *args, **kwargs):
@@ -125,49 +137,35 @@ class Collection(MongoCollection):
         """
         return self.database.create_type(*args, **kwargs)
 
-    def create_validation_set(self, identifier, filter_=None, *args, **kwargs):
+    def create_validation_set(self, identifier, filter=None, chunk_size=1000):
         """
         Create validation set.
 
         :param identifier: identifier of validation-set
-        :param filter_: filter_ defining where to get data from
+        :param filter: filter_ defining where to get data from
         :param args: positional arguments to ``self.database.create_validation_set``
         :param kwargs: passed to ``self.database.create_validation_set``
         """
-        if filter_ is None:
-            filter_ = {'_fold': 'valid'}
+        if filter is None:
+            filter = {'_fold': 'valid'}
         else:
-            filter_['_fold'] = 'valid'
+            filter['_fold'] = 'valid'
+
         return self.database.create_validation_set(
-            identifier, self.name, filter_, *args, **kwargs
+            identifier, Select(collection=self.name, filter=filter), chunk_size=chunk_size
         )
 
-    def create_watcher(self, *args, **kwargs):
+    def create_watcher(self, identifier, model, select: Optional[Select] = None, key='_base',
+                       **kwargs):
         """
         Create watcher.
 
         :param args: positional arguments to ``self.database.create_watcher``
         :param kwargs: passed to ``self.database.create_watcher``
         """
-        return self.database.create_watcher(self.name, *args, **kwargs)
-
-    def delete_agent(self, *args, **kwargs):
-        """
-        Delete agent
-        """
-        return self.database.delete_agent(*args, **kwargs)
-
-    def delete_function(self, *args, **kwargs):
-        """
-        Delete function
-        """
-        return self.database.delete_function(*args, **kwargs)
-
-    def delete_imputation(self, *args, **kwargs):
-        """
-        Delete imputation
-        """
-        return self.database.delete_imputation(*args, **kwargs)
+        if select is None:
+            select = Select(collection=self.name)
+        return self.database.create_watcher(identifier, model, select=select, key=key, **kwargs)
 
     def delete_learning_task(self, *args, **kwargs):
         """
@@ -247,14 +245,32 @@ class Collection(MongoCollection):
         """
         return self.database.list_watchers()
 
-    def find(self, *args, **kwargs):
+    def find(
+        self,
+        filter=None,
+        projection=None,
+        like=None,
+        features=None,
+        semantic_index=None,
+        watcher=None,
+        measure='css',
+        hash_set_cls='vanilla',
+        raw=False,
+        **kwargs,
+    ):
         """
         Behaves like MongoDB ``find`` with similarity search as additional option.
-
-        :param args: args passed to super(), along with ``"find"`` and ``self.name``
-        :param kwargs: kwargs passed to super()
         """
-        return self.database._select('find', self.name, *args, **kwargs)
+        return self.database.select(
+            Select(collection=self.name, filter=filter, projection=projection, kwargs=kwargs),
+            features=features,
+            like=like,
+            semantic_index=semantic_index,
+            watcher=watcher,
+            measure=measure,
+            hash_set_cls=hash_set_cls,
+            raw=False,
+        )
 
     def find_one(self, *args, **kwargs):
         """
@@ -278,17 +294,26 @@ class Collection(MongoCollection):
         """
         return self.insert_many([document], *args, **kwargs)
 
-    def insert_many(self, *args, **kwargs):
+    def insert_many(
+            self,
+            documents: List[Any],
+            ordered=True,
+            bypass_document_validation=False,
+            refresh=True
+        ):
         """
         Insert many items into database.
 
-        :param args: args to be passed to super()
-        :param verbose: toggle to ``True`` to display outputs during computation
-        :param refresh: toggle to ``False`` to suppress model processing
-        :param kwargs: kwargs to be passed to super()
+
         """
-        return self.database._insert(
-            args[0], 'insert_many', self.name, *args[1:], **kwargs
+        return self.database.insert(
+            Insert(
+                collection=self.name,
+                documents=documents,
+                ordered=True,
+                bypass_document_validation=bypass_document_validation
+            ),
+            refresh=refresh
         )
 
     def refresh_watcher(self, *args, **kwargs):

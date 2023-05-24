@@ -13,4 +13,4 @@ def test_pipeline(random_arrays, int64):
     random_arrays.create_model('test_sklearn', est)
     pl = random_arrays.models['test_sklearn']
     print(pl)
-    random_arrays.create_watcher('test_sklearn', key='x')
+    random_arrays.create_watcher('test_sklearn/x', 'test_sklearn', key='x')

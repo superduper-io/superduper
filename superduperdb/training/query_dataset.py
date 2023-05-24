@@ -1,4 +1,5 @@
 from superduperdb.datalayer.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 
@@ -16,7 +17,7 @@ class QueryDataset:
 
     def __init__(
         self,
-        query_params,
+        select: Select,
         database,
         database_type=None,
         keys=None,
@@ -36,8 +37,8 @@ class QueryDataset:
         self.keys = keys
 
         self.transform = transform if transform else lambda x: x
-        query_params = self.database._format_fold_to_query(query_params, fold)
-        self._documents = list(self.database.execute_query(*query_params))
+        select = select.add_fold(fold)
+        self._documents = list(self.database.select(select))
         self.suppress = suppress
         self.features = features or {}
 

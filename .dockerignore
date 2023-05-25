@@ -1,0 +1,3 @@
+*
+!build/requirements.ci.txt
+!dist/*.whl

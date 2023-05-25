@@ -29,6 +29,18 @@ Our test suite relies on `docker` to run 3rd-party services.
 make test
 ```
 
+### Running Jupyter
+
+You might want to run Jupyter equipped with SuperDuperDB Client and connected to our
+various components.
+The notebooks in the `./notebooks` directory are automatically mounted and available
+within your Jupyter instance.
+
+```shell
+make jupyter
+make clean-jupyter
+```
+
 ## Contributing
 
 SuperDuperDB is in *alpha*. Please expect:
@@ -80,5 +92,3 @@ Zoom meetings transcription + ChatBot
 Time-series analysis with Sktime
 
 ...
-
-

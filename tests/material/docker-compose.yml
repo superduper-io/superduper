@@ -1,0 +1,84 @@
+version: "3.9"
+networks:
+  default:
+    name: sddb
+
+configs:
+  sddb-config:
+    file: config.json
+
+services:
+  mongodb:
+    image: mongo:6
+    container_name: sddb-mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: testmongodbuser
+      MONGO_INITDB_ROOT_PASSWORD: testmongodbpassword
+    ports:
+      - "27018:27017"
+
+  vector-search:
+    image: superduperdb:latest
+    container_name: sddb-vector-search
+    restart: always
+    depends_on:
+      - mongodb
+    configs:
+      - source: sddb-config
+        target: /home/superduperdb/.superduperdb/config.json
+    command:
+      - python
+      - -m
+      - superduperdb.cluster.vector_search
+
+  model-server:
+    image: superduperdb:latest
+    container_name: sddb-model-server
+    restart: always
+    depends_on:
+      - mongodb
+      - vector-search
+    configs:
+      - source: sddb-config
+        target: /home/superduperdb/.superduperdb/config.json
+    command:
+      - python
+      - -m
+      - superduperdb.cluster.model_server
+
+  dask-scheduler:
+    image: superduperdb:latest
+    container_name: sddb-dask-scheduler
+    restart: always
+    command:
+      - dask
+      - scheduler
+
+  dask-worker:
+    image: superduperdb:latest
+    container_name: sddb-dask-worker
+    restart: always
+    depends_on:
+      - dask-scheduler
+    command:
+      - dask
+      - worker
+      - dask-scheduler:8786
+
+  jupyter:
+    image: superduperdb-jupyter:latest
+    container_name: sddb-jupyter
+    restart: always
+    configs:
+      - source: sddb-config
+        target: /home/superduperdb/.superduperdb/config.json
+    depends_on:
+      - mongodb
+      - vector-search
+      - model-server
+      - dask-scheduler
+    volumes:
+      - "../../notebooks:/home/superduperdb/notebooks"
+    ports:
+      - "28888:8888"

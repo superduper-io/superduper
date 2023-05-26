@@ -109,7 +109,7 @@ class Delete(query.Delete):
 @dataclass(frozen=True)
 class Insert(query.Insert):
     collection: str
-    documents = List[Any]
+    documents: List[Any]
     ordered: bool = True
     bypass_document_validation: bool = False
 

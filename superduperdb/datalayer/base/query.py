@@ -1,71 +1,70 @@
-from dataclasses import dataclass
-from functools import cached_property
+from abc import ABC, abstractmethod
 
 from typing import List, Any
 
 from superduperdb.misc.serialization import convert_from_types_to_bytes
 
 
-@dataclass(frozen=True)
-class Query:
-    ...
+class Select(ABC):
 
-
-@dataclass(frozen=True)
-class Select(Query):
-
-    @cached_property
+    @property
+    @abstractmethod
     def is_trivial(self) -> bool:
-        raise NotImplementedError
+        pass
 
-    @cached_property
+    @property
+    @abstractmethod
     def select_only_id(self) -> 'Select':
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def select_using_ids(self, ids):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def add_fold(self, fold: str) -> 'Select':
-        raise NotImplementedError
+        pass
 
 
-@dataclass(frozen=True)
-class Insert(Query):
-    documents: List[Any]
+class Insert(ABC):
 
-    def _to_raw_documents(self, types, type_lookup):
+    def _to_raw_documents(self, types, type_lookup) -> List[Any]:
         raw_documents = []
         for r in self.documents:
             raw_documents.append(convert_from_types_to_bytes(r, types, type_lookup))
         return raw_documents
 
+    @abstractmethod
     def to_raw(self, types, type_lookup):
-        raise NotImplementedError
+        pass
 
-    @cached_property
+    @property
+    @abstractmethod
     def table(self):
-        raise NotImplementedError
+        pass
 
-    @cached_property
+    @property
+    @abstractmethod
     def select_table(self) -> Select:
-        raise NotImplementedError
+        pass
 
 
-@dataclass(frozen=True)
-class Delete(Query):
+class Delete(ABC):
     ...
 
 
-@dataclass(frozen=True)
-class Update(Query):
+class Update(ABC):
 
+    @abstractmethod
     def to_raw(self, types, type_lookup):
-        raise NotImplementedError
+        pass
 
-    @cached_property
+    @property
+    @abstractmethod
     def select(self):
-        raise NotImplementedError
+        pass
 
-    @cached_property
+    @property
+    @abstractmethod
     def select_ids(self):
-        raise NotImplementedError
+        pass

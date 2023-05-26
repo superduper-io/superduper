@@ -26,10 +26,10 @@ class TransformersTrainerConfiguration(TrainerConfiguration):
     ):
         tokenizing_function = TokenizingFunction(models[0].tokenizer)
         train_data, valid_data = self._get_data(
-            database_type,
-            database_name,
-            select,
-            keys,
+            database_type=database_type,
+            database_name=database_name,
+            select=select,
+            keys=keys,
             features=features,
             transform=tokenizing_function,
         )

@@ -147,10 +147,10 @@ class TorchTrainerConfiguration(TrainerConfiguration):
             return self.split_and_preprocess(x, models, keys, self.splitter)
 
         train_data, valid_data = self._get_data(
-            database_type,
-            database_name,
-            select,
-            keys,
+            database_type=database_type,
+            database_name=database_name,
+            select=select,
+            keys=keys,
             features=features,
             transform=transform,
         )

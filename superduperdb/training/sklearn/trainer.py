@@ -44,24 +44,24 @@ class SklearnTrainerConfiguration(TrainerConfiguration):
     ):
         database = get_database_from_database_type(database_type, database_name)
         X_train, y_train = self._get_data(
-            database,
-            keys[0],
-            select.add_fold('train'),
-            keys[1] if keys[1:] else None,
+            database=database,
+            X=keys[0],
+            select=select.add_fold('train'),
+            y=keys[1] if keys[1:] else None,
             y_preprocess=models[1].predict_one,
         )
         X_valid, y_valid = self._get_data(
-            database,
-            keys[0],
-            select.add_fold('valid'),
+            database=database,
+            X=keys[0],
+            select=select.add_fold('valid'),
             y=keys[1] if keys[1:] else None,
             y_preprocess=models[1].predict_one,
         )
         return SklearnTrainer(
-            models,
-            model_names,
-            X_train,
-            X_valid,
+            models=models,
+            model_names=model_names,
+            X_train=X_train,
+            X_valid=X_valid,
             save=database._replace_model,
             y_train=y_train,
             y_valid=y_valid,

@@ -20,9 +20,9 @@ class TrainerConfiguration:
         cls, database_type, database_name, select, keys, features, transform
     ):
         train_data = QueryDataset(
-            select,
-            database_name,
-            database_type,
+            select=select,
+            database=database_name,
+            database_type=database_type,
             keys=keys,
             fold='train',
             transform=transform,
@@ -30,9 +30,9 @@ class TrainerConfiguration:
         )
 
         valid_data = QueryDataset(
-            select,
-            database_name,
-            database_type,
+            select=select,
+            database=database_name,
+            database_type=database_type,
             keys=keys,
             fold='valid',
             transform=transform,

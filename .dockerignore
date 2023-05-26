@@ -1,3 +1,4 @@
 *
-!build/requirements.ci.txt
+!requirements.ci.txt
+!build/requirements.txt
 !dist/*.whl

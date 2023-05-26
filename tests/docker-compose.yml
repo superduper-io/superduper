@@ -11,4 +11,4 @@ services:
       MONGO_INITDB_ROOT_USERNAME: testmongodbuser
       MONGO_INITDB_ROOT_PASSWORD: testmongodbpassword
     ports:
-      - "27017:27017"
+      - "27018:27017"

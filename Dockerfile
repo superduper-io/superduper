@@ -4,9 +4,11 @@ FROM python:${PY_VERSION}-bullseye AS requirements
 ENV PATH=/root/.local/bin:$PATH
 RUN pip install -U pip
 
-COPY build/requirements.ci.txt /tmp/requirements.txt
+COPY requirements.ci.txt /tmp/requirements.ci.txt
+COPY build/requirements.txt /tmp/requirements.txt
 COPY dist /tmp/dist
 
+RUN pip install --no-cache-dir --user -r /tmp/requirements.ci.txt
 RUN pip install --no-cache-dir --user -r /tmp/requirements.txt
 
 RUN pip install --user --find-links /tmp/dist superduperdb

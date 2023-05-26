@@ -5,13 +5,11 @@ dist/.built: pyproject.toml $(shell find superduperdb)
 
 dist: dist/.built
 
-build/requirements.ci.txt: pyproject.toml poetry.lock
+build/requirements.txt: pyproject.toml poetry.lock
 	mkdir -p build
-	poetry export --format=requirements.txt --with=ci --output=$@.tmp
-	echo "--extra-index-url https://download.pytorch.org/whl/cpu" > $@
-	cat $@.tmp >> $@
+	poetry export --without-hashes --format=requirements.txt --output=$@
 
-build/server-image: .dockerignore Dockerfile dist build/requirements.ci.txt
+build/server-image: .dockerignore Dockerfile dist requirements.ci.txt build/requirements.txt
 	docker build --target=server -t superduperdb:latest .
 	docker image inspect superduperdb:latest -f '{{ .ID }}' > $@
 
@@ -23,6 +21,10 @@ build/jupyter-image: build/server-image
 test:
 	docker compose -f tests/material/docker-compose.yml up mongodb -d
 	pytest -vv --maxfail=3 tests/unittests
+
+.PHONY: clean-test
+clean-test:
+	docker compose -f tests/material/docker-compose.yml down
 
 .PHONY: jupyter
 jupyter: build/jupyter-image

@@ -33,6 +33,8 @@ transformers = "^4.29.1"
 tqdm = "^4.65.0"
 werkzeug = "^2.3.4"
 openai = "^0.27.6"
+pydantic = "^1.10.7"
+fil = "^1.1.0"
 torch = "^2.0.1"
 
 [tool.poetry.group.ci]

@@ -10,7 +10,7 @@ from tenacity import RetryError, Retrying, stop_after_delay
 @dataclass(frozen=True)
 class MongoDBConfig:
     host: str = "localhost"
-    port: int = 27017
+    port: int = 27018
     username: str = field(repr=False, default="testmongodbuser")
     password: str = field(repr=False, default="testmongodbpassword")
     server_selection_timeout_s: float = 5.0

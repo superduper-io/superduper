@@ -130,10 +130,6 @@ class Insert(query.Insert):
         )
 
     @cached_property
-    def table(self):
-        return self.collection
-
-    @cached_property
     def select_table(self) -> Select:
         return Select(collection=self.collection, filter={})
 

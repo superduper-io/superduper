@@ -46,6 +46,7 @@ def vector_search(f):
             return out
         else:
             return f(database, *args, **kwargs)
+
     vector_search_wrapper.signature = sig
     vector_search_wrapper.f = f
     return vector_search_wrapper

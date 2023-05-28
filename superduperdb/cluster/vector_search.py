@@ -38,12 +38,8 @@ def serve():
     )
     database.remote = False
     method = getattr(database, data['method'])
-    args = decode_args(database,
-                       inspect.signature(method),
-                       data['args'])
-    kwargs = decode_kwargs(database,
-                           inspect.signature(method),
-                           data['kwargs'])
+    args = decode_args(database, inspect.signature(method), data['args'])
+    kwargs = decode_kwargs(database, inspect.signature(method), data['kwargs'])
     result = method.f(database, *args, **kwargs)
     logging.info('results')
     logging.info(result)

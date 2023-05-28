@@ -134,7 +134,9 @@ def test_watcher(random_data, a_model, b_model, remote):
         ).key
         random_data.watch_job(job_id)
     else:
-        random_data.create_watcher('linear_b/x', 'linear_b', key='x', features={'x': 'linear_a'})
+        random_data.create_watcher(
+            'linear_b/x', 'linear_b', key='x', features={'x': 'linear_a'}
+        )
     assert 'linear_b' in random_data.find_one()['_outputs']['x']
 
 

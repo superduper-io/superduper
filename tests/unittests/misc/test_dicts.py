@@ -4,19 +4,21 @@ import pytest
 
 
 def test_combine_dicts():
-    actual = dicts.combine((
-        {'one': {'two': ['three', 'four', 'five']}},
-        {'one': {'three': 3}},
-        {'four': None},
-        {'one': {'five': {'nine': 9, 'ten': 23}}},
-        {'one': {'five': {'eight': 8, 'ten': 10}}},
-    ))
+    actual = dicts.combine(
+        (
+            {'one': {'two': ['three', 'four', 'five']}},
+            {'one': {'three': 3}},
+            {'four': None},
+            {'one': {'five': {'nine': 9, 'ten': 23}}},
+            {'one': {'five': {'eight': 8, 'ten': 10}}},
+        )
+    )
 
     expected = {
         'one': {
             'five': {'eight': 8, 'nine': 9, 'ten': 10},
             'three': 3,
-            'two': ['three', 'four', 'five']
+            'two': ['three', 'four', 'five'],
         },
         'four': None,
     }
@@ -25,11 +27,14 @@ def test_combine_dicts():
 
 
 def test_environ_dict_():
-    actual = dicts.environ_dict('TEST_', {
-        'TOAST_ONE': 'one',
-        'TEST_TWO': 'two',
-        'TEST_three': 'three',
-    })
+    actual = dicts.environ_dict(
+        'TEST_',
+        {
+            'TOAST_ONE': 'one',
+            'TEST_TWO': 'two',
+            'TEST_three': 'three',
+        },
+    )
 
     expected = {'two': 'two'}
     assert expected == actual
@@ -43,17 +48,20 @@ PARENT = {
 }
 
 
-@pytest.mark.parametrize('key, expected', (
-    ('', []),
-    ('re', []),
-    ('red', [['red']]),
-    ('blue_green', [['blue_green'], ['blue', 'green']]),
-    ('blue_green_orange', [['blue', 'green', 'orange']]),
+@pytest.mark.parametrize(
+    'key, expected',
     (
-        'blue_green_puce',
-        [['blue', 'green_puce'], ['blue', 'green', 'puce'], ['blue_green', 'puce']]
+        ('', []),
+        ('re', []),
+        ('red', [['red']]),
+        ('blue_green', [['blue_green'], ['blue', 'green']]),
+        ('blue_green_orange', [['blue', 'green', 'orange']]),
+        (
+            'blue_green_puce',
+            [['blue', 'green_puce'], ['blue', 'green', 'puce'], ['blue_green', 'puce']],
+        ),
     ),
-))
+)
 def test_split_address(key, expected):
     actual = [list(i) for i in dicts.split_address(key, PARENT)]
     assert actual == expected

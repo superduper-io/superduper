@@ -23,7 +23,8 @@ class Select(ABC):
     @property
     @abstractmethod
     def select_only_id(self) -> 'Select':
-        # Converts the query into a query which only returns the id of each column/ document.
+        # Converts the query into a query which only returns the id
+        # of each column/ document.
         pass
 
     @abstractmethod
@@ -33,7 +34,8 @@ class Select(ABC):
 
     @abstractmethod
     def add_fold(self, fold: str) -> 'Select':
-        # Converts the query into a query which sub-selects based on the specified tag "fold"
+        # Converts the query into a query which sub-selects based on the specified
+        # tag "fold"
         pass
 
 
@@ -48,8 +50,8 @@ class Insert(ABC):
 
     @abstractmethod
     def to_raw(self, types, type_lookup) -> 'Insert':
-        # converts the Insert object into an equivalent insert object, but where the component
-        # types are dumped as bytes
+        # converts the Insert object into an equivalent insert object, but where
+        # the component types are dumped as bytes
         pass
 
     @property
@@ -61,7 +63,8 @@ class Insert(ABC):
     @property
     @abstractmethod
     def select_table(self) -> Select:
-        # returns a Select object which selects the table into which the insert was inserted
+        # returns a Select object which selects the table into which the insert
+        # was inserted
         pass
 
 
@@ -72,19 +75,20 @@ class Delete(ABC):
 class Update(ABC):
     @abstractmethod
     def to_raw(self, types, type_lookup):
-        # converts the Update object into an equivalent Update object, but where the component
-        # types are dumped as bytes in the update
+        # converts the Update object into an equivalent Update object, but where
+        # the component types are dumped as bytes in the update
         pass
 
     @property
     @abstractmethod
     def select(self):
-        # converts the update object to a Select object, which selects where the update was made
+        # converts the update object to a Select object, which selects where
+        # the update was made
         pass
 
     @property
     @abstractmethod
     def select_ids(self):
-        # converts the update object to a Select object, which selects where the update was made
-        # and returns only ids
+        # converts the update object to a Select object, which selects where
+        # the update was made, and returns only ids
         pass

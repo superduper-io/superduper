@@ -1,4 +1,3 @@
-from typing import Union
 
 import gridfs
 from bson import ObjectId
@@ -8,8 +7,6 @@ from pymongo.database import Database as MongoDatabase
 
 import superduperdb.datalayer.mongodb.collection
 from superduperdb.datalayer.base.database import BaseDatabase
-from superduperdb.cluster.annotations import ObjectIdConvertible, List
-from superduperdb.cluster.job_submission import work
 from superduperdb.datalayer.mongodb import loading
 from superduperdb.datalayer.mongodb.cursor import SuperDuperCursor
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -18,7 +15,6 @@ from superduperdb.datalayer.mongodb.query import (
     Select,
     Delete,
     Insert,
-    set_one_key_in_document,
     Update,
 )
 

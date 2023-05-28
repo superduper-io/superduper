@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from superduperdb.misc import dicts
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 import os
 
 Self = Any

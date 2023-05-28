@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
-from superduperdb.misc import dicts
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List
 
 # The classes in this file define the configuration variables for SuperDuperDB.
 #

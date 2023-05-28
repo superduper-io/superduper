@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Sequence, TextIO, Tuple, Union
+from typing import Dict, Iterator, Optional, Sequence, TextIO, Tuple, Union
 import fil
 import os
 import sys

@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 from tests.fixtures.collection import (
     with_semantic_index,
     random_data,

@@ -52,7 +52,7 @@ def test_type_error():
 
 def test_unknown_name():
     with pytest.raises(ValidationError) as pr:
-        c = Config(bad_name={}, **DATA)
+        Config(bad_name={}, **DATA)
     assert str(pr.value).strip() == NAME_ERROR.strip()
 
 

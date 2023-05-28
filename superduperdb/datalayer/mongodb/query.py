@@ -20,7 +20,7 @@ class Select(query.Select):
             filter={'_fold': fold, **(self.filter or {})},
             projection=self.projection,
             kwargs=self.kwargs,
-            one=self.one
+            one=self.one,
         )
 
     @cached_property
@@ -33,7 +33,9 @@ class Select(query.Select):
 
     @cached_property
     def select_only_id(self) -> 'Select':
-        return Select(collection=self.collection, filter=self.filter, projection={'_id': 1})
+        return Select(
+            collection=self.collection, filter=self.filter, projection={'_id': 1}
+        )
 
     def select_using_ids(self, ids) -> 'Select':
         return Select(
@@ -85,13 +87,15 @@ class Update(query.Update):
             return Update(
                 collection=self.collection,
                 filter=self.filter,
-                update=convert_from_types_to_bytes(self.update, types, type_lookup)
+                update=convert_from_types_to_bytes(self.update, types, type_lookup),
             )
         else:
             return Update(
                 collection=self.collection,
                 filter=self.filter,
-                replacement=convert_from_types_to_bytes(self.replacement, types, type_lookup),
+                replacement=convert_from_types_to_bytes(
+                    self.replacement, types, type_lookup
+                ),
             )
 
 

@@ -1,5 +1,12 @@
-from tests.fixtures.collection import with_semantic_index, random_data, float_tensors, empty, \
-    a_model, a_watcher, an_update
+from tests.fixtures.collection import (
+    with_semantic_index,
+    random_data,
+    float_tensors,
+    empty,
+    a_model,
+    a_watcher,
+    an_update,
+)
 
 import torch
 from superduperdb.datalayer.mongodb.query import Select, Insert, Update, Delete
@@ -13,7 +20,7 @@ def test_select(with_semantic_index):
             Select(collection='documents'),
             like={'x': r['x']},
             semantic_index='test_learning_task',
-            measure='css'
+            measure='css',
         )
     )
     assert s['_id'] == r['_id']
@@ -33,12 +40,17 @@ def test_update(random_data, a_watcher):
     r, s = list(random_data.find().limit(2))
     assert r['x'].tolist() == to_update.tolist()
     assert s['x'].tolist() == to_update.tolist()
-    assert r['_outputs']['x']['linear_a'].tolist() == s['_outputs']['x']['linear_a'].tolist()
+    assert (
+        r['_outputs']['x']['linear_a'].tolist()
+        == s['_outputs']['x']['linear_a'].tolist()
+    )
 
 
 def test_delete(random_data):
     r = random_data.find_one()
-    random_data.database.delete(Delete(collection='documents', filter={'_id': r['_id']}))
+    random_data.database.delete(
+        Delete(collection='documents', filter={'_id': r['_id']})
+    )
     assert random_data.find_one({'_id': r['_id']}) is None
 
 
@@ -55,5 +67,3 @@ def test_replace(random_data):
     )
     r = random_data.find_one({'_id': r['_id']})
     assert r['x'].tolist() == x.tolist()
-
-

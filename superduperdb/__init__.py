@@ -1,9 +1,14 @@
 from pathlib import Path
 import json
 import os
-from . misc import configs
+from .misc import configs
 
-__all__ = 'CFG', 'ICON', 'ROOT', 'cf',
+__all__ = (
+    'CFG',
+    'ICON',
+    'ROOT',
+    'cf',
+)
 
 CFG = configs.CONFIG.config
 ICON = '🔮'

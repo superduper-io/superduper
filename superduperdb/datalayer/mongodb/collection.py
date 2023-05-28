@@ -80,7 +80,9 @@ class Collection(MongoCollection):
         for k in self._all_hash_sets:
             del self._all_hash_sets[k]
 
-    def create_learning_task(self, models, keys, filter=None, projection=None, **kwargs):
+    def create_learning_task(
+        self, models, keys, filter=None, projection=None, **kwargs
+    ):
         """
         Create learning task.
 
@@ -88,9 +90,7 @@ class Collection(MongoCollection):
         :param kwargs: passed to ``self.database.create_learning_task``
         """
         select = Select(collection=self.name, filter=filter, projection=projection)
-        return self.database.create_learning_task(
-            models, keys, select, **kwargs
-        )
+        return self.database.create_learning_task(models, keys, select, **kwargs)
 
     def create_metric(self, *args, **kwargs):
         """
@@ -152,11 +152,14 @@ class Collection(MongoCollection):
             filter['_fold'] = 'valid'
 
         return self.database.create_validation_set(
-            identifier, Select(collection=self.name, filter=filter), chunk_size=chunk_size
+            identifier,
+            Select(collection=self.name, filter=filter),
+            chunk_size=chunk_size,
         )
 
-    def create_watcher(self, identifier, model, select: Optional[Select] = None, key='_base',
-                       **kwargs):
+    def create_watcher(
+        self, identifier, model, select: Optional[Select] = None, key='_base', **kwargs
+    ):
         """
         Create watcher.
 
@@ -165,7 +168,9 @@ class Collection(MongoCollection):
         """
         if select is None:
             select = Select(collection=self.name)
-        return self.database.create_watcher(identifier, model, select=select, key=key, **kwargs)
+        return self.database.create_watcher(
+            identifier, model, select=select, key=key, **kwargs
+        )
 
     def delete_learning_task(self, *args, **kwargs):
         """
@@ -262,7 +267,12 @@ class Collection(MongoCollection):
         Behaves like MongoDB ``find`` with similarity search as additional option.
         """
         return self.database.select(
-            Select(collection=self.name, filter=filter, projection=projection, kwargs=kwargs),
+            Select(
+                collection=self.name,
+                filter=filter,
+                projection=projection,
+                kwargs=kwargs,
+            ),
             features=features,
             like=like,
             semantic_index=semantic_index,
@@ -295,12 +305,12 @@ class Collection(MongoCollection):
         return self.insert_many([document], *args, **kwargs)
 
     def insert_many(
-            self,
-            documents: List[Any],
-            ordered=True,
-            bypass_document_validation=False,
-            refresh=True
-        ):
+        self,
+        documents: List[Any],
+        ordered=True,
+        bypass_document_validation=False,
+        refresh=True,
+    ):
         """
         Insert many items into database.
 
@@ -311,9 +321,9 @@ class Collection(MongoCollection):
                 collection=self.name,
                 documents=documents,
                 ordered=True,
-                bypass_document_validation=bypass_document_validation
+                bypass_document_validation=bypass_document_validation,
             ),
-            refresh=refresh
+            refresh=refresh,
         )
 
     def refresh_watcher(self, *args, **kwargs):
@@ -335,7 +345,9 @@ class Collection(MongoCollection):
         :param args: args to be passed to super()
         :param kwargs: kwargs to be passed to super()
         """
-        return self.database._update('replace_one', self.name, filter, replacement, *args, **kwargs)
+        return self.database._update(
+            'replace_one', self.name, filter, replacement, *args, **kwargs
+        )
 
     def update_many(self, *args, refresh=True, **kwargs):
         """

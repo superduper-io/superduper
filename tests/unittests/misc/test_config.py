@@ -1,4 +1,4 @@
-from . test_dicts import PARENT
+from .test_dicts import PARENT
 from collections import Counter
 from pathlib import Path
 from pydantic import ValidationError
@@ -19,6 +19,7 @@ NAME_ERROR = """
 bad_name
   extra fields not permitted (type=value_error.extra)
 """
+
 
 def test_default_config():
     # If this test fails, try running
@@ -73,7 +74,7 @@ def test_dict_names():
         ('blue_green_puce'),
         ('blue_green_puce'),
         ('blue_green_yellow'),
-        ('tan_green_orange')
+        ('tan_green_orange'),
     ]
 
     assert actual == expected
@@ -122,45 +123,23 @@ def test_find_dupes():
 
 
 DATA = {
-     'remote': False,
-     'vector_search': {
-          'host': 'localhost',
-          'port': 5001
-     },
-     'dask': {
-          'ip': 'localhost',
-          'port': 8786,
-          'serializers': ['pickle', 'dill'],
-          'deserializers': ['pickle', 'dill']
-     },
-     'ray': {
-          'deployments': [
-               {
-                    'database': 'mnist',
-                    'model': 'lenet'
-               }
-          ],
-          'host': '127.0.0.1',
-          'port': 8000
-     },
-     'model_server': {
-          'host': 'localhost',
-          'port': 5002
-     },
-     'mongodb': {
-          'host': 'localhost',
-          'port': 27017
-     },
-     'notebook': {
-          'token': '...',
-          'port': 8888,
-          'ip': '0.0.0.0'
-     },
-     'apis': {
-          'openai': {
-               'api_key': 'sk-...'
-          }
-     }
+    'remote': False,
+    'vector_search': {'host': 'localhost', 'port': 5001},
+    'dask': {
+        'ip': 'localhost',
+        'port': 8786,
+        'serializers': ['pickle', 'dill'],
+        'deserializers': ['pickle', 'dill'],
+    },
+    'ray': {
+        'deployments': [{'database': 'mnist', 'model': 'lenet'}],
+        'host': '127.0.0.1',
+        'port': 8000,
+    },
+    'model_server': {'host': 'localhost', 'port': 5002},
+    'mongodb': {'host': 'localhost', 'port': 27017},
+    'notebook': {'token': '...', 'port': 8888, 'ip': '0.0.0.0'},
+    'apis': {'openai': {'api_key': 'sk-...'}},
 }
 
 

@@ -14,8 +14,13 @@ from superduperdb.datalayer.mongodb import loading
 from superduperdb.datalayer.mongodb.cursor import SuperDuperCursor
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.misc.logger import logging
-from superduperdb.datalayer.mongodb.query import Select, Delete, Insert, set_one_key_in_document, \
-    Update
+from superduperdb.datalayer.mongodb.query import (
+    Select,
+    Delete,
+    Insert,
+    set_one_key_in_document,
+    Update,
+)
 
 
 class Database(MongoDatabase, BaseDatabase):
@@ -93,10 +98,15 @@ class Database(MongoDatabase, BaseDatabase):
         )
 
     def _get_hash_from_document(self, r, watcher_info):
-        return MongoStyleDict(r)[f'_outputs.{watcher_info["key"]}.{watcher_info["model"]}']
+        return MongoStyleDict(r)[
+            f'_outputs.{watcher_info["key"]}.{watcher_info["model"]}'
+        ]
 
     def _get_ids_from_select(self, select: Select):
-        return [r['_id'] for r in self[select.collection]._base_find(select.filter, {'_id': 1})]
+        return [
+            r['_id']
+            for r in self[select.collection]._base_find(select.filter, {'_id': 1})
+        ]
 
     def _get_job_info(self, identifier):
         return self['_jobs'].find_one({'identifier': identifier})
@@ -105,21 +115,22 @@ class Database(MongoDatabase, BaseDatabase):
         return self['_meta'].find_one(kwargs)['value']
 
     def _get_object_info(self, identifier, variety, **kwargs):
-        return self['_objects'].find_one({'identifier': identifier, 'variety': variety, **kwargs})
+        return self['_objects'].find_one(
+            {'identifier': identifier, 'variety': variety, **kwargs}
+        )
 
     def _get_object_info_where(self, variety, **kwargs):
         return self['_objects'].find_one({'variety': variety, **kwargs})
 
     def _get_raw_cursor(self, select: Select):
         return Cursor(
-            self[select.collection],
-            select.filter,
-            select.projection,
-            **select.kwargs
+            self[select.collection], select.filter, select.projection, **select.kwargs
         )
 
     def get_query_for_validation_set(self, validation_set):
-        return Select(collection='_validation_sets', filter={'identifier': validation_set})
+        return Select(
+            collection='_validation_sets', filter={'identifier': validation_set}
+        )
 
     def _insert_validation_data(self, tmp, identifier):
         tmp = [{**r, 'identifier': identifier} for r in tmp]
@@ -187,10 +198,12 @@ class Database(MongoDatabase, BaseDatabase):
         )
 
     def _update_neighbourhood(self, ids, similar_ids, identifier, select: Select):
-        self[select.collection].bulk_write([
-            UpdateOne({'_id': id_}, {'$set': {f'_like.{identifier}': sids}})
-            for id_, sids in zip(ids, similar_ids)
-        ])
+        self[select.collection].bulk_write(
+            [
+                UpdateOne({'_id': id_}, {'$set': {f'_like.{identifier}': sids}})
+                for id_, sids in zip(ids, similar_ids)
+            ]
+        )
 
     def _update_job_info(self, identifier, key, value):
         self['_jobs'].update_one({'identifier': identifier}, {'$set': {key: value}})
@@ -208,21 +221,28 @@ class Database(MongoDatabase, BaseDatabase):
         logging.info('bulk writing...')
         select = self.select_cls(**watcher_info['select'])
         if watcher_info.get('target') is None:
-            self[select.collection].bulk_write([
-                UpdateOne(
-                    {'_id': id},
-                    {'$set': {
-                        f'_outputs.{watcher_info["key"]}.{watcher_info["model"]}': outputs[i]}
-                    },
-                )
-                for i, id in enumerate(_ids)
-            ])
+            self[select.collection].bulk_write(
+                [
+                    UpdateOne(
+                        {'_id': id},
+                        {
+                            '$set': {
+                                f'_outputs.{watcher_info["key"]}.{watcher_info["model"]}': outputs[
+                                    i
+                                ]
+                            }
+                        },
+                    )
+                    for i, id in enumerate(_ids)
+                ]
+            )
         else:  # pragma: no cover
-            self[select.collection].bulk_write([
-                UpdateOne(
-                    {'_id': id}, {'$set': {watcher_info['target']: outputs[i]}}
-                )
-                for i, id in enumerate(_ids)
-            ])
+            self[select.collection].bulk_write(
+                [
+                    UpdateOne(
+                        {'_id': id}, {'$set': {watcher_info['target']: outputs[i]}}
+                    )
+                    for i, id in enumerate(_ids)
+                ]
+            )
         logging.info('done.')
-

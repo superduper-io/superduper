@@ -1,4 +1,3 @@
-
 import gridfs
 from bson import ObjectId
 from pymongo import UpdateOne
@@ -217,28 +216,17 @@ class Database(MongoDatabase, BaseDatabase):
         logging.info('bulk writing...')
         select = self.select_cls(**watcher_info['select'])
         if watcher_info.get('target') is None:
-            self[select.collection].bulk_write(
-                [
-                    UpdateOne(
-                        {'_id': id},
-                        {
-                            '$set': {
-                                f'_outputs.{watcher_info["key"]}.{watcher_info["model"]}': outputs[
-                                    i
-                                ]
-                            }
-                        },
-                    )
-                    for i, id in enumerate(_ids)
-                ]
-            )
-        else:  # pragma: no cover
-            self[select.collection].bulk_write(
-                [
-                    UpdateOne(
-                        {'_id': id}, {'$set': {watcher_info['target']: outputs[i]}}
-                    )
-                    for i, id in enumerate(_ids)
-                ]
-            )
+            out_key = f'_outputs.{watcher_info["key"]}.{watcher_info["model"]}'
+        else:
+            out_key = watcher_info['target']
+
+        self[select.collection].bulk_write(
+            [
+                UpdateOne(
+                    {'_id': id},
+                    {'$set': {out_key: outputs[i]}},
+                )
+                for i, id in enumerate(_ids)
+            ]
+        )
         logging.info('done.')

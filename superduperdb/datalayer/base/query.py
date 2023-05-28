@@ -70,7 +70,6 @@ class Delete(ABC):
 
 
 class Update(ABC):
-
     @abstractmethod
     def to_raw(self, types, type_lookup):
         # converts the Update object into an equivalent Update object, but where the component

@@ -105,10 +105,17 @@ class BaseDatabase:
         return model.predict(input_, **kwargs)
 
     @work
-    def apply_watcher(self, identifier, ids=None, verbose=False,
-                      max_chunk_size=5000, model=None, recompute=False, watcher_info=None,
-                      **kwargs):
-
+    def apply_watcher(
+        self,
+        identifier,
+        ids=None,
+        verbose=False,
+        max_chunk_size=5000,
+        model=None,
+        recompute=False,
+        watcher_info=None,
+        **kwargs,
+    ):
         select = self.select_cls(**watcher_info['select'])
 
         if watcher_info is None:
@@ -117,11 +124,13 @@ class BaseDatabase:
             ids = self._get_ids_from_select(select.select_only_id)
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                logging.info('computing chunk '
-                             f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})')
+                logging.info(
+                    'computing chunk '
+                    f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
+                )
                 self.apply_watcher(
                     identifier,
-                    ids=ids[i: i + max_chunk_size],
+                    ids=ids[i : i + max_chunk_size],
                     verbose=verbose,
                     max_chunk_size=None,
                     model=model,
@@ -140,25 +149,22 @@ class BaseDatabase:
             key=watcher_info['key'],
             features=watcher_info.get('features', {}),
             model=model,
-            predict_kwargs=watcher_info.get('predict_kwargs', {})
+            predict_kwargs=watcher_info.get('predict_kwargs', {}),
         )
         type_ = model_info.get('type')
         if type_ is not None:
             type_ = self.types[type_]
             outputs = [
-                {
-                    '_content': {
-                        'bytes': type_.encode(x),
-                        'type': model_info['type']
-                    }
-                }
+                {'_content': {'bytes': type_.encode(x), 'type': model_info['type']}}
                 for x in outputs
             ]
 
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
 
-    def _build_task_workflow(self, select: Select, ids=None, dependencies=(), verbose=True):
+    def _build_task_workflow(
+        self, select: Select, ids=None, dependencies=(), verbose=True
+    ):
         job_ids = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
@@ -174,8 +180,8 @@ class BaseDatabase:
                 ],
                 'kwargs': {
                     'ids': ids,
-                }
-            }
+                },
+            },
         )
         if not self.list_watchers():
             return G
@@ -189,8 +195,8 @@ class BaseDatabase:
                     'kwargs': {
                         'ids': ids,
                         'verbose': verbose,
-                    }
-                }
+                    },
+                },
             )
 
         for identifier in self.list_neighbourhoods():
@@ -199,24 +205,24 @@ class BaseDatabase:
                 data={
                     'task': self.compute_neighbourhood,
                     'args': [identifier],
-                    'kwargs': {}
-                }
+                    'kwargs': {},
+                },
             )
 
         for identifier in self.list_watchers():
             G.add_edge(
                 f'{self.download_content.__name__}()',
-                f'{self.apply_watcher.__name__}({identifier})'
+                f'{self.apply_watcher.__name__}({identifier})',
             )
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:
                 G.add_edge(
                     f'{self.apply_watcher.__name__}({dep})',
-                    f'{self.apply_watcher.__name__}({identifier})'
+                    f'{self.apply_watcher.__name__}({identifier})',
                 )
                 G.add_edge(
                     f'{self.download_content.__name__}()',
-                    f'{self.apply_watcher.__name__}({identifier})'
+                    f'{self.apply_watcher.__name__}({identifier})',
                 )
 
         for identifier in self.list_neighbourhoods():
@@ -224,7 +230,7 @@ class BaseDatabase:
             G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
             G.add_edge(
                 f'{self.apply_watcher.__name__}({watcher_identifier})',
-                f'{self.compute_neighbourhood.__name__}({identifier})'
+                f'{self.compute_neighbourhood.__name__}({identifier})',
             )
         return G
 
@@ -264,7 +270,9 @@ class BaseDatabase:
         select = self.select_cls(**watcher_info['query'])
         ids = self._get_ids_from_select(select.select_only_id)
         logging.info('getting hash set')
-        self._load_hashes(identifier, measure=info['measure'], hash_set_cls=info['hash_set_cls'])
+        self._load_hashes(
+            identifier, measure=info['measure'], hash_set_cls=info['hash_set_cls']
+        )
         h = self._all_hash_sets[identifier]
         h = h[ids]
         logging.info(
@@ -276,9 +284,7 @@ class BaseDatabase:
             sub = ids[i : i + info['batch_size']]
             results = h.find_nearest_from_ids(sub, n=info['n'])
             similar_ids = [res['_ids'] for res in results]
-            self._update_neighbourhood(
-                sub, similar_ids, identifier, select
-            )
+            self._update_neighbourhood(sub, similar_ids, identifier, select)
 
     def convert_from_bytes_to_types(self, r):
         """
@@ -294,7 +300,9 @@ class BaseDatabase:
 
         :param r: dictionary potentially containing non-Bsonable content
         """
-        return misc.serialization.convert_from_types_to_bytes(r, self.types, self.type_lookup)
+        return misc.serialization.convert_from_types_to_bytes(
+            r, self.types, self.type_lookup
+        )
 
     def _create_job_record(self, *args, **kwargs):
         raise NotImplementedError
@@ -744,7 +752,9 @@ class BaseDatabase:
         if update_db:
             return
         for id_, key in zip(place_ids, keys):
-            documents[id_] = self._set_content_bytes(documents[id_], key, downloader.results[id_])
+            documents[id_] = self._set_content_bytes(
+                documents[id_], key, downloader.results[id_]
+            )
         return documents
 
     def _download_update(self, table, id, key, bytes):
@@ -845,9 +855,7 @@ class BaseDatabase:
         if not refresh:  # pragma: no cover
             return output, None
         task_graph = self._build_task_workflow(
-            insert.select_table,
-            ids=output.inserted_ids,
-            verbose=verbose
+            insert.select_table, ids=output.inserted_ids, verbose=verbose
         )
         task_graph()
         return output, task_graph
@@ -1155,7 +1163,7 @@ class BaseDatabase:
         semantic_index=None,
         watcher=None,
         measure=None,
-        hash_set_cls='vanilla'
+        hash_set_cls='vanilla',
     ):
         if not select.is_trivial:
             id_cursor = self._get_raw_cursor(select.select_only_id)
@@ -1229,7 +1237,6 @@ class BaseDatabase:
         measure='css',
         hash_set_cls='vanilla',
     ) -> Tuple([List(Convertible()), Any]):
-
         if semantic_index is not None:
             si_info = self.get_object_info(semantic_index, variety='learning_task')
             models = si_info['models']
@@ -1242,7 +1249,9 @@ class BaseDatabase:
             keys = [watcher_info['key']]
 
         if watcher not in self._all_hash_sets:
-            self._load_hashes(watcher=watcher, measure=measure, hash_set_cls=hash_set_cls)
+            self._load_hashes(
+                watcher=watcher, measure=measure, hash_set_cls=hash_set_cls
+            )
 
         hash_set = self._all_hash_sets[watcher]
         if ids is not None:
@@ -1264,8 +1273,9 @@ class BaseDatabase:
             if subkey not in document['_outputs']:
                 document['_outputs'][subkey] = {}
             if features[subkey] not in document['_outputs'][subkey]:
-                document['_outputs'][subkey][features[subkey]] = \
-                    self.models[features[subkey]].predict_one(document[subkey])
+                document['_outputs'][subkey][features[subkey]] = self.models[
+                    features[subkey]
+                ].predict_one(document[subkey])
             document[subkey] = document['_outputs'][subkey][features[subkey]]
         model_input = document[key] if key != '_base' else document
 
@@ -1295,7 +1305,6 @@ class BaseDatabase:
 
     @work
     def fit(self, identifier):
-
         info = self.get_object_info(identifier, 'learning_task')
 
         trainer = info['configuration'](
@@ -1335,7 +1344,9 @@ class BaseDatabase:
             ids = self._get_ids_from_select(update.select_ids)
         result = self._base_update(update.to_raw(self.types, self.type_lookup))
         if refresh and self.list_models():
-            task_graph = self._build_task_workflow(update.select, ids=ids, verbose=verbose)
+            task_graph = self._build_task_workflow(
+                update.select, ids=ids, verbose=verbose
+            )
             task_graph()
             return result, task_graph
         return result

@@ -54,7 +54,7 @@ def split_address(key: str, parent: Dict) -> Iterator[Tuple[Dict, Tuple[str]]]:
 
         for k, v in parent.items():
             if key.startswith(ks := k + SEP) and isinstance(v, dict):
-                yield from split(key[len(ks):], v, *address, k)
+                yield from split(key[len(ks) :], v, *address, k)
 
     return split(key, parent)
 
@@ -64,7 +64,7 @@ def environ_dict(prefix: str, environ: Optional[Dict] = None) -> Dict:
 
     d = os.environ if environ is None else environ
     items = ((k, v) for k, v in d.items() if k.isupper() and k.startswith(prefix))
-    return {k[len(prefix):].lower(): v for k, v in items}
+    return {k[len(prefix) :].lower(): v for k, v in items}
 
 
 def _combine_one(target, source):

@@ -16,9 +16,7 @@ class TrainerConfiguration:
             database._replace_model(model, mn)
 
     @classmethod
-    def _get_data(
-        cls, database_type, database_name, select, keys, features, transform
-    ):
+    def _get_data(cls, database_type, database_name, select, keys, features, transform):
         train_data = QueryDataset(
             select=select,
             database=database_name,

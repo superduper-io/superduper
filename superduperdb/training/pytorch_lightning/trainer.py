@@ -2,9 +2,9 @@ import inspect
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
+from superduperdb.core.training_configuration import TrainingConfiguration
 from superduperdb.datalayer.base.imports import get_database_from_database_type
 from superduperdb.datalayer.base.query import Select
-from superduperdb.training.base.config import TrainerConfiguration
 from superduperdb.models.torch.utils import eval
 
 
@@ -18,9 +18,9 @@ class CustomCheckpoint(pl.callbacks.ModelCheckpoint):
         self.database._replace_model(filepath, trainer.lightning_module)
 
 
-class LightningConfiguration(TrainerConfiguration):
-    def __init__(self, loader_kwargs, monitor='val_loss', **kwargs):
-        super().__init__(monitor=monitor, loader_kwargs=loader_kwargs, **kwargs)
+class LightningConfiguration(TrainingConfiguration):
+    def __init__(self, identifier: str, loader_kwargs, monitor='val_loss', **kwargs):
+        super().__init__(identifier, monitor=monitor, loader_kwargs=loader_kwargs, **kwargs)
 
     @classmethod
     def split_and_preprocess(cls, sample, model, splitter=None):

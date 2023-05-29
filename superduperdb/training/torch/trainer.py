@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from superduperdb.datalayer.base.imports import get_database_from_database_type
 from superduperdb.datalayer.base.query import Select
-from superduperdb.training.base.config import TrainerConfiguration
+from superduperdb.core.training_configuration import TrainingConfiguration
 from superduperdb.misc.special_dicts import ExtensibleDict
 from superduperdb.models.torch.utils import to_device, device_of
 from superduperdb.training.query_dataset import QueryDataset
@@ -24,9 +24,10 @@ def _default_kwargs():
     return {'lr': 0.0001}
 
 
-class TorchTrainerConfiguration(TrainerConfiguration):
+class TorchTrainerConfiguration(TrainingConfiguration):
     def __init__(
         self,
+        identifier,
         objective,
         loader_kwargs,
         optimizer_classes=None,
@@ -46,6 +47,7 @@ class TorchTrainerConfiguration(TrainerConfiguration):
         optimizer_kwargs = defaultdict(_default_kwargs)
         optimizer_kwargs.update(_optimizer_kwargs)
         super().__init__(
+            identifier,
             loader_kwargs=loader_kwargs,
             objective=objective,
             optimizer_classes=optimizer_classes or {},

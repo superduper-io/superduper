@@ -1,7 +1,9 @@
 import numpy
 
+from superduperdb.core.type import Type
 
-class Array:
+
+class Array(Type):
     """
     >>> x = numpy.random.randn(32)
     >>> bs = Array(numpy.float64).encode(x)
@@ -9,7 +11,8 @@ class Array:
     True
     """
 
-    def __init__(self, dtype, types=()):
+    def __init__(self, identifier, dtype, types=()):
+        super().__init__(identifier)
         self.types = types
         self.dtype = dtype
 

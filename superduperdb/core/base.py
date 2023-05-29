@@ -1,3 +1,5 @@
+from superduperdb.misc.logger import logging
+
 
 class BasePlaceholder:
     """
@@ -9,14 +11,19 @@ class Placeholder(BasePlaceholder):
     """
     Placeholder.
     """
-    def __init__(self, identifier: str):
+    def __init__(self, identifier: str, variety: str):
         self.identifier = identifier
+        self.variety = variety
 
 
 class PlaceholderList(BasePlaceholder, list):
     """
     List of placeholders.
     """
+    def __init__(self, variety, *args, **kwargs):
+        super().__init__([Placeholder(arg, variety) for arg in args[0]], *args[1:], **kwargs)
+        self.variety = variety
+
     def __repr__(self):
         return 'PlaceholderList(' + super().__repr__() + ')'
 
@@ -39,19 +46,26 @@ class Component(BaseComponent):
         :param database: Database connector which is reponsible for saving/ loading components
         """
         for attr in dir(self):
-            object = getattr(self, attr)
+            try:
+                object = getattr(self, attr)
+            except Exception as e:
+                logging.warn(str(e))
+                continue
             if not isinstance(object, BasePlaceholder):
                 continue
-            if isinstance(reloaded, Placeholder):
-                reloaded = database.load_component(object.identifier)
+            if isinstance(object, Placeholder):
+                reloaded = database.load_component(object.identifier, variety=object.variety)
                 reloaded = reloaded.repopulate(database)
-            elif isinstance(reloaded, PlaceholderList):
-                reloaded = [database.load_component(c.identifier) for c in object]
+            elif isinstance(object, PlaceholderList):
+                reloaded = [database.load_component(c.identifier, c.variety) for c in object]
                 for i, c in enumerate(reloaded):
-                    reloaded[i] = database.repopulate(database)
-                reloaded = ComponentList(reloaded)
+                    reloaded[i] = c.repopulate(database)
+                reloaded = ComponentList(object.variety, reloaded)
             setattr(self, attr, reloaded)
         return self
+
+    def asdict(self):
+        return {'identifier': self.identifier}
 
     def was_stripped(self) -> bool:
         """
@@ -76,13 +90,29 @@ class Component(BaseComponent):
         lines = [parts[0], *['    '  + x for x in lines], parts[1]]
         return '\n'.join(lines)
 
+    def schedule_jobs(self, database):
+        return []
+
 
 class ComponentList(BaseComponent, list):
     """
     List of base components.
     """
+    def __init__(self, variety, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.variety = variety
+
     def __repr__(self):
         return 'ComponentList(' + super().__repr__() + ')'
+
+    def repopulate(self, database):
+        for i, item in enumerate(self):
+            if isinstance(item, str):
+                self[i] = database.load_component(item)
+            self[i] = self[i].repopulate(database)
+
+    def tolist(self):
+        return [c.identifier for i, c in enumerate(self)]
 
 
 def strip(component: BaseComponent):
@@ -95,12 +125,12 @@ def strip(component: BaseComponent):
     if isinstance(component, Placeholder):
         return component
     if isinstance(component, ComponentList):
-        return PlaceholderList([strip(obj) for obj in component])
+        return PlaceholderList(component.variety, [strip(obj) for obj in component])
     for attr in dir(component):
         subcomponent = getattr(component, attr)
         if isinstance(subcomponent, ComponentList):
             setattr(component, attr, strip(subcomponent))
         elif isinstance(subcomponent, BaseComponent):
-            setattr(component, attr, Placeholder(subcomponent.identifier))
+            setattr(component, attr, Placeholder(subcomponent.identifier, subcomponent.variety))
     return component
 

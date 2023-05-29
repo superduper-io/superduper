@@ -67,10 +67,10 @@ class Database(MongoDatabase, BaseDatabase):
     def _create_job_record(self, r):
         self['_jobs'].insert_one(r)
 
-    def _create_object_entry(self, info):
+    def _create_component_entry(self, info):
         return self['_objects'].insert_one(info)
 
-    def _delete_object_info(self, identifier, variety):
+    def _delete_component_info(self, identifier, variety):
         return self['_objects'].delete_one(
             {'identifier': identifier, 'variety': variety}
         )
@@ -139,7 +139,7 @@ class Database(MongoDatabase, BaseDatabase):
             )
         )
 
-    def _list_objects(self, variety, **kwargs):
+    def list_components(self, variety, **kwargs):
         return self['_objects'].distinct('identifier', {'variety': variety, **kwargs})
 
     def list_validation_sets(self):

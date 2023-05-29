@@ -2,6 +2,9 @@
 
 import numpy
 from sklearn.svm import SVC
+
+from superduperdb.core.watcher import Watcher
+from superduperdb.datalayer.mongodb.query import Select
 from superduperdb.models.sklearn.wrapper import Pipeline
 from tests.fixtures.collection import random_arrays, arrays, empty, int64
 
@@ -11,7 +14,7 @@ def test_pipeline(random_arrays, int64):
     y = (numpy.random.rand(100) > 0.5).astype(int)
     est = Pipeline([('my-svc', SVC())], 'my-svc')
     est.fit(X, y)
-    random_arrays.create_model('test_sklearn', est)
-    pl = random_arrays.models['test_sklearn']
+    random_arrays.database.create_component(est)
+    pl = random_arrays.models['my-svc']
     print(pl)
-    random_arrays.create_watcher('test_sklearn/x', 'test_sklearn', key='x')
+    random_arrays.database.create_component(Watcher(select=Select('documents'), model_id='my-svc', key='x'))

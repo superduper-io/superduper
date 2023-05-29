@@ -1,11 +1,11 @@
 from sklearn.pipeline import Pipeline as BasePipeline
-from superduperdb.models.base import SuperDuperModel
+from superduperdb.core.model import Model
 
 
-class Pipeline(BasePipeline, SuperDuperModel):
-    def __init__(self, steps, memory=None, verbose=False, postprocessor=None):
+class Pipeline(BasePipeline, Model):
+    def __init__(self, steps, identifier, memory=None, verbose=False, postprocessor=None):
         BasePipeline.__init__(self, steps=steps, memory=memory, verbose=verbose)
-        SuperDuperModel.__init__(self)
+        Model.__init__(self, None, identifier)
         self.postprocessor = postprocessor
 
     def predict_one(self, X, **predict_params):

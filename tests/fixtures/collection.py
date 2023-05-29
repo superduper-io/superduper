@@ -4,6 +4,7 @@ import lorem
 import numpy
 
 from superduperdb.datalayer.mongodb.client import SuperDuperClient
+from superduperdb.models.torch.wrapper import SuperDuperModule
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
 from tests.material.types import FloatTensor, Image, Array32, Int64
@@ -143,7 +144,11 @@ def image_type(empty):
 
 @pytest.fixture()
 def a_model(float_tensors):
-    float_tensors.create_model('linear_a', torch.nn.Linear(32, 16), type='float_tensor')
+    float_tensors.create_model(
+        'linear_a',
+        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_a'),
+        type='float_tensor',
+    )
     yield float_tensors
     try:
         float_tensors.delete_model('linear_a', force=True)
@@ -155,7 +160,11 @@ def a_model(float_tensors):
 
 @pytest.fixture()
 def a_model_base(float_tensors):
-    float_tensors.create_model('linear_a_base', LinearBase(32, 16), type='float_tensor')
+    float_tensors.create_model(
+        'linear_a_base',
+        SuperDuperModule(LinearBase(32, 16), 'linear_a_base'),
+        type='float_tensor',
+    )
     yield float_tensors
     try:
         float_tensors.delete_model('linear_a_base', force=True)
@@ -182,7 +191,10 @@ def a_watcher_base(a_model_base):
 
 @pytest.fixture()
 def a_classifier(float_tensors):
-    float_tensors.create_model('classifier', BinaryClassifier(32))
+    float_tensors.create_model(
+        'classifier',
+        SuperDuperModule(BinaryClassifier(32), 'classifier'),
+    )
     yield float_tensors
     try:
         float_tensors.delete_model('classifier', force=True)
@@ -206,7 +218,11 @@ def a_target(float_tensors):
 
 @pytest.fixture()
 def b_model(float_tensors):
-    float_tensors.create_model('linear_b', torch.nn.Linear(16, 8), type='float_tensor')
+    float_tensors.create_model(
+        'linear_b',
+        SuperDuperModule(torch.nn.Linear(16, 8), 'linear_b'),
+        type='float_tensor'
+    )
     yield float_tensors
     try:
         float_tensors.delete_model('linear_b', force=True)
@@ -218,7 +234,11 @@ def b_model(float_tensors):
 
 @pytest.fixture()
 def c_model(float_tensors):
-    float_tensors.create_model('linear_c', torch.nn.Linear(32, 16), type='float_tensor')
+    float_tensors.create_model(
+        'linear_c',
+        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_c'),
+        type='float_tensor',
+    )
     yield float_tensors
     try:
         float_tensors.delete_model('linear_c', force=True)

@@ -1,23 +1,21 @@
 import multiprocessing
-from superduperdb.models.base import SuperDuperModel
+from superduperdb.core.model import Model
 
 
-class FunctionWrapper(SuperDuperModel):
-    def __init__(self, f):
-        self.f = f
+class FunctionWrapper(Model):
 
     def predict_one(self, x, **kwargs):
-        return self.f(x, **kwargs)
+        return self.object(x, **kwargs)
 
     def predict(self, docs, num_workers=0):
         outputs = []
         if num_workers:
             pool = multiprocessing.Pool(processes=num_workers)
-            for r in pool.map(self.f, docs):
+            for r in pool.map(self.object, docs):
                 outputs.append(r)
             pool.close()
             pool.join()
         else:
-            for r in docs:  # pragma: no cover
-                outputs.append(self.f(r))
+            for r in docs:
+                outputs.append(self.object(r))
         return outputs

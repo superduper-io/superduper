@@ -2,36 +2,28 @@ import torch
 from torch.utils import data
 
 from superduperdb.misc import progress
-from superduperdb.models.base import SuperDuperModel
+from superduperdb.core.model import Model
 from superduperdb.models.torch.utils import device_of, to_device, eval
 
 
-class SuperDuperModule(torch.nn.Module, SuperDuperModel):
+class SuperDuperModule(torch.nn.Module, Model):
+    def __init__(self, layer, identifier, preprocess=None, postprocess=None):
+        torch.nn.Module.__init__(self)
+        Model.__init__(self, layer, identifier)
+        if hasattr(self.object, 'preprocess') and preprocess is None:
+            preprocess = self.object.preprocess
+        if hasattr(self.object, 'postprocess') and postprocess is None:
+            postprocess = self.layer.postprocess
+        self._preprocess = preprocess
+        self._postprocess = postprocess
+
     def predict_one(self, x, **kwargs):
-        with torch.no_grad(), eval(self):
+        with torch.no_grad(), eval(self.object):
             return apply_model(self, x, single=True, **kwargs)
 
     def predict(self, x, **kwargs):
         with torch.no_grad(), eval(self):
-            return apply_model(self, x, single=False, **kwargs)
-
-    def preprocess(self, x):
-        raise NotImplementedError
-
-    def postprocess(self, out):
-        raise NotImplementedError
-
-
-class SuperDuperWrapper(SuperDuperModule):
-    def __init__(self, layer, preprocess=None, postprocess=None):
-        super().__init__()
-        self.layer = layer
-        if hasattr(self.layer, 'preprocess') and preprocess is None:
-            preprocess = self.layer.preprocess
-        if hasattr(self.layer, 'postprocess') and postprocess is None:
-            postprocess = self.layer.postprocess
-        self._preprocess = preprocess
-        self._postprocess = postprocess
+            return apply_model(self.object, x, single=False, **kwargs)
 
     def preprocess(self, x):
         if self._preprocess is None:
@@ -39,7 +31,7 @@ class SuperDuperWrapper(SuperDuperModule):
         return self._preprocess(x)
 
     def forward(self, *args, **kwargs):
-        return self.layer(*args, **kwargs)
+        return self.object(*args, **kwargs)
 
     def postprocess(self, out):
         if self._postprocess is None:

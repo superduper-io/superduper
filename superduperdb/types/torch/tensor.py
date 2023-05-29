@@ -1,9 +1,12 @@
 import numpy
 import torch
 
+from superduperdb.core.type import Type
 
-class Array:
-    def __init__(self, dtype, types=()):
+
+class Tensor(Type):
+    def __init__(self, identifier, dtype, types=()):
+        super().__init__(identifier)
         self.dtype = torch.randn(1).type(dtype).numpy().dtype
         self.types = types
 

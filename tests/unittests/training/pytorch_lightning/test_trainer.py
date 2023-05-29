@@ -1,7 +1,10 @@
 # ruff: noqa: F401, F811
+from superduperdb.core.learning_task import LearningTask
+from superduperdb.datalayer.mongodb.query import Select
+from superduperdb.models.torch.wrapper import SuperDuperModule
+from superduperdb.training.pytorch_lightning.trainer import LightningConfiguration
 
 from tests.fixtures.collection import random_data, float_tensors, empty
-from superduperdb.training.pytorch_lightning.trainer import LightningConfiguration
 
 import pytorch_lightning as pl
 import os
@@ -11,19 +14,16 @@ import torch
 DISABLE_TEST = os.environ.get('DISABLE_PYTORCH_LIGHTNING', '').lower().startswith('t')
 
 
-class LightningModule(pl.LightningModule):
+class LightningModule(SuperDuperModule, pl.LightningModule):
     def __init__(self):
-        super().__init__()
-        self.linear = torch.nn.Linear(32, 1)
+        pl.LightningModule.__init__(self)
+        SuperDuperModule.__init__(self, torch.nn.Linear(32, 1), 'my-pl-module')
 
     def preprocess(self, r):
         return r['x']
 
     def preprocess_for_training(self, r):
         return r['x'], float(r['y'])
-
-    def forward(self, x):
-        return self.linear(x)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.001)
@@ -45,16 +45,21 @@ class LightningModule(pl.LightningModule):
 
 @pytest.mark.xfail(DISABLE_TEST, reason='See issue #94')
 def test_classification(random_data):
+
     cf = LightningConfiguration(
-        loader_kwargs={'batch_size': 5, 'num_workers': 0}, max_epochs=10
+        'my-pl-cf', loader_kwargs={'batch_size': 5, 'num_workers': 0}, max_epochs=10
     )
+    random_data.database.create_component(LightningModule())
+    random_data.database.create_component(cf)
 
-    random_data.create_model('lightning_classifier', LightningModule())
-
-    random_data.create_learning_task(
-        models=['lightning_classifier'],
-        keys=['_base'],
-        configuration=cf,
+    random_data.database.create_component(
+        LearningTask(
+            'my-pl-lt',
+            model_ids=['my-pl-module'],
+            keys=['_base'],
+            training_configuration_id='my-pl-cf',
+            select=Select('documents'),
+        )
     )
 
     print(random_data.list_models())

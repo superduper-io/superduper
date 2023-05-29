@@ -3,11 +3,15 @@ import random
 import lorem
 import numpy
 
+from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.client import SuperDuperClient
+from superduperdb.datalayer.mongodb.query import Select, Insert, Delete
 from superduperdb.models.torch.wrapper import SuperDuperModule
+from superduperdb.types.numpy.array import Array
+from superduperdb.types.pillow.image import Image
+from superduperdb.types.torch.tensor import Tensor
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
-from tests.material.types import FloatTensor, Image, Array32, Int64
 from tests.material.measures import css
 from tests.material.metrics import PatK, accuracy
 
@@ -28,9 +32,9 @@ def empty(client: SuperDuperClient):
 
 @pytest.fixture()
 def metric(empty):
-    empty.create_metric('p_at_1', PatK(1))
+    empty.database.create_component(PatK(1))
     yield empty
-    empty.delete_metric('p_at_1', force=True)
+    empty.database.delete_component('p@1', 'metric', force=True)
 
 
 @pytest.fixture()
@@ -60,9 +64,9 @@ def random_arrays(arrays):
         x = numpy.random.randn(32).astype(numpy.float32)
         y = int(random.random() > 0.5)
         data.append({'x': x, 'y': y})
-    arrays.insert_many(data, refresh=False)
+    arrays.database.insert(Insert('documents', documents=data), refresh=False)
     yield arrays
-    arrays.delete_many({})
+    arrays.database.delete(Delete('documents', {}))
 
 
 @pytest.fixture()
@@ -104,18 +108,18 @@ def imputation_validation(random_data):
 
 @pytest.fixture()
 def float_tensors(empty):
-    empty.create_type('float_tensor', FloatTensor())
-    empty.types['float_tensor']
+    empty.database.create_component(
+        Tensor('float_tensor', torch.float32, types=[torch.FloatTensor, torch.Tensor])
+    )
     yield empty
-    empty.delete_type('float_tensor', force=True)
+    empty.database.delete_component('float_tensor', 'type', force=True)
 
 
 @pytest.fixture()
 def arrays(empty):
-    empty.create_type('array', Array32())
-    empty.types['array']
+    empty.database.create_component(Array('array', numpy.float32, types=[numpy.ndarray]))
     yield empty
-    empty.delete_type('array', force=True)
+    empty.database.delete_component('array', 'type', force=True)
 
 
 @pytest.fixture()
@@ -129,29 +133,26 @@ def sentences(empty):
 
 @pytest.fixture()
 def int64(empty):
-    empty.create_type('int64', Int64())
-    empty.types['int64']
+    empty.database.create_component(Array('int64', numpy.int64))
     yield empty
-    empty.delete_type('int64', force=True)
+    empty.database.delete_component('int64', 'type', force=True)
 
 
 @pytest.fixture()
 def image_type(empty):
-    empty.create_type('image', Image())
+    empty.database.create_component(Image('image'))
     yield empty
-    empty.delete_type('image', force=True)
+    empty.database.delete_component('image', 'type', force=True)
 
 
 @pytest.fixture()
 def a_model(float_tensors):
-    float_tensors.create_model(
-        'linear_a',
-        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_a'),
-        type='float_tensor',
+    float_tensors.database.create_component(
+        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_a', type='float_tensor')
     )
     yield float_tensors
     try:
-        float_tensors.delete_model('linear_a', force=True)
+        float_tensors.database.delete_component('linear_a', 'model', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -160,14 +161,12 @@ def a_model(float_tensors):
 
 @pytest.fixture()
 def a_model_base(float_tensors):
-    float_tensors.create_model(
-        'linear_a_base',
-        SuperDuperModule(LinearBase(32, 16), 'linear_a_base'),
-        type='float_tensor',
+    float_tensors.database.create_component(
+        SuperDuperModule(LinearBase(32, 16), 'linear_a_base', type='float_tensor'),
     )
     yield float_tensors
     try:
-        float_tensors.delete_model('linear_a_base', force=True)
+        float_tensors.database.delete_component('linear_a_base', 'model', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -177,16 +176,16 @@ def a_model_base(float_tensors):
 @pytest.fixture()
 def a_watcher(a_model):
     a_model.remote = False
-    a_model.create_watcher('linear_a/x', 'linear_a', key='x')
+    a_model.database.create_component(Watcher(model_id='linear_a', select=Select('documents'), key='x'))
     yield a_model
-    a_model.delete_watcher('linear_a/x', force=True)
+    a_model.database.delete_component('linear_a/x', 'watcher', force=True)
 
 
 @pytest.fixture()
 def a_watcher_base(a_model_base):
-    a_model_base.create_watcher('linear_a_base/_base', 'linear_a_base', key='_base')
+    a_model_base.database.create_component(Watcher(model_id='linear_a_base', select=Select('documents'), key='_base'))
     yield a_model_base
-    a_model_base.delete_watcher('linear_a_base/_base', force=True)
+    a_model_base.database.delete_component('linear_a_base/_base', 'watcher', force=True)
 
 
 @pytest.fixture()

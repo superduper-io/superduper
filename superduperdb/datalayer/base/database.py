@@ -19,6 +19,7 @@ from superduperdb.cluster.client_decorators import model_server, vector_search
 from superduperdb.cluster.annotations import Convertible, Tuple, List
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
+from superduperdb.core.learning_task import LearningTask
 from superduperdb.datalayer.base.query import Insert, Select, Delete, Update
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.special_dicts import ArgumentDefaultDict, MongoStyleDict
@@ -41,12 +42,12 @@ class BaseDatabase:
     """
 
     select_cls = Select
+    variety_to_cache_mapping = {'model': 'models', 'metric': 'metrics', 'type': 'types'}
 
     def __init__(self):
-        self.measures = ArgumentDefaultDict(lambda x: self._load_object(x, 'measure'))
-        self.metrics = ArgumentDefaultDict(lambda x: self._load_object(x, 'metric'))
-        self.models = ArgumentDefaultDict(lambda x: self._load_object(x, 'model'))
-        self.types = ArgumentDefaultDict(lambda x: self._load_object(x, 'type'))
+        self.metrics = ArgumentDefaultDict(lambda x: self.load_component(x, 'metric'))
+        self.models = ArgumentDefaultDict(lambda x: self.load_component(x, 'model'))
+        self.types = ArgumentDefaultDict(lambda x: self.load_component(x, 'type'))
 
         self.remote = cf.get('remote', False)
         self._type_lookup = None
@@ -330,7 +331,7 @@ class BaseDatabase:
 
         file_id = self._create_serialized_file(configuration, serializer=serializer)
 
-        self._create_object_entry(
+        self._create_component_entry(
             {
                 'variety': 'learning_task',
                 'identifier': identifier,
@@ -374,7 +375,7 @@ class BaseDatabase:
         :param identifier: identifier
         :param object: Python object
         """
-        return self._create_object(identifier, object, 'metric', **kwargs)
+        return self.create_component(identifier, object, 'metric', **kwargs)
 
     def create_model(
         self,
@@ -414,7 +415,7 @@ class BaseDatabase:
         else:
             file_id = self._create_serialized_file(object, **kwargs)
 
-        self._create_object_entry(
+        self._create_component_entry(
             {
                 'variety': 'model',
                 'identifier': identifier,
@@ -434,7 +435,7 @@ class BaseDatabase:
         """
         assert identifier in self.list_watchers()
         assert identifier not in self.list_neighbourhoods()
-        self._create_object_entry(
+        self._create_component_entry(
             {
                 'identifier': identifier,
                 'n': n,
@@ -444,28 +445,21 @@ class BaseDatabase:
         )
         return self.compute_neighbourhood(identifier)
 
-    def _create_object_entry(self, info):
+    def _create_component_entry(self, info):
         raise NotImplementedError
 
-    def _create_object(
-        self, identifier, object, variety, serializer='pickle', serializer_kwargs=None
+    def create_component(
+        self, object, serializer='pickle', serializer_kwargs=None
     ):
         serializer_kwargs = serializer_kwargs or {}
-        assert identifier not in self._list_objects(variety)
-        secrets = {}
+        assert object.identifier not in self.list_components(object.variety)
         file_id = self._create_serialized_file(
             object, serializer=serializer, serializer_kwargs=serializer_kwargs
         )
-        self._create_object_entry(
-            {
-                'identifier': identifier,
-                'object': file_id,
-                'variety': variety,
-                'serializer': serializer,
-                'serializer_kwargs': serializer_kwargs,
-                **secrets,
-            }
+        self._create_component_entry(
+            {**object.asdict(), 'object': file_id, 'variety': object.variety}
         )
+        return object.schedule_jobs(self)
 
     def _create_plan(self):
         G = networkx.DiGraph()
@@ -508,7 +502,7 @@ class BaseDatabase:
         :param identifier: identifier
         :param object: Python object
         """
-        return self._create_object(identifier, object, 'type', **kwargs)
+        return self.create_component(identifier, object, 'type', **kwargs)
 
     def create_validation_set(self, identifier, select: Select, chunk_size=1000):
         if identifier in self.list_validation_sets():
@@ -541,7 +535,7 @@ class BaseDatabase:
     ):
         assert identifier not in self.list_watchers()
 
-        self._create_object_entry(
+        self._create_component_entry(
             {
                 'identifier': identifier,
                 'variety': 'watcher',
@@ -591,8 +585,8 @@ class BaseDatabase:
 
         model_lookup = dict(zip(info['keys'], info['models']))
         for k in info['keys_to_watch']:
-            self._delete_object_info(f'[{identifier}]:{model_lookup[k]}/{k}', 'watcher')
-        self._delete_object_info(info['identifier'], 'learning_task')
+            self._delete_component_info(f'[{identifier}]:{model_lookup[k]}/{k}', 'watcher')
+        self._delete_component_info(info['identifier'], 'learning_task')
 
     def delete_metric(self, identifier, force=False):
         """
@@ -601,7 +595,7 @@ class BaseDatabase:
         :param identifier: identifier of metric
         :param force: toggle to ``True`` to skip confirmation step
         """
-        return self._delete_object(identifier, 'metric', force=force)
+        return self.delete_component(identifier, 'metric', force=force)
 
     def delete_model(self, identifier, force=False):
         """
@@ -610,7 +604,7 @@ class BaseDatabase:
         :param identifier: identifier of model
         :param force: toggle to ``True`` to skip confirmation step
         """
-        return self._delete_object(identifier, 'model', force=force)
+        return self.delete_component(identifier, 'model', force=force)
 
     def delete_neighbourhood(self, identifier, force=False):
         """
@@ -626,11 +620,11 @@ class BaseDatabase:
             default=False,
         ):
             self._unset_neighbourhood_data(info, watcher_info)
-            self._delete_object_info(identifier, 'neighbourhood')
+            self._delete_component_info(identifier, 'neighbourhood')
         else:
             logging.info('aborting')  # pragma: no cover
 
-    def _delete_object(self, identifier, variety, force=False):
+    def delete_component(self, identifier, variety, force=False):
         info = self.get_object_info(identifier, variety)
         if not info:
             if not force:
@@ -640,14 +634,15 @@ class BaseDatabase:
             f'You are about to delete {variety}: {identifier}, are you sure?',
             default=False,
         ):
-            if hasattr(self, variety + 's') and identifier in getattr(
-                self, variety + 's'
-            ):
-                del getattr(self, variety + 's')[identifier]
+            if variety in self.variety_to_cache_mapping:
+                try:
+                    del getattr(self, self.variety_to_cache_mapping[variety])[identifier]
+                except KeyError:
+                    pass
             self.filesystem.delete(info['object'])
-            self._delete_object_info(identifier, variety)
+            self._delete_component_info(identifier, variety)
 
-    def _delete_object_info(self, identifier, variety):
+    def _delete_component_info(self, identifier, variety):
         raise NotImplementedError
 
     def delete_type(self, identifier, force=False):
@@ -657,7 +652,7 @@ class BaseDatabase:
         :param identifier: identifier of type
         :param force: toggle to ``True`` to skip confirmation step
         """
-        return self._delete_object(identifier, 'type', force=force)
+        return self.delete_component(identifier, 'type', force=force)
 
     def delete_watcher(self, identifier, force=False, delete_outputs=True):
         """
@@ -678,7 +673,7 @@ class BaseDatabase:
 
         if info.get('target') is None and delete_outputs:
             self._unset_watcher_outputs(info)
-        self._delete_object_info(identifier, 'watcher')
+        self._delete_component_info(identifier, 'watcher')
 
     @work
     def download_content(
@@ -868,52 +863,52 @@ class BaseDatabase:
         """
         List learning tasks.
         """
-        return self._list_objects('learning_task')
+        return self.list_components('learning_task')
 
     def list_metrics(self):
         """
         List metrics.
         """
-        return self._list_objects('metric')
+        return self.list_components('metric')
 
     def list_models(self):
         """
         List models.
         """
-        return self._list_objects('model')
+        return self.list_components('model')
 
     def list_neighbourhoods(self):
         """
         List neighbourhoods.
         """
-        return self._list_objects('neighbourhood')
+        return self.list_components('neighbourhood')
 
-    def _list_objects(self, variety, **kwargs):
+    def list_components(self, variety, **kwargs):
         raise NotImplementedError
 
     def list_postprocessors(self):
         """
         List postprocesors.
         """
-        return self._list_objects('postprocessor')
+        return self.list_components('postprocessor')
 
     def list_preprocessors(self):
         """
         List preprocessors.
         """
-        return self._list_objects('preprocessor')
+        return self.list_components('preprocessor')
 
     def list_trainers(self):
         """
         List trainers.
         """
-        return self._list_objects('trainer')
+        return self.list_components('trainer')
 
     def list_types(self):
         """
         List types.
         """
-        return self._list_objects('type')
+        return self.list_components('type')
 
     def list_validation_sets(self):
         """
@@ -925,7 +920,7 @@ class BaseDatabase:
         """
         List watchers.
         """
-        return self._list_objects('watcher')
+        return self.list_components('watcher')
 
     def _load_blob_of_bytes(self, file_id):
         raise NotImplementedError
@@ -964,7 +959,6 @@ class BaseDatabase:
         key = watcher_info.get('key', '_base')
         filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
         c = self.select(self.select_cls(**watcher_info['select']))
-
         configuration = info.get('configuration', {}) or {}
         loaded = []
         ids = []
@@ -987,7 +981,7 @@ class BaseDatabase:
             ),
         )
 
-    def _load_object(self, identifier, variety):
+    def load_component(self, identifier, variety):
         info = self.get_object_info(identifier, variety)
         if info is None:
             raise Exception(
@@ -999,6 +993,9 @@ class BaseDatabase:
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
         m = self._load_serialized_file(info['object'], serializer=info['serializer'])
+        m.repopulate(self)
+        if variety in self.variety_to_cache_mapping:
+            getattr(self, self.variety_to_cache_mapping[variety])[m.identifier] = m
         return m
 
     def _load_serialized_file(self, file_id, serializer='pickle'):
@@ -1300,27 +1297,31 @@ class BaseDatabase:
 
     @work
     def fit(self, identifier):
-        info = self.get_object_info(identifier, 'learning_task')
+        """
+        Execute the learning task.
 
-        trainer = info['configuration'](
+        :param identifier: Identifier of a learning task.
+        """
+
+        learning_task: LearningTask = self.load_component(identifier, 'learning_task')
+
+        trainer = learning_task.training_configuration(
             identifier=identifier,
-            models=[
-                self.models[m] if m != '_identity' else FunctionWrapper(lambda x: x, 'identity')
-                for m in info['models']
-            ],
-            keys=info['keys'],
-            model_names=info['models'],
+            keys=learning_task.keys,
+            model_names=learning_task.models.tolist(),
+            models=learning_task.models,
             database_type=self._database_type,
             database_name=self.name,
-            select=self.select_cls(**info['select']),
-            validation_sets=info['validation_sets'],
-            metrics={k: self.metrics[k] for k in info['metrics']},
-            features=info['features'],
+            select=learning_task.select,
+            validation_sets=learning_task.validation_sets,
+            metrics={m.identifier: m for m in learning_task.metrics},
+            features=learning_task.features,
         )
+
         try:
             trainer()
         except Exception as e:
-            self.delete_learning_task(identifier, force=True)
+            self.delete_component(identifier, 'learning_task', force=True)
             raise e
 
     def unset_hash_set(self, identifier):

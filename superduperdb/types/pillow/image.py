@@ -3,8 +3,10 @@ import PIL.JpegImagePlugin
 import PIL.PngImagePlugin
 import io
 
+from superduperdb.core.type import Type
 
-class Image:
+
+class Image(Type):
     """
     >>> with open('img/black.png', 'rb') as f: bs = f.read()
     >>> im = Image.decode(bs)

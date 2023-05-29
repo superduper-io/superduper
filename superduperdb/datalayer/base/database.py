@@ -20,7 +20,6 @@ from superduperdb.cluster.annotations import Convertible, Tuple, List
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
 from superduperdb.datalayer.base.query import Insert, Select, Delete, Update
-from superduperdb.models.base import wrap_model
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.special_dicts import ArgumentDefaultDict, MongoStyleDict
 from superduperdb.fetchers.downloads import Downloader
@@ -381,8 +380,6 @@ class BaseDatabase:
         self,
         identifier,
         object,
-        preprocessor=None,
-        postprocessor=None,
         type=None,
         **kwargs,
     ):
@@ -411,8 +408,6 @@ class BaseDatabase:
 
         if type is not None:
             assert type in self.list_types()
-
-        object = wrap_model(object, preprocessor, postprocessor)
 
         if isinstance(object, str):
             file_id = object
@@ -1310,7 +1305,7 @@ class BaseDatabase:
         trainer = info['configuration'](
             identifier=identifier,
             models=[
-                self.models[m] if m != '_identity' else FunctionWrapper(lambda x: x)
+                self.models[m] if m != '_identity' else FunctionWrapper(lambda x: x, 'identity')
                 for m in info['models']
             ],
             keys=info['keys'],

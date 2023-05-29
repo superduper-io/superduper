@@ -3,10 +3,11 @@
 from tests.fixtures.collection import random_arrays, arrays, empty
 from sklearn.svm import SVC
 from superduperdb.training.sklearn.trainer import SklearnTrainerConfiguration
+from superduperdb.models.sklearn.wrapper import Pipeline
 
 
 def test_classifier(random_arrays):
-    model = SVC(verbose=True)
+    model = Pipeline([('svc', SVC(verbose=True))], 'svc')
     cf = SklearnTrainerConfiguration()
     random_arrays.create_model('my_svm', model)
     random_arrays.create_learning_task(

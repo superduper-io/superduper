@@ -44,7 +44,7 @@ class LightningConfiguration(TrainerConfiguration):
         download=False,
     ):
         assert len(models) == 1
-        model = models[0].layer
+        model = models[0]
         database = get_database_from_database_type(database_type, database_name)
 
         with eval(model):

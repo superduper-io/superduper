@@ -1,15 +1,25 @@
-from superduperdb.models.base import SuperDuperModel
+from typing import Optional
+
+from superduperdb.core.model import Model
+from transformers import pipeline as _pipeline
 
 
-class TransformersWrapper(SuperDuperModel):
-    def __init__(self, pl):
-        self.pl = pl
+class Pipeline(Model):
+    def __init__(self, pipeline=None, task: Optional[str] = None, model: Optional[str] = None,
+                 identifier: Optional[str] = None):
+        if pipeline is None:
+            assert model is not None, 'must specify '
+            pipeline = _pipeline(task, model=model)
+
+        identifier = identifier or f'{pipeline.task}/{pipeline.model.name_or_path}'
+
+        super().__init__(pipeline, identifier=identifier)
 
     def predict_one(self, r, **kwargs):
-        return self.pl(r, **kwargs)
+        return self.object(r, **kwargs)
 
     def predict(self, docs, **kwargs):
-        return self.pl(docs, **kwargs)
+        return self.object(docs, **kwargs)
 
 
 class TokenizingFunction:

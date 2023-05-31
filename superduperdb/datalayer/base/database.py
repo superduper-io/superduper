@@ -11,9 +11,6 @@ import click
 import networkx
 from bson import ObjectId
 
-import superduperdb.vector_search.faiss.hashes
-import superduperdb.vector_search.vanilla.hashes
-import superduperdb.vector_search.vanilla.measures
 from superduperdb import cf, misc
 from superduperdb.cluster.client_decorators import model_server, vector_search
 from superduperdb.cluster.annotations import Convertible, Tuple, List
@@ -25,10 +22,7 @@ from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.special_dicts import ArgumentDefaultDict, MongoStyleDict
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.misc import progress
-from superduperdb.models.vanilla.wrapper import FunctionWrapper
 from superduperdb.misc.logger import logging
-from superduperdb.vector_search import hash_set_classes
-from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 
 
 def validate_representations(database, vs, identifier, metrics):
@@ -366,85 +360,6 @@ class BaseDatabase:
             )
         return jobs
 
-    def create_metric(self, identifier, object, **kwargs):
-        """
-        Create metric, called by ``self.create_learning_task``, to measure
-        performance of learning on validation_sets
-        (see ``self.list_validation_sets``)
-
-        :param identifier: identifier
-        :param object: Python object
-        """
-        return self.create_component(identifier, object, 'metric', **kwargs)
-
-    def create_model(
-        self,
-        identifier,
-        object,
-        type=None,
-        **kwargs,
-    ):
-        """
-        Create a model registered in the collection directly from a python
-        session.
-
-        The added model will then watch incoming records and add outputs computed on
-        those records into the ``"_outputs"`` fields of the records.
-
-        The model is then stored inside MongoDB and can be accessed using the
-        ``SuperDuperClient``.
-
-        :param identifier: name of model
-        :param object: if specified the model object (pickle-able)
-                       else None if model already exists
-        :param preprocessor: separate preprocessing
-        :param postprocessor: separate postprocessing
-        :param type: type for converting model outputs back and forth from bytes
-        """
-
-        if identifier.startswith('_'):
-            raise ValueError('Identifiers starting with "_" are reserved.')
-
-        assert identifier not in self.list_models()
-
-        if type is not None:
-            assert type in self.list_types()
-
-        if isinstance(object, str):
-            file_id = object
-        else:
-            file_id = self._create_serialized_file(object, **kwargs)
-
-        self._create_component_entry(
-            {
-                'variety': 'model',
-                'identifier': identifier,
-                'object': file_id,
-                'type': type,
-                **kwargs,
-            }
-        )
-
-    def create_neighbourhood(self, identifier, n=10, batch_size=100):
-        """
-        Cache similarity between items of model watcher (see ``self.list_watchers``)
-
-        :param identifier: identifier of watcher to use
-        :param n: number of similar items
-        :param batch_size: batch_size used in computation
-        """
-        assert identifier in self.list_watchers()
-        assert identifier not in self.list_neighbourhoods()
-        self._create_component_entry(
-            {
-                'identifier': identifier,
-                'n': n,
-                'batch_size': batch_size,
-                'variety': 'neighbourhood',
-            }
-        )
-        return self.compute_neighbourhood(identifier)
-
     def _create_component_entry(self, info):
         raise NotImplementedError
 
@@ -495,15 +410,6 @@ class BaseDatabase:
             raise NotImplementedError
         return self._save_blob_of_bytes(bytes_)
 
-    def create_type(self, identifier, object, **kwargs):
-        """
-        Create datatype, in order to serialize python object data in the database.
-
-        :param identifier: identifier
-        :param object: Python object
-        """
-        return self.create_component(identifier, object, 'type', **kwargs)
-
     def create_validation_set(self, identifier, select: Select, chunk_size=1000):
         if identifier in self.list_validation_sets():
             raise Exception(f'validation set {identifier} already exists!')
@@ -520,109 +426,8 @@ class BaseDatabase:
         if tmp:
             self._insert_validation_data(tmp, identifier)
 
-    def create_watcher(
-        self,
-        identifier,
-        model,
-        select,
-        key='_base',
-        verbose=False,
-        target=None,
-        process_docs=True,
-        features=None,
-        predict_kwargs=None,
-        dependencies=(),
-    ):
-        assert identifier not in self.list_watchers()
-
-        self._create_component_entry(
-            {
-                'identifier': identifier,
-                'variety': 'watcher',
-                'model': model,
-                'select': asdict(select),
-                'key': key,
-                'features': features if features else {},
-                'target': target,
-                'predict_kwargs': predict_kwargs or {},
-            }
-        )
-
-        if process_docs:
-            ids = self._get_ids_from_select(select)
-            if not ids:
-                return
-            return self.apply_watcher(
-                identifier,
-                ids=ids,
-                verbose=verbose,
-                dependencies=dependencies,
-                remote=self.remote,
-            )
-
     def delete(self, delete: Delete):
         return self._base_delete(delete)
-
-    def delete_learning_task(self, identifier, force=False):
-        """
-        Delete function.
-
-        :param name: name of function
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        do_delete = False
-        if force or click.confirm(
-            f'Are you sure you want to delete the learning-task "{identifier}"?',
-            default=False,
-        ):
-            do_delete = True
-        if not do_delete:
-            return
-
-        info = self.get_object_info(identifier, 'learning_task')
-        if info is None and force:
-            return
-
-        model_lookup = dict(zip(info['keys'], info['models']))
-        for k in info['keys_to_watch']:
-            self._delete_component_info(f'[{identifier}]:{model_lookup[k]}/{k}', 'watcher')
-        self._delete_component_info(info['identifier'], 'learning_task')
-
-    def delete_metric(self, identifier, force=False):
-        """
-        Delete metric.
-
-        :param identifier: identifier of metric
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self.delete_component(identifier, 'metric', force=force)
-
-    def delete_model(self, identifier, force=False):
-        """
-        Delete model.
-
-        :param identifier: identifier of model
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self.delete_component(identifier, 'model', force=force)
-
-    def delete_neighbourhood(self, identifier, force=False):
-        """
-        Delete neighbourhood.
-
-        :param name: name of neighbourhood
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        info = self.get_object_info(identifier, 'neighbourhood')
-        watcher_info = self.get_object_info(info['watcher_identifier'], 'watcher')
-        if force or click.confirm(
-            f'Removing neighbourhood "{identifier}"' ' documents. Are you sure?',
-            default=False,
-        ):
-            self._unset_neighbourhood_data(info, watcher_info)
-            self._delete_component_info(identifier, 'neighbourhood')
-        else:
-            logging.info('aborting')  # pragma: no cover
 
     def delete_component(self, identifier, variety, force=False):
         info = self.get_object_info(identifier, variety)
@@ -644,36 +449,6 @@ class BaseDatabase:
 
     def _delete_component_info(self, identifier, variety):
         raise NotImplementedError
-
-    def delete_type(self, identifier, force=False):
-        """
-        Delete type.
-
-        :param identifier: identifier of type
-        :param force: toggle to ``True`` to skip confirmation step
-        """
-        return self.delete_component(identifier, 'type', force=force)
-
-    def delete_watcher(self, identifier, force=False, delete_outputs=True):
-        """
-        Delete watcher
-
-        :param name: Name of model
-        :param force: Toggle to ``True`` to skip confirmation
-        """
-        info = self.get_object_info(identifier, 'watcher')
-        do_delete = False
-        if force or click.confirm(
-            f'Are you sure you want to delete this watcher: {identifier}; ',
-            default=False,
-        ):
-            do_delete = True
-        if not do_delete:
-            return
-
-        if info.get('target') is None and delete_outputs:
-            self._unset_watcher_outputs(info)
-        self._delete_component_info(identifier, 'watcher')
 
     @work
     def download_content(
@@ -784,7 +559,7 @@ class BaseDatabase:
                     r[k] = self._get_file_content(r[k])
         return r
 
-    def _get_hash_from_document(self, r, watcher_info):
+    def _get_output_from_document(self, r, key, model):
         raise NotImplementedError
 
     def _get_job_info(self, identifier):
@@ -925,61 +700,24 @@ class BaseDatabase:
     def _load_blob_of_bytes(self, file_id):
         raise NotImplementedError
 
-    def _load_hashes(self, watcher, measure='css', hash_set_cls='vanilla'):
-        watcher_info = self.get_object_info(watcher, 'watcher')
-        c = self.select(self.select_cls(**watcher_info['select']))
+    def _load_hashes(self, identifier):
+        vector_index = self.load_component(identifier, 'vector_index')
+        c = self.select(vector_index.watcher.select)
+        watcher_info = self.get_object_info(vector_index.watcher.identifier, 'watcher')
         loaded = []
         ids = []
         docs = progress.progressbar(c)
-        logging.info(f'loading hashes: "{watcher_info["identifier"]}"')
+        logging.info(f'loading hashes: "{vector_index.identifier}')
         for r in docs:
-            h = self._get_hash_from_document(r, watcher_info)
+            h = self._get_output_from_document(r, watcher_info['key'], watcher_info['model'])
             loaded.append(h)
             ids.append(r['_id'])
-        if hash_set_cls is None:
-            hash_set_cls = VanillaHashSet
-        hash_set_cls = hash_set_classes[hash_set_cls]
-        h = hash_set_cls(
+        h = vector_index.hash_set_cls(
             loaded,
             ids,
-            measure=measure,
+            measure=vector_index.measure,
         )
-        self._all_hash_sets[watcher] = h
-
-    def _load_hashes_from_learning_task(self, identifier):
-        info = self.get_object_info(identifier, 'learning_task')
-        key_to_watch = info['keys_to_watch'][0]
-        model_identifier = next(
-            m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch
-        )
-        watcher_info = self.get_object_info(
-            f'[{identifier}]:{model_identifier}/{key_to_watch}', 'watcher'
-        )
-        filter = watcher_info.get('filter', {})
-        key = watcher_info.get('key', '_base')
-        filter[f'_outputs.{key}.{watcher_info["model"]}'] = {'$exists': 1}
-        c = self.select(self.select_cls(**watcher_info['select']))
-        configuration = info.get('configuration', {}) or {}
-        loaded = []
-        ids = []
-        docs = progress.progressbar(c)
-        logging.info(f'loading hashes: "{identifier}"')
-        for r in docs:
-            h = self._get_hash_from_document(r, watcher_info)
-            loaded.append(h)
-            ids.append(r['_id'])
-
-        hash_set_cls = configuration.get(
-            'hash_set_cls',
-            superduperdb.vector_search.vanilla.hashes.VanillaHashSet,
-        )
-        return hash_set_cls(
-            loaded,
-            ids,
-            measure=configuration.get(
-                'measure', superduperdb.vector_search.vanilla.measures.css
-            ),
-        )
+        self._all_hash_sets[identifier] = h
 
     def load_component(self, identifier, variety):
         info = self.get_object_info(identifier, variety)
@@ -1103,14 +841,11 @@ class BaseDatabase:
         select: Select,
         like=None,
         download=False,
-        semantic_index=None,
-        watcher=None,
-        measure=None,
+        vector_index=None,
         similar_first=False,
         features=None,
         raw=False,
         n=100,
-        hash_set_cls='vanilla',
     ):
         if download and like is not None:
             like = self._get_content_for_filter(like)  # pragma: no cover
@@ -1121,23 +856,17 @@ class BaseDatabase:
                     select,
                     raw=raw,
                     features=features,
-                    semantic_index=semantic_index,
-                    watcher=watcher,
-                    measure=measure,
-                    hash_set_cls=hash_set_cls,
+                    vector_index=vector_index,
                     n=n,
                 )
             else:
                 return self._select_matches_then_similar(
                     like,
+                    vector_index,
                     select,
                     raw=raw,
                     n=n,
                     features=features,
-                    semantic_index=semantic_index,
-                    watcher=watcher,
-                    measure=measure,
-                    hash_set_cls=hash_set_cls,
                 )
         else:
             if raw:
@@ -1148,14 +877,11 @@ class BaseDatabase:
     def _select_matches_then_similar(
         self,
         like,
+        vector_index,
         select: Select,
         raw=False,
         n=100,
         features=None,
-        semantic_index=None,
-        watcher=None,
-        measure=None,
-        hash_set_cls='vanilla',
     ):
         if not select.is_trivial:
             id_cursor = self._get_raw_cursor(select.select_only_id)
@@ -1164,20 +890,10 @@ class BaseDatabase:
                 like,
                 ids=ids,
                 n=n,
-                semantic_index=semantic_index,
-                watcher=watcher,
-                hash_set_cls=hash_set_cls,
-                measure=measure,
+                vector_index=vector_index,
             )
         else:
-            similar_ids, scores = self.select_nearest(
-                like,
-                n=n,
-                semantic_index=semantic_index,
-                watcher=watcher,
-                hash_set_cls=hash_set_cls,
-                measure=measure,
-            )
+            similar_ids, scores = self.select_nearest(like, n=n, vector_index=vector_index)
 
         if raw:
             return self._get_raw_cursor(select.select_using_ids(similar_ids))
@@ -1195,19 +911,9 @@ class BaseDatabase:
         raw=False,
         n=100,
         features=None,
-        semantic_index=None,
-        watcher=None,
-        measure=None,
-        hash_set_cls='vanilla',
+        vector_index=None,
     ):
-        similar_ids, scores = self.select_nearest(
-            like,
-            n=n,
-            semantic_index=semantic_index,
-            watcher=watcher,
-            measure=measure,
-            hash_set_cls=hash_set_cls,
-        )
+        similar_ids, scores = self.select_nearest(like, n=n, vector_index=vector_index)
 
         if raw:
             return self._get_raw_cursor(select.select_using_ids(similar_ids))
@@ -1222,30 +928,16 @@ class BaseDatabase:
     def select_nearest(
         self,
         like: Convertible(),
+        vector_index: str,
         ids=None,
         n=10,
-        watcher=None,
-        semantic_index=None,
-        measure='css',
-        hash_set_cls='vanilla',
     ) -> Tuple([List(Convertible()), Any]):
-        if semantic_index is not None:
-            si_info = self.get_object_info(semantic_index, variety='learning_task')
-            models = si_info['models']
-            keys = si_info['keys']
-            watcher = self._get_watcher_for_learning_task(semantic_index)
-            watcher_info = self.get_object_info(watcher, variety='watcher')
-        else:
-            watcher_info = self.get_object_info(watcher, variety='watcher')
-            models = [watcher_info['model']]
-            keys = [watcher_info['key']]
 
-        if watcher not in self._all_hash_sets:
-            self._load_hashes(
-                watcher=watcher, measure=measure, hash_set_cls=hash_set_cls
-            )
-
-        hash_set = self._all_hash_sets[watcher]
+        info = self.get_object_info(vector_index, variety='vector_index')
+        models = info['models']
+        keys = info['keys']
+        self._load_hashes(vector_index)
+        hash_set = self._all_hash_sets[vector_index]
         if ids is not None:
             hash_set = hash_set[ids]
 
@@ -1257,7 +949,7 @@ class BaseDatabase:
         document = MongoStyleDict(like)
         if '_outputs' not in document:
             document['_outputs'] = {}
-        features = watcher_info.get('features', {})
+        features = info.get('features', {}) or {}
 
         for subkey in features:
             if subkey not in document:
@@ -1308,7 +1000,7 @@ class BaseDatabase:
         trainer = learning_task.training_configuration(
             identifier=identifier,
             keys=learning_task.keys,
-            model_names=learning_task.models.tolist(),
+            model_names=learning_task.models.aslist(),
             models=learning_task.models,
             database_type=self._database_type,
             database_name=self.name,

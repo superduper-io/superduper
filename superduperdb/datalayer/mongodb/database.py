@@ -24,7 +24,6 @@ class Database(MongoDatabase, BaseDatabase):
     database are SuperDuperDB objects :code:`superduperdb.collection.Collection`.
     """
 
-    _id = '_id'
     _database_type = 'mongodb'
     select_cls = Select
 
@@ -92,10 +91,8 @@ class Database(MongoDatabase, BaseDatabase):
             **select.kwargs,
         )
 
-    def _get_hash_from_document(self, r, watcher_info):
-        return MongoStyleDict(r)[
-            f'_outputs.{watcher_info["key"]}.{watcher_info["model"]}'
-        ]
+    def _get_output_from_document(self, r, key, model):
+        return MongoStyleDict(r)[f'_outputs.{key}.{model}']
 
     def _get_ids_from_select(self, select: Select):
         return [
@@ -129,7 +126,7 @@ class Database(MongoDatabase, BaseDatabase):
 
     def _insert_validation_data(self, tmp, identifier):
         tmp = [{**r, 'identifier': identifier} for r in tmp]
-        self['_validation_sets'].insert_many(tmp)
+        self.insert(Insert('_validation_sets', documents=tmp))
 
     def list_jobs(self, status=None):
         status = {} if status is None else {'status': status}

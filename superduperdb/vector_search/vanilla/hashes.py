@@ -14,6 +14,8 @@ class VanillaHashSet(BaseHashSet):
     :param measure: measure to assess similarity
     """
 
+    name = 'vanilla'
+
     def __init__(self, h, index, measure='css'):
         if isinstance(measure, str):
             measure = getattr(measures, measure)

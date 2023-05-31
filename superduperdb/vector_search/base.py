@@ -3,6 +3,8 @@ import torch
 
 
 class BaseHashSet:
+    name = None
+
     def __init__(self, h, index, measure):
         if isinstance(h, list) and isinstance(h[0], torch.Tensor):
             h = torch.stack(h).numpy()
@@ -43,3 +45,4 @@ class BaseHashSet:
 
     def __getitem__(self, item):
         raise NotImplementedError
+

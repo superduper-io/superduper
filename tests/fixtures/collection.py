@@ -3,6 +3,7 @@ import random
 import lorem
 import numpy
 
+from superduperdb.core.vector_index import VectorIndex
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.client import SuperDuperClient
 from superduperdb.datalayer.mongodb.query import Select, Insert, Delete
@@ -10,6 +11,7 @@ from superduperdb.models.torch.wrapper import SuperDuperModule
 from superduperdb.types.numpy.array import Array
 from superduperdb.types.pillow.image import Image
 from superduperdb.types.torch.tensor import Tensor
+from superduperdb.vector_search import FaissHashSet
 from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
 from tests.material.measures import css
@@ -52,7 +54,7 @@ def random_data(float_tensors):
         y = int(random.random() > 0.5)
         z = torch.randn(32)
         data.append({'x': x, 'z': z, 'y': y})
-    float_tensors.insert_many(data, refresh=False)
+    float_tensors.database.insert(Insert('documents', documents=data), refresh=False)
     yield float_tensors
     float_tensors.delete_many({})
 
@@ -81,21 +83,43 @@ def an_update():
 
 
 @pytest.fixture()
-def with_semantic_index(random_data, a_model):
-    random_data.create_learning_task(
-        ['linear_a'],
-        ['x'],
-        keys_to_watch=['x'],
-        identifier='test_learning_task',
-        configuration={'hash_set_cls': VanillaHashSet, 'measure': css},
+def with_vector_index(random_data, a_model):
+    random_data.database.create_component(
+        Watcher(select=Select('documents'), key='x', model_id='linear_a')
+    )
+    random_data.database.create_component(
+        VectorIndex(
+            'test_vector_search',
+            model_ids=['linear_a'],
+            keys=['x'],
+            watcher_id='linear_a/x',
+        )
     )
     yield random_data
-    random_data.delete_learning_task('test_learning_task', force=True)
+    random_data.database.delete_component('test_vector_search', 'vector_index', force=True)
+
+
+@pytest.fixture()
+def with_vector_index_faiss(random_data, a_model):
+    random_data.database.create_component(
+        Watcher(select=Select('documents'), key='x', model_id='linear_a')
+    )
+    random_data.database.create_component(
+        VectorIndex(
+            'test_vector_search',
+            model_ids=['linear_a'],
+            keys=['x'],
+            watcher_id='linear_a/x',
+            hash_set_cls=FaissHashSet,
+        )
+    )
+    yield random_data
+    random_data.database.delete_component('test_vector_search', 'vector_index', force=True)
 
 
 @pytest.fixture()
 def si_validation(random_data):
-    random_data.create_validation_set('my_valid', {'_fold': 'valid'}, chunk_size=100)
+    random_data.database.create_validation_set('my_valid', select=Select('documents', filter={'_fold': 'valid'}), chunk_size=100)
 
     yield random_data
 
@@ -127,7 +151,7 @@ def sentences(empty):
     data = []
     for _ in range(100):
         data.append({'text': lorem.sentence()})
-    empty.insert_many(data)
+    empty.database.insert(Insert('documents', documents=data))
     yield empty
 
 
@@ -190,13 +214,12 @@ def a_watcher_base(a_model_base):
 
 @pytest.fixture()
 def a_classifier(float_tensors):
-    float_tensors.create_model(
-        'classifier',
+    float_tensors.database.create_component(
         SuperDuperModule(BinaryClassifier(32), 'classifier'),
     )
     yield float_tensors
     try:
-        float_tensors.delete_model('classifier', force=True)
+        float_tensors.database.delete_component('classifier', 'model', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -217,14 +240,12 @@ def a_target(float_tensors):
 
 @pytest.fixture()
 def b_model(float_tensors):
-    float_tensors.create_model(
-        'linear_b',
-        SuperDuperModule(torch.nn.Linear(16, 8), 'linear_b'),
-        type='float_tensor'
+    float_tensors.database.create_component(
+        SuperDuperModule(torch.nn.Linear(16, 8), 'linear_b', type='float_tensor'),
     )
     yield float_tensors
     try:
-        float_tensors.delete_model('linear_b', force=True)
+        float_tensors.database.delete_component('linear_b', 'model', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -233,14 +254,12 @@ def b_model(float_tensors):
 
 @pytest.fixture()
 def c_model(float_tensors):
-    float_tensors.create_model(
-        'linear_c',
-        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_c'),
-        type='float_tensor',
+    float_tensors.database.create_component(
+        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_c', type='float_tensor'),
     )
     yield float_tensors
     try:
-        float_tensors.delete_model('linear_c', force=True)
+        float_tensors.database.delete_component('linear_c', 'model', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return

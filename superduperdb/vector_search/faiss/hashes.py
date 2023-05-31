@@ -21,6 +21,8 @@ class FaissHashSet(BaseHashSet):
     :param faiss_index: Faiss index object if available (prevents need to fit anew)
     """
 
+    name = 'faiss'
+
     def __init__(self, h, index, measure='l2', faiss_index=None):
         super().__init__(h, index, measure)
         self.h = self.h.astype('float32')

@@ -27,6 +27,9 @@ class PlaceholderList(BasePlaceholder, list):
     def __repr__(self):
         return 'PlaceholderList(' + super().__repr__() + ')'
 
+    def aslist(self):
+        return [x.identifier for x in self]
+
 
 class BaseComponent:
     """
@@ -111,7 +114,7 @@ class ComponentList(BaseComponent, list):
                 self[i] = database.load_component(item)
             self[i] = self[i].repopulate(database)
 
-    def tolist(self):
+    def aslist(self):
         return [c.identifier for i, c in enumerate(self)]
 
 

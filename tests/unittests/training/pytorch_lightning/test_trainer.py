@@ -62,4 +62,4 @@ def test_classification(random_data):
         )
     )
 
-    print(random_data.list_models())
+    print(random_data.database.list_components('learning_task'))

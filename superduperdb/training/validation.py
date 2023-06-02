@@ -1,9 +1,10 @@
-import random
 from collections import defaultdict
+
+import numpy
 
 
 def validate_imputation(
-    validation_data, models, keys, metrics, splitter, predict_kwargs=None
+    validation_data, models, keys, metrics, predict_kwargs=None
 ):
     inputs = []
     targets = []
@@ -21,7 +22,7 @@ def validate_imputation(
     return metric_values
 
 
-def validate_semantic_index(
+def validate_vector_search(
     validation_data,
     models,
     keys,
@@ -41,17 +42,18 @@ def validate_semantic_index(
         for j, m in enumerate(models):
             inputs[j].append(all_r[j][keys[j]])
 
-    random.shuffle(inputs)
+    random_order = numpy.random.permutation(len(inputs[0]))
+    inputs = [[x[i] for i in random_order] for x in inputs]
     predictions = [
         model.predict(inputs[i], **(predict_kwargs or {}))
         for i, model in enumerate(models)
     ]
-    h = hash_set_cls(predictions[1], list(range(len(predictions[1]))), measure)
+    h = hash_set_cls(predictions[0], list(range(len(predictions[0]))), measure)
     metric_values = defaultdict(lambda: [])
     for i in range(len(predictions[0])):
         ix, _ = h.find_nearest_from_hash(predictions[0][i], n=100)
         for metric in metrics:
-            metric_values[metric].append(metrics[metric](ix, i))
+            metric_values[metric.identifier].append(metric(ix, i))
 
     for k in metric_values:
         metric_values[k] = sum(metric_values[k]) / len(metric_values[k])

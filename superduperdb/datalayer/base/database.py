@@ -25,9 +25,6 @@ from superduperdb.misc import progress
 from superduperdb.misc.logger import logging
 
 
-def validate_representations(database, vs, identifier, metrics):
-    raise NotImplementedError
-
 
 class BaseDatabase:
     """
@@ -50,7 +47,7 @@ class BaseDatabase:
 
     def _reload_type_lookup(self):
         self._type_lookup = {}
-        for t in self.list_types():
+        for t in self.list_components('type'):
             try:
                 for s in self.types[t].types:
                     self._type_lookup[s] = t
@@ -87,73 +84,13 @@ class BaseDatabase:
         Apply model to input.
 
         :param model: model or ``str`` referring to an uploaded model
-            (see ``self.list_models``)
         :param input_: input_ to be passed to the model.
                        Must be possible to encode with registered types
-                       (``self.list_types``)
         :param kwargs: key-values (see ``superduperdb.models.utils.predict``)
         """
         if isinstance(model, str):
             model = self.models[model]
         return model.predict(input_, **kwargs)
-
-    @work
-    def apply_watcher(
-        self,
-        identifier,
-        ids=None,
-        verbose=False,
-        max_chunk_size=5000,
-        model=None,
-        recompute=False,
-        watcher_info=None,
-        **kwargs,
-    ):
-        select = self.select_cls(**watcher_info['select'])
-
-        if watcher_info is None:
-            watcher_info = self.get_object_info(identifier, 'watcher')
-        if ids is None:
-            ids = self._get_ids_from_select(select.select_only_id)
-        if max_chunk_size is not None:
-            for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                logging.info(
-                    'computing chunk '
-                    f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
-                )
-                self.apply_watcher(
-                    identifier,
-                    ids=ids[i : i + max_chunk_size],
-                    verbose=verbose,
-                    max_chunk_size=None,
-                    model=model,
-                    recompute=recompute,
-                    watcher_info=watcher_info,
-                    remote=False,
-                    **kwargs,
-                )
-            return
-
-        model_info = self.get_object_info(watcher_info['model'], 'model')
-        outputs = self._compute_model_outputs(
-            model_info,
-            ids,
-            select,
-            key=watcher_info['key'],
-            features=watcher_info.get('features', {}),
-            model=model,
-            predict_kwargs=watcher_info.get('predict_kwargs', {}),
-        )
-        type_ = model_info.get('type')
-        if type_ is not None:
-            type_ = self.types[type_]
-            outputs = [
-                {'_content': {'bytes': type_.encode(x), 'type': model_info['type']}}
-                for x in outputs
-            ]
-
-        self._write_watcher_outputs(watcher_info, outputs, ids)
-        return outputs
 
     def _build_task_workflow(
         self, select: Select, ids=None, dependencies=(), verbose=True
@@ -176,10 +113,10 @@ class BaseDatabase:
                 },
             },
         )
-        if not self.list_watchers():
+        if not self.list_components('watcher'):
             return G
 
-        for identifier in self.list_watchers():
+        for identifier in self.list_components('watcher'):
             G.add_node(
                 f'{self.apply_watcher.__name__}({identifier})',
                 data={
@@ -192,17 +129,7 @@ class BaseDatabase:
                 },
             )
 
-        for identifier in self.list_neighbourhoods():
-            G.add_node(
-                f'{self.compute_neighbourhood.__name__}({identifier})',
-                data={
-                    'task': self.compute_neighbourhood,
-                    'args': [identifier],
-                    'kwargs': {},
-                },
-            )
-
-        for identifier in self.list_watchers():
+        for identifier in self.list_components('watcher'):
             G.add_edge(
                 f'{self.download_content.__name__}()',
                 f'{self.apply_watcher.__name__}({identifier})',
@@ -218,13 +145,6 @@ class BaseDatabase:
                     f'{self.apply_watcher.__name__}({identifier})',
                 )
 
-        for identifier in self.list_neighbourhoods():
-            watcher_identifier = self._get_watcher_for_neighbourhood(identifier)
-            G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
-            G.add_edge(
-                f'{self.apply_watcher.__name__}({watcher_identifier})',
-                f'{self.compute_neighbourhood.__name__}({identifier})',
-            )
         return G
 
     def cancel_job(self, job_id):
@@ -255,30 +175,6 @@ class BaseDatabase:
             model = self.models[model_identifier]
         return model.predict(passed_docs, **(predict_kwargs or {}))
 
-    @work
-    def compute_neighbourhood(self, identifier):
-        # TODO testing, refactoring...
-        info = self.get_object_info(identifier, 'neighbourhood')
-        watcher_info = self.get_object_info(identifier, 'watcher')
-        select = self.select_cls(**watcher_info['query'])
-        ids = self._get_ids_from_select(select.select_only_id)
-        logging.info('getting hash set')
-        self._load_hashes(
-            identifier, measure=info['measure'], hash_set_cls=info['hash_set_cls']
-        )
-        h = self._all_hash_sets[identifier]
-        h = h[ids]
-        logging.info(
-            f'computing neighbours based on neighbourhood "{identifier}" and '
-            f'index "{info["semantic_index"]}"'
-        )
-
-        for i in progress.progressbar(range(0, len(ids), info['batch_size'])):
-            sub = ids[i : i + info['batch_size']]
-            results = h.find_nearest_from_ids(sub, n=info['n'])
-            similar_ids = [res['_ids'] for res in results]
-            self._update_neighbourhood(sub, similar_ids, identifier, select)
-
     def convert_from_bytes_to_types(self, r):
         """
         Convert the bson byte objects in a nested dictionary into python objects.
@@ -300,65 +196,6 @@ class BaseDatabase:
     def _create_job_record(self, *args, **kwargs):
         raise NotImplementedError
 
-    def create_learning_task(
-        self,
-        models,
-        keys,
-        select,
-        identifier=None,
-        configuration=None,
-        verbose=False,
-        validation_sets=(),
-        metrics=(),
-        keys_to_watch=(),
-        features=None,
-        serializer='pickle',
-    ):
-        if identifier is None:
-            identifier = '+'.join([f'{m}/{k}' for m, k in zip(models, keys)])
-
-        assert identifier not in self.list_learning_tasks()
-
-        for k in keys_to_watch:
-            assert f'{identifier}/{k}' not in self.list_watchers()
-
-        file_id = self._create_serialized_file(configuration, serializer=serializer)
-
-        self._create_component_entry(
-            {
-                'variety': 'learning_task',
-                'identifier': identifier,
-                'select': asdict(select),
-                'configuration': {'_file_id': file_id},
-                'models': models,
-                'keys': keys,
-                'metrics': metrics,
-                'features': features,
-                'validation_sets': validation_sets,
-                'keys_to_watch': keys_to_watch,
-            }
-        )
-        model_lookup = dict(zip(keys_to_watch, models))
-        jobs = []
-        if callable(configuration):
-            jobs.append(self.fit(identifier))
-        for k in keys_to_watch:
-            jobs.append(
-                self.create_watcher(
-                    f'[{identifier}]:{model_lookup[k]}/{k}',
-                    model_lookup[k],
-                    select,
-                    key=k,
-                    features=features,
-                    predict_kwargs=configuration.get('loader_kwargs', {})
-                    if configuration is not None
-                    else {},
-                    dependencies=[jobs[0]] if jobs else (),
-                    verbose=verbose,
-                )
-            )
-        return jobs
-
     def _create_component_entry(self, info):
         raise NotImplementedError
 
@@ -377,15 +214,12 @@ class BaseDatabase:
 
     def _create_plan(self):
         G = networkx.DiGraph()
-        for identifier in self.list_watchers():
+        for identifier in self.list_components('watcher'):
             G.add_node(('watcher', identifier))
-        for identifier in self.list_watchers():
+        for identifier in self.list_components('watcher'):
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:
                 G.add_edge(('watcher', dep), ('watcher', identifier))
-        for identifier in self.list_neighbourhoods():
-            watcher_identifier = self._get_watcher_for_neighbourhood(identifier)
-            G.add_edge(('watcher', watcher_identifier), ('neighbourhood', identifier))
         assert networkx.is_directed_acyclic_graph(G)
         return G
 
@@ -602,9 +436,6 @@ class BaseDatabase:
         )
         return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
 
-    def _get_watcher_for_neighbourhood(self, identifier):
-        return self.get_object_info(identifier, 'neighbourhood')['watcher_identifier']
-
     def insert(self, insert: Insert, refresh=True, verbose=True):
         for item in insert.documents:
             r = random.random()
@@ -633,68 +464,14 @@ class BaseDatabase:
         """
         raise NotImplementedError
 
-    def list_learning_tasks(self):
-        """
-        List learning tasks.
-        """
-        return self.list_components('learning_task')
-
-    def list_metrics(self):
-        """
-        List metrics.
-        """
-        return self.list_components('metric')
-
-    def list_models(self):
-        """
-        List models.
-        """
-        return self.list_components('model')
-
-    def list_neighbourhoods(self):
-        """
-        List neighbourhoods.
-        """
-        return self.list_components('neighbourhood')
-
     def list_components(self, variety, **kwargs):
         raise NotImplementedError
-
-    def list_postprocessors(self):
-        """
-        List postprocesors.
-        """
-        return self.list_components('postprocessor')
-
-    def list_preprocessors(self):
-        """
-        List preprocessors.
-        """
-        return self.list_components('preprocessor')
-
-    def list_trainers(self):
-        """
-        List trainers.
-        """
-        return self.list_components('trainer')
-
-    def list_types(self):
-        """
-        List types.
-        """
-        return self.list_components('type')
 
     def list_validation_sets(self):
         """
         List validation sets.
         """
         raise NotImplementedError
-
-    def list_watchers(self):
-        """
-        List watchers.
-        """
-        return self.list_components('watcher')
 
     def _load_blob_of_bytes(self, file_id):
         raise NotImplementedError
@@ -810,7 +587,7 @@ class BaseDatabase:
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
         assert (
-            identifier in self.list_models()
+            identifier in self.list_components('model')
         ), f'model "{identifier}" doesn\'t exist to replace'
         file_id = self._create_serialized_file(
             object,
@@ -823,16 +600,6 @@ class BaseDatabase:
         raise NotImplementedError
 
     def _save_blob_of_bytes(self, bytes_):
-        raise NotImplementedError
-
-    def save_metrics(self, identifier, variety, metrics):
-        """
-        Save metrics (during learning) into learning-task record.
-
-        :param identifier: identifier of object record
-        :param variety: variety of object record
-        :param metrics: values of metrics to save
-        """
         raise NotImplementedError
 
     def select(
@@ -1027,10 +794,10 @@ class BaseDatabase:
             pass
 
     def update(self, update: Update, refresh=True, verbose=True):
-        if refresh and self.list_models():
+        if refresh and self.list_components('model'):
             ids = self._get_ids_from_select(update.select_ids)
         result = self._base_update(update.to_raw(self.types, self.type_lookup))
-        if refresh and self.list_models():
+        if refresh and self.list_components('model'):
             task_graph = self._build_task_workflow(
                 update.select, ids=ids, verbose=verbose
             )
@@ -1041,30 +808,36 @@ class BaseDatabase:
     def _update_job_info(self, identifier, key, value):
         raise NotImplementedError
 
-    def _update_neighbourhood(self, ids, similar_ids, identifier, select: Select):
-        raise NotImplementedError
-
     def _update_object_info(self, identifier, variety, key, value):
         raise NotImplementedError
 
-    def validate_semantic_index(self, identifier, validation_sets, metrics):
+    @work
+    def validate_component(
+        self,
+        identifier: str,
+        variety: str,
+        validation_sets: List(str),
+        metrics: List(str),
+    ):
         """
-        Evaluate quality of semantic-index
+        Evaluate quality of component, using `Component.validate`, if implemented.
 
         :param identifier: identifier of semantic index
+        :param variety: variety of component
         :param validation_sets: validation-sets on which to validate
         :param metrics: metric functions to compute
         """
-        results = {}
-        for vs in validation_sets:
-            results[vs] = validate_representations(self, vs, identifier, metrics)
-        for vs in results:
-            for m in results[vs]:
+        component = self.load_component(identifier, variety)
+        metrics = [self.load_component(m, 'metric') for m in metrics]
+        validation_selects = [self.get_query_for_validation_set(vs) for vs in validation_sets]
+        results = component.validate(self, validation_selects, metrics)
+        for vs, res in zip(validation_sets, results):
+            for m in res:
                 self._update_object_info(
                     identifier,
-                    'semantic_index',
+                    variety,
                     f'final_metrics.{vs}.{m}',
-                    results[vs][m],
+                    res[m],
                 )
 
     def watch_job(self, identifier):

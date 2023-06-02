@@ -168,6 +168,7 @@ class TorchTrainerConfiguration(TrainingConfiguration):
             vs: self.get_validation_dataset(database_type, database_name, vs)
             for vs in validation_sets
         }
+        metrics = [database.load_component(m, 'metric') for m in metrics]
 
         return Trainer(
             models,

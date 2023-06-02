@@ -8,6 +8,22 @@ from superduperdb.datalayer.base.query import Select
 
 
 class LearningTask(Component):
+    """
+    Learning-task base object, used to hold important object crucial to all learning-task
+    creation and management.
+
+    :param identifier: Unique identifier of learning task
+    :param keys: Keys - keys or columns to which to apply the models
+    :param select: Select data to apply learning to
+    :param validation_sets: List of validation-datasets
+    :param training_configuration_id: Identifier of a training configuration
+    :param training_configuration: A training configuration instance
+    :param metrics: List of Metric components to measure performance on validation-sets
+    :param metric_ids: List of identifiers of metrics
+    :param models: List of Model components
+    :param model_ids: List of Model identifiers
+    :param features: Dictionary of feature mappings from keys -> model-identifiers
+    """
     variety = 'learning_task'
 
     def __init__(

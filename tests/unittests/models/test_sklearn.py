@@ -17,4 +17,4 @@ def test_pipeline(random_arrays, int64):
     random_arrays.database.create_component(est)
     pl = random_arrays.models['my-svc']
     print(pl)
-    random_arrays.database.create_component(Watcher(select=Select('documents'), model_id='my-svc', key='x'))
+    random_arrays.database.create_component(Watcher(select=Select('documents'), model='my-svc', key='x'))

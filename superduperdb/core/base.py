@@ -25,7 +25,7 @@ class PlaceholderList(BasePlaceholder, list):
         self.variety = variety
 
     def __repr__(self):
-        return 'PlaceholderList(' + super().__repr__() + ')'
+        return f'PlaceholderList[{self.variety}](' + super().__repr__() + ')'
 
     def aslist(self):
         return [x.identifier for x in self]
@@ -33,11 +33,16 @@ class PlaceholderList(BasePlaceholder, list):
 
 class BaseComponent:
     """
-    Base component which models, watchers, learning tasks etc. inherit from.
+    Essentially just there to put Component and ComponentList on common ground.
     """
 
 
 class Component(BaseComponent):
+    """
+    Base component which models, watchers, learning tasks etc. inherit from.
+
+    :param identifier: Unique ID
+    """
 
     def __init__(self, identifier: str):
         self.identifier = identifier
@@ -48,23 +53,21 @@ class Component(BaseComponent):
 
         :param database: Database connector which is reponsible for saving/ loading components
         """
-        for attr in dir(self):
-            try:
-                object = getattr(self, attr)
-            except Exception as e:
-                logging.warn(str(e))
-                continue
-            if not isinstance(object, BasePlaceholder):
-                continue
+        def reload(object):
             if isinstance(object, Placeholder):
                 reloaded = database.load_component(object.identifier, variety=object.variety)
-                reloaded = reloaded.repopulate(database)
-            elif isinstance(object, PlaceholderList):
+                return reloaded.repopulate(database)
+
+            if isinstance(object, PlaceholderList):
                 reloaded = [database.load_component(c.identifier, c.variety) for c in object]
                 for i, c in enumerate(reloaded):
                     reloaded[i] = c.repopulate(database)
-                reloaded = ComponentList(object.variety, reloaded)
-            setattr(self, attr, reloaded)
+                return ComponentList(object.variety, reloaded)
+
+            return object
+
+        items = ((k, v) for k, v in vars(self).items() if isinstance(v, BasePlaceholder))
+        self.__dict__.update((k, reload(v)) for k, v in items)
         return self
 
     def asdict(self):
@@ -74,10 +77,7 @@ class Component(BaseComponent):
         """
         Test if all contained BaseComponent attributes were stripped (no longer part of object).
         """
-        for attr in dir(self):
-            if isinstance(getattr(self, attr), BaseComponent):
-                return False
-        return True
+        return not any(isinstance(v, BaseComponent) for v in vars(self).values())
 
     def __repr__(self):
         super_repr = super().__repr__()
@@ -106,7 +106,7 @@ class ComponentList(BaseComponent, list):
         self.variety = variety
 
     def __repr__(self):
-        return 'ComponentList(' + super().__repr__() + ')'
+        return f'ComponentList[{self.variety}](' + super().__repr__() + ')'
 
     def repopulate(self, database):
         for i, item in enumerate(self):
@@ -115,7 +115,7 @@ class ComponentList(BaseComponent, list):
             self[i] = self[i].repopulate(database)
 
     def aslist(self):
-        return [c.identifier for i, c in enumerate(self)]
+        return [c.identifier for c in self]
 
 
 def strip(component: BaseComponent):
@@ -139,3 +139,11 @@ def strip(component: BaseComponent):
             setattr(component, attr, Placeholder(subcomponent.identifier, subcomponent.variety))
     return component
 
+
+def is_placeholders_or_components(items: list):
+    """
+    Test whether the list is just strings and also test whether it's just components
+    """
+    is_placeholders = all([isinstance(y, str) for y in items])
+    is_components = all([isinstance(y, Component) for y in items])
+    return is_placeholders, is_components

@@ -55,10 +55,11 @@ def test_classification(random_data):
     random_data.database.create_component(
         LearningTask(
             'my-pl-lt',
-            model_ids=['my-pl-module'],
+            models=['my-pl-module'],
             keys=['_base'],
-            training_configuration_id='my-pl-cf',
+            training_configuration='my-pl-cf',
             select=Select('documents'),
+            metrics=[],
         )
     )
 

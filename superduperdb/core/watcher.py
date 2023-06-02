@@ -21,12 +21,11 @@ class Watcher(Component):
     def __init__(
         self,
         select: dataclass,
-        model: Optional[Model] = None,
-        model_id: Optional[str] = None,
+        model: Union[Model, str],
         key: str = '_base',
         features: Optional[dict] = None,
     ):
-        self.model = model if model else Placeholder(model_id, 'model')
+        self.model = model if isinstance(model, Model) else Placeholder(model, 'model')
         self.select = select
         self.key = key
         self.select = select

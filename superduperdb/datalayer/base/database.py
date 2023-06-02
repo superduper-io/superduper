@@ -731,8 +731,8 @@ class BaseDatabase:
             info['serializer_kwargs'] = {}
         m = self._load_serialized_file(info['object'], serializer=info['serializer'])
         m.repopulate(self)
-        if variety in self.variety_to_cache_mapping:
-            getattr(self, self.variety_to_cache_mapping[variety])[m.identifier] = m
+        if cm := self.variety_to_cache_mapping.get(variety):
+            getattr(self, cm)[m.identifier] = m
         return m
 
     def _load_serialized_file(self, file_id, serializer='pickle'):

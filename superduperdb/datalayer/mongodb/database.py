@@ -158,12 +158,6 @@ class Database(MongoDatabase, BaseDatabase):
     def _save_blob_of_bytes(self, bytes_):
         return loading.save(bytes_, self.filesystem)
 
-    def save_metrics(self, identifier, variety, metrics):
-        self['_objects'].update_one(
-            {'identifier': identifier, 'variety': variety},
-            {'$set': {'metric_values': metrics}},
-        )
-
     def separate_query_part_from_validation_record(self, r):
         return r['_other'], {k: v for k, v in r.items() if k != '_other'}
 
@@ -176,25 +170,11 @@ class Database(MongoDatabase, BaseDatabase):
     def set_job_flag(self, identifier, kw):
         self['_jobs'].update_one({'identifier': identifier}, {'$set': {kw[0]: kw[1]}})
 
-    def _unset_neighbourhood_data(self, info, watcher_info):
-        select = self.select_cls(**watcher_info['select'])
-        logging.info(f'unsetting neighbourhood {info["info"]}')
-        update = select.update({'$unset': {f'_like.{info["identifier"]}': 1}})
-        return self._base_update(update)
-
     def _unset_watcher_outputs(self, info):
         select = self.select_cls(**info['select'])
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
         return self._base_update(
             select.update({'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}})
-        )
-
-    def _update_neighbourhood(self, ids, similar_ids, identifier, select: Select):
-        self[select.collection].bulk_write(
-            [
-                UpdateOne({'_id': id_}, {'$set': {f'_like.{identifier}': sids}})
-                for id_, sids in zip(ids, similar_ids)
-            ]
         )
 
     def _update_job_info(self, identifier, key, value):

@@ -20,9 +20,10 @@ def test_classifier(random_arrays):
     random_arrays.database.create_component(
         LearningTask(
             'my-sk-lt',
-            model_ids=['svc', 'identity'],
+            models=['svc', 'identity'],
             keys=['x', 'y'],
-            training_configuration_id='my-sk-cf',
+            training_configuration='my-sk-cf',
             select=Select('documents'),
+            metrics=[],
         )
     )

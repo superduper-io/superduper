@@ -12,9 +12,7 @@ from superduperdb.types.numpy.array import Array
 from superduperdb.types.pillow.image import Image
 from superduperdb.types.torch.tensor import Tensor
 from superduperdb.vector_search import FaissHashSet
-from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
 from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
-from tests.material.measures import css
 from tests.material.metrics import PatK, accuracy
 
 import pytest
@@ -85,16 +83,15 @@ def an_update():
 @pytest.fixture()
 def with_vector_index(random_data, a_model):
     random_data.database.create_component(
-        Watcher(select=Select('documents'), key='x', model_id='linear_a')
+        Watcher(select=Select('documents'), key='x', model='linear_a')
     )
-    random_data.database.create_component(
-        VectorIndex(
-            'test_vector_search',
-            model_ids=['linear_a'],
-            keys=['x'],
-            watcher_id='linear_a/x',
-        )
+    vi = VectorIndex(
+        'test_vector_search',
+        models=['linear_a'],
+        keys=['x'],
+        watcher='linear_a/x',
     )
+    random_data.database.create_component(vi)
     yield random_data
     random_data.database.delete_component('test_vector_search', 'vector_index', force=True)
 
@@ -102,14 +99,14 @@ def with_vector_index(random_data, a_model):
 @pytest.fixture()
 def with_vector_index_faiss(random_data, a_model):
     random_data.database.create_component(
-        Watcher(select=Select('documents'), key='x', model_id='linear_a')
+        Watcher(select=Select('documents'), key='x', model='linear_a')
     )
     random_data.database.create_component(
         VectorIndex(
             'test_vector_search',
-            model_ids=['linear_a'],
+            models=['linear_a'],
             keys=['x'],
-            watcher_id='linear_a/x',
+            watcher='linear_a/x',
             hash_set_cls=FaissHashSet,
         )
     )
@@ -200,14 +197,14 @@ def a_model_base(float_tensors):
 @pytest.fixture()
 def a_watcher(a_model):
     a_model.remote = False
-    a_model.database.create_component(Watcher(model_id='linear_a', select=Select('documents'), key='x'))
+    a_model.database.create_component(Watcher(model='linear_a', select=Select('documents'), key='x'))
     yield a_model
     a_model.database.delete_component('linear_a/x', 'watcher', force=True)
 
 
 @pytest.fixture()
 def a_watcher_base(a_model_base):
-    a_model_base.database.create_component(Watcher(model_id='linear_a_base', select=Select('documents'), key='_base'))
+    a_model_base.database.create_component(Watcher(model='linear_a_base', select=Select('documents'), key='_base'))
     yield a_model_base
     a_model_base.database.delete_component('linear_a_base/_base', 'watcher', force=True)
 

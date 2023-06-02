@@ -1,6 +1,7 @@
-from typing import List, Mapping, Optional
+from typing import List, Optional, Union
 
-from superduperdb.core.base import ComponentList, PlaceholderList, Component, Placeholder
+from superduperdb.core.base import ComponentList, PlaceholderList, Component, Placeholder, \
+    is_placeholders_or_components
 from superduperdb.core.model import Model
 from superduperdb.core.watcher import Watcher
 from superduperdb.vector_search import VanillaHashSet
@@ -26,17 +27,21 @@ class VectorIndex(Component):
         self,
         identifier: str,
         keys: List[str],
-        watcher: Optional[Watcher] = None,
-        watcher_id: Optional[str] = None,
-        model_ids: Optional[List[str]] = None,
-        models: Optional[List[Model]] = None,
+        watcher: Union[Watcher, str],
+        models: Union[List[Model], List[str]] = None,
         measure: str= 'css',
         hash_set_cls: type = VanillaHashSet,
     ):
         super().__init__(identifier)
         self.keys = keys
-        self.models = ComponentList('model', models) if models else PlaceholderList('model', model_ids)
-        self.watcher = Placeholder(watcher_id, 'watcher') if watcher_id is not None else watcher
+        self.watcher = Placeholder(watcher, 'watcher') if isinstance(watcher, str) else watcher
+
+        is_placeholders, is_components = is_placeholders_or_components(models)
+        assert is_placeholders or is_components
+        if is_placeholders:
+            self.models = PlaceholderList('model', models)
+        else:
+            self.models = ComponentList('model', models)
         assert len(self.keys) == len(self.models)
         self.measure = measure
         self.hash_set_cls = hash_set_cls

@@ -1,6 +1,7 @@
-from typing import List, Mapping, Optional
+from typing import List, Mapping, Optional, Union
 
-from superduperdb.core.base import Component, ComponentList, PlaceholderList, Placeholder
+from superduperdb.core.base import Component, ComponentList, PlaceholderList, Placeholder, \
+    is_placeholders_or_components
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model
 from superduperdb.core.training_configuration import TrainingConfiguration
@@ -29,32 +30,41 @@ class LearningTask(Component):
     def __init__(
         self,
         identifier: str,
+        models: Union[List[Model], List[str]],
         keys: List[str],
         select: Select,
+        training_configuration: Union[TrainingConfiguration, str],
         validation_sets: List[str] = (),
-        training_configuration_id: Optional[str] = None,
-        training_configuration: Optional[TrainingConfiguration] = None,
-        metrics: Optional[List[Metric]] = None,
-        metric_ids: Optional[List[str]] = None,
-        models: Optional[List[Model]] = None,
-        model_ids: Optional[List[str]] = None,
+        metrics: Union[List[Metric], List[str]] = (),
         features: Optional[Mapping[str, str]] = None,
     ):
         super().__init__(identifier)
 
-        assert training_configuration_id or training_configuration
-        assert model_ids or models
+        models_are_strs, models_are_comps = is_placeholders_or_components(models)
+        err_msg = 'Must specify all model IDs or all Model instances directly'
+        assert models_are_strs or models_are_comps, err_msg
 
-        self.models = ComponentList('model', models) if models else PlaceholderList('model', model_ids)
+        if models_are_strs:
+            self.models = PlaceholderList('model', models)
+        else:
+            self. models = ComponentList('model', models)
+
+        err_msg = 'Must specify all metric IDs or all Metric instances directly'
+        metrics_are_strs, metrics_are_comps = is_placeholders_or_components(metrics)
+        assert metrics_are_strs or metrics_are_comps, err_msg
+
+        if metrics_are_strs:
+            self.metrics = PlaceholderList('metric', metrics)
+        else:
+            self. metrics = ComponentList('metric', metrics)
+
         self.keys = keys
         self.training_configuration = (
-            training_configuration if training_configuration
-            else Placeholder(training_configuration_id, 'training_configuration')
+            training_configuration if isinstance(training_configuration, TrainingConfiguration)
+            else Placeholder(training_configuration, 'training_configuration')
         )
         self.identifier = identifier
         self.validation_sets = validation_sets
-        self.metrics = ComponentList('metric', metrics) \
-            if metrics else (PlaceholderList('metric', metric_ids) if metric_ids else ())
         self.features = features or {}
         self.select = select
 

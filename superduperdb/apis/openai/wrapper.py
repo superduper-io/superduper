@@ -10,15 +10,14 @@ from superduperdb.core.model import Model
 
 do_retry = DoRetry((Timeout, RateLimitError, TryAgain, ServiceUnavailableError))
 
-AVAILABLE_MODELS = [r['id'] for r in OpenAIModel.list()['data']]
+AVAILABLE_MODELS = tuple([r['id'] for r in OpenAIModel.list()['data']])
 
 
 class BaseOpenAI(Model):
-    def __init__(self, model_id):
-        super().__init__(None, model_id)
-        assert (
-            model_id in AVAILABLE_MODELS
-        ), "model not in list of OpenAI available models"
+    def __init__(self, identifier):
+        super().__init__(None, identifier)
+        msg = "model not in list of OpenAI available models"
+        assert identifier in AVAILABLE_MODELS, msg
         assert 'OPENAI_API_KEY' in os.environ, "OPENAI_API_KEY not set"
 
 

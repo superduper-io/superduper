@@ -103,7 +103,7 @@ def test_update(random_data, a_watcher):
 
 
 def test_watcher(random_data, a_model, b_model):
-    random_data.database.create_component(Watcher(model_id='linear_a', select=Select('documents'), key='x'))
+    random_data.database.create_component(Watcher(model='linear_a', select=Select('documents'), key='x'))
     r = next(random_data.database.select(Select('documents', one=True)))
     assert 'linear_a' in r['_outputs']['x']
 
@@ -114,7 +114,7 @@ def test_watcher(random_data, a_model, b_model):
     assert 'linear_a' in r['_outputs']['x']
 
     random_data.database.create_component(
-        Watcher(model_id='linear_b', select=Select('documents'), key='x', features={'x': 'linear_a'})
+        Watcher(model='linear_b', select=Select('documents'), key='x', features={'x': 'linear_a'})
     )
     r = next(random_data.database.select(Select('documents')))
     assert 'linear_b' in r['_outputs']['x']
@@ -144,11 +144,11 @@ def test_learning_task(si_validation, a_model, c_model, metric):
     si_validation.database.create_component(configuration)
     learning_task = LearningTask(
         'my_index',
-        model_ids=['linear_a', 'linear_c'],
+        models=['linear_a', 'linear_c'],
         select=Select('documents'),
         keys=['x', 'z'],
-        metric_ids=['p@1'],
-        training_configuration_id='ranking_task_parametrization',
+        metrics=['p@1'],
+        training_configuration='ranking_task_parametrization',
         validation_sets=['my_valid'],
     )
 

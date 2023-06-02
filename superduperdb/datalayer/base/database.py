@@ -46,7 +46,6 @@ class BaseDatabase:
         self.remote = cf.get('remote', False)
         self._type_lookup = None
 
-        self._hash_set = None
         self._all_hash_sets = {}
 
     def _reload_type_lookup(self):

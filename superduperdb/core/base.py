@@ -121,6 +121,8 @@ class ComponentList(BaseComponent, list):
 def strip(component: BaseComponent):
     """
     Strip component down to object which doesn't contain a BaseComponent part.
+    This may be applied so that objects aren't redundantly serialized and replaced in multiple
+    places.
 
     :param component: component to be stripped
     """

@@ -4,10 +4,15 @@ from typer import Argument, Option
 from typing import List
 import sys
 
-DIRS = ['superduperdb', 'tests']
+DOCKER = 'docker compose -f tests/material/docker-compose.yml'.split()
+DIRS = 'superduperdb tests'.split()
+
+_HELP = """Run superduperdb tests, which are essentially
+with extra flags
+"""
 
 
-@command(help='test')
+@command(help=_HELP)
 def test(
     argv: List[str] = Argument(
         None,
@@ -17,18 +22,26 @@ def test(
         False,
         '--check',
         '-c',
-        help='If true, black and ruff fail without making changes',
+        help='Only check files, do not change them',
     ),
     coverage: bool = Option(True, help='If True, run coverage on pytests'),
+    down: bool = Option(False, help='If True, bring the docker down at the end'),
+    dry_run: bool = Option(False, help='If True, print commands, do not execute them'),
 ):
-    black = ['black'] + check * ['--check'] + DIRS
-    pytest = coverage * ['coverage', 'run', '-m'] + ['pytest'] + argv
-    ruff = ['ruff'] + (not check) * ['--fix'] + DIRS
+    commands = [
+        DOCKER + ['up', 'mongodb', '-d'],
+        ['black'] + check * ['--check'] + DIRS,
+        ['ruff'] + (not check) * ['--fix'] + DIRS,
+        ['poetry', 'lock', '--no-update'] + check * ['--check'],
+        coverage * ['coverage', 'run', '-m'] + ['pytest'] + argv,
+    ] + down * [DOCKER + ['down']]
 
     try:
-        run.run(black)
-        run.run(ruff)
-        run.run(pytest)
+        for cmd in commands:
+            if dry_run:
+                print('$', *cmd)
+            else:
+                run.run(cmd)
     except run.CalledProcessError:
         sys.exit('Tests failed')
 

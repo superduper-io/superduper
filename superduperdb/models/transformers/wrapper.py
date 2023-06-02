@@ -1,14 +1,19 @@
-from typing import Optional
+from typing import Optional, Any
 
 from superduperdb.core.model import Model
-from transformers import pipeline as _pipeline
+from transformers import pipeline as _pipeline, Pipeline as TransformersPipeline
 
 
 class Pipeline(Model):
-    def __init__(self, pipeline=None, task: Optional[str] = None, model: Optional[str] = None,
-                 identifier: Optional[str] = None):
+    def __init__(
+        self,
+        pipeline: Optional[TransformersPipeline] = None,
+        task: Optional[str] = None,
+        model: Optional[str] = None,
+        identifier: Optional[str] = None,
+    ):
         if pipeline is None:
-            assert model is not None, 'must specify '
+            assert model is not None, 'must specify model for now'
             pipeline = _pipeline(task, model=model)
 
         identifier = identifier or f'{pipeline.task}/{pipeline.model.name_or_path}'

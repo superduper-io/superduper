@@ -8,5 +8,5 @@ class Metric(Component):
     """
     variety = 'metric'
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, x, y):
         raise NotImplementedError

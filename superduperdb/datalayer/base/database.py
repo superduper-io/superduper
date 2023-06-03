@@ -524,7 +524,7 @@ class BaseDatabase:
         raise NotImplementedError
 
     @work
-    def apply_watcher(
+    def apply_watcher(  # noqa: F811
         self,
         identifier,
         ids: List(ObjectId) = None,

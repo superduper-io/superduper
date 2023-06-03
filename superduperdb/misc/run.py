@@ -13,7 +13,7 @@ __all__ = (
 def run(
     args: Tuple[str], text: bool = True, check: bool = True, **kwargs: Dict[str, Any]
 ) -> subprocess.CompletedProcess:
-    print('$', args)
+    print('$', *args)
     return subprocess.run(args, text=text, check=check, **kwargs)
 
 

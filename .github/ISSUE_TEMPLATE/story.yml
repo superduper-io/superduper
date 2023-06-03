@@ -1,0 +1,20 @@
+name: Story
+description: File a story. A story is a concise description of a product improvement. Ideally stories address specific concerns related to user experience.
+labels: ["story"]
+body:
+  - type: textarea
+    attributes:
+      label: Why
+      description: The rationale behind a desired change. Any supportive product-related documentation should be referenced here.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: How
+      description: A short description of how assignees might approach implementing the change. Any technical documentation such as proposals should be references here.
+  - type: textarea
+    attributes:
+      label: What
+      description: A set of issues leading to accomplishing the story. These issues may span across multiple repositories. The set should be grouped into a task list using the markdown format. Essentially this is an implementation action plan.
+      value: |
+        - [ ]

@@ -1,4 +1,4 @@
-from superduperdb import cf
+from superduperdb import CFG
 
 
 def maybe_login_required(auth, service):
@@ -10,7 +10,7 @@ def maybe_login_required(auth, service):
     """
 
     def decorator(f):
-        if 'user' in cf[service]:
+        if getattr(CFG, service).user:
             return auth.login_required(f)
         return f
 

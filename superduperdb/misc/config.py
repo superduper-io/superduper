@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from enum import Enum, auto
+from pydantic import BaseModel, Field, root_validator
 from typing import Dict, List
 
 # The classes in this file define the configuration variables for SuperDuperDB.
@@ -22,20 +23,27 @@ class _Model(BaseModel):
         extra = 'forbid'
 
 
-class Port(_Model):
+class HasPort(_Model):
     port = 0
+    password = ''
+    user = ''
 
 
-class HostPort(Port):
+class HostPort(HasPort):
     host = 'localhost'
 
 
-class IpPort(Port):
+class IpPort(HasPort):
     ip = 'localhost'
 
 
 class Api(_Model):
     api_key: str = Field(default=_BAD_KEY, repr=False)
+
+
+class Apis(_Model):
+    n_retries = 2
+    providers: Dict[str, Api] = _Factory(dict)
 
 
 class Dask(IpPort):
@@ -50,6 +58,23 @@ class Deployment(_Model):
     model = ''
 
 
+class LogLevel(str, Enum):
+    DEBUG = 'DEBUG'
+    INFO = 'INFO'
+    WARN = 'WARN'
+
+
+class LogType(str, Enum):
+    STDERR = 'STDERR'
+    LOGGING = 'LOGGING'
+
+
+class Logging(_Model):
+    level = LogLevel.INFO
+    type = LogType.STDERR
+    kwargs: dict = _Factory(dict)
+
+
 class ModelServer(HostPort):
     host = '127.0.0.1'
     port = 5001
@@ -59,10 +84,16 @@ class MongoDB(HostPort):
     port = 27017
 
 
-class Notebook(IpPort):
-    port = 8888
+class Notebook(_Model):
     ip = '0.0.0.0'
-    token: str = Field(default=_BAD_KEY, repr=False)
+    port = 8888
+    password = ''
+    token = ''
+
+    @root_validator
+    def check_one_or_none(cls, v):
+        assert not all(v.values()), 'At most one of password and token may be set'
+        return v
 
 
 class Ray(HostPort):
@@ -76,8 +107,9 @@ class VectorSearch(HostPort):
 
 
 class Config(_Model):
-    apis: Dict[str, Api] = _Factory(dict)
+    apis: Apis = _Factory(Apis)
     dask: Dask = _Factory(Dask)
+    logging: Logging = _Factory(Logging)
     model_server: ModelServer = _Factory(ModelServer)
     mongodb: MongoDB = _Factory(MongoDB)
     notebook: Notebook = _Factory(Notebook)

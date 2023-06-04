@@ -12,7 +12,9 @@ class SuperDuperClient(MongoClient):
     Databases and collections in the client are SuperDuperDB objects.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
+        if user is not None:
+            kwargs.setdefault('username', user)
         super().__init__(*args, **kwargs)
         self.args = args
         self.kwargs = kwargs

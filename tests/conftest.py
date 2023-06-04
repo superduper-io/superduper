@@ -7,6 +7,7 @@ import pytest
 from superduperdb.datalayer.mongodb.client import SuperDuperClient
 
 from .conftest_mongodb import MongoDBConfig
+from superduperdb.misc import config as _config
 
 pytest_plugins = [
     "tests.conftest_mongodb",
@@ -37,15 +38,12 @@ def client(mongodb_server: MongoDBConfig) -> Iterator[SuperDuperClient]:
 
 @pytest.fixture(autouse=True)
 def config(mongodb_server: MongoDBConfig) -> Iterator[None]:
-    with mock.patch.dict(
-        "superduperdb.cf",
-        {
-            "mongodb": {
-                "host": mongodb_server.host,
-                "port": mongodb_server.port,
-                "username": mongodb_server.username,
-                "password": mongodb_server.password,
-            }
-        },
-    ):
+    our_config = _config.MongoDB(
+        host=mongodb_server.host,
+        port=mongodb_server.port,
+        user=mongodb_server.username,
+        password=mongodb_server.password,
+    )
+
+    with mock.patch('superduperdb.CFG.mongodb', our_config):
         yield

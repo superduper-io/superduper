@@ -1,25 +1,33 @@
-from superduperdb import cf
+from superduperdb import CFG
 from warnings import warn
 
-cf_logging = cf.get('logging', {'type': 'stdout', 'level': 'INFO'})
+__all__ = 'logging',
 
-if cf_logging['type'] == 'stdout':
-
+if CFG.logging.type == 'stdout':
     def logging():
-        return None
+        pass
 
-    logging.info = print if cf_logging['level'] in {'DEBUG', 'INFO'} else lambda x: None
-    logging.debug = print if cf_logging['level'] == 'DEBUG' else lambda x: None
-    logging.warn = (
-        warn if cf_logging['level'] in {'DEBUG', 'INFO', 'WARN'} else lambda x: None
-    )
-    logging.error = warn
+    def dont_print(*a, **ka):
+        pass
+
+    logging.error = logging.warn = warn
+    level = CFG.logging.level
+
+    if level == level.DEBUG:
+        logging.debug = print
+        logging.info = print
+
+    elif level == level.INFO:
+        logging.debug = dont_print
+        logging.info = print
+
+    else:
+        logging.debug = dont_print
+        logging.info = dont_print
+
 else:
     import logging
 
-    cf_logging = cf.get('logging', {})
-    logging.basicConfig(
-        level=getattr(logging, cf_logging.get('level', 'INFO')),
-        **{k: v for k, v in cf_logging.items() if k != 'level'},
-    )
-    logging.getLogger("distributed").propagate = True
+    level = getattr(logging, CFG.logging.level.name)
+    logging.basicConfig(level=level, **CFG.logging.kwargs)
+    logging.getLogger('distributed').propagate = True

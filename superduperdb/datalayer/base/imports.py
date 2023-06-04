@@ -1,6 +1,6 @@
 import importlib
 
-from superduperdb import cf
+from superduperdb import CFG
 
 
 def get_database_from_database_type(database_type, database_name):
@@ -12,5 +12,13 @@ def get_database_from_database_type(database_type, database_name):
     """
     module = importlib.import_module(f'superduperdb.datalayer.{database_type}.client')
     client_cls = getattr(module, 'SuperDuperClient')
-    client = client_cls(**cf.get(database_type, {}))
+
+    try:
+        cfg = getattr(CFG, database_type)
+    except AttributeError:
+        kwargs = {}
+    else:
+        kwargs = cfg.dict()
+
+    client = client_cls(**kwargs)
     return client.get_database_from_name(database_name)

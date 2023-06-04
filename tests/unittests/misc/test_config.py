@@ -2,12 +2,10 @@ from .test_dicts import PARENT
 from collections import Counter
 from pathlib import Path
 from pydantic import ValidationError
-from superduperdb.misc.config import _Factory, _Model, Config
+from superduperdb.misc.config import _Factory, _Model, Config, Notebook
 import copy
 import json
 import pytest
-
-DEFAULT_CONFIG_FILE = Path(__file__).parents[3] / 'default-configs.json'
 
 TYPE_ERROR = """
 1 validation error for Config
@@ -19,30 +17,15 @@ NAME_ERROR = """
 bad_name
   extra fields not permitted (type=value_error.extra)
 """
-
-
-def test_default_config():
-    # If this test fails, try running
-    #
-    #    $ python -m tests.unittests.misc.test_config
-    #
-    # to rebuild default-configs.json
-    assert Config().dict() == json.loads(DEFAULT_CONFIG_FILE.read_text())
-
-
-def write_default_config():
-    DEFAULT_CONFIG_FILE.write_text(json.dumps(Config().dict(), indent=2))
-
-
-def test_copy_config():
-    cf = Config(**DATA)
-    assert cf.ray.deployments[0].database == 'mnist'
-
-    assert cf.dict() == DATA
+VALIDATION_ERROR = """
+1 validation error for Notebook
+__root__
+  At most one of password and token may be set (type=assertion_error)
+"""
 
 
 def test_type_error():
-    d2 = copy.deepcopy(DATA)
+    d2 = Config().dict()
     d2['dask']['port'] = 'bad port'
 
     with pytest.raises(ValidationError) as pr:
@@ -52,8 +35,14 @@ def test_type_error():
 
 def test_unknown_name():
     with pytest.raises(ValidationError) as pr:
-        Config(bad_name={}, **DATA)
+        Config(bad_name={})
     assert str(pr.value).strip() == NAME_ERROR.strip()
+
+
+def test_validation():
+    with pytest.raises(ValidationError) as pr:
+        Notebook(password='password', token='token')
+    assert str(pr.value).strip() == VALIDATION_ERROR.strip()
 
 
 def _dict_names(d, *address):
@@ -120,29 +109,3 @@ def test_find_dupes():
 
     assert Colors().dict() == PARENT
     assert _dupes(Colors) == ['blue_green_puce']
-
-
-DATA = {
-    'remote': False,
-    'vector_search': {'host': 'localhost', 'port': 5001},
-    'dask': {
-        'ip': 'localhost',
-        'port': 8786,
-        'serializers': ['pickle', 'dill'],
-        'deserializers': ['pickle', 'dill'],
-    },
-    'ray': {
-        'deployments': [{'database': 'mnist', 'model': 'lenet'}],
-        'host': '127.0.0.1',
-        'port': 8000,
-    },
-    'model_server': {'host': 'localhost', 'port': 5002},
-    'mongodb': {'host': 'localhost', 'port': 27017},
-    'notebook': {'token': '...', 'port': 8888, 'ip': '0.0.0.0'},
-    'apis': {'openai': {'api_key': 'sk-...'}},
-}
-
-
-if __name__ == '__main__':
-    write_default_config()
-    print('Wrote', DEFAULT_CONFIG_FILE)

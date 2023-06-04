@@ -10,7 +10,7 @@ from superduperdb.datalayer.mongodb.client import SuperDuperClient
 from bson import BSON
 from flask import request, Flask, make_response
 
-from superduperdb import cf
+from superduperdb import CFG
 from superduperdb.cluster.login import maybe_login_required
 from superduperdb.misc.logger import logging
 
@@ -18,14 +18,13 @@ app = Flask(__name__)
 CORS(app)
 auth = HTTPBasicAuth()
 
-if 'user' in cf['vector_search']:
-    users = {
-        cf['vector_search']['user']: generate_password_hash(
-            cf['vector_search']['password']
-        ),
-    }
+if CFG.vector_search.user:
+    password_hash = generate_password_hash(CFG.vector_search.password)
+    users = {CFG.vector_search.user: password_hash}
+else:
+    users = None
 
-client = SuperDuperClient(**cf['mongodb'])
+client = SuperDuperClient(**CFG.mongodb.dict())
 collections = {}
 
 
@@ -49,4 +48,4 @@ def serve():
 
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=cf['vector_search']['port'])
+    app.run(host='localhost', port=CFG.vector_search.port)

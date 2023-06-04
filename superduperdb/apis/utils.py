@@ -5,7 +5,7 @@ from tenacity import (
     wait_exponential,
 )
 
-from superduperdb.apis import api_cf
+from superduperdb import CFG
 
 
 class DoRetry:
@@ -15,6 +15,6 @@ class DoRetry:
     def __call__(self, f):
         return retry(
             retry=retry_if_exception_type(self.exception_types),
-            stop=stop_after_attempt(api_cf.get('n_retries', 2)),
+            stop=stop_after_attempt(CFG.apis.n_retries),
             wait=wait_exponential(multiplier=1, min=4, max=10),
         )(f)

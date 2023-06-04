@@ -3,7 +3,7 @@ from functools import wraps
 import inspect
 import requests
 
-from superduperdb import cf
+from superduperdb import CFG
 from superduperdb.cluster.annotations import encode_args, encode_kwargs, decode_result
 from superduperdb.misc.logger import logging
 
@@ -18,7 +18,7 @@ def use_vector_search(database_type, database_name, method, args, kwargs):
     }
     body = BSON.encode(bson_)
     response = requests.post(
-        f'http://{cf["model_server"]["host"]}:{cf["vector_search"]["port"]}/',
+        f'http://{CFG.model_server.host}:{CFG.vector_search.port}/',
         data=body,
     )
     out = BSON.decode(response.content)
@@ -84,9 +84,7 @@ def model_server(f):
     return model_server_wrapper
 
 
-RAY_MODELS = [
-    (r['database'], r['model']) for r in cf.get('ray', {}).get('deployments', [])
-]
+RAY_MODELS = [(r['database'], r['model']) for r in CFG.ray.deployments]
 
 logging.info(f'These are the RAY_MODELS: {RAY_MODELS}')
 
@@ -95,7 +93,7 @@ def use_model_server(database_type, database_name, method, args, kwargs):
     if method in {'predict', 'predict_one'} and (database_name, args[0]) in RAY_MODELS:
         logging.debug('using Ray server')
         response = requests.post(
-            f'http://{cf["ray"]["host"]}:{cf["ray"]["port"]}/{method}/{args[0]}',
+            f'http://{CFG.ray.host}:{CFG.ray.port}/{method}/{args[0]}',
             data=BSON.encode({'input_': args[1]}),
         )
     else:
@@ -108,7 +106,7 @@ def use_model_server(database_type, database_name, method, args, kwargs):
         }
         body = BSON.encode(bson_)
         response = requests.post(
-            f'http://{cf["model_server"]["host"]}:{cf["model_server"]["port"]}/',
+            f'http://{CFG.model_server.host}:{CFG.model_server.port}/',
             data=body,
         )
     out = BSON.decode(response.content)['output']

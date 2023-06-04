@@ -1,10 +1,10 @@
 from dask.distributed import Client
-from superduperdb import cf
+from superduperdb import CFG
 
 
 def dask_client():
     return Client(
-        address=f'tcp://{cf["dask"]["ip"]}:{cf["dask"]["port"]}',
-        serializers=cf["dask"]["serializers"],
-        deserializers=cf["dask"]["deserializers"],
+        address=f'tcp://{CFG.dask.ip}:{CFG.dask.port}',
+        serializers=CFG.dask.serializers,
+        deserializers=CFG.dask.deserializers,
     )

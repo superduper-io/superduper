@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from superduperdb.cluster.annotations import decode_args, decode_kwargs, encode_result
 from superduperdb.datalayer.mongodb.client import SuperDuperClient
-from superduperdb import cf
+from superduperdb import CFG
 from superduperdb.cluster.login import maybe_login_required
 from superduperdb.misc.special_dicts import ArgumentDefaultDict
 
@@ -17,14 +17,13 @@ app = Flask(__name__)
 CORS(app)
 auth = HTTPBasicAuth()
 
-if 'user' in cf['model_server']:
-    users = {
-        cf['model_server']['user']: generate_password_hash(
-            cf['model_server']['password']
-        ),
-    }
+if CFG.model_server.user:
+    password_hash = generate_password_hash(CFG.model_server.password)
+    users = {CFG.model_server.user: password_hash}
+else:
+    users = None
 
-client = SuperDuperClient(**cf['mongodb'])
+client = SuperDuperClient(**CFG.mongodb.dict())
 databases = ArgumentDefaultDict(lambda name: client[name])
 
 
@@ -51,4 +50,4 @@ def serve():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=cf['model_server']['port'])
+    app.run(host='0.0.0.0', port=CFG.model_server.port)

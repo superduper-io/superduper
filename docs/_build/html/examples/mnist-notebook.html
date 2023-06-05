@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MNIST: Handwritten digit recognition with SuperDuperDB &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Bespoke training loop using GAN on Celeb Dataset" href="dc-gan.html" />
+    <link rel="prev" title="Examples" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MNIST: Handwritten digit recognition with SuperDuperDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dc-gan.html">Bespoke training loop using GAN on Celeb Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coco/index.html">CoCo (Common Objects in Context) Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../types.html">Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../content.html">Content</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../semantic_indexes.html">Semantic indexes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../imputations.html">Imputations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../full_usage.html">Full usage</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Examples</a></li>
+      <li class="breadcrumb-item active">MNIST: Handwritten digit recognition with SuperDuperDB</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/mnist-notebook.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="MNIST:-Handwritten-digit-recognition-with-SuperDuperDB">
+<h1>MNIST: Handwritten digit recognition with SuperDuperDB<a class="headerlink" href="#MNIST:-Handwritten-digit-recognition-with-SuperDuperDB" title="Permalink to this heading"></a></h1>
+<p>The <a class="reference external" href="https://en.wikipedia.org/wiki/MNIST_database">MNIST dataset</a> is the classic hello-world for machine learning and AI.</p>
+<p>In this tutorial we implement MNIST classification using the paradigmatic “LeNet” based on the un-preprocessed images.</p>
+<p>First we import the SuperDuperDB client, and create a fresh collection.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb.client</span> <span class="kn">import</span> <span class="n">SuperDuperClient</span>
+
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">PIL.Image</span>
+<span class="kn">import</span> <span class="nn">PIL.JpegImagePlugin</span>
+<span class="kn">import</span> <span class="nn">PIL.PngImagePlugin</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">transforms</span>
+<span class="kn">import</span> <span class="nn">torchvision</span>
+
+<span class="n">the_client</span> <span class="o">=</span> <span class="n">SuperDuperClient</span><span class="p">()</span>
+<span class="n">docs</span> <span class="o">=</span> <span class="n">the_client</span><span class="o">.</span><span class="n">mnist</span><span class="o">.</span><span class="n">digits</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:root:These are the RAY_MODELS: [(&#39;mnist&#39;, &#39;lenet&#39;)]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+DEBUG:PIL.PngImagePlugin:STREAM b&#39;IHDR&#39; 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b&#39;IDAT&#39; 41 203
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;_id&#39;: ObjectId(&#39;645e1873ea68526c890a55f3&#39;),
+ &#39;img&#39;: &lt;PIL.PngImagePlugin.PngImageFile image mode=L size=28x28&gt;,
+ &#39;class&#39;: 4,
+ &#39;_fold&#39;: &#39;train&#39;}
+</pre></div></div>
+</div>
+<p>The data is available as <code class="docutils literal notranslate"><span class="pre">PIL.Image</span></code> images with labels in the <code class="docutils literal notranslate"><span class="pre">torchvision</span></code> package:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
+
+<span class="n">mnist_data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">torchvision</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s1">&#39;./data&#39;</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">mnist_data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>SuperDuperDB is based on MongoDB, which does not support images and tensors and other special data types out of the box. In order to remedy this, we create custom SuperDuperDB <strong>types</strong>. These types handle:</p>
+<ul class="simple">
+<li><p>How to store images as bytes in SuperDuperDB and how to reinstantiate the images from the bytes</p></li>
+<li><p>How to store tensors in SuperDuperDB and how to retrieve these from the database again</p></li>
+</ul>
+<p>We do this by creating the classes in python with <code class="docutils literal notranslate"><span class="pre">.encode</span></code> and <code class="docutils literal notranslate"><span class="pre">.decode</span></code> methods:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Image</span><span class="p">:</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="n">PIL</span><span class="o">.</span><span class="n">JpegImagePlugin</span><span class="o">.</span><span class="n">JpegImageFile</span><span class="p">,</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span>
+             <span class="n">PIL</span><span class="o">.</span><span class="n">PngImagePlugin</span><span class="o">.</span><span class="n">PngImageFile</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;png&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">bytes_</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">bytes_</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">FloatTensor</span><span class="p">:</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span>
+        <span class="k">return</span> <span class="nb">memoryview</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">bytes_</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">bytes_</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">array</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Once these classes are ready, we can add instances of these to SuperDuperDB, giving each type a suitable name:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="n">Image</span><span class="p">(),</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span> <span class="n">FloatTensor</span><span class="p">(),</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now we have these custom types, we can insert the data into SuperDuperDB:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">jobs</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">([{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mnist_data</span><span class="p">[:</span><span class="o">-</span><span class="mi">1000</span><span class="p">]])</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({})</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">jobs</span>
+</pre></div>
+</div>
+</div>
+<p>When data is inserted into SuperDuperDB, certain actions/ jobs are triggered. These include downloading content into the database from provided URIs, and running model <strong>watchers</strong> over the added data, if these have been added.</p>
+<p>The second output from the <code class="docutils literal notranslate"><span class="pre">insert_many</span></code> statement give a dictionary of ids of the asynchronous jobs which were created. These can also be seen in the job list:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">list_jobs</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>In this case, only one job was created - to download content. We can watch the stdout/stderr of this job like this:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="s1">&#39;_download_content&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>You can see that all data apart from the final 1000 have been added:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({})</span>
+</pre></div>
+</div>
+</div>
+<p>You’ll see that when we fetch data from the database, it’s in exactly the form that we want. For example, the images have been saved and recalled as <code class="docutils literal notranslate"><span class="pre">PIL.Image</span></code> types.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>Now that we’ve added the data to SuperDuperDB, we’re ready to create a model. This is a simple PyTorch model implementing the iconic <a class="reference external" href="https://en.wikipedia.org/wiki/LeNet">LeNet architecture</a>. In addition to the standard PyTorch <code class="docutils literal notranslate"><span class="pre">.forward</span></code> method, SuperDuperDB allows users to specify <code class="docutils literal notranslate"><span class="pre">.preprocess</span></code> and <code class="docutils literal notranslate"><span class="pre">.postprocess</span></code> methods which define respectively:</p>
+<ul class="simple">
+<li><p>how the data is converted from the in-database form, to tensor</p></li>
+<li><p>from the output form back into the form to be stored in the database</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">label</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">LeNet5</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="mi">16</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relu</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">84</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relu1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">84</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">([</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">((</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">)),</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+            <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1307</span><span class="p">,),</span> <span class="n">std</span><span class="o">=</span><span class="p">(</span><span class="mf">0.3081</span><span class="p">,))]</span>
+        <span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relu1</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s test this model on a single image. <code class="docutils literal notranslate"><span class="pre">Collection.apply_model</span></code> applies the <code class="docutils literal notranslate"><span class="pre">preprocess</span></code>, <code class="docutils literal notranslate"><span class="pre">forward</span></code> and <code class="docutils literal notranslate"><span class="pre">postprocess</span></code> methods serially, creating a singleton batch prior to the <code class="docutils literal notranslate"><span class="pre">forward</span></code> and unpacking the batch after the <code class="docutils literal notranslate"><span class="pre">forward</span></code>. A similar logic is applied in all functionality which involves applying a model to the data.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">LeNet5</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">docs</span><span class="o">.</span><span class="n">find</span><span class="p">()[</span><span class="mi">23</span><span class="p">][</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+DEBUG:PIL.PngImagePlugin:STREAM b&#39;IHDR&#39; 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b&#39;IDAT&#39; 41 185
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #800000; text-decoration-color: #800000">╭─────────────────────────────── </span><span style="color: #800000; text-decoration-color: #800000; font-weight: bold">Traceback </span><span style="color: #bf7f7f; text-decoration-color: #bf7f7f; font-weight: bold">(most recent call last)</span><span style="color: #800000; text-decoration-color: #800000"> ────────────────────────────────╮</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #bfbf7f; text-decoration-color: #bfbf7f">/var/folders/y9/b74b9yj906s_wtj0rrh2lf7c0000gn/T/ipykernel_17342/</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">4273420027.py</span>:<span style="color: #0000ff; text-decoration-color: #0000ff">1</span> in <span style="color: #00ff00; text-decoration-color: #00ff00">&lt;module&gt;</span>     <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>                                                                                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #800000; text-decoration-color: #800000; font-style: italic">[Errno 2] No such file or directory: </span>                                                            <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #800000; text-decoration-color: #800000; font-style: italic">'/var/folders/y9/b74b9yj906s_wtj0rrh2lf7c0000gn/T/ipykernel_17342/4273420027.py'</span>                 <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>                                                                                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #bfbf7f; text-decoration-color: #bfbf7f">/Users/dodo/SuperDuperDB/superduperdb/superduperdb/datalayer/mongodb/</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">collection.py</span>:<span style="color: #0000ff; text-decoration-color: #0000ff">84</span> in         <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #00ff00; text-decoration-color: #00ff00">predict_one</span>                                                                                      <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>                                                                                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 81 │   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">return</span> <span style="color: #00ffff; text-decoration-color: #00ffff">self</span>.database.predict(*args, **kwargs)                                      <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 82 │   </span>                                                                                       <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 83 │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">def</span> <span style="color: #00ff00; text-decoration-color: #00ff00">predict_one</span>(<span style="color: #00ffff; text-decoration-color: #00ffff">self</span>, *args, **kwargs):                                                <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #800000; text-decoration-color: #800000">❱ </span> 84 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">return</span> <span style="color: #00ffff; text-decoration-color: #00ffff">self</span>.database.predict_one(*args, **kwargs)                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 85 │   </span>                                                                                       <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 86 │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">def</span> <span style="color: #00ff00; text-decoration-color: #00ff00">cancel_job</span>(<span style="color: #00ffff; text-decoration-color: #00ffff">self</span>, job_id):                                                          <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 87 │   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">return</span> <span style="color: #00ffff; text-decoration-color: #00ffff">self</span>.database.cancel_job(job_id)                                            <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>                                                                                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #bfbf7f; text-decoration-color: #bfbf7f">/Users/dodo/SuperDuperDB/superduperdb/superduperdb/cluster/</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">client_decorators.py</span>:<span style="color: #0000ff; text-decoration-color: #0000ff">80</span> in            <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #00ff00; text-decoration-color: #00ff00">model_server_wrapper</span>                                                                             <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>                                                                                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 77 │   │   │   </span>out = decode_result(database, sig, out)                                        <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 78 │   │   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">return</span> out                                                                     <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 79 │   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">else</span>:                                                                              <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #800000; text-decoration-color: #800000">❱ </span> 80 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│   │   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">return</span> f(database, *args, **kwargs)                                            <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 81 │   </span>model_server_wrapper.f = f                                                             <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 82 │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">return</span> model_server_wrapper                                                            <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 83 </span>                                                                                           <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>                                                                                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #bfbf7f; text-decoration-color: #bfbf7f">/Users/dodo/SuperDuperDB/superduperdb/superduperdb/datalayer/base/</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">database.py</span>:<span style="color: #0000ff; text-decoration-color: #0000ff">69</span> in <span style="color: #00ff00; text-decoration-color: #00ff00">predict_one</span>  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>                                                                                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  66 │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">def</span> <span style="color: #00ff00; text-decoration-color: #00ff00">predict_one</span>(<span style="color: #00ffff; text-decoration-color: #00ffff">self</span>, model, input_: Convertible(), **kwargs) -&gt; Convertible():       <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  67 │   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">if</span> <span style="color: #00ffff; text-decoration-color: #00ffff">isinstance</span>(model, <span style="color: #00ffff; text-decoration-color: #00ffff">str</span>):                                                        <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  68 │   │   │   </span>model = <span style="color: #00ffff; text-decoration-color: #00ffff">self</span>.models[model]                                                    <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #800000; text-decoration-color: #800000">❱ </span>  69 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">return</span> model.predict_one(input_, **{k: v <span style="color: #0000ff; text-decoration-color: #0000ff">for</span> k, v <span style="color: #ff00ff; text-decoration-color: #ff00ff">in</span> kwargs.items() <span style="color: #0000ff; text-decoration-color: #0000ff">if</span> k != <span style="color: #808000; text-decoration-color: #808000">'rem</span>  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  70 │   </span>                                                                                      <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  71 │   </span><span style="color: #ff00ff; text-decoration-color: #ff00ff; font-weight: bold">@model_server</span>                                                                         <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  72 │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">def</span> <span style="color: #00ff00; text-decoration-color: #00ff00">predict</span>(<span style="color: #00ffff; text-decoration-color: #00ffff">self</span>, model, input_: Convertible(), **kwargs) -&gt; Convertible():           <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>                                                                                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #bfbf7f; text-decoration-color: #bfbf7f">/Users/dodo/SuperDuperDB/superduperdb/.venv/lib/python3.10/site-packages/torch/nn/modules/</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">module</span> <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #808000; text-decoration-color: #808000; font-weight: bold">.py</span>:<span style="color: #0000ff; text-decoration-color: #0000ff">1614</span> in <span style="color: #00ff00; text-decoration-color: #00ff00">__getattr__</span>                                                                          <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>                                                                                                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">1611 │   │   │   </span>modules = <span style="color: #00ffff; text-decoration-color: #00ffff">self</span>.<span style="color: #ff0000; text-decoration-color: #ff0000">__dict__</span>[<span style="color: #808000; text-decoration-color: #808000">'_modules'</span>]                                           <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">1612 │   │   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">if</span> name <span style="color: #ff00ff; text-decoration-color: #ff00ff">in</span> modules:                                                           <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">1613 │   │   │   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">return</span> modules[name]                                                      <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span> <span style="color: #800000; text-decoration-color: #800000">❱ </span>1614 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│   │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">raise</span> <span style="color: #00ffff; text-decoration-color: #00ffff">AttributeError</span>(<span style="color: #808000; text-decoration-color: #808000">"'{}' object has no attribute '{}'"</span>.format(                  <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">1615 │   │   │   </span><span style="color: #00ffff; text-decoration-color: #00ffff">type</span>(<span style="color: #00ffff; text-decoration-color: #00ffff">self</span>).<span style="color: #ff0000; text-decoration-color: #ff0000">__name__</span>, name))                                                   <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">1616 │   </span>                                                                                      <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">│</span>   <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">1617 │   </span><span style="color: #0000ff; text-decoration-color: #0000ff">def</span> <span style="color: #00ff00; text-decoration-color: #00ff00">__setattr__</span>(<span style="color: #00ffff; text-decoration-color: #00ffff">self</span>, name: <span style="color: #00ffff; text-decoration-color: #00ffff">str</span>, value: Union[Tensor, <span style="color: #808000; text-decoration-color: #808000">'Module'</span>]) -&gt; <span style="color: #0000ff; text-decoration-color: #0000ff">None</span>:             <span style="color: #800000; text-decoration-color: #800000">│</span>
+<span style="color: #800000; text-decoration-color: #800000">╰──────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
+<span style="color: #ff0000; text-decoration-color: #ff0000; font-weight: bold">AttributeError: </span><span style="color: #008000; text-decoration-color: #008000">'LeNet5'</span> object has no attribute <span style="color: #008000; text-decoration-color: #008000">'predict_one'</span>
+</pre></div>
+</div>
+<p>Now that we have our model we need a target for learning - for this we use <code class="docutils literal notranslate"><span class="pre">label</span></code>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;lenet&#39;</span><span class="p">,</span> <span class="n">LeNet5</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">layer</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s1">&#39;lenet&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">layer</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()[</span><span class="s1">&#39;img&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+DEBUG:PIL.PngImagePlugin:STREAM b&#39;IHDR&#39; 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b&#39;IDAT&#39; 41 203
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+7
+</pre></div></div>
+</div>
+<p>And a metric to measure performance. Defined metrics are applied serially over individual data points, and the results are averaged:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">accuracy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>When measuring performance, SuperDuperDB requires users to create a separate validation set, which is saved for posterity and reproducibility reasons - edits and deletes on the main collection don’t affect this validation set.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_validation_set</span><span class="p">(</span><span class="s1">&#39;classification&#39;</span><span class="p">,</span> <span class="n">sample_size</span><span class="o">=</span><span class="mi">250</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now we’re ready to create the model using the <code class="docutils literal notranslate"><span class="pre">Collection.create_imputation</span></code>. This trains a model to predict one part of the data using another part, specified respectively by <code class="docutils literal notranslate"><span class="pre">model_key</span></code> and <code class="docutils literal notranslate"><span class="pre">target_key</span></code>; these are subkeys of the collection documents.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.training.torch.trainer</span> <span class="kn">import</span> <span class="n">TorchTrainerConfiguration</span>
+
+<span class="n">jobs</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">create_learning_task</span><span class="p">(</span>
+    <span class="p">[</span><span class="s1">&#39;lenet&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">],</span>
+    <span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">],</span>
+    <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;predictor&#39;</span><span class="p">,</span>
+    <span class="n">configuration</span><span class="o">=</span><span class="n">TorchTrainerConfiguration</span><span class="p">(</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">,</span>
+        <span class="n">n_iterations</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+        <span class="n">validation_interval</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+        <span class="n">loader_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span> <span class="s1">&#39;num_workers&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="p">),</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">],</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;classification&#39;</span><span class="p">,),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>This command creates two jobs, one to train the model, and another to apply the model to the data after training. As before, the jobs are spawned asynchronously. We can watch the output of the jobs, but in the meantime we can also do other things in our environment, and with the database. Stopping the <code class="docutils literal notranslate"><span class="pre">watch_job</span></code> command, simply breaks the connection to the logs (doesn’t stop the job).</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>We can continue watching the job, by executing the command again:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>Now the training has finished, we can watch the computation of model outputs:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">info</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_object_info</span><span class="p">(</span><span class="s1">&#39;predictor&#39;</span><span class="p">,</span> <span class="s1">&#39;learning_task&#39;</span><span class="p">)</span>
+<span class="n">info</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;metric_values&#39;</span><span class="p">][</span><span class="s1">&#39;classification&#39;</span><span class="p">][</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>Accuracy is good, and we can see the outputs have been added to the documents (<code class="docutils literal notranslate"><span class="pre">_outputs.img.lenet</span></code>):</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>After training, you’ll see that a model <strong>watcher</strong> has been created, which keeps the <code class="docutils literal notranslate"><span class="pre">img</span></code> key up-to-date</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">list_watchers</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>When new data are added, the trained model kicks into action and it’s outputs are added/ enriched to the newly added data</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">jobs</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">insert_many</span><span class="p">([{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;update&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mnist_data</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:]])</span>
+</pre></div>
+</div>
+</div>
+<p>We can watch the progress of adding this new data as before:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">watch_job</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="s1">&#39;watcher&#39;</span><span class="p">,</span> <span class="s1">&#39;predictor&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>After inserting and training the model, the model is automatically served on the SuperDuperDB model-server. If you’re deployment is exposed to the internet, then these predictions are available anywhere:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">im</span> <span class="o">=</span> <span class="n">docs</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;valid&#39;</span><span class="p">})[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span>
+<span class="n">im</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">apply_model</span><span class="p">(</span><span class="s1">&#39;lenet&#39;</span><span class="p">,</span> <span class="n">im</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dc-gan.html" class="btn btn-neutral float-right" title="Bespoke training loop using GAN on Celeb Dataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Duncan Blythe duncan@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -52,6 +52,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../minimum_working_example.html">Minimum working example</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">Examples</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../mnist-notebook.html">MNIST: Handwritten digit recognition with SuperDuperDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dc-gan.html">Bespoke training loop using GAN on Celeb Dataset</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo (Common Objects in Context) Dataset</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="setup-and-installation.html">Setup and installation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="inserting-and-getting-data.html">Inserting and getting data</a></li>
@@ -117,51 +118,36 @@
 </div>
 </div>
 <p>Let’s start adding a model to the collection. A nice open source model to test text-2-image retrieval is <a class="reference external" href="https://openai.com/blog/clip/">CLIP</a> which understands images and texts and embeds these in a common vector space.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/clip.py
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-bold" style="color: rgb(0,128,0)">import</span> <span class="ansi-bold" style="color: rgb(0,0,255)">torch</span>
-<span class="ansi-bold" style="color: rgb(0,128,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">clip</span> <span class="ansi-bold" style="color: rgb(0,128,0)">import</span> load <span class="ansi-bold" style="color: rgb(0,128,0)">as</span> load_clip, tokenize <span class="ansi-bold" style="color: rgb(0,128,0)">as</span> clip_tokenize
-
-
-<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">CLIP</span>(torch<span style="color: rgb(102,102,102)">.</span>nn<span style="color: rgb(102,102,102)">.</span>Module):
-    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, name):
-        <span style="color: rgb(0,128,0)">super</span>()<span style="color: rgb(102,102,102)">.</span><span style="color: rgb(0,0,255)">__init__</span>()
-        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>model, <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>image_preprocess <span style="color: rgb(102,102,102)">=</span> load_clip(name)
-
-    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">preprocess</span>(<span style="color: rgb(0,128,0)">self</span>, r):
-        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span style="color: rgb(0,128,0)">isinstance</span>(r, <span style="color: rgb(0,128,0)">str</span>):
-            <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> clip_tokenize(r, truncate<span style="color: rgb(102,102,102)">=</span><span class="ansi-bold" style="color: rgb(0,128,0)">True</span>)[<span style="color: rgb(102,102,102)">0</span>, :]
-        <span class="ansi-bold" style="color: rgb(0,128,0)">elif</span> <span style="color: rgb(0,128,0)">isinstance</span>(r, <span style="color: rgb(0,128,0)">list</span>) <span class="ansi-bold" style="color: rgb(170,34,255)">and</span> <span style="color: rgb(0,128,0)">isinstance</span>(r[<span style="color: rgb(102,102,102)">0</span>], <span style="color: rgb(0,128,0)">str</span>):
-            <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> clip_tokenize(<span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(186,33,33)"> </span><span style="color: rgb(186,33,33)">&#39;</span><span style="color: rgb(102,102,102)">.</span>join(r), truncate<span style="color: rgb(102,102,102)">=</span><span class="ansi-bold" style="color: rgb(0,128,0)">True</span>)[<span style="color: rgb(102,102,102)">0</span>, :]
-        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>image_preprocess(r)
-
-    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">forward</span>(<span style="color: rgb(0,128,0)">self</span>, r):
-        <span class="ansi-bold" style="color: rgb(0,128,0)">if</span> <span style="color: rgb(0,128,0)">len</span>(r<span style="color: rgb(102,102,102)">.</span>shape) <span style="color: rgb(102,102,102)">==</span> <span style="color: rgb(102,102,102)">2</span>:
-            <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>model<span style="color: rgb(102,102,102)">.</span>encode_text(r)
-        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>model<span style="color: rgb(102,102,102)">.</span>encode_image(r)
-</pre></div></div>
-</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.clip</span> <span class="kn">import</span> <span class="n">CLIP</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">clip</span> <span class="kn">import</span> <span class="n">load</span> <span class="k">as</span> <span class="n">load_clip</span><span class="p">,</span> <span class="n">tokenize</span> <span class="k">as</span> <span class="n">clip_tokenize</span>
+
+
+<span class="k">class</span> <span class="nc">CLIP</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_preprocess</span> <span class="o">=</span> <span class="n">load_clip</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">clip_tokenize</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">truncate</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">clip_tokenize</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="n">truncate</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_preprocess</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">encode_text</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">encode_image</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
 
 <span class="n">docs</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span>
     <span class="nb">object</span><span class="o">=</span><span class="n">CLIP</span><span class="p">(</span><span class="s1">&#39;RN50&#39;</span><span class="p">),</span>
     <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span>
+    <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -176,68 +162,36 @@
 </div>
 </div>
 <p>We’ll also create a measure which tests how similar to each other two outputs might be. Since CLIP was trained with cosine-similarity we’ll use that here too.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/measures.py
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">dot</span>(x, y):
-    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> x<span style="color: rgb(102,102,102)">.</span>matmul(y<span style="color: rgb(102,102,102)">.</span>T)
-
-
-<span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">css</span>(x, y):
-    x <span style="color: rgb(102,102,102)">=</span> x<span style="color: rgb(102,102,102)">.</span>div(x<span style="color: rgb(102,102,102)">.</span>norm(dim<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)[:, <span class="ansi-bold" style="color: rgb(0,128,0)">None</span>])
-    y <span style="color: rgb(102,102,102)">=</span> y<span style="color: rgb(102,102,102)">.</span>div(y<span style="color: rgb(102,102,102)">.</span>norm(dim<span style="color: rgb(102,102,102)">=</span><span style="color: rgb(102,102,102)">1</span>)[:, <span class="ansi-bold" style="color: rgb(0,128,0)">None</span>])
-    <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> dot(x, y)
-</pre></div></div>
-</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.measures</span> <span class="kn">import</span> <span class="n">css</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
-<span class="n">docs</span><span class="o">.</span><span class="n">create_measure</span><span class="p">(</span><span class="s1">&#39;css&#39;</span><span class="p">,</span> <span class="n">css</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">css</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_measure</span><span class="p">(</span><span class="s1">&#39;css&#39;</span><span class="p">,</span> <span class="n">css</span><span class="p">,</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <p>In order to be able to measure performance on the validation set, we’ll add a <strong>metric</strong>.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pygmentize<span class="w"> </span>examples/coco/recall.py
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-<span class="ansi-bold" style="color: rgb(0,128,0)">class</span> <span class="ansi-bold" style="color: rgb(0,0,255)">RatK</span>:
-    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(<span style="color: rgb(0,128,0)">self</span>, k):
-        <span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>k <span style="color: rgb(102,102,102)">=</span> k
-
-    <span class="ansi-bold" style="color: rgb(0,128,0)">def</span> <span style="color: rgb(0,0,255)">__call__</span>(<span style="color: rgb(0,128,0)">self</span>, x, y):
-        <span class="ansi-bold" style="color: rgb(0,128,0)">return</span> y <span class="ansi-bold" style="color: rgb(170,34,255)">in</span> x[:<span style="color: rgb(0,128,0)">self</span><span style="color: rgb(102,102,102)">.</span>k]
-</pre></div></div>
-</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.recall</span> <span class="kn">import</span> <span class="n">RatK</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">RatK</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
 
-<span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">,</span> <span class="n">RatK</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">]</span>
+
+<span class="n">docs</span><span class="o">.</span><span class="n">create_metric</span><span class="p">(</span><span class="s1">&#39;r_at_10&#39;</span><span class="p">,</span> <span class="n">RatK</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -246,14 +200,12 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.coco.clip</span> <span class="kn">import</span> <span class="n">CLIP</span>
-
-<span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">docs</span><span class="o">.</span><span class="n">create_semantic_index</span><span class="p">(</span>
     <span class="s1">&#39;clip&#39;</span><span class="p">,</span>
     <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clip&#39;</span><span class="p">,</span> <span class="s1">&#39;clip&#39;</span><span class="p">],</span>
     <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="s1">&#39;captions&#39;</span><span class="p">],</span>
     <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;css&#39;</span><span class="p">,</span>
-    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;p_at_10&#39;</span><span class="p">],</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;r_at_10&#39;</span><span class="p">],</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -307,70 +259,70 @@ loading hashes: &#34;clip&#34;
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_3.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_3.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_3.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_3.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_4.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_4.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_4.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_4.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_5.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_5.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_5.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_5.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_6.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_6.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_6.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_6.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_7.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_7.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_7.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_7.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_8.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_8.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_8.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_8.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_9.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_9.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_9.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_9.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_10.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_10.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_10.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_10.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_11.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_11.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_11.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_11.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_12.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_12.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_12.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_12.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
@@ -385,70 +337,70 @@ QUERY 2
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_14.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_14.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_14.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_14.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_15.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_15.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_15.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_15.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_16.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_16.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_16.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_16.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_17.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_17.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_17.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_17.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_18.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_18.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_18.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_18.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_19.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_19.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_19.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_19.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_20.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_20.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_20.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_20.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_21.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_21.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_21.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_21.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_22.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_22.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_22.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_22.png" />
 </div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_23.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_16_23.png" />
+<img alt="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_23.png" src="../../_images/examples_coco_text-2-image-retrieval-with-clip_13_23.png" />
 </div>
 </div>
 <p>Let’s now evaluate the quality of this semantic index</p>

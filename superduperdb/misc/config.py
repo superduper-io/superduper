@@ -1,6 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, Field, root_validator
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 # The classes in this file define the configuration variables for SuperDuperDB.
 #
@@ -102,8 +102,24 @@ class Ray(HostPort):
     deployments: List[Deployment] = _Factory(list)
 
 
-class VectorSearch(HostPort):
-    port = 5001
+class MilvusConfig(_Model):
+    host: str = 'localhost'
+    port: int = 19530
+    username: str = Field(default="", repr=False)
+    password: str = Field(default="", repr=False)
+    db_name: str = "default"
+    consistency_level: str = "Bounded"
+
+
+class VectorSearchConfig(_Model):
+    milvus: Optional[MilvusConfig] = None
+
+    # the fields below were left for compatibility with the vector search server
+    # that is still in the codebase
+    host: str = 'localhost'
+    port: int = 5001
+    user: str = Field(default="", repr=False)
+    password: str = Field(default="", repr=False)
 
 
 class Config(_Model):
@@ -115,4 +131,4 @@ class Config(_Model):
     notebook: Notebook = _Factory(Notebook)
     ray: Ray = _Factory(Ray)
     remote: bool = False
-    vector_search: VectorSearch = _Factory(VectorSearch)
+    vector_search: VectorSearchConfig = _Factory(VectorSearchConfig)

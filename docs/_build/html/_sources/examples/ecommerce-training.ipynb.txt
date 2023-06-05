@@ -1,0 +1,199 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "667047f8",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from superduperdb.mongodb.client import SuperDuperClient\n",
+    "from IPython.display import display\n",
+    "\n",
+    "c = SuperDuperClient()\n",
+    "docs = c.ecommerce.documents"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "da84fd0f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import torch\n",
+    "\n",
+    "\n",
+    "class Target(torch.nn.Module):\n",
+    "    def __init__(self):\n",
+    "        super().__init__()\n",
+    "        \n",
+    "    def preprocess(self, value):\n",
+    "        return torch.tensor(float(value))\n",
+    "    \n",
+    "    def forward(self, x):\n",
+    "        return x\n",
+    "    \n",
+    "    \n",
+    "class PersonDetector(torch.nn.Module):\n",
+    "    def __init__(self):\n",
+    "        super().__init__()\n",
+    "        self.linear = torch.nn.Linear(1024, 1)\n",
+    "        \n",
+    "    def preprocess(self, value):\n",
+    "        return torch.tensor(value).type(torch.float)\n",
+    "    \n",
+    "    def forward(self, x):\n",
+    "        return self.linear(x)[:, 0]\n",
+    "    \n",
+    "    def postprocess(self, x):\n",
+    "        return x.item() > 0.5\n",
+    "\n",
+    "\n",
+    "docs.create_model(\n",
+    "    'target',\n",
+    "    Target(),\n",
+    "    serializer='dill',\n",
+    ")\n",
+    "\n",
+    "docs.create_model(\n",
+    "    'person_detector',\n",
+    "    PersonDetector(),\n",
+    "    serializer='dill',\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "538da6df",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pos_weight = docs.count_documents({'person': True}) / docs.count_documents({'person': False})\n",
+    "\n",
+    "docs.create_objective('bce', torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight)))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "ef82d58c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "docs.create_metric('accuracy', lambda x, y: x == y, serializer='dill')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "1c8bd09d",
+   "metadata": {
+    "scrolled": false
+   },
+   "outputs": [],
+   "source": [
+    "job_ids = docs.create_imputation(\n",
+    "    'person_imputation',\n",
+    "    'person_detector',\n",
+    "    '_base',\n",
+    "    'target',\n",
+    "    'person',\n",
+    "    objective='bce',\n",
+    "    metrics=['accuracy'],\n",
+    "    filter_={'person': {'$exists': 1}},\n",
+    "    trainer_kwargs={'features': {'_base': 'clip'}, 'log_interval': 50},\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "23b4ba3d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "job_ids"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "62e76715",
+   "metadata": {
+    "scrolled": false
+   },
+   "outputs": [],
+   "source": [
+    "docs.watch_job(job_ids[0])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "2f26216a",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "docs.list_models()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "05f4a1de",
+   "metadata": {
+    "scrolled": false
+   },
+   "outputs": [],
+   "source": [
+    "_id = next(docs.aggregate([\n",
+    "    {'$match': {}},\n",
+    "    {'$sample': {'size': 1}},\n",
+    "    {'$project': {'_id': 1}}\n",
+    "]))['_id']\n",
+    "\n",
+    "r = docs.find_one({'_id': _id})\n",
+    "\n",
+    "display(r['img'])\n",
+    "docs.apply_model('person_detector', r['_outputs']['_base']['clip'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "901102ad",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "docs.delete_imputation('person_imputation', force=True)\n",
+    "docs.delete_objective('bce', force=True)\n",
+    "docs.delete_metric('accuracy', force=True)\n",
+    "docs.delete_model('person_detector', force=True)\n",
+    "docs.delete_model('target', force=True)"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

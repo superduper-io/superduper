@@ -154,11 +154,16 @@
     "In order to be able to get Python image objects or other objects encoded as bytes directly out of the database, we need to tell SuperDuperDB how to handle these bytes. For this we define `types`. The idea is that the class tells SuperDuperDB how to go to and from `bytes` from the Python object, based on the information in `_content`.\n",
     "Each type is a class with an `encode` and `decode` method, which convert to and from `bytes`.\n",
     "\n",
-    "In this example we import the types from the `examples` directory on GitHub. Here is the code for completeness.\n",
-    "\n",
-    "In `examples.types`:\n",
-    "\n",
-    "```python\n",
+    "In this example we create two important types."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "461f525e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "import io\n",
     "import numpy\n",
     "import PIL.Image\n",
@@ -190,8 +195,7 @@
     "    @staticmethod\n",
     "    def decode(bytes_):\n",
     "        array = numpy.frombuffer(bytes_, dtype=numpy.float32)\n",
-    "        return torch.from_numpy(array).type(torch.float)\n",
-    "```"
+    "        return torch.from_numpy(array).type(torch.float)"
    ]
   },
   {
@@ -203,8 +207,8 @@
    "source": [
     "from examples.types import FloatTensor, Image\n",
     "\n",
-    "docs.create_type('float_tensor', FloatTensor())\n",
-    "docs.create_type('image', Image())"
+    "docs.create_type('float_tensor', FloatTensor(), serializer='dill')\n",
+    "docs.create_type('image', Image(), serializer='dill')"
    ]
   },
   {
@@ -360,7 +364,7 @@
    "name": "python",
    "nbconvert_exporter": "python",
    "pygments_lexer": "ipython3",
-   "version": "3.10.6"
+   "version": "3.10.11"
   }
  },
  "nbformat": 4,

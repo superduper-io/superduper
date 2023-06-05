@@ -1,5 +1,12 @@
+from __future__ import annotations
+from dataclasses import dataclass
+from abc import ABC, abstractmethod
+from contextlib import contextmanager
 import numpy
 import torch
+from typing import List, Any, Iterator, Sequence
+
+from ..misc.config import VectorSearchConfig
 
 
 class BaseHashSet:
@@ -45,3 +52,87 @@ class BaseHashSet:
 
     def __getitem__(self, item):
         raise NotImplementedError
+
+
+VectorIndexId = str
+VectorIndexItemId = str
+
+
+class VectorIndexItemNotFound(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class VectorIndexItem:
+    id: VectorIndexItemId
+    vector: numpy.ndarray
+
+
+class VectorIndex(ABC):
+    """A vector index within a vector database.
+
+    Concrete implementations of this class are responsible for lifecycle management of
+    a single vector index within a specific vector database.
+
+    It is assumed that a vector index is associated with a single vector column or
+    field within a vector database.
+    """
+
+    @contextmanager
+    @abstractmethod
+    def init(self) -> Iterator["VectorIndex"]:
+        ...
+
+    @abstractmethod
+    def add(self, items: Sequence[VectorIndexItem]) -> None:
+        """Add items to the index."""
+        ...
+
+    @abstractmethod
+    def find_nearest_from_id(
+        self, identifier: VectorIndexItemId, *, limit: int = 100, offset: int = 0
+    ) -> List[Any]:
+        """Find items that are nearest to the item with the given identifier."""
+        ...
+
+    @abstractmethod
+    def find_nearest_from_array(
+        self, array: numpy.ndarray, *, limit: int = 100, offset: int = 0
+    ) -> List[Any]:
+        """Find items that are nearest to the given vector."""
+        ...
+
+
+class VectorIndexManager(ABC):
+    """A manager for vector indexes within a vector database.
+
+    Concrete implementations of this class are responsible for lifecycle management of
+    vector indexes within a specific vector database.
+
+    Clients of this class retrieve vector indexes by their identifier for subsequent
+    operations.
+    """
+
+    def __init__(self, *, config: VectorSearchConfig) -> None:
+        self._config = config
+
+    @contextmanager
+    @abstractmethod
+    def init(self) -> Iterator["VectorIndexManager"]:
+        """Initialize the manager.
+
+        This method makes sure all necessary connections to the underlying vector
+        database are established.
+        """
+        ...
+
+    @contextmanager
+    @abstractmethod
+    def get_index(
+        self, identifier: VectorIndexId, *, dimensions: int
+    ) -> Iterator[VectorIndex]:
+        """Get a vector index by its identifier.
+
+        If the index does not exist, it is created with the specified dimensionality.
+        """
+        ...

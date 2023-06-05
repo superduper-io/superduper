@@ -1,3 +1,5 @@
+import re
+
 import boto3
 from io import BytesIO
 from contextlib import contextmanager
@@ -53,6 +55,7 @@ class Fetcher:
         return f.getvalue()
 
     def _download_file(self, path):
+        path = re.split('^file://', path)[-1]
         with open(path, 'rb') as f:
             return f.read()
 

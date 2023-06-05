@@ -28,22 +28,26 @@ def test(
     down: bool = Option(False, help='If True, bring the docker down at the end'),
     dry_run: bool = Option(False, help='If True, print commands, do not execute them'),
 ):
-    commands = [
+    def run_all(cmd):
+        try:
+            for cmd in commands:
+                if dry_run:
+                    print('$', *cmd)
+                else:
+                    run.run(cmd)
+        except run.CalledProcessError:
+            sys.exit('Tests failed')
+
+    run_all(
         DOCKER + ['up', 'mongodb', '-d'],
         ['black'] + check * ['--check'] + DIRS,
         ['ruff'] + (not check) * ['--fix'] + DIRS,
+        ['mypy'],
         ['poetry', 'lock', '--no-update'] + check * ['--check'],
         coverage * ['coverage', 'run', '-m'] + ['pytest'] + argv,
-    ] + down * [DOCKER + ['down']]
-
-    try:
-        for cmd in commands:
-            if dry_run:
-                print('$', *cmd)
-            else:
-                run.run(cmd)
-    except run.CalledProcessError:
-        sys.exit('Tests failed')
+    )
+    if down:
+        run_all(DOCKER + ['down'])
 
 
 if __name__ == '__main__':

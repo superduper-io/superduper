@@ -37,6 +37,7 @@ pydantic = "^1.10.7"
 fil = "^1.1.0"
 torch = "^2.0.1"
 typer = "^0.9.0"
+ipykernel = "^6.23.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

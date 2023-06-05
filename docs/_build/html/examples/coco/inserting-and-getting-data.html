@@ -52,6 +52,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../minimum_working_example.html">Minimum working example</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">Examples</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../mnist-notebook.html">MNIST: Handwritten digit recognition with SuperDuperDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dc-gan.html">Bespoke training loop using GAN on Celeb Dataset</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="index.html">CoCo (Common Objects in Context) Dataset</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="setup-and-installation.html">Setup and installation</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Inserting and getting data</a></li>
@@ -182,9 +183,12 @@ number of workers 0
 </pre></div></div>
 </div>
 <p>In order to be able to get Python image objects or other objects encoded as bytes directly out of the database, we need to tell SuperDuperDB how to handle these bytes. For this we define <code class="docutils literal notranslate"><span class="pre">types</span></code>. The idea is that the class tells SuperDuperDB how to go to and from <code class="docutils literal notranslate"><span class="pre">bytes</span></code> from the Python object, based on the information in <code class="docutils literal notranslate"><span class="pre">_content</span></code>. Each type is a class with an <code class="docutils literal notranslate"><span class="pre">encode</span></code> and <code class="docutils literal notranslate"><span class="pre">decode</span></code> method, which convert to and from <code class="docutils literal notranslate"><span class="pre">bytes</span></code>.</p>
-<p>In this example we import the types from the <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory on GitHub. Here is the code for completeness.</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">examples.types</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">io</span>
+<p>In this example we create two important types.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">PIL.Image</span>
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -218,14 +222,15 @@ number of workers 0
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">array</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">examples.types</span> <span class="kn">import</span> <span class="n">FloatTensor</span><span class="p">,</span> <span class="n">Image</span>
 
-<span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span> <span class="n">FloatTensor</span><span class="p">())</span>
-<span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="n">Image</span><span class="p">())</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;float_tensor&#39;</span><span class="p">,</span> <span class="n">FloatTensor</span><span class="p">(),</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
+<span class="n">docs</span><span class="o">.</span><span class="n">create_type</span><span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="n">Image</span><span class="p">(),</span> <span class="n">serializer</span><span class="o">=</span><span class="s1">&#39;dill&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -303,21 +308,21 @@ number of workers 0
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_inserting-and-getting-data_15_0.png" src="../../_images/examples_coco_inserting-and-getting-data_15_0.png" />
+<img alt="../../_images/examples_coco_inserting-and-getting-data_16_0.png" src="../../_images/examples_coco_inserting-and-getting-data_16_0.png" />
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_inserting-and-getting-data_15_1.png" src="../../_images/examples_coco_inserting-and-getting-data_15_1.png" />
+<img alt="../../_images/examples_coco_inserting-and-getting-data_16_1.png" src="../../_images/examples_coco_inserting-and-getting-data_16_1.png" />
 </div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../../_images/examples_coco_inserting-and-getting-data_15_2.png" src="../../_images/examples_coco_inserting-and-getting-data_15_2.png" />
+<img alt="../../_images/examples_coco_inserting-and-getting-data_16_2.png" src="../../_images/examples_coco_inserting-and-getting-data_16_2.png" />
 </div>
 </div>
 </section>

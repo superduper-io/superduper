@@ -1,3 +1,4 @@
+from functools import lru_cache
 import os
 
 from openai import ChatCompletion as _ChatCompletion
@@ -10,14 +11,17 @@ from superduperdb.core.model import Model
 
 do_retry = DoRetry((Timeout, RateLimitError, TryAgain, ServiceUnavailableError))
 
-AVAILABLE_MODELS = tuple([r['id'] for r in OpenAIModel.list()['data']])
+
+@lru_cache(maxsize=None)
+def _available_models():
+    return tuple([r['id'] for r in OpenAIModel.list()['data']])
 
 
 class BaseOpenAI(Model):
     def __init__(self, identifier):
         super().__init__(None, identifier)
         msg = "model not in list of OpenAI available models"
-        assert identifier in AVAILABLE_MODELS, msg
+        assert identifier in _available_models(), msg
         assert 'OPENAI_API_KEY' in os.environ, "OPENAI_API_KEY not set"
 
 

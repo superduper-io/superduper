@@ -24,9 +24,9 @@ class BaseOpenAI(Model):
 class Embedding(BaseOpenAI):
     @do_retry
     def predict_one(self, text, **kwargs):
-        return _Embedding.create(input=text, model=self.identifier, **kwargs)['data'][0][
-            'embedding'
-        ]
+        return _Embedding.create(input=text, model=self.identifier, **kwargs)['data'][
+            0
+        ]['embedding']
 
     @do_retry
     def _predict_a_batch(self, texts, **kwargs):

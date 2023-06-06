@@ -1,9 +1,10 @@
 from superduperdb import CFG
 from warnings import warn
 
-__all__ = 'logging',
+__all__ = ('logging',)
 
 if CFG.logging.type == 'stdout':
+
     def logging():
         pass
 

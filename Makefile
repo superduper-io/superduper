@@ -1,4 +1,3 @@
-
 dist/.built: pyproject.toml $(shell find superduperdb)
 	poetry build --format=wheel
 	touch $@
@@ -20,7 +19,20 @@ build/jupyter-image: build/server-image
 .PHONY: test
 test:
 	docker compose -f tests/material/docker-compose.yml up mongodb -d
-	pytest -vv --maxfail=3 tests/unittests
+	black --check superduperdb tests
+	ruff check superduperdb tests
+	mypy
+	poetry lock --no-update --check
+	$(COVERAGE_PREFIX) pytest $(PYTEST_ARGUMENTS)
+
+.PHONY: fix-and-test
+fix-and-test:
+	docker compose -f tests/material/docker-compose.yml up mongodb -d
+	black superduperdb tests
+	ruff check --fix superduperdb tests
+	mypy
+	poetry lock --no-update
+	$(COVERAGE_PREFIX) pytest $(PYTEST_ARGUMENTS)
 
 .PHONY: clean-test
 clean-test:

@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum
 from pydantic import BaseModel, Field, root_validator
 from typing import Dict, List
 

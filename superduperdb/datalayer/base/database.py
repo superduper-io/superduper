@@ -1,5 +1,4 @@
 from collections import defaultdict
-from dataclasses import asdict
 import io
 import math
 import pickle
@@ -23,7 +22,6 @@ from superduperdb.misc.special_dicts import ArgumentDefaultDict, MongoStyleDict
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.misc import progress
 from superduperdb.misc.logger import logging
-
 
 
 class BaseDatabase:
@@ -199,9 +197,7 @@ class BaseDatabase:
     def _create_component_entry(self, info):
         raise NotImplementedError
 
-    def create_component(
-        self, object, serializer='pickle', serializer_kwargs=None
-    ):
+    def create_component(self, object, serializer='pickle', serializer_kwargs=None):
         serializer_kwargs = serializer_kwargs or {}
         assert object.identifier not in self.list_components(object.variety)
         file_id = self._create_serialized_file(
@@ -274,7 +270,9 @@ class BaseDatabase:
         ):
             if variety in self.variety_to_cache_mapping:
                 try:
-                    del getattr(self, self.variety_to_cache_mapping[variety])[identifier]
+                    del getattr(self, self.variety_to_cache_mapping[variety])[
+                        identifier
+                    ]
                 except KeyError:
                     pass
             self.filesystem.delete(info['object'])
@@ -485,7 +483,9 @@ class BaseDatabase:
         docs = progress.progressbar(c)
         logging.info(f'loading hashes: "{vector_index.identifier}')
         for r in docs:
-            h = self._get_output_from_document(r, watcher_info['key'], watcher_info['model'])
+            h = self._get_output_from_document(
+                r, watcher_info['key'], watcher_info['model']
+            )
             loaded.append(h)
             ids.append(r['_id'])
         h = vector_index.hash_set_cls(
@@ -586,8 +586,8 @@ class BaseDatabase:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
-        assert (
-            identifier in self.list_components('model')
+        assert identifier in self.list_components(
+            'model'
         ), f'model "{identifier}" doesn\'t exist to replace'
         file_id = self._create_serialized_file(
             object,
@@ -659,7 +659,9 @@ class BaseDatabase:
                 vector_index=vector_index,
             )
         else:
-            similar_ids, scores = self.select_nearest(like, n=n, vector_index=vector_index)
+            similar_ids, scores = self.select_nearest(
+                like, n=n, vector_index=vector_index
+            )
 
         if raw:
             return self._get_raw_cursor(select.select_using_ids(similar_ids))
@@ -698,7 +700,6 @@ class BaseDatabase:
         ids=None,
         n=10,
     ) -> Tuple([List(Convertible()), Any]):
-
         info = self.get_object_info(vector_index, variety='vector_index')
         models = info['models']
         keys = info['keys']
@@ -829,7 +830,9 @@ class BaseDatabase:
         """
         component = self.load_component(identifier, variety)
         metrics = [self.load_component(m, 'metric') for m in metrics]
-        validation_selects = [self.get_query_for_validation_set(vs) for vs in validation_sets]
+        validation_selects = [
+            self.get_query_for_validation_set(vs) for vs in validation_sets
+        ]
         results = component.validate(self, validation_selects, metrics)
         for vs, res in zip(validation_sets, results):
             for m in res:

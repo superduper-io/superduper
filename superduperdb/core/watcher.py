@@ -7,8 +7,8 @@ from superduperdb.core.model import Model
 
 class Watcher(Component):
     """
-    Watcher object which is used to process a column/ key of a collection or table, and store
-    the outputs.
+    Watcher object which is used to process a column/ key of a collection or table,
+    and store the outputs.
 
     :param select: Object for selecting which data is processed
     :param model: Model for processing data
@@ -16,6 +16,7 @@ class Watcher(Component):
     :param key: Key to be bound to model
     :param features: Dictionary of mappings from keys to models
     """
+
     variety = 'watcher'
 
     def __init__(
@@ -46,9 +47,11 @@ class Watcher(Component):
         ids = database._get_ids_from_select(self.select)
         if not ids:
             return []
-        return [database.apply_watcher(
-            self.identifier,
-            ids=ids,
-            verbose=verbose,
-            dependencies=dependencies,
-        )]
+        return [
+            database.apply_watcher(
+                self.identifier,
+                ids=ids,
+                verbose=verbose,
+                dependencies=dependencies,
+            )
+        ]

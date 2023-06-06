@@ -1,6 +1,5 @@
 from .misc import configs
 from pathlib import Path
-import json
 import os
 
 __all__ = 'CFG', 'ICON', 'ROOT'

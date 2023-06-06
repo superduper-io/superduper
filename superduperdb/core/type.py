@@ -3,11 +3,12 @@ from superduperdb.core.base import Component
 
 class Type(Component):
     """
-    Type component, responsible for encoding and decoding model inputs and outputs to the datalayer
-    as blobs of bytes.
+    Type component, responsible for encoding and decoding model inputs and outputs
+    to and from the datalayer as blobs of bytes.
 
     :param identifier: Unique identifier
     """
+
     variety = 'type'
 
     def __init__(self, identifier: str):

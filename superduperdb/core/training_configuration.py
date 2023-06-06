@@ -4,13 +4,14 @@ from superduperdb.training.query_dataset import QueryDataset
 
 class TrainingConfiguration(Component):
     """
-    Training configuration object, containing all settings necessary for a particular learning-task
-    use-case to be serialized and initiated. The object is ``callable`` and returns a class which
-    may be invoked to apply training.
+    Training configuration object, containing all settings necessary for a particular
+    learning-task use-case to be serialized and initiated. The object is ``callable``
+    and returns a class which may be invoked to apply training.
 
     :param identifier: Unique identifier of configuration
-    :param **parameters: Key-values pairs, constituting the variables which configure training.
+    :param **parameters: Key-values pairs, the variables which configure training.
     """
+
     variety = 'training_configuration'
 
     def __init__(self, identifier, **parameters):
@@ -28,9 +29,7 @@ class TrainingConfiguration(Component):
             database._replace_model(model, mn)
 
     @classmethod
-    def _get_data(
-        cls, database_type, database_name, select, keys, features, transform
-    ):
+    def _get_data(cls, database_type, database_name, select, keys, features, transform):
         train_data = QueryDataset(
             select=select,
             database=database_name,

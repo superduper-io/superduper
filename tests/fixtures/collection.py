@@ -93,7 +93,9 @@ def with_vector_index(random_data, a_model):
     )
     random_data.database.create_component(vi)
     yield random_data
-    random_data.database.delete_component('test_vector_search', 'vector_index', force=True)
+    random_data.database.delete_component(
+        'test_vector_search', 'vector_index', force=True
+    )
 
 
 @pytest.fixture()
@@ -111,12 +113,18 @@ def with_vector_index_faiss(random_data, a_model):
         )
     )
     yield random_data
-    random_data.database.delete_component('test_vector_search', 'vector_index', force=True)
+    random_data.database.delete_component(
+        'test_vector_search', 'vector_index', force=True
+    )
 
 
 @pytest.fixture()
 def si_validation(random_data):
-    random_data.database.create_validation_set('my_valid', select=Select('documents', filter={'_fold': 'valid'}), chunk_size=100)
+    random_data.database.create_validation_set(
+        'my_valid',
+        select=Select('documents', filter={'_fold': 'valid'}),
+        chunk_size=100,
+    )
 
     yield random_data
 
@@ -138,7 +146,9 @@ def float_tensors(empty):
 
 @pytest.fixture()
 def arrays(empty):
-    empty.database.create_component(Array('array', numpy.float32, types=[numpy.ndarray]))
+    empty.database.create_component(
+        Array('array', numpy.float32, types=[numpy.ndarray])
+    )
     yield empty
     empty.database.delete_component('array', 'type', force=True)
 
@@ -197,14 +207,18 @@ def a_model_base(float_tensors):
 @pytest.fixture()
 def a_watcher(a_model):
     a_model.remote = False
-    a_model.database.create_component(Watcher(model='linear_a', select=Select('documents'), key='x'))
+    a_model.database.create_component(
+        Watcher(model='linear_a', select=Select('documents'), key='x')
+    )
     yield a_model
     a_model.database.delete_component('linear_a/x', 'watcher', force=True)
 
 
 @pytest.fixture()
 def a_watcher_base(a_model_base):
-    a_model_base.database.create_component(Watcher(model='linear_a_base', select=Select('documents'), key='_base'))
+    a_model_base.database.create_component(
+        Watcher(model='linear_a_base', select=Select('documents'), key='_base')
+    )
     yield a_model_base
     a_model_base.database.delete_component('linear_a_base/_base', 'watcher', force=True)
 

@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional
 
 from superduperdb.core.model import Model
 from transformers import pipeline as _pipeline, Pipeline as TransformersPipeline

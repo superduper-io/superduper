@@ -3,7 +3,15 @@ from superduperdb.core.model import Model
 
 
 class Pipeline(BasePipeline, Model):
-    def __init__(self, steps, identifier, memory=None, verbose=False, postprocessor=None, type=None):
+    def __init__(
+        self,
+        steps,
+        identifier,
+        memory=None,
+        verbose=False,
+        postprocessor=None,
+        type=None,
+    ):
         BasePipeline.__init__(self, steps=steps, memory=memory, verbose=verbose)
         Model.__init__(self, None, identifier, type=type)
         self.postprocessor = postprocessor

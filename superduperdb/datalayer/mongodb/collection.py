@@ -1,7 +1,7 @@
 from pymongo.collection import Collection as MongoCollection
 
 from superduperdb.cluster.client_decorators import vector_search
-from superduperdb.datalayer.mongodb.query import Insert, Select, Update, Delete
+from superduperdb.datalayer.mongodb.query import Insert, Update, Delete
 
 
 class Collection(MongoCollection):
@@ -60,4 +60,3 @@ class Collection(MongoCollection):
         """
         for k in self._all_hash_sets:
             del self._all_hash_sets[k]
-

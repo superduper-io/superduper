@@ -3,9 +3,7 @@ from collections import defaultdict
 import numpy
 
 
-def validate_imputation(
-    validation_data, models, keys, metrics, predict_kwargs=None
-):
+def validate_imputation(validation_data, models, keys, metrics, predict_kwargs=None):
     inputs = []
     targets = []
     for i in range(len(validation_data)):

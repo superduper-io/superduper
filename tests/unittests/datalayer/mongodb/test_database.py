@@ -1,3 +1,4 @@
+# ruff: noqa: F401, F811
 import PIL.PngImagePlugin
 import pytest
 import torch
@@ -11,16 +12,31 @@ from superduperdb.training.validation import validate_vector_search
 from superduperdb.vector_search import VanillaHashSet
 from superduperdb.vector_search.vanilla.measures import css
 
-from tests.fixtures.collection import with_vector_index, random_data, float_tensors, empty, \
-    a_model, b_model, a_watcher, an_update, n_data_points, image_type, si_validation, c_model, metric, \
-    with_vector_index_faiss
+from tests.fixtures.collection import (
+    with_vector_index,
+    random_data,
+    float_tensors,
+    empty,
+    a_model,
+    b_model,
+    a_watcher,
+    an_update,
+    n_data_points,
+    image_type,
+    si_validation,
+    c_model,
+    metric,
+    with_vector_index_faiss,
+)
 from tests.material.losses import ranking_loss
 
 IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
 
 
 def test_create_component(empty):
-    empty.database.create_component(SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module'))
+    empty.database.create_component(
+        SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module')
+    )
     assert 'my-test-module' in empty.database.list_components('model')
     model = empty.database.models['my-test-module']
     output = model.predict_one(torch.randn(16))
@@ -92,9 +108,7 @@ def test_insert_from_uris(empty, image_type):
     empty.database.insert(Insert(collection='documents', documents=to_insert))
     r = next(empty.database.select(Select('documents')))
     assert isinstance(r['item'], PIL.PngImagePlugin.PngImageFile)
-    assert isinstance(
-        r['other']['item'], PIL.PngImagePlugin.PngImageFile
-    )
+    assert isinstance(r['other']['item'], PIL.PngImagePlugin.PngImageFile)
 
 
 def test_update(random_data, a_watcher):
@@ -108,29 +122,41 @@ def test_update(random_data, a_watcher):
 
     assert r['x'].tolist() == to_update.tolist()
     assert s['x'].tolist() == to_update.tolist()
-    assert r['_outputs']['x']['linear_a'].tolist() == s['_outputs']['x']['linear_a'].tolist()
+    assert (
+        r['_outputs']['x']['linear_a'].tolist()
+        == s['_outputs']['x']['linear_a'].tolist()
+    )
 
 
 def test_watcher(random_data, a_model, b_model):
-    random_data.database.create_component(Watcher(model='linear_a', select=Select('documents'), key='x'))
+    random_data.database.create_component(
+        Watcher(model='linear_a', select=Select('documents'), key='x')
+    )
     r = next(random_data.database.select(Select('documents', one=True)))
     assert 'linear_a' in r['_outputs']['x']
 
     random_data.database.insert(
-        Insert('documents', documents=[{'x': torch.randn(32), 'update': True} for _ in range(5)])
+        Insert(
+            'documents',
+            documents=[{'x': torch.randn(32), 'update': True} for _ in range(5)],
+        )
     )
     r = next(random_data.database.select(Select('documents', filter={'update': True})))
     assert 'linear_a' in r['_outputs']['x']
 
     random_data.database.create_component(
-        Watcher(model='linear_b', select=Select('documents'), key='x', features={'x': 'linear_a'})
+        Watcher(
+            model='linear_b',
+            select=Select('documents'),
+            key='x',
+            features={'x': 'linear_a'},
+        )
     )
     r = next(random_data.database.select(Select('documents')))
     assert 'linear_b' in r['_outputs']['x']
 
 
 def test_learning_task(si_validation, a_model, c_model, metric):
-
     configuration = TorchTrainerConfiguration(
         'ranking_task_parametrization',
         objective=ranking_loss,
@@ -170,7 +196,9 @@ def test_predict(a_model):
 
 def test_delete(random_data):
     r = next(random_data.database.select(Select('documents')))
-    random_data.database.delete(Delete(collection='documents', filter={'_id': r['_id']}))
+    random_data.database.delete(
+        Delete(collection='documents', filter={'_id': r['_id']})
+    )
     with pytest.raises(StopIteration):
         next(random_data.database.select(Select('documents', filter={'_id': r['_id']})))
 

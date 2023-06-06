@@ -12,9 +12,12 @@ class Model(Component):
     :param identifier: Unique identifying ID
     :param type: Type instance (optional)
     """
+
     variety = 'model'
 
-    def __init__(self, object: Any, identifier: str, type: Optional[Union[Type, str]] = None):
+    def __init__(
+        self, object: Any, identifier: str, type: Optional[Union[Type, str]] = None
+    ):
         super().__init__(identifier)
         self.object = object
         if isinstance(type, str):
@@ -37,4 +40,3 @@ class Model(Component):
             'identifier': self.identifier,
             'type': self.type.identifier if isinstance(self.type, Type) else self.type,
         }
-

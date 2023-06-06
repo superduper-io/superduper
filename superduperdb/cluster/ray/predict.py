@@ -8,7 +8,7 @@ from superduperdb.datalayer.base.imports import get_database_from_database_type
 
 
 @serve.deployment(
-    route_prefix=f'/predict/{os.environ["SUPERDUPERDB_MODEL"]}',
+    route_prefix=f'/predict/{os.environ.get("SUPERDUPERDB_MODEL", "ERROR")}',
     num_replicas=int(os.environ.get("SUPERDUPERDB_NUM_REPLICAS", "1")),
 )
 class Server:

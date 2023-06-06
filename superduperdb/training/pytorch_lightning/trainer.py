@@ -20,7 +20,9 @@ class CustomCheckpoint(pl.callbacks.ModelCheckpoint):
 
 class LightningConfiguration(TrainingConfiguration):
     def __init__(self, identifier: str, loader_kwargs, monitor='val_loss', **kwargs):
-        super().__init__(identifier, monitor=monitor, loader_kwargs=loader_kwargs, **kwargs)
+        super().__init__(
+            identifier, monitor=monitor, loader_kwargs=loader_kwargs, **kwargs
+        )
 
     @classmethod
     def split_and_preprocess(cls, sample, model, splitter=None):

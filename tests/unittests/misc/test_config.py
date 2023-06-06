@@ -1,10 +1,7 @@
 from .test_dicts import PARENT
 from collections import Counter
-from pathlib import Path
 from pydantic import ValidationError
 from superduperdb.misc.config import _Factory, _Model, Config, Notebook
-import copy
-import json
 import pytest
 
 TYPE_ERROR = """

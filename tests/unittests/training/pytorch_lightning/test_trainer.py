@@ -45,7 +45,6 @@ class LightningModule(SuperDuperModule, pl.LightningModule):
 
 @pytest.mark.xfail(DISABLE_TEST, reason='See issue #94')
 def test_classification(random_data):
-
     cf = LightningConfiguration(
         'my-pl-cf', loader_kwargs={'batch_size': 5, 'num_workers': 0}, max_epochs=10
     )

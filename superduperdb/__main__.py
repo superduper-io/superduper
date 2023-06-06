@@ -1,4 +1,4 @@
-from .cli import app, config, docs, info, serve, test  # noqa: F401, E402
+from .cli import app, config, docs, info, serve  # noqa: F401, E402
 import click
 import sys
 

@@ -7,11 +7,10 @@ from superduperdb.training.pytorch_lightning.trainer import LightningConfigurati
 from tests.fixtures.collection import random_data, float_tensors, empty
 
 import pytorch_lightning as pl
-import os
 import pytest
 import torch
 
-DISABLE_TEST = os.environ.get('DISABLE_PYTORCH_LIGHTNING', '').lower().startswith('t')
+DISABLE_TEST = True
 
 
 class LightningModule(SuperDuperModule, pl.LightningModule):

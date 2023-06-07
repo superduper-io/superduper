@@ -33,9 +33,17 @@ class LangchainRetriever(BaseRetriever):
 
     def get_relevant_documents(self, query: str) -> List[Document]:
         document_to_search = {self.key: query}
-        ids = self.vector_index.get_nearest(document_to_search, n=self.n)[0]
+        ids = self.vector_index.get_nearest(
+            document_to_search,
+            n=self.n,
+            featurize=False,
+        )[0]
         select = self.vector_index.select.select_using_ids(ids)
-        out = list(self.vector_index.database.select(select))
+        out = list(
+            self.vector_index.database.select(
+                select, features=self.vector_index.watcher.features
+            )
+        )
         out = [
             Document(
                 page_content=x[self.key],
@@ -105,7 +113,11 @@ class DBQAWithSourcesChain(Model):
     @cached_property
     def retriever(self) -> LangchainRetriever:
         assert not isinstance(self.vector_index, Placeholder)
-        return LangchainRetriever(self.key, self.vector_index, self.n)
+        return LangchainRetriever(
+            self.key,
+            vector_index=self.vector_index,
+            n=self.n,
+        )
 
     @cached_property
     def chain(self) -> Chain:
@@ -116,7 +128,7 @@ class DBQAWithSourcesChain(Model):
             chain_type=self.chain_type,
         )
 
-    def predict_one(self, question):
+    def predict_one(self, question, outputs=None, **kwargs):
         return self.chain(question)
 
     def predict(self):

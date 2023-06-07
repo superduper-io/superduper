@@ -11,7 +11,7 @@ license = "Apache 2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8.1, <4.0"
 boto3 = "^1.26.134"
 dask = {extras = ["distributed"], version = "^2023.5.0"}
 dill = "^0.3.6"
@@ -39,6 +39,7 @@ torch = "^2.0.1"
 typer = "^0.9.0"
 ipykernel = "^6.23.1"
 ray = "^2.4.0"
+langchain = "^0.0.193"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

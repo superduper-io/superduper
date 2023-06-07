@@ -16,9 +16,10 @@ from superduperdb.cluster.annotations import Convertible, Tuple, List
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
 from superduperdb.core.learning_task import LearningTask
+from superduperdb.core.vector_index import VectorIndex
 from superduperdb.datalayer.base.query import Insert, Select, Delete, Update
 from superduperdb.fetchers.downloads import gather_uris
-from superduperdb.misc.special_dicts import ArgumentDefaultDict, MongoStyleDict
+from superduperdb.misc.special_dicts import ArgumentDefaultDict
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.misc import progress
 from superduperdb.misc.logger import logging
@@ -31,12 +32,20 @@ class BaseDatabase:
     """
 
     select_cls = Select
-    variety_to_cache_mapping = {'model': 'models', 'metric': 'metrics', 'type': 'types'}
+    variety_to_cache_mapping = {
+        'model': 'models',
+        'metric': 'metrics',
+        'type': 'types',
+        'vector_index': 'vector_indices',
+    }
 
     def __init__(self):
         self.metrics = ArgumentDefaultDict(lambda x: self.load_component(x, 'metric'))
         self.models = ArgumentDefaultDict(lambda x: self.load_component(x, 'model'))
         self.types = ArgumentDefaultDict(lambda x: self.load_component(x, 'type'))
+        self.vector_indices = ArgumentDefaultDict(
+            lambda x: self.load_component(x, 'vector_index')
+        )
 
         self.remote = CFG.remote
         self._type_lookup = None
@@ -474,27 +483,6 @@ class BaseDatabase:
     def _load_blob_of_bytes(self, file_id):
         raise NotImplementedError
 
-    def _load_hashes(self, identifier):
-        vector_index = self.load_component(identifier, 'vector_index')
-        c = self.select(vector_index.watcher.select)
-        watcher_info = self.get_object_info(vector_index.watcher.identifier, 'watcher')
-        loaded = []
-        ids = []
-        docs = progress.progressbar(c)
-        logging.info(f'loading hashes: "{vector_index.identifier}')
-        for r in docs:
-            h = self._get_output_from_document(
-                r, watcher_info['key'], watcher_info['model']
-            )
-            loaded.append(h)
-            ids.append(r['_id'])
-        h = vector_index.hash_set_cls(
-            loaded,
-            ids,
-            measure=vector_index.measure,
-        )
-        self._all_hash_sets[identifier] = h
-
     def load_component(self, identifier, variety):
         info = self.get_object_info(identifier, variety)
         if info is None:
@@ -700,39 +688,8 @@ class BaseDatabase:
         ids=None,
         n=10,
     ) -> Tuple([List(Convertible()), Any]):
-        info = self.get_object_info(vector_index, variety='vector_index')
-        models = info['models']
-        keys = info['keys']
-        self._load_hashes(vector_index)
-        hash_set = self._all_hash_sets[vector_index]
-        if ids is not None:
-            hash_set = hash_set[ids]
-
-        if '_id' in like:
-            return hash_set.find_nearest_from_id(like['_id'], n=n)
-
-        available_keys = list(like.keys()) + ['_base']
-        model, key = next((m, k) for m, k in zip(models, keys) if k in available_keys)
-        document = MongoStyleDict(like)
-        if '_outputs' not in document:
-            document['_outputs'] = {}
-        features = info.get('features', {}) or {}
-
-        for subkey in features:
-            if subkey not in document:
-                continue
-            if subkey not in document['_outputs']:
-                document['_outputs'][subkey] = {}
-            if features[subkey] not in document['_outputs'][subkey]:
-                document['_outputs'][subkey][features[subkey]] = self.models[
-                    features[subkey]
-                ].predict_one(document[subkey])
-            document[subkey] = document['_outputs'][subkey][features[subkey]]
-        model_input = document[key] if key != '_base' else document
-
-        model = self.models[model]
-        h = model.predict_one(model_input)
-        return hash_set.find_nearest_from_hash(h, n=n)
+        vector_index: VectorIndex = self.vector_indices[vector_index]
+        return vector_index.get_nearest(like, database=self, ids=ids, n=n)
 
     def separate_query_part_from_validation_record(self, r):
         """

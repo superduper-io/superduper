@@ -1,3 +1,4 @@
+import json
 import random
 
 import lorem
@@ -158,6 +159,16 @@ def sentences(empty):
     data = []
     for _ in range(100):
         data.append({'text': lorem.sentence()})
+    empty.database.insert(Insert('documents', documents=data))
+    yield empty
+
+
+@pytest.fixture()
+def nursery_rhymes(empty):
+    with open('tests/material/data/rhymes.json') as f:
+        data = json.load(f)
+    for i in range(len(data)):
+        data[i] = {'text': data[i]}
     empty.database.insert(Insert('documents', documents=data))
     yield empty
 

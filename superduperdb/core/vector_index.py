@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional, Any
 
 from superduperdb.core.base import (
     ComponentList,
@@ -6,14 +6,18 @@ from superduperdb.core.base import (
     Component,
     Placeholder,
     is_placeholders_or_components,
+    DBPlaceholder,
 )
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.base.query import Select
+from superduperdb.misc import progress
+from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.training.query_dataset import QueryDataset
 from superduperdb.training.validation import validate_vector_search
 from superduperdb.vector_search import VanillaHashSet
+from superduperdb.misc.logger import logging
 
 
 class VectorIndex(Component):
@@ -56,6 +60,82 @@ class VectorIndex(Component):
         assert len(self.keys) == len(self.models)
         self.measure = measure
         self.hash_set_cls = hash_set_cls
+        self._hash_set = None
+        self.database = DBPlaceholder()
+
+    def repopulate(self, database: Optional[Any] = None):
+        if database is None:
+            database = self.database
+            assert not isinstance(database, DBPlaceholder)
+        super().repopulate(database)
+        c = database.select(self.select)
+        loaded = []
+        ids = []
+        docs = progress.progressbar(c)
+        logging.info(f'loading hashes: "{self.identifier}')
+        for r in docs:
+            h = database._get_output_from_document(
+                r, self.watcher.key, self.watcher.model.identifier
+            )
+            loaded.append(h)
+            ids.append(r['_id'])
+
+        self._hash_set = self.hash_set_cls(
+            loaded,
+            ids,
+            measure=self.measure,
+        )
+
+    @property
+    def select(self):
+        return self.watcher.select
+
+    def get_nearest(
+        self,
+        like,
+        database: Optional[Any] = None,
+        ids=None,
+        n=100,
+    ):
+        if database is None:
+            database = self.database
+            assert not isinstance(database, DBPlaceholder)
+
+        models = [m.identifier for m in self.models]
+        keys = self.keys
+
+        hash_set = self._hash_set
+        if ids:
+            hash_set = hash_set[ids]
+
+        if database.id_field in like:
+            return hash_set.find_nearest_from_id(like['_id'], n=n)
+
+        available_keys = list(like.keys()) + ['_base']
+        model, key = next((m, k) for m, k in zip(models, keys) if k in available_keys)
+        document = MongoStyleDict(like)
+        if '_outputs' not in document:
+            document['_outputs'] = {}
+
+        for subkey in self.watcher.features:
+            if subkey not in document:
+                continue
+            if subkey not in document['_outputs']:
+                document['_outputs'][subkey] = {}
+            if self.watcher.features[subkey] not in document['_outputs'][subkey]:
+                document['_outputs'][subkey][
+                    self.watcher.features[subkey]
+                ] = database.models[self.watcher.features[subkey]].predict_one(
+                    document[subkey]
+                )
+            document[subkey] = document['_outputs'][subkey][
+                self.watcher.features[subkey]
+            ]
+        model_input = document[key] if key != '_base' else document
+
+        model = database.models[model]
+        h = model.predict_one(model_input)
+        return hash_set.find_nearest_from_hash(h, n=n)
 
     def validate(
         self,

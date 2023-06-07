@@ -30,7 +30,7 @@ class Watcher(Component):
         self.select = select
         self.key = key
         self.select = select
-        self.features = features
+        self.features = features or {}
         identifier = f'{self.model.identifier}/{self.key}'
         super().__init__(identifier)
 

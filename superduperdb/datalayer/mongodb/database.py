@@ -26,6 +26,7 @@ class Database(MongoDatabase, BaseDatabase):
 
     _database_type = 'mongodb'
     select_cls = Select
+    id_field = '_id'
 
     def __init__(self, *args, **kwargs):
         MongoDatabase.__init__(self, *args, **kwargs)

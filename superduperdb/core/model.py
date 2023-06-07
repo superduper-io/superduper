@@ -20,6 +20,7 @@ class Model(Component):
     ):
         super().__init__(identifier)
         self.object = object
+
         if isinstance(type, str):
             self.type = Placeholder(type, 'type')
         else:
@@ -30,13 +31,18 @@ class Model(Component):
         except AttributeError:
             pass
 
-        try:
-            self.predict = object.predict
-        except AttributeError:
-            pass
+        if not hasattr(self, 'predict'):
+            try:
+                self.predict = object.predict
+            except AttributeError:
+                pass
+                self.predict = self._predict
+
+    def _predict(self, inputs, **kwargs):
+        return [self.predict_one(x, **kwargs) for x in inputs]
 
     def asdict(self):
         return {
             'identifier': self.identifier,
-            'type': self.type.identifier if isinstance(self.type, Type) else self.type,
+            'type': self.type.identifier if self.type is not None else None,
         }

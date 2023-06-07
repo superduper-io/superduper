@@ -4,6 +4,12 @@ class BasePlaceholder:
     """
 
 
+class DBPlaceholder(BasePlaceholder):
+    """
+    Placeholder for a database connection
+    """
+
+
 class Placeholder(BasePlaceholder):
     """
     Placeholder.
@@ -62,7 +68,7 @@ class Component(BaseComponent):
                 reloaded = database.load_component(
                     object.identifier, variety=object.variety
                 )
-                return reloaded.repopulate(database)
+                return reload(reloaded)
 
             if isinstance(object, PlaceholderList):
                 reloaded = [
@@ -72,11 +78,15 @@ class Component(BaseComponent):
                     reloaded[i] = c.repopulate(database)
                 return ComponentList(object.variety, reloaded)
 
+            if isinstance(object, DBPlaceholder):
+                return database
+
             return object
 
         items = (
             (k, v) for k, v in vars(self).items() if isinstance(v, BasePlaceholder)
         )
+
         self.__dict__.update((k, reload(v)) for k, v in items)
         return self
 
@@ -139,6 +149,8 @@ def strip(component: BaseComponent):
 
     :param component: component to be stripped
     """
+    from superduperdb.datalayer.base.database import BaseDatabase
+
     assert isinstance(component, BaseComponent)
     if isinstance(component, Placeholder):
         return component
@@ -154,6 +166,8 @@ def strip(component: BaseComponent):
                 attr,
                 Placeholder(subcomponent.identifier, subcomponent.variety),
             )
+        elif isinstance(subcomponent, BaseDatabase):
+            setattr(component, attr, None)
     return component
 
 

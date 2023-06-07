@@ -9,14 +9,13 @@ from superduperdb.models.torch.utils import device_of, to_device, eval
 class SuperDuperModule(torch.nn.Module, Model):
     def __init__(self, layer, identifier, preprocess=None, postprocess=None, type=None):
         torch.nn.Module.__init__(self)
-        Model.__init__(self, layer, identifier)
+        Model.__init__(self, layer, identifier, type=type)
         if hasattr(self.object, 'preprocess') and preprocess is None:
             preprocess = self.object.preprocess
         if hasattr(self.object, 'postprocess') and postprocess is None:
             postprocess = self.layer.postprocess
         self._preprocess = preprocess
         self._postprocess = postprocess
-        self.type = type
 
     def predict_one(self, x, **kwargs):
         with torch.no_grad(), eval(self.object):

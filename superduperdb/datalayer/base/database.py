@@ -4,7 +4,7 @@ import math
 import pickle
 import random
 import time
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 import click
 import networkx
@@ -600,6 +600,7 @@ class BaseDatabase:
         features=None,
         raw=False,
         n=100,
+        outputs=None,
     ):
         if download and like is not None:
             like = self._get_content_for_filter(like)  # pragma: no cover
@@ -612,6 +613,7 @@ class BaseDatabase:
                     features=features,
                     vector_index=vector_index,
                     n=n,
+                    outputs=outputs,
                 )
             else:
                 return self._select_matches_then_similar(
@@ -621,6 +623,7 @@ class BaseDatabase:
                     raw=raw,
                     n=n,
                     features=features,
+                    outputs=outputs,
                 )
         else:
             if raw:
@@ -636,6 +639,7 @@ class BaseDatabase:
         raw=False,
         n=100,
         features=None,
+        outputs=None,
     ):
         if not select.is_trivial:
             id_cursor = self._get_raw_cursor(select.select_only_id)
@@ -645,10 +649,11 @@ class BaseDatabase:
                 ids=ids,
                 n=n,
                 vector_index=vector_index,
+                outputs=outputs,
             )
         else:
             similar_ids, scores = self.select_nearest(
-                like, n=n, vector_index=vector_index
+                like, n=n, vector_index=vector_index, outputs=outputs
             )
 
         if raw:
@@ -668,8 +673,14 @@ class BaseDatabase:
         n=100,
         features=None,
         vector_index=None,
+        outputs=None,
     ):
-        similar_ids, scores = self.select_nearest(like, n=n, vector_index=vector_index)
+        similar_ids, scores = self.select_nearest(
+            like,
+            n=n,
+            vector_index=vector_index,
+            outputs=outputs,
+        )
 
         if raw:
             return self._get_raw_cursor(select.select_using_ids(similar_ids))
@@ -686,10 +697,13 @@ class BaseDatabase:
         like: Convertible(),
         vector_index: str,
         ids=None,
+        outputs: Optional[dict] = None,
         n=10,
     ) -> Tuple([List(Convertible()), Any]):
         vector_index: VectorIndex = self.vector_indices[vector_index]
-        return vector_index.get_nearest(like, database=self, ids=ids, n=n)
+        return vector_index.get_nearest(
+            like, database=self, ids=ids, n=n, outputs=outputs
+        )
 
     def separate_query_part_from_validation_record(self, r):
         """

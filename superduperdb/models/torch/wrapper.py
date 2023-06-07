@@ -1,3 +1,6 @@
+import io
+from typing import Optional, Callable
+
 import torch
 from torch.utils import data
 
@@ -7,7 +10,15 @@ from superduperdb.models.torch.utils import device_of, to_device, eval
 
 
 class SuperDuperModule(torch.nn.Module, Model):
-    def __init__(self, layer, identifier, preprocess=None, postprocess=None, type=None):
+    def __init__(
+        self,
+        layer,
+        identifier,
+        preprocess=None,
+        postprocess=None,
+        type=None,
+        collate_fn: Optional[Callable] = None,
+    ):
         torch.nn.Module.__init__(self)
         Model.__init__(self, layer, identifier, type=type)
         if hasattr(self.object, 'preprocess') and preprocess is None:
@@ -16,14 +27,37 @@ class SuperDuperModule(torch.nn.Module, Model):
             postprocess = self.layer.postprocess
         self._preprocess = preprocess
         self._postprocess = postprocess
+        self.collate_fn = collate_fn
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if isinstance(self.object, torch.jit.ScriptModule) or isinstance(
+            self.object, torch.jit.ScriptFunction
+        ):
+            f = io.BytesIO()
+            torch.jit.save(self.object, f)
+            del state['_modules']['object']
+            state['object_bytes'] = f.getvalue()
+        return state
+
+    def __setstate__(self, state):
+        if 'object_bytes' in state:
+            state['_modules']['object'] = torch.jit.load(
+                io.BytesIO(state.pop('object_bytes'))
+            )
+        return super().__setstate__(state)
 
     def predict_one(self, x, **kwargs):
         with torch.no_grad(), eval(self.object):
-            return apply_model(self, x, single=True, **kwargs)
+            return apply_model(
+                self, x, single=True, collate_fn=self.collate_fn, **kwargs
+            )
 
     def predict(self, x, **kwargs):
-        with torch.no_grad(), eval(self):
-            return apply_model(self.object, x, single=False, **kwargs)
+        with torch.no_grad(), eval(self.object):
+            return apply_model(
+                self, x, single=False, collate_fn=self.collate_fn, **kwargs
+            )
 
     def preprocess(self, x):
         if self._preprocess is None:

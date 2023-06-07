@@ -1,4 +1,4 @@
-from typing import List, Union, Optional, Any
+from typing import List, Union, Optional, Any, Dict
 
 from superduperdb.core.base import (
     ComponentList,
@@ -92,8 +92,10 @@ class VectorIndex(Component):
 
     def get_nearest(
         self,
-        like,
+        like: Dict,
         database: Optional[Any] = None,
+        outputs: Optional[dict] = None,
+        featurize: bool = True,
         ids=None,
         n=100,
     ):
@@ -103,6 +105,7 @@ class VectorIndex(Component):
 
         models = [m.identifier for m in self.models]
         keys = self.keys
+        assert len(models) == len(keys)
 
         hash_set = self._hash_set
         if ids:
@@ -111,26 +114,31 @@ class VectorIndex(Component):
         if database.id_field in like:
             return hash_set.find_nearest_from_id(like['_id'], n=n)
 
-        available_keys = list(like.keys()) + ['_base']
-        model, key = next((m, k) for m, k in zip(models, keys) if k in available_keys)
         document = MongoStyleDict(like)
-        if '_outputs' not in document:
-            document['_outputs'] = {}
 
-        for subkey in self.watcher.features:
-            if subkey not in document:
-                continue
-            if subkey not in document['_outputs']:
-                document['_outputs'][subkey] = {}
-            if self.watcher.features[subkey] not in document['_outputs'][subkey]:
-                document['_outputs'][subkey][
-                    self.watcher.features[subkey]
-                ] = database.models[self.watcher.features[subkey]].predict_one(
-                    document[subkey]
-                )
-            document[subkey] = document['_outputs'][subkey][
-                self.watcher.features[subkey]
-            ]
+        if featurize:
+            outputs = outputs or {}
+            if '_outputs' not in document:
+                document['_outputs'] = {}
+            document['_outputs'].update(outputs)
+
+            for subkey in self.watcher.features or ():
+                subout = document['_outputs'].setdefault(subkey, {})
+                if self.watcher.features[subkey] not in subout:
+                    subout[self.watcher.features[subkey]] = database.models[
+                        self.watcher.features[subkey]
+                    ].predict_one(document[subkey])
+                document[subkey] = subout[self.watcher.features[subkey]]
+        available_keys = list(document.keys()) + ['_base']
+        try:
+            model, key = next(
+                (m, k) for m, k in zip(models, keys) if k in available_keys
+            )
+        except StopIteration:
+            raise Exception(
+                f'Keys in provided {like} don\'t match'
+                f' VectorIndex keys: {self.keys}, {self.models}'
+            )
         model_input = document[key] if key != '_base' else document
 
         model = database.models[model]

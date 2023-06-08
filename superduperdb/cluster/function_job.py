@@ -8,7 +8,7 @@ def function_job(database_type, database_name, function_name, args_, kwargs_, jo
     database = get_database_from_database_type(database_type, database_name)
     database.remote = False
     function = getattr(database, function_name)
-    database.set_job_flag(job_id, ('status', 'running'))
+    database.metadata.update_job(job_id, 'status', 'running')
     args_ = decode_args(database, function.signature, args_)
     kwargs_ = decode_kwargs(database, function.signature, kwargs_)
     try:
@@ -21,7 +21,7 @@ def function_job(database_type, database_name, function_name, args_, kwargs_, jo
         )
     except Exception as e:
         tb = traceback.format_exc()
-        database.set_job_flag(job_id, ('status', 'failed'))
-        database.set_job_flag(job_id, ('msg', tb))
+        database.metadata.update_job(job_id, 'status', 'failed')
+        database.metadata.update_job(job_id, 'msg', tb)
         raise e
     database.set_job_flag(job_id, ('status', 'success'))

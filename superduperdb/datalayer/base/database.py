@@ -1,9 +1,6 @@
 from collections import defaultdict
-import io
 import math
-import pickle
 import random
-import time
 from typing import Any, Union, Optional
 
 import click
@@ -17,6 +14,8 @@ from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
 from superduperdb.core.learning_task import LearningTask
 from superduperdb.core.vector_index import VectorIndex
+from superduperdb.datalayer.base.artifacts import ArtifactStore
+from superduperdb.datalayer.base.metadata import MetaDataStore
 from superduperdb.datalayer.base.query import Insert, Select, Delete, Update
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.special_dicts import ArgumentDefaultDict
@@ -39,7 +38,7 @@ class BaseDatabase:
         'vector_index': 'vector_indices',
     }
 
-    def __init__(self):
+    def __init__(self, metadata: MetaDataStore, artifact_store: ArtifactStore):
         self.metrics = ArgumentDefaultDict(lambda x: self.load_component(x, 'metric'))
         self.models = ArgumentDefaultDict(lambda x: self.load_component(x, 'model'))
         self.types = ArgumentDefaultDict(lambda x: self.load_component(x, 'type'))
@@ -50,7 +49,8 @@ class BaseDatabase:
         self.remote = CFG.remote
         self._type_lookup = None
 
-        self._all_hash_sets = {}
+        self.metadata = metadata
+        self.artifact_store = artifact_store
 
     def _reload_type_lookup(self):
         self._type_lookup = {}
@@ -60,10 +60,6 @@ class BaseDatabase:
                     self._type_lookup[s] = t
             except AttributeError:
                 continue
-
-    @property
-    def filesystem(self):
-        raise NotImplementedError
 
     @property
     def type_lookup(self):
@@ -154,9 +150,6 @@ class BaseDatabase:
 
         return G
 
-    def cancel_job(self, job_id):
-        raise NotImplementedError
-
     def _compute_model_outputs(
         self,
         model_info,
@@ -203,50 +196,27 @@ class BaseDatabase:
     def _create_job_record(self, *args, **kwargs):
         raise NotImplementedError
 
-    def _create_component_entry(self, info):
-        raise NotImplementedError
-
     def create_component(self, object, serializer='pickle', serializer_kwargs=None):
         serializer_kwargs = serializer_kwargs or {}
         assert object.identifier not in self.list_components(object.variety)
-        file_id = self._create_serialized_file(
+        file_id = self.artifact_store.create_artifact(
             object, serializer=serializer, serializer_kwargs=serializer_kwargs
         )
-        self._create_component_entry(
+        self.metadata.create_component(
             {**object.asdict(), 'object': file_id, 'variety': object.variety}
         )
         return object.schedule_jobs(self)
 
     def _create_plan(self):
         G = networkx.DiGraph()
-        for identifier in self.list_components('watcher'):
+        for identifier in self.metadata.list_components('watcher'):
             G.add_node(('watcher', identifier))
-        for identifier in self.list_components('watcher'):
+        for identifier in self.metadata.list_components('watcher'):
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:
                 G.add_edge(('watcher', dep), ('watcher', identifier))
         assert networkx.is_directed_acyclic_graph(G)
         return G
-
-    def _create_serialized_file(
-        self, object, serializer='pickle', serializer_kwargs=None
-    ):
-        serializer_kwargs = serializer_kwargs or {}
-        if serializer == 'pickle':
-            with io.BytesIO() as f:
-                pickle.dump(object, f, **serializer_kwargs)
-                bytes_ = f.getvalue()
-        elif serializer == 'dill':
-            import dill
-
-            if not serializer_kwargs:
-                serializer_kwargs['recurse'] = True
-            with io.BytesIO() as f:
-                dill.dump(object, f, **serializer_kwargs)
-                bytes_ = f.getvalue()
-        else:
-            raise NotImplementedError
-        return self._save_blob_of_bytes(bytes_)
 
     def create_validation_set(self, identifier, select: Select, chunk_size=1000):
         if identifier in self.list_validation_sets():
@@ -268,11 +238,12 @@ class BaseDatabase:
         return self._base_delete(delete)
 
     def delete_component(self, identifier, variety, force=False):
-        info = self.get_object_info(identifier, variety)
-        if not info:
+        try:
+            info = self.metadata.get_object(identifier, variety)
+        except FileNotFoundError as e:
             if not force:
-                raise Exception(f'"{identifier}": {variety} does not exist...')
-            return
+                raise e
+
         if force or click.confirm(
             f'You are about to delete {variety}: {identifier}, are you sure?',
             default=False,
@@ -284,11 +255,8 @@ class BaseDatabase:
                     ]
                 except KeyError:
                     pass
-            self.filesystem.delete(info['object'])
-            self._delete_component_info(identifier, variety)
-
-    def _delete_component_info(self, identifier, variety):
-        raise NotImplementedError
+            self.artifact_store.delete_artifact(info['object'])
+            self.metadata.delete_component(identifier, variety)
 
     @work
     def download_content(
@@ -324,19 +292,21 @@ class BaseDatabase:
 
         if n_download_workers is None:
             try:
-                n_download_workers = self.get_meta_data(key='n_download_workers')
+                n_download_workers = self.metadata.get_metadata(
+                    key='n_download_workers'
+                )
             except TypeError:
                 n_download_workers = 0
 
         if headers is None:
             try:
-                headers = self.get_meta_data(key='headers')
+                headers = self.metadata.get_metadata(key='headers')
             except TypeError:
                 headers = 0
 
         if timeout is None:
             try:
-                timeout = self.get_meta_data(key='download_timeout')
+                timeout = self.metadata.get_metadata(key='download_timeout')
             except TypeError:
                 timeout = None
 
@@ -380,7 +350,7 @@ class BaseDatabase:
         raise NotImplementedError
 
     def _get_dependencies_for_watcher(self, identifier):
-        info = self.get_object_info(identifier, 'watcher')
+        info = self.metadata.get_object(identifier, 'watcher')
         if info is None:
             return []
         watcher_features = info.get('features', {})
@@ -393,10 +363,7 @@ class BaseDatabase:
     def _get_file_content(self, r):
         for k in r:
             if isinstance(r[k], dict):
-                if '_file_id' in r[k]:
-                    r[k] = self._load_serialized_file(r[k]['_file_id'])
-                else:
-                    r[k] = self._get_file_content(r[k])
+                r[k] = self._get_file_content(r[k])
         return r
 
     def _get_output_from_document(self, r, key, model):
@@ -411,32 +378,14 @@ class BaseDatabase:
     def _get_raw_cursor(self, select: Select):
         raise NotImplementedError
 
-    def get_meta_data(self, **kwargs):
-        raise NotImplementedError
-
-    def _get_object_info(self, identifier, variety, **kwargs):
-        raise NotImplementedError
-
-    def _get_object_info_where(self, variety, **kwargs):
-        raise NotImplementedError
-
-    def get_object_info(self, identifier, variety, decode=True, **kwargs):
-        r = self._get_object_info(identifier, variety, **kwargs)
-        if r is None:
-            raise FileNotFoundError('Object doesn\'t exist')
-        if decode:
-            r = self.convert_from_bytes_to_types(r)
-            r = self._get_file_content(r)
-        return r
-
-    def get_object_info_where(self, variety, **kwargs):
-        return self._get_object_info_where(variety, **kwargs)
+    def get_object_info(self, identifier, variety):
+        return self.metadata.get_object(identifier, variety)
 
     def get_query_for_validation_set(self, validation_set):
         raise NotImplementedError
 
     def _get_watcher_for_learning_task(self, learning_task):
-        info = self.get_object_info(learning_task, 'learning_task')
+        info = self.metadata.get_object(learning_task, 'learning_task')
         key_to_watch = info['keys_to_watch'][0]
         model_identifier = next(
             m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch
@@ -447,7 +396,7 @@ class BaseDatabase:
         for item in insert.documents:
             r = random.random()
             try:
-                valid_probability = self.get_meta_data(key='valid_probability')
+                valid_probability = self.metadata.get_metadata(key='valid_probability')
             except TypeError:
                 valid_probability = 0.05
             if '_fold' not in item:
@@ -469,22 +418,19 @@ class BaseDatabase:
         """
         List jobs
         """
-        raise NotImplementedError
+        return self.metadata.list_jobs()
 
-    def list_components(self, variety, **kwargs):
-        raise NotImplementedError
+    def list_components(self, variety):
+        return self.metadata.list_components(variety)
 
     def list_validation_sets(self):
         """
         List validation sets.
         """
-        raise NotImplementedError
-
-    def _load_blob_of_bytes(self, file_id):
-        raise NotImplementedError
+        return self.metadata.list_components(variety='validation_set')
 
     def load_component(self, identifier, variety):
-        info = self.get_object_info(identifier, variety)
+        info = self.metadata.get_object(identifier, variety)
         if info is None:
             raise Exception(
                 f'No such object of type "{variety}", '
@@ -494,22 +440,13 @@ class BaseDatabase:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
-        m = self._load_serialized_file(info['object'], serializer=info['serializer'])
+        m = self.artifact_store.load_artifact(
+            info['object'], serializer=info['serializer']
+        )
         m.repopulate(self)
         if cm := self.variety_to_cache_mapping.get(variety):
             getattr(self, cm)[m.identifier] = m
         return m
-
-    def _load_serialized_file(self, file_id, serializer='pickle'):
-        bytes_ = self._load_blob_of_bytes(file_id)
-        f = io.BytesIO(bytes_)
-        if serializer == 'pickle':
-            return pickle.load(f)
-        elif serializer == 'dill':
-            import dill
-
-            return dill.load(f)
-        raise NotImplementedError
 
     @work
     def apply_watcher(  # noqa: F811
@@ -524,7 +461,7 @@ class BaseDatabase:
         **kwargs,
     ):
         if watcher_info is None:
-            watcher_info = self.get_object_info(identifier, 'watcher')
+            watcher_info = self.metadata.get_object(identifier, 'watcher')
         select = self.select_cls(**watcher_info['select'])
         if ids is None:
             ids = self._get_ids_from_select(select.select_only_id)
@@ -547,7 +484,7 @@ class BaseDatabase:
                 )
             return
 
-        model_info = self.get_object_info(watcher_info['model'], 'model')
+        model_info = self.metadata.get_object(watcher_info['model'], 'model')
         outputs = self._compute_model_outputs(
             model_info,
             ids,
@@ -569,26 +506,21 @@ class BaseDatabase:
         return outputs
 
     def _replace_model(self, identifier, object):
-        info = self.get_object_info(identifier, 'model')
+        info = self.metadata.get_object(identifier, 'model')
         if 'serializer' not in info:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
-        assert identifier in self.list_components(
+        assert identifier in self.metadata.list_components(
             'model'
         ), f'model "{identifier}" doesn\'t exist to replace'
-        file_id = self._create_serialized_file(
+        file_id = self.artifact_store.create_artifact(
             object,
             serializer=info['serializer'],
             serializer_kwargs=info['serializer_kwargs'],
         )
-        self._replace_object(info['object'], file_id, 'model', identifier)
-
-    def _replace_object(self, file_id, new_file_id, variety, identifier):
-        raise NotImplementedError
-
-    def _save_blob_of_bytes(self, bytes_):
-        raise NotImplementedError
+        self.artifact_store.delete_artifact(info['object'])
+        self.metadata.update_object(identifier, 'model', 'object', file_id)
 
     def select(
         self,
@@ -754,34 +686,17 @@ class BaseDatabase:
             self.delete_component(identifier, 'learning_task', force=True)
             raise e
 
-    def unset_hash_set(self, identifier):
-        """
-        Remove hash-set from memory
-
-        :param identifier: identifier of corresponding semantic-index
-        """
-        try:
-            del self._all_hash_sets[identifier]
-        except KeyError:
-            pass
-
     def update(self, update: Update, refresh=True, verbose=True):
-        if refresh and self.list_components('model'):
+        if refresh and self.metadata.list_components('model'):
             ids = self._get_ids_from_select(update.select_ids)
         result = self._base_update(update.to_raw(self.types, self.type_lookup))
-        if refresh and self.list_components('model'):
+        if refresh and self.metadata.list_components('model'):
             task_graph = self._build_task_workflow(
                 update.select, ids=ids, verbose=verbose
             )
             task_graph()
             return result, task_graph
         return result
-
-    def _update_job_info(self, identifier, key, value):
-        raise NotImplementedError
-
-    def _update_object_info(self, identifier, variety, key, value):
-        raise NotImplementedError
 
     @work
     def validate_component(
@@ -807,7 +722,7 @@ class BaseDatabase:
         results = component.validate(self, validation_selects, metrics)
         for vs, res in zip(validation_sets, results):
             for m in res:
-                self._update_object_info(
+                self.metadata.update_object(
                     identifier,
                     variety,
                     f'final_metrics.{vs}.{m}',
@@ -820,33 +735,7 @@ class BaseDatabase:
 
         :param identifier: job-id
         """
-        try:
-            status = 'pending'
-            n_lines = 0
-            n_lines_stderr = 0
-            while status in {'pending', 'running'}:
-                r = self._get_job_info(identifier)
-                status = r['status']
-                if status == 'running':
-                    if len(r['stdout']) > n_lines:
-                        print(''.join(r['stdout'][n_lines:]), end='')
-                        n_lines = len(r['stdout'])
-                    if len(r['stderr']) > n_lines_stderr:
-                        print(''.join(r['stderr'][n_lines_stderr:]), end='')
-                        n_lines_stderr = len(r['stderr'])
-                    time.sleep(0.2)
-                else:
-                    time.sleep(0.2)
-            r = self._get_job_info(identifier)
-            if status == 'success':
-                if len(r['stdout']) > n_lines:
-                    print(''.join(r['stdout'][n_lines:]), end='')
-                if len(r['stderr']) > n_lines_stderr:
-                    print(''.join(r['stderr'][n_lines_stderr:]), end='')
-            elif status == 'failed':  # pragma: no cover
-                print(r['msg'])
-        except KeyboardInterrupt:  # pragma: no cover
-            return
+        return self.metadata.watch_job(identifier)
 
     def write_output_to_job(self, identifier, msg, stream):
         """

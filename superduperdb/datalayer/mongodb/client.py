@@ -1,7 +1,13 @@
+from typing import Optional
+
 import click
 from pymongo.mongo_client import MongoClient
 
 import superduperdb.datalayer.mongodb.database
+from superduperdb.datalayer.base.artifacts import ArtifactStore
+from superduperdb.datalayer.base.metadata import MetaDataStore
+from superduperdb.datalayer.mongodb.artifacts import MongoArtifactStore
+from superduperdb.datalayer.mongodb.metadata import MongoMetaDataStore
 from superduperdb.misc.logger import logging
 
 
@@ -12,7 +18,16 @@ class SuperDuperClient(MongoClient):
     Databases and collections in the client are SuperDuperDB objects.
     """
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        user=None,
+        artifact_store: Optional[ArtifactStore] = None,
+        metadata: Optional[MetaDataStore] = None,
+        **kwargs,
+    ):
+        self.artifact_store = artifact_store
+        self.metadata = metadata
         if user is not None:
             kwargs.setdefault('username', user)
         super().__init__(*args, **kwargs)
@@ -20,7 +35,20 @@ class SuperDuperClient(MongoClient):
         self.kwargs = kwargs
 
     def __getitem__(self, name: str):
-        return superduperdb.datalayer.mongodb.database.Database(self, name)
+        artifact_store = self.artifact_store
+        if artifact_store is None:
+            artifact_db = super().__getitem__(f'_{name}:files')
+            artifact_store = MongoArtifactStore(artifact_db)
+        metadata = self.metadata
+        if metadata is None:
+            metadata_db = super().__getitem__(name)
+            metadata = MongoMetaDataStore(metadata_db, '_objects', '_meta', '_jobs')
+        return superduperdb.datalayer.mongodb.database.Database(
+            artifact_store,
+            metadata,
+            self,
+            name,
+        )
 
     def get_database_from_name(self, name):
         return self[name]

@@ -2,22 +2,6 @@ import pymongo
 from torch.utils import data
 
 
-def load(file_id, filesystem):
-    """
-    :param file_id: id in file system
-    :param filesystem: MongoDB gridfs filesystem
-    """
-    return filesystem.get(file_id).read()
-
-
-def save(bytes_, filesystem):
-    """
-    :param bytes_: content to save
-    :param filesystem: MongoDB gridfs filesystem
-    """
-    return filesystem.put(bytes_)
-
-
 class MongoIterable(data.IterableDataset):  # pragma: no cover
     """
     Dataset iterating over a query without needing to download the whole thing first.

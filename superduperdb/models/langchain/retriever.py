@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Union, List, Optional
+from typing import Union, List
 
 from langchain.base_language import BaseLanguageModel
 from langchain.chains import RetrievalQAWithSourcesChain

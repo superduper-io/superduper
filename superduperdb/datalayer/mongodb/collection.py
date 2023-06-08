@@ -50,9 +50,6 @@ class Collection(MongoCollection):
             bypass_document_validation=insert.bypass_document_validation,
         )
 
-    def cancel_job(self, job_id):
-        return self.database.cancel_job(job_id)
-
     @vector_search
     def clear_remote_cache(self):
         """

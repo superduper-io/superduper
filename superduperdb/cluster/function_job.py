@@ -21,4 +21,4 @@ def function_job(database_type, database_name, function_name, args_, kwargs_, jo
         database.metadata.update_job(job_id, 'status', 'failed')
         database.metadata.update_job(job_id, 'msg', tb)
         raise e
-    database.set_job_flag(job_id, ('status', 'success'))
+    database._set_job_flag(job_id, ('status', 'success'))

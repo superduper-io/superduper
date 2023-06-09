@@ -14,9 +14,9 @@ def test_pipeline(random_arrays, int64):
     y = (numpy.random.rand(100) > 0.5).astype(int)
     est = Pipeline([('my-svc', SVC())], 'my-svc')
     est.fit(X, y)
-    random_arrays.database.create_component(est)
+    random_arrays.database.add(est)
     pl = random_arrays.models['my-svc']
     print(pl)
-    random_arrays.database.create_component(
+    random_arrays.database.add(
         Watcher(select=Select('documents'), model='my-svc', key='x')
     )

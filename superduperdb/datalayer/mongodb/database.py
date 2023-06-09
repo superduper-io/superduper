@@ -101,12 +101,12 @@ class Database(MongoDatabase, BaseDatabase):
     def _insert_validation_data(self, tmp: List[Document], identifier: str):
         for i, r in enumerate(tmp):
             tmp[i]['identifier'] = identifier
-        self.insert(Insert(collection='_validation_sets', documents=tmp))
+        self._insert(Insert(collection='_validation_sets', documents=tmp))
 
-    def list_validation_sets(self):
+    def _show_validation_sets(self):
         return self['_validation_sets'].distinct('identifier')
 
-    def separate_query_part_from_validation_record(self, r):
+    def _separate_query_part_from_validation_record(self, r):
         return r['_other'], {k: v for k, v in r.items() if k != '_other'}
 
     def _set_content_bytes(self, r, key, bytes_):

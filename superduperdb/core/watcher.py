@@ -48,7 +48,7 @@ class Watcher(Component):
         if not ids:
             return []
         return [
-            database.apply_watcher(
+            database._apply_watcher(
                 self.identifier,
                 ids=ids,
                 verbose=verbose,

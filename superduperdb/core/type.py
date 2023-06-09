@@ -33,7 +33,7 @@ class DataVar:
 class Type(Component):
     """
     Storeable ``Component`` allowing byte encoding of primary data,
-    i.e. data inserted using ``datalayer.base.BaseDatabase.insert``
+    i.e. data inserted using ``datalayer.base.BaseDatabase._insert``
 
     :param identifier: unique identifier
     :param encoder: callable converting an ``DataVar`` of this ``Type`` to

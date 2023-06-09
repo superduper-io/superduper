@@ -13,8 +13,8 @@ from superduperdb.types.numpy.array import Array
 from superduperdb.types.pillow.image import Image
 from superduperdb.types.torch.tensor import Tensor
 from superduperdb.vector_search import FaissHashSet
-from tests.material.models import BinaryClassifier, BinaryTarget, LinearBase
-from tests.material.metrics import PatK, accuracy
+from tests.material.models import BinaryClassifier, LinearBase
+from tests.material.metrics import PatK
 
 import pytest
 import torch
@@ -35,14 +35,7 @@ def empty(client: SuperDuperClient):
 def metric(empty):
     empty.database.create_component(PatK(1))
     yield empty
-    empty.database.delete_component('p@1', 'metric', force=True)
-
-
-@pytest.fixture()
-def accuracy_metric(empty):
-    empty.create_metric('accuracy_metric', accuracy)
-    yield empty
-    empty.delete_metric('accuracy_metric', force=True)
+    empty.database.delete_component('metric', 'p@1', force=True)
 
 
 @pytest.fixture()
@@ -95,7 +88,7 @@ def with_vector_index(random_data, a_model):
     random_data.database.create_component(vi)
     yield random_data
     random_data.database.delete_component(
-        'test_vector_search', 'vector_index', force=True
+        'vector_index', 'test_vector_search', force=True
     )
 
 
@@ -115,7 +108,7 @@ def with_vector_index_faiss(random_data, a_model):
     )
     yield random_data
     random_data.database.delete_component(
-        'test_vector_search', 'vector_index', force=True
+        'vector_index', 'test_vector_search', force=True
     )
 
 
@@ -142,7 +135,7 @@ def float_tensors(empty):
         Tensor('float_tensor', torch.float32, types=[torch.FloatTensor, torch.Tensor])
     )
     yield empty
-    empty.database.delete_component('float_tensor', 'type', force=True)
+    empty.database.delete_component('type', 'float_tensor', force=True)
 
 
 @pytest.fixture()
@@ -151,7 +144,7 @@ def arrays(empty):
         Array('array', numpy.float32, types=[numpy.ndarray])
     )
     yield empty
-    empty.database.delete_component('array', 'type', force=True)
+    empty.database.delete_component('type', 'array', force=True)
 
 
 @pytest.fixture()
@@ -177,14 +170,14 @@ def nursery_rhymes(empty):
 def int64(empty):
     empty.database.create_component(Array('int64', numpy.int64))
     yield empty
-    empty.database.delete_component('int64', 'type', force=True)
+    empty.database.delete_component('type', 'int64', force=True)
 
 
 @pytest.fixture()
 def image_type(empty):
     empty.database.create_component(Image('image'))
     yield empty
-    empty.database.delete_component('image', 'type', force=True)
+    empty.database.delete_component('type', 'image', force=True)
 
 
 @pytest.fixture()
@@ -194,7 +187,7 @@ def a_model(float_tensors):
     )
     yield float_tensors
     try:
-        float_tensors.database.delete_component('linear_a', 'model', force=True)
+        float_tensors.database.delete_component('model', 'linear_a', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -208,7 +201,7 @@ def a_model_base(float_tensors):
     )
     yield float_tensors
     try:
-        float_tensors.database.delete_component('linear_a_base', 'model', force=True)
+        float_tensors.database.delete_component('model', 'linear_a_base', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -222,7 +215,7 @@ def a_watcher(a_model):
         Watcher(model='linear_a', select=Select('documents'), key='x')
     )
     yield a_model
-    a_model.database.delete_component('linear_a/x', 'watcher', force=True)
+    a_model.database.delete_component('watcher', 'linear_a/x', force=True)
 
 
 @pytest.fixture()
@@ -231,7 +224,7 @@ def a_watcher_base(a_model_base):
         Watcher(model='linear_a_base', select=Select('documents'), key='_base')
     )
     yield a_model_base
-    a_model_base.database.delete_component('linear_a_base/_base', 'watcher', force=True)
+    a_model_base.database.delete_component('watcher', 'linear_a_base/_base', force=True)
 
 
 @pytest.fixture()
@@ -241,19 +234,7 @@ def a_classifier(float_tensors):
     )
     yield float_tensors
     try:
-        float_tensors.database.delete_component('classifier', 'model', force=True)
-    except TypeError as e:
-        if "'NoneType' object is not subscriptable" in str(e):
-            return
-        raise e
-
-
-@pytest.fixture()
-def a_target(float_tensors):
-    float_tensors.create_function('target', BinaryTarget())
-    yield float_tensors
-    try:
-        float_tensors.delete_function('target', force=True)
+        float_tensors.database.delete_component('model', 'classifier', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -267,7 +248,7 @@ def b_model(float_tensors):
     )
     yield float_tensors
     try:
-        float_tensors.database.delete_component('linear_b', 'model', force=True)
+        float_tensors.database.delete_component('model', 'linear_b', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -281,7 +262,7 @@ def c_model(float_tensors):
     )
     yield float_tensors
     try:
-        float_tensors.database.delete_component('linear_c', 'model', force=True)
+        float_tensors.database.delete_component('model', 'linear_c', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return

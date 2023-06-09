@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
 
 
@@ -10,6 +10,10 @@ class MetaDataStore(ABC):
 
     @abstractmethod
     def create_component(self, info: Dict):
+        pass
+
+    @abstractmethod
+    def create_parent_child(self, parent: str, child: str):
         pass
 
     @abstractmethod
@@ -59,7 +63,17 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def delete_component(self, identifier: str, variety: str):
+    def list_component_versions(self, variety: str, identifier: str):
+        pass
+
+    @abstractmethod
+    def delete_component_version(self, variety: str, identifier: str, version: int):
+        pass
+
+    @abstractmethod
+    def component_version_has_parents(
+        self, variety: str, identifier: str, version: int
+    ):
         pass
 
     @abstractmethod
@@ -67,19 +81,63 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def _get_object(self, identifier: str, variety: str):
+    def get_latest_version(
+        self, variety: str, identifier: str, allow_hidden: bool = False
+    ):
         pass
 
-    def get_object(self, identifier: str, variety: str):
-        r = self._get_object(identifier, variety)
+    @abstractmethod
+    def _get_component(
+        self,
+        variety: str,
+        identifier: str,
+        version: int,
+        allow_hidden: bool = False,
+    ):
+        pass
+
+    def get_component(
+        self,
+        variety: str,
+        identifier: str,
+        version: Optional[int] = None,
+        allow_hidden: bool = False,
+    ):
+        if version is None:
+            version = self.get_latest_version(
+                variety, identifier, allow_hidden=allow_hidden
+            )
+        r = self._get_component(
+            variety, identifier, version=version, allow_hidden=allow_hidden
+        )
         if r is None:
             raise FileNotFoundError(f'Object {identifier} does not exist in metadata')
         return r
 
     @abstractmethod
-    def update_object(self, identifier, variety, key, value):
+    def _update_object(
+        self,
+        identifier: str,
+        variety: str,
+        key: str,
+        value: Any,
+        version: int,
+    ):
         pass
+
+    def update_object(self, identifier, variety, key, value, version=None):
+        if version is not None:
+            version = self.get_latest_version(variety, identifier)
+        return self._update_object(identifier, variety, key, value, version=version)
 
     @abstractmethod
     def write_output_to_job(self, identifier, msg, stream):
+        pass
+
+    @abstractmethod
+    def get_component_version_parents(self, unique_id: str):
+        pass
+
+    @abstractmethod
+    def hide_component_version(self, variety: str, identifier: str, version: int):
         pass

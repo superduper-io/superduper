@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  python:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+      target: requirements
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    volumes:
+      - ./superduperdb:/src/superduperdb
+      - ./tests:/src/tests
+
+
+  mongodb:
+    image: mongo:6
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: testmongodbuser
+      MONGO_INITDB_ROOT_PASSWORD: testmongodbpassword
+    ports:
+      - "27018:27017"

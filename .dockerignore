@@ -1,4 +1,5 @@
-*
 !requirements.ci.txt
 !build/requirements.txt
 !dist/*.whl
+!pyproject.toml
+!poetry.lock

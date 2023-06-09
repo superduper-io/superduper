@@ -1,3 +1,4 @@
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Iterator
@@ -9,10 +10,10 @@ from tenacity import RetryError, Retrying, stop_after_delay
 
 @dataclass(frozen=True)
 class MongoDBConfig:
-    host: str = "localhost"
-    port: int = 27018
-    username: str = field(repr=False, default="testmongodbuser")
-    password: str = field(repr=False, default="testmongodbpassword")
+    host: str = os.environ.get('MONGODB_HOST', 'localhost')
+    port: int = int(os.environ.get('MONGODB_PORT', '27018'))
+    username: str = field(repr=False, default='testmongodbuser')
+    password: str = field(repr=False, default='testmongodbpassword')
     server_selection_timeout_s: float = 5.0
 
 

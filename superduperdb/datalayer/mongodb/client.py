@@ -42,7 +42,9 @@ class SuperDuperClient(MongoClient):
         metadata = self.metadata
         if metadata is None:
             metadata_db = super().__getitem__(name)
-            metadata = MongoMetaDataStore(metadata_db, '_objects', '_meta', '_jobs')
+            metadata = MongoMetaDataStore(
+                metadata_db, '_objects', '_meta', '_jobs', '_parent_child_mappings'
+            )
         return superduperdb.datalayer.mongodb.database.Database(
             artifact_store,
             metadata,

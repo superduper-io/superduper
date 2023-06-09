@@ -35,16 +35,32 @@ werkzeug = "^2.3.4"
 openai = "^0.27.6"
 pydantic = "^1.10.7"
 fil = "^1.1.0"
-torch = "^2.0.1"
+torch = [
+     {version = "^2.0.1", platform = "darwin", source="PyPI"},
+     {version = "^2.0.1", platform = "linux", source = "torch"},
+     {version = "^2.0.1", platform = "win32", source = "torch"},
+ ]
 typer = "^0.9.0"
 ipykernel = "^6.23.1"
 ray = "^2.4.0"
 langchain = "^0.0.193"
 pymilvus = "^2.2.9"
+sympy = "^1.12"
 # pymilvus and ray are contributing to the version abmiguity
 grpcio = "<=1.49.1"
 readerwriterlock = "^1.0.9"
 fastapi = {version = "0.88.0", extras = ["all"]}
+
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+[[tool.poetry.source]]
+name = "torch"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

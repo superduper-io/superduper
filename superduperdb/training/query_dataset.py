@@ -38,7 +38,7 @@ class QueryDataset:
 
         self.transform = transform if transform else lambda x: x
         select = select.add_fold(fold)
-        self._documents = list(self.database.select(select))
+        self._documents = list(self.database.execute(select))
         self.suppress = suppress
         self.features = features or {}
 

@@ -87,4 +87,4 @@ class LearningTask(Component):
         }
 
     def schedule_jobs(self, database, verbose=True, dependencies=()):
-        return [database.fit(self.identifier)]
+        return [database._fit(self.identifier)]

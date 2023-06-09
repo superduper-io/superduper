@@ -55,15 +55,15 @@ class MetaDataStore(ABC):
             return
 
     @abstractmethod
-    def list_jobs(self):
+    def show_jobs(self):
         pass
 
     @abstractmethod
-    def list_components(self, variety: str):
+    def show_components(self, variety: str):
         pass
 
     @abstractmethod
-    def list_component_versions(self, variety: str, identifier: str):
+    def show_component_versions(self, variety: str, identifier: str):
         pass
 
     @abstractmethod

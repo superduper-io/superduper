@@ -94,10 +94,10 @@ class MongoMetaDataStore(MetaDataStore):
     def watch_job(self, job_id: str):
         pass
 
-    def list_components(self, variety: str):
+    def show_components(self, variety: str):
         return self.object_collection.distinct('identifier', {'variety': variety})
 
-    def list_component_versions(self, variety: str, identifier: str):
+    def show_component_versions(self, variety: str, identifier: str):
         return self.object_collection.distinct(
             'version', {'variety': variety, 'identifier': identifier}
         )
@@ -108,7 +108,7 @@ class MongoMetaDataStore(MetaDataStore):
             out.append((r['variety'], r['identifier']))
         return out
 
-    def list_jobs(self, status=None):
+    def show_jobs(self, status=None):
         status = {} if status is None else {'status': status}
         return list(
             self.job_collection.find(

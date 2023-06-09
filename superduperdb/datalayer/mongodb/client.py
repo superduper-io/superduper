@@ -71,7 +71,7 @@ class SuperDuperClient(MongoClient):
         **kwargs,
     ):
         if force or click.confirm(
-            'Are you sure you want to delete this database and all its models?',
+            'Are you sure you want to _delete this database and all its models?',
             default=False,
         ):
             super().drop_database(f'_{name}:files')

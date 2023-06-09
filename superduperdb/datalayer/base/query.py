@@ -16,7 +16,7 @@ class Select(ABC):
     @property
     @abstractmethod
     def is_trivial(self) -> bool:
-        # Determines when a select statement is "just" select everything.
+        # Determines when a _select statement is "just" _select everything.
         # For example, in SQL: "FROM my_table SELECT *"
         # For example, in MongoDB: "collection.find()"
         pass
@@ -55,7 +55,7 @@ class Insert(ABC):
     @property
     @abstractmethod
     def select_table(self) -> Select:
-        # returns a Select object which selects the table into which the insert
+        # returns a Select object which selects the table into which the _insert
         # was inserted
         pass
 
@@ -68,13 +68,13 @@ class Update(ABC):
     @property
     @abstractmethod
     def select(self):
-        # converts the update object to a Select object, which selects where
+        # converts the _update object to a Select object, which selects where
         # the update was made
         pass
 
     @property
     @abstractmethod
     def select_ids(self):
-        # converts the update object to a Select object, which selects where
+        # converts the _update object to a Select object, which selects where
         # the update was made, and returns only ids
         pass

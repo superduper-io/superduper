@@ -8,7 +8,7 @@ class DBLogger:
         self.stream = stream
 
     def write(self, message):
-        self.database.metadata.write_output_to_job(
+        self.database.metadata._write_output_to_job(
             self.id_, message, stream=self.stream
         )
 

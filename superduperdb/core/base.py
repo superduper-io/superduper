@@ -112,9 +112,9 @@ class Component(BaseComponent):
 
         def reload(object):
             if isinstance(object, Placeholder):
-                reloaded = database.load_component(
-                    object.identifier,
+                reloaded = database.load(
                     variety=object.variety,
+                    identifier=object.identifier,
                     version=object.version,
                     allow_hidden=True,
                 )
@@ -122,7 +122,7 @@ class Component(BaseComponent):
 
             if isinstance(object, PlaceholderList):
                 reloaded = [
-                    database.load_component(c.identifier, c.variety, allow_hidden=True)
+                    database.load(c.variety, c.identifier, allow_hidden=True)
                     for c in object
                 ]
                 for i, c in enumerate(reloaded):
@@ -189,7 +189,7 @@ class ComponentList(BaseComponent, list):
     def repopulate(self, database):
         for i, item in enumerate(self):
             if isinstance(item, str):
-                self[i] = database.load_component(item)
+                self[i] = database.load(self.variety, item)
             self[i] = self[i].repopulate(database)
 
     def aslist(self):

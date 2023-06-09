@@ -1,3 +1,8 @@
+from typing import Optional, List
+
+from superduperdb.misc.logger import logging
+
+
 class BasePlaceholder:
     """
     Base placeholders, used to signify an attribute was saved separately.
@@ -15,9 +20,10 @@ class Placeholder(BasePlaceholder):
     Placeholder.
     """
 
-    def __init__(self, identifier: str, variety: str):
+    def __init__(self, identifier: str, variety: str, version: Optional[int] = None):
         self.identifier = identifier
         self.variety = variety
+        self.version = version
 
 
 class PlaceholderList(BasePlaceholder, list):
@@ -43,6 +49,20 @@ class BaseComponent:
     Essentially just there to put Component and ComponentList on common ground.
     """
 
+    def _set_subcomponent(self, key, value):
+        logging.warn(f'Setting {value} component at {key}')
+        super().__setattr__(key, value)
+
+    def __setattr__(self, key, value):
+        try:
+            current = getattr(self, key)
+            # don't allow surgery on component, since messes with version rules
+            if isinstance(current, BaseComponent) or isinstance(current, Placeholder):
+                raise Exception('Cannot set component attribute!')
+        except AttributeError:
+            pass
+        return super().__setattr__(key, value)
+
 
 class Component(BaseComponent):
     """
@@ -53,6 +73,33 @@ class Component(BaseComponent):
 
     def __init__(self, identifier: str):
         self.identifier = identifier
+        self.version = None
+
+    @property
+    def unique_id(self):
+        if self.version is None:
+            raise Exception('Version not yet set for component uniqueness')
+        return f'{self.variety}/{self.identifier}/{self.version}'
+
+    @property
+    def child_components(self) -> List['Component']:
+        out = []
+        for v in vars(self).values():
+            if isinstance(v, Component):
+                out.append(v)
+            elif isinstance(v, ComponentList):
+                out.extend(list(v))
+        return out
+
+    @property
+    def child_references(self) -> List[Placeholder]:
+        out = []
+        for v in vars(self).values():
+            if isinstance(v, Placeholder):
+                out.append(v)
+            elif isinstance(v, PlaceholderList):
+                out.extend(list(v))
+        return out
 
     def repopulate(
         self, database: 'superduperdb.datalayer.base.BaseDatabase'  # noqa: F821  why?
@@ -66,13 +113,17 @@ class Component(BaseComponent):
         def reload(object):
             if isinstance(object, Placeholder):
                 reloaded = database.load_component(
-                    object.identifier, variety=object.variety
+                    object.identifier,
+                    variety=object.variety,
+                    version=object.version,
+                    allow_hidden=True,
                 )
                 return reload(reloaded)
 
             if isinstance(object, PlaceholderList):
                 reloaded = [
-                    database.load_component(c.identifier, c.variety) for c in object
+                    database.load_component(c.identifier, c.variety, allow_hidden=True)
+                    for c in object
                 ]
                 for i, c in enumerate(reloaded):
                     reloaded[i] = c.repopulate(database)
@@ -105,7 +156,7 @@ class Component(BaseComponent):
         parts = super_repr.split(' object at ')
         subcomponents = [
             getattr(self, attr)
-            for attr in dir(self)
+            for attr in vars(self)
             if isinstance(getattr(self, attr), BaseComponent)
             or isinstance(getattr(self, attr), BasePlaceholder)
         ]
@@ -117,6 +168,10 @@ class Component(BaseComponent):
 
     def schedule_jobs(self, database):
         return []
+
+    @classmethod
+    def make_unique_id(cls, variety, identifier, version):
+        return f'{variety}/{identifier}/{version}'
 
 
 class ComponentList(BaseComponent, list):
@@ -156,18 +211,21 @@ def strip(component: BaseComponent):
         return component
     if isinstance(component, ComponentList):
         return PlaceholderList(component.variety, [strip(obj) for obj in component])
-    for attr in dir(component):
+    for attr in vars(component):
         subcomponent = getattr(component, attr)
         if isinstance(subcomponent, ComponentList):
-            setattr(component, attr, strip(subcomponent))
-        elif isinstance(subcomponent, BaseComponent):
-            setattr(
-                component,
+            component._set_subcomponent(attr, strip(subcomponent))
+        elif isinstance(subcomponent, Component):
+            component._set_subcomponent(
                 attr,
-                Placeholder(subcomponent.identifier, subcomponent.variety),
+                Placeholder(
+                    subcomponent.identifier,
+                    subcomponent.variety,
+                    subcomponent.version,
+                ),
             )
         elif isinstance(subcomponent, BaseDatabase):
-            setattr(component, attr, None)
+            component._set_subcomponent(attr, None)
     return component
 
 

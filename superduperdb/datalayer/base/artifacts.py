@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import dill
+import hashlib
 import io
 import pickle
 from typing import Any, Optional, Dict
@@ -39,8 +40,7 @@ class ArtifactStore(ABC):
         serializer_kwargs: Optional[Dict] = None,
     ):
         bytes = self._serialize(object, serializer, serializer_kwargs)
-        return self._save_artifact(bytes)
-        pass
+        return self._save_artifact(bytes), hashlib.sha1(bytes).hexdigest()
 
     @abstractmethod
     def _save_artifact(self, serialized: bytes):

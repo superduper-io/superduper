@@ -16,7 +16,10 @@ class Model(Component):
     variety = 'model'
 
     def __init__(
-        self, object: Any, identifier: str, type: Optional[Union[Type, str]] = None
+        self,
+        object: Any,
+        identifier: str,
+        type: Optional[Union[Type, str]] = None,
     ):
         super().__init__(identifier)
         self.object = object

@@ -70,7 +70,7 @@ class VectorIndex(Component):
             database = self.database
             assert not isinstance(database, DBPlaceholder)
         super().repopulate(database)
-        c = database.select(self.watcher.select)
+        c = database.execute(self.watcher.select)
         loaded = []
         ids = []
         docs = progress.progressbar(c)

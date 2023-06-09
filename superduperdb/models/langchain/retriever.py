@@ -40,7 +40,7 @@ class LangchainRetriever(BaseRetriever):
         )[0]
         select = self.vector_index.select.select_using_ids(ids)
         out = list(
-            self.vector_index.database.select(
+            self.vector_index.database._select(
                 select, features=self.vector_index.watcher.features
             )
         )

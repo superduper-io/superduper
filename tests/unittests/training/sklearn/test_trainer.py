@@ -14,10 +14,10 @@ def test_classifier(random_arrays):
     model = Pipeline([('svc', SVC(verbose=True))], 'svc')
     identity = FunctionWrapper(lambda x: x, 'identity')
     cf = SklearnTrainingConfiguration('my-sk-cf')
-    random_arrays.database.create_component(cf)
-    random_arrays.database.create_component(identity, serializer='dill')
-    random_arrays.database.create_component(model)
-    random_arrays.database.create_component(
+    random_arrays.database.add(cf)
+    random_arrays.database.add(identity, serializer='dill')
+    random_arrays.database.add(model)
+    random_arrays.database.add(
         LearningTask(
             'my-sk-lt',
             models=['svc', 'identity'],

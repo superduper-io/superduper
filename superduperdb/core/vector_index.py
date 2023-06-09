@@ -68,7 +68,7 @@ class VectorIndex(Component):
             database = self.database
             assert not isinstance(database, DBPlaceholder)
         super().repopulate(database)
-        c = database.select(self.select)
+        c = database.select(self.watcher.select)
         loaded = []
         ids = []
         docs = progress.progressbar(c)
@@ -85,10 +85,6 @@ class VectorIndex(Component):
             ids,
             measure=self.measure,
         )
-
-    @property
-    def select(self):
-        return self.watcher.select
 
     def get_nearest(
         self,

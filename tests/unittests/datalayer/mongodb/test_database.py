@@ -3,12 +3,15 @@ import PIL.PngImagePlugin
 import pytest
 import torch
 
+from superduperdb.core.base import Placeholder
+from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.learning_task import LearningTask
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Select, Insert, Update, Delete
 from superduperdb.models.torch.wrapper import SuperDuperModule
 from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_vector_search
+from superduperdb.types.torch.tensor import Tensor
 from superduperdb.vector_search import VanillaHashSet
 from superduperdb.vector_search.vanilla.measures import css
 
@@ -41,6 +44,80 @@ def test_create_component(empty):
     model = empty.database.models['my-test-module']
     output = model.predict_one(torch.randn(16))
     assert output.shape[0] == 32
+
+
+def test_update_component(empty):
+    empty.database.create_component(
+        SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module')
+    )
+    m = SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module')
+    empty.database.create_component(m)
+    assert empty.database.list_component_versions('model', 'my-test-module') == [0, 1]
+    empty.database.create_component(m)
+    assert empty.database.list_component_versions('model', 'my-test-module') == [0, 1]
+
+    n = empty.database.models[m.identifier]
+    empty.database.create_component(n)
+    assert empty.database.list_component_versions('model', 'my-test-module') == [0, 1]
+
+
+def test_compound_component(empty):
+    t = Tensor('my-float-tensor', dtype=torch.float)
+
+    m = SuperDuperModule(
+        layer=torch.nn.Linear(16, 32),
+        identifier='my-test-module',
+        type=t,
+    )
+
+    empty.database.create_component(m)
+    assert 'my-float-tensor' in empty.database.list_components('type')
+    assert 'my-test-module' in empty.database.list_components('model')
+    assert empty.database.list_component_versions('model', 'my-test-module') == [0]
+
+    empty.database.create_component(m)
+    assert empty.database.list_component_versions('model', 'my-test-module') == [0]
+    assert empty.database.list_component_versions('type', 'my-float-tensor') == [0]
+
+    empty.database.create_component(
+        SuperDuperModule(
+            layer=torch.nn.Linear(16, 32),
+            identifier='my-test-module',
+            type=t,
+        )
+    )
+    assert empty.database.list_component_versions('model', 'my-test-module') == [0, 1]
+    assert empty.database.list_component_versions('type', 'my-float-tensor') == [0]
+
+    m = empty.database.load_component(
+        identifier='my-test-module',
+        variety='model',
+        repopulate=False,
+    )
+    assert isinstance(m.type, Placeholder)
+
+    m = empty.database.load_component(
+        identifier='my-test-module',
+        variety='model',
+        repopulate=True,
+    )
+    assert isinstance(m.type, Tensor)
+
+    with pytest.raises(ComponentInUseError):
+        empty.database.delete_component('type', 'my-float-tensor')
+
+    with pytest.warns(ComponentInUseWarning):
+        empty.database.delete_component('type', 'my-float-tensor', force=True)
+
+    # checks that can reload hidden type if part of another component
+    m = empty.database.load_component(
+        identifier='my-test-module',
+        variety='model',
+        repopulate=True,
+    )
+    assert isinstance(m.type, Tensor)
+
+    empty.database.delete_component('model', 'my-test-module', force=True)
 
 
 def test_select(with_vector_index):

@@ -1,7 +1,8 @@
+import warnings
 from collections import defaultdict
 import math
 import random
-from typing import Any, Union, Optional
+from typing import Any, Union, Optional, Dict
 
 import click
 import networkx
@@ -12,7 +13,10 @@ from superduperdb.cluster.client_decorators import model_server, vector_search
 from superduperdb.cluster.annotations import Convertible, Tuple, List
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
+from superduperdb.core.base import Component, strip
+from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.learning_task import LearningTask
+from superduperdb.core.model import Model
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.datalayer.base.metadata import MetaDataStore
@@ -193,18 +197,61 @@ class BaseDatabase:
             r, self.types, self.type_lookup
         )
 
-    def _create_job_record(self, *args, **kwargs):
+    def _create_job_record(self, *args, **kwargs):  # TODO - move to metadata
         raise NotImplementedError
 
-    def create_component(self, object, serializer='pickle', serializer_kwargs=None):
+    def create_component(
+        self,
+        object: Component,
+        serializer: str = 'pickle',
+        serializer_kwargs: Optional[Dict] = None,
+        parent: Optional[str] = None,
+    ):
+        existing_versions = self.list_component_versions(
+            object.variety, object.identifier
+        )
+        if isinstance(object.version, int) and object.version in existing_versions:
+            logging.warn(f'{object.unique_id} already exists - doing nothing')
+            return
+        version = existing_versions[-1] + 1 if existing_versions else 0
+        object.version = version
+
+        for c in object.child_components:
+            logging.info(f'Checking upstream-component {c.variety}/{c.identifier}')
+            self.create_component(
+                c,
+                serializer=serializer,
+                serializer_kwargs=serializer_kwargs,
+                parent=object.unique_id,
+            )
+
+        for p in object.child_references:
+            if p.version is None:
+                p.version = self.metadata.get_latest_version(p.variety, p.identifier)
+
+        print('Stripping sub-components to references')
+        strip(object)
+
         serializer_kwargs = serializer_kwargs or {}
-        assert object.identifier not in self.list_components(object.variety)
-        file_id = self.artifact_store.create_artifact(
-            object, serializer=serializer, serializer_kwargs=serializer_kwargs
+        file_id, sha1 = self.artifact_store.create_artifact(
+            object,
+            serializer=serializer,
+            serializer_kwargs=serializer_kwargs,
         )
         self.metadata.create_component(
-            {**object.asdict(), 'object': file_id, 'variety': object.variety}
+            {
+                **object.asdict(),
+                'object': file_id,
+                'variety': object.variety,
+                'version': version,
+                'sha1': sha1,
+            }
         )
+        if parent is not None:
+            self.metadata.create_parent_child(parent, object.unique_id)
+        logging.info(f'Created {object.unique_id}')
+
+        object.repopulate(self)
         return object.schedule_jobs(self)
 
     def _create_plan(self):
@@ -237,17 +284,25 @@ class BaseDatabase:
     def delete(self, delete: Delete):
         return self._base_delete(delete)
 
-    def delete_component(self, identifier, variety, force=False):
-        try:
-            info = self.metadata.get_object(identifier, variety)
-        except FileNotFoundError as e:
-            if not force:
-                raise e
+    def delete_component_version(
+        self,
+        variety: str,
+        identifier: str,
+        version: int,
+        force: bool = False,
+    ):
+        unique_id = Component.make_unique_id(variety, identifier, version)
+        if self.metadata.component_version_has_parents(variety, identifier, version):
+            parents = self.metadata.get_component_version_parents(
+                variety, identifier, version
+            )
+            raise Exception(f'{unique_id} is involved in other components: {parents}')
 
         if force or click.confirm(
-            f'You are about to delete {variety}: {identifier}, are you sure?',
+            f'You are about to delete {unique_id}, are you sure?',
             default=False,
         ):
+            info = self.metadata.get_component(variety, identifier, version=version)
             if variety in self.variety_to_cache_mapping:
                 try:
                     del getattr(self, self.variety_to_cache_mapping[variety])[
@@ -256,7 +311,46 @@ class BaseDatabase:
                 except KeyError:
                     pass
             self.artifact_store.delete_artifact(info['object'])
-            self.metadata.delete_component(identifier, variety)
+            self.metadata.delete_component_version(variety, identifier, version=version)
+
+    def delete_component(self, variety, identifier, force=False):
+        versions = self.metadata.list_component_versions(variety, identifier)
+        versions_in_use = []
+        for v in versions:
+            if self.metadata.component_version_has_parents(variety, identifier, v):
+                versions_in_use.append(v)
+
+        if versions_in_use:
+            component_versions_in_use = []
+            for v in versions_in_use:
+                unique_id = Component.make_unique_id(variety, identifier, v)
+                component_versions_in_use.append(
+                    f"{unique_id} -> "
+                    f"{self.metadata.get_component_version_parents(unique_id)}",
+                )
+            if not force:
+                raise ComponentInUseError(
+                    f'Component versions: {component_versions_in_use} are in use'
+                )
+            else:
+                warnings.warn(
+                    ComponentInUseWarning(
+                        f'Component versions: {component_versions_in_use}'
+                        ', marking as hidden'
+                    )
+                )
+
+        if force or click.confirm(
+            f'You are about to delete {variety}/{identifier}, are you sure?',
+            default=False,
+        ):
+            for v in sorted(list(set(versions) - set(versions_in_use))):
+                self.delete_component_version(variety, identifier, v, force=True)
+
+            for v in sorted(versions_in_use):
+                self.metadata.hide_component_version(variety, identifier, v)
+        else:
+            print('aborting.')
 
     @work
     def download_content(
@@ -350,7 +444,7 @@ class BaseDatabase:
         raise NotImplementedError
 
     def _get_dependencies_for_watcher(self, identifier):
-        info = self.metadata.get_object(identifier, 'watcher')
+        info = self.metadata.get_component('watcher', identifier)
         if info is None:
             return []
         watcher_features = info.get('features', {})
@@ -379,13 +473,13 @@ class BaseDatabase:
         raise NotImplementedError
 
     def get_object_info(self, identifier, variety):
-        return self.metadata.get_object(identifier, variety)
+        return self.metadata.get_component(variety, identifier)
 
     def get_query_for_validation_set(self, validation_set):
         raise NotImplementedError
 
     def _get_watcher_for_learning_task(self, learning_task):
-        info = self.metadata.get_object(learning_task, 'learning_task')
+        info = self.metadata.get_component('learning_task', learning_task)
         key_to_watch = info['keys_to_watch'][0]
         model_identifier = next(
             m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch
@@ -423,14 +517,26 @@ class BaseDatabase:
     def list_components(self, variety):
         return self.metadata.list_components(variety)
 
+    def list_component_versions(self, variety: str, identifier: str):
+        return sorted(self.metadata.list_component_versions(variety, identifier))
+
     def list_validation_sets(self):
         """
         List validation sets.
         """
         return self.metadata.list_components(variety='validation_set')
 
-    def load_component(self, identifier, variety):
-        info = self.metadata.get_object(identifier, variety)
+    def load_component(
+        self,
+        identifier: str,
+        variety: str,
+        version: Optional[int] = None,
+        repopulate: bool = True,
+        allow_hidden: bool = False,
+    ):
+        info = self.metadata.get_component(
+            variety, identifier, version=version, allow_hidden=allow_hidden
+        )
         if info is None:
             raise Exception(
                 f'No such object of type "{variety}", '
@@ -443,7 +549,8 @@ class BaseDatabase:
         m = self.artifact_store.load_artifact(
             info['object'], serializer=info['serializer']
         )
-        m.repopulate(self)
+        if repopulate:
+            m.repopulate(self)
         if cm := self.variety_to_cache_mapping.get(variety):
             getattr(self, cm)[m.identifier] = m
         return m
@@ -461,7 +568,7 @@ class BaseDatabase:
         **kwargs,
     ):
         if watcher_info is None:
-            watcher_info = self.metadata.get_object(identifier, 'watcher')
+            watcher_info = self.metadata.get_component('watcher', identifier)
         select = self.select_cls(**watcher_info['select'])
         if ids is None:
             ids = self._get_ids_from_select(select.select_only_id)
@@ -484,7 +591,7 @@ class BaseDatabase:
                 )
             return
 
-        model_info = self.metadata.get_object(watcher_info['model'], 'model')
+        model_info = self.metadata.get_component('model', watcher_info['model'])
         outputs = self._compute_model_outputs(
             model_info,
             ids,
@@ -505,8 +612,8 @@ class BaseDatabase:
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
 
-    def _replace_model(self, identifier, object):
-        info = self.metadata.get_object(identifier, 'model')
+    def _replace_model(self, identifier: str, object: Model):
+        info = self.metadata.get_component('model', identifier, version=object.version)
         if 'serializer' not in info:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
@@ -514,6 +621,10 @@ class BaseDatabase:
         assert identifier in self.metadata.list_components(
             'model'
         ), f'model "{identifier}" doesn\'t exist to replace'
+        assert object.version in self.metadata.list_component_versions(
+            'model', identifier
+        )
+
         file_id = self.artifact_store.create_artifact(
             object,
             serializer=info['serializer'],
@@ -683,7 +794,7 @@ class BaseDatabase:
         try:
             trainer()
         except Exception as e:
-            self.delete_component(identifier, 'learning_task', force=True)
+            self.delete_component('learning_task', identifier, force=True)
             raise e
 
     def update(self, update: Update, refresh=True, verbose=True):

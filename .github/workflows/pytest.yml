@@ -27,10 +27,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install poetry
-        poetry remove torch
-        poetry source add --priority=explicit torch https://download.pytorch.org/whl/cpu
-        poetry add torch==2.0.1 --source=torch
-        poetry add sympy==1.12
         poetry install
     - name: Test
       run: |

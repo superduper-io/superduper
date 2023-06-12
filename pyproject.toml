@@ -44,6 +44,7 @@ pymilvus = "^2.2.9"
 # pymilvus and ray are contributing to the version abmiguity
 grpcio = "<=1.49.1"
 readerwriterlock = "^1.0.9"
+fastapi = {version = "0.88.0", extras = ["all"]}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
@@ -57,6 +58,7 @@ tenacity = "^8.2.2"
 pandoc = "^2.3"
 sphinx-rtd-theme = "^1.2.1"
 nbsphinx = "^0.9.2"
+httpx = "^0.24.1"
 
 [build-system]
 requires = ["poetry-core"]

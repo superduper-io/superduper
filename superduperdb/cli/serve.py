@@ -1,18 +1,8 @@
 from . import command
-from typer import Argument, Option
-from typing import List
+from superduperdb.server.server import Server
+from tests.unittests.server.test_server import Object
 
 
-@command(help='serve')
-def serve(
-    arg: str = Argument(
-        'arg',
-        help='First argument',
-    ),
-    argv: List[str] = Argument(
-        None,
-        help='Additional arguments',
-    ),
-    opt: bool = Option(False, '--opt', '-o', help='An option'),
-):
-    pass
+@command(help='Start server')
+def serve():
+    Server().auto_run(Object())

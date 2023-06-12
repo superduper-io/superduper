@@ -3,20 +3,25 @@ from enum import Enum
 from pydantic import Field, root_validator
 from typing import Dict, List, Optional
 
-# The classes in this file define the configuration variables for SuperDuperDB.
-#
-# There is a file in the root directory named `default-config.json`
-# which has the default values for every configuration variable, serialized into JSON.
-#
-# If you change a class below, you must regenerate `default-config.json with:
-#
-#    $ python -m tests.unittests.misc.test_config
+"""
+The classes in this file define the configuration variables for SuperDuperDB,
+which means that this file gets imported before alost anything else, and
+canot contain any other imports from this project.
+
+There is a file in the root directory named `default-config.json`
+which has the default values for every configuration variable, serialized into JSON.
+
+If you change a class below, you must regenerate `default-config.json with
+
+    $ python -m tests.unittests.misc.test_config
+"""
 
 _BAD_KEY = '...bad.key...'
+REST_API_VERSION = '0.1.0'
 
 
-def Factory(factory):
-    return Field(default_factory=factory)
+def Factory(factory, **ka):
+    return Field(default_factory=factory, **ka)
 
 
 class HasPort(Serializable):
@@ -98,6 +103,20 @@ class Ray(HostPort):
     deployments: List[Deployment] = Factory(list)
 
 
+class Server(Serializable):
+    class FastAPI(Serializable):
+        debug = False
+        title = 'SuperDuperDB server'
+        version = REST_API_VERSION
+
+    class WebServer(Serializable):
+        host = '127.0.0.1'
+        port = 3223
+
+    fastapi: FastAPI = Factory(FastAPI)
+    web_server: WebServer = Factory(WebServer)
+
+
 class MilvusConfig(Serializable):
     host: str = 'localhost'
     port: int = 19530
@@ -127,4 +146,5 @@ class Config(Serializable):
     notebook: Notebook = Factory(Notebook)
     ray: Ray = Factory(Ray)
     remote: bool = False
+    server: Server = Factory(Server)
     vector_search: VectorSearchConfig = Factory(VectorSearchConfig)

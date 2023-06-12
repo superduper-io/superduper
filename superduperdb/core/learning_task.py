@@ -32,6 +32,8 @@ class LearningTask(Component):
     """
 
     variety = 'learning_task'
+    models: Union[PlaceholderList, ComponentList]
+    metrics: Union[PlaceholderList, ComponentList]
 
     def __init__(
         self,
@@ -40,8 +42,8 @@ class LearningTask(Component):
         keys: List[str],
         select: Select,
         training_configuration: Union[TrainingConfiguration, str],
-        validation_sets: List[str] = (),
-        metrics: Union[List[Metric], List[str]] = (),
+        validation_sets: Union[List[str], tuple] = (),
+        metrics: Union[List[Metric], List[str], tuple] = (),
         features: Optional[Mapping[str, str]] = None,
     ):
         super().__init__(identifier)

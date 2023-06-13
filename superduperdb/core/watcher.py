@@ -1,9 +1,8 @@
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from typing import Union, Optional
 
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.model import Model
-from superduperdb.datalayer.base.query import Select
 
 
 class Watcher(Component):
@@ -22,14 +21,12 @@ class Watcher(Component):
 
     def __init__(
         self,
-        select: Select,
+        select: dataclass,
         model: Union[Model, str],
         key: str = '_base',
         features: Optional[dict] = None,
     ):
-        self.model: Union[Placeholder, Model] = (
-            model if isinstance(model, Model) else Placeholder(model, 'model')
-        )
+        self.model = model if isinstance(model, Model) else Placeholder(model, 'model')
         self.select = select
         self.key = key
         self.select = select

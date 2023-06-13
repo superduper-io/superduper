@@ -1,12 +1,6 @@
-from typing import List, Optional
+from typing import Optional, List
 
 from superduperdb.misc.logger import logging
-
-
-from typing import TYPE_CHECKING, Union, Any
-
-if TYPE_CHECKING:
-    from superduperdb.datalayer.base.database import BaseDatabase
 
 
 class BasePlaceholder:
@@ -26,10 +20,10 @@ class Placeholder(BasePlaceholder):
     Placeholder.
     """
 
-    def __init__(self, identifier: str, variety: str, version: Union[int, None] = None):
-        self.identifier: str = identifier
-        self.variety: str = variety
-        self.version: Optional[int] = version
+    def __init__(self, identifier: str, variety: str, version: Optional[int] = None):
+        self.identifier = identifier
+        self.variety = variety
+        self.version = version
 
 
 class PlaceholderList(BasePlaceholder, list):
@@ -37,7 +31,7 @@ class PlaceholderList(BasePlaceholder, list):
     List of placeholders.
     """
 
-    def __init__(self, variety: str, *args, **kwargs):
+    def __init__(self, variety, *args, **kwargs):
         super().__init__(
             [Placeholder(arg, variety) for arg in args[0]], *args[1:], **kwargs
         )
@@ -46,7 +40,7 @@ class PlaceholderList(BasePlaceholder, list):
     def __repr__(self):
         return f'PlaceholderList[{self.variety}](' + super().__repr__() + ')'
 
-    def aslist(self) -> List[str]:
+    def aslist(self):
         return [x.identifier for x in self]
 
 
@@ -54,9 +48,6 @@ class BaseComponent:
     """
     Essentially just there to put Component and ComponentList on common ground.
     """
-
-    identifier: str
-    variety: str
 
     def _set_subcomponent(self, key, value):
         logging.warn(f'Setting {value} component at {key}')
@@ -81,8 +72,8 @@ class Component(BaseComponent):
     """
 
     def __init__(self, identifier: str):
-        self.identifier: str = identifier
-        self.version: Optional[int] = None
+        self.identifier = identifier
+        self.version = None
 
     @property
     def unique_id(self):
@@ -110,11 +101,13 @@ class Component(BaseComponent):
                 out.extend(list(v))
         return out
 
-    def repopulate(self, database: 'BaseDatabase'):  # noqa: F821 why?
+    def repopulate(
+        self, database: 'superduperdb.datalayer.base.BaseDatabase'  # noqa: F821  why?
+    ):
         """
         Set all attributes which were separately saved and serialized.
 
-        :param database: Database connector responsible for saving/ loading components
+        :param database: Database connector reponsible for saving/ loading components
         """
 
         def reload(object):
@@ -236,13 +229,10 @@ def strip(component: BaseComponent):
     return component
 
 
-def is_placeholders_or_components(items: Union[List[Any], tuple, None]):
+def is_placeholders_or_components(items: list):
     """
     Test whether the list is just strings and also test whether it's just components
     """
-    if items is None:
-        return False, False
-
     is_placeholders = all([isinstance(y, str) for y in items])
     is_components = all([isinstance(y, Component) for y in items])
     return is_placeholders, is_components

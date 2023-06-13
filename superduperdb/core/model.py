@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.type import Type
@@ -13,14 +13,13 @@ class Model(Component):
     :param type: Type instance (optional)
     """
 
-    variety: str = 'model'
-    type: Union[Type, Placeholder, None]
+    variety = 'model'
 
     def __init__(
         self,
         object: Any,
         identifier: str,
-        type: Union[Type, str, None] = None,
+        type: Optional[Union[Type, str]] = None,
     ):
         super().__init__(identifier)
         self.object = object

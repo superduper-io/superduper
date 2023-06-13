@@ -1,4 +1,4 @@
-from typing import List, Union, Any, Dict, TYPE_CHECKING, Optional
+from typing import List, Union, Optional, Any, Dict
 
 from superduperdb.core.base import (
     ComponentList,
@@ -13,15 +13,11 @@ from superduperdb.core.model import Model
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc import progress
-from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.training.query_dataset import QueryDataset
 from superduperdb.training.validation import validate_vector_search
 from superduperdb.vector_search import VanillaHashSet
-from superduperdb.vector_search.base import BaseHashSet
-
-if TYPE_CHECKING:
-    from superduperdb.datalayer.mongodb.database import Database
+from superduperdb.misc.logger import logging
 
 
 class VectorIndex(Component):
@@ -39,16 +35,13 @@ class VectorIndex(Component):
     """
 
     variety = 'vector_index'
-    models: Union[PlaceholderList, ComponentList]
-    watcher: Union[Watcher, Placeholder]
-    _hash_set: Optional[BaseHashSet]
 
     def __init__(
         self,
         identifier: str,
         keys: List[str],
         watcher: Union[Watcher, str],
-        models: Union[List[Model], List[str], None] = None,
+        models: Union[List[Model], List[str]] = None,
         measure: str = 'css',
         hash_set_cls: type = VanillaHashSet,
     ):
@@ -75,14 +68,11 @@ class VectorIndex(Component):
             database = self.database
             assert not isinstance(database, DBPlaceholder)
         super().repopulate(database)
-        assert isinstance(self.watcher, Watcher)
         c = database.select(self.watcher.select)
         loaded = []
         ids = []
         docs = progress.progressbar(c)
-        assert hasattr(logging, 'info')
         logging.info(f'loading hashes: "{self.identifier}')
-        assert isinstance(self.watcher, Watcher)
         for r in docs:
             h = database._get_output_from_document(
                 r, self.watcher.key, self.watcher.model.identifier
@@ -113,7 +103,6 @@ class VectorIndex(Component):
         keys = self.keys
         assert len(models) == len(keys)
 
-        assert isinstance(self._hash_set, BaseHashSet)
         hash_set = self._hash_set
         if ids:
             hash_set = hash_set[ids]
@@ -128,7 +117,7 @@ class VectorIndex(Component):
             if '_outputs' not in document:
                 document['_outputs'] = {}
             document['_outputs'].update(outputs)
-            assert isinstance(self.watcher, Watcher)
+
             for subkey in self.watcher.features or ():
                 subout = document['_outputs'].setdefault(subkey, {})
                 if self.watcher.features[subkey] not in subout:
@@ -154,7 +143,7 @@ class VectorIndex(Component):
 
     def validate(
         self,
-        database: 'Database',  # noqa: F821  why?
+        database: 'superduperdb.datalayer.base.database.Database',  # noqa: F821  why?
         validation_selects: List[Select],
         metrics: List[Metric],
     ):

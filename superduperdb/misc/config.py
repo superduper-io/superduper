@@ -1,5 +1,6 @@
+from .serializable import Serializable
 from enum import Enum
-from pydantic import BaseModel, Field, root_validator
+from pydantic import Field, root_validator
 from typing import Dict, List, Optional
 
 # The classes in this file define the configuration variables for SuperDuperDB.
@@ -14,16 +15,11 @@ from typing import Dict, List, Optional
 _BAD_KEY = '...bad.key...'
 
 
-def _Factory(factory):
+def Factory(factory):
     return Field(default_factory=factory)
 
 
-class _Model(BaseModel):
-    class Config:
-        extra = 'forbid'
-
-
-class HasPort(_Model):
+class HasPort(Serializable):
     port = 0
     password = ''
     user = ''
@@ -37,23 +33,23 @@ class IpPort(HasPort):
     ip = 'localhost'
 
 
-class Api(_Model):
+class Api(Serializable):
     api_key: str = Field(default=_BAD_KEY, repr=False)
 
 
-class Apis(_Model):
+class Apis(Serializable):
     n_retries = 2
-    providers: Dict[str, Api] = _Factory(dict)
+    providers: Dict[str, Api] = Factory(dict)
 
 
 class Dask(IpPort):
     port = 8786
 
-    serializers: List[str] = _Factory(list)
-    deserializers: List[str] = _Factory(list)
+    serializers: List[str] = Factory(list)
+    deserializers: List[str] = Factory(list)
 
 
-class Deployment(_Model):
+class Deployment(Serializable):
     database = ''
     model = ''
 
@@ -69,10 +65,10 @@ class LogType(str, Enum):
     LOGGING = 'LOGGING'
 
 
-class Logging(_Model):
+class Logging(Serializable):
     level = LogLevel.INFO
     type = LogType.STDERR
-    kwargs: dict = _Factory(dict)
+    kwargs: dict = Factory(dict)
 
 
 class ModelServer(HostPort):
@@ -84,7 +80,7 @@ class MongoDB(HostPort):
     port = 27017
 
 
-class Notebook(_Model):
+class Notebook(Serializable):
     ip = '0.0.0.0'
     port = 8888
     password = ''
@@ -99,10 +95,10 @@ class Notebook(_Model):
 class Ray(HostPort):
     host = '127.0.0.1'
 
-    deployments: List[Deployment] = _Factory(list)
+    deployments: List[Deployment] = Factory(list)
 
 
-class MilvusConfig(_Model):
+class MilvusConfig(Serializable):
     host: str = 'localhost'
     port: int = 19530
     username: str = Field(default="", repr=False)
@@ -111,7 +107,7 @@ class MilvusConfig(_Model):
     consistency_level: str = "Bounded"
 
 
-class VectorSearchConfig(_Model):
+class VectorSearchConfig(Serializable):
     milvus: Optional[MilvusConfig] = None
 
     # the fields below were left for compatibility with the vector search server
@@ -122,13 +118,13 @@ class VectorSearchConfig(_Model):
     password: str = Field(default="", repr=False)
 
 
-class Config(_Model):
-    apis: Apis = _Factory(Apis)
-    dask: Dask = _Factory(Dask)
-    logging: Logging = _Factory(Logging)
-    model_server: ModelServer = _Factory(ModelServer)
-    mongodb: MongoDB = _Factory(MongoDB)
-    notebook: Notebook = _Factory(Notebook)
-    ray: Ray = _Factory(Ray)
+class Config(Serializable):
+    apis: Apis = Factory(Apis)
+    dask: Dask = Factory(Dask)
+    logging: Logging = Factory(Logging)
+    model_server: ModelServer = Factory(ModelServer)
+    mongodb: MongoDB = Factory(MongoDB)
+    notebook: Notebook = Factory(Notebook)
+    ray: Ray = Factory(Ray)
     remote: bool = False
-    vector_search: VectorSearchConfig = _Factory(VectorSearchConfig)
+    vector_search: VectorSearchConfig = Factory(VectorSearchConfig)

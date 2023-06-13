@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
-from typing import List, Any
+from typing import List, Optional, Mapping
 
-from superduperdb.misc.serialization import convert_from_types_to_bytes
+from superduperdb.core.documents import Document
 
 
 class Select(ABC):
@@ -28,7 +29,7 @@ class Select(ABC):
         pass
 
     @abstractmethod
-    def select_using_ids(self, ids):
+    def select_using_ids(self, ids, features: Optional[Mapping[str, str]] = None):
         # Converts the query into a query which sub-selects from the ids specified.
         pass
 
@@ -39,20 +40,11 @@ class Select(ABC):
         pass
 
 
+@dataclass(frozen=False)
 class Insert(ABC):
     # must implement attribute/ property self.documents
 
-    def _to_raw_documents(self, types, type_lookup) -> List[Any]:
-        raw_documents = []
-        for r in self.documents:
-            raw_documents.append(convert_from_types_to_bytes(r, types, type_lookup))
-        return raw_documents
-
-    @abstractmethod
-    def to_raw(self, types, type_lookup) -> 'Insert':
-        # converts the Insert object into an equivalent insert object, but where
-        # the component types are dumped as bytes
-        pass
+    documents: List[Document]
 
     @property
     @abstractmethod
@@ -73,12 +65,6 @@ class Delete(ABC):
 
 
 class Update(ABC):
-    @abstractmethod
-    def to_raw(self, types, type_lookup):
-        # converts the Update object into an equivalent Update object, but where
-        # the component types are dumped as bytes in the update
-        pass
-
     @property
     @abstractmethod
     def select(self):

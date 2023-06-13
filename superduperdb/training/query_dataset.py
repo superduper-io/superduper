@@ -54,7 +54,7 @@ class QueryDataset:
         return len(self._documents)
 
     def __getitem__(self, item):
-        r = MongoStyleDict(self._documents[item])
+        r = MongoStyleDict(self._documents[item].unpack())
         s = MongoStyleDict({})
         for k in self.features:
             r[k] = r['_outputs'][k][self.features[k]]

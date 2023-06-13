@@ -6,21 +6,18 @@ import io
 from superduperdb.core.type import Type
 
 
-class Image(Type):
-    """
-    >>> with open('img/black.png', 'rb') as f: bs = f.read()
-    >>> im = Image.decode(bs)
-    >>> bs = Image.encode(im)
-    """
+def encode_pil_image(x):
+    buffer = io.BytesIO()
+    x.save(buffer, format='png')
+    return buffer.getvalue()
 
-    types = (PIL.JpegImagePlugin.JpegImageFile, PIL.PngImagePlugin.PngImageFile)
 
-    @staticmethod
-    def encode(x):
-        buffer = io.BytesIO()
-        x.save(buffer, format='png')
-        return buffer.getvalue()
+def decode_pil_image(bytes):
+    return PIL.Image.open(io.BytesIO(bytes))
 
-    @staticmethod
-    def decode(bytes_):
-        return PIL.Image.open(io.BytesIO(bytes_))
+
+pil_image = Type(
+    'pil_image',
+    encoder=encode_pil_image,
+    decoder=decode_pil_image,
+)

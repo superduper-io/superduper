@@ -3,21 +3,21 @@ import random
 
 import lorem
 import numpy
+import pytest
+import torch
 
+from superduperdb.core.documents import Document
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.client import SuperDuperClient
 from superduperdb.datalayer.mongodb.query import Select, Insert, Delete
 from superduperdb.models.torch.wrapper import SuperDuperModule
-from superduperdb.types.numpy.array import Array
-from superduperdb.types.pillow.image import Image
-from superduperdb.types.torch.tensor import Tensor
+from superduperdb.types.numpy.array import array
+from superduperdb.types.pillow.image import pil_image
+from superduperdb.types.torch.tensor import tensor
 from superduperdb.vector_search import FaissHashSet
 from tests.material.models import BinaryClassifier, LinearBase
 from tests.material.metrics import PatK
-
-import pytest
-import torch
 
 
 n_data_points = 250
@@ -40,37 +40,62 @@ def metric(empty):
 
 @pytest.fixture()
 def random_data(float_tensors):
+    float_tensor = float_tensors.database.types['torch.float32']
+
     data = []
     for i in range(n_data_points):
         x = torch.randn(32)
         y = int(random.random() > 0.5)
         z = torch.randn(32)
-        data.append({'x': x, 'z': z, 'y': y})
-    float_tensors.database.insert(Insert('documents', documents=data), refresh=False)
+        data.append(
+            Document(
+                {
+                    'x': float_tensor(x),
+                    'y': y,
+                    'z': float_tensor(z),
+                }
+            )
+        )
+    float_tensors.database.insert(
+        Insert(collection='documents', documents=data), refresh=False
+    )
     yield float_tensors
     float_tensors.delete_many({})
 
 
 @pytest.fixture()
 def random_arrays(arrays):
+    float_array = arrays.database.types['numpy.float32']
     data = []
     for i in range(n_data_points):
         x = numpy.random.randn(32).astype(numpy.float32)
         y = int(random.random() > 0.5)
-        data.append({'x': x, 'y': y})
-    arrays.database.insert(Insert('documents', documents=data), refresh=False)
+        data.append(Document({'x': float_array(x), 'y': y}))
+    arrays.database.insert(
+        Insert(collection='documents', documents=data), refresh=False
+    )
     yield arrays
     arrays.database.delete(Delete('documents', {}))
 
 
 @pytest.fixture()
-def an_update():
+def an_update(float_tensors):
+    float_tensor = float_tensors.database.types['torch.float32']
     data = []
     for i in range(10):
         x = torch.randn(32)
         y = int(random.random() > 0.5)
         z = torch.randn(32)
-        data.append({'x': x, 'z': z, 'y': y, 'update': True})
+        data.append(
+            Document(
+                {
+                    'x': float_tensor(x),
+                    'y': y,
+                    'z': float_tensor(z),
+                    'update': True,
+                }
+            )
+        )
     return data
 
 
@@ -131,28 +156,24 @@ def imputation_validation(random_data):
 
 @pytest.fixture()
 def float_tensors(empty):
-    empty.database.create_component(
-        Tensor('float_tensor', torch.float32, types=[torch.FloatTensor, torch.Tensor])
-    )
+    empty.database.create_component(tensor(torch.float))
     yield empty
-    empty.database.delete_component('type', 'float_tensor', force=True)
+    empty.database.delete_component('type', 'torch.float32', force=True)
 
 
 @pytest.fixture()
 def arrays(empty):
-    empty.database.create_component(
-        Array('array', numpy.float32, types=[numpy.ndarray])
-    )
+    empty.database.create_component(array('float32'))
     yield empty
-    empty.database.delete_component('type', 'array', force=True)
+    empty.database.delete_component('type', 'numpy.float32', force=True)
 
 
 @pytest.fixture()
 def sentences(empty):
     data = []
     for _ in range(100):
-        data.append({'text': lorem.sentence()})
-    empty.database.insert(Insert('documents', documents=data))
+        data.append(Document({'text': lorem.sentence()}))
+    empty.database.insert(Insert(collection='documents', documents=data))
     yield empty
 
 
@@ -161,29 +182,29 @@ def nursery_rhymes(empty):
     with open('tests/material/data/rhymes.json') as f:
         data = json.load(f)
     for i in range(len(data)):
-        data[i] = {'text': data[i]}
-    empty.database.insert(Insert('documents', documents=data))
+        data[i] = Document({'text': data[i]})
+    empty.database.insert(Insert(collection='documents', documents=data))
     yield empty
 
 
 @pytest.fixture()
 def int64(empty):
-    empty.database.create_component(Array('int64', numpy.int64))
+    empty.database.create_component(array(numpy.int64))
     yield empty
     empty.database.delete_component('type', 'int64', force=True)
 
 
 @pytest.fixture()
 def image_type(empty):
-    empty.database.create_component(Image('image'))
+    empty.database.create_component(pil_image)
     yield empty
-    empty.database.delete_component('type', 'image', force=True)
+    empty.database.delete_component('type', 'pil_image', force=True)
 
 
 @pytest.fixture()
 def a_model(float_tensors):
     float_tensors.database.create_component(
-        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_a', type='float_tensor')
+        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_a', type='torch.float32')
     )
     yield float_tensors
     try:
@@ -197,7 +218,7 @@ def a_model(float_tensors):
 @pytest.fixture()
 def a_model_base(float_tensors):
     float_tensors.database.create_component(
-        SuperDuperModule(LinearBase(32, 16), 'linear_a_base', type='float_tensor'),
+        SuperDuperModule(LinearBase(32, 16), 'linear_a_base', type='torch.float32'),
     )
     yield float_tensors
     try:
@@ -244,7 +265,7 @@ def a_classifier(float_tensors):
 @pytest.fixture()
 def b_model(float_tensors):
     float_tensors.database.create_component(
-        SuperDuperModule(torch.nn.Linear(16, 8), 'linear_b', type='float_tensor'),
+        SuperDuperModule(torch.nn.Linear(16, 8), 'linear_b', type='torch.float32'),
     )
     yield float_tensors
     try:
@@ -258,7 +279,7 @@ def b_model(float_tensors):
 @pytest.fixture()
 def c_model(float_tensors):
     float_tensors.database.create_component(
-        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_c', type='float_tensor'),
+        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_c', type='torch.float32'),
     )
     yield float_tensors
     try:

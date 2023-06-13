@@ -1,6 +1,7 @@
 from pymongo.cursor import Cursor
 
 from superduperdb.misc.special_dicts import MongoStyleDict
+from superduperdb.core.documents import Document
 
 
 class SuperDuperCursor(Cursor):
@@ -88,6 +89,6 @@ class SuperDuperCursor(Cursor):
                 for i, id_ in enumerate(r['_like'][self.similar_join]):
                     r['_like'][self.similar_join][i] = lookup[id_]
 
-        return self.collection.database.convert_from_bytes_to_types(r)
+        return Document(Document.decode(r, self.collection.database.types))
 
     __next__ = next

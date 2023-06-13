@@ -34,9 +34,9 @@ class TestMilvusVectorIndex:
                 ]
             )
 
-            nearest = index.find_nearest_from_array(numpy.array([15]), limit=8)
-            ids = [int(i) for i in nearest[0].ids]
-            assert len(ids) == 8
+            results = index.find_nearest_from_array(numpy.array([15]), limit=8)
+            assert len(results) == 8
+            ids = [int(r.id) for r in results]
             assert all(5 <= i <= 25 for i in ids)
 
     def test_find_nearest_from_id(self, manager: MilvusVectorIndexManager) -> None:
@@ -48,9 +48,9 @@ class TestMilvusVectorIndex:
                 ]
             )
 
-            nearest = index.find_nearest_from_id("15", limit=8)
-            ids = [int(i) for i in nearest[0].ids]
-            assert len(ids) == 8
+            results = index.find_nearest_from_id("15", limit=8)
+            assert len(results) == 8
+            ids = [int(r.id) for r in results]
             assert all(5 <= i <= 25 for i in ids)
 
     def test_find_nearest_from_id__not_found(
@@ -67,6 +67,6 @@ class TestMilvusVectorIndex:
 
             index.add([VectorIndexItem(id="1", vector=numpy.array([100]))])
 
-            nearest = index.find_nearest_from_array(numpy.array([99]), limit=1)
-            ids = [int(i) for i in nearest[0].ids]
+            results = index.find_nearest_from_array(numpy.array([99]), limit=1)
+            ids = [int(r.id) for r in results]
             assert ids == [1]

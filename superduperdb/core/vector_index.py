@@ -1,4 +1,4 @@
-from typing import List, Union, Optional, Any, Dict
+from typing import List, Union, Optional, Any
 
 from superduperdb.core.base import (
     ComponentList,
@@ -8,8 +8,10 @@ from superduperdb.core.base import (
     is_placeholders_or_components,
     DBPlaceholder,
 )
+from superduperdb.core.documents import Document
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model
+from superduperdb.core.type import DataVar
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc import progress
@@ -74,11 +76,13 @@ class VectorIndex(Component):
         docs = progress.progressbar(c)
         logging.info(f'loading hashes: "{self.identifier}')
         for r in docs:
-            h = database._get_output_from_document(
+            h, id = database._get_output_from_document(
                 r, self.watcher.key, self.watcher.model.identifier
             )
+            if isinstance(h, DataVar):
+                h = h.x
             loaded.append(h)
-            ids.append(r['_id'])
+            ids.append(id)
 
         self._hash_set = self.hash_set_cls(
             loaded,
@@ -88,12 +92,12 @@ class VectorIndex(Component):
 
     def get_nearest(
         self,
-        like: Dict,
+        like: Document,
         database: Optional[Any] = None,
         outputs: Optional[dict] = None,
         featurize: bool = True,
-        ids=None,
-        n=100,
+        ids: Optional[List[str]] = None,
+        n: int = 100,
     ):
         if database is None:
             database = self.database
@@ -107,10 +111,10 @@ class VectorIndex(Component):
         if ids:
             hash_set = hash_set[ids]
 
-        if database.id_field in like:
+        if database.id_field in like.content:
             return hash_set.find_nearest_from_id(like['_id'], n=n)
 
-        document = MongoStyleDict(like)
+        document = MongoStyleDict(like.unpack())
 
         if featurize:
             outputs = outputs or {}

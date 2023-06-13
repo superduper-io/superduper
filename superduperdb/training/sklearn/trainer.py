@@ -15,7 +15,7 @@ class SklearnTrainingConfiguration(TrainingConfiguration):
     def _get_data(cls, database, X, select: Select, y=None, y_preprocess=None):
         documents = []
         for r in progress.progressbar(database.select(select)):
-            documents.append(r)
+            documents.append(r.unpack())
         X = [r[X] for r in documents]
         if isinstance(X[0], numpy.ndarray):
             X = numpy.stack(X)

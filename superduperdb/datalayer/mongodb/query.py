@@ -1,9 +1,9 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from functools import cached_property
-from typing import Optional, Mapping, Any, List
+from typing import Optional, Mapping, Any
 
+from superduperdb.core.documents import Document
 from superduperdb.datalayer.base import query
-from superduperdb.misc.serialization import convert_from_types_to_bytes
 
 
 @dataclass(frozen=True)
@@ -11,8 +11,15 @@ class Select(query.Select):
     collection: str
     filter: Optional[Mapping[str, Any]] = None
     projection: Optional[Mapping[str, Any]] = None
-    kwargs: Mapping[str, Any] = field(default_factory=dict)
     one: bool = False
+    kwargs: Mapping[str, Any] = field(default_factory=dict)
+    like: Optional[Document] = None
+    download: bool = False
+    vector_index: Optional[str] = None
+    similar_first: bool = False
+    features: Optional[Mapping[str, str]] = None
+    n: int = 100
+    outputs: Optional[Document] = None
 
     def add_fold(self, fold: str) -> 'Select':
         return Select(
@@ -33,19 +40,23 @@ class Select(query.Select):
 
     @cached_property
     def select_only_id(self) -> 'Select':
-        return Select(
-            collection=self.collection, filter=self.filter, projection={'_id': 1}
-        )
+        variables = asdict(self)
+        variables['projection'] = {'_id': 1}
+        return Select(**variables)
 
-    def select_using_ids(self, ids) -> 'Select':
-        return Select(
-            collection=self.collection,
-            filter={'_id': {'$in': ids}, **(self.filter if self.filter else {})},
-            projection=self.projection,
-            kwargs=self.kwargs,
-        )
+    def select_using_ids(
+        self, ids, features: Optional[Mapping[str, str]] = None
+    ) -> 'Select':
+        variables = asdict(self)
+        variables['filter'] = {
+            '_id': {'$in': ids},
+            **(self.filter if self.filter else {}),
+        }
+        if features is not None:
+            variables['features'] = features
+        return Select(**variables)
 
-    def update(self, to_update: dict) -> 'Update':
+    def update(self, to_update: Document) -> 'Update':
         return Update(
             collection=self.collection,
             filter=self.filter or {},
@@ -57,9 +68,9 @@ class Select(query.Select):
 class Update(query.Update):
     collection: str
     filter: Mapping[str, Any]
-    update: Optional[Mapping[str, Any]] = None
+    update: Optional[Document] = None
     one: bool = False
-    replacement: Optional[Mapping[str, Any]] = None
+    replacement: Optional[Document] = None
 
     @cached_property
     def table(self):
@@ -81,23 +92,6 @@ class Update(query.Update):
             projection={'_id': 1},
         )
 
-    def to_raw(self, types, type_lookup):
-        if self.replacement is None:
-            assert self.update is not None
-            return Update(
-                collection=self.collection,
-                filter=self.filter,
-                update=convert_from_types_to_bytes(self.update, types, type_lookup),
-            )
-        else:
-            return Update(
-                collection=self.collection,
-                filter=self.filter,
-                replacement=convert_from_types_to_bytes(
-                    self.replacement, types, type_lookup
-                ),
-            )
-
 
 @dataclass(frozen=True)
 class Delete(query.Delete):
@@ -110,24 +104,15 @@ class Delete(query.Delete):
         return self.collection
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class Insert(query.Insert):
     collection: str
-    documents: List[Any]
     ordered: bool = True
     bypass_document_validation: bool = False
 
     @cached_property
     def table(self):
         return self.collection
-
-    def to_raw(self, types: dict, type_lookup: dict) -> 'Insert':
-        return Insert(
-            collection=self.collection,
-            documents=self._to_raw_documents(types, type_lookup),
-            ordered=self.ordered,
-            bypass_document_validation=self.bypass_document_validation,
-        )
 
     @cached_property
     def select_table(self) -> Select:

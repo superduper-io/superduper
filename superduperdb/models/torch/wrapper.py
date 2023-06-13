@@ -4,6 +4,8 @@ from typing import Optional, Callable
 import torch
 from torch.utils import data
 
+from superduperdb.core.documents import Document
+from superduperdb.core.type import DataVar
 from superduperdb.misc import progress
 from superduperdb.core.model import Model
 from superduperdb.models.torch.utils import device_of, to_device, eval
@@ -172,7 +174,12 @@ class BasicDataset(data.Dataset):
         return len(self.documents)
 
     def __getitem__(self, item):
-        return self.transform(self.documents[item])
+        document = self.documents[item]
+        if isinstance(document, Document):
+            document = document.unpack()
+        elif isinstance(document, DataVar):
+            document = document.x
+        return self.transform(document)
 
 
 def unpack_batch(args):

@@ -1,3 +1,5 @@
+from typing import List
+
 from bson import ObjectId
 from pymongo import UpdateOne
 from pymongo.cursor import Cursor
@@ -5,6 +7,7 @@ from pymongo.database import Database as MongoDatabase
 
 import superduperdb.datalayer.mongodb.artifacts
 import superduperdb.datalayer.mongodb.collection
+from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.mongodb.cursor import SuperDuperCursor
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -64,7 +67,7 @@ class Database(MongoDatabase, BaseDatabase):
             collection=table,
             one=True,
             filter={'_id': id},
-            update={'$set': {f'{key}._content.bytes': bytes_}},
+            update=Document({'$set': {f'{key}._content.bytes': bytes_}}),
         )
 
     def _get_cursor(self, select: Select, features=None, scores=None):
@@ -76,8 +79,8 @@ class Database(MongoDatabase, BaseDatabase):
             **select.kwargs,
         )
 
-    def _get_output_from_document(self, r, key, model):
-        return MongoStyleDict(r)[f'_outputs.{key}.{model}']
+    def _get_output_from_document(self, r: Document, key: str, model: str):
+        return MongoStyleDict(r.content)[f'_outputs.{key}.{model}'], r.content['_id']
 
     def _get_ids_from_select(self, select: Select):
         return [
@@ -95,9 +98,10 @@ class Database(MongoDatabase, BaseDatabase):
             collection='_validation_sets', filter={'identifier': validation_set}
         )
 
-    def _insert_validation_data(self, tmp, identifier):
-        tmp = [{**r, 'identifier': identifier} for r in tmp]
-        self.insert(Insert('_validation_sets', documents=tmp))
+    def _insert_validation_data(self, tmp: List[Document], identifier: str):
+        for i, r in enumerate(tmp):
+            tmp[i]['identifier'] = identifier
+        self.insert(Insert(collection='_validation_sets', documents=tmp))
 
     def list_validation_sets(self):
         return self['_validation_sets'].distinct('identifier')
@@ -129,7 +133,7 @@ class Database(MongoDatabase, BaseDatabase):
         self[select.collection].bulk_write(
             [
                 UpdateOne(
-                    {'_id': id},
+                    {'_id': ObjectId(id)},
                     {'$set': {out_key: outputs[i]}},
                 )
                 for i, id in enumerate(_ids)

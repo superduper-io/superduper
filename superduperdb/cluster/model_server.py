@@ -1,5 +1,3 @@
-import inspect
-
 import flask
 from bson import BSON
 from flask_cors import CORS
@@ -7,7 +5,6 @@ from flask import request, Flask
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from superduperdb.cluster.annotations import decode_args, decode_kwargs, encode_result
 from superduperdb.datalayer.mongodb.client import SuperDuperClient
 from superduperdb import CFG
 from superduperdb.cluster.login import maybe_login_required
@@ -42,10 +39,7 @@ def serve():
         databases[f'{database}'] = client[database]
     database = databases[database]
     method = getattr(database, data['method']).f
-    args = decode_args(database, inspect.signature(method), data['args'])
-    kwargs = decode_kwargs(database, inspect.signature(method), data['kwargs'])
-    result = method(database, *args, **kwargs)
-    result = encode_result(database, inspect.signature(method), {'output': result})
+    result = method(database, *data['args'], **data['kwargs'])
     return flask.make_response(BSON.encode(result))
 
 

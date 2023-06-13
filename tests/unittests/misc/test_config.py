@@ -1,7 +1,7 @@
 from .test_dicts import PARENT
 from collections import Counter
 from pydantic import ValidationError
-from superduperdb.misc.config import _Factory, _Model, Config, Notebook
+from superduperdb.misc.config import Factory, Serializable, Config, Notebook
 import pytest
 
 TYPE_ERROR = """
@@ -76,33 +76,33 @@ def test_config_has_no_dupes():
 
 
 def test_find_dupes():
-    class Red(_Model):
+    class Red(Serializable):
         crimson = 'Crimson'
         ruby = 'Ruby'
 
-    class Green(_Model):
+    class Green(Serializable):
         puce = 'Puce'
         orange = 'Orange'
 
-    class Blue(_Model):
+    class Blue(Serializable):
         green_puce = 'Green Puce'
-        green: Green = _Factory(Green)
+        green: Green = Factory(Green)
 
-    class BlueGreen(_Model):
+    class BlueGreen(Serializable):
         puce = 0
         yellow = 30
 
-    class Green2(_Model):
+    class Green2(Serializable):
         orange = 'lime'
 
-    class Tan(_Model):
-        green: Green2 = _Factory(Green2)
+    class Tan(Serializable):
+        green: Green2 = Factory(Green2)
 
-    class Colors(_Model):
-        red: Red = _Factory(Red)
-        blue: Blue = _Factory(Blue)
-        blue_green: BlueGreen = _Factory(BlueGreen)
-        tan: Tan = _Factory(Tan)
+    class Colors(Serializable):
+        red: Red = Factory(Red)
+        blue: Blue = Factory(Blue)
+        blue_green: BlueGreen = Factory(BlueGreen)
+        tan: Tan = Factory(Tan)
 
     assert Colors().dict() == PARENT
     assert _dupes(Colors) == ['blue_green_puce']

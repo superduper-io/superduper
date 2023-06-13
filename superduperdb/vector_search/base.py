@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 import numpy
 import torch
-from typing import List, Any, Iterator, Sequence
+from typing import List, Iterator, Sequence, Callable
 
 from ..misc.config import VectorSearchConfig
 
@@ -56,6 +56,7 @@ class BaseHashSet:
 
 VectorIndexId = str
 VectorIndexItemId = str
+VectorIndexMeasureFunction = Callable[[numpy.ndarray, numpy.ndarray], float]
 
 
 class VectorIndexItemNotFound(Exception):
@@ -66,6 +67,12 @@ class VectorIndexItemNotFound(Exception):
 class VectorIndexItem:
     id: VectorIndexItemId
     vector: numpy.ndarray
+
+
+@dataclass(frozen=True)
+class VectorIndexResult:
+    id: VectorIndexItemId
+    score: float
 
 
 class VectorIndex(ABC):
@@ -91,14 +98,14 @@ class VectorIndex(ABC):
     @abstractmethod
     def find_nearest_from_id(
         self, identifier: VectorIndexItemId, *, limit: int = 100, offset: int = 0
-    ) -> List[Any]:
+    ) -> List[VectorIndexResult]:
         """Find items that are nearest to the item with the given identifier."""
         ...
 
     @abstractmethod
     def find_nearest_from_array(
         self, array: numpy.ndarray, *, limit: int = 100, offset: int = 0
-    ) -> List[Any]:
+    ) -> List[VectorIndexResult]:
         """Find items that are nearest to the given vector."""
         ...
 

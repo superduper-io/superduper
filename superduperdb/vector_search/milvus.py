@@ -12,6 +12,7 @@ from .base import (
     VectorIndexId,
     VectorIndexItemId,
     VectorIndexItemNotFound,
+    VectorIndexResult,
 )
 from ..misc.config import VectorSearchConfig, MilvusConfig
 
@@ -204,7 +205,7 @@ class MilvusVectorIndex(VectorIndex):
 
     def find_nearest_from_id(
         self, identifier: VectorIndexItemId, *, limit: int = 100, offset: int = 0
-    ) -> List[Any]:
+    ) -> List[VectorIndexResult]:
         array = self._get_vector_by_id(identifier=identifier)
         return self.find_nearest_from_array(array=array, limit=limit, offset=offset)
 
@@ -220,11 +221,15 @@ class MilvusVectorIndex(VectorIndex):
 
     def find_nearest_from_array(
         self, array: numpy.ndarray, *, limit: int = 100, offset: int = 0
-    ) -> List[Any]:
-        return self._collection.search(
+    ) -> List[VectorIndexResult]:
+        result = self._collection.search(
             data=[array],
             anns_field=MilvusVectorIndexManager._vector_field_name,
             param={"metric_type": "L2", "params": {"ef": "top_k"}},
             limit=limit,
             offset=offset,
         )
+        return [
+            VectorIndexResult(id=id_, score=distance)
+            for id_, distance in zip(result[0].ids, result[0].distances)
+        ]

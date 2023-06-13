@@ -1,8 +1,9 @@
 from .misc import configs
+from .misc.serializable import Serializable
 from pathlib import Path
 import os
 
-__all__ = 'CFG', 'ICON', 'ROOT'
+__all__ = 'CFG', 'ICON', 'ROOT', 'Serializable'
 
 CFG = configs.CONFIG.config
 ICON = '🔮'

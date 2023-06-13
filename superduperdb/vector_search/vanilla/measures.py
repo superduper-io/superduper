@@ -1,6 +1,10 @@
 import numpy
 
 
+def l2(x, y):
+    return numpy.array([-numpy.linalg.norm(x - y, axis=1)])
+
+
 def dot(x, y):
     return numpy.dot(x, y.T)
 

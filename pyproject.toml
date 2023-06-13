@@ -43,6 +43,7 @@ langchain = "^0.0.193"
 pymilvus = "^2.2.9"
 # pymilvus and ray are contributing to the version abmiguity
 grpcio = "<=1.49.1"
+readerwriterlock = "^1.0.9"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

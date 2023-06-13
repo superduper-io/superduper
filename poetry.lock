@@ -3893,6 +3893,20 @@ files = [
 setuptools = ">=41.0"
 
 [[package]]
+name = "readerwriterlock"
+version = "1.0.9"
+description = "A python implementation of the three Reader-Writer problems."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "readerwriterlock-1.0.9-py3-none-any.whl", hash = "sha256:8c4b704e60d15991462081a27ef46762fea49b478aa4426644f2146754759ca7"},
+    {file = "readerwriterlock-1.0.9.tar.gz", hash = "sha256:b7c4cc003435d7a8ff15b312b0a62a88d9800ba6164af88991f87f8b748f9bea"},
+]
+
+[package.dependencies]
+typing-extensions = "*"
+
+[[package]]
 name = "regex"
 version = "2023.6.3"
 description = "Alternative regular expression module, to replace re."
@@ -5405,4 +5419,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1, <4.0"
-content-hash = "3c219e50781c4dedbe2e8524e7d0c61e352ea5f687847891432bd71b2810fe8c"
+content-hash = "6e242eda692b5223d9ac174b66bb86fb04b21bb9bcae8ddbb35702ee3305f482"

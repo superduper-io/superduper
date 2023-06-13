@@ -4,17 +4,25 @@ import torch
 from superduperdb.core.type import Type
 
 
-class Tensor(Type):
-    def __init__(self, identifier, dtype, types=()):
-        super().__init__(identifier)
-        self.dtype = torch.randn(1).type(dtype).numpy().dtype
-        self.types = types
+class EncodeTensor:
+    def __init__(self, dtype):
+        self.dtype = dtype
 
-    def encode(self, x):
-        x = x.numpy()
+    def __call__(self, x):
         assert self.dtype == x.dtype
-        return memoryview(x).tobytes()
+        return memoryview(x.numpy()).tobytes()
 
-    def decode(self, bytes_):
-        array = numpy.frombuffer(bytes_, dtype=self.dtype)
+
+class DecodeTensor:
+    def __init__(self, dtype):
+        self.dtype = torch.randn(1).type(dtype).numpy().dtype
+
+    def __call__(self, bytes):
+        array = numpy.frombuffer(bytes, dtype=self.dtype)
         return torch.from_numpy(array)
+
+
+def tensor(dtype):
+    return Type(
+        identifier=str(dtype), encoder=EncodeTensor(dtype), decoder=DecodeTensor(dtype)
+    )

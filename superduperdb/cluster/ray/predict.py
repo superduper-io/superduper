@@ -5,6 +5,7 @@ from ray import serve
 from bson import BSON
 
 from superduperdb.datalayer.base.imports import get_database_from_database_type
+from superduperdb.core.documents import Document
 
 
 @serve.deployment(
@@ -23,10 +24,11 @@ class Server:
         data = await http_request.body()
         data = BSON.decode(data)
         print(data)
-        input_ = self.db.convert_from_bytes_to_types(data['input_'])
+        data = [Document.decode(r, types=self.db.types) for r in data]
+
+        input_ = Document.decode(data['input_'], types=self.db.types)
         result = self.db.predict(os.environ['SUPERDUPERDB_MODEL'], input_)
-        result = self.db.convert_from_types_to_bytes(result)
-        return BSON.encode({'output': result})
+        return BSON.encode({'output': result.encode()})
 
 
 server = Server.bind()

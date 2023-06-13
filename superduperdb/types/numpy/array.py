@@ -3,22 +3,26 @@ import numpy
 from superduperdb.core.type import Type
 
 
-class Array(Type):
-    """
-    >>> x = numpy.random.randn(32)
-    >>> bs = Array(numpy.float64).encode(x)
-    >>> Array(numpy.float64).decode(bs) == x
-    True
-    """
-
-    def __init__(self, identifier, dtype, types=()):
-        super().__init__(identifier)
-        self.types = types
+class EncodeArray:
+    def __init__(self, dtype):
         self.dtype = dtype
 
-    def encode(self, x):
+    def __call__(self, x):
         assert x.dtype == self.dtype
         return memoryview(x).tobytes()
 
-    def decode(self, bytes_):
-        return numpy.frombuffer(bytes_, dtype=self.dtype)
+
+class DecodeArray:
+    def __init__(self, dtype):
+        self.dtype = dtype
+
+    def __call__(self, bytes):
+        return numpy.frombuffer(bytes, dtype=self.dtype)
+
+
+def array(dtype: str):
+    return Type(
+        identifier=f'numpy.{dtype}',
+        encoder=EncodeArray(dtype),
+        decoder=DecodeArray(dtype),
+    )

@@ -4,14 +4,16 @@ import pytest
 import torch
 
 from superduperdb.core.base import Placeholder
+from superduperdb.core.documents import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.learning_task import LearningTask
+from superduperdb.core.type import Type
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Select, Insert, Update, Delete
 from superduperdb.models.torch.wrapper import SuperDuperModule
 from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_vector_search
-from superduperdb.types.torch.tensor import Tensor
+from superduperdb.types.torch.tensor import tensor
 from superduperdb.vector_search import VanillaHashSet
 from superduperdb.vector_search.vanilla.measures import css
 
@@ -52,17 +54,23 @@ def test_update_component(empty):
     )
     m = SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module')
     empty.database.create_component(m)
-    assert empty.database.list_component_versions('model', 'my-test-module') == [0, 1]
+    assert empty.database.metadata.list_component_versions(
+        'model', 'my-test-module'
+    ) == [0, 1]
     empty.database.create_component(m)
-    assert empty.database.list_component_versions('model', 'my-test-module') == [0, 1]
+    assert empty.database.metadata.list_component_versions(
+        'model', 'my-test-module'
+    ) == [0, 1]
 
     n = empty.database.models[m.identifier]
     empty.database.create_component(n)
-    assert empty.database.list_component_versions('model', 'my-test-module') == [0, 1]
+    assert empty.database.metadata.list_component_versions(
+        'model', 'my-test-module'
+    ) == [0, 1]
 
 
 def test_compound_component(empty):
-    t = Tensor('my-float-tensor', dtype=torch.float)
+    t = tensor(torch.float)
 
     m = SuperDuperModule(
         layer=torch.nn.Linear(16, 32),
@@ -71,13 +79,19 @@ def test_compound_component(empty):
     )
 
     empty.database.create_component(m)
-    assert 'my-float-tensor' in empty.database.list_components('type')
+    assert 'torch.float32' in empty.database.list_components('type')
     assert 'my-test-module' in empty.database.list_components('model')
-    assert empty.database.list_component_versions('model', 'my-test-module') == [0]
+    assert empty.database.metadata.list_component_versions(
+        'model', 'my-test-module'
+    ) == [0]
 
     empty.database.create_component(m)
-    assert empty.database.list_component_versions('model', 'my-test-module') == [0]
-    assert empty.database.list_component_versions('type', 'my-float-tensor') == [0]
+    assert empty.database.metadata.list_component_versions(
+        'model', 'my-test-module'
+    ) == [0]
+    assert empty.database.metadata.list_component_versions('type', 'torch.float32') == [
+        0
+    ]
 
     empty.database.create_component(
         SuperDuperModule(
@@ -86,8 +100,12 @@ def test_compound_component(empty):
             type=t,
         )
     )
-    assert empty.database.list_component_versions('model', 'my-test-module') == [0, 1]
-    assert empty.database.list_component_versions('type', 'my-float-tensor') == [0]
+    assert empty.database.metadata.list_component_versions(
+        'model', 'my-test-module'
+    ) == [0, 1]
+    assert empty.database.metadata.list_component_versions('type', 'torch.float32') == [
+        0
+    ]
 
     m = empty.database.load_component(
         identifier='my-test-module',
@@ -101,13 +119,13 @@ def test_compound_component(empty):
         variety='model',
         repopulate=True,
     )
-    assert isinstance(m.type, Tensor)
+    assert isinstance(m.type, Type)
 
     with pytest.raises(ComponentInUseError):
-        empty.database.delete_component('type', 'my-float-tensor')
+        empty.database.delete_component('type', 'torch.float32')
 
     with pytest.warns(ComponentInUseWarning):
-        empty.database.delete_component('type', 'my-float-tensor', force=True)
+        empty.database.delete_component('type', 'torch.float32', force=True)
 
     # checks that can reload hidden type if part of another component
     m = empty.database.load_component(
@@ -115,9 +133,15 @@ def test_compound_component(empty):
         variety='model',
         repopulate=True,
     )
-    assert isinstance(m.type, Tensor)
+    assert isinstance(m.type, Type)
 
     empty.database.delete_component('model', 'my-test-module', force=True)
+
+
+def test_select_vanilla(random_data):
+    db = random_data.database
+    r = next(db.select(Select(collection='documents')))
+    print(r)
 
 
 def test_select(with_vector_index):
@@ -125,9 +149,11 @@ def test_select(with_vector_index):
     r = next(db.select(Select(collection='documents')))
     s = next(
         db.select(
-            Select(collection='documents'),
-            like={'x': r['x']},
-            vector_index='test_vector_search',
+            Select(
+                collection='documents',
+                like=Document({'x': r['x']}),
+                vector_index='test_vector_search',
+            ),
         )
     )
     assert r['_id'] == s['_id']
@@ -147,9 +173,11 @@ def test_select_faiss(with_vector_index_faiss):
     r = next(db.select(Select(collection='documents')))
     s = next(
         db.select(
-            Select(collection='documents'),
-            like={'x': r['x']},
-            vector_index='test_vector_search',
+            Select(
+                collection='documents',
+                like=Document({'x': r['x']}),
+                vector_index='test_vector_search',
+            ),
         )
     )
     assert r['_id'] == s['_id']
@@ -164,44 +192,51 @@ def test_insert(random_data, a_watcher, an_update):
 
 def test_insert_from_uris(empty, image_type):
     to_insert = [
-        {
-            'item': {
-                '_content': {
-                    'uri': IMAGE_URL,
-                    'type': 'image',
-                }
-            },
-            'other': {
+        Document(
+            {
                 'item': {
                     '_content': {
                         'uri': IMAGE_URL,
-                        'type': 'image',
+                        'type': 'pil_image',
                     }
-                }
-            },
-        }
+                },
+                'other': {
+                    'item': {
+                        '_content': {
+                            'uri': IMAGE_URL,
+                            'type': 'pil_image',
+                        }
+                    }
+                },
+            }
+        )
         for _ in range(2)
     ]
     empty.database.insert(Insert(collection='documents', documents=to_insert))
     r = next(empty.database.select(Select('documents')))
-    assert isinstance(r['item'], PIL.PngImagePlugin.PngImageFile)
-    assert isinstance(r['other']['item'], PIL.PngImagePlugin.PngImageFile)
+    assert isinstance(r['item'].x, PIL.PngImagePlugin.PngImageFile)
+    assert isinstance(r['other']['item'].x, PIL.PngImagePlugin.PngImageFile)
 
 
 def test_update(random_data, a_watcher):
     to_update = torch.randn(32)
+    t = random_data.database.types['torch.float32']
     random_data.database.update(
-        Update(collection='documents', filter={}, update={'$set': {'x': to_update}})
+        Update(
+            collection='documents',
+            filter={},
+            update=Document({'$set': {'x': t(to_update)}}),
+        )
     )
     cur = random_data.database.select(Select('documents'))
     r = next(cur)
     s = next(cur)
 
-    assert r['x'].tolist() == to_update.tolist()
-    assert s['x'].tolist() == to_update.tolist()
+    assert r['x'].x.tolist() == to_update.tolist()
+    assert s['x'].x.tolist() == to_update.tolist()
     assert (
-        r['_outputs']['x']['linear_a'].tolist()
-        == s['_outputs']['x']['linear_a'].tolist()
+        r['_outputs']['x']['linear_a'].x.tolist()
+        == s['_outputs']['x']['linear_a'].x.tolist()
     )
 
 
@@ -212,13 +247,17 @@ def test_watcher(random_data, a_model, b_model):
     r = next(random_data.database.select(Select('documents', one=True)))
     assert 'linear_a' in r['_outputs']['x']
 
+    t = random_data.database.types['torch.float32']
+
     random_data.database.insert(
         Insert(
-            'documents',
-            documents=[{'x': torch.randn(32), 'update': True} for _ in range(5)],
+            collection='documents',
+            documents=[
+                Document({'x': t(torch.randn(32)), '_update': True}) for _ in range(5)
+            ],
         )
     )
-    r = next(random_data.database.select(Select('documents', filter={'update': True})))
+    r = next(random_data.database.select(Select('documents', filter={'_update': True})))
     assert 'linear_a' in r['_outputs']['x']
 
     random_data.database.create_component(
@@ -267,8 +306,9 @@ def test_learning_task(si_validation, a_model, c_model, metric):
     si_validation.database.create_component(learning_task)
 
 
-def test_predict(a_model):
-    a_model.database.predict_one('linear_a', torch.randn(32))
+def test_predict(a_model, float_tensors):
+    t = float_tensors.database.types['torch.float32']
+    a_model.database.predict_one('linear_a', Document(t(torch.randn(32))))
 
 
 def test_delete(random_data):
@@ -283,7 +323,8 @@ def test_delete(random_data):
 def test_replace(random_data):
     r = next(random_data.database.select(Select('documents')))
     x = torch.randn(32)
-    r['x'] = x
+    t = random_data.database.types['torch.float32']
+    r['x'] = t(x)
     random_data.database.update(
         Update(
             collection='documents',
@@ -292,4 +333,4 @@ def test_replace(random_data):
         )
     )
     r = next(random_data.database.select(Select('documents')))
-    assert r['x'].tolist() == x.tolist()
+    assert r['x'].x.tolist() == x.tolist()

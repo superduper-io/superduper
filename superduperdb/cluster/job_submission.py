@@ -3,7 +3,6 @@ import inspect
 from functools import wraps
 import uuid
 
-from superduperdb.cluster.annotations import encode_args, encode_kwargs
 from superduperdb.cluster.function_job import function_job
 from superduperdb.cluster.dask.dask_client import dask_client
 from superduperdb.misc.logger import logging
@@ -20,8 +19,6 @@ def work(f):
         if remote is None:
             remote = database.remote
         if remote:
-            args = encode_args(database, sig, args)
-            kwargs = encode_kwargs(database, sig, kwargs)
             job_id = str(uuid.uuid4())
             database._create_job_record(
                 {

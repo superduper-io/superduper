@@ -2,7 +2,6 @@ import datetime
 import networkx
 import uuid
 
-from superduperdb.cluster.annotations import encode_args, encode_kwargs
 from superduperdb.cluster.function_job import function_job
 from superduperdb.cluster.job_submission import dask_client
 
@@ -86,28 +85,21 @@ class TaskWorkflow:
                         }
                     )
                     self.G.nodes[node]['job_id'] = job_id
-                    args = encode_args(
-                        self.database,
-                        node_object['task'].signature,
-                        node_object['args'],
-                    )
-                    kwargs = encode_kwargs(
-                        self.database,
-                        node_object['task'].signature,
-                        node_object['kwargs'],
-                    )
 
                     dependencies = [
                         self.G.nodes[a]['future'] for a in self.G.predecessors(node)
                     ]
-
                     node_object['future'] = _dask_client.submit(
                         function_job,
                         self.database._database_type,
                         self.database.name,
                         node_object['task'].__name__,
-                        args,
-                        {**kwargs, 'remote': False, 'dependencies': dependencies},
+                        node_object['args'],
+                        {
+                            **node_object['kwargs'],
+                            'remote': False,
+                            'dependencies': dependencies,
+                        },
                         job_id,
                         key=job_id,
                     )

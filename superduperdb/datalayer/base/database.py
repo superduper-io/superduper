@@ -2,18 +2,16 @@ import warnings
 from collections import defaultdict
 import math
 import random
-from typing import Any, Union, Optional, Dict
+from typing import Union, Optional, Dict, List, Tuple
 
 import click
 import networkx
-from bson import ObjectId
 
-from superduperdb import CFG, misc
-from superduperdb.cluster.client_decorators import model_server, vector_search
-from superduperdb.cluster.annotations import Convertible, Tuple, List
+from superduperdb import CFG
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
 from superduperdb.core.base import Component, strip
+from superduperdb.core.documents import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.learning_task import LearningTask
 from superduperdb.core.model import Model
@@ -77,16 +75,16 @@ class BaseDatabase:
     def _base_insert(self, insert: Insert):
         raise NotImplementedError
 
-    @model_server
-    def predict_one(self, model, input_: Convertible(), **kwargs) -> Convertible():
+    def predict_one(self, model, input: Document) -> Document:
+        opts = self.metadata.get_component('model', model)
         if isinstance(model, str):
             model = self.models[model]
-        return model.predict_one(
-            input_, **{k: v for k, v in kwargs.items() if k != 'remote'}
-        )
+        out = model.predict_one(input.unpack(), **opts.get('predict_kwargs', {}))
+        if model.type is not None:
+            out = model.type(out)
+        return Document(out)
 
-    @model_server
-    def predict(self, model, input_: Convertible(), **kwargs) -> Convertible():
+    def predict(self, model, input: List[Document]) -> List[Document]:
         """
         Apply model to input.
 
@@ -97,7 +95,16 @@ class BaseDatabase:
         """
         if isinstance(model, str):
             model = self.models[model]
-        return model.predict(input_, **kwargs)
+        opts = self.metadata.get_component('model', model)
+        out = model.predict(
+            [x.unpack() for x in input], **opts.get('predict_kwargs', {})
+        )
+        to_return = []
+        for x in out:
+            if model.type is not None:
+                x = model.type(x)
+            to_return.append(Document(x))
+        return to_return
 
     def _build_task_workflow(
         self, select: Select, ids=None, dependencies=(), verbose=True
@@ -169,8 +176,9 @@ class BaseDatabase:
         model_identifier = model_info['identifier']
         if features is None:
             features = {}  # pragma: no cover
-        documents = list(self.select(select.select_using_ids(_ids), features=features))
+        documents = list(self.select(select.select_using_ids(_ids, features=features)))
         logging.info('done.')
+        documents = [x.unpack() for x in documents]
         if key != '_base' or '_base' in features:
             passed_docs = [r[key] for r in documents]
         else:  # pragma: no cover
@@ -178,24 +186,6 @@ class BaseDatabase:
         if model is None:
             model = self.models[model_identifier]
         return model.predict(passed_docs, **(predict_kwargs or {}))
-
-    def convert_from_bytes_to_types(self, r):
-        """
-        Convert the bson byte objects in a nested dictionary into python objects.
-
-        :param r: dictionary potentially containing non-Bsonable content
-        """
-        return misc.serialization.convert_from_bytes_to_types(r, self.types)
-
-    def convert_from_types_to_bytes(self, r):
-        """
-        Convert the non-Bsonable python objects in a nested dictionary into ``bytes``
-
-        :param r: dictionary potentially containing non-Bsonable content
-        """
-        return misc.serialization.convert_from_types_to_bytes(
-            r, self.types, self.type_lookup
-        )
 
     def _create_job_record(self, *args, **kwargs):  # TODO - move to metadata
         raise NotImplementedError
@@ -376,9 +366,11 @@ class BaseDatabase:
                 documents = list(self.select(query))
             else:
                 documents = list(self.select(query.select_using_ids(ids), raw=True))
+                documents = [Document(x) for x in documents]
         else:
             documents = query.documents
 
+        documents = [x.content for x in documents]
         uris, keys, place_ids = gather_uris(documents)
         logging.info(f'found {len(uris)} uris')
         if not uris:
@@ -460,7 +452,7 @@ class BaseDatabase:
                 r[k] = self._get_file_content(r[k])
         return r
 
-    def _get_output_from_document(self, r, key, model):
+    def _get_output_from_document(self, r: Document, key: str, model: str):
         raise NotImplementedError
 
     def _get_job_info(self, identifier):
@@ -492,11 +484,10 @@ class BaseDatabase:
             try:
                 valid_probability = self.metadata.get_metadata(key='valid_probability')
             except TypeError:
-                valid_probability = 0.05
-            if '_fold' not in item:
+                valid_probability = 0.05  # TODO proper error handling
+            if '_fold' not in item.content:
                 item['_fold'] = 'valid' if r < valid_probability else 'train'
-
-        output = self._base_insert(insert.to_raw(self.types, self.type_lookup))
+        output = self._base_insert(insert)
         if not refresh:  # pragma: no cover
             return output, None
         task_graph = self._build_task_workflow(
@@ -533,7 +524,7 @@ class BaseDatabase:
         version: Optional[int] = None,
         repopulate: bool = True,
         allow_hidden: bool = False,
-    ):
+    ) -> Component:
         info = self.metadata.get_component(
             variety, identifier, version=version, allow_hidden=allow_hidden
         )
@@ -559,7 +550,7 @@ class BaseDatabase:
     def apply_watcher(  # noqa: F811
         self,
         identifier,
-        ids: List(ObjectId) = None,
+        ids: List[str] = None,
         verbose=False,
         max_chunk_size=5000,
         model=None,
@@ -572,6 +563,7 @@ class BaseDatabase:
         select = self.select_cls(**watcher_info['select'])
         if ids is None:
             ids = self._get_ids_from_select(select.select_only_id)
+            ids = [str(id) for id in ids]
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
                 logging.info(
@@ -601,14 +593,10 @@ class BaseDatabase:
             model=model,
             predict_kwargs=watcher_info.get('predict_kwargs', {}),
         )
-        type_ = model_info.get('type')
-        if type_ is not None:
-            type_ = self.types[type_]
-            outputs = [
-                {'_content': {'bytes': type_.encode(x), 'type': model_info['type']}}
-                for x in outputs
-            ]
-
+        type = model_info.get('type')
+        if type is not None:
+            type = self.types[type]
+            outputs = [type(x).encode() for x in outputs]
         self._write_watcher_outputs(watcher_info, outputs, ids)
         return outputs
 
@@ -633,119 +621,58 @@ class BaseDatabase:
         self.artifact_store.delete_artifact(info['object'])
         self.metadata.update_object(identifier, 'model', 'object', file_id)
 
-    def select(
-        self,
-        select: Select,
-        like=None,
-        download=False,
-        vector_index=None,
-        similar_first=False,
-        features=None,
-        raw=False,
-        n=100,
-        outputs=None,
-    ):
-        if download and like is not None:
-            like = self._get_content_for_filter(like)  # pragma: no cover
-        if like is not None:
-            if similar_first:
-                return self._select_similar_then_matches(
-                    like,
-                    select,
-                    raw=raw,
-                    features=features,
-                    vector_index=vector_index,
-                    n=n,
-                    outputs=outputs,
-                )
+    def select(self, select: Select, raw: bool = False) -> List[Document]:
+        if select.like is not None:
+            if select.similar_first:
+                return self._select_similar_then_matches(select, raw=raw)
             else:
-                return self._select_matches_then_similar(
-                    like,
-                    vector_index,
-                    select,
-                    raw=raw,
-                    n=n,
-                    features=features,
-                    outputs=outputs,
-                )
+                return self._select_matches_then_similar(select, raw=raw)
         else:
             if raw:
                 return self._get_raw_cursor(select)
             else:
-                return self._get_cursor(select, features=features)
+                return self._get_cursor(select, features=select.features)
 
-    def _select_matches_then_similar(
-        self,
-        like,
-        vector_index,
-        select: Select,
-        raw=False,
-        n=100,
-        features=None,
-        outputs=None,
-    ):
+    def _select_matches_then_similar(self, select: Select, raw: bool = False):
         if not select.is_trivial:
             id_cursor = self._get_raw_cursor(select.select_only_id)
             ids = [x['_id'] for x in id_cursor]
-            similar_ids, scores = self.select_nearest(
-                like,
-                ids=ids,
-                n=n,
-                vector_index=vector_index,
-                outputs=outputs,
-            )
+            similar_ids, scores = self.select_nearest(select, ids=ids)
         else:
-            similar_ids, scores = self.select_nearest(
-                like, n=n, vector_index=vector_index, outputs=outputs
-            )
+            similar_ids, scores = self.select_nearest(select)
 
         if raw:
             return self._get_raw_cursor(select.select_using_ids(similar_ids))
         else:
             return self._get_cursor(
                 select.select_using_ids(similar_ids),
-                features=features,
+                features=select.features,
                 scores=dict(zip(similar_ids, scores)),
             )
 
-    def _select_similar_then_matches(
-        self,
-        like,
-        select: Select,
-        raw=False,
-        n=100,
-        features=None,
-        vector_index=None,
-        outputs=None,
-    ):
-        similar_ids, scores = self.select_nearest(
-            like,
-            n=n,
-            vector_index=vector_index,
-            outputs=outputs,
-        )
+    def _select_similar_then_matches(self, select: Select, raw: bool = False):
+        similar_ids, scores = self.select_nearest(select)
 
         if raw:
             return self._get_raw_cursor(select.select_using_ids(similar_ids))
         else:
             return self._get_cursor(
                 select.select_using_ids(similar_ids),
-                features=features,
+                features=select.features,
                 scores=dict(zip(similar_ids, scores)),
             )
 
-    @vector_search
     def select_nearest(
-        self,
-        like: Convertible(),
-        vector_index: str,
-        ids=None,
-        outputs: Optional[dict] = None,
-        n=10,
-    ) -> Tuple([List(Convertible()), Any]):
-        vector_index: VectorIndex = self.vector_indices[vector_index]
+        self, select: Select, ids: Optional[List[str]] = None
+    ) -> Tuple[List[str], List[float]]:
+        if select.download and select.like is not None:
+            like = self._get_content_for_filter(select.like)  # pragma: no cover
+        else:
+            like = select.like
+
+        vector_index: VectorIndex = self.vector_indices[select.vector_index]
         return vector_index.get_nearest(
-            like, database=self, ids=ids, n=n, outputs=outputs
+            like, database=self, ids=ids, n=select.n, outputs=select.outputs
         )
 
     def separate_query_part_from_validation_record(self, r):
@@ -800,7 +727,7 @@ class BaseDatabase:
     def update(self, update: Update, refresh=True, verbose=True):
         if refresh and self.metadata.list_components('model'):
             ids = self._get_ids_from_select(update.select_ids)
-        result = self._base_update(update.to_raw(self.types, self.type_lookup))
+        result = self._base_update(update)
         if refresh and self.metadata.list_components('model'):
             task_graph = self._build_task_workflow(
                 update.select, ids=ids, verbose=verbose
@@ -814,8 +741,8 @@ class BaseDatabase:
         self,
         identifier: str,
         variety: str,
-        validation_sets: List(str),
-        metrics: List(str),
+        validation_sets: List[str],
+        metrics: List[str],
     ):
         """
         Evaluate quality of component, using `Component.validate`, if implemented.

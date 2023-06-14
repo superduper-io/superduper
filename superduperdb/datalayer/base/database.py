@@ -684,7 +684,7 @@ class BaseDatabase:
     ):
         if watcher_info is None:
             watcher_info = self.metadata.get_component('watcher', identifier)
-        select = self.select_cls(**watcher_info['select'])
+        select = self.select_cls(**watcher_info['_select'])
         if ids is None:
             ids = self._get_ids_from_select(select.select_only_id)
             ids = [str(id) for id in ids]

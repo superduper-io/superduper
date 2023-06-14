@@ -102,9 +102,7 @@ def with_vector_index(random_data, a_model):
     random_data.add(Watcher(select=Select('documents'), key='x', model='linear_a'))
     vi = VectorIndex(
         'test_vector_search',
-        models=['linear_a'],
-        keys=['x'],
-        watcher='linear_a/x',
+        indexing_watcher='linear_a/x',
     )
     random_data.add(vi)
     yield random_data
@@ -117,9 +115,7 @@ def with_vector_index_faiss(random_data, a_model):
     random_data.add(
         VectorIndex(
             'test_vector_search',
-            models=['linear_a'],
-            keys=['x'],
-            watcher='linear_a/x',
+            indexing_watcher='linear_a/x',
             hash_set_cls=FaissHashSet,
         )
     )

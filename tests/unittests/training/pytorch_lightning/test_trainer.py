@@ -47,10 +47,10 @@ def test_classification(random_data):
     cf = LightningConfiguration(
         'my-pl-cf', loader_kwargs={'batch_size': 5, 'num_workers': 0}, max_epochs=10
     )
-    random_data.database.add(LightningModule())
-    random_data.database.add(cf)
+    random_data.add(LightningModule())
+    random_data.add(cf)
 
-    random_data.database.add(
+    random_data.add(
         LearningTask(
             'my-pl-lt',
             models=['my-pl-module'],
@@ -61,4 +61,4 @@ def test_classification(random_data):
         )
     )
 
-    print(random_data.database._show_components('learning_task'))
+    print(random_data.show('learning_task'))

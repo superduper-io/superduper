@@ -18,13 +18,13 @@ if not SKIP_PAID:
 
 @pytest.mark.skipif(SKIP_PAID, reason='don\'t test paid API')
 def test_db_qa_with_sources_chain(nursery_rhymes):
-    nursery_rhymes.database.add(array(numpy.float32))
+    nursery_rhymes.add(array(numpy.float32))
     pl = SentenceTransformer(model_name_or_path='all-MiniLM-L6-v2', type='array')
-    nursery_rhymes.database.add(pl)
-    nursery_rhymes.database.add(
+    nursery_rhymes.add(pl)
+    nursery_rhymes.add(
         Watcher(model='all-MiniLM-L6-v2', key='text', select=Select('documents'))
     )
-    nursery_rhymes.database.add(
+    nursery_rhymes.add(
         VectorIndex(
             'my-index',
             models=['all-MiniLM-L6-v2'],
@@ -40,6 +40,6 @@ def test_db_qa_with_sources_chain(nursery_rhymes):
         key='text',
         n=2,
     )
-    m.repopulate(nursery_rhymes.database)
+    m.repopulate(nursery_rhymes)
     output = m.predict_one('Complete this: Do you know the ...')
     assert 'muffin' in output['answer'].lower()

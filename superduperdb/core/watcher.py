@@ -37,7 +37,7 @@ class Watcher(Component):
     def asdict(self):
         return {
             'model': self.model.identifier,
-            'select': asdict(self.select),
+            '_select': asdict(self.select),
             'key': self.key,
             'identifier': self.identifier,
             'features': self.features or {},

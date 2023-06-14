@@ -39,25 +39,24 @@ IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
 
 
 def test_create_component(empty, float_tensors):
-    empty.database.add(SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module'))
-    assert 'my-test-module' in empty.database.show('model')
-    model = empty.database.models['my-test-module']
-    empty.database.types['torch.float32']
+    empty.add(SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module'))
+    assert 'my-test-module' in empty.show('model')
+    model = empty.models['my-test-module']
     output = model.predict_one(torch.randn(16))
     assert output.shape[0] == 32
 
 
 def test_update_component(empty):
-    empty.database.add(SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module'))
+    empty.add(SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module'))
     m = SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module')
-    empty.database.add(m)
-    assert empty.database.show('model', 'my-test-module') == [0, 1]
-    empty.database.add(m)
-    assert empty.database.show('model', 'my-test-module') == [0, 1]
+    empty.add(m)
+    assert empty.show('model', 'my-test-module') == [0, 1]
+    empty.add(m)
+    assert empty.show('model', 'my-test-module') == [0, 1]
 
-    n = empty.database.models[m.identifier]
-    empty.database.add(n)
-    assert empty.database.show('model', 'my-test-module') == [0, 1]
+    n = empty.models[m.identifier]
+    empty.add(n)
+    assert empty.show('model', 'my-test-module') == [0, 1]
 
 
 def test_compound_component(empty):
@@ -69,58 +68,51 @@ def test_compound_component(empty):
         type=t,
     )
 
-    empty.database.add(m)
-    assert 'torch.float32' in empty.database.show('type')
-    assert 'my-test-module' in empty.database.show('model')
-    assert empty.database.show('model', 'my-test-module') == [0]
+    empty.add(m)
+    assert 'torch.float32' in empty.show('type')
+    assert 'my-test-module' in empty.show('model')
+    assert empty.show('model', 'my-test-module') == [0]
 
-    empty.database.add(m)
-    assert empty.database.show('model', 'my-test-module') == [0]
-    assert empty.database.show('type', 'torch.float32') == [0]
+    empty.add(m)
+    assert empty.show('model', 'my-test-module') == [0]
+    assert empty.show('type', 'torch.float32') == [0]
 
-    empty.database.add(
+    empty.add(
         SuperDuperModule(
             layer=torch.nn.Linear(16, 32),
             identifier='my-test-module',
             type=t,
         )
     )
-    assert empty.database.show('model', 'my-test-module') == [0, 1]
-    assert empty.database.show('type', 'torch.float32') == [0]
+    assert empty.show('model', 'my-test-module') == [0, 1]
+    assert empty.show('type', 'torch.float32') == [0]
 
-    m = empty.database.load(
-        variety='model', identifier='my-test-module', repopulate=False
-    )
+    m = empty.load(variety='model', identifier='my-test-module', repopulate=False)
     assert isinstance(m.type, Placeholder)
 
-    m = empty.database.load(
-        variety='model', identifier='my-test-module', repopulate=True
-    )
+    m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
     assert isinstance(m.type, Type)
 
     with pytest.raises(ComponentInUseError):
-        empty.database.remove('type', 'torch.float32')
+        empty.remove('type', 'torch.float32')
 
     with pytest.warns(ComponentInUseWarning):
-        empty.database.remove('type', 'torch.float32', force=True)
+        empty.remove('type', 'torch.float32', force=True)
 
     # checks that can reload hidden type if part of another component
-    m = empty.database.load(
-        variety='model', identifier='my-test-module', repopulate=True
-    )
+    m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
     assert isinstance(m.type, Type)
 
-    empty.database.remove('model', 'my-test-module', force=True)
+    empty.remove('model', 'my-test-module', force=True)
 
 
 def test_select_vanilla(random_data):
-    db = random_data.database
-    r = next(db.execute(Select(collection='documents')))
+    r = next(random_data.execute(Select(collection='documents')))
     print(r)
 
 
 def test_select(with_vector_index):
-    db = with_vector_index.database
+    db = with_vector_index
     r = next(db.execute(Select(collection='documents')))
     s = next(
         db.execute(
@@ -135,7 +127,7 @@ def test_select(with_vector_index):
 
 
 def test_validate_component(with_vector_index, si_validation, metric):
-    with_vector_index.database.validate(
+    with_vector_index.validate(
         'test_vector_search',
         variety='vector_index',
         metrics=['p@1'],
@@ -144,7 +136,7 @@ def test_validate_component(with_vector_index, si_validation, metric):
 
 
 def test_select_faiss(with_vector_index_faiss):
-    db = with_vector_index_faiss.database
+    db = with_vector_index_faiss
     r = next(db.execute(Select(collection='documents')))
     s = next(
         db.execute(
@@ -159,10 +151,10 @@ def test_select_faiss(with_vector_index_faiss):
 
 
 def test_insert(random_data, a_watcher, an_update):
-    random_data.database._insert(Insert(collection='documents', documents=an_update))
-    r = next(random_data.database.execute(Select('documents', filter={'update': True})))
+    random_data.execute(Insert(collection='documents', documents=an_update))
+    r = next(random_data.execute(Select('documents', filter={'update': True})))
     assert 'linear_a' in r['_outputs']['x']
-    assert random_data.count_documents({}) == n_data_points + 10
+    assert random_data.documents.count_documents({}) == n_data_points + 10
 
 
 def test_insert_from_uris(empty, image_type):
@@ -187,23 +179,23 @@ def test_insert_from_uris(empty, image_type):
         )
         for _ in range(2)
     ]
-    empty.database._insert(Insert(collection='documents', documents=to_insert))
-    r = next(empty.database.execute(Select('documents')))
+    empty.execute(Insert(collection='documents', documents=to_insert))
+    r = next(empty.execute(Select('documents')))
     assert isinstance(r['item'].x, PIL.PngImagePlugin.PngImageFile)
     assert isinstance(r['other']['item'].x, PIL.PngImagePlugin.PngImageFile)
 
 
 def test_update(random_data, a_watcher):
     to_update = torch.randn(32)
-    t = random_data.database.types['torch.float32']
-    random_data.database._update(
+    t = random_data.types['torch.float32']
+    random_data.execute(
         Update(
             collection='documents',
             filter={},
             update=Document({'$set': {'x': t(to_update)}}),
         )
     )
-    cur = random_data.database.execute(Select('documents'))
+    cur = random_data.execute(Select('documents'))
     r = next(cur)
     s = next(cur)
 
@@ -216,15 +208,13 @@ def test_update(random_data, a_watcher):
 
 
 def test_watcher(random_data, a_model, b_model):
-    random_data.database.add(
-        Watcher(model='linear_a', select=Select('documents'), key='x')
-    )
-    r = next(random_data.database.execute(Select('documents', one=True)))
+    random_data.add(Watcher(model='linear_a', select=Select('documents'), key='x'))
+    r = next(random_data.execute(Select('documents', one=True)))
     assert 'linear_a' in r['_outputs']['x']
 
-    t = random_data.database.types['torch.float32']
+    t = random_data.types['torch.float32']
 
-    random_data.database._insert(
+    random_data.execute(
         Insert(
             collection='documents',
             documents=[
@@ -232,12 +222,10 @@ def test_watcher(random_data, a_model, b_model):
             ],
         )
     )
-    r = next(
-        random_data.database.execute(Select('documents', filter={'_update': True}))
-    )
+    r = next(random_data.execute(Select('documents', filter={'_update': True})))
     assert 'linear_a' in r['_outputs']['x']
 
-    random_data.database.add(
+    random_data.add(
         Watcher(
             model='linear_b',
             select=Select('documents'),
@@ -245,7 +233,7 @@ def test_watcher(random_data, a_model, b_model):
             features={'x': 'linear_a'},
         )
     )
-    r = next(random_data.database.execute(Select('documents')))
+    r = next(random_data.execute(Select('documents')))
     assert 'linear_b' in r['_outputs']['x']
 
 
@@ -269,7 +257,7 @@ def test_learning_task(si_validation, a_model, c_model, metric):
         measure=css,
     )
 
-    si_validation.database.add(configuration)
+    si_validation.add(configuration)
     learning_task = LearningTask(
         'my_index',
         models=['linear_a', 'linear_c'],
@@ -280,36 +268,32 @@ def test_learning_task(si_validation, a_model, c_model, metric):
         validation_sets=['my_valid'],
     )
 
-    si_validation.database.add(learning_task)
+    si_validation.add(learning_task)
 
 
 def test_predict(a_model, float_tensors):
-    t = float_tensors.database.types['torch.float32']
-    a_model.database.predict('linear_a', Document(t(torch.randn(32))))
+    t = float_tensors.types['torch.float32']
+    a_model.predict('linear_a', Document(t(torch.randn(32))))
 
 
 def test_delete(random_data):
-    r = next(random_data.database.execute(Select('documents')))
-    random_data.database._delete(
-        Delete(collection='documents', filter={'_id': r['_id']})
-    )
+    r = next(random_data.execute(Select('documents')))
+    random_data.execute(Delete(collection='documents', filter={'_id': r['_id']}))
     with pytest.raises(StopIteration):
-        next(
-            random_data.database.execute(Select('documents', filter={'_id': r['_id']}))
-        )
+        next(random_data.execute(Select('documents', filter={'_id': r['_id']})))
 
 
 def test_replace(random_data):
-    r = next(random_data.database.execute(Select('documents')))
+    r = next(random_data.execute(Select('documents')))
     x = torch.randn(32)
-    t = random_data.database.types['torch.float32']
+    t = random_data.types['torch.float32']
     r['x'] = t(x)
-    random_data.database._update(
+    random_data.execute(
         Update(
             collection='documents',
             filter={'_id': r['_id']},
             replacement=r,
         )
     )
-    r = next(random_data.database.execute(Select('documents')))
+    r = next(random_data.execute(Select('documents')))
     assert r['x'].x.tolist() == x.tolist()

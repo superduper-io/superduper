@@ -1,4 +1,4 @@
-from .serializable import Serializable
+from .jsonable import JSONable
 from enum import Enum
 from pydantic import Field, root_validator
 from typing import Dict, List, Optional
@@ -24,7 +24,7 @@ def Factory(factory, **ka):
     return Field(default_factory=factory, **ka)
 
 
-class HasPort(Serializable):
+class HasPort(JSONable):
     port = 0
     password = ''
     user = ''
@@ -38,11 +38,11 @@ class IpPort(HasPort):
     ip = 'localhost'
 
 
-class Api(Serializable):
+class Api(JSONable):
     api_key: str = Field(default=_BAD_KEY, repr=False)
 
 
-class Apis(Serializable):
+class Apis(JSONable):
     n_retries = 2
     providers: Dict[str, Api] = Factory(dict)
 
@@ -54,7 +54,7 @@ class Dask(IpPort):
     deserializers: List[str] = Factory(list)
 
 
-class Deployment(Serializable):
+class Deployment(JSONable):
     database = ''
     model = ''
 
@@ -70,7 +70,7 @@ class LogType(str, Enum):
     LOGGING = 'LOGGING'
 
 
-class Logging(Serializable):
+class Logging(JSONable):
     level = LogLevel.INFO
     type = LogType.STDERR
     kwargs: dict = Factory(dict)
@@ -85,7 +85,7 @@ class MongoDB(HostPort):
     port = 27017
 
 
-class Notebook(Serializable):
+class Notebook(JSONable):
     ip = '0.0.0.0'
     port = 8888
     password = ''
@@ -103,13 +103,13 @@ class Ray(HostPort):
     deployments: List[Deployment] = Factory(list)
 
 
-class Server(Serializable):
-    class FastAPI(Serializable):
+class Server(JSONable):
+    class FastAPI(JSONable):
         debug = False
         title = 'SuperDuperDB server'
         version = REST_API_VERSION
 
-    class WebServer(Serializable):
+    class WebServer(JSONable):
         host = '127.0.0.1'
         port = 3223
 
@@ -117,7 +117,7 @@ class Server(Serializable):
     web_server: WebServer = Factory(WebServer)
 
 
-class MilvusConfig(Serializable):
+class MilvusConfig(JSONable):
     host: str = 'localhost'
     port: int = 19530
     username: str = Field(default="", repr=False)
@@ -126,7 +126,7 @@ class MilvusConfig(Serializable):
     consistency_level: str = "Bounded"
 
 
-class VectorSearchConfig(Serializable):
+class VectorSearchConfig(JSONable):
     milvus: Optional[MilvusConfig] = None
 
     # the fields below were left for compatibility with the vector search server
@@ -137,7 +137,7 @@ class VectorSearchConfig(Serializable):
     password: str = Field(default="", repr=False)
 
 
-class Config(Serializable):
+class Config(JSONable):
     apis: Apis = Factory(Apis)
     dask: Dask = Factory(Dask)
     logging: Logging = Factory(Logging)

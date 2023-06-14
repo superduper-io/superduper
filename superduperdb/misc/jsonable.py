@@ -6,7 +6,12 @@ TYPE_ID_TO_MODEL = {}
 _NONE = object()
 
 
-class Serializable(BaseModel):
+class JSONable(BaseModel):
+    """
+    JSONable is the base class for all superduperdb classes that can be
+    converted to and from JSON using the pydantic serialization system
+    """
+
     def __init_subclass__(cls, *a, **ka):
         super().__init_subclass__(*a, **ka)
         if (type_id := getattr(cls, TYPE_ID, _NONE)) is not _NONE:

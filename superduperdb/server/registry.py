@@ -4,7 +4,7 @@ import superduperdb as s
 import typing as t
 
 
-class NotSerializableError(ValueError):
+class NotJSONableError(ValueError):
     pass
 
 
@@ -32,18 +32,18 @@ class Registry:
         params = list(sig.parameters.items())
         if not inspect.ismethod(method):
             if not (params and params[0][0] == 'self'):
-                raise NotSerializableError(f'{method} not an instance method')
+                raise NotJSONableError(f'{method} not an instance method')
             params = params[1:]
 
         parameter_types = tuple(value.annotation for _, value in params)
         result_type = sig.return_annotation
 
-        def is_model(t, parent=s.Serializable):
+        def is_model(t, parent=s.JSONable):
             return t is parent or any(is_model(c, parent) for c in t.__bases__)
 
         types = set(parameter_types + (result_type,))
         if non_models := [t for t in types if not is_model(t)]:
-            raise NotSerializableError(f'Not serializable: {non_models}')
+            raise NotJSONableError(f'Not serializable: {non_models}')
 
         def unite(a, b):
             return b if a is None else t.Union[a, b]
@@ -54,8 +54,8 @@ class Registry:
         self.entries[name] = RegistryEntry(name, parameter_types, result_type)
 
     def execute(
-        self, obj: t.Any, method: str, args: t.Sequence[s.Serializable]
-    ) -> s.Serializable:
+        self, obj: t.Any, method: str, args: t.Sequence[s.JSONable]
+    ) -> s.JSONable:
         """Executes a query with zero or more parameters"""
 
         method_impl = getattr(obj, method, None)

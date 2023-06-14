@@ -1,4 +1,4 @@
-from .registry import NotSerializableError, Registry
+from .registry import NotJSONableError, Registry
 from enum import Enum
 from fastapi import FastAPI, HTTPException, Response, UploadFile
 from fastapi.responses import PlainTextResponse
@@ -44,7 +44,7 @@ class Server:
             if callable(v) and k.islower() and not k.startswith('_'):
                 try:
                     self.registry.register(v)
-                except NotSerializableError:
+                except NotJSONableError:
                     pass
 
     def auto_run(self, obj: t.Any) -> t.NoReturn:

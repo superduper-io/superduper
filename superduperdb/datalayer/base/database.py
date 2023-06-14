@@ -438,7 +438,7 @@ class BaseDatabase:
 
     def _create_plan(self):
         G = networkx.DiGraph()
-        for identifier in self.metadata.show_components('watcher'):
+        for identifier in self.metadata.show_components('watcher', active=True):
             G.add_node(('watcher', identifier))
         for identifier in self.metadata.show_components('watcher'):
             deps = self._get_dependencies_for_watcher(identifier)

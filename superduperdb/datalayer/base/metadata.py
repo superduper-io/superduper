@@ -59,7 +59,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def show_components(self, variety: str):
+    def show_components(self, variety: str, **kwargs):
         pass
 
     @abstractmethod

@@ -1,33 +1,47 @@
 from abc import ABC, abstractmethod
 import dill
+import enum
 import hashlib
 import io
 import pickle
-from typing import Any, Optional, Dict
+import typing as t
+
+
+class Serializer(enum.Enum):
+    """
+    Enumerates the types of Python serializers to use
+    """
+
+    dill = 'dill'
+    pickle = 'pickle'
+
+    default = dill
+
+    @property
+    def impl(self):
+        return dill if self.value == 'dill' else pickle
 
 
 class ArtifactStore(ABC):
     """
-    Abstraction for storing models, data artifacts, etc. separately from primary data
+    Abstraction for storing large artifacts separately from primary data.
+
+    This might include models, data artifacts...
     """
 
     def _serialize(
-        self, object: Any, serializer: str, serializer_kwargs: Optional[Dict] = None
+        self,
+        object: t.Any,
+        serializer: Serializer = Serializer.default,
+        serializer_kwargs: t.Optional[t.Dict] = None,
     ):
-        serializer_kwargs = serializer_kwargs or {}
-        if serializer == 'pickle':
-            with io.BytesIO() as f:
-                pickle.dump(object, f, **serializer_kwargs)
-                bytes_ = f.getvalue()
-        elif serializer == 'dill':
-            if not serializer_kwargs:
-                serializer_kwargs['recurse'] = True
-            with io.BytesIO() as f:
-                dill.dump(object, f, **serializer_kwargs)
-                bytes_ = f.getvalue()
-        else:
-            raise NotImplementedError
-        return bytes_
+        if serializer == Serializer.default:
+            # TODO: this was what was there, but is it right?
+            serializer_kwargs = serializer_kwargs or {'recurse': True}
+
+        with io.BytesIO() as f:
+            serializer.impl.dump(object, f, **serializer_kwargs)
+            return f.getvalue()
 
     @abstractmethod
     def delete_artifact(self, file_id: str):
@@ -35,10 +49,13 @@ class ArtifactStore(ABC):
 
     def create_artifact(
         self,
-        object: Any,
-        serializer: str,
-        serializer_kwargs: Optional[Dict] = None,
+        object: t.Any,
+        serializer: Serializer = Serializer.default,
+        serializer_kwargs: t.Optional[t.Dict] = None,
     ):
+        if isinstance(serializer, str):
+            serializer = Serializer(serializer)
+
         bytes = self._serialize(object, serializer, serializer_kwargs)
         return self._save_artifact(bytes), hashlib.sha1(bytes).hexdigest()
 
@@ -50,12 +67,10 @@ class ArtifactStore(ABC):
     def _load_bytes(self, file_id):
         pass
 
-    def load_artifact(self, file_id: str, serializer: str):
+    def load_artifact(self, file_id: str, serializer: Serializer = Serializer.default):
+        if isinstance(serializer, str):
+            serializer = Serializer(serializer)
+
         bytes = self._load_bytes(file_id)
-        f = io.BytesIO(bytes)
-        if serializer == 'pickle':
-            return pickle.load(f)
-        elif serializer == 'dill':
-            return dill.load(f)
-        else:
-            raise NotImplementedError(f'{serializer} serializer not implemented')
+        fp = io.BytesIO(bytes)
+        return serializer.impl.load(fp)

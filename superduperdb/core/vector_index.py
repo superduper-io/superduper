@@ -10,7 +10,6 @@ from superduperdb.core.base import (
 )
 from superduperdb.core.documents import Document
 from superduperdb.core.metric import Metric
-from superduperdb.core.model import Model
 from superduperdb.core.type import DataVar
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.base.query import Select
@@ -27,11 +26,9 @@ class VectorIndex(Component):
     Vector-index
 
     :param identifier: Unique ID of index
-    :param keys: Keys which may be used to search index
-    :param watcher: Watcher which is applied to create vectors
-    :param watcher_id: ID of Watcher which is applied to create vectors
-    :param models:  models which may be used to search index
-    :param model_ids: ID of models which may be used to search index
+    :param indexing_watcher: watcher which is applied to create vectors
+    :param compatible_watchers: list of additional watchers which can
+                                "talk" to the index (e.g. multi-modal)
     :param measure: Measure which is used to compare vectors in index
     :param hash_set_cls: Class which is used to execute similarity lookup
     """
@@ -41,25 +38,30 @@ class VectorIndex(Component):
     def __init__(
         self,
         identifier: str,
-        keys: List[str],
-        watcher: Union[Watcher, str],
-        models: Union[List[Model], List[str]] = None,
+        indexing_watcher: Union[Watcher, str],
+        compatible_watchers: Optional[Union[List[Watcher], List[str]]] = None,
         measure: str = 'css',
         hash_set_cls: type = VanillaHashSet,
     ):
         super().__init__(identifier)
-        self.keys = keys
-        self.watcher = (
-            Placeholder(watcher, 'watcher') if isinstance(watcher, str) else watcher
+        self.indexing_watcher = (
+            Placeholder(indexing_watcher, 'watcher')
+            if isinstance(indexing_watcher, str)
+            else indexing_watcher
         )
 
-        is_placeholders, is_components = is_placeholders_or_components(models)
-        assert is_placeholders or is_components
-        if is_placeholders:
-            self.models = PlaceholderList('model', models)
-        else:
-            self.models = ComponentList('model', models)
-        assert len(self.keys) == len(self.models)
+        self.compatible_watchers = ()
+        if compatible_watchers:
+            is_placeholders, is_components = is_placeholders_or_components(
+                compatible_watchers
+            )
+            assert is_placeholders or is_components
+            if is_placeholders:
+                self.compatible_watchers = PlaceholderList(
+                    'watcher', compatible_watchers
+                )
+            else:
+                self.compatible_watchers = ComponentList('watcher', compatible_watchers)
         self.measure = measure
         self.hash_set_cls = hash_set_cls
         self._hash_set = None
@@ -70,14 +72,14 @@ class VectorIndex(Component):
             database = self.database
             assert not isinstance(database, DBPlaceholder)
         super().repopulate(database)
-        c = database.execute(self.watcher.select)
+        c = database.execute(self.indexing_watcher.select)
         loaded = []
         ids = []
         docs = progress.progressbar(c)
         logging.info(f'loading hashes: "{self.identifier}')
         for r in docs:
             h, id = database._get_output_from_document(
-                r, self.watcher.key, self.watcher.model.identifier
+                r, self.indexing_watcher.key, self.indexing_watcher.model.identifier
             )
             if isinstance(h, DataVar):
                 h = h.x
@@ -103,8 +105,7 @@ class VectorIndex(Component):
             database = self.database
             assert not isinstance(database, DBPlaceholder)
 
-        models = [m.identifier for m in self.models]
-        keys = self.keys
+        models, keys = self.models_keys
         assert len(models) == len(keys)
 
         hash_set = self._hash_set
@@ -122,13 +123,13 @@ class VectorIndex(Component):
                 document['_outputs'] = {}
             document['_outputs'].update(outputs)
 
-            for subkey in self.watcher.features or ():
+            for subkey in self.indexing_watcher.features or ():
                 subout = document['_outputs'].setdefault(subkey, {})
-                if self.watcher.features[subkey] not in subout:
-                    subout[self.watcher.features[subkey]] = database.models[
-                        self.watcher.features[subkey]
+                if self.indexing_watcher.features[subkey] not in subout:
+                    subout[self.indexing_watcher.features[subkey]] = database.models[
+                        self.indexing_watcher.features[subkey]
                     ].predict_one(document[subkey])
-                document[subkey] = subout[self.watcher.features[subkey]]
+                document[subkey] = subout[self.indexing_watcher.features[subkey]]
         available_keys = list(document.keys()) + ['_base']
         try:
             model, key = next(
@@ -137,7 +138,7 @@ class VectorIndex(Component):
         except StopIteration:
             raise Exception(
                 f'Keys in provided {like} don\'t match'
-                f' VectorIndex keys: {self.keys}, {self.models}'
+                f' VectorIndex keys: {keys}, with models: {models}'
             )
         model_input = document[key] if key != '_base' else document
 
@@ -145,25 +146,34 @@ class VectorIndex(Component):
         h = model.predict_one(model_input)
         return hash_set.find_nearest_from_hash(h, n=n)
 
+    @property
+    def models_keys(self):
+        watchers = [self.indexing_watcher, *self.compatible_watchers]
+        models = [w.model.identifier for w in watchers]
+        keys = [w.key for w in watchers]
+        return models, keys
+
     def validate(
         self,
         database: 'superduperdb.datalayer.base.database.Database',  # noqa: F821  why?
         validation_selects: List[Select],
         metrics: List[Metric],
     ):
+        models, keys = self.models_keys
+        models = [database.models[m] for m in models]
         out = []
         for vs in validation_selects:
             validation_data = QueryDataset(
                 vs,
                 database_type=database._database_type,
                 database=database.name,
-                keys=self.keys,
+                keys=keys,
                 fold='valid',
             )
             res = validate_vector_search(
                 validation_data=validation_data,
-                models=self.models,
-                keys=self.keys,
+                models=models,
+                keys=keys,
                 metrics=metrics,
                 hash_set_cls=self.hash_set_cls,
                 measure=self.measure,
@@ -175,9 +185,8 @@ class VectorIndex(Component):
     def asdict(self):
         return {
             'identifier': self.identifier,
-            'watcher': self.watcher.identifier,
-            'keys': self.keys,
-            'models': self.models.aslist(),
+            'indexing_watcher': self.indexing_watcher.identifier,
+            'compatible_watchers': [w.identifier for w in self.compatible_watchers],
             'measure': self.measure,
             'hash_set_cls': self.hash_set_cls.name,
         }

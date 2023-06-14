@@ -116,7 +116,7 @@ class Database(MongoDatabase, BaseDatabase):
         return r
 
     def _unset_watcher_outputs(self, info):
-        select = self.select_cls(**info['select'])
+        select = self.select_cls(**info['_select'])
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
         return self._base_update(
             select.update({'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}})
@@ -124,7 +124,7 @@ class Database(MongoDatabase, BaseDatabase):
 
     def _write_watcher_outputs(self, watcher_info, outputs, _ids):
         logging.info('bulk writing...')
-        select = self.select_cls(**watcher_info['select'])
+        select = self.select_cls(**watcher_info['_select'])
         if watcher_info.get('target') is None:
             out_key = f'_outputs.{watcher_info["key"]}.{watcher_info["model"]}'
         else:

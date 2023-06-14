@@ -48,7 +48,7 @@ def test_execute():
         assert response.json() == {'one': 'three', 'two': 'two'}
 
 
-class One(s.Serializable):
+class One(s.JSONable):
     one = 'one'
 
 

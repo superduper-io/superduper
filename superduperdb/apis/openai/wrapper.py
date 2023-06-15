@@ -1,4 +1,5 @@
 import os
+import superduperdb as s
 
 from openai import ChatCompletion as _ChatCompletion
 from openai import Embedding as _Embedding
@@ -9,7 +10,12 @@ from superduperdb.apis.retry import Retry
 from superduperdb.core.model import Model
 from superduperdb.misc.compat import cache
 
-retry = Retry((Timeout, RateLimitError, TryAgain, ServiceUnavailableError))
+retry = Retry((RateLimitError, ServiceUnavailableError, Timeout, TryAgain))
+
+
+def init_fn():
+    s.log.info('Setting OpenAI api-key...')
+    os.environ['OPENAI_API_KEY'] = s.CFG.apis.providers['openai'].api_key
 
 
 @cache
@@ -28,9 +34,8 @@ class BaseOpenAI(Model):
 class Embedding(BaseOpenAI):
     @retry
     def predict_one(self, text, **kwargs):
-        return _Embedding.create(input=text, model=self.identifier, **kwargs)['data'][
-            0
-        ]['embedding']
+        e = _Embedding.create(input=text, model=self.identifier, **kwargs)
+        return e['data'][0]['embedding']
 
     @retry
     def _predict_a_batch(self, texts, **kwargs):

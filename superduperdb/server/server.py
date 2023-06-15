@@ -15,7 +15,7 @@ MEDIA_TYPE = 'application/octet-stream'
 
 @dc.dataclass
 class Server:
-    cfg: s.config.Server = s.CFG.server
+    cfg: s.config.Server = dc.field(default_factory=s.CFG.server.deepcopy)
     stats: t.Dict = dc.field(default_factory=dict)
     artifact_store: t.Dict = dc.field(default_factory=dict)
     # TODO: this is a non-thread-safe proof of concept

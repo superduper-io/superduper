@@ -1,5 +1,6 @@
 import io
 import pickle
+import typing as t
 
 from superduperdb.core.base import Component
 
@@ -14,13 +15,26 @@ class DataVar:
     :param encoder: Encoder used to dump to `bytes`
     """
 
-    def __init__(self, x, type: str, encoder=None):
+    def __init__(
+        self,
+        x: t.Any,
+        type: str,
+        encoder: t.Optional[t.Callable] = None,
+        shape: t.Optional[t.Tuple] = None,
+    ):
+        if shape is not None:
+            assert hasattr(x, 'shape')
+            assert tuple(x.shape) == shape
         self.x = x
         self._encoder = encoder
         self.type = type
+        self.shape = shape
 
     def __repr__(self):
-        return f'DataVar[{self.type}]({self.x.__repr__()})'
+        if self.shape is not None:
+            return f'DataVar[{self.type}: {tuple(self.shape)}]({self.x.__repr__()})'
+        else:
+            return f'DataVar[{self.type}]({self.x.__repr__()})'
 
     def encode(self):
         if self._encoder is None:
@@ -44,13 +58,23 @@ class Type(Component):
 
     variety = 'type'
 
-    def __init__(self, identifier, encoder=None, decoder=None):
+    def __init__(
+        self,
+        identifier,
+        encoder=None,
+        decoder=None,
+        shape: t.Optional[t.Tuple] = None,
+    ):
         super().__init__(identifier)
         self.encoder = encoder
         self.decoder = decoder
+        self.shape = shape
 
     def __repr__(self):
-        return f'Type[{self.identifier}/{self.version}]'
+        if self.shape is not None:
+            return f'Type[{self.identifier}/{self.version}:{tuple(self.shape)}]'
+        else:
+            return f'Type[{self.identifier}/{self.version}]'
 
     def decode(self, bytes):
         if self.decoder is None:
@@ -59,7 +83,17 @@ class Type(Component):
                 type=self.identifier,
                 encoder=self.encoder,
             )
-        return DataVar(self.decoder(bytes), type=self.identifier, encoder=self.encoder)
+        return DataVar(
+            self.decoder(bytes),
+            type=self.identifier,
+            encoder=self.encoder,
+            shape=self.shape,
+        )
 
     def __call__(self, x):
-        return DataVar(x, type=self.identifier, encoder=self.encoder)
+        return DataVar(
+            x,
+            type=self.identifier,
+            encoder=self.encoder,
+            shape=self.shape,
+        )

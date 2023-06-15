@@ -5,11 +5,11 @@ from openai import Embedding as _Embedding
 from openai import Model as OpenAIModel
 from openai.error import Timeout, RateLimitError, TryAgain, ServiceUnavailableError
 
-from superduperdb.apis.utils import DoRetry
+from superduperdb.apis.retry import Retry
 from superduperdb.core.model import Model
 from superduperdb.misc.compat import cache
 
-do_retry = DoRetry((Timeout, RateLimitError, TryAgain, ServiceUnavailableError))
+retry = Retry((Timeout, RateLimitError, TryAgain, ServiceUnavailableError))
 
 
 @cache
@@ -26,13 +26,13 @@ class BaseOpenAI(Model):
 
 
 class Embedding(BaseOpenAI):
-    @do_retry
+    @retry
     def predict_one(self, text, **kwargs):
         return _Embedding.create(input=text, model=self.identifier, **kwargs)['data'][
             0
         ]['embedding']
 
-    @do_retry
+    @retry
     def _predict_a_batch(self, texts, **kwargs):
         out = _Embedding.create(input=texts, model=self.identifier, **kwargs)['data']
         return [r['embedding'] for r in out]
@@ -45,7 +45,7 @@ class Embedding(BaseOpenAI):
 
 
 class ChatCompletion(BaseOpenAI):
-    @do_retry
+    @retry
     def predict_one(self, message, **kwargs):
         return _ChatCompletion.create(
             messages=[{'role': 'user', 'content': message}],

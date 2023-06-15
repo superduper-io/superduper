@@ -1,10 +1,11 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 import numpy
+import numpy.typing
 import torch
-from typing import List, Iterator, Sequence, Callable
+from typing import List, Iterator, Sequence, Callable, Any, Mapping, Union, Literal
 
 from ..misc.config import VectorSearchConfig
 
@@ -40,10 +41,7 @@ class BaseHashSet:
         return self.find_nearest_from_hashes(self.h[ix, :], n=n)
 
     def find_nearest_from_hash(self, h, n=100):
-        if isinstance(h, list):
-            h = numpy.array(h)
-        elif isinstance(h, torch.Tensor):
-            h = h.numpy()
+        h = to_numpy(h)
         _ids, scores = self.find_nearest_from_hashes(h[None, :], n=n)
         return _ids[0], scores[0]
 
@@ -54,79 +52,137 @@ class BaseHashSet:
         raise NotImplementedError
 
 
-VectorIndexId = str
-VectorIndexItemId = str
+ArrayLike = Union[numpy.typing.ArrayLike, torch.Tensor]
+
+
+def to_numpy(x: ArrayLike) -> numpy.ndarray:
+    if isinstance(x, numpy.ndarray):
+        return x
+    if isinstance(x, torch.Tensor):
+        return x.numpy()
+    return numpy.array(x)
+
+
+VectorCollectionId = str
+VectorCollectionItemId = str
+VectorIndexMeasureType = Literal["l2", "dot", "css"]
 VectorIndexMeasureFunction = Callable[[numpy.ndarray, numpy.ndarray], float]
+VectorIndexMeasure = Union[VectorIndexMeasureType, VectorIndexMeasureFunction]
 
 
-class VectorIndexItemNotFound(Exception):
+class VectorCollectionItemNotFound(Exception):
     pass
 
 
 @dataclass(frozen=True)
-class VectorIndexItem:
-    id: VectorIndexItemId
-    vector: numpy.ndarray
+class VectorCollectionConfig:
+    id: VectorCollectionId
+    dimensions: int
+    measure: VectorIndexMeasure = "l2"
+    parameters: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
-class VectorIndexResult:
-    id: VectorIndexItemId
+class VectorCollectionItem:
+    id: VectorCollectionItemId
+    vector: numpy.ndarray
+
+    @classmethod
+    def create(
+        self, *, id: VectorCollectionItemId, vector: ArrayLike
+    ) -> VectorCollectionItem:
+        return VectorCollectionItem(id=id, vector=to_numpy(vector))
+
+
+@dataclass(frozen=True)
+class VectorCollectionResult:
+    id: VectorCollectionItemId
     score: float
 
 
-class VectorIndex(ABC):
-    """A vector index within a vector database.
+class VectorCollection(ABC):
+    """A vector collection within a vector database.
 
     Concrete implementations of this class are responsible for lifecycle management of
-    a single vector index within a specific vector database.
+    a single vector collection within a specific vector database.
 
-    It is assumed that a vector index is associated with a single vector column or
+    It is assumed that a vector collection is associated with a single vector column or
     field within a vector database.
     """
 
     @contextmanager
     @abstractmethod
-    def init(self) -> Iterator["VectorIndex"]:
+    def init(self) -> Iterator["VectorCollection"]:
         ...
 
     @abstractmethod
-    def add(self, items: Sequence[VectorIndexItem]) -> None:
-        """Add items to the index."""
+    def add(self, items: Sequence[VectorCollectionItem]) -> None:
+        """Add items to the collection."""
         ...
 
     @abstractmethod
     def find_nearest_from_id(
-        self, identifier: VectorIndexItemId, *, limit: int = 100, offset: int = 0
-    ) -> List[VectorIndexResult]:
+        self,
+        identifier: VectorCollectionItemId,
+        *,
+        within_ids: Sequence[VectorCollectionItemId] = (),
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[VectorCollectionResult]:
         """Find items that are nearest to the item with the given identifier."""
         ...
 
     @abstractmethod
     def find_nearest_from_array(
-        self, array: numpy.ndarray, *, limit: int = 100, offset: int = 0
-    ) -> List[VectorIndexResult]:
+        self,
+        array: ArrayLike,
+        *,
+        within_ids: Sequence[VectorCollectionItemId] = (),
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[VectorCollectionResult]:
         """Find items that are nearest to the given vector."""
         ...
 
 
-class VectorIndexManager(ABC):
+class VectorDatabase(ABC):
     """A manager for vector indexes within a vector database.
+    A vector database that manages indexed vector collections.
 
     Concrete implementations of this class are responsible for lifecycle management of
-    vector indexes within a specific vector database.
+    vector collections within a specific vector database.
 
-    Clients of this class retrieve vector indexes by their identifier for subsequent
+    Clients of this class retrieve vector collections by their identifier for subsequent
     operations.
     """
 
     def __init__(self, *, config: VectorSearchConfig) -> None:
         self._config = config
 
+    @classmethod
+    def create(cls, *, config: VectorSearchConfig) -> VectorDatabase:
+        if config.milvus:
+            return cls.create_milvus(config=config)
+        return cls.create_in_memory(config=config)
+
+    @classmethod
+    def create_milvus(self, *, config: VectorSearchConfig) -> VectorDatabase:
+        # avoiding circular import
+        from .milvus import MilvusVectorDatabase
+
+        return MilvusVectorDatabase(config=config)
+
+    @classmethod
+    def create_in_memory(self, *, config: VectorSearchConfig) -> VectorDatabase:
+        # avoiding circular import
+        from .inmemory import InMemoryVectorDatabase
+
+        return InMemoryVectorDatabase(config=config)
+
     @contextmanager
     @abstractmethod
-    def init(self) -> Iterator["VectorIndexManager"]:
-        """Initialize the manager.
+    def init(self) -> Iterator["VectorDatabase"]:
+        """Initialize the database.
 
         This method makes sure all necessary connections to the underlying vector
         database are established.
@@ -135,11 +191,13 @@ class VectorIndexManager(ABC):
 
     @contextmanager
     @abstractmethod
-    def get_index(
-        self, identifier: VectorIndexId, *, dimensions: int
-    ) -> Iterator[VectorIndex]:
-        """Get a vector index by its identifier.
+    def get_collection(
+        self,
+        config: VectorCollectionConfig,
+    ) -> Iterator[VectorCollection]:
+        """Get a vector collection by its identifier.
 
-        If the index does not exist, it is created with the specified dimensionality.
+        If the collection does not exist, it is created with the specified
+        dimensionality.
         """
         ...

@@ -15,7 +15,6 @@ from superduperdb.models.torch.wrapper import SuperDuperModule
 from superduperdb.types.numpy.array import array
 from superduperdb.types.pillow.image import pil_image
 from superduperdb.types.torch.tensor import tensor
-from superduperdb.vector_search import FaissHashSet
 from tests.material.models import BinaryClassifier, LinearBase
 from tests.material.metrics import PatK
 
@@ -38,29 +37,36 @@ def metric(empty):
     empty.remove('metric', 'p@1', force=True)
 
 
-@pytest.fixture()
-def random_data(float_tensors_32):
+@pytest.fixture
+def random_data_factory(float_tensors_32):
     float_tensor = float_tensors_32.types['torch.float32[32]']
 
-    data = []
-    for i in range(n_data_points):
-        x = torch.randn(32)
-        y = int(random.random() > 0.5)
-        z = torch.randn(32)
-        data.append(
-            Document(
-                {
-                    'x': float_tensor(x),
-                    'y': y,
-                    'z': float_tensor(z),
-                }
+    def _factory(number_data_points=n_data_points):
+        data = []
+        for i in range(number_data_points):
+            x = torch.randn(32)
+            y = int(random.random() > 0.5)
+            z = torch.randn(32)
+            data.append(
+                Document(
+                    {
+                        'x': float_tensor(x),
+                        'y': y,
+                        'z': float_tensor(z),
+                    }
+                )
             )
+        float_tensors_32.execute(
+            Insert(collection='documents', documents=data), refresh=False
         )
-    float_tensors_32.execute(
-        Insert(collection='documents', documents=data), refresh=False
-    )
-    yield float_tensors_32
-    float_tensors_32.execute(Delete(collection='documents', filter={}))
+        return float_tensors_32
+
+    return _factory
+
+
+@pytest.fixture()
+def random_data(random_data_factory):
+    return random_data_factory()
 
 
 @pytest.fixture()
@@ -97,30 +103,25 @@ def an_update(float_tensors_32):
     return data
 
 
-@pytest.fixture()
-def with_vector_index(random_data, a_model):
-    random_data.add(Watcher(select=Select('documents'), key='x', model='linear_a'))
-    vi = VectorIndex(
-        'test_vector_search',
-        indexing_watcher='linear_a/x',
-    )
-    random_data.add(vi)
-    yield random_data
-    random_data.remove('vector_index', 'test_vector_search', force=True)
-
-
-@pytest.fixture()
-def with_vector_index_faiss(random_data, a_model):
-    random_data.add(Watcher(select=Select('documents'), key='x', model='linear_a'))
-    random_data.add(
-        VectorIndex(
-            'test_vector_search',
+@pytest.fixture
+def vector_index_factory(a_model):
+    def _factory(db, identifier, **kwargs) -> VectorIndex:
+        db.add(Watcher(select=Select('documents'), key='x', model='linear_a'))
+        vi = VectorIndex(
+            identifier=identifier,
             indexing_watcher='linear_a/x',
-            hash_set_cls=FaissHashSet,
+            **kwargs,
         )
-    )
+        db.add(vi)
+        return vi
+
+    return _factory
+
+
+@pytest.fixture()
+def with_vector_index(random_data, vector_index_factory):
+    vector_index_factory(random_data, 'test_vector_search')
     yield random_data
-    random_data.remove('vector_index', 'test_vector_search', force=True)
 
 
 @pytest.fixture()

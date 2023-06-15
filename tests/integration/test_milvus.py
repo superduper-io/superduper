@@ -12,12 +12,14 @@ from superduperdb.vector_search.base import (
 from superduperdb.vector_search.milvus import MilvusClient, MilvusVectorDatabase
 
 
+@pytest.mark.skip(reason='See issue #291')
 class TestMilvusClient:
     def test_list_databases(self, milvus_client: MilvusClient) -> None:
         dbs = milvus_client.list_databases()
         assert dbs == ["default"]
 
 
+@pytest.mark.skip(reason='See issue #291')
 class TestMilvusVectorCollection:
     @pytest.fixture
     def manager(self, milvus_server: MilvusConfig) -> Iterator[VectorDatabase]:

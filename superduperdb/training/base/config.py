@@ -19,8 +19,6 @@ class TrainerConfiguration:
     def _get_data(cls, database_type, database_name, select, keys, features, transform):
         train_data = QueryDataset(
             select=select,
-            database=database_name,
-            database_type=database_type,
             keys=keys,
             fold='train',
             transform=transform,
@@ -29,8 +27,6 @@ class TrainerConfiguration:
 
         valid_data = QueryDataset(
             select=select,
-            database=database_name,
-            database_type=database_type,
             keys=keys,
             fold='valid',
             transform=transform,
@@ -48,8 +44,6 @@ class TrainerConfiguration:
         models,
         keys,
         model_names,
-        database_type,
-        database_name,
         select,
         validation_sets=(),
         metrics=None,

@@ -10,7 +10,7 @@ def maybe_login_required(auth, service):
     """
 
     def decorator(f):
-        if getattr(CFG, service).user:
+        if getattr(CFG, service).username:
             return auth.login_required(f)
         return f
 

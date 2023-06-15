@@ -8,6 +8,14 @@ class MetaDataStore(ABC):
     Abstraction for storing meta-data separately from primary data.
     """
 
+    def __init__(
+        self,
+        conn: Any,
+        name: Optional[str] = None,
+    ):
+        self.name = name
+        self.conn = conn
+
     @abstractmethod
     def create_component(self, info: Dict):
         pass

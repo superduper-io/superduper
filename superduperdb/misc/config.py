@@ -1,8 +1,3 @@
-from .jsonable import Factory, JSONable
-from enum import Enum
-from pydantic import Field, root_validator
-from typing import Dict, List, Optional
-
 """
 The classes in this file define the configuration variables for SuperDuperDB,
 which means that this file gets imported before alost anything else, and
@@ -16,6 +11,12 @@ If you change a class below, you must regenerate `default-config.json with
     $ python -m tests.unittests.misc.test_config
 """
 
+from .jsonable import JSONable, Factory
+from enum import Enum
+from pydantic import Field, root_validator
+from typing import Dict, List, Optional
+
+
 _BAD_KEY = '...bad.key...'
 REST_API_VERSION = '0.1.0'
 
@@ -23,7 +24,7 @@ REST_API_VERSION = '0.1.0'
 class HasPort(JSONable):
     port = 0
     password = ''
-    user = ''
+    username = ''
 
 
 class HostPort(HasPort):
@@ -89,6 +90,21 @@ class MongoDB(HostPort):
     port = 27017
 
 
+class DataLayer(JSONable):
+    data_backend_name: str = 'documents'
+    data_backend_cls: str = 'mongodb'
+    data_backend_connection: str = 'pymongo'
+    data_backend_kwargs: Dict = Factory(MongoDB)
+    metadata_cls: str = 'mongodb'
+    metadata_kwargs: Dict = Factory(MongoDB)
+    metadata_connection: str = 'pymongo'
+    metadata_name: str = 'documents'
+    artifact_store_cls: str = 'mongodb'
+    artifact_store_kwargs: Dict = Factory(MongoDB)
+    artifact_store_connection: str = 'pymongo'
+    artifact_store_name: str = '_filesystem:documents'
+
+
 class Notebook(JSONable):
     ip = '0.0.0.0'
     port = 8888
@@ -137,7 +153,7 @@ class VectorSearchConfig(JSONable):
     # that is still in the codebase
     host: str = 'localhost'
     port: int = 5001
-    user: str = Field(default="", repr=False)
+    username: str = Field(default="", repr=False)
     password: str = Field(default="", repr=False)
 
 
@@ -146,7 +162,7 @@ class Config(JSONable):
     dask: Dask = Factory(Dask)
     logging: Logging = Factory(Logging)
     model_server: ModelServer = Factory(ModelServer)
-    mongodb: MongoDB = Factory(MongoDB)
+    datalayer: DataLayer = Factory(DataLayer)
     notebook: Notebook = Factory(Notebook)
     ray: Ray = Factory(Ray)
     remote: bool = False

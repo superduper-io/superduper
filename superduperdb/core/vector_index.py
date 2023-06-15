@@ -85,7 +85,7 @@ class VectorIndex(Component):
         # a bulk add in MilvusVectorIndex
         with self._get_vector_collection() as vector_collection:
             for record in database.execute(self.indexing_watcher.select):
-                h, id = database._get_output_from_document(
+                h, id = database.db.get_output_from_document(
                     record,
                     self.indexing_watcher.key,
                     self.indexing_watcher.model.identifier,
@@ -146,10 +146,10 @@ class VectorIndex(Component):
 
         within_ids = ids or ()
 
-        if database.id_field in like.content:
+        if database.db.id_field in like.content:
             with self._get_vector_collection() as vector_collection:
                 nearest = vector_collection.find_nearest_from_id(
-                    str(like[database.id_field]), within_ids=within_ids, limit=n
+                    str(like[database.db.id_field]), within_ids=within_ids, limit=n
                 )
                 return (
                     [result.id for result in nearest],
@@ -213,8 +213,6 @@ class VectorIndex(Component):
         for vs in validation_selects:
             validation_data = QueryDataset(
                 vs,
-                database_type=database._database_type,
-                database=database.name,
                 keys=keys,
                 fold='valid',
             )

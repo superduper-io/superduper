@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from superduperdb.misc import dicts
-from typing import Any, Dict, Optional, Sequence, Type, Union
+import typing as t
 import os
 
-Self = Any
-File = Union[Path, str]
+Self = t.Any
+File = t.Union[Path, str]
 
 ROOT = Path(__file__).parents[1]
 PREFIX = 'SUPERDUPERDB_'
@@ -26,13 +26,13 @@ FILE_SEP = ','
 
 @dataclass(frozen=True)
 class ConfigSettings:
-    cls: Type
-    default_files: Union[Sequence[Path], str]
+    cls: t.Type
+    default_files: t.Union[t.Sequence[Path], str]
     prefix: str
-    environ: Optional[Dict] = None
+    environ: t.Optional[t.Dict] = None
 
     @cached_property
-    def config(self) -> Any:
+    def config(self) -> t.Any:
         """Read a Pydantic class"""
         environ = dict(os.environ if self.environ is None else self.environ)
 

@@ -82,7 +82,7 @@ class VectorIndex(Component):
             database = self.database
             assert not isinstance(database, DBPlaceholder)
         super().repopulate(database)
-        logging.info(f'loading hashes: {self.identifier!r}')  # type: ignore
+        logging.info(f'loading hashes: {self.identifier!r}')
 
         # TODO: this is a temporary solution until we implement a CDC process that will
         # asynchronously

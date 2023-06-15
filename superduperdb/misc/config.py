@@ -14,7 +14,7 @@ If you change a class below, you must regenerate `default-config.json with
 from .jsonable import JSONable, Factory
 from enum import Enum
 from pydantic import Field, root_validator
-from typing import Dict, List, Optional
+import typing as t
 
 
 _BAD_KEY = '...bad.key...'
@@ -48,15 +48,15 @@ class Retry(JSONable):
 
 
 class Apis(JSONable):
-    providers: Dict[str, Api] = Factory(dict)
+    providers: t.Dict[str, Api] = Factory(dict)
     retry: Retry = Factory(Retry)
 
 
 class Dask(IpPort):
     port = 8786
 
-    serializers: List[str] = Factory(list)
-    deserializers: List[str] = Factory(list)
+    serializers: t.List[str] = Factory(list)
+    deserializers: t.List[str] = Factory(list)
 
 
 class Deployment(JSONable):
@@ -94,13 +94,13 @@ class DataLayer(JSONable):
     data_backend_name: str = 'documents'
     data_backend_cls: str = 'mongodb'
     data_backend_connection: str = 'pymongo'
-    data_backend_kwargs: Dict = Factory(MongoDB)
+    data_backend_kwargs: t.Dict = Factory(MongoDB)
     metadata_cls: str = 'mongodb'
-    metadata_kwargs: Dict = Factory(MongoDB)
+    metadata_kwargs: t.Dict = Factory(MongoDB)
     metadata_connection: str = 'pymongo'
     metadata_name: str = 'documents'
     artifact_store_cls: str = 'mongodb'
-    artifact_store_kwargs: Dict = Factory(MongoDB)
+    artifact_store_kwargs: t.Dict = Factory(MongoDB)
     artifact_store_connection: str = 'pymongo'
     artifact_store_name: str = '_filesystem:documents'
 
@@ -120,7 +120,7 @@ class Notebook(JSONable):
 class Ray(HostPort):
     host = '127.0.0.1'
 
-    deployments: List[Deployment] = Factory(list)
+    deployments: t.List[Deployment] = Factory(list)
 
 
 class Server(JSONable):
@@ -147,7 +147,7 @@ class MilvusConfig(JSONable):
 
 
 class VectorSearchConfig(JSONable):
-    milvus: Optional[MilvusConfig] = None
+    milvus: t.Optional[MilvusConfig] = None
 
     # the fields below were left for compatibility with the vector search server
     # that is still in the codebase

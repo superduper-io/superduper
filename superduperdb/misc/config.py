@@ -42,9 +42,17 @@ class Api(JSONable):
     api_key: str = Field(default=_BAD_KEY, repr=False)
 
 
+class Retry(JSONable):
+    wait_multiplier = 1.0
+    wait_min = 4.0
+    wait_max = 10.0
+
+    stop_after_attempt = 2
+
+
 class Apis(JSONable):
-    n_retries = 2
     providers: Dict[str, Api] = Factory(dict)
+    retry: Retry = Factory(Retry)
 
 
 class Dask(IpPort):

@@ -75,6 +75,8 @@ pandoc = "^2.3"
 sphinx-rtd-theme = "^1.2.1"
 nbsphinx = "^0.9.2"
 httpx = "^0.24.1"
+types-requests = "^2.31.0.1"
+boto3-stubs = "^1.26.154"
 
 [build-system]
 requires = ["poetry-core"]

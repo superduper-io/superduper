@@ -21,5 +21,8 @@ class JSONable(BaseModel):
 
         MODELS.add(cls)
 
+    def deepcopy(self) -> 'JSONable':
+        return self.copy(deep=True)
+
     class Config:
         extra = 'forbid'

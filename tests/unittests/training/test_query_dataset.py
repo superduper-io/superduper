@@ -22,8 +22,6 @@ def test_query_dataset(random_data, a_watcher):
             filter={},
             projection={'_id': 0, 'x': 1, '_fold': 1, '_outputs': 1},
         ),
-        database='test_db',
-        database_type='mongodb',
         fold='train',
         features={'x': 'linear_a'},
     )
@@ -38,8 +36,6 @@ def test_query_dataset(random_data, a_watcher):
             collection='documents',
             filter={},
         ),
-        database='test_db',
-        database_type='mongodb',
         keys=['x', 'y'],
         fold='train',
     )
@@ -53,8 +49,6 @@ def test_query_dataset(random_data, a_watcher):
             collection='documents',
             filter={},
         ),
-        database='test_db',
-        database_type='mongodb',
         fold='valid',
     )
 
@@ -65,8 +59,6 @@ def test_query_dataset_base(random_data, a_watcher_base):
             collection='documents',
             filter={},
         ),
-        database='test_db',
-        database_type='mongodb',
         keys=['_base', 'y'],
         fold='train',
         features={'_base': 'linear_a_base'},

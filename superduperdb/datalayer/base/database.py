@@ -17,6 +17,7 @@ from superduperdb.core.learning_task import LearningTask
 from superduperdb.core.model import Model
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.datalayer.base.artifacts import ArtifactStore
+from superduperdb.datalayer.base.data_backend import BaseDataBackend
 from superduperdb.datalayer.base.metadata import MetaDataStore
 from superduperdb.datalayer.base.query import Insert, Select, Delete, Update
 from superduperdb.fetchers.downloads import gather_uris
@@ -25,6 +26,7 @@ from superduperdb.fetchers.downloads import Downloader
 from superduperdb.misc import progress
 from superduperdb.misc.logger import logging
 from superduperdb.vector_search.base import VectorDatabase
+from superduperdb.core import components
 
 
 # TODO:
@@ -42,7 +44,6 @@ class BaseDatabase:
     type.
     """
 
-    select_cls = Select
     variety_to_cache_mapping = {
         'model': 'models',
         'metric': 'metrics',
@@ -50,7 +51,12 @@ class BaseDatabase:
         'vector_index': 'vector_indices',
     }
 
-    def __init__(self, metadata: MetaDataStore, artifact_store: ArtifactStore):
+    def __init__(
+        self,
+        db: BaseDataBackend,
+        metadata: MetaDataStore,
+        artifact_store: ArtifactStore,
+    ):
         self.metrics = ArgumentDefaultDict(lambda x: self.load('metric', x))
         self.models = ArgumentDefaultDict(lambda x: self.load('model', x))
         self.types = ArgumentDefaultDict(lambda x: self.load('type', x))
@@ -61,6 +67,7 @@ class BaseDatabase:
         self.remote = CFG.remote
         self.metadata = metadata
         self.artifact_store = artifact_store
+        self.db = db
 
     @work
     def validate(
@@ -81,7 +88,7 @@ class BaseDatabase:
         component = self.load(variety, identifier)
         metrics = [self.load('metric', m) for m in metrics]
         validation_selects = [
-            self.get_query_for_validation_set(vs) for vs in validation_sets
+            self.db.get_query_for_validation_set(vs) for vs in validation_sets
         ]
         results = component.validate(self, validation_selects, metrics)
         for vs, res in zip(validation_sets, results):
@@ -103,15 +110,17 @@ class BaseDatabase:
         Show available functionality which has been added using ``self.add``.
         If version is specified, then print full metadata
 
-        :param variety: variety of component to show
+        :param variety: variety of component to show ["type", "model", "watcher",
+                       "learning_task", "training_configuration", "metric",
+                       "vector_index", "job"]
         :param identifier: identifying string to component
         :param version: (optional) numerical version - specify for full metadata
         """
         if identifier is None:
             assert version is None, f"must specify {identifier} to go with {version}"
-            return self._show_components(variety)
+            return self.metadata.show_components(variety)
         elif identifier is not None and version is None:
-            return self._show_component_versions(variety, identifier)
+            return self.metadata.show_component_versions(variety, identifier)
         elif identifier is not None and version is not None:
             if version == -1:
                 return self._get_object_info(variety, identifier)
@@ -309,7 +318,7 @@ class BaseDatabase:
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
         if ids is None:
-            ids = self._get_ids_from_select(select.select_only_id)
+            ids = self.db.get_ids_from_select(select.select_only_id)
 
         G.add_node(
             f'{self._download_content.__name__}()',
@@ -323,10 +332,10 @@ class BaseDatabase:
                 },
             },
         )
-        if not self._show_components('watcher'):
+        if not self.show('watcher'):
             return G
 
-        for identifier in self._show_components('watcher'):
+        for identifier in self.show('watcher'):
             G.add_node(
                 f'{self._apply_watcher.__name__}({identifier})',
                 data={
@@ -339,7 +348,7 @@ class BaseDatabase:
                 },
             )
 
-        for identifier in self._show_components('watcher'):
+        for identifier in self.show('watcher'):
             G.add_edge(
                 f'{self._download_content.__name__}()',
                 f'{self._apply_watcher.__name__}({identifier})',
@@ -372,7 +381,7 @@ class BaseDatabase:
         model_identifier = model_info['identifier']
         if features is None:
             features = {}  # pragma: no cover
-        documents = list(self._select(select.select_using_ids(_ids, features=features)))
+        documents = list(self.execute(select.select_using_ids(_ids, features=features)))
         logging.info('done.')
         documents = [x.unpack() for x in documents]
         if key != '_base' or '_base' in features:
@@ -399,9 +408,7 @@ class BaseDatabase:
         serializer_kwargs: Optional[Dict] = None,
         parent: Optional[str] = None,
     ):
-        existing_versions = self._show_component_versions(
-            object.variety, object.identifier
-        )
+        existing_versions = self.show(object.variety, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
             logging.warn(f'{object.unique_id} already exists - doing nothing')
             return
@@ -458,7 +465,7 @@ class BaseDatabase:
         return G
 
     def _add_validation_set(self, identifier, select: Select, chunk_size=1000):
-        if identifier in self._show_validation_sets():
+        if identifier in self.db.show_validation_sets():
             raise Exception(f'validation set {identifier} already exists!')
 
         data = self._select(select)
@@ -468,13 +475,13 @@ class BaseDatabase:
             tmp.append(r)
             it += 1
             if it % chunk_size == 0:
-                self._insert_validation_data(tmp, identifier)
+                self.db.insert_validation_data(tmp, identifier)
                 tmp = []
         if tmp:
-            self._insert_validation_data(tmp, identifier)
+            self.db.insert_validation_data(tmp, identifier)
 
     def _delete(self, delete: Delete):
-        return self._base_delete(delete)
+        return self.db.delete(delete)
 
     def _remove_component_version(
         self,
@@ -485,9 +492,7 @@ class BaseDatabase:
     ):
         unique_id = Component.make_unique_id(variety, identifier, version)
         if self.metadata.component_version_has_parents(variety, identifier, version):
-            parents = self.metadata.get_component_version_parents(
-                variety, identifier, version
-            )
+            parents = self.metadata.get_component_version_parents(unique_id)
             raise Exception(f'{unique_id} is involved in other components: {parents}')
 
         if force or click.confirm(
@@ -495,6 +500,9 @@ class BaseDatabase:
             default=False,
         ):
             info = self.metadata.get_component(variety, identifier, version=version)
+            component_cls = components[variety]
+            if hasattr(component_cls, 'cleanup'):
+                component_cls.cleanup(info, self)
             if variety in self.variety_to_cache_mapping:
                 try:
                     del getattr(self, self.variety_to_cache_mapping[variety])[
@@ -560,7 +568,7 @@ class BaseDatabase:
                 timeout = None
 
         def update_one(id, key, bytes):
-            return self._update(self._download_update(query.table, id, key, bytes))
+            return self._update(self.db.download_update(query.table, id, key, bytes))
 
         downloader = Downloader(
             uris=uris,
@@ -576,27 +584,21 @@ class BaseDatabase:
         if update_db:
             return
         for id_, key in zip(place_ids, keys):
-            documents[id_] = self._set_content_bytes(
+            documents[id_] = self.db.set_content_bytes(
                 documents[id_], key, downloader.results[id_]
             )
         return documents
-
-    def _download_update(self, table, id, key, bytes):
-        raise NotImplementedError
 
     def _get_content_for_filter(self, filter):
         if '_id' not in filter:
             filter['_id'] = 0
         uris = gather_uris([filter])[0]
         if uris:
-            filter = self._download_content(
-                self.name, documents=[filter], timeout=None, raises=True
+            output = self._download_content(
+                self.name, documents=[filter.content], timeout=None, raises=True
             )[0]
-            filter = self.convert_from_bytes_to_types(filter)
+            filter = Document(Document.decode(output, types=self.types))
         return filter
-
-    def _get_cursor(self, select: Select, features=None, scores=None):
-        raise NotImplementedError
 
     def _get_dependencies_for_watcher(self, identifier):
         info = self.metadata.get_component('watcher', identifier)
@@ -615,23 +617,8 @@ class BaseDatabase:
                 r[k] = self._get_file_content(r[k])
         return r
 
-    def _get_output_from_document(self, r: Document, key: str, model: str):
-        raise NotImplementedError
-
-    def _get_job_info(self, identifier):
-        raise NotImplementedError
-
-    def _get_ids_from_select(self, select: Select):
-        raise NotImplementedError
-
-    def _get_raw_cursor(self, select: Select):
-        raise NotImplementedError
-
     def _get_object_info(self, identifier, variety, version=None):
         return self.metadata.get_component(variety, identifier, version=version)
-
-    def get_query_for_validation_set(self, validation_set):
-        raise NotImplementedError
 
     def _get_watcher_for_learning_task(self, learning_task):
         info = self.metadata.get_component('learning_task', learning_task)
@@ -650,7 +637,7 @@ class BaseDatabase:
                 valid_probability = 0.05  # TODO proper error handling
             if '_fold' not in item.content:
                 item['_fold'] = 'valid' if r < valid_probability else 'train'
-        output = self._base_insert(insert)
+        output = self.db.insert(insert)
         if not refresh:  # pragma: no cover
             return output, None
         task_graph = self._build_task_workflow(
@@ -658,27 +645,6 @@ class BaseDatabase:
         )
         task_graph()
         return output, task_graph
-
-    def _insert_validation_data(self, tmp, identifier):
-        raise NotImplementedError
-
-    def _show_jobs(self):
-        """
-        List jobs
-        """
-        return self.metadata.show_jobs()
-
-    def _show_components(self, variety):
-        return self.metadata.show_components(variety)
-
-    def _show_component_versions(self, variety: str, identifier: str):
-        return sorted(self.metadata.show_component_versions(variety, identifier))
-
-    def _show_validation_sets(self):
-        """
-        List validation sets.
-        """
-        return self.metadata.show_components(variety='validation_set')
 
     @work
     def _apply_watcher(  # noqa: F811
@@ -694,9 +660,9 @@ class BaseDatabase:
     ):
         if watcher_info is None:
             watcher_info = self.metadata.get_component('watcher', identifier)
-        select = self.select_cls(**watcher_info['_select'])
+        select = self.db.select_cls(**watcher_info['select'])
         if ids is None:
-            ids = self._get_ids_from_select(select.select_only_id)
+            ids = self.db.get_ids_from_select(select.select_only_id)
             ids = [str(id) for id in ids]
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
@@ -731,7 +697,7 @@ class BaseDatabase:
         if type is not None:
             type = self.types[type]
             outputs = [type(x).encode() for x in outputs]
-        self._write_watcher_outputs(watcher_info, outputs, ids)
+        self.db.write_outputs(watcher_info, outputs, ids)
         return outputs
 
     def _replace_model(self, identifier: str, object: Model):
@@ -763,37 +729,43 @@ class BaseDatabase:
                 return self._select_matches_then_similar(select, raw=raw)
         else:
             if raw:
-                return self._get_raw_cursor(select)
+                return self.db.get_raw_cursor(select)
             else:
-                return self._get_cursor(select, features=select.features)
+                return self.db.get_cursor(
+                    select,
+                    features=select.features,
+                    types=self.types,
+                )
 
     def _select_matches_then_similar(self, select: Select, raw: bool = False):
         if not select.is_trivial:
-            id_cursor = self._get_raw_cursor(select.select_only_id)
+            id_cursor = self.db.get_raw_cursor(select.select_only_id)
             ids = [x['_id'] for x in id_cursor]
             similar_ids, scores = self._select_nearest(select, ids=ids)
         else:
             similar_ids, scores = self._select_nearest(select)
 
         if raw:
-            return self._get_raw_cursor(select.select_using_ids(similar_ids))
+            return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
         else:
-            return self._get_cursor(
+            return self.db.get_cursor(
                 select.select_using_ids(similar_ids),
                 features=select.features,
                 scores=dict(zip(similar_ids, scores)),
+                types=self.types,
             )
 
     def _select_similar_then_matches(self, select: Select, raw: bool = False):
         similar_ids, scores = self._select_nearest(select)
 
         if raw:
-            return self._get_raw_cursor(select.select_using_ids(similar_ids))
+            return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
         else:
-            return self._get_cursor(
+            return self.db.get_cursor(
                 select.select_using_ids(similar_ids),
                 features=select.features,
                 scores=dict(zip(similar_ids, scores)),
+                types=self.types,
             )
 
     def _select_nearest(
@@ -808,26 +780,6 @@ class BaseDatabase:
         return vector_index.get_nearest(
             like, database=self, ids=ids, n=select.n, outputs=select.outputs
         )
-
-    def _separate_query_part_from_validation_record(self, r):
-        """
-        Separate the info in the record after splitting.
-
-        :param r: record
-        """
-        raise NotImplementedError
-
-    def _set_content_bytes(self, r, key, bytes_):
-        raise NotImplementedError
-
-    def _set_job_flag(self, identifier, kw):
-        """
-        Set key-value pair in job record
-
-        :param identifier: id of job
-        :param kw: tuple of key-value pair
-        """
-        raise NotImplementedError
 
     @work
     def _fit(self, identifier):
@@ -844,8 +796,6 @@ class BaseDatabase:
             keys=learning_task.keys,
             model_names=learning_task.models.aslist(),
             models=learning_task.models,
-            database_type=self._database_type,
-            database_name=self.name,
             select=learning_task.select,
             validation_sets=learning_task.validation_sets,
             metrics={m.identifier: m for m in learning_task.metrics},
@@ -860,8 +810,8 @@ class BaseDatabase:
 
     def _update(self, update: Update, refresh=True, verbose=True):
         if refresh and self.metadata.show_components('model'):
-            ids = self._get_ids_from_select(update.select_ids)
-        result = self._base_update(update)
+            ids = self.db.get_ids_from_select(update.select_ids)
+        result = self.db.update(update)
         if refresh and self.metadata.show_components('model'):
             task_graph = self._build_task_workflow(
                 update.select, ids=ids, verbose=verbose
@@ -869,33 +819,3 @@ class BaseDatabase:
             task_graph()
             return result, task_graph
         return result
-
-    def _watch_job(self, identifier):
-        """
-        Watch stdout/stderr of worker job.
-
-        :param identifier: job-id
-        """
-        return self.metadata.watch_job(identifier)
-
-    def _write_output_to_job(self, identifier, msg, stream):
-        """
-        Write stdout/ stderr to database
-
-        :param identifier: job identifier
-        :param msg: msg to write
-        :param stream: {'stdout', 'stderr'}
-        """
-        raise NotImplementedError
-
-    def _write_watcher_outputs(self, info, outputs, _ids):
-        raise NotImplementedError
-
-    def _base_update(self, update: Update):
-        raise NotImplementedError
-
-    def _base_delete(self, delete: Delete):
-        raise NotImplementedError
-
-    def _unset_watcher_outputs(self, info):
-        raise NotImplementedError

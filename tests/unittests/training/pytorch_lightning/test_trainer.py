@@ -15,8 +15,6 @@ import pytorch_lightning as pl
 import pytest
 import torch
 
-DISABLE_TEST = True
-
 
 class LightningModule(SuperDuperModule, pl.LightningModule):
     def __init__(self):
@@ -47,7 +45,7 @@ class LightningModule(SuperDuperModule, pl.LightningModule):
         return int((out.exp() > 0.5).item())
 
 
-@pytest.mark.xfail(DISABLE_TEST, reason='See issue #94')
+@pytest.mark.xfail(True, reason='See issue #94')
 def test_classification(random_data):
     cf = LightningConfiguration(
         'my-pl-cf', loader_kwargs={'batch_size': 5, 'num_workers': 0}, max_epochs=10

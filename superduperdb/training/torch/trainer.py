@@ -7,7 +7,7 @@ import torch.optim
 import torch.utils
 from torch.utils.data import DataLoader
 
-from superduperdb.datalayer.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.build import build_datalayer
 from superduperdb.datalayer.base.query import Select
 from superduperdb.core.training_configuration import TrainingConfiguration
 from superduperdb.misc.special_dicts import ExtensibleDict
@@ -115,10 +115,10 @@ class TorchTrainerConfiguration(TrainingConfiguration):
         return False
 
     @classmethod
-    def get_validation_dataset(cls, database_type, database_name, validation_set):
-        database = get_database_from_database_type(database_type, database_name)
-        select: Select = database.get_query_for_validation_set(validation_set)
-        return QueryDataset(select, database_name, database_type, fold='valid')
+    def get_validation_dataset(cls, validation_set):
+        database = build_datalayer()
+        select: Select = database.db.get_query_for_validation_set(validation_set)
+        return QueryDataset(select, fold='valid')
 
     def __call__(
         self,
@@ -126,15 +126,13 @@ class TorchTrainerConfiguration(TrainingConfiguration):
         models,
         keys,
         model_names,
-        database_type,
-        database_name,
         select: Select,
         validation_sets=(),
         metrics=None,
         features=None,
         download=False,
     ):
-        database = get_database_from_database_type(database_type, database_name)
+        database = build_datalayer()
 
         lookup = dict(zip(model_names, models))
         optimizer_classes = defaultdict(lambda: torch.optim.Adam)
@@ -149,8 +147,6 @@ class TorchTrainerConfiguration(TrainingConfiguration):
             return self.split_and_preprocess(x, models, keys, self.splitter)
 
         train_data, valid_data = self._get_data(
-            database_type=database_type,
-            database_name=database_name,
             select=select,
             keys=keys,
             features=features,
@@ -165,8 +161,7 @@ class TorchTrainerConfiguration(TrainingConfiguration):
         }
 
         validation_sets = {
-            vs: self.get_validation_dataset(database_type, database_name, vs)
-            for vs in validation_sets
+            vs: self.get_validation_dataset(vs) for vs in validation_sets
         }
         metrics = [database.load('metric', m) for m in metrics]
 

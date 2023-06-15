@@ -2,6 +2,8 @@ from dataclasses import dataclass, field, asdict
 from functools import cached_property
 from typing import Optional, Mapping, Any
 
+from bson import ObjectId
+
 from superduperdb.core.documents import Document
 from superduperdb.datalayer.base import query
 
@@ -48,8 +50,10 @@ class Select(query.Select):
         self, ids, features: Optional[Mapping[str, str]] = None
     ) -> 'Select':
         variables = asdict(self)
+        # NOTE: here we assume that the _id field is ObjectId, although it may not be
+        # the case.
         variables['filter'] = {
-            '_id': {'$in': ids},
+            '_id': {'$in': [ObjectId(id_) for id_ in ids]},
             **(self.filter if self.filter else {}),
         }
         if features is not None:

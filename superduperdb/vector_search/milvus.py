@@ -1,18 +1,22 @@
 from contextlib import contextmanager
 import uuid
 import pymilvus
-from typing import Iterator, List, Sequence, Dict, Any
+from typing import Iterator, List, Sequence, Dict, Any, Mapping
 
 import numpy
 
 from .base import (
-    VectorIndex,
-    VectorIndexItem,
-    VectorIndexManager,
-    VectorIndexId,
-    VectorIndexItemId,
-    VectorIndexItemNotFound,
-    VectorIndexResult,
+    to_numpy,
+    ArrayLike,
+    VectorCollection,
+    VectorCollectionItem,
+    VectorCollectionConfig,
+    VectorDatabase,
+    VectorCollectionItemId,
+    VectorCollectionItemNotFound,
+    VectorCollectionResult,
+    VectorIndexMeasureType,
+    VectorIndexMeasure,
 )
 from ..misc.config import VectorSearchConfig, MilvusConfig
 
@@ -120,7 +124,7 @@ class MilvusClient:
             self.drop_collection(name)
 
 
-class MilvusVectorIndexManager(VectorIndexManager):
+class MilvusVectorDatabase(VectorDatabase):
     """
 
     It is assumed that a column or a field in an upstream database table / collection is
@@ -133,6 +137,11 @@ class MilvusVectorIndexManager(VectorIndexManager):
     _client: MilvusClient
     _vector_field_name = "vector"
 
+    _measure_type_metric_type_map: Mapping[VectorIndexMeasureType, str] = {
+        "l2": "L2",
+        "dot": "IP",
+    }
+
     def __init__(self, *, config: VectorSearchConfig) -> None:
         if not config.milvus:
             raise RuntimeError("MilvusConfig is not set")
@@ -140,7 +149,7 @@ class MilvusVectorIndexManager(VectorIndexManager):
         self._milvus_config = config.milvus
 
     @contextmanager
-    def init(self) -> Iterator["VectorIndexManager"]:
+    def init(self) -> Iterator["VectorDatabase"]:
         with MilvusClient(config=self._milvus_config).init() as client:
             self._client = client
             yield self
@@ -162,74 +171,95 @@ class MilvusVectorIndexManager(VectorIndexManager):
             ],
         )
 
-    def _get_collection(self, *, name: str, dimensions: int) -> pymilvus.Collection:
+    def _get_collection(self, *, config: VectorCollectionConfig) -> pymilvus.Collection:
         collection = self._client.get_collection(
-            name=name, schema=self._create_collection_schema(dimensions=dimensions)
+            name=config.id,
+            schema=self._create_collection_schema(dimensions=config.dimensions),
         )
         self._client.get_index(
             collection,
             field_name=self._vector_field_name,
             index_params={
-                "metric_type": "L2",
+                "metric_type": self._get_metric_type(config.measure),
                 "index_type": "HNSW",
+                # TODO: use config.parameters here
                 "params": {"efConstruction": 128, "M": 32},
             },
         )
         return collection
 
+    def _get_metric_type(self, measure: VectorIndexMeasure) -> str:
+        if not isinstance(measure, str):
+            raise ValueError(f"Measure functions are not supported: {measure}")
+        try:
+            return self._measure_type_metric_type_map[measure]
+        except KeyError:
+            raise ValueError(f"Unsupported measure type: {measure}")
+
     @contextmanager
-    def get_index(
-        self, identifier: VectorIndexId, *, dimensions: int
-    ) -> Iterator[VectorIndex]:
-        collection = self._get_collection(
-            name=identifier,
-            dimensions=dimensions,
-        )
-        with MilvusVectorIndex(collection=collection).init() as index:
-            yield index
+    def get_collection(
+        self, config: VectorCollectionConfig
+    ) -> Iterator[VectorCollection]:
+        collection = self._get_collection(config=config)
+        with MilvusVectorCollection(collection=collection).init() as vector_collection:
+            yield vector_collection
 
 
-class MilvusVectorIndex(VectorIndex):
+class MilvusVectorCollection(VectorCollection):
     def __init__(self, *, collection: pymilvus.Collection) -> None:
         self._collection = collection
 
     @contextmanager
-    def init(self) -> Iterator["MilvusVectorIndex"]:
+    def init(self) -> Iterator["MilvusVectorCollection"]:
         yield self
 
-    def add(self, items: Sequence[VectorIndexItem]) -> None:
+    def add(self, items: Sequence[VectorCollectionItem]) -> None:
         self._collection.insert(
             [{"id": item.id, "vector": item.vector} for item in items]
         )
         self._collection.flush()
 
     def find_nearest_from_id(
-        self, identifier: VectorIndexItemId, *, limit: int = 100, offset: int = 0
-    ) -> List[VectorIndexResult]:
+        self,
+        identifier: VectorCollectionItemId,
+        *,
+        within_ids: Sequence[VectorCollectionItemId] = (),
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[VectorCollectionResult]:
+        if within_ids:
+            raise NotImplementedError("within_ids not supported")
         array = self._get_vector_by_id(identifier=identifier)
         return self.find_nearest_from_array(array=array, limit=limit, offset=offset)
 
-    def _get_vector_by_id(self, identifier: VectorIndexItemId) -> numpy.ndarray:
+    def _get_vector_by_id(self, identifier: VectorCollectionItemId) -> numpy.ndarray:
         record = self._collection.query(
             expr=f'id == "{identifier}"',
             limit=1,
-            output_fields=[MilvusVectorIndexManager._vector_field_name],
+            output_fields=[MilvusVectorDatabase._vector_field_name],
         )
         if not record:
-            raise VectorIndexItemNotFound()
-        return record[0][MilvusVectorIndexManager._vector_field_name]
+            raise VectorCollectionItemNotFound()
+        return record[0][MilvusVectorDatabase._vector_field_name]
 
     def find_nearest_from_array(
-        self, array: numpy.ndarray, *, limit: int = 100, offset: int = 0
-    ) -> List[VectorIndexResult]:
+        self,
+        array: ArrayLike,
+        *,
+        within_ids: Sequence[VectorCollectionItemId] = (),
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[VectorCollectionResult]:
+        if within_ids:
+            raise NotImplementedError("within_ids not supported")
         result = self._collection.search(
-            data=[array],
-            anns_field=MilvusVectorIndexManager._vector_field_name,
+            data=[to_numpy(array)],
+            anns_field=MilvusVectorDatabase._vector_field_name,
             param={"metric_type": "L2", "params": {"ef": "top_k"}},
             limit=limit,
             offset=offset,
         )
         return [
-            VectorIndexResult(id=id_, score=distance)
+            VectorCollectionResult(id=id_, score=distance)
             for id_, distance in zip(result[0].ids, result[0].distances)
         ]

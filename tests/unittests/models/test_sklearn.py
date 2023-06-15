@@ -6,10 +6,10 @@ from sklearn.svm import SVC
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Select
 from superduperdb.models.sklearn.wrapper import Pipeline
-from tests.fixtures.collection import random_arrays, arrays, empty, int64
+from tests.fixtures.collection import random_arrays, arrays, empty
 
 
-def test_pipeline(random_arrays, int64):
+def test_pipeline(random_arrays):
     X = numpy.random.randn(100, 32)
     y = (numpy.random.rand(100) > 0.5).astype(int)
     est = Pipeline([('my-svc', SVC())], 'my-svc')

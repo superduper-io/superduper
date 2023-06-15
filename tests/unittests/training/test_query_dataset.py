@@ -2,7 +2,8 @@
 from superduperdb.datalayer.mongodb.query import Select
 from tests.fixtures.collection import (
     empty,
-    float_tensors,
+    float_tensors_16,
+    float_tensors_32,
     random_data,
     a_watcher,
     a_model,

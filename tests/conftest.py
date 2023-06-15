@@ -1,11 +1,14 @@
 from contextlib import contextmanager
+from dataclasses import asdict
 from typing import Iterator
 from unittest import mock
+from pymongo import MongoClient
 
 import pytest
 
-from superduperdb.datalayer.mongodb.client import SuperDuperClient
 from superduperdb.vector_search.base import VectorDatabase
+from superduperdb.datalayer.base.database import BaseDatabase
+from superduperdb.misc.config import DataLayer
 
 from .conftest_mongodb import MongoDBConfig as TestMongoDBConfig
 from superduperdb.misc.config import (
@@ -22,36 +25,40 @@ pytest_plugins = [
 
 
 @contextmanager
-def create_client(*, mongodb_config: TestMongoDBConfig) -> Iterator[SuperDuperClient]:
-    client = SuperDuperClient(
+def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[BaseDatabase]:
+    from superduperdb.datalayer.base.build import build_datalayer
+
+    mongo_client = MongoClient(
         host=mongodb_config.host,
         port=mongodb_config.port,
         username=mongodb_config.username,
         password=mongodb_config.password,
-        serverSelectionTimeoutMS=int(mongodb_config.server_selection_timeout_s * 1000),
+        serverSelectionTimeoutMS=int(mongodb_config.serverSelectionTimeoutMS * 1000),
     )
-    # avoiding a typing error here as SuperDuperClient inherits from pymongo.MongoClient
-    # which returns a generic MongoClient[...] object in __enter__, but we still want to
-    # keep the SuperDuperClient type
-    with client:
-        yield client
+    with mongo_client:
+        yield build_datalayer(
+            pymongo=mongo_client,
+        )
 
 
 @pytest.fixture
-def client(mongodb_server: TestMongoDBConfig) -> Iterator[SuperDuperClient]:
-    with create_client(mongodb_config=mongodb_server) as client:
-        yield client
+def test_db(mongodb_server: MongoDBConfig) -> Iterator[BaseDatabase]:
+    with create_datalayer(mongodb_config=mongodb_server) as db:
+        yield db
 
 
 @pytest.fixture(autouse=True)
-def config(mongodb_server: TestMongoDBConfig) -> Iterator[None]:
-    mongodb_config = MongoDBConfig(
-        host=mongodb_server.host,
-        port=mongodb_server.port,
-        user=mongodb_server.username,
-        password=mongodb_server.password,
+def config(mongodb_server: MongoDBConfig) -> Iterator[None]:
+    datalayer_cfg = DataLayer(
+        data_backend_kwargs=asdict(TestMongoDBConfig()),
+        data_backend_name='test_db',
+        metadata_kwargs=asdict(TestMongoDBConfig()),
+        metadata_name='test_db',
+        artifact_store_kwargs=asdict(TestMongoDBConfig()),
+        artifact_store_name='_filesystem:test_db',
     )
-    with mock.patch('superduperdb.CFG.mongodb', mongodb_config):
+
+    with mock.patch('superduperdb.CFG.datalayer', datalayer_cfg):
         yield
 
 

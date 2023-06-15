@@ -7,22 +7,15 @@ from superduperdb.datalayer.base.metadata import MetaDataStore
 class MongoMetaDataStore(MetaDataStore):
     def __init__(
         self,
-        db,
-        object_collection,
-        meta_collection,
-        job_collection,
-        parent_child_mappings,
+        conn: Any,
+        name: Optional[str] = None,
     ):
-        """
-        :param db: pymongo database connection
-        :param object_collection: name of collection to store component information
-        :param meta_collection: name of collection to store meta-data
-        :param job_collection: name of collection to store job information
-        """
-        self.meta_collection = db[meta_collection]
-        self.object_collection = db[object_collection]
-        self.job_collection = db[job_collection]
-        self.parent_child_mappings = db[parent_child_mappings]
+        self.name = name
+        db = conn[name]
+        self.meta_collection = db['_meta']
+        self.object_collection = db['_objects']
+        self.job_collection = db['_jobs']
+        self.parent_child_mappings = db['_parent_child_mappings']
 
     def create_parent_child(self, parent: str, child: str):
         self.parent_child_mappings.insert_one(

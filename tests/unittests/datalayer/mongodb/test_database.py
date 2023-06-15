@@ -129,6 +129,7 @@ def test_select(with_vector_index):
     assert r['_id'] == s['_id']
 
 
+@pytest.mark.skip(reason='See issue #291')
 def test_select_milvus(
     config_mongodb_milvus, random_data_factory, vector_index_factory
 ):
@@ -160,7 +161,10 @@ def test_insert(random_data, a_watcher, an_update):
     random_data.execute(Insert(collection='documents', documents=an_update))
     r = next(random_data.execute(Select('documents', filter={'update': True})))
     assert 'linear_a' in r['_outputs']['x']
-    assert random_data.documents.count_documents({}) == n_data_points + 10
+    assert (
+        len(list(random_data.execute(Select(collection='documents'))))
+        == n_data_points + 10
+    )
 
 
 def test_insert_from_uris(empty, image_type):

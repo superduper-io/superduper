@@ -1,4 +1,5 @@
-from typing import List, Union, Optional, Any
+from contextlib import contextmanager
+from typing import List, Union, Optional, Any, Iterator
 
 from superduperdb.core.base import (
     ComponentList,
@@ -12,12 +13,18 @@ from superduperdb.core.documents import Document
 from superduperdb.core.metric import Metric
 from superduperdb.core.type import DataVar
 from superduperdb.core.watcher import Watcher
+from superduperdb.core.model import Model
 from superduperdb.datalayer.base.query import Select
-from superduperdb.misc import progress
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.training.query_dataset import QueryDataset
 from superduperdb.training.validation import validate_vector_search
-from superduperdb.vector_search import VanillaHashSet
+from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
+from superduperdb.vector_search.base import (
+    VectorCollection,
+    VectorCollectionConfig,
+    VectorIndexMeasureType,
+    VectorCollectionItem,
+)
 from superduperdb.misc.logger import logging
 
 
@@ -30,7 +37,6 @@ class VectorIndex(Component):
     :param compatible_watchers: list of additional watchers which can
                                 "talk" to the index (e.g. multi-modal)
     :param measure: Measure which is used to compare vectors in index
-    :param hash_set_cls: Class which is used to execute similarity lookup
     """
 
     variety = 'vector_index'
@@ -40,8 +46,7 @@ class VectorIndex(Component):
         identifier: str,
         indexing_watcher: Union[Watcher, str],
         compatible_watchers: Optional[Union[List[Watcher], List[str]]] = None,
-        measure: str = 'css',
-        hash_set_cls: type = VanillaHashSet,
+        measure: VectorIndexMeasureType = 'css',
     ):
         super().__init__(identifier)
         self.indexing_watcher = (
@@ -63,8 +68,6 @@ class VectorIndex(Component):
             else:
                 self.compatible_watchers = ComponentList('watcher', compatible_watchers)
         self.measure = measure
-        self.hash_set_cls = hash_set_cls
-        self._hash_set = None
         self.database = DBPlaceholder()
 
     def repopulate(self, database: Optional[Any] = None):
@@ -72,25 +75,58 @@ class VectorIndex(Component):
             database = self.database
             assert not isinstance(database, DBPlaceholder)
         super().repopulate(database)
-        c = database.execute(self.indexing_watcher.select)
-        loaded = []
-        ids = []
-        docs = progress.progressbar(c)
-        logging.info(f'loading hashes: "{self.identifier}')
-        for r in docs:
-            h, id = database._get_output_from_document(
-                r, self.indexing_watcher.key, self.indexing_watcher.model.identifier
-            )
-            if isinstance(h, DataVar):
-                h = h.x
-            loaded.append(h)
-            ids.append(id)
+        logging.info(f'loading hashes: {self.identifier!r}')
 
-        self._hash_set = self.hash_set_cls(
-            loaded,
-            ids,
-            measure=self.measure,
-        )
+        # TODO: this is a temporary solution until we implement a CDC process that will
+        # asynchronously
+        # * backfill the index
+        # * keep the index up-to-date
+        # TODO: this is quite an ineffective way to populate Milvus. we should implement
+        # a bulk add in MilvusVectorIndex
+        with self._get_vector_collection() as vector_collection:
+            for record in database.execute(self.indexing_watcher.select):
+                h, id = database._get_output_from_document(
+                    record,
+                    self.indexing_watcher.key,
+                    self.indexing_watcher.model.identifier,
+                )
+                if isinstance(h, DataVar):
+                    h = h.x
+                vector_collection.add(
+                    [VectorCollectionItem.create(id=str(id), vector=h)]
+                )
+
+    @property
+    def _dimensions(self) -> int:
+        if not isinstance(self.indexing_watcher, Watcher):
+            raise NotImplementedError
+        if not isinstance(self.indexing_watcher.model, Model):
+            raise NotImplementedError
+        model_type = self.indexing_watcher.model.type
+        if isinstance(model_type, Placeholder):
+            raise NotImplementedError
+        try:
+            dimensions = model_type and model_type.shape and int(model_type.shape[-1])
+        except (IndexError, TypeError, ValueError):
+            dimensions = None
+        if not dimensions:
+            raise ValueError(
+                f"Model {self.indexing_watcher.model.identifier} has no shape"
+            )
+        return dimensions
+
+    @contextmanager
+    def _get_vector_collection(self) -> Iterator[VectorCollection]:
+        from superduperdb.datalayer.base.database import VECTOR_DATABASE
+
+        with VECTOR_DATABASE.get_collection(
+            VectorCollectionConfig(
+                id=self.identifier,
+                dimensions=self._dimensions,
+                measure=self.measure,
+            )
+        ) as vector_collection:
+            yield vector_collection
 
     def get_nearest(
         self,
@@ -108,12 +144,17 @@ class VectorIndex(Component):
         models, keys = self.models_keys
         assert len(models) == len(keys)
 
-        hash_set = self._hash_set
-        if ids:
-            hash_set = hash_set[ids]
+        within_ids = ids or ()
 
         if database.id_field in like.content:
-            return hash_set.find_nearest_from_id(like['_id'], n=n)
+            with self._get_vector_collection() as vector_collection:
+                nearest = vector_collection.find_nearest_from_id(
+                    str(like[database.id_field]), within_ids=within_ids, limit=n
+                )
+                return (
+                    [result.id for result in nearest],
+                    [result.score for result in nearest],
+                )
 
         document = MongoStyleDict(like.unpack())
 
@@ -144,7 +185,14 @@ class VectorIndex(Component):
 
         model = database.models[model]
         h = model.predict_one(model_input)
-        return hash_set.find_nearest_from_hash(h, n=n)
+        with self._get_vector_collection() as vector_collection:
+            nearest = vector_collection.find_nearest_from_array(
+                h, within_ids=within_ids, limit=n
+            )
+            return (
+                [result.id for result in nearest],
+                [result.score for result in nearest],
+            )
 
     @property
     def models_keys(self):
@@ -175,7 +223,7 @@ class VectorIndex(Component):
                 models=models,
                 keys=keys,
                 metrics=metrics,
-                hash_set_cls=self.hash_set_cls,
+                hash_set_cls=VanillaHashSet,
                 measure=self.measure,
                 predict_kwargs={},
             )
@@ -188,5 +236,4 @@ class VectorIndex(Component):
             'indexing_watcher': self.indexing_watcher.identifier,
             'compatible_watchers': [w.identifier for w in self.compatible_watchers],
             'measure': self.measure,
-            'hash_set_cls': self.hash_set_cls.name,
         }

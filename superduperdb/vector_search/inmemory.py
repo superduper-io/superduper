@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import List, Sequence, Iterator, Dict, Union
+from typing import List, Sequence, Iterator, Dict
 
 import numpy
 from readerwriterlock import rwlock
@@ -7,21 +7,22 @@ from readerwriterlock import rwlock
 from ..misc.config import VectorSearchConfig
 from .vanilla.hashes import VanillaHashSet
 from .base import (
-    VectorIndex,
-    VectorIndexResult,
-    VectorIndexId,
-    VectorIndexManager,
-    VectorIndexItem,
-    VectorIndexItemId,
-    VectorIndexItemNotFound,
-    VectorIndexMeasureFunction,
+    ArrayLike,
+    to_numpy,
+    VectorCollection,
+    VectorCollectionResult,
+    VectorCollectionId,
+    VectorDatabase,
+    VectorCollectionItem,
+    VectorCollectionItemId,
+    VectorCollectionItemNotFound,
+    VectorIndexMeasure,
+    VectorCollectionConfig,
 )
 
 
-class InMemoryVectorIndex(VectorIndex):
-    def __init__(
-        self, *, dimensions: int, measure: Union[str, VectorIndexMeasureFunction] = 'l2'
-    ) -> None:
+class InMemoryVectorCollection(VectorCollection):
+    def __init__(self, *, dimensions: int, measure: VectorIndexMeasure = 'l2') -> None:
         super().__init__()
         self._index = VanillaHashSet(
             numpy.empty((0, dimensions), dtype='float32'),
@@ -31,15 +32,15 @@ class InMemoryVectorIndex(VectorIndex):
         self._lock = rwlock.RWLockFair()
 
     @contextmanager
-    def init(self) -> Iterator["VectorIndex"]:
+    def init(self) -> Iterator["VectorCollection"]:
         yield self
 
-    def add(self, items: Sequence[VectorIndexItem]) -> None:
+    def add(self, items: Sequence[VectorCollectionItem]) -> None:
         for item in items:
             with self._lock.gen_wlock():
                 self._add(item)
 
-    def _add(self, item: VectorIndexItem) -> None:
+    def _add(self, item: VectorCollectionItem) -> None:
         ix = self._index.lookup.get(item.id)
         if ix is not None:
             self._index.h[ix] = item.vector
@@ -49,54 +50,65 @@ class InMemoryVectorIndex(VectorIndex):
             self._index.h = numpy.append(self._index.h, [item.vector], axis=0)
 
     def find_nearest_from_id(
-        self, identifier: VectorIndexItemId, *, limit: int = 100, offset: int = 0
-    ) -> List[VectorIndexResult]:
+        self,
+        identifier: VectorCollectionItemId,
+        *,
+        within_ids: Sequence[VectorCollectionItemId] = (),
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[VectorCollectionResult]:
+        if within_ids:
+            raise NotImplementedError("within_ids not supported")
         with self._lock.gen_rlock():
             try:
                 ids, scores = self._index.find_nearest_from_id(
                     identifier, n=limit + offset
                 )
             except KeyError:
-                raise VectorIndexItemNotFound()
+                raise VectorCollectionItemNotFound()
             return self._convert_ids_scores_to_results(ids[offset:], scores[offset:])
 
     def find_nearest_from_array(
-        self, array: numpy.ndarray, *, limit: int = 100, offset: int = 0
-    ) -> List[VectorIndexResult]:
+        self,
+        array: ArrayLike,
+        *,
+        within_ids: Sequence[VectorCollectionItemId] = (),
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[VectorCollectionResult]:
+        if within_ids:
+            raise NotImplementedError("within_ids not supported")
         with self._lock.gen_rlock():
-            ids, scores = self._index.find_nearest_from_hash(array, n=limit + offset)
+            ids, scores = self._index.find_nearest_from_hash(
+                to_numpy(array), n=limit + offset
+            )
             return self._convert_ids_scores_to_results(ids[offset:], scores[offset:])
 
     def _convert_ids_scores_to_results(
         self, ids: numpy.ndarray, scores: numpy.ndarray
-    ) -> List[VectorIndexResult]:
-        results: List[VectorIndexResult] = []
-        for ix, score in zip(ids, scores):
-            results.append(
-                VectorIndexResult(
-                    id=self._index.lookup[ix],
-                    score=score,
-                )
-            )
+    ) -> List[VectorCollectionResult]:
+        results: List[VectorCollectionResult] = []
+        for id, score in zip(ids, scores):
+            results.append(VectorCollectionResult(id=id, score=score))
         return results
 
 
-class InMemoryVectorIndexManager(VectorIndexManager):
+class InMemoryVectorDatabase(VectorDatabase):
     def __init__(self, *, config: VectorSearchConfig) -> None:
         self._config = config
-        self._indices: Dict[VectorIndexId, VectorIndex] = {}
+        self._collections: Dict[VectorCollectionId, VectorCollection] = {}
 
     @contextmanager
-    def init(self) -> Iterator["VectorIndexManager"]:
+    def init(self) -> Iterator["VectorDatabase"]:
         yield self
 
     @contextmanager
-    def get_index(
-        self, identifier: VectorIndexId, *, dimensions: int
-    ) -> Iterator[VectorIndex]:
-        index = self._indices.get(identifier)
-        if not index:
-            index = self._indices[identifier] = InMemoryVectorIndex(
-                dimensions=dimensions
+    def get_collection(
+        self, config: VectorCollectionConfig
+    ) -> Iterator[VectorCollection]:
+        collection = self._collections.get(config.id)
+        if not collection:
+            collection = self._collections[config.id] = InMemoryVectorCollection(
+                dimensions=config.dimensions, measure=config.measure
             )
-        yield index
+        yield collection

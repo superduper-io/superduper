@@ -33,7 +33,8 @@ from tests.fixtures.collection import (
     si_validation,
     c_model,
     metric,
-    with_vector_index_faiss,
+    random_data_factory,
+    vector_index_factory,
 )
 from tests.material.losses import ranking_loss
 
@@ -128,17 +129,11 @@ def test_select(with_vector_index):
     assert r['_id'] == s['_id']
 
 
-def test_validate_component(with_vector_index, si_validation, metric):
-    with_vector_index.validate(
-        'test_vector_search',
-        variety='vector_index',
-        metrics=['p@1'],
-        validation_sets=['my_valid'],
-    )
-
-
-def test_select_faiss(with_vector_index_faiss):
-    db = with_vector_index_faiss
+def test_select_milvus(
+    config_mongodb_milvus, random_data_factory, vector_index_factory
+):
+    db = random_data_factory(number_data_points=5)
+    vector_index_factory(db, 'test_vector_search', measure='l2')
     r = next(db.execute(Select(collection='documents')))
     s = next(
         db.execute(
@@ -150,6 +145,15 @@ def test_select_faiss(with_vector_index_faiss):
         )
     )
     assert r['_id'] == s['_id']
+
+
+def test_validate_component(with_vector_index, si_validation, metric):
+    with_vector_index.validate(
+        'test_vector_search',
+        variety='vector_index',
+        metrics=['p@1'],
+        validation_sets=['my_valid'],
+    )
 
 
 def test_insert(random_data, a_watcher, an_update):

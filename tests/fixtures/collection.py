@@ -39,8 +39,8 @@ def metric(empty):
 
 
 @pytest.fixture()
-def random_data(float_tensors):
-    float_tensor = float_tensors.types['torch.float32']
+def random_data(float_tensors_32):
+    float_tensor = float_tensors_32.types['torch.float32[32]']
 
     data = []
     for i in range(n_data_points):
@@ -56,14 +56,16 @@ def random_data(float_tensors):
                 }
             )
         )
-    float_tensors.execute(Insert(collection='documents', documents=data), refresh=False)
-    yield float_tensors
-    float_tensors.execute(Delete(collection='documents', filter={}))
+    float_tensors_32.execute(
+        Insert(collection='documents', documents=data), refresh=False
+    )
+    yield float_tensors_32
+    float_tensors_32.execute(Delete(collection='documents', filter={}))
 
 
 @pytest.fixture()
 def random_arrays(arrays):
-    float_array = arrays.types['numpy.float32']
+    float_array = arrays.types['numpy.float32[32]']
     data = []
     for i in range(n_data_points):
         x = numpy.random.randn(32).astype(numpy.float32)
@@ -75,8 +77,8 @@ def random_arrays(arrays):
 
 
 @pytest.fixture()
-def an_update(float_tensors):
-    float_tensor = float_tensors.types['torch.float32']
+def an_update(float_tensors_32):
+    float_tensor = float_tensors_32.types['torch.float32[32]']
     data = []
     for i in range(10):
         x = torch.randn(32)
@@ -143,17 +145,31 @@ def imputation_validation(random_data):
 
 
 @pytest.fixture()
-def float_tensors(empty):
-    empty.add(tensor(torch.float))
+def float_tensors_32(empty):
+    empty.add(tensor(torch.float, shape=(32,)))
     yield empty
-    empty.remove('type', 'torch.float32', force=True)
+    empty.remove('type', 'torch.float32[32]', force=True)
+
+
+@pytest.fixture()
+def float_tensors_16(empty):
+    empty.add(tensor(torch.float, shape=(16,)))
+    yield empty
+    empty.remove('type', 'torch.float32[16]', force=True)
+
+
+@pytest.fixture()
+def float_tensors_8(empty):
+    empty.add(tensor(torch.float, shape=(8,)))
+    yield empty
+    empty.remove('type', 'torch.float32[8]', force=True)
 
 
 @pytest.fixture()
 def arrays(empty):
-    empty.add(array('float32'))
+    empty.add(array('float32', shape=(32,)))
     yield empty
-    empty.remove('type', 'numpy.float32', force=True)
+    empty.remove('type', 'numpy.float32[32]', force=True)
 
 
 @pytest.fixture()
@@ -176,13 +192,6 @@ def nursery_rhymes(empty):
 
 
 @pytest.fixture()
-def int64(empty):
-    empty.add(array(numpy.int64))
-    yield empty
-    empty.remove('type', 'int64', force=True)
-
-
-@pytest.fixture()
 def image_type(empty):
     empty.add(pil_image)
     yield empty
@@ -190,13 +199,13 @@ def image_type(empty):
 
 
 @pytest.fixture()
-def a_model(float_tensors):
-    float_tensors.add(
-        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_a', type='torch.float32')
+def a_model(float_tensors_32, float_tensors_16):
+    float_tensors_32.add(
+        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_a', type='torch.float32[16]')
     )
-    yield float_tensors
+    yield float_tensors_32
     try:
-        float_tensors.remove('model', 'linear_a', force=True)
+        float_tensors_32.remove('model', 'linear_a', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -204,13 +213,13 @@ def a_model(float_tensors):
 
 
 @pytest.fixture()
-def a_model_base(float_tensors):
-    float_tensors.add(
-        SuperDuperModule(LinearBase(32, 16), 'linear_a_base', type='torch.float32'),
+def a_model_base(float_tensors_32, float_tensors_16):
+    float_tensors_32.add(
+        SuperDuperModule(LinearBase(32, 16), 'linear_a_base', type='torch.float32[16]'),
     )
-    yield float_tensors
+    yield float_tensors_32
     try:
-        float_tensors.remove('model', 'linear_a_base', force=True)
+        float_tensors_32.remove('model', 'linear_a_base', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -235,13 +244,13 @@ def a_watcher_base(a_model_base):
 
 
 @pytest.fixture()
-def a_classifier(float_tensors):
-    float_tensors.add(
+def a_classifier(float_tensors_32):
+    float_tensors_32.add(
         SuperDuperModule(BinaryClassifier(32), 'classifier'),
     )
-    yield float_tensors
+    yield float_tensors_32
     try:
-        float_tensors.remove('model', 'classifier', force=True)
+        float_tensors_32.remove('model', 'classifier', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -249,13 +258,13 @@ def a_classifier(float_tensors):
 
 
 @pytest.fixture()
-def b_model(float_tensors):
-    float_tensors.add(
-        SuperDuperModule(torch.nn.Linear(16, 8), 'linear_b', type='torch.float32'),
+def b_model(float_tensors_32, float_tensors_16, float_tensors_8):
+    float_tensors_32.add(
+        SuperDuperModule(torch.nn.Linear(16, 8), 'linear_b', type='torch.float32[8]'),
     )
-    yield float_tensors
+    yield float_tensors_32
     try:
-        float_tensors.remove('model', 'linear_b', force=True)
+        float_tensors_32.remove('model', 'linear_b', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return
@@ -263,13 +272,17 @@ def b_model(float_tensors):
 
 
 @pytest.fixture()
-def c_model(float_tensors):
-    float_tensors.add(
-        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_c', type='torch.float32'),
+def c_model(float_tensors_32, float_tensors_16):
+    float_tensors_32.add(
+        SuperDuperModule(
+            torch.nn.Linear(32, 16),
+            'linear_c',
+            type='torch.float32[16]',
+        ),
     )
-    yield float_tensors
+    yield float_tensors_32
     try:
-        float_tensors.remove('model', 'linear_c', force=True)
+        float_tensors_32.remove('model', 'linear_c', force=True)
     except TypeError as e:
         if "'NoneType' object is not subscriptable" in str(e):
             return

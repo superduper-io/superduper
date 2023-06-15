@@ -259,7 +259,8 @@ class MilvusVectorCollection(VectorCollection):
             limit=limit,
             offset=offset,
         )
-        return [
-            VectorCollectionResult(id=id_, score=distance)
+        out = [
+            VectorCollectionResult(id=id_, score=-distance)
             for id_, distance in zip(result[0].ids, result[0].distances)
         ]
+        return out

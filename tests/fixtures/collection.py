@@ -9,7 +9,7 @@ import torch
 from superduperdb.core.documents import Document
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.core.watcher import Watcher
-from superduperdb.datalayer.mongodb.client import SuperDuperClient
+from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.mongodb.query import Select, Insert, Delete
 from superduperdb.models.torch.wrapper import SuperDuperModule
 from superduperdb.types.numpy.array import array
@@ -23,11 +23,8 @@ n_data_points = 250
 
 
 @pytest.fixture()
-def empty(client: SuperDuperClient):
-    db = client.test_db
-    db.remote = False
-    yield db
-    client.drop_database('test_db', force=True)
+def empty(test_db: BaseDatabase):
+    yield test_db
 
 
 @pytest.fixture()

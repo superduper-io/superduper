@@ -3,7 +3,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
 from superduperdb.core.training_configuration import TrainingConfiguration
-from superduperdb.datalayer.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.build import build_datalayer
 from superduperdb.datalayer.base.query import Select
 from superduperdb.models.torch.utils import eval
 
@@ -36,8 +36,6 @@ class LightningConfiguration(TrainingConfiguration):
         models,
         keys,
         model_names,
-        database_type,
-        database_name,
         select: Select,
         splitter=None,
         validation_sets=(),
@@ -47,12 +45,10 @@ class LightningConfiguration(TrainingConfiguration):
     ):
         assert len(models) == 1
         model = models[0]
-        database = get_database_from_database_type(database_type, database_name)
+        database = build_datalayer()
 
         with eval(model):
             train_data, valid_data = self._get_data(
-                database_type,
-                database_name,
                 select,
                 keys=None,
                 features=features,

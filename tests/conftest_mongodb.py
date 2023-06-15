@@ -13,7 +13,7 @@ class MongoDBConfig:
     port: int = 27018
     username: str = field(repr=False, default="testmongodbuser")
     password: str = field(repr=False, default="testmongodbpassword")
-    server_selection_timeout_s: float = 5.0
+    serverSelectionTimeoutMS: float = 5.0
 
 
 @contextmanager
@@ -24,7 +24,7 @@ def create_mongodb_client(config: MongoDBConfig) -> Iterator[pymongo.MongoClient
         port=config.port,
         username=config.username,
         password=config.password,
-        serverSelectionTimeoutMS=int(config.server_selection_timeout_s * 1000),
+        serverSelectionTimeoutMS=int(config.serverSelectionTimeoutMS * 1000),
     ) as client:
         yield client
 

@@ -39,17 +39,21 @@ class Watcher(Component):
     def asdict(self):
         return {
             'model': self.model.identifier,
-            '_select': asdict(self.select),
+            'select': asdict(self.select),
             'key': self.key,
             'identifier': self.identifier,
             'features': self.features or {},
             'active': self.active,
         }
 
+    @staticmethod
+    def cleanup(info, database):
+        database.db.unset_outputs(info)
+
     def schedule_jobs(self, database, verbose=False, dependencies=()):
         if not self.active:
             return
-        ids = database._get_ids_from_select(self.select)
+        ids = database.db.get_ids_from_select(self.select)
         if not ids:
             return []
         return [

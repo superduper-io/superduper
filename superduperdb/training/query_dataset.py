@@ -1,4 +1,3 @@
-from superduperdb.datalayer.base.imports import get_database_from_database_type
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
 
@@ -18,8 +17,6 @@ class QueryDataset:
     def __init__(
         self,
         select: Select,
-        database,
-        database_type=None,
         keys=None,
         fold='train',
         suppress=(),
@@ -28,12 +25,7 @@ class QueryDataset:
     ):
         super().__init__()
 
-        if isinstance(database, str):
-            self._database = None
-            self._database_name = database
-        else:
-            self._database = database
-        self._database_type = database_type
+        self._database = None
         self.keys = keys
 
         self.transform = transform if transform else lambda x: x
@@ -45,9 +37,9 @@ class QueryDataset:
     @property
     def database(self):
         if self._database is None:
-            self._database = get_database_from_database_type(
-                self._database_type, self._database_name
-            )
+            from superduperdb.datalayer.base.build import build_datalayer
+
+            self._database = build_datalayer()
         return self._database
 
     def __len__(self):

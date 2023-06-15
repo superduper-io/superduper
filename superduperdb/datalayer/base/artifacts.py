@@ -29,6 +29,14 @@ class ArtifactStore(ABC):
     This might include models, data artifacts...
     """
 
+    def __init__(
+        self,
+        conn: t.Any,
+        name: t.Optional[str] = None,
+    ):
+        self.name = name
+        self.conn = conn
+
     def _serialize(
         self,
         object: t.Any,

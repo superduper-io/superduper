@@ -20,8 +20,10 @@ from superduperdb.vector_search.vanilla.measures import css
 from tests.fixtures.collection import (
     with_vector_index,
     random_data,
-    float_tensors,
     empty,
+    float_tensors_8,
+    float_tensors_16,
+    float_tensors_32,
     a_model,
     b_model,
     a_watcher,
@@ -38,7 +40,7 @@ from tests.material.losses import ranking_loss
 IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
 
 
-def test_create_component(empty, float_tensors):
+def test_create_component(empty, float_tensors_16, float_tensors_32):
     empty.add(SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module'))
     assert 'my-test-module' in empty.show('model')
     model = empty.models['my-test-module']
@@ -60,7 +62,7 @@ def test_update_component(empty):
 
 
 def test_compound_component(empty):
-    t = tensor(torch.float)
+    t = tensor(torch.float, shape=(32,))
 
     m = SuperDuperModule(
         layer=torch.nn.Linear(16, 32),
@@ -69,13 +71,13 @@ def test_compound_component(empty):
     )
 
     empty.add(m)
-    assert 'torch.float32' in empty.show('type')
+    assert 'torch.float32[32]' in empty.show('type')
     assert 'my-test-module' in empty.show('model')
     assert empty.show('model', 'my-test-module') == [0]
 
     empty.add(m)
     assert empty.show('model', 'my-test-module') == [0]
-    assert empty.show('type', 'torch.float32') == [0]
+    assert empty.show('type', 'torch.float32[32]') == [0]
 
     empty.add(
         SuperDuperModule(
@@ -85,7 +87,7 @@ def test_compound_component(empty):
         )
     )
     assert empty.show('model', 'my-test-module') == [0, 1]
-    assert empty.show('type', 'torch.float32') == [0]
+    assert empty.show('type', 'torch.float32[32]') == [0]
 
     m = empty.load(variety='model', identifier='my-test-module', repopulate=False)
     assert isinstance(m.type, Placeholder)
@@ -94,10 +96,10 @@ def test_compound_component(empty):
     assert isinstance(m.type, Type)
 
     with pytest.raises(ComponentInUseError):
-        empty.remove('type', 'torch.float32')
+        empty.remove('type', 'torch.float32[32]')
 
     with pytest.warns(ComponentInUseWarning):
-        empty.remove('type', 'torch.float32', force=True)
+        empty.remove('type', 'torch.float32[32]', force=True)
 
     # checks that can reload hidden type if part of another component
     m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
@@ -187,7 +189,7 @@ def test_insert_from_uris(empty, image_type):
 
 def test_update(random_data, a_watcher):
     to_update = torch.randn(32)
-    t = random_data.types['torch.float32']
+    t = random_data.types['torch.float32[32]']
     random_data.execute(
         Update(
             collection='documents',
@@ -212,7 +214,7 @@ def test_watcher(random_data, a_model, b_model):
     r = next(random_data.execute(Select('documents', one=True)))
     assert 'linear_a' in r['_outputs']['x']
 
-    t = random_data.types['torch.float32']
+    t = random_data.types['torch.float32[32]']
 
     random_data.execute(
         Insert(
@@ -271,8 +273,8 @@ def test_learning_task(si_validation, a_model, c_model, metric):
     si_validation.add(learning_task)
 
 
-def test_predict(a_model, float_tensors):
-    t = float_tensors.types['torch.float32']
+def test_predict(a_model, float_tensors_32, float_tensors_16):
+    t = float_tensors_32.types['torch.float32[32]']
     a_model.predict('linear_a', Document(t(torch.randn(32))))
 
 
@@ -286,7 +288,7 @@ def test_delete(random_data):
 def test_replace(random_data):
     r = next(random_data.execute(Select('documents')))
     x = torch.randn(32)
-    t = random_data.types['torch.float32']
+    t = random_data.types['torch.float32[32]']
     r['x'] = t(x)
     random_data.execute(
         Update(

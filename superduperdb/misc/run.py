@@ -1,5 +1,5 @@
 from subprocess import CalledProcessError, PIPE
-from typing import Any, Dict, Tuple
+import typing as t
 import subprocess
 
 __all__ = (
@@ -11,11 +11,11 @@ __all__ = (
 
 
 def run(
-    args: Tuple[str], text: bool = True, check: bool = True, **kwargs: Dict[str, Any]
+    args: t.Tuple[str], text: bool = True, check: bool = True, **kwargs
 ) -> subprocess.CompletedProcess:
     print('$', *args)
     return subprocess.run(args, text=text, check=check, **kwargs)
 
 
-def out(args: Tuple[str], **kwargs: Dict[str, Any]) -> str:
+def out(args: t.Tuple[str], **kwargs) -> str:
     return run(args, stdout=PIPE, **kwargs).stdout.strip()

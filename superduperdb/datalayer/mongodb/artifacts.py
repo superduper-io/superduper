@@ -1,13 +1,20 @@
+import typing as t
+
 import gridfs
 
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 
 
 class MongoArtifactStore(ArtifactStore):
-    def __init__(self, db):
+    def __init__(self, conn, name: t.Optional[str] = None):
         """
-        :param db: MongoDB database connection
+        :param conn: MongoDB client connection
+        :param name: Name of database to host filesystem
         """
+        if name is None:
+            name = '_filesystem'
+        super().__init__(name=name, conn=conn)
+        db = self.conn[self.name]
         self.filesystem = gridfs.GridFS(db)
 
     def delete_artifact(self, file_id: str):

@@ -438,7 +438,7 @@ class BaseDatabase:
 
     def _create_plan(self):
         G = networkx.DiGraph()
-        for identifier in self.metadata.show_components('watcher'):
+        for identifier in self.metadata.show_components('watcher', active=True):
             G.add_node(('watcher', identifier))
         for identifier in self.metadata.show_components('watcher'):
             deps = self._get_dependencies_for_watcher(identifier)
@@ -684,7 +684,7 @@ class BaseDatabase:
     ):
         if watcher_info is None:
             watcher_info = self.metadata.get_component('watcher', identifier)
-        select = self.select_cls(**watcher_info['_select'])
+        select = self.select_cls(**watcher_info['select'])
         if ids is None:
             ids = self._get_ids_from_select(select.select_only_id)
             ids = [str(id) for id in ids]

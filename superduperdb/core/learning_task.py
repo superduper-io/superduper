@@ -31,7 +31,7 @@ class LearningTask(Component):
     :param features: Dictionary of feature mappings from keys -> model-identifiers
     """
 
-    variety = 'learning_task'
+    type_id = 'learning_task'
 
     def __init__(
         self,

@@ -56,7 +56,7 @@ class Type(Component):
                     this ``Type``
     """
 
-    variety = 'type'
+    type_id = 'type'
 
     def __init__(
         self,

@@ -12,7 +12,7 @@ class TrainingConfiguration(Component):
     :param **parameters: Key-values pairs, the variables which configure training.
     """
 
-    variety = 'training_configuration'
+    type_id = 'training_configuration'
 
     def __init__(self, identifier, **parameters):
         super().__init__(identifier)

@@ -7,7 +7,7 @@ class Metric(Component):
     These objects are ``callable`` and are applied row-wise to the data, and averaged.
     """
 
-    variety = 'metric'
+    type_id = 'metric'
 
     def __call__(self, x, y):
         raise NotImplementedError

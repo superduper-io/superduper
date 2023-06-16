@@ -105,7 +105,7 @@ class DBQAWithSourcesChain(Model):
         self.vector_index = (
             vector_index
             if isinstance(vector_index, VectorIndex)
-            else Placeholder(variety='vector_index', identifier=vector_index)
+            else Placeholder(type_id='vector_index', identifier=vector_index)
         )
         self.key = key
         self.n = n

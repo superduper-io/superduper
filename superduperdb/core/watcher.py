@@ -17,7 +17,7 @@ class Watcher(Component):
     :param active: Toggle to ``False`` to deactivate change data triggering
     """
 
-    variety = 'watcher'
+    type_id = 'watcher'
 
     def __init__(
         self,

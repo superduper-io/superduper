@@ -2,11 +2,11 @@ from superduperdb.core.base import Component, ComponentList, strip
 
 
 class ComponentA(Component):
-    variety = 'a'
+    type_id = 'a'
 
 
 class ComponentB(Component):
-    variety = 'b'
+    type_id = 'b'
 
 
 class MyComponent(Component):

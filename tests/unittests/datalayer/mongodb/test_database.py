@@ -90,10 +90,10 @@ def test_compound_component(empty):
     assert empty.show('model', 'my-test-module') == [0, 1]
     assert empty.show('type', 'torch.float32[32]') == [0]
 
-    m = empty.load(variety='model', identifier='my-test-module', repopulate=False)
+    m = empty.load(type_id='model', identifier='my-test-module', repopulate=False)
     assert isinstance(m.type, Placeholder)
 
-    m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
+    m = empty.load(type_id='model', identifier='my-test-module', repopulate=True)
     assert isinstance(m.type, Type)
 
     with pytest.raises(ComponentInUseError):
@@ -103,7 +103,7 @@ def test_compound_component(empty):
         empty.remove('type', 'torch.float32[32]', force=True)
 
     # checks that can reload hidden type if part of another component
-    m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
+    m = empty.load(type_id='model', identifier='my-test-module', repopulate=True)
     assert isinstance(m.type, Type)
 
     empty.remove('model', 'my-test-module', force=True)
@@ -150,7 +150,7 @@ def test_select_milvus(
 def test_validate_component(with_vector_index, si_validation, metric):
     with_vector_index.validate(
         'test_vector_search',
-        variety='vector_index',
+        type_id='vector_index',
         metrics=['p@1'],
         validation_sets=['my_valid'],
     )

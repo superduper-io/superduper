@@ -20,9 +20,9 @@ class Placeholder(BasePlaceholder):
     Placeholder.
     """
 
-    def __init__(self, identifier: str, variety: str, version: Optional[int] = None):
+    def __init__(self, identifier: str, type_id: str, version: Optional[int] = None):
         self.identifier = identifier
-        self.variety = variety
+        self.type_id = type_id
         self.version = version
 
 
@@ -31,14 +31,14 @@ class PlaceholderList(BasePlaceholder, list):
     List of placeholders.
     """
 
-    def __init__(self, variety, *args, **kwargs):
+    def __init__(self, type_id, *args, **kwargs):
         super().__init__(
-            [Placeholder(arg, variety) for arg in args[0]], *args[1:], **kwargs
+            [Placeholder(arg, type_id) for arg in args[0]], *args[1:], **kwargs
         )
-        self.variety = variety
+        self.type_id = type_id
 
     def __repr__(self):
-        return f'PlaceholderList[{self.variety}](' + super().__repr__() + ')'
+        return f'PlaceholderList[{self.type_id}](' + super().__repr__() + ')'
 
     def aslist(self):
         return [x.identifier for x in self]
@@ -79,7 +79,7 @@ class Component(BaseComponent):
     def unique_id(self):
         if self.version is None:
             raise Exception('Version not yet set for component uniqueness')
-        return f'{self.variety}/{self.identifier}/{self.version}'
+        return f'{self.type_id}/{self.identifier}/{self.version}'
 
     @property
     def child_components(self) -> List['Component']:
@@ -113,7 +113,7 @@ class Component(BaseComponent):
         def reload(object):
             if isinstance(object, Placeholder):
                 reloaded = database.load(
-                    variety=object.variety,
+                    type_id=object.type_id,
                     identifier=object.identifier,
                     version=object.version,
                     allow_hidden=True,
@@ -122,12 +122,12 @@ class Component(BaseComponent):
 
             if isinstance(object, PlaceholderList):
                 reloaded = [
-                    database.load(c.variety, c.identifier, allow_hidden=True)
+                    database.load(c.type_id, c.identifier, allow_hidden=True)
                     for c in object
                 ]
                 for i, c in enumerate(reloaded):
                     reloaded[i] = c.repopulate(database)
-                return ComponentList(object.variety, reloaded)
+                return ComponentList(object.type_id, reloaded)
 
             if isinstance(object, DBPlaceholder):
                 return database
@@ -170,8 +170,8 @@ class Component(BaseComponent):
         return []
 
     @classmethod
-    def make_unique_id(cls, variety, identifier, version):
-        return f'{variety}/{identifier}/{version}'
+    def make_unique_id(cls, type_id, identifier, version):
+        return f'{type_id}/{identifier}/{version}'
 
 
 class ComponentList(BaseComponent, list):
@@ -179,17 +179,17 @@ class ComponentList(BaseComponent, list):
     List of base components.
     """
 
-    def __init__(self, variety, *args, **kwargs):
+    def __init__(self, type_id, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.variety = variety
+        self.type_id = type_id
 
     def __repr__(self):
-        return f'ComponentList[{self.variety}](' + super().__repr__() + ')'
+        return f'ComponentList[{self.type_id}](' + super().__repr__() + ')'
 
     def repopulate(self, database):
         for i, item in enumerate(self):
             if isinstance(item, str):
-                self[i] = database.load(self.variety, item)
+                self[i] = database.load(self.type_id, item)
             self[i] = self[i].repopulate(database)
 
     def aslist(self):
@@ -210,7 +210,7 @@ def strip(component: BaseComponent):
     if isinstance(component, Placeholder):
         return component
     if isinstance(component, ComponentList):
-        return PlaceholderList(component.variety, [strip(obj) for obj in component])
+        return PlaceholderList(component.type_id, [strip(obj) for obj in component])
     for attr in vars(component):
         subcomponent = getattr(component, attr)
         if isinstance(subcomponent, ComponentList):
@@ -220,7 +220,7 @@ def strip(component: BaseComponent):
                 attr,
                 Placeholder(
                     subcomponent.identifier,
-                    subcomponent.variety,
+                    subcomponent.type_id,
                     subcomponent.version,
                 ),
             )

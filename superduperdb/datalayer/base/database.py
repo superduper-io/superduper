@@ -43,7 +43,7 @@ class BaseDatabase:
     """
 
     select_cls = Select
-    variety_to_cache_mapping = {
+    type_id_to_cache_mapping = {
         'model': 'models',
         'metric': 'metrics',
         'type': 'types',
@@ -66,7 +66,7 @@ class BaseDatabase:
     def validate(
         self,
         identifier: str,
-        variety: str,
+        type_id: str,
         validation_sets: List[str],
         metrics: List[str],
     ):
@@ -74,11 +74,11 @@ class BaseDatabase:
         Evaluate quality of component, using `Component.validate`, if implemented.
 
         :param identifier: identifier of semantic index
-        :param variety: variety of component
+        :param type_id: type_id of component
         :param validation_sets: validation-sets on which to validate
         :param metrics: metric functions to compute
         """
-        component = self.load(variety, identifier)
+        component = self.load(type_id, identifier)
         metrics = [self.load('metric', m) for m in metrics]
         validation_selects = [
             self.get_query_for_validation_set(vs) for vs in validation_sets
@@ -88,14 +88,14 @@ class BaseDatabase:
             for m in res:
                 self.metadata.update_object(
                     identifier,
-                    variety,
+                    type_id,
                     f'final_metrics.{vs}.{m}',
                     res[m],
                 )
 
     def show(
         self,
-        variety: str,
+        type_id: str,
         identifier: Optional[str] = None,
         version: Optional[int] = None,
     ):
@@ -103,23 +103,23 @@ class BaseDatabase:
         Show available functionality which has been added using ``self.add``.
         If version is specified, then print full metadata
 
-        :param variety: variety of component to show
+        :param type_id: type_id of component to show
         :param identifier: identifying string to component
         :param version: (optional) numerical version - specify for full metadata
         """
         if identifier is None:
             assert version is None, f"must specify {identifier} to go with {version}"
-            return self._show_components(variety)
+            return self._show_components(type_id)
         elif identifier is not None and version is None:
-            return self._show_component_versions(variety, identifier)
+            return self._show_component_versions(type_id, identifier)
         elif identifier is not None and version is not None:
             if version == -1:
-                return self._get_object_info(variety, identifier)
+                return self._get_object_info(type_id, identifier)
             else:
-                return self._get_object_info(variety, identifier, version)
+                return self._get_object_info(type_id, identifier, version)
         else:
             raise ValueError(
-                f'Incorrect combination of {variety}, {identifier}, {version}'
+                f'Incorrect combination of {type_id}, {identifier}, {version}'
             )
 
     def predict(
@@ -207,7 +207,7 @@ class BaseDatabase:
 
     def remove(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: Optional[int] = None,
         force=False,
@@ -215,24 +215,24 @@ class BaseDatabase:
         """
         Remove component (version: optional)
 
-        :param variety: variety of component to remove ["type", "model", "watcher",
+        :param type_id: type_id of component to remove ["type", "model", "watcher",
                         "training_configuration", "learning_task", "vector_index"]
         :param identifier: identifier of component (see `core.base.Component`)
         :param version: [optional] numerical version to remove
         :param force: force skip confirmation (use with caution)
         """
         if version is not None:
-            return self._remove_component_version(variety, identifier, version=version)
-        versions = self.metadata.show_component_versions(variety, identifier)
+            return self._remove_component_version(type_id, identifier, version=version)
+        versions = self.metadata.show_component_versions(type_id, identifier)
         versions_in_use = []
         for v in versions:
-            if self.metadata.component_version_has_parents(variety, identifier, v):
+            if self.metadata.component_version_has_parents(type_id, identifier, v):
                 versions_in_use.append(v)
 
         if versions_in_use:
             component_versions_in_use = []
             for v in versions_in_use:
-                unique_id = Component.make_unique_id(variety, identifier, v)
+                unique_id = Component.make_unique_id(type_id, identifier, v)
                 component_versions_in_use.append(
                     f"{unique_id} -> "
                     f"{self.metadata.get_component_version_parents(unique_id)}",
@@ -250,20 +250,20 @@ class BaseDatabase:
                 )
 
         if force or click.confirm(
-            f'You are about to delete {variety}/{identifier}, are you sure?',
+            f'You are about to delete {type_id}/{identifier}, are you sure?',
             default=False,
         ):
             for v in sorted(list(set(versions) - set(versions_in_use))):
-                self._remove_component_version(variety, identifier, v, force=True)
+                self._remove_component_version(type_id, identifier, v, force=True)
 
             for v in sorted(versions_in_use):
-                self.metadata.hide_component_version(variety, identifier, v)
+                self.metadata.hide_component_version(type_id, identifier, v)
         else:
             print('aborting.')
 
     def load(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: Optional[int] = None,
         repopulate: bool = True,
@@ -272,7 +272,7 @@ class BaseDatabase:
         """
         Load component using uniquely identifying information.
 
-        :param variety: variety of component to remove ["type", "model", "watcher",
+        :param type_id: type_id of component to remove ["type", "model", "watcher",
                         "training_configuration", "learning_task", "vector_index"]
         :param identifier: identifier of component (see `core.base.Component`)
         :param version: [optional] numerical version
@@ -282,11 +282,11 @@ class BaseDatabase:
                              components
         """
         info = self.metadata.get_component(
-            variety, identifier, version=version, allow_hidden=allow_hidden
+            type_id, identifier, version=version, allow_hidden=allow_hidden
         )
         if info is None:
             raise Exception(
-                f'No such object of type "{variety}", '
+                f'No such object of type "{type_id}", '
                 f'"{identifier}" has been registered.'
             )
         if 'serializer' not in info:
@@ -298,7 +298,7 @@ class BaseDatabase:
         )
         if repopulate:
             m.repopulate(self)
-        if cm := self.variety_to_cache_mapping.get(variety):
+        if cm := self.type_id_to_cache_mapping.get(type_id):
             getattr(self, cm)[m.identifier] = m
         return m
 
@@ -400,7 +400,7 @@ class BaseDatabase:
         parent: Optional[str] = None,
     ):
         existing_versions = self._show_component_versions(
-            object.variety, object.identifier
+            object.type_id, object.identifier
         )
         if isinstance(object.version, int) and object.version in existing_versions:
             logging.warn(f'{object.unique_id} already exists - doing nothing')
@@ -409,7 +409,7 @@ class BaseDatabase:
         object.version = version
 
         for c in object.child_components:
-            logging.info(f'Checking upstream-component {c.variety}/{c.identifier}')
+            logging.info(f'Checking upstream-component {c.type_id}/{c.identifier}')
             self._add(
                 c,
                 serializer=serializer,
@@ -419,7 +419,7 @@ class BaseDatabase:
 
         for p in object.child_references:
             if p.version is None:
-                p.version = self.metadata.get_latest_version(p.variety, p.identifier)
+                p.version = self.metadata.get_latest_version(p.type_id, p.identifier)
 
         print('Stripping sub-components to references')
         strip(object)
@@ -434,7 +434,7 @@ class BaseDatabase:
             {
                 **object.asdict(),
                 'object': file_id,
-                'variety': object.variety,
+                'type_id': object.type_id,
                 'version': version,
                 'sha1': sha1,
             }
@@ -478,15 +478,15 @@ class BaseDatabase:
 
     def _remove_component_version(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: int,
         force: bool = False,
     ):
-        unique_id = Component.make_unique_id(variety, identifier, version)
-        if self.metadata.component_version_has_parents(variety, identifier, version):
+        unique_id = Component.make_unique_id(type_id, identifier, version)
+        if self.metadata.component_version_has_parents(type_id, identifier, version):
             parents = self.metadata.get_component_version_parents(
-                variety, identifier, version
+                type_id, identifier, version
             )
             raise Exception(f'{unique_id} is involved in other components: {parents}')
 
@@ -494,16 +494,16 @@ class BaseDatabase:
             f'You are about to delete {unique_id}, are you sure?',
             default=False,
         ):
-            info = self.metadata.get_component(variety, identifier, version=version)
-            if variety in self.variety_to_cache_mapping:
+            info = self.metadata.get_component(type_id, identifier, version=version)
+            if type_id in self.type_id_to_cache_mapping:
                 try:
-                    del getattr(self, self.variety_to_cache_mapping[variety])[
+                    del getattr(self, self.type_id_to_cache_mapping[type_id])[
                         identifier
                     ]
                 except KeyError:
                     pass
             self.artifact_store.delete_artifact(info['object'])
-            self.metadata.delete_component_version(variety, identifier, version=version)
+            self.metadata.delete_component_version(type_id, identifier, version=version)
 
     @work
     def _download_content(
@@ -627,8 +627,8 @@ class BaseDatabase:
     def _get_raw_cursor(self, select: Select):
         raise NotImplementedError
 
-    def _get_object_info(self, identifier, variety, version=None):
-        return self.metadata.get_component(variety, identifier, version=version)
+    def _get_object_info(self, identifier, type_id, version=None):
+        return self.metadata.get_component(type_id, identifier, version=version)
 
     def get_query_for_validation_set(self, validation_set):
         raise NotImplementedError
@@ -668,17 +668,17 @@ class BaseDatabase:
         """
         return self.metadata.show_jobs()
 
-    def _show_components(self, variety):
-        return self.metadata.show_components(variety)
+    def _show_components(self, type_id):
+        return self.metadata.show_components(type_id)
 
-    def _show_component_versions(self, variety: str, identifier: str):
-        return sorted(self.metadata.show_component_versions(variety, identifier))
+    def _show_component_versions(self, type_id: str, identifier: str):
+        return sorted(self.metadata.show_component_versions(type_id, identifier))
 
     def _show_validation_sets(self):
         """
         List validation sets.
         """
-        return self.metadata.show_components(variety='validation_set')
+        return self.metadata.show_components(type_id='validation_set')
 
     @work
     def _apply_watcher(  # noqa: F811

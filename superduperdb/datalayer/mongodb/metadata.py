@@ -54,13 +54,13 @@ class MongoMetaDataStore(MetaDataStore):
         return self.meta_collection.find_one({'key': key})['value']
 
     def get_latest_version(
-        self, variety: str, identifier: str, allow_hidden: bool = False
+        self, type_id: str, identifier: str, allow_hidden: bool = False
     ):
         try:
             if allow_hidden:
                 return sorted(
                     self.object_collection.distinct(
-                        'version', {'identifier': identifier, 'variety': variety}
+                        'version', {'identifier': identifier, 'type_id': type_id}
                     )
                 )[-1]
             else:
@@ -71,12 +71,12 @@ class MongoMetaDataStore(MetaDataStore):
                             '$or': [
                                 {
                                     'identifier': identifier,
-                                    'variety': variety,
+                                    'type_id': type_id,
                                     'hidden': False,
                                 },
                                 {
                                     'identifier': identifier,
-                                    'variety': variety,
+                                    'type_id': type_id,
                                     'hidden': {'$exists': 0},
                                 },
                             ]
@@ -84,7 +84,7 @@ class MongoMetaDataStore(MetaDataStore):
                     )
                 )[-1]
         except IndexError:
-            raise FileNotFoundError(f'Can\'t find {variety}: {identifier} in metadata')
+            raise FileNotFoundError(f'Can\'t find {type_id}: {identifier} in metadata')
 
     def update_job(self, identifier: str, key: str, value: Any):
         return self.job_collection.update_one(
@@ -94,20 +94,20 @@ class MongoMetaDataStore(MetaDataStore):
     def watch_job(self, job_id: str):
         pass
 
-    def show_components(self, variety: str, **kwargs):
+    def show_components(self, type_id: str, **kwargs):
         return self.object_collection.distinct(
-            'identifier', {'variety': variety, **kwargs}
+            'identifier', {'type_id': type_id, **kwargs}
         )
 
-    def show_component_versions(self, variety: str, identifier: str):
+    def show_component_versions(self, type_id: str, identifier: str):
         return self.object_collection.distinct(
-            'version', {'variety': variety, 'identifier': identifier}
+            'version', {'type_id': type_id, 'identifier': identifier}
         )
 
     def list_components_in_scope(self, scope: str):
         out = []
         for r in self.object_collection.find({'parent': scope}):
-            out.append((r['variety'], r['identifier']))
+            out.append((r['type_id'], r['identifier']))
         return out
 
     def show_jobs(self, status=None):
@@ -119,58 +119,58 @@ class MongoMetaDataStore(MetaDataStore):
         )
 
     def _component_used(
-        self, variety: str, identifier: str, version: Optional[int] = None
+        self, type_id: str, identifier: str, version: Optional[int] = None
     ):
         if version is None:
             return bool(
                 self.object_collection.count_documents(
-                    {'members': {'$regex': f'^{identifier}/{variety}'}}
+                    {'members': {'$regex': f'^{identifier}/{type_id}'}}
                 )
             )
         else:
             return bool(
                 self.object_collection.count_documents(
-                    {'members': Component.make_unique_id(variety, identifier, version)}
+                    {'members': Component.make_unique_id(type_id, identifier, version)}
                 )
             )
 
-    def component_has_parents(self, variety: str, identifier: str):
+    def component_has_parents(self, type_id: str, identifier: str):
         return (
             self.parent_child_mappings.count_documents(
-                {'child': {'$regex': f'^{variety}/{identifier}/'}}
+                {'child': {'$regex': f'^{type_id}/{identifier}/'}}
             )
             > 0
         )
 
     def component_version_has_parents(
-        self, variety: str, identifier: str, version: int
+        self, type_id: str, identifier: str, version: int
     ):
         return (
             self.parent_child_mappings.count_documents(
-                {'child': Component.make_unique_id(variety, identifier, version)}
+                {'child': Component.make_unique_id(type_id, identifier, version)}
             )
             > 0
         )
 
-    def delete_component_version(self, variety: str, identifier: str, version: int):
-        if self._component_used(variety, identifier, version=version):
+    def delete_component_version(self, type_id: str, identifier: str, version: int):
+        if self._component_used(type_id, identifier, version=version):
             raise Exception('Component version already in use in other components!')
 
         self.parent_child_mappings.delete_many(
-            {'parent': Component.make_unique_id(variety, identifier, version)}
+            {'parent': Component.make_unique_id(type_id, identifier, version)}
         )
 
         return self.object_collection.delete_many(
             {
                 'identifier': identifier,
-                'variety': variety,
+                'type_id': type_id,
                 'version': version,
             }
         )
 
     def _get_component(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: int,
         allow_hidden: bool = False,
@@ -181,13 +181,13 @@ class MongoMetaDataStore(MetaDataStore):
                     '$or': [
                         {
                             'identifier': identifier,
-                            'variety': variety,
+                            'type_id': type_id,
                             'version': version,
                             'hidden': False,
                         },
                         {
                             'identifier': identifier,
-                            'variety': variety,
+                            'type_id': type_id,
                             'version': version,
                             'hidden': {'$exists': 0},
                         },
@@ -198,7 +198,7 @@ class MongoMetaDataStore(MetaDataStore):
             return self.object_collection.find_one(
                 {
                     'identifier': identifier,
-                    'variety': variety,
+                    'type_id': type_id,
                     'version': version,
                 },
             )
@@ -211,13 +211,13 @@ class MongoMetaDataStore(MetaDataStore):
     def _update_object(
         self,
         identifier: str,
-        variety: str,
+        type_id: str,
         key: str,
         value: Any,
         version: int,
     ):
         return self.object_collection.update_one(
-            {'identifier': identifier, 'variety': variety}, {'$set': {key: value}}
+            {'identifier': identifier, 'type_id': type_id}, {'$set': {key: value}}
         )
 
     def write_output_to_job(self, identifier, msg, stream):
@@ -226,8 +226,8 @@ class MongoMetaDataStore(MetaDataStore):
             {'identifier': identifier}, {'$push': {stream: msg}}
         )
 
-    def hide_component_version(self, variety: str, identifier: str, version: int):
+    def hide_component_version(self, type_id: str, identifier: str, version: int):
         self.object_collection.update_one(
-            {'variety': variety, 'identifier': identifier, 'version': version},
+            {'type_id': type_id, 'identifier': identifier, 'version': version},
             {'$set': {'hidden': True}},
         )

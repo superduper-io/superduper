@@ -39,7 +39,7 @@ class VectorIndex(Component):
     :param measure: Measure which is used to compare vectors in index
     """
 
-    variety = 'vector_index'
+    type_id = 'vector_index'
 
     def __init__(
         self,

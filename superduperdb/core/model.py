@@ -13,7 +13,7 @@ class Model(Component):
     :param type: Type instance (optional)
     """
 
-    variety = 'model'
+    type_id = 'model'
 
     def __init__(
         self,

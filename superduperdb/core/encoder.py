@@ -6,19 +6,19 @@ from .data_var import DataVar
 from superduperdb.core.base import Component
 
 
-class Type(Component):
+class Encoder(Component):
     """
     Storeable ``Component`` allowing byte encoding of primary data,
     i.e. data inserted using ``datalayer.base.BaseDatabase._insert``
 
     :param identifier: unique identifier
-    :param encoder: callable converting an ``DataVar`` of this ``Type`` to
+    :param encoder: callable converting an ``DataVar`` of this ``Encoder`` to
                     be converted to ``bytes``
     :param decoder: callable converting a ``bytes`` string to a ``DataVar`` of
-                    this ``Type``
+                    this ``Encoder``
     """
 
-    type_id = 'type'
+    type_id = 'type'  # This cannot yet be changed
 
     def __init__(
         self,
@@ -34,9 +34,9 @@ class Type(Component):
 
     def __repr__(self):
         if self.shape is not None:
-            return f'Type[{self.identifier}/{self.version}:{tuple(self.shape)}]'
+            return f'Encoder[{self.identifier}/{self.version}:{tuple(self.shape)}]'
         else:
-            return f'Type[{self.identifier}/{self.version}]'
+            return f'Encoder[{self.identifier}/{self.version}]'
 
     def decode(self, bytes):
         if self.decoder is None:

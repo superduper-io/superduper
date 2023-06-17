@@ -2,7 +2,7 @@ import numpy
 import torch
 import typing as t
 
-from superduperdb.core.type import Type
+from superduperdb.core.encoder import Encoder
 from superduperdb.types.utils import str_shape
 
 
@@ -24,8 +24,8 @@ class DecodeTensor:
         return torch.from_numpy(array)
 
 
-def tensor(dtype, shape: t.Tuple):
-    return Type(
+def tensor(dtype, shape: t.Tuple) -> Encoder:
+    return Encoder(
         identifier=f'{str(dtype)}[{str_shape(shape)}]',
         encoder=EncodeTensor(dtype),
         decoder=DecodeTensor(dtype),

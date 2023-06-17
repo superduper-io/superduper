@@ -1,7 +1,7 @@
 import numpy
 import typing as t
 
-from superduperdb.core.type import Type
+from superduperdb.core.encoder import Encoder
 from superduperdb.types.utils import str_shape
 
 
@@ -22,8 +22,8 @@ class DecodeArray:
         return numpy.frombuffer(bytes, dtype=self.dtype)
 
 
-def array(dtype: str, shape: t.Tuple):
-    return Type(
+def array(dtype: str, shape: t.Tuple) -> Encoder:
+    return Encoder(
         identifier=f'numpy.{dtype}[{str_shape(shape)}]',
         encoder=EncodeArray(dtype),
         decoder=DecodeArray(dtype),

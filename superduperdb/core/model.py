@@ -1,7 +1,7 @@
 from typing import Any, Optional, Union
 
 from superduperdb.core.base import Component, Placeholder
-from superduperdb.core.type import Type
+from superduperdb.core.encoder import Encoder
 
 
 class Model(Component):
@@ -10,7 +10,7 @@ class Model(Component):
 
     :param object: Model object, e.g. sklearn model, etc..
     :param identifier: Unique identifying ID
-    :param type: Type instance (optional)
+    :param type: Encoder instance (optional)
     """
 
     type_id = 'model'
@@ -19,7 +19,7 @@ class Model(Component):
         self,
         object: Any,
         identifier: str,
-        type: Optional[Union[Type, str]] = None,
+        type: Optional[Union[Encoder, str]] = None,
     ):
         super().__init__(identifier)
         self.object = object

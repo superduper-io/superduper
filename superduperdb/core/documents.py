@@ -1,6 +1,6 @@
 import dataclasses as dc
 import typing as t
-from superduperdb.core.type import DataVar
+from superduperdb.core.data_var import DataVar
 
 
 @dc.dataclass

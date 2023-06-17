@@ -9,9 +9,9 @@ from superduperdb.core.base import (
     is_placeholders_or_components,
     DBPlaceholder,
 )
+from superduperdb.core.data_var import DataVar
 from superduperdb.core.documents import Document
 from superduperdb.core.metric import Metric
-from superduperdb.core.type import DataVar
 from superduperdb.core.watcher import Watcher
 from superduperdb.core.model import Model
 from superduperdb.datalayer.base.query import Select

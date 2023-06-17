@@ -1,4 +1,4 @@
-from .jsonable import JSONable
+from .jsonable import Factory, JSONable
 from enum import Enum
 from pydantic import Field, root_validator
 from typing import Dict, List, Optional
@@ -18,10 +18,6 @@ If you change a class below, you must regenerate `default-config.json with
 
 _BAD_KEY = '...bad.key...'
 REST_API_VERSION = '0.1.0'
-
-
-def Factory(factory, **ka):
-    return Field(default_factory=factory, **ka)
 
 
 class HasPort(JSONable):

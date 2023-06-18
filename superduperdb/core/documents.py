@@ -1,21 +1,21 @@
 import dataclasses as dc
 import typing as t
-from superduperdb.core.type import DataVar
+from superduperdb.core.encoder import Encodable
 
 
 @dc.dataclass
 class Document:
     """
-    A wrapper around an instance of dict or a DataVar which may be used to dump
+    A wrapper around an instance of dict or a Encodable which may be used to dump
     that resource to a mix of jsonable content or `bytes`
     """
 
-    content: t.Union[t.Dict, DataVar]
+    content: t.Union[t.Dict, Encodable]
 
     def _encode(self, r: t.Any):
         if isinstance(r, dict):
             return {k: self._encode(v) for k, v in r.items()}
-        elif isinstance(r, DataVar):
+        elif isinstance(r, Encodable):
             return r.encode()
         return r
 
@@ -50,7 +50,7 @@ class Document:
 
     @classmethod
     def _unpack_datavars(cls, item: t.Any):
-        if isinstance(item, DataVar):
+        if isinstance(item, Encodable):
             return item.x
         elif isinstance(item, dict):
             return {k: cls._unpack_datavars(v) for k, v in item.items()}

@@ -21,34 +21,34 @@ def _pickle_encoder(x: t.Any) -> bytes:
 
 
 @dc.dataclass
-class TypeDesc:
+class EncoderDesc:
     identifier: str
     decoder: Decode = _pickle_decoder
     encoder: Encode = _pickle_encoder
     shape: t.Optional[t.Tuple] = None
 
-    variety = 'type'
+    variety = 'type'  # This cannot yet be changed
 
 
-class Type(Component, TypeDesc):
+class Encoder(Component, EncoderDesc):
     """
     Storeable ``Component`` allowing byte encoding of primary data,
     i.e. data inserted using ``datalayer.base.BaseDatabase._insert``
 
     :param identifier: unique identifier
-    :param encoder: callable converting an ``DataVar`` of this ``Type`` to
+    :param encoder: callable converting an ``Encodable`` of this ``Encoder`` to
                     be converted to ``bytes``
-    :param decoder: callable converting a ``bytes`` string to a ``DataVar`` of
-                    this ``Type``
+    :param decoder: callable converting a ``bytes`` string to a ``Encodable`` of
+                    this ``Encoder``
     """
 
-    @wraps(TypeDesc.__init__)
+    @wraps(EncoderDesc.__init__)
     def __init__(self, identifier, *a, **ka):
         Component.__init__(self, identifier)
-        TypeDesc.__init__(self, identifier, *a, **ka)
+        EncoderDesc.__init__(self, identifier, *a, **ka)
 
     def __call__(self, x):
-        return DataVar(x, self)
+        return Encodable(x, self)
 
     def decode(self, b: bytes) -> t.Any:
         return self(self.decoder(b))
@@ -58,17 +58,17 @@ class Type(Component, TypeDesc):
 
 
 @dc.dataclass
-class DataVar:
+class Encodable:
     """
     Data variable wrapping encode-able item. Encoding is controlled by the referred
-    to ``Type`` instance.
+    to ``Encoder`` instance.
 
     :param x: Wrapped content
     :param type: Identifier of type component used to encode
     """
 
     x: t.Any
-    type: Type
+    type: Encoder
 
     def encode(self) -> t.Dict[str, t.Any]:
         return self.type.encode(self.x)

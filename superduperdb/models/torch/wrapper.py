@@ -5,7 +5,7 @@ import torch
 from torch.utils import data
 
 from superduperdb.core.documents import Document
-from superduperdb.core.type import DataVar
+from superduperdb.core.encoder import Encodable
 from superduperdb.misc import progress
 from superduperdb.core.model import Model
 from superduperdb.models.torch.utils import device_of, to_device, eval
@@ -177,7 +177,7 @@ class BasicDataset(data.Dataset):
         document = self.documents[item]
         if isinstance(document, Document):
             document = document.unpack()
-        elif isinstance(document, DataVar):
+        elif isinstance(document, Encodable):
             document = document.x
         return self.transform(document)
 

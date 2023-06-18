@@ -2,8 +2,8 @@ from typing import Optional, Union
 
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 
+from superduperdb.core.encoder import Encoder
 from superduperdb.core.model import Model
-from superduperdb.core.type import Type
 
 
 class SentenceTransformer(Model):
@@ -11,7 +11,7 @@ class SentenceTransformer(Model):
         self,
         model_name_or_path: Optional[str] = None,
         identifier: Optional[str] = None,
-        type: Optional[Union[str, Type]] = None,
+        type: Optional[Union[Encoder, str]] = None,
     ):
         if identifier is None:
             identifier = model_name_or_path

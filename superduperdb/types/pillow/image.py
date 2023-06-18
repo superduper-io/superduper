@@ -3,7 +3,7 @@ import PIL.JpegImagePlugin
 import PIL.PngImagePlugin
 import io
 
-from superduperdb.core.type import Type
+from superduperdb.core.encoder import Encoder
 
 
 def encode_pil_image(x):
@@ -16,7 +16,7 @@ def decode_pil_image(bytes):
     return PIL.Image.open(io.BytesIO(bytes))
 
 
-pil_image = Type(
+pil_image = Encoder(
     'pil_image',
     encoder=encode_pil_image,
     decoder=decode_pil_image,

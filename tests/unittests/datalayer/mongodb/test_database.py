@@ -5,9 +5,9 @@ import torch
 
 from superduperdb.core.base import Placeholder
 from superduperdb.core.documents import Document
+from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.learning_task import LearningTask
-from superduperdb.core.type import Type
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Select, Insert, Update, Delete
 from superduperdb.models.torch.wrapper import SuperDuperModule
@@ -94,7 +94,7 @@ def test_compound_component(empty):
     assert isinstance(m.type, Placeholder)
 
     m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
-    assert isinstance(m.type, Type)
+    assert isinstance(m.type, Encoder)
 
     with pytest.raises(ComponentInUseError):
         empty.remove('type', 'torch.float32[32]')
@@ -104,7 +104,7 @@ def test_compound_component(empty):
 
     # checks that can reload hidden type if part of another component
     m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
-    assert isinstance(m.type, Type)
+    assert isinstance(m.type, Encoder)
 
     empty.remove('model', 'my-test-module', force=True)
 

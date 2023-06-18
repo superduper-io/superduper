@@ -10,8 +10,8 @@ from superduperdb.core.base import (
     DBPlaceholder,
 )
 from superduperdb.core.documents import Document
+from superduperdb.core.encoder import Encodable
 from superduperdb.core.metric import Metric
-from superduperdb.core.type import DataVar
 from superduperdb.core.watcher import Watcher
 from superduperdb.core.model import Model
 from superduperdb.datalayer.base.query import Select
@@ -90,7 +90,7 @@ class VectorIndex(Component):
                     self.indexing_watcher.key,
                     self.indexing_watcher.model.identifier,
                 )
-                if isinstance(h, DataVar):
+                if isinstance(h, Encodable):
                     h = h.x
                 vector_collection.add(
                     [VectorCollectionItem.create(id=str(id), vector=h)]

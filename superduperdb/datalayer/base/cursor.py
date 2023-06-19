@@ -6,12 +6,14 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 
 
 class SuperDuperCursor:
+    _results: t.List[float]
+
     def __init__(
         self,
         cursor,
         id_field: str,
         types: t.Mapping[str, Encoder],
-        features: t.Optional[t.Dict] = None,
+        features: t.Union[t.Mapping[str, str], None] = None,
         scores: t.Optional[t.List[float]] = None,
     ):
         self.cur = cursor
@@ -28,7 +30,8 @@ class SuperDuperCursor:
                 except StopIteration:
                     break
             self._results = sorted(
-                self._results, key=lambda r: -self.scores[str(r[self.id_field])]
+                self._results,
+                key=lambda r: -self.scores[str(r[self.id_field])],  # type: ignore
             )
             self.it = 0
 

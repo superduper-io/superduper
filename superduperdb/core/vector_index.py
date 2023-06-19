@@ -1,5 +1,5 @@
-from contextlib import contextmanager
 import typing as t
+from contextlib import contextmanager
 
 from superduperdb.core.base import (
     ComponentList,
@@ -12,14 +12,15 @@ from superduperdb.core.base import (
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encodable
 from superduperdb.core.metric import Metric
-from superduperdb.core.watcher import Watcher
 from superduperdb.core.model import Model
+from superduperdb.core.watcher import Watcher
+from superduperdb.datalayer.base.data_backend import BaseDataBackend
 from superduperdb.datalayer.base.query import Select
+from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.training.query_dataset import QueryDataset
 from superduperdb.training.validation import validate_vector_search
 from superduperdb.vector_search import VanillaHashSet
-from superduperdb.misc.logger import logging
 from superduperdb.vector_search.base import (
     BaseHashSet,
     VectorCollection,
@@ -27,9 +28,6 @@ from superduperdb.vector_search.base import (
     VectorIndexMeasureType,
     VectorCollectionItem,
 )
-
-if t.TYPE_CHECKING:
-    from superduperdb.datalayer.mongodb.database import Database
 
 
 class VectorIndex(Component):
@@ -93,7 +91,9 @@ class VectorIndex(Component):
         # TODO: this is quite an ineffective way to populate Milvus. we should implement
         # a bulk add in MilvusVectorIndex
         with self._get_vector_collection() as vector_collection:
-            for record in database.execute(self.indexing_watcher.select):
+            for record in database.execute(
+                self.indexing_watcher.select  # type: ignore
+            ):
                 h, id = database.db.get_output_from_document(
                     record,
                     self.indexing_watcher.key,  # type: ignore
@@ -115,7 +115,7 @@ class VectorIndex(Component):
         if isinstance(model_encoder, Placeholder):
             raise NotImplementedError
         try:
-            dimensions = int(model_encoder.shape[-1])
+            dimensions = int(model_encoder.shape[-1])  # type: ignore
         except Exception:
             dimensions = None
         if not dimensions:
@@ -155,7 +155,7 @@ class VectorIndex(Component):
 
         within_ids = ids or ()
 
-        if database.db.id_field in like.content:
+        if database.db.id_field in like.content:  # type: ignore
             with self._get_vector_collection() as vector_collection:
                 nearest = vector_collection.find_nearest_from_id(
                     str(like[database.db.id_field]), within_ids=within_ids, limit=n
@@ -213,7 +213,7 @@ class VectorIndex(Component):
 
     def validate(
         self,
-        database: 'Database',  # noqa: F821  why?
+        database: t.Type[BaseDataBackend],  # noqa: F821  why?
         validation_selects: t.List[Select],
         metrics: t.List[Metric],
     ):

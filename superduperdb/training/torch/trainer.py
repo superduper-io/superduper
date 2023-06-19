@@ -11,10 +11,9 @@ from torch.utils.data import DataLoader
 from superduperdb.core.training_configuration import TrainingConfiguration
 from superduperdb.datalayer.base.build import build_datalayer
 from superduperdb.datalayer.base.query import Select
-from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import ExtensibleDict
 from superduperdb.models.torch.utils import to_device, device_of
-from superduperdb.training.query_dataset import QueryDataset
+from superduperdb.misc.logger import logging
 
 
 def _default_optimizer():
@@ -116,10 +115,8 @@ class TorchTrainerConfiguration(TrainingConfiguration):
         return False
 
     @classmethod
-    def get_validation_dataset(cls, validation_set) -> QueryDataset:
-        database = build_datalayer()
-        select: Select = database.db.get_query_for_validation_set(validation_set)
-        return QueryDataset(select, fold='valid')
+    def get_validation_dataset(cls, validation_set):
+        return build_datalayer().load('dataset', validation_set).data
 
     def __call__(
         self,

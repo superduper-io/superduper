@@ -5,8 +5,9 @@ import torch
 import typing as t
 
 from superduperdb.core.base import Placeholder
-from superduperdb.core.documents import Document
 from superduperdb.core.suri import URIDocument
+from superduperdb.core.documents import Document
+from superduperdb.core.dataset import Dataset
 from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.learning_task import LearningTask
@@ -179,7 +180,7 @@ def test_validate_component(with_vector_index, si_validation, metric):
         'test_vector_search',
         variety='vector_index',
         metrics=['p@1'],
-        validation_sets=['my_valid'],
+        validation_datasets=['my_valid'],
     )
 
 
@@ -343,3 +344,15 @@ def test_replace(random_data):
     )
     r = next(random_data.execute(Select(collection='documents')))
     assert r['x'].x.tolist() == x.tolist()
+
+
+def test_dataset(random_data):
+    random_data.add(
+        Dataset(
+            'test_dataset', Select(collection='documents', filter={'_fold': 'valid'})
+        )
+    )
+    assert random_data.show('dataset') == ['test_dataset']
+
+    dataset = random_data.load('dataset', 'test_dataset')
+    assert len(dataset.data) == len(list(random_data.execute(dataset.select)))

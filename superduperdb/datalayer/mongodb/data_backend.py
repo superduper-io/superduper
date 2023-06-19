@@ -58,16 +58,6 @@ class MongoDataBackend(BaseDataBackend):
             **select.kwargs,
         )
 
-    def get_query_for_validation_set(self, validation_set):
-        return Select(
-            collection='_validation_sets', filter={'identifier': validation_set}
-        )
-
-    def insert_validation_data(self, tmp, identifier):
-        for i, r in enumerate(tmp):
-            tmp[i]['identifier'] = identifier
-        self.insert(Insert(collection='_validation_sets', documents=tmp))
-
     def set_content_bytes(self, r, key, bytes_):
         if not isinstance(r, MongoStyleDict):
             r = MongoStyleDict(r)
@@ -116,8 +106,6 @@ class MongoDataBackend(BaseDataBackend):
             update.filter, update.update.encode()  # type: ignore
         )
 
-        pass
-
     def delete(self, delete: Delete):
         if delete.one:
             return self.db[delete.collection].delete_one(delete.filter)
@@ -131,6 +119,3 @@ class MongoDataBackend(BaseDataBackend):
             {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}  # type: ignore
         )
         return self.db[select.collection].update_many(update.filter, update.update)
-
-    def show_validation_sets(self):
-        return self.db['_validation_sets'].distinct('identifier')

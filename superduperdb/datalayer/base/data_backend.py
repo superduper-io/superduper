@@ -56,14 +56,6 @@ class BaseDataBackend(ABC):
         pass
 
     @abstractmethod
-    def get_query_for_validation_set(self, validation_set):
-        pass
-
-    @abstractmethod
-    def insert_validation_data(self, tmp, identifier):
-        pass
-
-    @abstractmethod
     def set_content_bytes(self, r, key, bytes_):
         pass
 
@@ -81,8 +73,4 @@ class BaseDataBackend(ABC):
 
     @abstractmethod
     def unset_outputs(self, info):
-        pass
-
-    @abstractmethod
-    def show_validation_sets(self):
         pass

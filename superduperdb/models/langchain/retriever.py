@@ -133,8 +133,10 @@ class DBQAWithSourcesChain(Model):
             chain_type=self.chain_type,
         )
 
-    def predict_one(self, question, outputs=None, **kwargs):
+    def _predict_one(self, question, outputs=None, **kwargs):
         return self.chain(question)
 
-    def predict(self):
-        raise NotImplementedError
+    def predict(self, question):
+        if isinstance(question, list):
+            return [self._predict_one(q) for q in question]
+        return self._predict_one(question)

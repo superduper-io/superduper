@@ -12,7 +12,7 @@ from tests.fixtures.collection import random_arrays, arrays, empty
 def test_pipeline(random_arrays):
     X = numpy.random.randn(100, 32)
     y = (numpy.random.rand(100) > 0.5).astype(int)
-    est = Pipeline([('my-svc', SVC())], 'my-svc')
+    est = Pipeline('my-svc', [('my-svc', SVC())])
     est.fit(X, y)
     random_arrays.add(est)
     pl = random_arrays.models['my-svc']

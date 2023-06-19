@@ -177,7 +177,7 @@ class VectorIndex(Component):
                 subout = document['_outputs'].setdefault(subkey, {})
                 f_subkey = features[subkey]
                 if f_subkey not in subout:
-                    subout[f_subkey] = database.models[f_subkey].predict_one(
+                    subout[f_subkey] = database.models[f_subkey].predict(
                         document[subkey]
                     )
                 document[subkey] = subout[f_subkey]
@@ -194,7 +194,7 @@ class VectorIndex(Component):
         model_input = document[key] if key != '_base' else document
 
         model = database.models[model]
-        h = model.predict_one(model_input)
+        h = model.predict(model_input)
         with self._get_vector_collection() as vector_collection:
             nearest = vector_collection.find_nearest_from_array(
                 h, within_ids=within_ids, limit=n

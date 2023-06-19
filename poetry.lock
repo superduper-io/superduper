@@ -5698,6 +5698,17 @@ files = [
 types-awscrt = "*"
 
 [[package]]
+name = "types-tqdm"
+version = "4.65.0.1"
+description = "Typing stubs for tqdm"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-tqdm-4.65.0.1.tar.gz", hash = "sha256:972dd871b6b2b8ff32f1f0f6fdfdf5a4ba2b0b848453689391bec8bd858fb1c4"},
+    {file = "types_tqdm-4.65.0.1-py3-none-any.whl", hash = "sha256:4894fe2b1581374ce9bca3f23d53729e4409d69b352e3d5db5829fa19482962c"},
+]
+
+[[package]]
 name = "types-urllib3"
 version = "1.26.25.13"
 description = "Typing stubs for urllib3"
@@ -6184,4 +6195,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1, <4.0"
-content-hash = "6add11d61ad5c0893dd96aa6129b1195faeb168367f600600300f0453a80c53f"
+content-hash = "776d0243603eb185edacca45c7492ab7eb1e4f4fd85a7fbbee75f7cde35d8f5f"

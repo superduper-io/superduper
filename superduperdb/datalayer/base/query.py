@@ -1,7 +1,6 @@
+import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-
-from typing import List, Optional, Mapping
 
 from superduperdb.core.documents import Document
 
@@ -12,6 +11,14 @@ class Select(ABC):
     This allows the concrete implementation of each datalayer to differ substantially on
     stored properties necessary for querying the DB.
     """
+
+    download: bool
+    features: t.Optional[t.Mapping[str, str]]
+    like: t.Optional[Document]
+    n: int
+    outputs: t.Optional[t.Dict]
+    similar_first: bool
+    vector_index: t.Optional[str]
 
     @property
     @abstractmethod
@@ -29,7 +36,7 @@ class Select(ABC):
         pass
 
     @abstractmethod
-    def select_using_ids(self, ids, features: Optional[Mapping[str, str]] = None):
+    def select_using_ids(self, ids, features: t.Optional[t.Mapping[str, str]] = None):
         # Converts the query into a query which sub-selects from the ids specified.
         pass
 
@@ -44,7 +51,7 @@ class Select(ABC):
 class Insert(ABC):
     # must implement attribute/ property self.documents
 
-    documents: List[Document]
+    documents: t.List[Document]
 
     @property
     @abstractmethod

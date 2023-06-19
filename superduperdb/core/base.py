@@ -1,6 +1,9 @@
-from typing import Optional, List
+import typing as t
 
 from superduperdb.misc.logger import logging
+
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.database import BaseDatabase
 
 
 class BasePlaceholder:
@@ -20,7 +23,7 @@ class Placeholder(BasePlaceholder):
     Placeholder.
     """
 
-    def __init__(self, identifier: str, variety: str, version: Optional[int] = None):
+    def __init__(self, identifier: str, variety: str, version: t.Optional[int] = None):
         self.identifier = identifier
         self.variety = variety
         self.version = version
@@ -31,7 +34,7 @@ class PlaceholderList(BasePlaceholder, list):
     List of placeholders.
     """
 
-    def __init__(self, variety, *args, **kwargs):
+    def __init__(self, variety: str, *args, **kwargs):
         super().__init__(
             [Placeholder(arg, variety) for arg in args[0]], *args[1:], **kwargs
         )
@@ -40,7 +43,7 @@ class PlaceholderList(BasePlaceholder, list):
     def __repr__(self):
         return f'PlaceholderList[{self.variety}](' + super().__repr__() + ')'
 
-    def aslist(self):
+    def aslist(self) -> t.List[str]:
         return [x.identifier for x in self]
 
 
@@ -71,9 +74,11 @@ class Component(BaseComponent):
     :param identifier: Unique ID
     """
 
+    variety: str
+
     def __init__(self, identifier: str):
-        self.identifier = identifier
-        self.version = None
+        self.identifier: str = identifier
+        self.version: t.Optional[int] = None
 
     @property
     def unique_id(self):
@@ -82,7 +87,7 @@ class Component(BaseComponent):
         return f'{self.variety}/{self.identifier}/{self.version}'
 
     @property
-    def child_components(self) -> List['Component']:
+    def child_components(self) -> t.List['Component']:
         out = []
         for v in vars(self).values():
             if isinstance(v, Component):
@@ -92,7 +97,7 @@ class Component(BaseComponent):
         return out
 
     @property
-    def child_references(self) -> List[Placeholder]:
+    def child_references(self) -> t.List[Placeholder]:
         out = []
         for v in vars(self).values():
             if isinstance(v, Placeholder):
@@ -101,13 +106,11 @@ class Component(BaseComponent):
                 out.extend(list(v))
         return out
 
-    def repopulate(
-        self, database: 'superduperdb.datalayer.base.BaseDatabase'  # noqa: F821  why?
-    ):
+    def repopulate(self, database: 'BaseDatabase'):  # noqa: F821 why?
         """
         Set all attributes which were separately saved and serialized.
 
-        :param database: Database connector reponsible for saving/ loading components
+        :param database: Database connector responsible for saving/ loading components
         """
 
         def reload(object):
@@ -229,10 +232,11 @@ def strip(component: BaseComponent):
     return component
 
 
-def is_placeholders_or_components(items: list):
+def is_placeholders_or_components(items: t.Union[t.List[t.Any], t.Tuple]):
     """
     Test whether the list is just strings and also test whether it's just components
     """
+
     is_placeholders = all([isinstance(y, str) for y in items])
     is_components = all([isinstance(y, Component) for y in items])
     return is_placeholders, is_components

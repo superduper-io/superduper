@@ -43,9 +43,11 @@ class Document:
         return r
 
     def __getitem__(self, item: str):
+        assert isinstance(self.content, dict)
         return self.content[item]
 
     def __setitem__(self, key: str, value: t.Any):
+        assert isinstance(self.content, dict)
         self.content[key] = value
 
     @classmethod

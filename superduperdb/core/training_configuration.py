@@ -38,7 +38,8 @@ class TrainingConfiguration(Component):
     @classmethod
     def save_models(cls, database, models, model_names):
         for model, mn in zip(models, model_names):
-            database._replace_model(model, mn)
+            with model.saving():
+                database._replace_model(mn, model)
 
     @classmethod
     def _get_data(cls, select, keys, features, transform):

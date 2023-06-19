@@ -17,4 +17,6 @@ def test_pipeline(random_arrays):
     random_arrays.add(est)
     pl = random_arrays.models['my-svc']
     print(pl)
-    random_arrays.add(Watcher(select=Select('documents'), model='my-svc', key='x'))
+    random_arrays.add(
+        Watcher(select=Select(collection='documents'), model='my-svc', key='x')
+    )

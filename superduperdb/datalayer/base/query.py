@@ -1,8 +1,7 @@
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-
-from superduperdb.core.documents import Document
+from superduperdb.core.documents import Document, URIDocument
 
 
 class Select(ABC):
@@ -14,9 +13,9 @@ class Select(ABC):
 
     download: bool
     features: t.Optional[t.Mapping[str, str]]
-    like: t.Optional[Document]
+    like: t.Optional[URIDocument]
     n: int
-    outputs: t.Optional[t.Dict]
+    outputs: t.Optional[URIDocument]
     similar_first: bool
     vector_index: t.Optional[str]
 
@@ -36,7 +35,9 @@ class Select(ABC):
         pass
 
     @abstractmethod
-    def select_using_ids(self, ids, features: t.Optional[t.Mapping[str, str]] = None):
+    def select_using_ids(
+        self, ids: t.List[str], features: t.Optional[t.Dict[str, str]] = None
+    ) -> t.Any:
         # Converts the query into a query which sub-selects from the ids specified.
         pass
 

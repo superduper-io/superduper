@@ -1,8 +1,9 @@
-from dataclasses import asdict, dataclass
-from typing import Union, Optional
+from dataclasses import asdict
+import typing as t
 
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.model import Model
+from superduperdb.datalayer.base.query import Select
 
 
 class Watcher(Component):
@@ -17,20 +18,23 @@ class Watcher(Component):
     :param active: Toggle to ``False`` to deactivate change data triggering
     """
 
+    features: t.Dict
+    key: str
+    model: t.Union[Placeholder, Model]
+    select: Select
     variety = 'watcher'
 
     def __init__(
         self,
-        select: dataclass,
-        model: Union[Model, str],
+        select: Select,
+        model: t.Union[Model, str],
         key: str = '_base',
-        features: Optional[dict] = None,
+        features: t.Optional[t.Dict] = None,
         active: bool = True,
     ):
         self.model = model if isinstance(model, Model) else Placeholder(model, 'model')
         self.select = select
         self.key = key
-        self.select = select
         self.features = features or {}
         self.active = active
         identifier = f'{self.model.identifier}/{self.key}'

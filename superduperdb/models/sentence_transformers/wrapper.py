@@ -11,12 +11,12 @@ class SentenceTransformer(Model):
         self,
         model_name_or_path: Optional[str] = None,
         identifier: Optional[str] = None,
-        type: Optional[Union[Encoder, str]] = None,
+        encoder: Union[Encoder, None, str] = None,
     ):
         if identifier is None:
             identifier = model_name_or_path
         sentence_transformer = _SentenceTransformer(model_name_or_path)
-        super().__init__(sentence_transformer, identifier, type=type)
+        super().__init__(sentence_transformer, identifier, encoder=encoder)
 
     def predict_one(self, sentence, **kwargs):
         return self.object.encode(sentence)

@@ -58,7 +58,7 @@ class ArtifactStore(ABC):
     def create_artifact(
         self,
         object: t.Any,
-        serializer: Serializer = Serializer.default,
+        serializer: t.Union[Serializer, str] = Serializer.default,
         serializer_kwargs: t.Optional[t.Dict] = None,
     ):
         if isinstance(serializer, str):

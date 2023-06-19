@@ -1,3 +1,4 @@
+import typing as t
 import re
 
 import boto3
@@ -150,6 +151,8 @@ class Downloader(BaseDownloader):
     :param skip_existing: if ``True`` then don't bother getting already present data
     :param timeout: set seconds until request times out
     """
+
+    results: t.Dict[int, str]
 
     def __init__(
         self,

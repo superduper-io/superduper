@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field, asdict
 from functools import cached_property
-from typing import Optional, Mapping, Any
-
+import typing as t
 from bson import ObjectId
 
 from superduperdb.core.documents import Document
@@ -11,17 +10,17 @@ from superduperdb.datalayer.base import query
 @dataclass(frozen=True)
 class Select(query.Select):
     collection: str
-    filter: Optional[Mapping[str, Any]] = None
-    projection: Optional[Mapping[str, Any]] = None
+    filter: t.Optional[t.Mapping[str, t.Any]] = None
+    projection: t.Optional[t.Mapping[str, t.Any]] = None
     one: bool = False
-    kwargs: Mapping[str, Any] = field(default_factory=dict)
-    like: Optional[Document] = None
+    kwargs: t.Mapping[str, t.Any] = field(default_factory=dict)
+    like: t.Optional[Document] = None
     download: bool = False
-    vector_index: Optional[str] = None
+    vector_index: t.Optional[str] = None
     similar_first: bool = False
-    features: Optional[Mapping[str, str]] = None
+    features: t.Optional[t.Mapping[str, str]] = None
     n: int = 100
-    outputs: Optional[Document] = None
+    outputs: t.Optional[t.Dict] = None
 
     def add_fold(self, fold: str) -> 'Select':
         return Select(
@@ -47,7 +46,7 @@ class Select(query.Select):
         return Select(**variables)
 
     def select_using_ids(
-        self, ids, features: Optional[Mapping[str, str]] = None
+        self, ids, features: t.Optional[t.Mapping[str, str]] = None
     ) -> 'Select':
         variables = asdict(self)
         # NOTE: here we assume that the _id field is ObjectId, although it may not be
@@ -71,10 +70,10 @@ class Select(query.Select):
 @dataclass(frozen=True)
 class Update(query.Update):
     collection: str
-    filter: Mapping[str, Any]
-    update: Optional[Document] = None
+    filter: t.Mapping[str, t.Any]
+    update: t.Optional[Document] = None
     one: bool = False
-    replacement: Optional[Document] = None
+    replacement: t.Optional[Document] = None
 
     @cached_property
     def table(self):
@@ -100,7 +99,7 @@ class Update(query.Update):
 @dataclass(frozen=True)
 class Delete(query.Delete):
     collection: str
-    filter: Mapping[str, Any]
+    filter: t.Mapping[str, t.Any]
     one: bool = False
 
     @cached_property

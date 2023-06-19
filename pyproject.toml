@@ -77,6 +77,7 @@ nbsphinx = "^0.9.2"
 httpx = "^0.24.1"
 types-requests = "^2.31.0.1"
 boto3-stubs = "^1.26.154"
+types-tqdm = "^4.65.0.1"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,7 +1,7 @@
 # ruff: noqa: F401, F811
 from superduperdb.core.learning_task import LearningTask
 from superduperdb.datalayer.mongodb.query import Select
-from superduperdb.models.torch.wrapper import SuperDuperModule
+from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb.training.pytorch_lightning.trainer import LightningConfiguration
 
 from tests.fixtures.collection import (
@@ -16,10 +16,10 @@ import pytest
 import torch
 
 
-class LightningModule(SuperDuperModule, pl.LightningModule):
+class LightningModule(TorchModel, pl.LightningModule):
     def __init__(self):
         pl.LightningModule.__init__(self)
-        SuperDuperModule.__init__(self, torch.nn.Linear(32, 1), 'my-pl-module')
+        TorchModel.__init__(self, torch.nn.Linear(32, 1), 'my-pl-module')
 
     def preprocess(self, r):
         return r['x']

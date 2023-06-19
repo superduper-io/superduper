@@ -14,7 +14,7 @@ from superduperdb.core.learning_task import LearningTask
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Select, Insert, Update, Delete
 from superduperdb.misc.key_cache import KeyCache
-from superduperdb.models.torch.wrapper import SuperDuperModule
+from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_vector_search
 from superduperdb.types.torch.tensor import tensor
@@ -46,7 +46,7 @@ IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
 
 
 def test_create_component(empty, float_tensors_16, float_tensors_32):
-    empty.add(SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module'))
+    empty.add(TorchModel(torch.nn.Linear(16, 32), 'my-test-module'))
     assert 'my-test-module' in empty.show('model')
     model = empty.models['my-test-module']
     output = model.predict_one(torch.randn(16))
@@ -54,8 +54,8 @@ def test_create_component(empty, float_tensors_16, float_tensors_32):
 
 
 def test_update_component(empty):
-    empty.add(SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module'))
-    m = SuperDuperModule(torch.nn.Linear(16, 32), 'my-test-module')
+    empty.add(TorchModel(torch.nn.Linear(16, 32), 'my-test-module'))
+    m = TorchModel(torch.nn.Linear(16, 32), 'my-test-module')
     empty.add(m)
     assert empty.show('model', 'my-test-module') == [0, 1]
     empty.add(m)
@@ -69,8 +69,8 @@ def test_update_component(empty):
 def test_compound_component(empty):
     t = tensor(torch.float, shape=(32,))
 
-    m = SuperDuperModule(
-        layer=torch.nn.Linear(16, 32),
+    m = TorchModel(
+        object=torch.nn.Linear(16, 32),
         identifier='my-test-module',
         encoder=t,
     )
@@ -85,8 +85,8 @@ def test_compound_component(empty):
     assert empty.show('type', 'torch.float32[32]') == [0]
 
     empty.add(
-        SuperDuperModule(
-            layer=torch.nn.Linear(16, 32),
+        TorchModel(
+            object=torch.nn.Linear(16, 32),
             identifier='my-test-module',
             encoder=t,
         )

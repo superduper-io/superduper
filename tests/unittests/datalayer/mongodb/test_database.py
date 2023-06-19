@@ -49,7 +49,7 @@ def test_create_component(empty, float_tensors_16, float_tensors_32):
     empty.add(TorchModel(torch.nn.Linear(16, 32), 'my-test-module'))
     assert 'my-test-module' in empty.show('model')
     model = empty.models['my-test-module']
-    output = model.predict_one(torch.randn(16))
+    output = model.predict(torch.randn(16))
     assert output.shape[0] == 32
 
 

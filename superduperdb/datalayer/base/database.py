@@ -23,7 +23,6 @@ from superduperdb.datalayer.base.metadata import MetaDataStore
 from superduperdb.datalayer.base.query import Insert, Select, Delete, Update
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.fetchers.downloads import gather_uris
-from superduperdb.misc import progress
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import ArgumentDefaultDict
 from superduperdb.vector_search.base import VectorDatabase
@@ -94,25 +93,21 @@ class BaseDatabase:
         self,
         identifier: str,
         variety: str,
-        validation_sets: t.List[str],
-        metrics: t.List[str],
+        validation_datasets: List[str],
+        metrics: List[str],
     ):
         """
         Evaluate quality of component, using `Component.validate`, if implemented.
 
         :param identifier: identifier of semantic index
         :param variety: variety of component
-        :param validation_sets: validation-sets on which to validate
+        :param validation_datasets: validation-sets on which to validate
         :param metrics: metric functions to compute
         """
         component = self.load(variety, identifier)
-        metrics = [self.load('metric', m) for m in metrics]  # type: ignore
-        validation_selects = [
-            self.db.get_query_for_validation_set(vs) for vs in validation_sets
-        ]
-
-        results = component.validate(self, validation_selects, metrics)  # type: ignore
-        for vs, res in zip(validation_sets, results):
+        metrics = [self.load('metric', m) for m in metrics]  # type: ignore[misc]
+        for vs in validation_datasets:
+            res = component.validate(self, vs, metrics)  # type: ignore[attr-defined]
             for m in res:
                 self.metadata.update_object(
                     identifier,
@@ -467,6 +462,9 @@ class BaseDatabase:
         serializer_kwargs: Optional[Dict] = None,
         parent: Optional[str] = None,
     ):
+        if object.repopulate_on_init:
+            object.repopulate(self)
+
         existing_versions = self.show(object.variety, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
             logging.warn(f'{object.unique_id} already exists - doing nothing')
@@ -523,21 +521,8 @@ class BaseDatabase:
         assert networkx.is_directed_acyclic_graph(G)
         return G
 
-    def _add_validation_set(self, identifier, select: Select, chunk_size=1000):
-        if identifier in self.db.show_validation_sets():
-            raise Exception(f'validation set {identifier} already exists!')
-
-        data = self.select(select)
-        it = 0
-        tmp = []
-        for r in progress.progressbar(data):
-            tmp.append(r)
-            it += 1
-            if it % chunk_size == 0:
-                self.db.insert_validation_data(tmp, identifier)
-                tmp = []
-        if tmp:
-            self.db.insert_validation_data(tmp, identifier)
+    def _delete(self, delete: Delete):
+        return self.db.delete(delete)
 
     def _remove_component_version(
         self,

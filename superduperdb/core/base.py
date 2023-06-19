@@ -17,6 +17,8 @@ class DBPlaceholder(BasePlaceholder):
     Placeholder for a database connection
     """
 
+    is_database = True
+
 
 class Placeholder(BasePlaceholder):
     """
@@ -75,6 +77,7 @@ class Component(BaseComponent):
     """
 
     variety: str
+    repopulate_on_init = False
 
     def __init__(self, identifier: str):
         self.identifier: str = identifier
@@ -137,11 +140,19 @@ class Component(BaseComponent):
 
             return object
 
-        items = (
+        items = [
             (k, v) for k, v in vars(self).items() if isinstance(v, BasePlaceholder)
-        )
+        ]
+        has_a_db = False
+        for k, v in items:
+            reloaded = reload(v)
+            self.__dict__[k] = reloaded
+            if getattr(v, 'is_database', False):
+                has_a_db = True
 
-        self.__dict__.update((k, reload(v)) for k, v in items)
+        if has_a_db and hasattr(self, '_post_attach_database'):
+            self._post_attach_database()
+
         return self
 
     def asdict(self):
@@ -193,7 +204,7 @@ class ComponentList(BaseComponent, list):
         for i, item in enumerate(self):
             if isinstance(item, str):
                 self[i] = database.load(self.variety, item)
-            self[i] = self[i].repopulate(database)
+            self[i], _ = self[i].repopulate(database)
 
     def aslist(self):
         return [c.identifier for c in self]

@@ -18,11 +18,11 @@ class SuperDuperModule(torch.nn.Module, Model):
         identifier,
         preprocess=None,
         postprocess=None,
-        type=None,
+        encoder=None,
         collate_fn: Optional[Callable] = None,
     ):
         torch.nn.Module.__init__(self)
-        Model.__init__(self, layer, identifier, type=type)
+        Model.__init__(self, layer, identifier, encoder=encoder)
         if hasattr(self.object, 'preprocess') and preprocess is None:
             preprocess = self.object.preprocess
         if hasattr(self.object, 'postprocess') and postprocess is None:

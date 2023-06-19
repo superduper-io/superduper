@@ -1,4 +1,4 @@
-from typing import List, Mapping, Optional, Union
+import typing as t
 
 from superduperdb.core.base import (
     Component,
@@ -32,17 +32,19 @@ class LearningTask(Component):
     """
 
     variety = 'learning_task'
+    models: t.Union[PlaceholderList, ComponentList]
+    metrics: t.Union[PlaceholderList, ComponentList]
 
     def __init__(
         self,
         identifier: str,
-        models: Union[List[Model], List[str]],
-        keys: List[str],
+        models: t.Union[t.List[Model], t.List[str]],
+        keys: t.List[str],
         select: Select,
-        training_configuration: Union[TrainingConfiguration, str],
-        validation_sets: List[str] = (),
-        metrics: Union[List[Metric], List[str]] = (),
-        features: Optional[Mapping[str, str]] = None,
+        training_configuration: t.Union[TrainingConfiguration, str],
+        validation_sets: t.Union[t.List[str], t.Tuple] = (),
+        metrics: t.Union[t.List[Metric], t.List[str], t.Tuple] = (),
+        features: t.Optional[t.Mapping[str, str]] = None,
     ):
         super().__init__(identifier)
 

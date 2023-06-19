@@ -29,6 +29,12 @@ class JSONable(BaseModel):
     SUBCLASSES: t.ClassVar[t.Set[t.Type]] = set()
     TYPE_ID_TO_CLASS: t.ClassVar[t.Dict[str, t.Type]] = {}
 
+    @functools.wraps(BaseModel.dict)
+    def dict(self, *a, **ka):
+        d = super().dict(*a, **ka)
+        properties = self.schema()['properties']
+        return {k: v for k, v in d.items() if k in properties}
+
     def deepcopy(self) -> 'JSONable':
         return self.copy(deep=True)
 

@@ -23,7 +23,7 @@ def test_classifier(random_arrays):
             models=['svc', 'identity'],
             keys=['x', 'y'],
             training_configuration='my-sk-cf',
-            select=Select('documents'),
+            select=Select(collection='documents'),
             metrics=[],
         )
     )

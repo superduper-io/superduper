@@ -781,14 +781,23 @@ class BaseDatabase:
     def _select_nearest(
         self, select: Select, ids: Optional[List[str]] = None
     ) -> Tuple[List[str], List[float]]:
-        if select.download and select.like is not None:
-            like = self._get_content_for_filter(select.like)  # pragma: no cover
+        if select.like is not None:
+            like = select.like()
         else:
-            like = select.like
+            raise ValueError('_select_nearest requires non-empty select.like')
+
+        if select.download:
+            like = self._get_content_for_filter(like)  # pragma: no cover
 
         vector_index: VectorIndex = self.vector_indices[select.vector_index]
+        if select.outputs is None:
+            outputs = {}
+        else:
+            outputs = select.outputs().encode()
+            if not isinstance(outputs, dict):
+                raise TypeError(f'Expected dict, got {type(outputs)}')
         return vector_index.get_nearest(
-            like, database=self, ids=ids, n=select.n, outputs=select.outputs
+            like, database=self, ids=ids, n=select.n, outputs=outputs
         )
 
     @work

@@ -1,7 +1,8 @@
-import warnings
-from collections import defaultdict
 import math
 import random
+import typing as t
+import warnings
+from collections import defaultdict
 from typing import Union, Optional, Dict, List, Tuple
 
 import click
@@ -20,14 +21,13 @@ from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
 from superduperdb.datalayer.base.metadata import MetaDataStore
 from superduperdb.datalayer.base.query import Insert, Select, Delete, Update
-from superduperdb.fetchers.downloads import gather_uris
-from superduperdb.misc.special_dicts import ArgumentDefaultDict
 from superduperdb.fetchers.downloads import Downloader
+from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc import progress
 from superduperdb.misc.logger import logging
+from superduperdb.misc.special_dicts import ArgumentDefaultDict
 from superduperdb.vector_search.base import VectorDatabase
 from superduperdb.core import components
-
 
 # TODO:
 # This global variable is a temporary solution to make VectorDatabase available
@@ -44,6 +44,11 @@ class BaseDatabase:
     type.
     """
 
+    _database_type: str
+    name: str
+    select_cls: t.Type[Select]
+    models: t.Dict[str, Model]
+
     variety_to_cache_mapping = {
         'model': 'models',
         'metric': 'metrics',
@@ -57,11 +62,15 @@ class BaseDatabase:
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
     ):
-        self.metrics = ArgumentDefaultDict(lambda x: self.load('metric', x))
-        self.models = ArgumentDefaultDict(lambda x: self.load('model', x))
-        self.types = ArgumentDefaultDict(lambda x: self.load('type', x))
+        self.metrics = ArgumentDefaultDict(
+            lambda x: self.load('metric', x)  # type: ignore
+        )
+        self.models = ArgumentDefaultDict(
+            lambda x: self.load('model', x)  # type: ignore
+        )
+        self.types = ArgumentDefaultDict(lambda x: self.load('type', x))  # type: ignore
         self.vector_indices = ArgumentDefaultDict(
-            lambda x: self.load('vector_index', x)
+            lambda x: self.load('vector_index', x)  # type: ignore
         )
 
         self.remote = CFG.remote
@@ -74,8 +83,8 @@ class BaseDatabase:
         self,
         identifier: str,
         variety: str,
-        validation_sets: List[str],
-        metrics: List[str],
+        validation_sets: t.List[str],
+        metrics: t.List[str],
     ):
         """
         Evaluate quality of component, using `Component.validate`, if implemented.
@@ -86,11 +95,12 @@ class BaseDatabase:
         :param metrics: metric functions to compute
         """
         component = self.load(variety, identifier)
-        metrics = [self.load('metric', m) for m in metrics]
+        metrics = [self.load('metric', m) for m in metrics]  # type: ignore
         validation_selects = [
             self.db.get_query_for_validation_set(vs) for vs in validation_sets
         ]
-        results = component.validate(self, validation_selects, metrics)
+
+        results = component.validate(self, validation_selects, metrics)  # type: ignore
         for vs, res in zip(validation_sets, results):
             for m in res:
                 self.metadata.update_object(
@@ -149,7 +159,7 @@ class BaseDatabase:
         if isinstance(input, Document):
             out = model.predict_one(input.unpack(), **opts.get('predict_kwargs', {}))
             if model.encoder is not None:
-                out = model.encoder(out)
+                out = model.encoder(out)  # type: ignore
             return Document(out)
 
         out = model.predict(
@@ -158,7 +168,7 @@ class BaseDatabase:
         to_return = []
         for x in out:
             if model.encoder is not None:
-                x = model.encoder(x)
+                x = model.encoder(x)  # type: ignore
             to_return.append(Document(x))
         return to_return
 
@@ -277,7 +287,7 @@ class BaseDatabase:
         version: Optional[int] = None,
         repopulate: bool = True,
         allow_hidden: bool = False,
-    ) -> Component:
+    ) -> t.Type[Component]:
         """
         Load component using uniquely identifying information.
 
@@ -314,7 +324,7 @@ class BaseDatabase:
     def _build_task_workflow(
         self, select: Select, ids=None, dependencies=(), verbose=True
     ):
-        job_ids = defaultdict(lambda: [])
+        job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
         if ids is None:
@@ -635,7 +645,7 @@ class BaseDatabase:
                 valid_probability = self.metadata.get_metadata(key='valid_probability')
             except TypeError:
                 valid_probability = 0.05  # TODO proper error handling
-            if '_fold' not in item.content:
+            if '_fold' not in item.content:  # type: ignore
                 item['_fold'] = 'valid' if r < valid_probability else 'train'
         output = self.db.insert(insert)
         if not refresh:  # pragma: no cover
@@ -650,7 +660,7 @@ class BaseDatabase:
     def _apply_watcher(  # noqa: F811
         self,
         identifier,
-        ids: List[str] = None,
+        ids: Optional[List[str]] = None,
         verbose=False,
         max_chunk_size=5000,
         model=None,
@@ -660,7 +670,7 @@ class BaseDatabase:
     ):
         if watcher_info is None:
             watcher_info = self.metadata.get_component('watcher', identifier)
-        select = self.db.select_cls(**watcher_info['select'])
+        select = self.db.select_cls(**watcher_info['select'])  # type: ignore
         if ids is None:
             ids = self.db.get_ids_from_select(select.select_only_id)
             ids = [str(id) for id in ids]
@@ -782,15 +792,16 @@ class BaseDatabase:
         )
 
     @work
-    def _fit(self, identifier):
+    def _fit(self, identifier) -> None:
         """
         Execute the learning task.
 
         :param identifier: Identifier of a learning task.
         """
 
-        learning_task: LearningTask = self.load('learning_task', identifier)
-
+        learning_task: LearningTask = self.load(
+            'learning_task', identifier
+        )  # type: ignore
         trainer = learning_task.training_configuration(
             identifier=identifier,
             keys=learning_task.keys,
@@ -800,7 +811,7 @@ class BaseDatabase:
             validation_sets=learning_task.validation_sets,
             metrics={m.identifier: m for m in learning_task.metrics},
             features=learning_task.features,
-        )
+        )  # type: ignore
 
         try:
             trainer()
@@ -808,7 +819,7 @@ class BaseDatabase:
             self.remove('learning_task', identifier, force=True)
             raise e
 
-    def _update(self, update: Update, refresh=True, verbose=True):
+    def _update(self, update: Update, refresh=True, verbose=True) -> t.Any:
         if refresh and self.metadata.show_components('model'):
             ids = self.db.get_ids_from_select(update.select_ids)
         result = self.db.update(update)

@@ -1,4 +1,5 @@
 import typing as t
+from contextlib import contextmanager
 
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.encoder import Encoder
@@ -45,6 +46,10 @@ class Model(Component):
             except AttributeError:
                 pass
                 self.predict = self._predict
+
+    @contextmanager
+    def saving(self):
+        yield
 
     @property
     def encoder(self) -> EncoderArg:

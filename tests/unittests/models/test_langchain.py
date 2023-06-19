@@ -19,7 +19,7 @@ if not SKIP_PAID:
 @pytest.mark.skipif(SKIP_PAID, reason='don\'t test paid API')
 def test_db_qa_with_sources_chain(nursery_rhymes):
     nursery_rhymes.add(array(numpy.float32))
-    pl = SentenceTransformer(model_name_or_path='all-MiniLM-L6-v2', type='array')
+    pl = SentenceTransformer(model_name_or_path='all-MiniLM-L6-v2', encoder='array')
     nursery_rhymes.add(pl)
     nursery_rhymes.add(
         Watcher(model='all-MiniLM-L6-v2', key='text', select=Select('documents'))

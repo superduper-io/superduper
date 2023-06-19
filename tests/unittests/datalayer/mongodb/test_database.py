@@ -68,7 +68,7 @@ def test_compound_component(empty):
     m = SuperDuperModule(
         layer=torch.nn.Linear(16, 32),
         identifier='my-test-module',
-        type=t,
+        encoder=t,
     )
 
     empty.add(m)
@@ -84,17 +84,17 @@ def test_compound_component(empty):
         SuperDuperModule(
             layer=torch.nn.Linear(16, 32),
             identifier='my-test-module',
-            type=t,
+            encoder=t,
         )
     )
     assert empty.show('model', 'my-test-module') == [0, 1]
     assert empty.show('type', 'torch.float32[32]') == [0]
 
     m = empty.load(variety='model', identifier='my-test-module', repopulate=False)
-    assert isinstance(m.type, Placeholder)
+    assert isinstance(m.encoder, Placeholder)
 
     m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
-    assert isinstance(m.type, Encoder)
+    assert isinstance(m.encoder, Encoder)
 
     with pytest.raises(ComponentInUseError):
         empty.remove('type', 'torch.float32[32]')
@@ -104,7 +104,7 @@ def test_compound_component(empty):
 
     # checks that can reload hidden type if part of another component
     m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
-    assert isinstance(m.type, Encoder)
+    assert isinstance(m.encoder, Encoder)
 
     empty.remove('model', 'my-test-module', force=True)
 

@@ -10,10 +10,10 @@ class Pipeline(BasePipeline, Model):
         memory=None,
         verbose=False,
         postprocessor=None,
-        type=None,
+        encoder=None,
     ):
         BasePipeline.__init__(self, steps=steps, memory=memory, verbose=verbose)
-        Model.__init__(self, None, identifier, type=type)
+        Model.__init__(self, None, identifier, encoder=encoder)
         self.postprocessor = postprocessor
 
     def predict_one(self, X, **predict_params):

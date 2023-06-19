@@ -102,12 +102,12 @@ class VectorIndex(Component):
             raise NotImplementedError
         if not isinstance(self.indexing_watcher.model, Model):
             raise NotImplementedError
-        model_type = self.indexing_watcher.model.type
-        if isinstance(model_type, Placeholder):
+        model_encoder = self.indexing_watcher.model.encoder
+        if isinstance(model_encoder, Placeholder):
             raise NotImplementedError
         try:
-            dimensions = model_type and model_type.shape and int(model_type.shape[-1])
-        except (IndexError, TypeError, ValueError):
+            dimensions = int(model_encoder.shape[-1])
+        except Exception:
             dimensions = None
         if not dimensions:
             raise ValueError(

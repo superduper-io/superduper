@@ -139,8 +139,8 @@ class BaseDatabase:
         opts = self.metadata.get_component('model', model_identifier)
         if isinstance(input, Document):
             out = model.predict_one(input.unpack(), **opts.get('predict_kwargs', {}))
-            if model.type is not None:
-                out = model.type(out)
+            if model.encoder is not None:
+                out = model.encoder(out)
             return Document(out)
 
         out = model.predict(
@@ -148,8 +148,8 @@ class BaseDatabase:
         )
         to_return = []
         for x in out:
-            if model.type is not None:
-                x = model.type(x)
+            if model.encoder is not None:
+                x = model.encoder(x)
             to_return.append(Document(x))
         return to_return
 

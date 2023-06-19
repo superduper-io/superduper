@@ -15,8 +15,7 @@ class Model(Component):
     :param encoder: Encoder instance (optional)
     """
 
-    variety = 'model'
-
+    variety: str = 'model'
     object: t.Any
     identifier: str
     type: EncoderArg

@@ -1,6 +1,6 @@
 <a href="https://www.superduperdb.com">
   <img
-    src="https://raw.githubusercontent.com/superduperdb/superduperdb-stealth/img/symbol_purple.png"
+    src="img/symbol_purple.png"
     width="150"
     align="right"
     />

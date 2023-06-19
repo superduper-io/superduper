@@ -2,9 +2,10 @@
 import PIL.PngImagePlugin
 import pytest
 import torch
+import typing as t
 
 from superduperdb.core.base import Placeholder
-from superduperdb.core.documents import Document
+from superduperdb.core.documents import Document, DocumentCache, URIDocument
 from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.learning_task import LearningTask
@@ -114,14 +115,23 @@ def test_select_vanilla(random_data):
     print(r)
 
 
+def make_uri_document(**ka):
+    # Create a new class each time so the caches don't interfere with each other
+    class TestURIDocument(URIDocument):
+        key_cache: t.ClassVar[DocumentCache] = DocumentCache()
+
+    return TestURIDocument.add(Document(ka))
+
+
 def test_select(with_vector_index):
     db = with_vector_index
     r = next(db.execute(Select(collection='documents')))
+
     s = next(
         db.execute(
             Select(
                 collection='documents',
-                like=Document({'x': r['x']}),
+                like=make_uri_document(x=r['x']),
                 vector_index='test_vector_search',
             ),
         )
@@ -140,12 +150,26 @@ def test_select_milvus(
         db.execute(
             Select(
                 collection='documents',
-                like=Document({'x': r['x']}),
+                like=make_uri_document(x=r['x']),
                 vector_index='test_vector_search',
             ),
         )
     )
     assert r['_id'] == s['_id']
+
+
+def test_select_jsonable(with_vector_index):
+    db = with_vector_index
+    r = next(db.execute(Select(collection='documents')))
+
+    s1 = Select(
+        collection='documents',
+        like=make_uri_document(x=r['x']),
+        vector_index='test_vector_search',
+    )
+
+    s2 = Select(**s1.dict())
+    assert s1 == s2
 
 
 def test_validate_component(with_vector_index, si_validation, metric):
@@ -159,7 +183,9 @@ def test_validate_component(with_vector_index, si_validation, metric):
 
 def test_insert(random_data, a_watcher, an_update):
     random_data.execute(Insert(collection='documents', documents=an_update))
-    r = next(random_data.execute(Select('documents', filter={'update': True})))
+    r = next(
+        random_data.execute(Select(collection='documents', filter={'update': True}))
+    )
     assert 'linear_a' in r['_outputs']['x']
     assert (
         len(list(random_data.execute(Select(collection='documents'))))
@@ -190,7 +216,7 @@ def test_insert_from_uris(empty, image_type):
         for _ in range(2)
     ]
     empty.execute(Insert(collection='documents', documents=to_insert))
-    r = next(empty.execute(Select('documents')))
+    r = next(empty.execute(Select(collection='documents')))
     assert isinstance(r['item'].x, PIL.PngImagePlugin.PngImageFile)
     assert isinstance(r['other']['item'].x, PIL.PngImagePlugin.PngImageFile)
 
@@ -205,7 +231,7 @@ def test_update(random_data, a_watcher):
             update=Document({'$set': {'x': t(to_update)}}),
         )
     )
-    cur = random_data.execute(Select('documents'))
+    cur = random_data.execute(Select(collection='documents'))
     r = next(cur)
     s = next(cur)
 
@@ -218,8 +244,10 @@ def test_update(random_data, a_watcher):
 
 
 def test_watcher(random_data, a_model, b_model):
-    random_data.add(Watcher(model='linear_a', select=Select('documents'), key='x'))
-    r = next(random_data.execute(Select('documents', one=True)))
+    random_data.add(
+        Watcher(model='linear_a', select=Select(collection='documents'), key='x')
+    )
+    r = next(random_data.execute(Select(collection='documents', one=True)))
     assert 'linear_a' in r['_outputs']['x']
 
     t = random_data.types['torch.float32[32]']
@@ -232,18 +260,20 @@ def test_watcher(random_data, a_model, b_model):
             ],
         )
     )
-    r = next(random_data.execute(Select('documents', filter={'_update': True})))
+    r = next(
+        random_data.execute(Select(collection='documents', filter={'_update': True}))
+    )
     assert 'linear_a' in r['_outputs']['x']
 
     random_data.add(
         Watcher(
             model='linear_b',
-            select=Select('documents'),
+            select=Select(collection='documents'),
             key='x',
             features={'x': 'linear_a'},
         )
     )
-    r = next(random_data.execute(Select('documents')))
+    r = next(random_data.execute(Select(collection='documents')))
     assert 'linear_b' in r['_outputs']['x']
 
 
@@ -271,7 +301,7 @@ def test_learning_task(si_validation, a_model, c_model, metric):
     learning_task = LearningTask(
         'my_index',
         models=['linear_a', 'linear_c'],
-        select=Select('documents'),
+        select=Select(collection='documents'),
         keys=['x', 'z'],
         metrics=['p@1'],
         training_configuration='ranking_task_parametrization',
@@ -287,14 +317,18 @@ def test_predict(a_model, float_tensors_32, float_tensors_16):
 
 
 def test_delete(random_data):
-    r = next(random_data.execute(Select('documents')))
+    r = next(random_data.execute(Select(collection='documents')))
     random_data.execute(Delete(collection='documents', filter={'_id': r['_id']}))
     with pytest.raises(StopIteration):
-        next(random_data.execute(Select('documents', filter={'_id': r['_id']})))
+        next(
+            random_data.execute(
+                Select(collection='documents', filter={'_id': r['_id']})
+            )
+        )
 
 
 def test_replace(random_data):
-    r = next(random_data.execute(Select('documents')))
+    r = next(random_data.execute(Select(collection='documents')))
     x = torch.randn(32)
     t = random_data.types['torch.float32[32]']
     r['x'] = t(x)
@@ -305,5 +339,5 @@ def test_replace(random_data):
             replacement=r,
         )
     )
-    r = next(random_data.execute(Select('documents')))
+    r = next(random_data.execute(Select(collection='documents')))
     assert r['x'].x.tolist() == x.tolist()

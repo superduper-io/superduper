@@ -145,7 +145,7 @@ class VectorIndex(Component):
         featurize: bool = True,
         ids: t.Optional[t.List[str]] = None,
         n: int = 100,
-    ):
+    ) -> t.Tuple[t.List[str], t.List[float]]:
         if database is None:
             database = self.database
             assert not isinstance(database, DBPlaceholder)

@@ -103,7 +103,9 @@ def an_update(float_tensors_32):
 @pytest.fixture
 def vector_index_factory(a_model):
     def _factory(db, identifier, **kwargs) -> VectorIndex:
-        db.add(Watcher(select=Select('documents'), key='x', model='linear_a'))
+        db.add(
+            Watcher(select=Select(collection='documents'), key='x', model='linear_a')
+        )
         vi = VectorIndex(
             identifier=identifier,
             indexing_watcher='linear_a/x',
@@ -125,7 +127,7 @@ def with_vector_index(random_data, vector_index_factory):
 def si_validation(random_data):
     random_data._add_validation_set(
         'my_valid',
-        select=Select('documents', filter={'_fold': 'valid'}),
+        select=Select(collection='documents', filter={'_fold': 'valid'}),
         chunk_size=100,
     )
 
@@ -227,7 +229,9 @@ def a_model_base(float_tensors_32, float_tensors_16):
 @pytest.fixture()
 def a_watcher(a_model):
     a_model.remote = False
-    a_model.add(Watcher(model='linear_a', select=Select('documents'), key='x'))
+    a_model.add(
+        Watcher(model='linear_a', select=Select(collection='documents'), key='x')
+    )
     yield a_model
     a_model.remove('watcher', 'linear_a/x', force=True)
 
@@ -235,7 +239,9 @@ def a_watcher(a_model):
 @pytest.fixture()
 def a_watcher_base(a_model_base):
     a_model_base.add(
-        Watcher(model='linear_a_base', select=Select('documents'), key='_base')
+        Watcher(
+            model='linear_a_base', select=Select(collection='documents'), key='_base'
+        )
     )
     yield a_model_base
     a_model_base.remove('watcher', 'linear_a_base/_base', force=True)

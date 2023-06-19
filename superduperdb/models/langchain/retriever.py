@@ -34,11 +34,11 @@ class LangchainRetriever(BaseRetriever):
 
     def get_relevant_documents(self, query: str) -> List[Document]:
         document_to_search = documents.Document({self.key: query})
-        ids = self.vector_index.get_nearest(
+        ids, scores = self.vector_index.get_nearest(
             document_to_search,
             n=self.n,
             featurize=False,
-        )[0]
+        )
         select = self.vector_index.select.select_using_ids(ids)
         out = list(
             self.vector_index.database._select(

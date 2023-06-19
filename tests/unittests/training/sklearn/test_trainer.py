@@ -11,7 +11,7 @@ from tests.fixtures.collection import random_arrays, arrays, empty
 
 
 def test_classifier(random_arrays):
-    model = Pipeline([('svc', SVC(verbose=True))], 'svc')
+    model = Pipeline('svc', [('svc', SVC(verbose=True))])
     identity = FunctionWrapper(lambda x: x, 'identity')
     cf = SklearnTrainingConfiguration('my-sk-cf')
     random_arrays.add(cf)

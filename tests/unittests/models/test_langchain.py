@@ -29,9 +29,7 @@ def test_db_qa_with_sources_chain(nursery_rhymes):
     nursery_rhymes.add(
         VectorIndex(
             'my-index',
-            models=['all-MiniLM-L6-v2'],
-            watcher='all-MiniLM-L6-v2/text',
-            keys=['text'],
+            indexing_watcher='all-MiniLM-L6-v2/text',
         )
     )
     llm = OpenAI(model_name="text-davinci-003")
@@ -43,5 +41,5 @@ def test_db_qa_with_sources_chain(nursery_rhymes):
         n=2,
     )
     m.repopulate(nursery_rhymes)
-    output = m.predict_one('Complete this: Do you know the ...')
+    output = m.predict('Complete this: Do you know the ...')
     assert 'muffin' in output['answer'].lower()

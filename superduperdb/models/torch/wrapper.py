@@ -1,5 +1,10 @@
 import io
+<<<<<<< HEAD
 import typing as t
+=======
+from contextlib import contextmanager
+from typing import Optional, Callable
+>>>>>>> 11538be (Wrap models instead of subclassing)
 
 import torch
 from torch.utils import data
@@ -11,21 +16,17 @@ from superduperdb.misc import progress
 from superduperdb.models.torch.utils import device_of, to_device, eval
 
 
-# TODO: `type` is inherited from both Base Classes but with different types.
-class SuperDuperModule(torch.nn.Module, Model):  # type: ignore
-    layer: torch.nn.Linear
-
+class TorchModel(Model):
     def __init__(
         self,
-        layer,
-        identifier: str,
-        preprocess: t.Optional[t.Callable] = None,
-        postprocess: t.Optional[t.Callable] = None,
+        object,
+        identifier,
+        preprocess=None,
+        postprocess=None,
         encoder=None,
         collate_fn: t.Optional[t.Callable] = None,
     ):
-        torch.nn.Module.__init__(self)
-        Model.__init__(self, layer, identifier, encoder=encoder)
+        Model.__init__(self, object, identifier, encoder=encoder)
         if hasattr(self.object, 'preprocess') and preprocess is None:
             preprocess = self.object.preprocess
         if hasattr(self.object, 'postprocess') and postprocess is None:
@@ -34,6 +35,22 @@ class SuperDuperModule(torch.nn.Module, Model):  # type: ignore
         self._postprocess = postprocess
         self.collate_fn = collate_fn
 
+    def parameters(self):
+        return self.object.parameters()
+
+    def state_dict(self):
+        return self.object.state_dict()
+
+    @contextmanager
+    def saving(self):
+        was_training = self.object.training
+        try:
+            self.object.eval()
+            yield
+        finally:
+            if was_training:
+                self.object.train()
+
     def __getstate__(self):
         state = self.__dict__.copy()
         if isinstance(self.object, torch.jit.ScriptModule) or isinstance(
@@ -41,16 +58,18 @@ class SuperDuperModule(torch.nn.Module, Model):  # type: ignore
         ):
             f = io.BytesIO()
             torch.jit.save(self.object, f)
-            del state['_modules']['object']
-            state['object_bytes'] = f.getvalue()
+            state['_object_bytes'] = f.getvalue()
         return state
 
     def __setstate__(self, state):
-        if 'object_bytes' in state:
-            state['_modules']['object'] = torch.jit.load(
-                io.BytesIO(state.pop('object_bytes'))
-            )
-        return super().__setstate__(state)
+        keys = state.keys()
+        for k in keys:
+            if k != '_object_bytes':
+                self.__dict__[k] = state[k]
+            else:
+                state.__dict__['object'] = torch.jit.load(
+                    io.BytesIO(state.pop('object_bytes'))
+                )
 
     def predict_one(self, x, **kwargs):
         with torch.no_grad(), eval(self.object):
@@ -130,7 +149,7 @@ def apply_model(
     if single:
         if hasattr(model, 'preprocess'):
             args = model.preprocess(args)
-        args = to_device(args, device_of(model))
+        args = to_device(args, device_of(model.object))
         if hasattr(model, forward):
             singleton_batch = create_batch(args)
             output = getattr(model, forward)(singleton_batch)
@@ -147,7 +166,7 @@ def apply_model(
             loader = torch.utils.data.DataLoader(args, **kwargs)
         out = []
         for batch in progress.progressbar(loader, total=len(loader)):
-            batch = to_device(batch, device_of(model))
+            batch = to_device(batch, device_of(model.object))
             if hasattr(model, forward):
                 tmp = getattr(model, forward)(batch)
                 tmp = to_device(tmp, 'cpu')

@@ -238,10 +238,12 @@ class Trainer:
         batch = to_device(batch, device_of(models[0]))
         output = []
         for subbatch, model in list(zip(batch, models)):
-            if isinstance(model, torch.nn.Module) and hasattr(model, 'train_forward'):
-                output.append(model.train_forward(subbatch))
-            elif isinstance(model, torch.nn.Module):
-                output.append(model(subbatch))
+            if isinstance(model.object, torch.nn.Module) and hasattr(
+                model.object, 'train_forward'
+            ):
+                output.append(model.object.train_forward(subbatch))
+            elif isinstance(model.object, torch.nn.Module):
+                output.append(model.object(subbatch))
             else:
                 output.append(subbatch)
         return output
@@ -265,6 +267,8 @@ class Trainer:
         return sum(objective_values) / len(objective_values)
 
     def __call__(self):
+        for m in self.models:
+            m.object.train()
         iteration = 0
         while True:
             for batch in self.train_dataloader:
@@ -281,7 +285,7 @@ class Trainer:
                     self.metrics.append(all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion(self.metrics):
-                        self.save(self.model_names, self.models)
+                        self.save(self.models, self.model_names)
                     stop = self.stopping_criterion(self.metrics, iteration)
                     if stop:
                         return

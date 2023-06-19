@@ -151,7 +151,7 @@ class BaseDatabase:
     def predict(
         self,
         model_identifier: str,
-        input: Union[List[Document], Document],
+        input: Document,
     ) -> Union[List[Document], Document]:
         """
         Apply model to input.
@@ -159,25 +159,13 @@ class BaseDatabase:
         :param model_identifier: model or ``str`` referring to an uploaded model
         :param input: input to be passed to the model.
                       Must be possible to encode with registered types
-        :param kwargs: key-values (see ``superduperdb.models.utils.predict``)
         """
         model: Model = self.models[model_identifier]
         opts = self.metadata.get_component('model', model_identifier)
-        if isinstance(input, Document):
-            out = model.predict_one(input.unpack(), **opts.get('predict_kwargs', {}))
-            if model.encoder is not None:
-                out = model.encoder(out)  # type: ignore
-            return Document(out)
-
-        out = model.predict(
-            [x.unpack() for x in input], **opts.get('predict_kwargs', {})
-        )
-        to_return = []
-        for x in out:
-            if model.encoder is not None:
-                x = model.encoder(x)  # type: ignore
-            to_return.append(Document(x))
-        return to_return
+        out = model.predict(input.unpack(), **opts.get('predict_kwargs', {}))
+        if model.encoder is not None:
+            out = model.encoder(out)
+        return Document(out)
 
     def execute(self, query: ExecuteQuery) -> ExecuteResult:
         """

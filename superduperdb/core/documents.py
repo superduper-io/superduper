@@ -59,6 +59,8 @@ class Document:
             return item.x
         elif isinstance(item, dict):
             return {k: cls._unpack_datavars(v) for k, v in item.items()}
+        elif isinstance(item, list):
+            return [cls._unpack_datavars(x) for x in item]
         else:
             return item
 

@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import List, Union, Optional, Any, Iterator
+import typing as t
 
 from superduperdb.core.base import (
     ComponentList,
@@ -18,14 +18,18 @@ from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.training.query_dataset import QueryDataset
 from superduperdb.training.validation import validate_vector_search
-from superduperdb.vector_search.vanilla.hashes import VanillaHashSet
+from superduperdb.vector_search import VanillaHashSet
+from superduperdb.misc.logger import logging
 from superduperdb.vector_search.base import (
+    BaseHashSet,
     VectorCollection,
     VectorCollectionConfig,
     VectorIndexMeasureType,
     VectorCollectionItem,
 )
-from superduperdb.misc.logger import logging
+
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.mongodb.database import Database
 
 
 class VectorIndex(Component):
@@ -39,13 +43,18 @@ class VectorIndex(Component):
     :param measure: Measure which is used to compare vectors in index
     """
 
+    compatible_watchers: t.Union[t.Tuple, PlaceholderList, ComponentList]
+    indexing_watcher: t.Union[Watcher, Placeholder]
+    models: t.Union[PlaceholderList, ComponentList]
     variety = 'vector_index'
+    watcher: t.Union[Watcher, Placeholder]
+    _hash_set: t.Optional[BaseHashSet]
 
     def __init__(
         self,
         identifier: str,
-        indexing_watcher: Union[Watcher, str],
-        compatible_watchers: Optional[Union[List[Watcher], List[str]]] = None,
+        indexing_watcher: t.Union[Watcher, str],
+        compatible_watchers: t.Union[t.List[Watcher], t.List[str], None] = None,
         measure: VectorIndexMeasureType = 'css',
     ):
         super().__init__(identifier)
@@ -70,12 +79,12 @@ class VectorIndex(Component):
         self.measure = measure
         self.database = DBPlaceholder()
 
-    def repopulate(self, database: Optional[Any] = None):
+    def repopulate(self, database: t.Optional[t.Any] = None):
         if database is None:
             database = self.database
             assert not isinstance(database, DBPlaceholder)
         super().repopulate(database)
-        logging.info(f'loading hashes: {self.identifier!r}')
+        logging.info(f'loading hashes: {self.identifier!r}')  # type: ignore
 
         # TODO: this is a temporary solution until we implement a CDC process that will
         # asynchronously
@@ -87,8 +96,8 @@ class VectorIndex(Component):
             for record in database.execute(self.indexing_watcher.select):
                 h, id = database.db.get_output_from_document(
                     record,
-                    self.indexing_watcher.key,
-                    self.indexing_watcher.model.identifier,
+                    self.indexing_watcher.key,  # type: ignore
+                    self.indexing_watcher.model.identifier,  # type: ignore
                 )
                 if isinstance(h, Encodable):
                     h = h.x
@@ -116,7 +125,7 @@ class VectorIndex(Component):
         return dimensions
 
     @contextmanager
-    def _get_vector_collection(self) -> Iterator[VectorCollection]:
+    def _get_vector_collection(self) -> t.Iterator[VectorCollection]:
         from superduperdb.datalayer.base.database import VECTOR_DATABASE
 
         with VECTOR_DATABASE.get_collection(
@@ -131,10 +140,10 @@ class VectorIndex(Component):
     def get_nearest(
         self,
         like: Document,
-        database: Optional[Any] = None,
-        outputs: Optional[dict] = None,
+        database: t.Optional[t.Any] = None,
+        outputs: t.Optional[t.Dict] = None,
         featurize: bool = True,
-        ids: Optional[List[str]] = None,
+        ids: t.Optional[t.List[str]] = None,
         n: int = 100,
     ):
         if database is None:
@@ -163,14 +172,15 @@ class VectorIndex(Component):
             if '_outputs' not in document:
                 document['_outputs'] = {}
             document['_outputs'].update(outputs)
-
-            for subkey in self.indexing_watcher.features or ():
+            features = self.indexing_watcher.features or ()  # type: ignore
+            for subkey in features:
                 subout = document['_outputs'].setdefault(subkey, {})
-                if self.indexing_watcher.features[subkey] not in subout:
-                    subout[self.indexing_watcher.features[subkey]] = database.models[
-                        self.indexing_watcher.features[subkey]
-                    ].predict_one(document[subkey])
-                document[subkey] = subout[self.indexing_watcher.features[subkey]]
+                f_subkey = features[subkey]
+                if f_subkey not in subout:
+                    subout[f_subkey] = database.models[f_subkey].predict_one(
+                        document[subkey]
+                    )
+                document[subkey] = subout[f_subkey]
         available_keys = list(document.keys()) + ['_base']
         try:
             model, key = next(
@@ -203,9 +213,9 @@ class VectorIndex(Component):
 
     def validate(
         self,
-        database: 'superduperdb.datalayer.base.database.Database',  # noqa: F821  why?
-        validation_selects: List[Select],
-        metrics: List[Metric],
+        database: 'Database',  # noqa: F821  why?
+        validation_selects: t.List[Select],
+        metrics: t.List[Metric],
     ):
         models, keys = self.models_keys
         models = [database.models[m] for m in models]

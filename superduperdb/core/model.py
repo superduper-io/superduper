@@ -1,7 +1,9 @@
-from typing import Any, Optional, Union
+import typing as t
 
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.encoder import Encoder
+
+EncoderArg = t.Union[Encoder, None, str]
 
 
 class Model(Component):
@@ -10,24 +12,28 @@ class Model(Component):
 
     :param object: Model object, e.g. sklearn model, etc..
     :param identifier: Unique identifying ID
-    :param type: Encoder instance (optional)
+    :param encoder: Encoder instance (optional)
     """
 
     variety = 'model'
 
+    object: t.Any
+    identifier: str
+    type: EncoderArg
+
     def __init__(
         self,
-        object: Any,
+        object: t.Any,
         identifier: str,
-        type: Optional[Union[Encoder, str]] = None,
+        encoder: EncoderArg = None,
     ):
         super().__init__(identifier)
         self.object = object
 
-        if isinstance(type, str):
-            self.type = Placeholder(type, 'type')
+        if isinstance(encoder, str):
+            self.type = Placeholder(encoder, 'type')
         else:
-            self.type = type
+            self.type = encoder
 
         try:
             self.predict_one = object.predict_one
@@ -41,11 +47,15 @@ class Model(Component):
                 pass
                 self.predict = self._predict
 
+    @property
+    def encoder(self) -> EncoderArg:
+        return self.type
+
     def _predict(self, inputs, **kwargs):
         return [self.predict_one(x, **kwargs) for x in inputs]
 
     def asdict(self):
         return {
             'identifier': self.identifier,
-            'type': self.type.identifier if self.type is not None else None,
+            'type': None if self.encoder is None else self.encoder.identifier,
         }

@@ -198,7 +198,9 @@ def image_type(empty):
 @pytest.fixture()
 def a_model(float_tensors_32, float_tensors_16):
     float_tensors_32.add(
-        SuperDuperModule(torch.nn.Linear(32, 16), 'linear_a', type='torch.float32[16]')
+        SuperDuperModule(
+            torch.nn.Linear(32, 16), 'linear_a', encoder='torch.float32[16]'
+        )
     )
     yield float_tensors_32
     try:
@@ -212,7 +214,9 @@ def a_model(float_tensors_32, float_tensors_16):
 @pytest.fixture()
 def a_model_base(float_tensors_32, float_tensors_16):
     float_tensors_32.add(
-        SuperDuperModule(LinearBase(32, 16), 'linear_a_base', type='torch.float32[16]'),
+        SuperDuperModule(
+            LinearBase(32, 16), 'linear_a_base', encoder='torch.float32[16]'
+        ),
     )
     yield float_tensors_32
     try:
@@ -257,7 +261,9 @@ def a_classifier(float_tensors_32):
 @pytest.fixture()
 def b_model(float_tensors_32, float_tensors_16, float_tensors_8):
     float_tensors_32.add(
-        SuperDuperModule(torch.nn.Linear(16, 8), 'linear_b', type='torch.float32[8]'),
+        SuperDuperModule(
+            torch.nn.Linear(16, 8), 'linear_b', encoder='torch.float32[8]'
+        ),
     )
     yield float_tensors_32
     try:
@@ -274,7 +280,7 @@ def c_model(float_tensors_32, float_tensors_16):
         SuperDuperModule(
             torch.nn.Linear(32, 16),
             'linear_c',
-            type='torch.float32[16]',
+            encoder='torch.float32[16]',
         ),
     )
     yield float_tensors_32

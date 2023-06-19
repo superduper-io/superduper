@@ -68,7 +68,7 @@ class Encodable:
     """
 
     x: t.Any
-    type: Encoder
+    encoder: Encoder
 
     def encode(self) -> t.Dict[str, t.Any]:
-        return self.type.encode(self.x)
+        return self.encoder.encode(self.x)

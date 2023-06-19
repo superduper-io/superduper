@@ -45,7 +45,10 @@ class MongoDataBackend(BaseDataBackend):
         ]
 
     def get_output_from_document(self, r: Document, key: str, model: str):
-        return MongoStyleDict(r.content)[f'_outputs.{key}.{model}'], r.content['_id']
+        return (
+            MongoStyleDict(r.content)[f'_outputs.{key}.{model}'],  # type: ignore
+            r.content['_id'],  # type: ignore
+        )
 
     def get_raw_cursor(self, select: Select):
         return Cursor(
@@ -107,10 +110,10 @@ class MongoDataBackend(BaseDataBackend):
             )
         if update.one:
             return self.db[update.collection].update_one(
-                update.filter, update.update.encode()
+                update.filter, update.update.encode()  # type: ignore
             )
         return self.db[update.collection].update_many(
-            update.filter, update.update.encode()
+            update.filter, update.update.encode()  # type: ignore
         )
 
         pass
@@ -125,7 +128,7 @@ class MongoDataBackend(BaseDataBackend):
         select = Select(**info['select'])
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
         update = select.update(
-            {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}
+            {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}  # type: ignore
         )
         return self.db[select.collection].update_many(update.filter, update.update)
 

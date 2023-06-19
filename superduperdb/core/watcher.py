@@ -1,4 +1,3 @@
-from dataclasses import asdict
 import typing as t
 
 from superduperdb.core.base import Component, Placeholder
@@ -43,7 +42,7 @@ class Watcher(Component):
     def asdict(self):
         return {
             'model': self.model.identifier,
-            'select': asdict(self.select),
+            'select': self.select.dict(),
             'key': self.key,
             'identifier': self.identifier,
             'features': self.features or {},

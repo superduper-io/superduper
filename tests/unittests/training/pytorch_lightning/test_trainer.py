@@ -59,7 +59,7 @@ def test_classification(random_data):
             models=['my-pl-module'],
             keys=['_base'],
             training_configuration='my-pl-cf',
-            select=Select('documents'),
+            select=Select(collection='documents'),
             metrics=[],
         )
     )

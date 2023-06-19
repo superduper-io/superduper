@@ -22,7 +22,9 @@ def test_db_qa_with_sources_chain(nursery_rhymes):
     pl = SentenceTransformer(model_name_or_path='all-MiniLM-L6-v2', encoder='array')
     nursery_rhymes.add(pl)
     nursery_rhymes.add(
-        Watcher(model='all-MiniLM-L6-v2', key='text', select=Select('documents'))
+        Watcher(
+            model='all-MiniLM-L6-v2', key='text', select=Select(collection='documents')
+        )
     )
     nursery_rhymes.add(
         VectorIndex(

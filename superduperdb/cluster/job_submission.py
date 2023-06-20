@@ -46,7 +46,12 @@ def work(f):
         else:
             logging.debug(database)
             logging.debug(args)
-            logging.debug(kwargs)
+            ka = dict(kwargs)
+            if ids := ka.pop('ids', None):
+                if len(ids) > 10:
+                    ids = [ids[:10], '...']
+                ka['ids'] = ids
+            logging.debug(ka)
             return f(database, *args, **kwargs)
 
     work_wrapper.signature = sig

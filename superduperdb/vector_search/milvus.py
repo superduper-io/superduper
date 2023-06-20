@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import uuid
 import pymilvus
-from typing import Iterator, List, Sequence, Dict, Any, Mapping
+import typing as t
 
 import numpy
 
@@ -25,11 +25,11 @@ class MilvusClient:
     def __init__(self, *, config: MilvusConfig) -> None:
         self._config = config
         self._alias = str(uuid.uuid4())
-        self._collections: Dict[str, pymilvus.Collection] = {}
-        self._indices: Dict[str, pymilvus.Index] = {}
+        self._collections: t.Dict[str, pymilvus.Collection] = {}
+        self._indices: t.Dict[str, pymilvus.Index] = {}
 
     @contextmanager
-    def init(self) -> Iterator["MilvusClient"]:
+    def init(self) -> t.Iterator["MilvusClient"]:
         """Establish a connection to the Milvus server.
 
         pymilvus keeps all connections in a global singleton. Each connection has an
@@ -51,14 +51,14 @@ class MilvusClient:
             self._collections.clear()
             self._indices.clear()
 
-    def list_databases(self) -> List[str]:
+    def list_databases(self) -> t.List[str]:
         return pymilvus.db.list_database(self._alias)
 
-    def list_collections(self) -> List[str]:
+    def list_collections(self) -> t.List[str]:
         return pymilvus.utility.list_collections(using=self._alias)
 
     def get_collection(
-        self, name: str, *args: Any, **kwargs: Any
+        self, name: str, *args: t.Any, **kwargs: t.Any
     ) -> pymilvus.Collection:
         """Get a `pymilvus.Collection` by name.
 
@@ -81,7 +81,7 @@ class MilvusClient:
         return collection
 
     def get_index(
-        self, collection: pymilvus.Collection, *args: Any, **kwargs: Any
+        self, collection: pymilvus.Collection, *args: t.Any, **kwargs: t.Any
     ) -> pymilvus.Index:
         """Get a `pymilvus.Index` for a collection.
 
@@ -100,7 +100,7 @@ class MilvusClient:
         return index
 
     def _get_index(
-        self, collection: pymilvus.Collection, *args: Any, **kwargs: Any
+        self, collection: pymilvus.Collection, *args: t.Any, **kwargs: t.Any
     ) -> pymilvus.Index:
         try:
             return collection.index(*args, **kwargs)
@@ -137,7 +137,7 @@ class MilvusVectorDatabase(VectorDatabase):
     _client: MilvusClient
     _vector_field_name = "vector"
 
-    _measure_type_metric_type_map: Mapping[VectorIndexMeasureType, str] = {
+    _measure_type_metric_type_map: t.Mapping[VectorIndexMeasureType, str] = {
         "l2": "L2",
         "dot": "IP",
     }
@@ -149,7 +149,7 @@ class MilvusVectorDatabase(VectorDatabase):
         self._milvus_config = config.milvus
 
     @contextmanager
-    def init(self) -> Iterator["VectorDatabase"]:
+    def init(self) -> t.Iterator["VectorDatabase"]:
         with MilvusClient(config=self._milvus_config).init() as client:
             self._client = client
             yield self
@@ -199,7 +199,7 @@ class MilvusVectorDatabase(VectorDatabase):
     @contextmanager
     def get_collection(
         self, config: VectorCollectionConfig
-    ) -> Iterator[VectorCollection]:
+    ) -> t.Iterator[VectorCollection]:
         collection = self._get_collection(config=config)
         with MilvusVectorCollection(collection=collection).init() as vector_collection:
             yield vector_collection
@@ -210,10 +210,10 @@ class MilvusVectorCollection(VectorCollection):
         self._collection = collection
 
     @contextmanager
-    def init(self) -> Iterator["MilvusVectorCollection"]:
+    def init(self) -> t.Iterator["MilvusVectorCollection"]:
         yield self
 
-    def add(self, items: Sequence[VectorCollectionItem]) -> None:
+    def add(self, items: t.Sequence[VectorCollectionItem]) -> None:
         self._collection.insert(
             [{"id": item.id, "vector": item.vector} for item in items]
         )
@@ -223,10 +223,10 @@ class MilvusVectorCollection(VectorCollection):
         self,
         identifier: VectorCollectionItemId,
         *,
-        within_ids: Sequence[VectorCollectionItemId] = (),
+        within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> List[VectorCollectionResult]:
+    ) -> t.List[VectorCollectionResult]:
         if within_ids:
             raise NotImplementedError("within_ids not supported")
         array = self._get_vector_by_id(identifier=identifier)
@@ -246,10 +246,10 @@ class MilvusVectorCollection(VectorCollection):
         self,
         array: ArrayLike,
         *,
-        within_ids: Sequence[VectorCollectionItemId] = (),
+        within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> List[VectorCollectionResult]:
+    ) -> t.List[VectorCollectionResult]:
         if within_ids:
             raise NotImplementedError("within_ids not supported")
         result = self._collection.search(

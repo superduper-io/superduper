@@ -1,4 +1,5 @@
 import inspect
+import typing as t
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
@@ -19,6 +20,9 @@ class CustomCheckpoint(pl.callbacks.ModelCheckpoint):
 
 
 class LightningConfiguration(TrainingConfiguration):
+    monitor: str
+    loader_kwargs: t.Dict[str, t.Any]
+
     def __init__(self, identifier: str, loader_kwargs, monitor='val_loss', **kwargs):
         super().__init__(
             identifier, monitor=monitor, loader_kwargs=loader_kwargs, **kwargs

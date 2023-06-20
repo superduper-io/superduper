@@ -1,7 +1,11 @@
+from transformers import TrainingArguments
+
 from superduperdb.training.query_dataset import QueryDataset
 
 
 class TrainerConfiguration:
+    training_arguments: TrainingArguments
+
     def __init__(self, **parameters):
         for k, v in parameters.items():
             setattr(self, k, v)

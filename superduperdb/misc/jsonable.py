@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+import functools
 import sys
 import typing as t
 
@@ -19,7 +20,11 @@ class JSONable(BaseModel):
     """
 
     class Config:
-        extra = 'forbid'  # Fail in deserializion if there are extra fields
+        # Fail in deserializion if there are extra fields
+        extra = 'forbid'
+
+        # See https://github.com/samuelcolvin/pydantic/issues/1241
+        keep_untouched = (functools.cached_property,)
 
     SUBCLASSES: t.ClassVar[t.Set[t.Type]] = set()
     TYPE_ID_TO_CLASS: t.ClassVar[t.Dict[str, t.Type]] = {}

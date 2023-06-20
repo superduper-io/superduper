@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import List, Sequence, Iterator, Dict
+import typing as t
 
 import numpy
 from readerwriterlock import rwlock
@@ -32,10 +32,10 @@ class InMemoryVectorCollection(VectorCollection):
         self._lock = rwlock.RWLockFair()
 
     @contextmanager
-    def init(self) -> Iterator["VectorCollection"]:
+    def init(self) -> t.Iterator["VectorCollection"]:
         yield self
 
-    def add(self, items: Sequence[VectorCollectionItem]) -> None:
+    def add(self, items: t.Sequence[VectorCollectionItem]) -> None:
         for item in items:
             with self._lock.gen_wlock():
                 self._add(item)
@@ -43,7 +43,7 @@ class InMemoryVectorCollection(VectorCollection):
     def _add(self, item: VectorCollectionItem) -> None:
         ix = self._index.lookup.get(item.id)
         if ix is not None:
-            self._index.h[ix] = item.vector
+            self._index.h[ix] = item.vector  # type: ignore
         else:
             self._index.index.append(item.id)
             self._index.lookup[item.id] = len(self._index.lookup)
@@ -53,10 +53,10 @@ class InMemoryVectorCollection(VectorCollection):
         self,
         identifier: VectorCollectionItemId,
         *,
-        within_ids: Sequence[VectorCollectionItemId] = (),
+        within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> List[VectorCollectionResult]:
+    ) -> t.List[VectorCollectionResult]:
         if within_ids:
             raise NotImplementedError("within_ids not supported")
         with self._lock.gen_rlock():
@@ -72,10 +72,10 @@ class InMemoryVectorCollection(VectorCollection):
         self,
         array: ArrayLike,
         *,
-        within_ids: Sequence[VectorCollectionItemId] = (),
+        within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> List[VectorCollectionResult]:
+    ) -> t.List[VectorCollectionResult]:
         if within_ids:
             raise NotImplementedError("within_ids not supported")
         with self._lock.gen_rlock():
@@ -86,8 +86,8 @@ class InMemoryVectorCollection(VectorCollection):
 
     def _convert_ids_scores_to_results(
         self, ids: numpy.ndarray, scores: numpy.ndarray
-    ) -> List[VectorCollectionResult]:
-        results: List[VectorCollectionResult] = []
+    ) -> t.List[VectorCollectionResult]:
+        results: t.List[VectorCollectionResult] = []
         for id, score in zip(ids, scores):
             results.append(VectorCollectionResult(id=id, score=score))
         return results
@@ -96,16 +96,16 @@ class InMemoryVectorCollection(VectorCollection):
 class InMemoryVectorDatabase(VectorDatabase):
     def __init__(self, *, config: VectorSearchConfig) -> None:
         self._config = config
-        self._collections: Dict[VectorCollectionId, VectorCollection] = {}
+        self._collections: t.Dict[VectorCollectionId, VectorCollection] = {}
 
     @contextmanager
-    def init(self) -> Iterator["VectorDatabase"]:
+    def init(self) -> t.Iterator["VectorDatabase"]:
         yield self
 
     @contextmanager
     def get_collection(
         self, config: VectorCollectionConfig
-    ) -> Iterator[VectorCollection]:
+    ) -> t.Iterator[VectorCollection]:
         collection = self._collections.get(config.id)
         if not collection:
             collection = self._collections[config.id] = InMemoryVectorCollection(

@@ -5,13 +5,17 @@ from contextlib import contextmanager
 import numpy
 import numpy.typing
 import torch
-from typing import List, Iterator, Sequence, Callable, Any, Mapping, Union, Literal
+import typing as t
 
 from ..misc.config import VectorSearchConfig
 
 
 class BaseHashSet:
-    name = None
+    name: t.Optional[str] = None
+    h: t.Union[torch.Tensor, numpy.ndarray, t.List]
+    index: t.List[str]
+    lookup: t.Dict[str, t.Union[t.Iterator[int], int]]
+    measure: str
 
     def __init__(self, h, index, measure):
         if isinstance(h, list) and isinstance(h[0], torch.Tensor):
@@ -52,7 +56,7 @@ class BaseHashSet:
         raise NotImplementedError
 
 
-ArrayLike = Union[numpy.typing.ArrayLike, torch.Tensor]
+ArrayLike = t.Union[numpy.typing.ArrayLike, torch.Tensor]
 
 
 def to_numpy(x: ArrayLike) -> numpy.ndarray:
@@ -65,9 +69,9 @@ def to_numpy(x: ArrayLike) -> numpy.ndarray:
 
 VectorCollectionId = str
 VectorCollectionItemId = str
-VectorIndexMeasureType = Literal["l2", "dot", "css"]
-VectorIndexMeasureFunction = Callable[[numpy.ndarray, numpy.ndarray], float]
-VectorIndexMeasure = Union[VectorIndexMeasureType, VectorIndexMeasureFunction]
+VectorIndexMeasureType = t.Literal["l2", "dot", "css"]
+VectorIndexMeasureFunction = t.Callable[[numpy.ndarray, numpy.ndarray], float]
+VectorIndexMeasure = t.Union[VectorIndexMeasureType, VectorIndexMeasureFunction]
 
 
 class VectorCollectionItemNotFound(Exception):
@@ -79,7 +83,7 @@ class VectorCollectionConfig:
     id: VectorCollectionId
     dimensions: int
     measure: VectorIndexMeasure = "l2"
-    parameters: Mapping[str, Any] = field(default_factory=dict)
+    parameters: t.Mapping[str, t.Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -112,11 +116,11 @@ class VectorCollection(ABC):
 
     @contextmanager
     @abstractmethod
-    def init(self) -> Iterator["VectorCollection"]:
+    def init(self) -> t.Iterator["VectorCollection"]:
         ...
 
     @abstractmethod
-    def add(self, items: Sequence[VectorCollectionItem]) -> None:
+    def add(self, items: t.Sequence[VectorCollectionItem]) -> None:
         """Add items to the collection."""
         ...
 
@@ -125,10 +129,10 @@ class VectorCollection(ABC):
         self,
         identifier: VectorCollectionItemId,
         *,
-        within_ids: Sequence[VectorCollectionItemId] = (),
+        within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> List[VectorCollectionResult]:
+    ) -> t.List[VectorCollectionResult]:
         """Find items that are nearest to the item with the given identifier."""
         ...
 
@@ -137,10 +141,10 @@ class VectorCollection(ABC):
         self,
         array: ArrayLike,
         *,
-        within_ids: Sequence[VectorCollectionItemId] = (),
+        within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> List[VectorCollectionResult]:
+    ) -> t.List[VectorCollectionResult]:
         """Find items that are nearest to the given vector."""
         ...
 
@@ -181,7 +185,7 @@ class VectorDatabase(ABC):
 
     @contextmanager
     @abstractmethod
-    def init(self) -> Iterator["VectorDatabase"]:
+    def init(self) -> t.Iterator["VectorDatabase"]:
         """Initialize the database.
 
         This method makes sure all necessary connections to the underlying vector
@@ -194,7 +198,7 @@ class VectorDatabase(ABC):
     def get_collection(
         self,
         config: VectorCollectionConfig,
-    ) -> Iterator[VectorCollection]:
+    ) -> t.Iterator[VectorCollection]:
         """Get a vector collection by its identifier.
 
         If the collection does not exist, it is created with the specified

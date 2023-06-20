@@ -1,4 +1,5 @@
 import inspect
+import typing as t
 from collections import defaultdict
 
 import torch.cuda
@@ -7,13 +8,13 @@ import torch.optim
 import torch.utils
 from torch.utils.data import DataLoader
 
+from superduperdb.core.training_configuration import TrainingConfiguration
 from superduperdb.datalayer.base.build import build_datalayer
 from superduperdb.datalayer.base.query import Select
-from superduperdb.core.training_configuration import TrainingConfiguration
+from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import ExtensibleDict
 from superduperdb.models.torch.utils import to_device, device_of
 from superduperdb.training.query_dataset import QueryDataset
-from superduperdb.misc.logger import logging
 
 
 def _default_optimizer():
@@ -115,7 +116,7 @@ class TorchTrainerConfiguration(TrainingConfiguration):
         return False
 
     @classmethod
-    def get_validation_dataset(cls, validation_set):
+    def get_validation_dataset(cls, validation_set) -> QueryDataset:
         database = build_datalayer()
         select: Select = database.db.get_query_for_validation_set(validation_set)
         return QueryDataset(select, fold='valid')
@@ -135,7 +136,7 @@ class TorchTrainerConfiguration(TrainingConfiguration):
         database = build_datalayer()
 
         lookup = dict(zip(model_names, models))
-        optimizer_classes = defaultdict(lambda: torch.optim.Adam)
+        optimizer_classes: t.Dict = defaultdict(lambda: torch.optim.Adam)
         optimizer_classes.update(self.optimizer_classes)
         optimizers = []
         for k in optimizer_classes:

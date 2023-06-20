@@ -1,3 +1,5 @@
+import typing as t
+
 from superduperdb.core.base import Component
 from superduperdb.training.query_dataset import QueryDataset
 
@@ -11,6 +13,16 @@ class TrainingConfiguration(Component):
     :param identifier: Unique identifier of configuration
     :param **parameters: Key-values pairs, the variables which configure training.
     """
+
+    compute_metrics: t.Callable[..., t.Any]
+    loader_kwargs: t.Dict[str, t.Any]
+    max_iterations: float
+    no_improve_then_stop: int
+    objective: t.Any
+    optimizer_classes: t.Dict
+    optimizer_kwargs: t.Dict
+    validation_interval: int
+    watch: str
 
     variety = 'training_configuration'
 

@@ -31,5 +31,3 @@ def test_registry():
     test = setup_registry(registry.register)
     assert registry.Parameter == t.Union[test.One, test.Three]
     assert registry.Result == t.Union[test.One, test.Two]
-
-    return registry

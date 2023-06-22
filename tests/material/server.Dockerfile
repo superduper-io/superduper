@@ -11,7 +11,7 @@ RUN pip install -U --no-cache-dir pip
 FROM base AS requirements
 
 RUN pip install poetry
-COPY pyproject.toml ./poetry.lock ./
+COPY ./pyproject.toml ./poetry.lock ./
 
 RUN poetry install --without dev
 
@@ -20,8 +20,8 @@ RUN poetry install --without dev
 
 FROM requirements as server
 
-COPY superduperdb .
-COPY tests/material/server.py .
+COPY ./superduperdb .
+COPY ./tests/material/server.py .
 
 ENTRYPOINT ["python"]
 CMD ["server.py"]

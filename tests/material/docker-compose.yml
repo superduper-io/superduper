@@ -128,7 +128,7 @@ services:
   server:
     build:
       context: ../..
-      dockerfile: ./server.Dockerfile
+      dockerfile: ./tests/material/server.Dockerfile
       target: server
     depends_on:
       - mongodb

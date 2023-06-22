@@ -21,21 +21,9 @@ class TrainerConfiguration:
 
     @classmethod
     def _get_data(cls, database_type, database_name, select, keys, features, transform):
-        train_data = QueryDataset(
-            select=select,
-            keys=keys,
-            fold='train',
-            transform=transform,
-            features=features,
-        )
+        train_data = QueryDataset(select=select, keys=keys, fold='train', transform=transform)
 
-        valid_data = QueryDataset(
-            select=select,
-            keys=keys,
-            fold='valid',
-            transform=transform,
-            features=features,
-        )
+        valid_data = QueryDataset(select=select, keys=keys, fold='valid', transform=transform)
 
         return train_data, valid_data
 

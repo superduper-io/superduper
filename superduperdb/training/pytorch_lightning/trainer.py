@@ -3,7 +3,7 @@ import typing as t
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
-from superduperdb.core.training_configuration import TrainingConfiguration
+from superduperdb.core import TrainingConfiguration
 from superduperdb.datalayer.base.build import build_datalayer
 from superduperdb.datalayer.base.query import Select
 from superduperdb.models.torch.utils import eval

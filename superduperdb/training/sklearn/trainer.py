@@ -1,6 +1,6 @@
 import typing as t
 
-from superduperdb.core.training_configuration import TrainingConfiguration
+from superduperdb.core import TrainingConfiguration
 from superduperdb.datalayer.base.build import build_datalayer
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc import progress

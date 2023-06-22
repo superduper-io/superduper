@@ -26,7 +26,7 @@ class SuperDuperModule(torch.nn.Module, Model):
         if hasattr(self.object, 'preprocess') and preprocess is None:
             preprocess = self.object.preprocess
         if hasattr(self.object, 'postprocess') and postprocess is None:
-            postprocess = self.layer.postprocess
+            postprocess = self.object.postprocess
         self._preprocess = preprocess
         self._postprocess = postprocess
         self.collate_fn = collate_fn

@@ -6,6 +6,7 @@ from langchain.chains import RetrievalQAWithSourcesChain
 from langchain.chains.base import Chain
 from langchain.schema import BaseRetriever, Document
 
+from superduperdb.core import documents
 from superduperdb.core.base import Placeholder
 from superduperdb.core.model import Model
 from superduperdb.core.vector_index import VectorIndex
@@ -32,7 +33,7 @@ class LangchainRetriever(BaseRetriever):
         self.n = n
 
     def get_relevant_documents(self, query: str) -> List[Document]:
-        document_to_search = {self.key: query}
+        document_to_search = documents.Document({self.key: query})
         ids = self.vector_index.get_nearest(
             document_to_search,
             n=self.n,

@@ -1,25 +1,28 @@
 import io
-from typing import Optional, Callable
+import typing as t
 
 import torch
 from torch.utils import data
 
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encodable
-from superduperdb.misc import progress
 from superduperdb.core.model import Model
+from superduperdb.misc import progress
 from superduperdb.models.torch.utils import device_of, to_device, eval
 
 
-class SuperDuperModule(torch.nn.Module, Model):
+# TODO: `type` is inherited from both Base Classes but with different types.
+class SuperDuperModule(torch.nn.Module, Model):  # type: ignore
+    layer: torch.nn.Linear
+
     def __init__(
         self,
         layer,
-        identifier,
-        preprocess=None,
-        postprocess=None,
+        identifier: str,
+        preprocess: t.Optional[t.Callable] = None,
+        postprocess: t.Optional[t.Callable] = None,
         encoder=None,
-        collate_fn: Optional[Callable] = None,
+        collate_fn: t.Optional[t.Callable] = None,
     ):
         torch.nn.Module.__init__(self)
         Model.__init__(self, layer, identifier, encoder=encoder)

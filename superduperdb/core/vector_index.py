@@ -1,6 +1,7 @@
 import typing as t
 from contextlib import contextmanager
 
+from superduperdb.datalayer.base.query import Select
 from superduperdb.core.base import (
     ComponentList,
     PlaceholderList,
@@ -42,7 +43,8 @@ class VectorIndex(Component):
     compatible_watchers: t.Union[t.Tuple, PlaceholderList, ComponentList]
     indexing_watcher: t.Union[Watcher, Placeholder]
     models: t.Union[PlaceholderList, ComponentList]
-    variety = 'vector_index'
+    variety: str = 'vector_index'
+    select: Select
     watcher: t.Union[Watcher, Placeholder]
     _hash_set: t.Optional[BaseHashSet]
 

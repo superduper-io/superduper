@@ -1,4 +1,4 @@
-from typing import Optional
+import typing as t
 
 from superduperdb.core.model import Model
 from transformers import pipeline as _pipeline, Pipeline as TransformersPipeline
@@ -7,10 +7,10 @@ from transformers import pipeline as _pipeline, Pipeline as TransformersPipeline
 class Pipeline(Model):
     def __init__(
         self,
-        pipeline: Optional[TransformersPipeline] = None,
-        task: Optional[str] = None,
-        model: Optional[str] = None,
-        identifier: Optional[str] = None,
+        pipeline: t.Optional[TransformersPipeline] = None,
+        task: t.Optional[str] = None,
+        model: t.Optional[str] = None,
+        identifier: t.Optional[str] = None,
     ):
         if pipeline is None:
             assert model is not None, 'must specify model for now'

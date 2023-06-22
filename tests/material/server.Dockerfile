@@ -20,8 +20,7 @@ RUN poetry install --without dev
 
 FROM requirements as server
 
-COPY ./superduperdb .
+COPY ./superduperdb ./superduperdb
 COPY ./tests/material/server.py .
 
-ENTRYPOINT ["python"]
-CMD ["server.py"]
+CMD ["python", "server.py"]

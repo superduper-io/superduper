@@ -16,15 +16,15 @@ class KeyCache(t.Generic[Entry]):
                 pass
 
             key = str(len(self._cache))
+            self._cache.append(entry)
             self._inverse[entry] = key
-            self._cache[key] = entry
 
             return key
 
     def get(self, key: str) -> Entry:
         """Given a key, returns an entry or raises KeyError"""
-        return self._cache[key]  # Atomic operation, no lock needed.
+        return self._cache[int(key)]  # Atomic operation, no lock needed.
 
-    _cache: t.Dict[str, Entry] = dc.field(default_factory=dict)
+    _cache: t.List[Entry] = dc.field(default_factory=list)
     _inverse: t.Dict[Entry, str] = dc.field(default_factory=dict)
     _lock: Lock = dc.field(default_factory=Lock)

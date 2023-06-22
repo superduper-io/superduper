@@ -127,7 +127,9 @@ services:
 
   server:
     build:
-      dockerfile: server.Dockerfile
+      context: ../..
+      dockerfile: ./server.Dockerfile
+      target: server
     depends_on:
       - mongodb
     ports:

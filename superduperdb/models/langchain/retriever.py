@@ -1,5 +1,5 @@
+import typing as t
 from functools import cached_property
-from typing import Union, List
 
 from langchain.base_language import BaseLanguageModel
 from langchain.chains import RetrievalQAWithSourcesChain
@@ -32,7 +32,7 @@ class LangchainRetriever(BaseRetriever):
         self.key = key
         self.n = n
 
-    def get_relevant_documents(self, query: str) -> List[Document]:
+    def get_relevant_documents(self, query: str) -> t.List[Document]:
         document_to_search = documents.Document({self.key: query})
         ids, scores = self.vector_index.get_nearest(
             document_to_search,
@@ -41,20 +41,22 @@ class LangchainRetriever(BaseRetriever):
         )
         select = self.vector_index.select.select_using_ids(ids)
         out = list(
-            self.vector_index.database.select(
-                select, features=self.vector_index.watcher.features
+            self.vector_index.database.select(  # type: ignore
+                select, features=self.vector_index.watcher.features  # type: ignore
             )
         )
         out = [
             Document(
                 page_content=x[self.key],
-                metadata={'source': x[self.vector_index.database.id_field]},
+                metadata={
+                    'source': x[self.vector_index.database.id_field]  # type: ignore
+                },
             )
             for x in out
         ]
         return out
 
-    async def aget_relevant_documents(self, query: str) -> List[Document]:
+    async def aget_relevant_documents(self, query: str) -> t.List[Document]:
         raise NotImplementedError
 
 
@@ -91,12 +93,14 @@ class DBQAWithSourcesChain(Model):
     :param n: Number of documents to retrieve as seed for chain
     """
 
+    vector_index: t.Union[Placeholder, VectorIndex]
+
     def __init__(
         self,
         identifier: str,
         key: str,
         llm: BaseLanguageModel,
-        vector_index: Union[VectorIndex, str],
+        vector_index: t.Union[VectorIndex, str],
         chain_type: str = 'stuff',
         n: int = 5,
     ):

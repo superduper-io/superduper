@@ -1,28 +1,40 @@
+from superduperdb import JSONable
+
+
 from superduperdb.server.server import Server
 
 
-class SomeResult:
+class BaseJSON(JSONable):
     pass
 
 
-class One:
+class SomeResult(JSONable):
     pass
 
 
-class Two:
+class One(BaseJSON):
     pass
 
 
-class Other:
+class Two(BaseJSON):
     pass
+
+
+class Other(BaseJSON):
+    pass
+
+
+server = Server()
 
 
 class SomeDatabase:
+    @server.register
     def method_to_expose(self, one: One, two: Two) -> SomeResult:
         return SomeResult()
 
+    @server.register
     def method_two(self) -> Other:
         return Other()
 
 
-Server().auto_run(SomeDatabase())
+server.run(SomeDatabase())

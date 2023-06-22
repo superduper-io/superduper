@@ -124,3 +124,12 @@ services:
     depends_on:
       - milvus-etcd
       - milvus-minio
+
+  server:
+    build:
+      dockerfile: server.Dockerfile
+    depends_on:
+      - mongodb
+    ports:
+      - "80:80"
+

@@ -1,6 +1,5 @@
 from superduperdb import JSONable
 
-
 from superduperdb.server.server import Server
 
 
@@ -37,4 +36,5 @@ class SomeDatabase:
         return Other()
 
 
+server.cfg.web_server.host = '0.0.0.0'
 server.run(SomeDatabase())

@@ -9,7 +9,7 @@ from superduperdb.core.base import (
 )
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model
-from superduperdb.core.training_configuration import TrainingConfiguration
+from superduperdb.core import TrainingConfiguration
 from superduperdb.datalayer.base.query import Select
 
 

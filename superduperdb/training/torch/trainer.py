@@ -8,9 +8,9 @@ import torch.optim
 import torch.utils
 from torch.utils.data import DataLoader
 
-from superduperdb.core.training_configuration import TrainingConfiguration
 from superduperdb.datalayer.base.build import build_datalayer
 from superduperdb.datalayer.base.query import Select
+from superduperdb.core import TrainingConfiguration
 from superduperdb.misc.special_dicts import ExtensibleDict
 from superduperdb.models.torch.utils import to_device, device_of
 from superduperdb.misc.logger import logging

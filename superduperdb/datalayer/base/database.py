@@ -176,7 +176,6 @@ class BaseDatabase:
         self,
         query: Union[Select, Delete, Update, Insert],
         refresh: bool = True,
-        raw: bool = False,
         verbose: bool = True,
     ):
         """
@@ -184,12 +183,10 @@ class BaseDatabase:
 
         :param query: select, insert, delete, update,
         :param refresh: refresh the computations if applicable
-        :param raw: toggle to ``True`` to return raw data, including
-                    ``bytes`` from data base
         :param verbose: toggle to ``False`` to suppress output
         """
         if isinstance(query, Select):
-            return self._select(query, raw=raw)
+            return self._select(query)
         elif isinstance(query, Delete):
             return self._delete(query)
         elif isinstance(query, Update):
@@ -546,7 +543,9 @@ class BaseDatabase:
             if ids is None:
                 documents = list(self._select(query))
             else:
-                documents = list(self._select(query.select_using_ids(ids), raw=True))
+                select = query.select_using_ids(ids)
+                select = select.copy(update={'raw': True})
+                documents = list(self._select(select))
                 documents = [Document(x) for x in documents]
         else:
             documents = query.documents
@@ -731,14 +730,14 @@ class BaseDatabase:
         self.artifact_store.delete_artifact(info['object'])
         self.metadata.update_object(identifier, 'model', 'object', file_id)
 
-    def _select(self, select: Select, raw: bool = False) -> List[Document]:
+    def _select(self, select: Select) -> List[Document]:
         if select.like is not None:
             if select.similar_first:
-                return self._select_similar_then_matches(select, raw=raw)
+                return self._select_similar_then_matches(select)
             else:
-                return self._select_matches_then_similar(select, raw=raw)
+                return self._select_matches_then_similar(select)
         else:
-            if raw:
+            if select.raw:
                 return self.db.get_raw_cursor(select)
             else:
                 return self.db.get_cursor(
@@ -747,7 +746,7 @@ class BaseDatabase:
                     types=self.types,
                 )
 
-    def _select_matches_then_similar(self, select: Select, raw: bool = False):
+    def _select_matches_then_similar(self, select: Select):
         if not select.is_trivial:
             id_cursor = self.db.get_raw_cursor(select.select_only_id)
             ids = [x['_id'] for x in id_cursor]
@@ -755,7 +754,7 @@ class BaseDatabase:
         else:
             similar_ids, scores = self._select_nearest(select)
 
-        if raw:
+        if select.raw:
             return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
         else:
             return self.db.get_cursor(
@@ -765,10 +764,10 @@ class BaseDatabase:
                 types=self.types,
             )
 
-    def _select_similar_then_matches(self, select: Select, raw: bool = False):
+    def _select_similar_then_matches(self, select: Select):
         similar_ids, scores = self._select_nearest(select)
 
-        if raw:
+        if select.raw:
             return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
         else:
             return self.db.get_cursor(

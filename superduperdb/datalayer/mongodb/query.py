@@ -22,6 +22,7 @@ class Select(s.JSONable, query.Select):
     one: bool = False
     outputs: t.Optional[URIDocument] = None
     projection: t.Optional[t.Dict[str, int]] = None
+    raw: bool = False
     similar_first: bool = False
     vector_index: t.Optional[str] = None
 

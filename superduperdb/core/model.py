@@ -38,9 +38,13 @@ class TrainingConfiguration(Component):
 
     @classmethod
     def _get_data(cls, select, keys, features, transform):
-        train_data = QueryDataset(select=select, keys=keys, fold='train', transform=transform)
+        train_data = QueryDataset(
+            select=select, keys=keys, fold='train', transform=transform
+        )
 
-        valid_data = QueryDataset(select=select, keys=keys, fold='valid', transform=transform)
+        valid_data = QueryDataset(
+            select=select, keys=keys, fold='valid', transform=transform
+        )
 
         return train_data, valid_data
 
@@ -48,16 +52,16 @@ class TrainingConfiguration(Component):
         return getattr(self, k, default)
 
     def __call__(
-            self,
-            identifier,
-            models,
-            keys,
-            model_names,
-            select,
-            validation_sets=(),
-            metrics=None,
-            features=None,
-            download=False,
+        self,
+        identifier,
+        models,
+        keys,
+        model_names,
+        select,
+        validation_sets=(),
+        metrics=None,
+        features=None,
+        download=False,
     ):
         raise NotImplementedError
 
@@ -83,15 +87,15 @@ class Model(Component):
         encoder: EncoderArg = None,
         training_configuration: t.Optional[TrainingConfiguration] = None,
         training_select: t.Optional[Select] = None,
-        training_keys: t.Optional[t.Dict] = None
+        training_keys: t.Optional[t.Dict] = None,
     ):
         super().__init__(identifier)
         self.object = object
 
         if isinstance(encoder, str):
-            self.type = Placeholder(encoder, 'type')
+            self.encoder: EncoderArg = Placeholder(encoder, 'type')
         else:
-            self.type = encoder
+            self.encoder: EncoderArg = encoder  # type: ignore
 
         try:
             self.predict_one = object.predict_one
@@ -108,14 +112,11 @@ class Model(Component):
         self.training_configuration = training_configuration
         self.training_select = training_select
         self.training_keys = training_keys
+        self.metrics: t.Dict = {}
 
     @contextmanager
     def saving(self):
-        yield
-
-    @property
-    def encoder(self) -> EncoderArg:
-        return self.type
+        raise NotImplementedError
 
     def _predict(self, inputs, **kwargs):
         return [self.predict_one(x, **kwargs) for x in inputs]
@@ -125,3 +126,26 @@ class Model(Component):
             'identifier': self.identifier,
             'type': None if self.encoder is None else self.encoder.identifier,
         }
+
+    def append_metrics(self, d):
+        for k in d:
+            if k not in self.metrics:
+                self.metrics[k] = []
+            self.metrics[k].append(d[k])
+
+
+class ModelEnsemblePredictionError(Exception):
+    pass
+
+
+# TODO make Component less dogmatic about having just one ``self.object`` type thing
+class ModelEnsemble:
+    def __init__(self, models: t.List[t.Union[Model, str]]):
+        self._model_ids = []
+        for m in models:
+            if isinstance(m, Model):
+                setattr(self, m.identifier, m)
+                self._model_ids.append(m.identifier)
+            elif isinstance(m, str):
+                setattr(self, m, Placeholder('model', m))
+                self._model_ids.append(m)

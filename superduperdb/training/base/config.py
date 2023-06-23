@@ -20,10 +20,22 @@ class TrainerConfiguration:
             database._replace_model(model, mn)
 
     @classmethod
-    def _get_data(cls, database_type, database_name, select, keys, features, transform):
-        train_data = QueryDataset(select=select, keys=keys, fold='train', transform=transform)
+    def _get_data(cls, select, keys, features, transform):
+        train_data = QueryDataset(
+            select=select,
+            keys=keys,
+            fold='train',
+            transform=transform,
+            features=features,
+        )
 
-        valid_data = QueryDataset(select=select, keys=keys, fold='valid', transform=transform)
+        valid_data = QueryDataset(
+            select=select,
+            keys=keys,
+            fold='valid',
+            transform=transform,
+            features=features,
+        )
 
         return train_data, valid_data
 

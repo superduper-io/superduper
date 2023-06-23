@@ -20,8 +20,12 @@ def postprocess(f):
     return f
 
 
-def get_data_from_query(select: Select, X: str, y: t.Optional[str] = None,
-                        y_preprocess: t.Optional[t.Callable] = None):
+def get_data_from_query(
+    select: Select,
+    X: str,
+    y: t.Optional[str] = None,
+    y_preprocess: t.Optional[t.Callable] = None,
+):
     data = QueryDataset(
         select=select,
         keys=[X] if y is None else [X, y],
@@ -77,9 +81,13 @@ class Base(Model):
             y_preprocess = None
             if self.training_configuration is not None:
                 y_preprocess = self.training_configuration.get('y_preprocess', None)
-            X, y = get_data_from_query(select=select, X=X, y=y, y_preprocess=y_preprocess)
+            X, y = get_data_from_query(
+                select=select, X=X, y=y, y_preprocess=y_preprocess
+            )
         if self.training_configuration is not None:
-            return self.object.fit(X, y, **self.training_configuration.get('fit_params', {}))
+            return self.object.fit(
+                X, y, **self.training_configuration.get('fit_params', {})
+            )
         else:
             return self.object.fit(X, y)
 
@@ -145,7 +153,7 @@ class Pipeline(Base):
             encoder=encoder,
             training_configuration=training_configuration,
             training_select=training_select,
-            training_keys={'X': X, 'y': y}
+            training_keys={'X': X, 'y': y},
         )
 
     def __getattr__(self, item):

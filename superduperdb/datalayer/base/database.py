@@ -37,6 +37,17 @@ from superduperdb.core import components
 VECTOR_DATABASE = VectorDatabase.create(config=CFG.vector_search)
 VECTOR_DATABASE.init().__enter__()
 
+DBResult = t.Any
+TaskGraph = t.Any
+
+DeleteResult = DBResult
+InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
+SelectResult = t.List[Document]
+UpdateResult = t.Any
+
+ExecuteQuery = t.Union[Select, Delete, Update, Insert]
+ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
+
 
 class BaseDatabase:
     """
@@ -172,33 +183,30 @@ class BaseDatabase:
             to_return.append(Document(x))
         return to_return
 
-    def execute(
-        self,
-        query: Union[Select, Delete, Update, Insert],
-    ):
+    def execute(self, query: ExecuteQuery) -> ExecuteResult:
         """
         Execute a query on the datalayer
 
         :param query: select, insert, delete, update,
         """
-        if isinstance(query, Select):
-            return self._select(query)
         if isinstance(query, Delete):
-            return self._delete(query)
-        if isinstance(query, Update):
-            return self._update(query)
+            return self.delete(query)
         if isinstance(query, Insert):
-            return self._insert(query)
+            return self.insert(query)
+        if isinstance(query, Select):
+            return self.select(query)
+        if isinstance(query, Update):
+            return self.update(query)
         raise TypeError(
             f'Wrong type of {query}; '
             f'Expected object of type {Union[Select, Delete, Update, Insert]}; '
             f'Got {type(query)};'
         )
 
-    def _delete(self, delete: Delete):
+    def delete(self, delete: Delete) -> DeleteResult:
         return self.db.delete(delete)
 
-    def _insert(self, insert: Insert):
+    def insert(self, insert: Insert) -> InsertResult:
         for item in insert.documents:
             r = random.random()
             try:
@@ -216,7 +224,7 @@ class BaseDatabase:
         task_graph()
         return output, task_graph
 
-    def _select(self, select: Select) -> List[Document]:
+    def select(self, select: Select) -> SelectResult:
         if select.like is not None:
             if select.similar_first:
                 return self._select_similar_then_matches(select)
@@ -232,7 +240,7 @@ class BaseDatabase:
                     types=self.types,
                 )
 
-    def _update(self, update: Update) -> t.Any:
+    def update(self, update: Update) -> UpdateResult:
         if update.refresh and self.metadata.show_components('model'):
             ids = self.db.get_ids_from_select(update.select_ids)
         result = self.db.update(update)
@@ -364,7 +372,7 @@ class BaseDatabase:
 
     def _build_task_workflow(
         self, select: Select, ids=None, dependencies=(), verbose=True
-    ):
+    ) -> TaskWorkflow:
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
@@ -519,7 +527,7 @@ class BaseDatabase:
         if identifier in self.db.show_validation_sets():
             raise Exception(f'validation set {identifier} already exists!')
 
-        data = self._select(select)
+        data = self.select(select)
         it = 0
         tmp = []
         for r in progress.progressbar(data):
@@ -582,11 +590,11 @@ class BaseDatabase:
         elif isinstance(query, Select):
             update_db = True
             if ids is None:
-                documents = list(self._select(query))
+                documents = list(self.select(query))
             else:
                 select = query.select_using_ids(ids)
                 select = select.copy(update={'raw': True})
-                documents = list(self._select(select))
+                documents = list(self.select(select))
                 documents = [Document(x) for x in documents]
         else:
             documents = query.documents
@@ -618,7 +626,7 @@ class BaseDatabase:
                 timeout = None
 
         def update_one(id, key, bytes):
-            return self._update(self.db.download_update(query.table, id, key, bytes))
+            return self.update(self.db.download_update(query.table, id, key, bytes))
 
         downloader = Downloader(
             uris=uris,

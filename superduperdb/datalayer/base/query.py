@@ -17,6 +17,7 @@ class Select(ABC):
     like: t.Optional[URIDocument]
     n: int
     outputs: t.Optional[URIDocument]
+    raw: bool = False
     similar_first: bool
     vector_index: t.Optional[str]
 

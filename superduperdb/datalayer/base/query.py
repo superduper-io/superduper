@@ -59,8 +59,10 @@ class Select(s.JSONable, ABC):
 @dataclass(frozen=False)
 class Insert(ABC):
     # must implement attribute/ property self.documents
-
     documents: t.List[Document]
+
+    refresh: bool = True
+    verbose: bool = True
 
     @property
     @abstractmethod
@@ -81,6 +83,9 @@ class Delete(ABC):
 
 
 class Update(ABC):
+    refresh: bool = True
+    verbose: bool = True
+
     @property
     @abstractmethod
     def select(self):

@@ -175,24 +175,20 @@ class BaseDatabase:
     def execute(
         self,
         query: Union[Select, Delete, Update, Insert],
-        refresh: bool = True,
-        verbose: bool = True,
     ):
         """
         Execute a query on the datalayer
 
         :param query: select, insert, delete, update,
-        :param refresh: refresh the computations if applicable
-        :param verbose: toggle to ``False`` to suppress output
         """
         if isinstance(query, Select):
             return self._select(query)
         elif isinstance(query, Delete):
             return self._delete(query)
         elif isinstance(query, Update):
-            return self._update(query, refresh=refresh, verbose=verbose)
+            return self._update(query)
         elif isinstance(query, Insert):
-            return self._insert(query, refresh=refresh, verbose=verbose)
+            return self._insert(query)
         else:
             raise TypeError(
                 f'Wrong type of {query}; '
@@ -637,7 +633,7 @@ class BaseDatabase:
         )
         return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
 
-    def _insert(self, insert: Insert, refresh=True, verbose=True):
+    def _insert(self, insert: Insert):
         for item in insert.documents:
             r = random.random()
             try:
@@ -647,10 +643,10 @@ class BaseDatabase:
             if '_fold' not in item.content:  # type: ignore
                 item['_fold'] = 'valid' if r < valid_probability else 'train'
         output = self.db.insert(insert)
-        if not refresh:  # pragma: no cover
+        if not insert.refresh:  # pragma: no cover
             return output, None
         task_graph = self._build_task_workflow(
-            insert.select_table, ids=output.inserted_ids, verbose=verbose
+            insert.select_table, ids=output.inserted_ids, verbose=insert.verbose
         )
         task_graph()
         return output, task_graph
@@ -827,13 +823,13 @@ class BaseDatabase:
             self.remove('learning_task', identifier, force=True)
             raise e
 
-    def _update(self, update: Update, refresh=True, verbose=True) -> t.Any:
-        if refresh and self.metadata.show_components('model'):
+    def _update(self, update: Update) -> t.Any:
+        if update.refresh and self.metadata.show_components('model'):
             ids = self.db.get_ids_from_select(update.select_ids)
         result = self.db.update(update)
-        if refresh and self.metadata.show_components('model'):
+        if update.refresh and self.metadata.show_components('model'):
             task_graph = self._build_task_workflow(
-                update.select, ids=ids, verbose=verbose
+                update.select, ids=ids, verbose=update.verbose
             )
             task_graph()
             return result, task_graph

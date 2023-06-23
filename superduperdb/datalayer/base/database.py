@@ -183,18 +183,66 @@ class BaseDatabase:
         """
         if isinstance(query, Select):
             return self._select(query)
-        elif isinstance(query, Delete):
+        if isinstance(query, Delete):
             return self._delete(query)
-        elif isinstance(query, Update):
+        if isinstance(query, Update):
             return self._update(query)
-        elif isinstance(query, Insert):
+        if isinstance(query, Insert):
             return self._insert(query)
+        raise TypeError(
+            f'Wrong type of {query}; '
+            f'Expected object of type {Union[Select, Delete, Update, Insert]}; '
+            f'Got {type(query)};'
+        )
+
+    def _delete(self, delete: Delete):
+        return self.db.delete(delete)
+
+    def _insert(self, insert: Insert):
+        for item in insert.documents:
+            r = random.random()
+            try:
+                valid_probability = self.metadata.get_metadata(key='valid_probability')
+            except TypeError:
+                valid_probability = 0.05  # TODO proper error handling
+            if '_fold' not in item.content:  # type: ignore
+                item['_fold'] = 'valid' if r < valid_probability else 'train'
+        output = self.db.insert(insert)
+        if not insert.refresh:  # pragma: no cover
+            return output, None
+        task_graph = self._build_task_workflow(
+            insert.select_table, ids=output.inserted_ids, verbose=insert.verbose
+        )
+        task_graph()
+        return output, task_graph
+
+    def _select(self, select: Select) -> List[Document]:
+        if select.like is not None:
+            if select.similar_first:
+                return self._select_similar_then_matches(select)
+            else:
+                return self._select_matches_then_similar(select)
         else:
-            raise TypeError(
-                f'Wrong type of {query}; '
-                f'Expected object of type {Union[Select, Delete, Update, Insert]}; '
-                f'Got {type(query)};'
+            if select.raw:
+                return self.db.get_raw_cursor(select)
+            else:
+                return self.db.get_cursor(
+                    select,
+                    features=select.features,
+                    types=self.types,
+                )
+
+    def _update(self, update: Update) -> t.Any:
+        if update.refresh and self.metadata.show_components('model'):
+            ids = self.db.get_ids_from_select(update.select_ids)
+        result = self.db.update(update)
+        if update.refresh and self.metadata.show_components('model'):
+            task_graph = self._build_task_workflow(
+                update.select, ids=ids, verbose=update.verbose
             )
+            task_graph()
+            return result, task_graph
+        return result
 
     def add(
         self,
@@ -483,9 +531,6 @@ class BaseDatabase:
         if tmp:
             self.db.insert_validation_data(tmp, identifier)
 
-    def _delete(self, delete: Delete):
-        return self.db.delete(delete)
-
     def _remove_component_version(
         self,
         variety: str,
@@ -633,24 +678,6 @@ class BaseDatabase:
         )
         return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
 
-    def _insert(self, insert: Insert):
-        for item in insert.documents:
-            r = random.random()
-            try:
-                valid_probability = self.metadata.get_metadata(key='valid_probability')
-            except TypeError:
-                valid_probability = 0.05  # TODO proper error handling
-            if '_fold' not in item.content:  # type: ignore
-                item['_fold'] = 'valid' if r < valid_probability else 'train'
-        output = self.db.insert(insert)
-        if not insert.refresh:  # pragma: no cover
-            return output, None
-        task_graph = self._build_task_workflow(
-            insert.select_table, ids=output.inserted_ids, verbose=insert.verbose
-        )
-        task_graph()
-        return output, task_graph
-
     @work
     def _apply_watcher(  # noqa: F811
         self,
@@ -725,22 +752,6 @@ class BaseDatabase:
         )
         self.artifact_store.delete_artifact(info['object'])
         self.metadata.update_object(identifier, 'model', 'object', file_id)
-
-    def _select(self, select: Select) -> List[Document]:
-        if select.like is not None:
-            if select.similar_first:
-                return self._select_similar_then_matches(select)
-            else:
-                return self._select_matches_then_similar(select)
-        else:
-            if select.raw:
-                return self.db.get_raw_cursor(select)
-            else:
-                return self.db.get_cursor(
-                    select,
-                    features=select.features,
-                    types=self.types,
-                )
 
     def _select_matches_then_similar(self, select: Select):
         if not select.is_trivial:
@@ -822,15 +833,3 @@ class BaseDatabase:
         except Exception as e:
             self.remove('learning_task', identifier, force=True)
             raise e
-
-    def _update(self, update: Update) -> t.Any:
-        if update.refresh and self.metadata.show_components('model'):
-            ids = self.db.get_ids_from_select(update.select_ids)
-        result = self.db.update(update)
-        if update.refresh and self.metadata.show_components('model'):
-            task_graph = self._build_task_workflow(
-                update.select, ids=ids, verbose=update.verbose
-            )
-            task_graph()
-            return result, task_graph
-        return result

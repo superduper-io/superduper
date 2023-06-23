@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from functools import cached_property
 from bson import ObjectId
 from pydantic import Field
-from superduperdb.core.documents import Document, URIDocument
+from superduperdb.core.documents import Document
+from superduperdb.core.suri import URIDocument
 from superduperdb.datalayer.base import query
 import superduperdb as s
 import typing as t

@@ -3,23 +3,7 @@ from superduperdb import JSONable
 from superduperdb.server.server import Server
 
 
-class BaseJSON(JSONable):
-    pass
-
-
-class SomeResult(JSONable):
-    pass
-
-
-class One(BaseJSON):
-    pass
-
-
-class Two(BaseJSON):
-    pass
-
-
-class Other(BaseJSON):
+class ContentResult(JSONable):
     pass
 
 
@@ -28,12 +12,8 @@ server = Server()
 
 class SomeDatabase:
     @server.register
-    def method_to_expose(self, one: One, two: Two) -> SomeResult:
-        return SomeResult()
-
-    @server.register
-    def method_two(self) -> Other:
-        return Other()
+    def read_content(self, artifact_key: str) -> ContentResult:
+        pass
 
 
 server.cfg.web_server.host = '0.0.0.0'

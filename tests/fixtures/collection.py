@@ -31,7 +31,7 @@ def empty(test_db: BaseDatabase):
 @pytest.fixture()
 def metric(empty):
     empty.add(PatK(1))
-    yield empty
+    yield PatK
     empty.remove('metric', 'p@1', force=True)
 
 

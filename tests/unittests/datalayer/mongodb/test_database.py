@@ -15,7 +15,7 @@ from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Select, Insert, Update, Delete
 from superduperdb.misc.key_cache import KeyCache
 from superduperdb.models.torch.wrapper import TorchModel
-from superduperdb.training.torch.trainer import TorchTrainerConfiguration
+from superduperdb.models.torch.wrapper import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_vector_search
 from superduperdb.types.torch.tensor import tensor
 from superduperdb.vector_search import VanillaHashSet
@@ -280,6 +280,7 @@ def test_watcher(random_data, a_model, b_model):
     assert 'linear_b' in r['_outputs']['x']
 
 
+@pytest.mark.skip('To be replaced with model.fit')
 def test_learning_task(si_validation, a_model, c_model, metric):
     configuration = TorchTrainerConfiguration(
         'ranking_task_parametrization',

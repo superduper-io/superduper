@@ -1,7 +1,8 @@
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from superduperdb.core.documents import Document, URIDocument
+from superduperdb.core.documents import Document
+from superduperdb.core.suri import URIDocument
 
 
 class Select(ABC):

@@ -258,12 +258,12 @@ def test_watcher(random_data, a_model, b_model):
         Insert(
             collection='documents',
             documents=[
-                Document({'x': t(torch.randn(32)), '_update': True}) for _ in range(5)
+                Document({'x': t(torch.randn(32)), 'update': True}) for _ in range(5)
             ],
         )
     )
     r = next(
-        random_data.execute(Select(collection='documents', filter={'_update': True}))
+        random_data.execute(Select(collection='documents', filter={'update': True}))
     )
     assert 'linear_a' in r['_outputs']['x']
 

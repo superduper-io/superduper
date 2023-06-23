@@ -142,9 +142,9 @@ class Downloader(BaseDownloader):
     """
 
     :param uris: list of uris/ file names to fetch
-    :param update_one: function to call to _insert data into table
-    :param ids: list of ids of rows/ documents to _update
-    :param keys: list of keys in rows/ documents to _insert to
+    :param update_one: function to call to insert data into table
+    :param ids: list of ids of rows/ documents to update
+    :param keys: list of keys in rows/ documents to insert to
     :param n_workers: number of multiprocessing workers
     :param raises: raises error ``True``/``False``
     :param headers: dictionary of request headers passed to``requests`` package

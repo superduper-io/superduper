@@ -98,7 +98,7 @@ class Delete(query.Delete):
 
 @dataclass(frozen=False)
 class Insert(query.Insert):
-    collection: str
+    collection: str = ''
     ordered: bool = True
     bypass_document_validation: bool = False
 

@@ -30,7 +30,6 @@ class Lookup(TransformerMixin):
 
 
 class TestPipeline:
-
     @pytest.fixture()
     def dictionary(self):
         yield ['apple', 'orange', 'banana', 'toast']
@@ -38,11 +37,7 @@ class TestPipeline:
     @pytest.fixture()
     def pipeline(self, dictionary):
         yield Pipeline(
-            'my-svc',
-            [
-                ('my-encoding', Lookup(dictionary)),
-                ('my-svc', SVC())
-            ]
+            'my-svc', [('my-encoding', Lookup(dictionary)), ('my-svc', SVC())]
         )
 
     @pytest.fixture()
@@ -51,10 +46,12 @@ class TestPipeline:
 
     @pytest.fixture()
     def data_in_db(self, empty, X, y):
-        empty.execute(Insert(
-            collection='documents',
-            documents=[Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
-        ))
+        empty.execute(
+            Insert(
+                collection='documents',
+                documents=[Document({'X': x, 'y': yy}) for x, yy in zip(X, y)],
+            )
+        )
         yield empty
 
     @pytest.fixture()
@@ -67,5 +64,6 @@ class TestPipeline:
         print(output)
 
     def test_fit_db(self, pipeline, data_in_db):
-        pipeline.fit('X', 'y', database=data_in_db, select=Select('documents'))
-
+        pipeline.fit(
+            'X', 'y', database=data_in_db, select=Select(collection='documents')
+        )

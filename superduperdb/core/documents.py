@@ -1,7 +1,5 @@
 from superduperdb.core.encoder import Encodable
-from superduperdb.misc.key_cache import KeyCache
 import dataclasses as dc
-import superduperdb as s
 import typing as t
 
 
@@ -66,20 +64,3 @@ class Document:
 
     def unpack(self):
         return self._unpack_datavars(self.content)
-
-
-DocumentCache = KeyCache[Document]
-
-
-class URIDocument(s.JSONable):
-    uri: str = ''
-
-    key_cache: t.ClassVar[DocumentCache] = DocumentCache()
-
-    def __call__(self) -> Document:
-        return self.key_cache.get(self.uri)
-
-    @classmethod
-    def add(cls, document: Document) -> 'URIDocument':
-        """Add a Document to the cache and return a URIDocument"""
-        return cls(uri=cls.key_cache.put(document))

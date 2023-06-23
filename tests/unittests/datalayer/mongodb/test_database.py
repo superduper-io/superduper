@@ -5,12 +5,14 @@ import torch
 import typing as t
 
 from superduperdb.core.base import Placeholder
-from superduperdb.core.documents import Document, DocumentCache, URIDocument
+from superduperdb.core.documents import Document
+from superduperdb.core.suri import URIDocument
 from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.learning_task import LearningTask
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Select, Insert, Update, Delete
+from superduperdb.misc.key_cache import KeyCache
 from superduperdb.models.torch.wrapper import SuperDuperModule
 from superduperdb.training.torch.trainer import TorchTrainerConfiguration
 from superduperdb.training.validation import validate_vector_search
@@ -118,7 +120,7 @@ def test_select_vanilla(random_data):
 def make_uri_document(**ka):
     # Create a new class each time so the caches don't interfere with each other
     class TestURIDocument(URIDocument):
-        key_cache: t.ClassVar[DocumentCache] = DocumentCache()
+        _cache: t.ClassVar[KeyCache[Document]] = KeyCache[Document]()
 
     return TestURIDocument.add(Document(ka))
 

@@ -1,12 +1,21 @@
 from threading import Lock
+import abc
 import dataclasses as dc
 import typing as t
 
 Entry = t.TypeVar('Entry')
 
 
+class Cache(abc.ABC):
+    def put(self, entry: t.Any) -> str:
+        raise NotImplementedError
+
+    def get(self, key: str) -> t.Any:
+        raise NotImplementedError
+
+
 @dc.dataclass
-class KeyCache(t.Generic[Entry]):
+class KeyCache(t.Generic[Entry], Cache):
     def put(self, entry: Entry) -> str:
         """Put an item into the cache, return a string key"""
         with self._lock:

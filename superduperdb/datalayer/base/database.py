@@ -164,7 +164,7 @@ class BaseDatabase:
         opts = self.metadata.get_component('model', model_identifier)
         out = model.predict(input.unpack(), **opts.get('predict_kwargs', {}))
         if model.encoder is not None:
-            out = model.encoder(out)
+            out = model.encoder(out)  # type: ignore
         return Document(out)
 
     def execute(self, query: ExecuteQuery) -> ExecuteResult:
@@ -576,12 +576,6 @@ class BaseDatabase:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
-        assert identifier in self.metadata.show_components(
-            'model'
-        ), f'model "{identifier}" doesn\'t exist to replace'
-        assert object.version in self.metadata.show_component_versions(
-            'model', identifier
-        )
 
         file_id = self.artifact_store.create_artifact(
             object,

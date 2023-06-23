@@ -5,16 +5,270 @@ from typing import Optional, Callable, Union, Dict, List
 
 import torch
 from torch.utils import data
+from torch.utils.data import DataLoader
 
-from superduperdb.core.base import Placeholder
+from superduperdb.core import Metric
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encoder, Encodable
-from superduperdb.core.model import Model
+from superduperdb.datalayer.base.database import BaseDatabase
+from superduperdb.datalayer.base.query import Select
 from superduperdb.misc import progress
+from superduperdb.core.model import Model, ModelEnsemble, TrainingConfiguration
+from superduperdb.misc.logger import logging
 from superduperdb.models.torch.utils import device_of, to_device, eval
+from superduperdb.training.query_dataset import QueryDataset
 
 
-class TorchPipeline:
+class TorchTrainerConfiguration(TrainingConfiguration):
+    def __init__(
+        self,
+        identifier,
+        objective,
+        loader_kwargs,
+        optimizer_cls=torch.optim.Adam,
+        optimizer_kwargs=None,
+        max_iterations=float('inf'),
+        no_improve_then_stop=5,
+        splitter=None,
+        download=False,
+        validation_interval=100,
+        watch='objective',
+        target_preprocessors=None,
+        **kwargs,
+    ):
+        super().__init__(
+            identifier,
+            loader_kwargs=loader_kwargs,
+            objective=objective,
+            optimizer_cls=optimizer_cls,
+            optimizer_kwargs=optimizer_kwargs or {},
+            no_improve_then_stop=no_improve_then_stop,
+            max_iterations=max_iterations,
+            splitter=splitter,
+            download=download,
+            validation_interval=validation_interval,
+            target_preprocessors=target_preprocessors or {},
+            watch=watch,
+            **kwargs,
+        )
+
+
+class Base(Model):
+    def __init__(
+        self,
+        object: Union[torch.nn.Module, torch.jit.ScriptModule],
+        identifier: str,
+        collate_fn: Optional[Callable] = None,
+        is_batch: Optional[Callable] = None,
+        encoder: Optional[Union[Encoder, str]] = None,
+        training_configuration: Optional[TorchTrainerConfiguration] = None,
+        training_select: Optional[Select] = None,
+        training_keys: Optional[List[str]] = None,
+        validation_sets: Optional[List[str]] = None,
+        num_directions: int = 2,
+    ):
+        super().__init__(
+            object=object,
+            identifier=identifier,
+            training_configuration=training_configuration,
+            training_keys=training_keys,
+            training_select=training_select,
+            encoder=encoder,
+        )
+        self.optimizers = None
+        self.collate_fn = collate_fn
+        self.is_batch = is_batch
+        self.num_directions = num_directions
+        self.validation_sets = validation_sets
+
+    @contextmanager
+    def evaluating(self):
+        raise NotImplementedError
+
+    def train(self):
+        raise NotImplementedError
+
+    def stopping_criterion(self, iteration):
+        max_iterations = self.training_configuration.max_iterations
+        no_improve_then_stop = self.training_configuration.no_improve_then_stop
+        if isinstance(max_iterations, int) and iteration >= max_iterations:
+            return True
+        if isinstance(no_improve_then_stop, int):
+            if self.training_configuration.watch == 'objective':
+                to_watch = [-x for x in self.metrics['objective']]
+            else:
+                to_watch = self.metrics[self.training_configuration.watch]
+
+            if max(to_watch[-no_improve_then_stop:]) < max(to_watch):
+                logging.info('early stopping triggered!')
+                return True
+        return False
+
+    def saving_criterion(self):
+        if self.training_configuration.watch == 'objective':
+            to_watch = [-x for x in self.metrics['objective']]
+        else:
+            to_watch = self.metrics[self.training_configuration.watch]
+        if all([to_watch[-1] >= x for x in to_watch[:-1]]):
+            return True
+
+    # TODO context manager for handling "stripping" on _replace_model, upsert=True
+    def fit(
+        self,
+        X: Optional[Union[List[str], str]] = None,
+        *targets,
+        select: Optional[Select] = None,
+        database: Optional[BaseDatabase] = None,
+        training_configuration: Optional[TorchTrainerConfiguration] = None,
+        validation_sets: Optional[List[str]] = None,
+        metrics: Optional[List[Metric]] = None,
+    ):
+        if training_configuration is not None:
+            self.training_configuration = training_configuration
+        if select is not None:
+            self.training_select = select
+        if validation_sets is not None:
+            self.validation_sets = validation_sets
+
+        self.training_keys = (X, *targets)
+
+        train_data, valid_data = self._get_data()
+        loader_kwargs = self.training_configuration.loader_kwargs
+        train_dataloader = DataLoader(train_data, **loader_kwargs)
+        valid_dataloader = DataLoader(valid_data, **loader_kwargs)
+
+        if self.optimizers is None:
+            self.optimizers = self.build_optimizers()
+
+        return self._fit_with_dataloaders(
+            train_dataloader,
+            valid_dataloader,
+            database=database,
+            validation_sets=validation_sets or (),
+        )
+
+    def preprocess(self, r):
+        raise NotImplementedError  # implemented in PyTorch wrapper and PyTorch pipeline
+
+    def log(self, **kwargs):
+        out = ''
+        for k, v in kwargs.items():
+            if isinstance(v, dict):
+                for kk, vv in v.items():
+                    out += f'{k}/{kk}: {vv}; '
+            else:
+                out += f'{k}: {v}; '
+        logging.info(out)
+
+    def train_forward(self, X, *targets):
+        if hasattr(self.object, 'train_forward'):
+            return self.object.train_forward(X, *targets)
+        else:
+            return [self.object(X), *targets]
+
+    def forward(self, X):
+        return self.object(X)
+
+    def take_step(self, batch):
+        if isinstance(self.training_keys[0], str):
+            batch = [batch[k] for k in self.training_keys]
+        else:
+            batch = [
+                [batch[k] for k in self.training_keys[0]],
+                *[batch[k] for k in self.training_keys[1:]],
+            ]
+        outputs = self.train_forward(*batch)
+        objective_value = self.training_configuration.objective(*outputs)
+        for opt in self.optimizers:
+            opt.zero_grad()
+        objective_value.backward()
+        for opt in self.optimizers:
+            opt.step()
+        return objective_value
+
+    def compute_validation_objective(self, valid_dataloader):
+        objective_values = []
+        with self.evaluating(), torch.no_grad():
+            for batch in valid_dataloader:
+                if isinstance(self.training_keys[0], str):
+                    batch = [batch[k] for k in self.training_keys]
+                else:
+                    batch = [
+                        [batch[k] for k in self.training_keys[0]],
+                        *[batch[k] for k in self.training_keys[1:]],
+                    ]
+                objective_values.append(
+                    self.training_configuration.objective(
+                        *self.train_forward(*batch)
+                    ).item()
+                )
+            return sum(objective_values) / len(objective_values)
+
+    def save(self, database: BaseDatabase):
+        database._replace_model(
+            self.identifier, self, upsert=True
+        )  # TODO _replace_model is redundant
+
+    def compute_metrics(self, validation_set, database):
+        validation_set = database.load('dataset', validation_set)
+        parameters = inspect.signature(self.compute_metrics).parameters
+        compute_metrics_kwargs = {
+            k: getattr(self, k) for k in parameters if hasattr(self, k)
+        }
+        return self.compute_metrics(validation_set, **compute_metrics_kwargs)
+
+    def _fit_with_dataloaders(
+        self,
+        train_dataloader: DataLoader,
+        valid_dataloader: DataLoader,
+        database: BaseDatabase,
+        validation_sets: List[str],
+    ):
+        self.train()
+        iteration = 0
+        while True:
+            for batch in train_dataloader:
+                train_objective = self.take_step(batch)
+                self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
+                if iteration % self.training_configuration.validation_interval == 0:
+                    valid_loss = self.compute_validation_objective(valid_dataloader)
+                    all_metrics = {}
+                    for vs in validation_sets:
+                        metrics = self.compute_metrics(vs, database)
+                        metrics = {f'{vs}/{k}': metrics[k] for k in metrics}
+                        all_metrics.update(metrics)
+                    all_metrics.update({'objective': valid_loss})
+                    self.append_metrics(all_metrics)
+                    self.log(fold='VALID', iteration=iteration, **all_metrics)
+                    if self.saving_criterion():
+                        self.save(database)
+                    stop = self.stopping_criterion(iteration)
+                    if stop:
+                        return
+                iteration += 1
+
+    def _get_data(self):
+        preprocessors = {self.training_keys[0]: self.preprocess}
+        for k in self.training_keys:
+            preprocessors[k] = self.training_configuration.target_preprocessors.get(
+                k, lambda x: x
+            )
+        train_data = QueryDataset(
+            select=self.training_select,
+            keys=self.training_keys,
+            fold='train',
+            transform=lambda r: {k: preprocessors[k](r[k]) for k in self.training_keys},
+        )
+        valid_data = QueryDataset(
+            select=self.training_select,
+            keys=self.training_keys,
+            fold='valid',
+            transform=lambda r: {k: preprocessors[k](r[k]) for k in self.training_keys},
+        )
+        return train_data, valid_data
+
+
+class TorchPipeline(Base):
     """
     Sklearn style PyTorch pipeline.
 
@@ -30,14 +284,41 @@ class TorchPipeline:
         collate_fn: Optional[Callable] = None,
         is_batch: Optional[Callable] = None,
         encoder: Optional[Union[Encoder, str]] = None,
+        training_configuration: Optional[TorchTrainerConfiguration] = None,
+        training_select: Optional[Select] = None,
+        training_keys: Optional[List[str]] = None,
+        num_directions: int = 2,
     ):
         self.steps = steps
-        self.identifier = identifier
-        self.collate_fn = collate_fn
         self._forward_sequential = None
         self.is_batch = is_batch
-        self.type = (
-            encoder if isinstance(encoder, Encoder) else Placeholder('type', encoder)
+        forward_steps = self.steps[self._forward_mark : self._post_mark]
+        object = torch.nn.Sequential(*[s[1] for s in forward_steps])
+        super().__init__(
+            identifier=identifier,
+            object=object,
+            training_configuration=training_configuration,
+            training_select=training_select,
+            training_keys=training_keys,
+            encoder=encoder,
+            collate_fn=collate_fn,
+            is_batch=is_batch,
+            num_directions=num_directions,
+        )
+
+    @contextmanager
+    def evaluating(self):
+        yield from eval(self.object)
+
+    def train(self):
+        return self.object.train()
+
+    def build_optimizers(self):
+        return (
+            self.training_configuration.optimizer_cls(
+                self.object.parameters(),
+                **self.training_configuration.optimizer_kwargs,
+            ),
         )
 
     def __repr__(self):
@@ -93,9 +374,6 @@ class TorchPipeline:
             )
         return self._forward_sequential
 
-    def forward(self, x):
-        return self._forward_sequential(x)
-
     @property
     def postprocess_pipeline(self):
         return TorchPipeline(
@@ -113,7 +391,10 @@ class TorchPipeline:
                 x = transform(x)
         return x
 
-    def predict(self, x, **kwargs):
+    # TODO move to Base class
+    def predict(
+        self, x, **kwargs
+    ):  # TODO include submodel flag predict(X, submodel='my_model')
         if not self._test_if_batch(x):
             return self._predict_one(x, **kwargs)
         if self.preprocess_pipeline.steps:
@@ -186,18 +467,21 @@ class TorchPipeline:
             yield from s[1].parameters()
 
 
-class TorchModel(Model):
-    def __init__(
-        self,
-        object,
-        identifier,
-        encoder=None,
-        collate_fn: Optional[Callable] = None,
-        num_directions: Optional[Union[Dict, List, int]] = 2,
-    ):
-        Model.__init__(self, object, identifier, encoder=encoder)
-        self.collate_fn = collate_fn
-        self.num_directions = num_directions
+class TorchModel(Base):
+    def build_optimizers(self):
+        return (
+            self.training_configuration.optimizer_cls(
+                self.object.parameters(),
+                **self.training_configuration.optimizer_kwargs,
+            ),
+        )
+
+    @contextmanager
+    def evaluating(self):
+        yield eval(self)
+
+    def train(self):
+        return self.object.train()
 
     def parameters(self):
         return self.object.parameters()
@@ -263,10 +547,19 @@ class TorchModel(Model):
                 tmp = self.object(batch)
                 tmp = to_device(tmp, 'cpu')
                 tmp = unpack_batch(tmp)
-                if hasattr(self.object, 'postprocess'):
-                    tmp = list(map(self.object.postprocess, tmp))
+                tmp = list(map(self.postprocess, tmp))
                 out.extend(tmp)
             return out
+
+    def preprocess(self, r):
+        if hasattr(self.object, 'preprocess'):
+            return self.object.preprocess(r)
+        return r
+
+    def postprocess(self, r):
+        if hasattr(self.object, 'postprocess'):
+            return self.object.postprocess(r)
+        return r
 
 
 def test_if_batch(x, num_directions: Union[Dict, int]):
@@ -389,3 +682,92 @@ def create_batch(args):
     raise TypeError(
         'only tensors and tuples of tensors recursively supported...'
     )  # pragma: no cover
+
+
+class TorchModelEnsemble(Base, ModelEnsemble):
+    def __init__(
+        self,
+        models: List[Base],
+        identifier: str,
+        collate_fn: Optional[Callable] = None,
+        is_batch: Optional[Callable] = None,
+        encoder: Optional[Union[Encoder, str]] = None,
+        training_configuration: Optional[TorchTrainerConfiguration] = None,
+        training_select: Optional[Select] = None,
+        training_keys: Optional[List[str]] = None,
+        num_directions: int = 2,
+    ):
+        Base.__init__(
+            self,
+            object=None,
+            identifier=identifier,
+            collate_fn=collate_fn,
+            is_batch=is_batch,
+            encoder=encoder,
+            training_configuration=training_configuration,
+            training_select=training_select,
+            training_keys=training_keys,
+            num_directions=num_directions,
+        )
+        ModelEnsemble.__init__(self, models)
+
+    def train_preprocess(self, r):
+        out = {}
+        for i, k in enumerate(self.training_keys[0]):
+            model_id = self._model_ids[i]
+            out[k] = getattr(self, model_id).preprocess(r[k])
+        for k in self.training_keys[1:]:
+            preprocessor = self.training_configuration.target_preprocessors.get(
+                k, lambda x: x
+            )
+            out[k] = preprocessor(r[k])
+        return out
+
+    def build_optimizers(self):
+        optimizers = []
+        for m in self._model_ids:
+            optimizers.append(
+                self.training_configuration.optimizer_cls(
+                    getattr(self, m).object.parameters(),
+                    **self.training_configuration.optimizer_kwargs,
+                )
+            )
+        return optimizers
+
+    @contextmanager
+    def evaluating(self):
+        was_training = getattr(self, self._model_ids[0]).object.training
+        try:
+            for m in self._model_ids:
+                getattr(self, m).object.eval()
+            yield
+        finally:
+            if was_training:
+                for m in self._model_ids:
+                    getattr(self, m).object.train()
+
+    def train(self):
+        for m in self._model_ids:
+            getattr(self, m).train()
+
+    def _get_data(self):
+        train_data = QueryDataset(
+            select=self.training_select,
+            keys=[*self.training_keys[0], *self.training_keys[1:]],
+            fold='train',
+            transform=self.train_preprocess,
+        )
+        valid_data = QueryDataset(
+            select=self.training_select,
+            keys=[*self.training_keys[0], *self.training_keys[1:]],
+            fold='valid',
+            transform=self.train_preprocess,
+        )
+        return train_data, valid_data
+
+    def train_forward(self, X, *targets):
+        out = []
+        for i, k in enumerate(self.training_keys[0]):
+            submodel = getattr(self, self._model_ids[i])
+            out.append(submodel.object(X[i]))
+        return out, *targets

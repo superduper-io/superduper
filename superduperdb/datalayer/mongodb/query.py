@@ -1,30 +1,15 @@
 from dataclasses import dataclass
 from functools import cached_property
 from bson import ObjectId
-from pydantic import Field
 from superduperdb.core.documents import Document
-from superduperdb.core.suri import URIDocument
 from superduperdb.datalayer.base import query
-import superduperdb as s
 import typing as t
 
 JSON = t.Union[None, bool, float, int, t.Dict, t.List, str]
 
 
-class Select(s.JSONable, query.Select):
+class Select(query.Select):
     collection: str
-    download: bool = False
-    features: t.Optional[t.Dict[str, str]] = None
-    filter: t.Optional[t.Dict] = None
-    kwargs: t.Dict = Field(default_factory=dict)
-    like: t.Optional[URIDocument] = None
-    n: int = 100
-    one: bool = False
-    outputs: t.Optional[URIDocument] = None
-    projection: t.Optional[t.Dict[str, int]] = None
-    raw: bool = False
-    similar_first: bool = False
-    vector_index: t.Optional[str] = None
 
     def add_fold(self, fold: str) -> 'Select':
         return Select(

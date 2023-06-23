@@ -54,7 +54,7 @@ def random_data_factory(float_tensors_32):
                 )
             )
         float_tensors_32.execute(
-            Insert(collection='documents', documents=data), refresh=False
+            Insert(collection='documents', documents=data, refresh=False)
         )
         return float_tensors_32
 
@@ -74,7 +74,7 @@ def random_arrays(arrays):
         x = numpy.random.randn(32).astype(numpy.float32)
         y = int(random.random() > 0.5)
         data.append(Document({'x': float_array(x), 'y': y}))
-    arrays.execute(Insert(collection='documents', documents=data), refresh=False)
+    arrays.execute(Insert(collection='documents', documents=data, refresh=False))
     yield arrays
     arrays.execute(Delete('documents', {}))
 

@@ -91,18 +91,16 @@ class MongoDB(HostPort):
 
 
 class DataLayer(JSONable):
-    data_backend_name: str = 'documents'
-    data_backend_cls: str = 'mongodb'
-    data_backend_connection: str = 'pymongo'
-    data_backend_kwargs: t.Dict = Factory(MongoDB)
-    metadata_cls: str = 'mongodb'
-    metadata_kwargs: t.Dict = Factory(MongoDB)
-    metadata_connection: str = 'pymongo'
-    metadata_name: str = 'documents'
-    artifact_store_cls: str = 'mongodb'
-    artifact_store_kwargs: t.Dict = Factory(MongoDB)
-    artifact_store_connection: str = 'pymongo'
-    artifact_store_name: str = '_filesystem:documents'
+    cls: str = 'mongodb'
+    connection: str = 'pymongo'
+    kwargs: t.Dict = Factory(MongoDB)
+    name: str = 'documents'
+
+
+class DataLayers(JSONable):
+    artifact: DataLayer = Factory(lambda: DataLayer(name='_filesystem:documents'))
+    data_backend: DataLayer = Factory(DataLayer)
+    metadata: DataLayer = Factory(DataLayer)
 
 
 class Notebook(JSONable):
@@ -162,7 +160,7 @@ class Config(JSONable):
     dask: Dask = Factory(Dask)
     logging: Logging = Factory(Logging)
     model_server: ModelServer = Factory(ModelServer)
-    datalayer: DataLayer = Factory(DataLayer)
+    data_layers: DataLayers = Factory(DataLayers)
     notebook: Notebook = Factory(Notebook)
     ray: Ray = Factory(Ray)
     remote: bool = False

@@ -5,45 +5,21 @@ from superduperdb.datalayer.base.backends import (
     artifact_stores,
     connections as default_connections,
 )
+from superduperdb.datalayer.base.database import BaseDatabase
 
 
-def build_datalayer(**connections):
-    from superduperdb.datalayer.base.database import BaseDatabase
+def build_datalayer(**connections) -> BaseDatabase:
+    def build(cfg, stores):
+        cls = stores[cfg.cls]
+        if connections:
+            connection = connections[cfg.connection]
+        else:
+            connection = default_connections[cfg.connection](**cfg.kwargs)
 
-    data_backend_cls = data_backends[CFG.datalayer.data_backend_cls]
-    metadata_store_cls = metadata_stores[CFG.datalayer.metadata_cls]
-    artifact_store_cls = artifact_stores[CFG.datalayer.artifact_store_cls]
-
-    if connections:
-        data_backend_connection = connections[CFG.datalayer.data_backend_connection]
-        metadata_store_connection = connections[CFG.datalayer.metadata_connection]
-        artifact_store_connection = connections[CFG.datalayer.artifact_store_connection]
-    else:
-        data_backend_connection = default_connections[
-            CFG.datalayer.data_backend_connection
-        ](**CFG.datalayer.data_backend_kwargs)
-        metadata_store_connection = default_connections[
-            CFG.datalayer.metadata_connection
-        ](**CFG.datalayer.metadata_kwargs)
-        artifact_store_connection = default_connections[
-            CFG.datalayer.artifact_store_connection
-        ](**CFG.datalayer.artifact_store_kwargs)
-
-    data_backend = data_backend_cls(
-        name=CFG.datalayer.data_backend_name,
-        conn=data_backend_connection,
-    )
-    artifact_store = artifact_store_cls(
-        name=CFG.datalayer.artifact_store_name,
-        conn=artifact_store_connection,
-    )
-    metadata = metadata_store_cls(
-        name=CFG.datalayer.metadata_name,
-        conn=metadata_store_connection,
-    )
+        return cls(name=cfg.name, conn=connection)
 
     return BaseDatabase(
-        data_backend,
-        metadata=metadata,
-        artifact_store=artifact_store,
+        artifact_store=build(CFG.data_layers.artifact, artifact_stores),
+        db=build(CFG.data_layers.data_backend, data_backends),
+        metadata=build(CFG.data_layers.metadata, metadata_stores),
     )

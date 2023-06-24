@@ -20,6 +20,7 @@ class Registry:
     entries: t.Dict[str, RegistryEntry] = dc.field(default_factory=dict)
     Parameter: t.Optional[t.Type] = None
     Result: t.Optional[t.Type] = None
+    strict: bool = False
 
     def register(self, method: t.Callable) -> None:
         """
@@ -38,12 +39,15 @@ class Registry:
         parameter_types = tuple(value.annotation for _, value in params)
         result_type = sig.return_annotation
 
-        def is_model(t, parent=s.JSONable):
-            return t is parent or any(is_model(c, parent) for c in t.__bases__)
+        if self.strict:
 
-        types = set(parameter_types + (result_type,))
-        if non_models := [t for t in types if not is_model(t)]:
-            raise NotJSONableError(f'Not serializable: {non_models}')
+            def is_model(t, parent=s.JSONable):
+                bases = getattr(t, '__bases__', ())
+                return t is parent or any(is_model(c, parent) for c in bases)
+
+            types = set(parameter_types + (result_type,))
+            if non_models := [t for t in types if not is_model(t)]:
+                raise NotJSONableError(f'Not serializable: {non_models}')
 
         def unite(a, b):
             return b if a is None else t.Union[a, b]

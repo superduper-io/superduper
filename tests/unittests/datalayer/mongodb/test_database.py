@@ -118,12 +118,12 @@ def test_select_vanilla(random_data):
     print(r)
 
 
-def make_uri_document(**ka):
+def make_uri_document(**ka) -> URIDocument:
     # Create a new class each time so the caches don't interfere with each other
     class TestURIDocument(URIDocument):
         _cache: t.ClassVar[KeyCache[Document]] = KeyCache[Document]()
 
-    return TestURIDocument.add(Document(ka))
+    return TestURIDocument.make(Document(ka))
 
 
 def test_select(with_vector_index):

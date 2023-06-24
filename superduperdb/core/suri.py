@@ -15,7 +15,7 @@ class SURI(s.JSONable, t.Generic[T], abc.ABC):
         return self._cache.get(self.uri)
 
     @classmethod
-    def add(cls, item: T) -> t.Any:
+    def make(cls, item: T) -> t.Any:
         """Add a Document to the cache and return the SURI"""
         return cls(uri=cls._cache.put(item))
 

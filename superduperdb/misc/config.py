@@ -93,7 +93,7 @@ class MongoDB(HostPort):
 class DataLayer(JSONable):
     cls: str = 'mongodb'
     connection: str = 'pymongo'
-    kwargs: t.Dict = Factory(MongoDB)
+    kwargs: t.Dict = Factory(lambda: MongoDB().dict())
     name: str = 'documents'
 
 

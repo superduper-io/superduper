@@ -1,24 +1,28 @@
 from .registry import NotJSONableError, Registry
 from enum import Enum
 from fastapi import FastAPI, HTTPException, Response, UploadFile
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from functools import cached_property
 from http import HTTPStatus as status
-from uvicorn import run
+from pathlib import Path
 import dataclasses as dc
 import fastapi
 import superduperdb as s
 import typing as t
+import uvicorn
 
 MEDIA_TYPE = 'application/octet-stream'
+HERE = Path(__file__).parent
+FAVICON = HERE / 'favicon.ico'
+INDEX_HTML = Path(__file__).parent / 'index.html'
 
 
 @dc.dataclass
 class Server:
     cfg: s.config.Server = dc.field(default_factory=s.CFG.server.deepcopy)
     stats: t.Dict = dc.field(default_factory=dict)
-    artifact_store: t.Dict = dc.field(default_factory=dict)
-    # TODO: this is a non-thread-safe proof of concept
+    artifact_store: t.Dict = dc.field(default_factory=dict)  # TODO: Use URIDocument
+    count: int = 0
 
     @cached_property
     def app(self) -> FastAPI:
@@ -34,10 +38,9 @@ class Server:
             self.registry.register(result)
         return result
 
-    def run(self, obj: t.Any) -> t.NoReturn:
+    def run(self, obj: t.Any) -> None:
         self.add_endpoints(obj)
-        run(self.app, **self.cfg.web_server.dict())
-        assert False, 'We never get here'
+        uvicorn.run(self.app, **self.cfg.web_server.dict())
 
     def auto_register(self, obj: t.Any) -> None:
         for k, v in vars(obj.__class__).items():
@@ -47,30 +50,30 @@ class Server:
                 except NotJSONableError:
                     pass
 
-    def auto_run(self, obj: t.Any) -> t.NoReturn:
-        self.auto_register(obj)
-        self.run(obj)
-
     def add_endpoints(self, obj: t.Any):
-        count = 0
+        self.count = 0
 
-        @self.app.get('/', response_class=PlainTextResponse)
-        def root() -> str:
-            return self.cfg.fastapi.title
+        @self.app.get('/')
+        def root():
+            return FileResponse(INDEX_HTML)
 
-        count += 1
+        self.count += 1
 
-        @self.app.get('/health', response_class=PlainTextResponse)
-        def health() -> str:
-            return 'ok'
+        @self.app.get('/health')
+        def health():
+            return PlainTextResponse('ok')
 
-        count += 1
+        self.count += 1
 
         @self.app.get('/stats')
-        def stats() -> t.Dict[str, int]:
-            return self.stats
+        def stats() -> t.Dict[str, t.Any]:
+            return dict(self.stats, perhaps='redoc makes this pointless')
 
-        count += 1
+        self.count += 1
+
+        @self.app.get('/favicon.ico', include_in_schema=False)
+        def favicon():
+            return FileResponse(FAVICON)
 
         @self.app.get('/download/{artifact_key}', response_class=Response)
         def download(artifact_key: str) -> Response:
@@ -91,7 +94,7 @@ class Server:
                 content=content, status_code=status.OK, media_type=MEDIA_TYPE
             )
 
-        count += 1
+        self.count += 1
 
         @self.app.post('/upload/{artifact_key}')
         async def upload(file: UploadFile):
@@ -101,29 +104,26 @@ class Server:
             action = 'replaced' if exists else 'created'
             return {action: file.filename}
 
-        count += 1
+        self.count += 1
 
         for method_name in self.registry.entries:
             method = getattr(obj, method_name)
             self.app.post('/' + method_name)(method)
 
-            count += 1
+            self.count += 1
 
+    def add_execute(self, obj: t.Any):
         # TODO: unfortunately, mypy won't accept these computed types
         # even though FastAPI has no issue with them.
 
         methods = sorted((e, e) for e in self.registry.entries)
         Method = Enum('Method', methods)  # type: ignore
-        Parameter = self.registry.Parameter
+        Args = t.List[self.registry.Parameter]  # type: ignore
         Result = self.registry.Result
 
         @self.app.post('/execute')
-        def execute(
-            method: Method,  # type: ignore
-            args: t.List[Parameter] = (),  # type: ignore
-        ) -> Result:  # type: ignore
+        def execute(method: Method, args: Args = ()) -> Result:  # type: ignore
             return self.registry.execute(obj, method.value, args)
 
-        count += 1
-
-        print(count, 'endpoints added')
+        self.count += 1
+        print(self.count, 'endpoints added')

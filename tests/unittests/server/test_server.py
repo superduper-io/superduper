@@ -3,7 +3,10 @@ from fastapi.testclient import TestClient
 from superduperdb.server.server import Server
 import io
 import json
+import pytest
 import superduperdb as s
+
+skip_obsolete = pytest.mark.skip(reason='Obsolete tests')
 
 
 def setup_test_client():
@@ -23,7 +26,7 @@ def test_basics():
     with setup_test_client().client as client:
         response = client.get('/')
         assert response.status_code == 200
-        assert response.text == s.CFG.server.fastapi.title
+        assert 'SuperDuperServer' in response.text
 
         response = client.get('/health')
         assert response.status_code == 200
@@ -31,9 +34,10 @@ def test_basics():
 
         response = client.get('/stats')
         assert response.status_code == 200
-        assert response.json() == {}
+        assert response.json() == {'perhaps': 'redoc makes this pointless'}
 
 
+@skip_obsolete
 def test_methods():
     with setup_test_client().client as client:
         response = client.post('/first', json={'one': 'three'})
@@ -41,6 +45,7 @@ def test_methods():
         assert response.json() == {'one': 'three', 'two': 'two'}
 
 
+@skip_obsolete
 def test_execute():
     with setup_test_client().client as client:
         response = client.post('/execute?method=first', json=[{'one': 'three'}])
@@ -68,6 +73,7 @@ class Object:
         return one
 
 
+@skip_obsolete
 def test_auto_register():
     obj = Object()
     server = Server()

@@ -26,7 +26,7 @@ from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import ArgumentDefaultDict
 from superduperdb.vector_search.base import VectorDatabase
-from superduperdb.core import components
+from superduperdb.core.components import components
 
 # TODO:
 # This global variable is a temporary solution to make VectorDatabase available

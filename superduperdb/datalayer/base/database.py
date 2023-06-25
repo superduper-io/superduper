@@ -17,7 +17,7 @@ from .query import Insert, Select, Delete, Update
 from superduperdb import CFG
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
-from superduperdb.core.base import Component, strip
+from superduperdb.core.base import Component
 from superduperdb.core.documents import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.learning_task import LearningTask
@@ -473,29 +473,26 @@ class BaseDatabase:
             if p.version is None:
                 p.version = self.metadata.get_latest_version(p.variety, p.identifier)
 
-        print('Stripping sub-components to references')
-        strip(object)
+        with object.saving():
+            serializer_kwargs = serializer_kwargs or {}
+            file_id, sha1 = self.artifact_store.create_artifact(
+                object,
+                serializer=serializer,
+                serializer_kwargs=serializer_kwargs,
+            )
+            self.metadata.create_component(
+                {
+                    **object.asdict(),
+                    'object': file_id,
+                    'variety': object.variety,
+                    'version': version,
+                    'sha1': sha1,
+                }
+            )
+            if parent is not None:
+                self.metadata.create_parent_child(parent, object.unique_id)
+            logging.info(f'Created {object.unique_id}')
 
-        serializer_kwargs = serializer_kwargs or {}
-        file_id, sha1 = self.artifact_store.create_artifact(
-            object,
-            serializer=serializer,
-            serializer_kwargs=serializer_kwargs,
-        )
-        self.metadata.create_component(
-            {
-                **object.asdict(),
-                'object': file_id,
-                'variety': object.variety,
-                'version': version,
-                'sha1': sha1,
-            }
-        )
-        if parent is not None:
-            self.metadata.create_parent_child(parent, object.unique_id)
-        logging.info(f'Created {object.unique_id}')
-
-        object.repopulate(self)
         return object.schedule_jobs(self)
 
     def _create_plan(self):

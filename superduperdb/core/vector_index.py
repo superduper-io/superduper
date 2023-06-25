@@ -222,8 +222,9 @@ class VectorIndex(Component):
         models = [database.models[m] for m in models]
         if isinstance(validation_data, str):
             validation_data = database.load('dataset', validation_data)
+        unpacked = [r.unpack() for r in validation_data.data]  # type: ignore[union-attr]
         return validate_vector_search(
-            validation_data=validation_data.data,  # type: ignore[union-attr]
+            validation_data=unpacked,
             models=models,
             keys=keys,
             metrics=metrics,

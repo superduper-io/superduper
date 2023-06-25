@@ -1,7 +1,9 @@
 # ruff: noqa: F401, F811
 import torch
 
+from superduperdb.core import Metric
 from superduperdb.datalayer.mongodb.query import Select
+from superduperdb.metrics.classification import compute_classification_metrics
 from superduperdb.models.torch.wrapper import (
     TorchPipeline,
     TorchModel,
@@ -79,7 +81,11 @@ def my_loss(X, y):
     )
 
 
-def test_fit(random_data):
+def acc(x, y):
+    return x == y
+
+
+def test_fit(random_data, si_validation):
     m = TorchModel(
         torch.nn.Linear(32, 1),
         'test',
@@ -90,9 +96,19 @@ def test_fit(random_data):
             loader_kwargs={'batch_size': 10},
             max_iterations=100,
             validation_interval=10,
+            compute_metrics=compute_classification_metrics,
         ),
+        postprocess=lambda x: int(torch.sigmoid(x).item() > 0.5),
     )
-    m.fit('x', 'y', database=random_data, select=Select(collection='documents'))
+    m.fit(
+        'x',
+        'y',
+        database=random_data,
+        select=Select(collection='documents'),
+        metrics=[Metric(identifier='acc', object=acc)],
+        validation_sets=['my_valid'],
+        serializer='dill',
+    )
 
 
 def ranking_loss(X):
@@ -103,9 +119,6 @@ def ranking_loss(X):
     return -torch.nn.functional.log_softmax(similarities, dim=1).diag().mean()
 
 
-# TODO bug: if torch.float32[16] is given as string, it doesn't raise error
-#  on repoopulate
-# TODO no computation of metrics...
 def test_ensemble(si_validation, metric):
     encoder = tensor(torch.float, shape=(16,))
     a_model = TorchModel(torch.nn.Linear(32, 16), 'linear_a', encoder=encoder)
@@ -133,7 +146,6 @@ def test_ensemble(si_validation, metric):
         identifier='my_ranking_ensemble',
     )
 
-    # TODO fix up the metrics once we have the dataset feature merged
     m.fit(
         ['x', 'z'],
         training_configuration=config,

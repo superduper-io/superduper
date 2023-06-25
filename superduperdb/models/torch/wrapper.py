@@ -66,6 +66,7 @@ class Base(Model):
         training_keys: Optional[List[str]] = None,
         validation_sets: Optional[List[str]] = None,
         num_directions: int = 2,
+        metrics: Optional[List[Metric]] = None,
     ):
         super().__init__(
             object=object,
@@ -74,6 +75,7 @@ class Base(Model):
             training_keys=training_keys,
             training_select=training_select,
             encoder=encoder,
+            metrics=metrics,
         )
         self.optimizers = None
         self.collate_fn = collate_fn
@@ -95,9 +97,9 @@ class Base(Model):
             return True
         if isinstance(no_improve_then_stop, int):
             if self.training_configuration.watch == 'objective':
-                to_watch = [-x for x in self.metrics['objective']]
+                to_watch = [-x for x in self.metric_values['objective']]
             else:
-                to_watch = self.metrics[self.training_configuration.watch]
+                to_watch = self.metric_values[self.training_configuration.watch]
 
             if max(to_watch[-no_improve_then_stop:]) < max(to_watch):
                 logging.info('early stopping triggered!')
@@ -106,13 +108,12 @@ class Base(Model):
 
     def saving_criterion(self):
         if self.training_configuration.watch == 'objective':
-            to_watch = [-x for x in self.metrics['objective']]
+            to_watch = [-x for x in self.metric_values['objective']]
         else:
-            to_watch = self.metrics[self.training_configuration.watch]
+            to_watch = self.metric_values[self.training_configuration.watch]
         if all([to_watch[-1] >= x for x in to_watch[:-1]]):
             return True
 
-    # TODO context manager for handling "stripping" on _replace_model, upsert=True
     def fit(
         self,
         X: Optional[Union[List[str], str]] = None,
@@ -122,6 +123,7 @@ class Base(Model):
         training_configuration: Optional[TorchTrainerConfiguration] = None,
         validation_sets: Optional[List[str]] = None,
         metrics: Optional[List[Metric]] = None,
+        serializer: str = 'pickle',
     ):
         if training_configuration is not None:
             self.training_configuration = training_configuration
@@ -129,6 +131,8 @@ class Base(Model):
             self.training_select = select
         if validation_sets is not None:
             self.validation_sets = validation_sets
+        if metrics is not None:
+            self.metrics = metrics
 
         self.training_keys = (X, *targets)
 
@@ -145,6 +149,7 @@ class Base(Model):
             valid_dataloader,
             database=database,
             validation_sets=validation_sets or (),
+            serializer=serializer,  # TODO - add serializer to __init__ method of Model
         )
 
     def preprocess(self, r):
@@ -204,18 +209,23 @@ class Base(Model):
                 )
             return sum(objective_values) / len(objective_values)
 
-    def save(self, database: BaseDatabase):
+    def save(self, database: BaseDatabase, serializer: str = 'pickle'):
         database._replace_model(
-            self.identifier, self, upsert=True
+            self.identifier,
+            self,
+            upsert=True,
+            serializer=serializer,
         )  # TODO _replace_model is redundant
 
     def compute_metrics(self, validation_set, database):
         validation_set = database.load('dataset', validation_set)
-        parameters = inspect.signature(self.compute_metrics).parameters
-        compute_metrics_kwargs = {
-            k: getattr(self, k) for k in parameters if hasattr(self, k)
-        }
-        return self.compute_metrics(validation_set, **compute_metrics_kwargs)
+        validation_set = [r.unpack() for r in validation_set.data]
+        return self.training_configuration.compute_metrics(
+            validation_set,
+            metrics=self.metrics,
+            training_keys=self.training_keys,
+            model=self,
+        )
 
     def _fit_with_dataloaders(
         self,
@@ -223,6 +233,7 @@ class Base(Model):
         valid_dataloader: DataLoader,
         database: BaseDatabase,
         validation_sets: List[str],
+        serializer: str = 'pickle',
     ):
         self.train()
         iteration = 0
@@ -241,7 +252,7 @@ class Base(Model):
                     self.append_metrics(all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion():
-                        self.save(database)
+                        self.save(database, serializer)
                     stop = self.stopping_criterion(iteration)
                     if stop:
                         return
@@ -288,6 +299,7 @@ class TorchPipeline(Base):
         training_select: Optional[Select] = None,
         training_keys: Optional[List[str]] = None,
         num_directions: int = 2,
+        metrics: Optional[Union[List[Metric], List[str]]] = None,
     ):
         self.steps = steps
         self._forward_sequential = None
@@ -304,6 +316,7 @@ class TorchPipeline(Base):
             collate_fn=collate_fn,
             is_batch=is_batch,
             num_directions=num_directions,
+            metrics=metrics,
         )
 
     @contextmanager
@@ -468,6 +481,52 @@ class TorchPipeline(Base):
 
 
 class TorchModel(Base):
+    def __init__(
+        self,
+        object: Union[torch.nn.Module, torch.jit.ScriptModule],
+        identifier: str,
+        collate_fn: Optional[Callable] = None,
+        is_batch: Optional[Callable] = None,
+        encoder: Optional[Union[Encoder, str]] = None,
+        training_configuration: Optional[TorchTrainerConfiguration] = None,
+        training_select: Optional[Select] = None,
+        training_keys: Optional[List[str]] = None,
+        validation_sets: Optional[List[str]] = None,
+        num_directions: int = 2,
+        metrics: Optional[List[Metric]] = None,
+        preprocess: Optional[Callable] = None,
+        postprocess: Optional[Callable] = None,
+    ):
+        super().__init__(
+            object=object,
+            identifier=identifier,
+            collate_fn=collate_fn,
+            is_batch=is_batch,
+            encoder=encoder,
+            training_configuration=training_configuration,
+            training_select=training_select,
+            training_keys=training_keys,
+            validation_sets=validation_sets,
+            num_directions=num_directions,
+            metrics=metrics,
+        )
+        self._preprocess = preprocess
+        self._postprocess = postprocess
+        if hasattr(self.object, 'preprocess') and preprocess is not None:
+            raise Exception(
+                'Ambiguous preprocessing between passed preprocess '
+                'and object.preprocess'
+            )
+        if hasattr(self.object, 'postprocess') and postprocess is not None:
+            raise Exception(
+                'Ambiguous postprocessing between passed postprocess '
+                'and object.postprocess'
+            )
+        if hasattr(self.object, 'preprocess'):
+            self._preprocess = self.object.preprocess
+        if hasattr(self.object, 'postprocess'):
+            self._postprocess = self.object.postprocess
+
     def build_optimizers(self):
         return (
             self.training_configuration.optimizer_cls(
@@ -537,11 +596,8 @@ class TorchModel(Base):
         with torch.no_grad(), eval(self.object):
             if not isinstance(x, list) and not test_if_batch(x, self.num_directions):
                 return self._predict_one(x)
-            if hasattr(self.object, 'preprocess'):
-                inputs = BasicDataset(x, self.object.preprocess)
-                loader = torch.utils.data.DataLoader(inputs, **kwargs)
-            else:
-                loader = torch.utils.data.DataLoader(x, **kwargs)
+            inputs = BasicDataset(x, self.preprocess)
+            loader = torch.utils.data.DataLoader(inputs, **kwargs)
             out = []
             for batch in progress.progressbar(loader, total=len(loader)):
                 batch = to_device(batch, device_of(self.object))
@@ -553,13 +609,13 @@ class TorchModel(Base):
             return out
 
     def preprocess(self, r):
-        if hasattr(self.object, 'preprocess'):
-            return self.object.preprocess(r)
+        if self._preprocess is not None:
+            return self._preprocess(r)
         return r
 
     def postprocess(self, r):
-        if hasattr(self.object, 'postprocess'):
-            return self.object.postprocess(r)
+        if self._postprocess is not None:
+            return self._postprocess(r)
         return r
 
 

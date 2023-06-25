@@ -1,5 +1,4 @@
 import typing as t
-from contextlib import contextmanager
 
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.encoder import Encoder
@@ -113,10 +112,6 @@ class Model(Component):
         self.training_select = training_select
         self.training_keys = training_keys
         self.metrics: t.Dict = {}
-
-    @contextmanager
-    def saving(self):
-        raise NotImplementedError
 
     def _predict(self, inputs, **kwargs):
         return [self.predict_one(x, **kwargs) for x in inputs]

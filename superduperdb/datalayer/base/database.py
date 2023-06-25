@@ -376,72 +376,6 @@ class BaseDatabase:
                 f'"{identifier}" has been registered.'
             )
         info.setdefault('serializer', 'pickle')
-        info.setdefault('kwargs', {})
-
-        m = self.artifact_store.load_artifact(
-            info['object'], serializer=info['serializer']
-        )
-        if repopulate:
-            m.repopulate(self)
-        if cm := self.variety_to_cache_mapping.get(variety):
-            getattr(self, cm)[m.identifier] = m
-        return m
-
-    def _build_task_workflow(
-        self, select: Select, ids=None, dependencies=(), verbose=True
-    ) -> TaskWorkflow:
-        job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
-        job_ids.update(dependencies)
-        G = TaskWorkflow(self)
-        if ids is None:
-            ids = self.db.get_ids_from_select(select.select_only_id)
-
-        G.add_node(
-            '_download_content()',
-            data={
-                'task': download_content,
-                'args': [
-                    self,
-                    select,
-                ],
-                'kwargs': {
-                    'ids': ids,
-                },
-            },
-        )
-        if not self.show('watcher'):
-            return G
-
-        for identifier in self.show('watcher'):
-            G.add_node(
-                '_apply_watcher({identifier})',
-                data={
-                    'task': apply_watcher,
-                    'args': [self, identifier],
-                    'kwargs': {
-                        'ids': ids,
-                        'verbose': verbose,
-                    },
-                },
-            )
-
-        for identifier in self.show('watcher'):
-            G.add_edge('_download_content()', '_apply_watcher({identifier})')
-            deps = self._get_dependencies_for_watcher(identifier)
-            for dep in deps:
-                G.add_edge('_apply_watcher({dep})', '_apply_watcher({identifier})')
-                G.add_edge('_download_content()', '_apply_watcher({identifier})')
-
-        return G
-
-    def _create_job_record(self, *args, **kwargs):  # TODO - move to metadata
-        raise NotImplementedError
-
-    def _add_split_to_row(self, r, other):
-        raise NotImplementedError
-
-    def _base_insert(self, insert: Insert):
-        raise NotImplementedError
 
     def _add(
         self,
@@ -487,6 +421,8 @@ class BaseDatabase:
                     'variety': object.variety,
                     'version': version,
                     'sha1': sha1,
+                    'serializer': serializer,
+                    'serializer_kwargs': serializer_kwargs,
                 }
             )
             if parent is not None:

@@ -250,7 +250,14 @@ class BaseDatabase:
         like = select.like()
 
         if select.download:
-            like = self._get_content_for_filter(like)  # pragma: no cover
+            if '_id' not in like:
+                like['_id'] = 0
+            uris = gather_uris([like])[0]
+            if uris:
+                # TODO: self.name is a string, but the query parameter should be
+                # t.Union[Select, Insert]!  So this has never been called. :-)
+                output = download_content(self, self.name, documents=[like.content])[0]
+                like = Document(Document.decode(output, types=self.types))
 
         vector_index: VectorIndex = self.vector_indices[select.vector_index]
         if select.outputs is None:
@@ -573,17 +580,6 @@ class BaseDatabase:
                     pass
             self.artifact_store.delete_artifact(info['object'])
             self.metadata.delete_component_version(variety, identifier, version=version)
-
-    def _get_content_for_filter(self, filter):
-        if '_id' not in filter:
-            filter['_id'] = 0
-        uris = gather_uris([filter])[0]
-        if uris:
-            # TODO: self.name is a string, but the query parameter should be
-            # t.Union[Select, Insert]!  So this has never been called. :-)
-            output = download_content(self, self.name, documents=[filter.content])[0]
-            filter = Document(Document.decode(output, types=self.types))
-        return filter
 
     def _get_dependencies_for_watcher(self, identifier):
         info = self.metadata.get_component('watcher', identifier)

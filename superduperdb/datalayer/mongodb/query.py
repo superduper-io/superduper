@@ -121,6 +121,6 @@ def set_one_key_in_document(table, id, key, value):
     return Update(
         collection=table,
         filter={'_id': id},
-        update={'$set': {key: value}},
+        update=Document({'$set': {key: value}}),
         one=True,
     )

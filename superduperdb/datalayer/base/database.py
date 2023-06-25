@@ -375,7 +375,7 @@ class BaseDatabase:
             ids = self.db.get_ids_from_select(select.select_only_id)
 
         G.add_node(
-            f'{self._download_content.__name__}()',
+            '_download_content()',
             data={
                 'task': self._download_content,
                 'args': [
@@ -391,7 +391,7 @@ class BaseDatabase:
 
         for identifier in self.show('watcher'):
             G.add_node(
-                f'{self._apply_watcher.__name__}({identifier})',
+                '_apply_watcher({identifier})',
                 data={
                     'task': self._apply_watcher,
                     'args': [identifier],
@@ -403,20 +403,11 @@ class BaseDatabase:
             )
 
         for identifier in self.show('watcher'):
-            G.add_edge(
-                f'{self._download_content.__name__}()',
-                f'{self._apply_watcher.__name__}({identifier})',
-            )
+            G.add_edge('_download_content()', '_apply_watcher({identifier})')
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:
-                G.add_edge(
-                    f'{self._apply_watcher.__name__}({dep})',
-                    f'{self._apply_watcher.__name__}({identifier})',
-                )
-                G.add_edge(
-                    f'{self._download_content.__name__}()',
-                    f'{self._apply_watcher.__name__}({identifier})',
-                )
+                G.add_edge('_apply_watcher({dep})', '_apply_watcher({identifier})')
+                G.add_edge('_download_content()', '_apply_watcher({identifier})')
 
         return G
 

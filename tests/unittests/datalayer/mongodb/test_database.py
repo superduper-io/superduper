@@ -322,6 +322,7 @@ def test_predict(a_model, float_tensors_32, float_tensors_16):
 def test_delete(random_data):
     r = next(random_data.execute(Select(collection='documents')))
     random_data.execute(Delete(collection='documents', filter={'_id': r['_id']}))
+
     with pytest.raises(StopIteration):
         next(
             random_data.execute(

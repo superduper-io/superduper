@@ -387,10 +387,9 @@ class BaseDatabase:
                 f'No such object of type "{variety}", '
                 f'"{identifier}" has been registered.'
             )
-        if 'serializer' not in info:
-            info['serializer'] = 'pickle'
-        if 'serializer_kwargs' not in info:
-            info['serializer_kwargs'] = {}
+        info.setdefault('serializer', 'pickle')
+        info.setdefault('kwargs', {})
+
         m = self.artifact_store.load_artifact(
             info['object'], serializer=info['serializer']
         )

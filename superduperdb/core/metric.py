@@ -1,5 +1,7 @@
 from superduperdb.core.base import Component
 
+import typing as t
+
 
 class Metric(Component):
     """
@@ -9,5 +11,9 @@ class Metric(Component):
 
     variety = 'metric'
 
+    def __init__(self, identifier: str, object: t.Callable):
+        super().__init__(identifier)
+        self.object = object
+
     def __call__(self, x, y):
-        raise NotImplementedError
+        return self.object(x, y)

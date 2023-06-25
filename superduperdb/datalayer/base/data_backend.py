@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import typing as t
 
-from superduperdb.core import Model
+from superduperdb.core.model import Model
 from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.cursor import SuperDuperCursor
 from superduperdb.datalayer.base.query import Insert, Select, Update, Delete

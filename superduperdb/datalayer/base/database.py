@@ -222,40 +222,24 @@ class BaseDatabase:
 
     def select(self, select: Select) -> SelectResult:
         if select.like is not None:
-            if select.similar_first:
-                return self._select_similar_then_matches(select)
-            else:
-                return self._select_matches_then_similar(select)
-        else:
-            if select.raw:
-                return self.db.get_raw_cursor(select)
-            else:
-                return self.db.get_cursor(
-                    select,
-                    features=select.features,
-                    types=self.types,
-                )
-
-    def _select_similar_then_matches(self, select: Select):
-        similar_ids, scores = self._select_nearest(select)
+            return self._select_like(select)
 
         if select.raw:
-            return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
-        else:
-            return self.db.get_cursor(
-                select.select_using_ids(similar_ids),
-                features=select.features,
-                scores=dict(zip(similar_ids, scores)),
-                types=self.types,
-            )
+            return self.db.get_raw_cursor(select)
 
-    def _select_matches_then_similar(self, select: Select):
-        if not select.is_trivial:
+        return self.db.get_cursor(
+            select,
+            features=select.features,
+            types=self.types,
+        )
+
+    def _select_like(self, select: Select):
+        if select.is_trivial or select.similar_first:
+            ids = None
+        else:
             id_cursor = self.db.get_raw_cursor(select.select_only_id)
             ids = [x['_id'] for x in id_cursor]
-            similar_ids, scores = self._select_nearest(select, ids=ids)
-        else:
-            similar_ids, scores = self._select_nearest(select)
+        similar_ids, scores = self._select_nearest(select, ids=ids)
 
         if select.raw:
             return self.db.get_raw_cursor(select.select_using_ids(similar_ids))

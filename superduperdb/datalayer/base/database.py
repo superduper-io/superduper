@@ -248,15 +248,15 @@ class BaseDatabase:
     ) -> Tuple[List[str], List[float]]:
         assert select.like
         like = select.like()
+        content = like.content
+        assert isinstance(content, dict)
 
         if select.download:
-            if '_id' not in like:
-                like['_id'] = 0
-            uris = gather_uris([like])[0]
+            if '_id' not in content:
+                content['_id'] = 0
+            uris = gather_uris([content])[0]
             if uris:
-                # TODO: self.name is a string, but the query parameter should be
-                # t.Union[Select, Insert]!  So this has never been called. :-)
-                output = download_content(self, self.name, documents=[like.content])[0]
+                output = download_content(self, select, documents=[content])[0]
                 like = Document(Document.decode(output, types=self.types))
 
         vector_index: VectorIndex = self.vector_indices[select.vector_index]

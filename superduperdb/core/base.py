@@ -1,4 +1,5 @@
 import typing as t
+from contextlib import contextmanager
 
 from superduperdb.misc.logger import logging
 
@@ -25,28 +26,47 @@ class Placeholder(BasePlaceholder):
     Placeholder.
     """
 
-    def __init__(self, identifier: str, variety: str, version: t.Optional[int] = None):
+    def __init__(
+        self,
+        identifier: str,
+        variety: str,
+        version: t.Optional[int] = None,
+        id: t.Optional[int] = None,
+    ):
         self.identifier = identifier
         self.variety = variety
         self.version = version
+        self.id = id
 
 
-class PlaceholderList(BasePlaceholder, list):
+class PlaceholderList(BasePlaceholder):
     """
     List of placeholders.
     """
 
-    def __init__(self, variety: str, *args, **kwargs):
-        super().__init__(
-            [Placeholder(arg, variety) for arg in args[0]], *args[1:], **kwargs
-        )
+    # ruff: noqa: E501
+    def __init__(self, variety: str, list: t.Union[t.List[str], t.List[Placeholder]]):
+        self.list = list
+        if list and isinstance(self.list[0], str):
+            self.list = [Placeholder(arg, variety) for arg in list]  # type: ignore[arg-type]
+        elif list:
+            assert isinstance(self.list[0], Placeholder)
+            self.list = list
+        else:
+            self.list = list
         self.variety = variety
 
+    def __iter__(self):
+        return iter(self.list)
+
+    def __getitem__(self, item):
+        return self.list[item]
+
     def __repr__(self):
-        return f'PlaceholderList[{self.variety}](' + super().__repr__() + ')'
+        return f'PlaceholderList[{self.variety}](' + str(self.list) + ')'
 
     def aslist(self) -> t.List[str]:
-        return [x.identifier for x in self]
+        return [x.identifier for x in self.list]  # type: ignore[union-attr]
 
 
 class BaseComponent:
@@ -106,8 +126,17 @@ class Component(BaseComponent):
             if isinstance(v, Placeholder):
                 out.append(v)
             elif isinstance(v, PlaceholderList):
-                out.extend(list(v))
+                out.extend(v.list)  # type: ignore[arg-type]
         return out
+
+    @contextmanager
+    def saving(self):
+        try:
+            print('Stripping sub-components to references')
+            cache = strip(self, top_level=True)[1]
+            yield self
+        finally:
+            restore(self, cache)
 
     def repopulate(self, database: 'BaseDatabase'):  # noqa: F821 why?
         """
@@ -188,14 +217,20 @@ class Component(BaseComponent):
         return f'{variety}/{identifier}/{version}'
 
 
-class ComponentList(BaseComponent, list):
+class ComponentList(BaseComponent):
     """
     List of base components.
     """
 
-    def __init__(self, variety, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, variety, list):
         self.variety = variety
+        self.list = list
+
+    def __getitem__(self, item):
+        return self.list[item]
+
+    def __iter__(self):
+        return iter(self.list)
 
     def __repr__(self):
         return f'ComponentList[{self.variety}](' + super().__repr__() + ')'
@@ -210,7 +245,7 @@ class ComponentList(BaseComponent, list):
         return [c.identifier for c in self]
 
 
-def strip(component: BaseComponent):
+def strip(component: BaseComponent, top_level=True):
     """
     Strip component down to object which doesn't contain a BaseComponent part.
     This may be applied so that objects aren't redundantly serialized and replaced
@@ -220,26 +255,63 @@ def strip(component: BaseComponent):
     """
     from superduperdb.datalayer.base.database import BaseDatabase
 
+    cache = {}
     assert isinstance(component, BaseComponent)
-    if isinstance(component, Placeholder):
-        return component
     if isinstance(component, ComponentList):
-        return PlaceholderList(component.variety, [strip(obj) for obj in component])
+        placeholders = []
+        for sc in component:
+            stripped, subcache = strip(sc, top_level=False)
+            cache.update(subcache)
+            placeholders.append(stripped)
+        return PlaceholderList(component.variety, placeholders), cache
     for attr in vars(component):
         subcomponent = getattr(component, attr)
         if isinstance(subcomponent, ComponentList):
-            component._set_subcomponent(attr, strip(subcomponent))
+            sub_component, sub_cache = strip(subcomponent, top_level=False)
+            component._set_subcomponent(attr, sub_component)
+            cache.update(sub_cache)
         elif isinstance(subcomponent, Component):
+            cache[id(subcomponent)] = subcomponent
             component._set_subcomponent(
                 attr,
                 Placeholder(
                     subcomponent.identifier,
                     subcomponent.variety,
                     subcomponent.version,
+                    id=id(subcomponent),
                 ),
             )
         elif isinstance(subcomponent, BaseDatabase):
+            cache[id(subcomponent)] = subcomponent
             component._set_subcomponent(attr, None)
+    if top_level:
+        return component, cache
+    else:
+        cache[id(component)] = component
+        return (
+            Placeholder(
+                component.identifier,  # type: ignore
+                component.variety,  # type: ignore
+                component.version,  # type: ignore
+                id=id(component),
+            ),
+            cache,
+        )
+
+
+# ruff: noqa: E501
+def restore(component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict):
+    if isinstance(component, PlaceholderList):
+        return ComponentList(component.variety, [restore(c, cache) for c in component.list])  # type: ignore[arg-type]
+    if isinstance(component, Placeholder):
+        try:
+            return cache[component.id]
+        except KeyError:
+            logging.warn(f'Left placeholder {component} because not found in cache')
+            return component
+    for attr, value in vars(component).items():
+        if isinstance(value, BasePlaceholder):
+            component._set_subcomponent(attr, restore(value, cache))  # type: ignore[union-attr]
     return component
 
 

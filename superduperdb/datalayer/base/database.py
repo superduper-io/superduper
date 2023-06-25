@@ -236,6 +236,59 @@ class BaseDatabase:
                     types=self.types,
                 )
 
+    def _select_similar_then_matches(self, select: Select):
+        similar_ids, scores = self._select_nearest(select)
+
+        if select.raw:
+            return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
+        else:
+            return self.db.get_cursor(
+                select.select_using_ids(similar_ids),
+                features=select.features,
+                scores=dict(zip(similar_ids, scores)),
+                types=self.types,
+            )
+
+    def _select_matches_then_similar(self, select: Select):
+        if not select.is_trivial:
+            id_cursor = self.db.get_raw_cursor(select.select_only_id)
+            ids = [x['_id'] for x in id_cursor]
+            similar_ids, scores = self._select_nearest(select, ids=ids)
+        else:
+            similar_ids, scores = self._select_nearest(select)
+
+        if select.raw:
+            return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
+        else:
+            return self.db.get_cursor(
+                select.select_using_ids(similar_ids),
+                features=select.features,
+                scores=dict(zip(similar_ids, scores)),
+                types=self.types,
+            )
+
+    def _select_nearest(
+        self, select: Select, ids: Optional[List[str]] = None
+    ) -> Tuple[List[str], List[float]]:
+        if select.like is not None:
+            like = select.like()
+        else:
+            raise ValueError('_select_nearest requires non-empty select.like')
+
+        if select.download:
+            like = self._get_content_for_filter(like)  # pragma: no cover
+
+        vector_index: VectorIndex = self.vector_indices[select.vector_index]
+        if select.outputs is None:
+            outputs = {}
+        else:
+            outputs = select.outputs().encode()
+            if not isinstance(outputs, dict):
+                raise TypeError(f'Expected dict, got {type(outputs)}')
+        return vector_index.get_nearest(
+            like, database=self, ids=ids, n=select.n, outputs=outputs
+        )
+
     def update(self, update: Update) -> UpdateResult:
         if update.refresh and self.metadata.show_components('model'):
             ids = self.db.get_ids_from_select(update.select_ids)
@@ -660,59 +713,6 @@ class BaseDatabase:
         )
         self.artifact_store.delete_artifact(info['object'])
         self.metadata.update_object(identifier, 'model', 'object', file_id)
-
-    def _select_matches_then_similar(self, select: Select):
-        if not select.is_trivial:
-            id_cursor = self.db.get_raw_cursor(select.select_only_id)
-            ids = [x['_id'] for x in id_cursor]
-            similar_ids, scores = self._select_nearest(select, ids=ids)
-        else:
-            similar_ids, scores = self._select_nearest(select)
-
-        if select.raw:
-            return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
-        else:
-            return self.db.get_cursor(
-                select.select_using_ids(similar_ids),
-                features=select.features,
-                scores=dict(zip(similar_ids, scores)),
-                types=self.types,
-            )
-
-    def _select_similar_then_matches(self, select: Select):
-        similar_ids, scores = self._select_nearest(select)
-
-        if select.raw:
-            return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
-        else:
-            return self.db.get_cursor(
-                select.select_using_ids(similar_ids),
-                features=select.features,
-                scores=dict(zip(similar_ids, scores)),
-                types=self.types,
-            )
-
-    def _select_nearest(
-        self, select: Select, ids: Optional[List[str]] = None
-    ) -> Tuple[List[str], List[float]]:
-        if select.like is not None:
-            like = select.like()
-        else:
-            raise ValueError('_select_nearest requires non-empty select.like')
-
-        if select.download:
-            like = self._get_content_for_filter(like)  # pragma: no cover
-
-        vector_index: VectorIndex = self.vector_indices[select.vector_index]
-        if select.outputs is None:
-            outputs = {}
-        else:
-            outputs = select.outputs().encode()
-            if not isinstance(outputs, dict):
-                raise TypeError(f'Expected dict, got {type(outputs)}')
-        return vector_index.get_nearest(
-            like, database=self, ids=ids, n=select.n, outputs=outputs
-        )
 
     @work
     def _fit(self, identifier) -> None:

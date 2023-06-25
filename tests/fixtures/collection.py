@@ -77,7 +77,7 @@ def random_arrays(arrays):
         data.append(Document({'x': float_array(x), 'y': y}))
     arrays.execute(Insert(collection='documents', documents=data, refresh=False))
     yield arrays
-    arrays.execute(Delete('documents', {}))
+    arrays.execute(Delete(collection='documents', filter={}))
 
 
 @pytest.fixture()

@@ -1,4 +1,3 @@
-import math
 import random
 import typing as t
 import warnings
@@ -9,6 +8,7 @@ import click
 import networkx
 
 from .artifacts import ArtifactStore
+from .apply_watcher import apply_watcher
 from .data_backend import BaseDataBackend
 from .download_content import download_content
 from .metadata import MetaDataStore
@@ -428,8 +428,8 @@ class BaseDatabase:
             G.add_node(
                 '_apply_watcher({identifier})',
                 data={
-                    'task': self._apply_watcher,
-                    'args': [identifier],
+                    'task': apply_watcher,
+                    'args': [self, identifier],
                     'kwargs': {
                         'ids': ids,
                         'verbose': verbose,
@@ -445,32 +445,6 @@ class BaseDatabase:
                 G.add_edge('_download_content()', '_apply_watcher({identifier})')
 
         return G
-
-    def _compute_model_outputs(
-        self,
-        model_info,
-        _ids,
-        select: Select,
-        key='_base',
-        features=None,
-        model=None,
-        predict_kwargs=None,
-    ):
-        logging.info('finding documents under filter')
-        features = features or {}
-        model_identifier = model_info['identifier']
-        if features is None:
-            features = {}  # pragma: no cover
-        documents = list(self.execute(select.select_using_ids(_ids, features=features)))
-        logging.info('done.')
-        documents = [x.unpack() for x in documents]
-        if key != '_base' or '_base' in features:
-            passed_docs = [r[key] for r in documents]
-        else:  # pragma: no cover
-            passed_docs = documents
-        if model is None:
-            model = self.models[model_identifier]
-        return model.predict(passed_docs, **(predict_kwargs or {}))
 
     def _create_job_record(self, *args, **kwargs):  # TODO - move to metadata
         raise NotImplementedError
@@ -607,60 +581,6 @@ class BaseDatabase:
             m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch
         )
         return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
-
-    @work
-    def _apply_watcher(  # noqa: F811
-        self,
-        identifier,
-        ids: Optional[List[str]] = None,
-        verbose=False,
-        max_chunk_size=5000,
-        model=None,
-        recompute=False,
-        watcher_info=None,
-        **kwargs,
-    ):
-        if watcher_info is None:
-            watcher_info = self.metadata.get_component('watcher', identifier)
-        select = self.db.select_cls(**watcher_info['select'])  # type: ignore
-        if ids is None:
-            ids = self.db.get_ids_from_select(select.select_only_id)
-            ids = [str(id) for id in ids]
-        if max_chunk_size is not None:
-            for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                logging.info(
-                    'computing chunk '
-                    f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
-                )
-                self._apply_watcher(
-                    identifier,
-                    ids=ids[i : i + max_chunk_size],
-                    verbose=verbose,
-                    max_chunk_size=None,
-                    model=model,
-                    recompute=recompute,
-                    watcher_info=watcher_info,
-                    remote=False,
-                    **kwargs,
-                )
-            return
-
-        model_info = self.metadata.get_component('model', watcher_info['model'])
-        outputs = self._compute_model_outputs(
-            model_info,
-            ids,
-            select,
-            key=watcher_info['key'],
-            features=watcher_info.get('features', {}),
-            model=model,
-            predict_kwargs=watcher_info.get('predict_kwargs', {}),
-        )
-        type = model_info.get('type')
-        if type is not None:
-            type = self.types[type]
-            outputs = [type(x).encode() for x in outputs]
-        self.db.write_outputs(watcher_info, outputs, ids)
-        return outputs
 
     def _replace_model(self, identifier: str, object: Model):
         info = self.metadata.get_component('model', identifier, version=object.version)

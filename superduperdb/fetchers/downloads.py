@@ -196,7 +196,9 @@ class InMemoryDownloader(BaseDownloader):
         self.results[i] = content
 
 
-def gather_uris(documents, gather_ids=True):
+def gather_uris(
+    documents, gather_ids=True
+) -> t.Tuple[t.List[str], t.List[str], t.List[int]]:
     """
     Get the URLS out of all documents as denoted by ``{"_content": ...}``
 

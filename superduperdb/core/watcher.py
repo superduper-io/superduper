@@ -2,6 +2,7 @@ import typing as t
 
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.model import Model
+from superduperdb.datalayer.base.apply_watcher import apply_watcher
 from superduperdb.datalayer.base.query import Select
 
 
@@ -60,7 +61,8 @@ class Watcher(Component):
         if not ids:
             return []
         return [
-            database._apply_watcher(
+            apply_watcher(
+                database,
                 self.identifier,
                 ids=ids,
                 verbose=verbose,

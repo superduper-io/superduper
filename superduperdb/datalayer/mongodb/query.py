@@ -5,7 +5,8 @@ from superduperdb.core.documents import Document
 from superduperdb.datalayer.base import query
 import typing as t
 
-JSON = t.Union[None, bool, float, int, t.Dict, t.List, str]
+Filter = t.Dict[str, t.Any]  # Really it's ObjectId
+# TODO: make Filter JSONable
 
 
 class Select(query.Select):
@@ -59,7 +60,7 @@ class Select(query.Select):
 @dataclass(frozen=True)
 class Update(query.Update):
     collection: str
-    filter: t.Dict[str, t.Any]
+    filter: Filter
     update: t.Optional[Document] = None
     one: bool = False
     replacement: t.Optional[Document] = None
@@ -85,10 +86,9 @@ class Update(query.Update):
         )
 
 
-@dataclass(frozen=True)
 class Delete(query.Delete):
     collection: str
-    filter: t.Dict[str, t.Any]
+    filter: Filter
     one: bool = False
 
     @cached_property

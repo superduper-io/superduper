@@ -40,7 +40,7 @@ VECTOR_DATABASE.init().__enter__()
 DBResult = t.Any
 TaskGraph = t.Any
 
-DeleteResult = DBResult
+DeleteResult = t.Dict[str, t.Any]
 InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
 SelectResult = t.List[Document]
 UpdateResult = t.Any
@@ -200,7 +200,7 @@ class BaseDatabase:
         )
 
     def delete(self, delete: Delete) -> DeleteResult:
-        return self.db.delete(delete)
+        return self.db.delete(delete).raw_result
 
     def insert(self, insert: Insert) -> InsertResult:
         for item in insert.documents:

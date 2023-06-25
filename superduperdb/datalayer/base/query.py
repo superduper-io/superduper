@@ -78,7 +78,7 @@ class Insert(ABC):
         pass
 
 
-class Delete(ABC):
+class Delete(s.JSONable, ABC):
     ...
 
 

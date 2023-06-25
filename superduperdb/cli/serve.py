@@ -15,6 +15,7 @@ def serve(
     db = build.build_datalayer()
 
     s.register(db.select)
+    s.register(db.delete)
 
     if open_page:
 

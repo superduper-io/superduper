@@ -1,6 +1,6 @@
 import typing as t
 
-from superduperdb.core import Encoder
+from superduperdb.core.encoder import Encoder
 from superduperdb.core.documents import Document
 from superduperdb.misc.special_dicts import MongoStyleDict
 

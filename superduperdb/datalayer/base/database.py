@@ -8,6 +8,12 @@ from typing import Union, Optional, Dict, List, Tuple
 import click
 import networkx
 
+from .artifacts import ArtifactStore
+from .data_backend import BaseDataBackend
+from .download_content import download_content
+from .metadata import MetaDataStore
+from .query import Insert, Select, Delete, Update
+
 from superduperdb import CFG
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
@@ -17,11 +23,6 @@ from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarn
 from superduperdb.core.learning_task import LearningTask
 from superduperdb.core.model import Model
 from superduperdb.core.vector_index import VectorIndex
-from superduperdb.datalayer.base.artifacts import ArtifactStore
-from superduperdb.datalayer.base.data_backend import BaseDataBackend
-from superduperdb.datalayer.base.metadata import MetaDataStore
-from superduperdb.datalayer.base.query import Insert, Select, Delete, Update
-from superduperdb.fetchers.downloads import Downloader
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import ArgumentDefaultDict
@@ -377,8 +378,9 @@ class BaseDatabase:
         G.add_node(
             '_download_content()',
             data={
-                'task': self._download_content,
+                'task': download_content,
                 'args': [
+                    self,
                     select,
                 ],
                 'kwargs': {
@@ -545,92 +547,14 @@ class BaseDatabase:
             self.artifact_store.delete_artifact(info['object'])
             self.metadata.delete_component_version(variety, identifier, version=version)
 
-    @work
-    def _download_content(
-        self,
-        query: Union[Select, Insert],
-        ids=None,
-        documents=None,
-        timeout=None,
-        raises=True,
-        n_download_workers=None,
-        headers=None,
-        **kwargs,
-    ):
-        logging.debug(query)
-        logging.debug(ids)
-        update_db = False
-
-        if documents is not None:
-            pass
-        elif isinstance(query, Select):
-            update_db = True
-            if ids is None:
-                documents = list(self.select(query))
-            else:
-                select = query.select_using_ids(ids)
-                select = select.copy(update={'raw': True})
-                documents = list(self.select(select))
-                documents = [Document(x) for x in documents]
-        else:
-            documents = query.documents
-
-        documents = [x.content for x in documents]
-        uris, keys, place_ids = gather_uris(documents)
-        logging.info(f'found {len(uris)} uris')
-        if not uris:
-            return
-
-        if n_download_workers is None:
-            try:
-                n_download_workers = self.metadata.get_metadata(
-                    key='n_download_workers'
-                )
-            except TypeError:
-                n_download_workers = 0
-
-        if headers is None:
-            try:
-                headers = self.metadata.get_metadata(key='headers')
-            except TypeError:
-                headers = 0
-
-        if timeout is None:
-            try:
-                timeout = self.metadata.get_metadata(key='download_timeout')
-            except TypeError:
-                timeout = None
-
-        def update_one(id, key, bytes):
-            return self.update(self.db.download_update(query.table, id, key, bytes))
-
-        downloader = Downloader(
-            uris=uris,
-            ids=place_ids,
-            keys=keys,
-            update_one=update_one,
-            n_workers=n_download_workers,
-            timeout=timeout,
-            headers=headers,
-            raises=raises,
-        )
-        downloader.go()
-        if update_db:
-            return
-        for id_, key in zip(place_ids, keys):
-            documents[id_] = self.db.set_content_bytes(
-                documents[id_], key, downloader.results[id_]
-            )
-        return documents
-
     def _get_content_for_filter(self, filter):
         if '_id' not in filter:
             filter['_id'] = 0
         uris = gather_uris([filter])[0]
         if uris:
-            output = self._download_content(
-                self.name, documents=[filter.content], timeout=None, raises=True
-            )[0]
+            # TODO: self.name is a string, but the query parameter should be
+            # t.Union[Select, Insert]!  So this has never been called. :-)
+            output = download_content(self, self.name, documents=[filter.content])[0]
             filter = Document(Document.decode(output, types=self.types))
         return filter
 

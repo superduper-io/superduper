@@ -221,8 +221,17 @@ class BaseDatabase:
         return output, task_graph
 
     def select(self, select: Select) -> SelectResult:
-        if select.like is not None:
-            return self._select_like(select)
+        if select.like is None:
+            scores = None
+        else:
+            if select.is_trivial or select.similar_first:
+                ids = None
+            else:
+                id_cursor = self.db.get_raw_cursor(select.select_only_id)
+                ids = [x['_id'] for x in id_cursor]
+            similar_ids, score = self._select_nearest(select, ids=ids)
+            select = select.select_using_ids(similar_ids)
+            scores = dict(zip(similar_ids, score))
 
         if select.raw:
             return self.db.get_raw_cursor(select)
@@ -230,34 +239,15 @@ class BaseDatabase:
         return self.db.get_cursor(
             select,
             features=select.features,
+            scores=scores,
             types=self.types,
         )
-
-    def _select_like(self, select: Select):
-        if select.is_trivial or select.similar_first:
-            ids = None
-        else:
-            id_cursor = self.db.get_raw_cursor(select.select_only_id)
-            ids = [x['_id'] for x in id_cursor]
-        similar_ids, scores = self._select_nearest(select, ids=ids)
-
-        if select.raw:
-            return self.db.get_raw_cursor(select.select_using_ids(similar_ids))
-        else:
-            return self.db.get_cursor(
-                select.select_using_ids(similar_ids),
-                features=select.features,
-                scores=dict(zip(similar_ids, scores)),
-                types=self.types,
-            )
 
     def _select_nearest(
         self, select: Select, ids: Optional[List[str]] = None
     ) -> Tuple[List[str], List[float]]:
-        if select.like is not None:
-            like = select.like()
-        else:
-            raise ValueError('_select_nearest requires non-empty select.like')
+        assert select.like
+        like = select.like()
 
         if select.download:
             like = self._get_content_for_filter(like)  # pragma: no cover

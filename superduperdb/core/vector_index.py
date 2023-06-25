@@ -70,7 +70,7 @@ class VectorIndex(Component):
             assert is_placeholders or is_components
             if is_placeholders:
                 self.compatible_watchers = PlaceholderList(
-                    'watcher', compatible_watchers
+                    'watcher', compatible_watchers  # type: ignore[arg-type]
                 )
             else:
                 self.compatible_watchers = ComponentList('watcher', compatible_watchers)

@@ -491,13 +491,14 @@ class TorchModel(Base):
 
     @contextmanager
     def saving(self):
-        was_training = self.object.training
-        try:
-            self.object.eval()
-            yield
-        finally:
-            if was_training:
-                self.object.train()
+        with super().saving():
+            was_training = self.object.training
+            try:
+                self.object.eval()
+                yield
+            finally:
+                if was_training:
+                    self.object.train()
 
     def __getstate__(self):
         state = self.__dict__.copy()

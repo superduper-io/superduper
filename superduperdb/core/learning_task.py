@@ -53,7 +53,7 @@ class LearningTask(Component):
         assert models_are_strs or models_are_comps, err_msg
 
         if models_are_strs:
-            self.models = PlaceholderList('model', models)
+            self.models = PlaceholderList('model', models)  # type: ignore[arg-type]
         else:
             self.models = ComponentList('model', models)
 
@@ -62,15 +62,16 @@ class LearningTask(Component):
         assert metrics_are_strs or metrics_are_comps, err_msg
 
         if metrics_are_strs:
-            self.metrics = PlaceholderList('metric', metrics)
+            self.metrics = PlaceholderList('metric', metrics)  # type: ignore[arg-type]
         else:
             self.metrics = ComponentList('metric', metrics)
 
         self.keys = keys
+        # ruff: noqa: E501
         self.training_configuration = (
             training_configuration
             if isinstance(training_configuration, TrainingConfiguration)
-            else Placeholder(training_configuration, 'training_configuration')
+            else Placeholder(training_configuration, 'training_configuration')  # type: ignore[arg-type]
         )
         self.identifier = identifier
         self.validation_sets = validation_sets

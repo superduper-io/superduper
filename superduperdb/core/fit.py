@@ -8,12 +8,11 @@ from superduperdb.core.base import (
     is_placeholders_or_components,
 )
 from superduperdb.core.metric import Metric
-from superduperdb.core.model import Model
-from superduperdb.core import TrainingConfiguration
+from superduperdb.core.model import Model, ModelEnsemble, TrainingConfiguration
 from superduperdb.datalayer.base.query import Select
 
 
-class LearningTask(Component):
+class Fit(Component):
     """
     Learning-task base object, used to hold important object crucial to all
     learning-task creation and management.
@@ -31,15 +30,15 @@ class LearningTask(Component):
     :param features: Dictionary of feature mappings from keys -> model-identifiers
     """
 
-    variety = 'learning_task'
+    variety = 'fit'
     models: t.Union[PlaceholderList, ComponentList]
     metrics: t.Union[PlaceholderList, ComponentList]
 
     def __init__(
         self,
         identifier: str,
-        models: t.Union[t.List[Model], t.List[str]],
-        keys: t.List[str],
+        model: t.Union[Model, ModelEnsemble, str],
+        keys: t.Any,
         select: Select,
         training_configuration: t.Union[TrainingConfiguration, str],
         validation_sets: t.Union[t.List[str], t.Tuple] = (),
@@ -48,14 +47,10 @@ class LearningTask(Component):
     ):
         super().__init__(identifier)
 
-        models_are_strs, models_are_comps = is_placeholders_or_components(models)
-        err_msg = 'Must specify all model IDs or all Model instances directly'
-        assert models_are_strs or models_are_comps, err_msg
-
-        if models_are_strs:
-            self.models = PlaceholderList('model', models)  # type: ignore[arg-type]
+        if isinstance(model, str):
+            self.model = Placeholder(model, 'model')
         else:
-            self.models = ComponentList('model', models)
+            assert isinstance(model, Model)
 
         err_msg = 'Must specify all metric IDs or all Metric instances directly'
         metrics_are_strs, metrics_are_comps = is_placeholders_or_components(metrics)
@@ -85,7 +80,7 @@ class LearningTask(Component):
             'validation_sets': list(self.validation_sets),
             'training_configuration': self.training_configuration.identifier,
             'metrics': [m.identifier for m in self.metrics],
-            'models': [m.identifier for m in self.models],
+            'model': self.model.identifier,
             'features': self.features,
         }
 

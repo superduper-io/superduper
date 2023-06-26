@@ -1,11 +1,10 @@
 # ruff: noqa: F401, F811
 from sklearn.svm import SVC
 
-from superduperdb.core.learning_task import LearningTask
+from superduperdb.core.fit import Fit
 from superduperdb.datalayer.mongodb.query import Select
 from superduperdb.models.vanilla.wrapper import FunctionWrapper
-from superduperdb.training.sklearn.trainer import SklearnTrainingConfiguration
-from superduperdb.models.sklearn.wrapper import Pipeline
+from superduperdb.models.sklearn.wrapper import Pipeline, SklearnTrainingConfiguration
 
 from tests.fixtures.collection import random_arrays, arrays, empty
 
@@ -18,9 +17,9 @@ def test_classifier(random_arrays):
     random_arrays.add(identity, serializer='dill')
     random_arrays.add(model)
     random_arrays.add(
-        LearningTask(
+        Fit(
             'my-sk-lt',
-            models=['svc', 'identity'],
+            model=model.identifier,
             keys=['x', 'y'],
             training_configuration='my-sk-cf',
             select=Select(collection='documents'),

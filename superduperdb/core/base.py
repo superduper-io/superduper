@@ -45,28 +45,29 @@ class PlaceholderList(BasePlaceholder):
     """
 
     # ruff: noqa: E501
-    def __init__(self, variety: str, list: t.Union[t.List[str], t.List[Placeholder]]):
-        self.list = list
-        if list and isinstance(self.list[0], str):
-            self.list = [Placeholder(arg, variety) for arg in list]  # type: ignore[arg-type]
-        elif list:
-            assert isinstance(self.list[0], Placeholder)
-            self.list = list
+    def __init__(
+        self,
+        variety: str,
+        placeholders: t.Union[t.List[str], t.List[Placeholder]],  # TODO - fix this type
+    ):
+        self.placeholders = placeholders
+        if placeholders and isinstance(self.placeholders[0], str):
+            self.placeholders = [Placeholder(arg, variety) for arg in placeholders]  # type: ignore[arg-type]
+        elif placeholders:
+            assert isinstance(self.placeholders[0], Placeholder)
+            self.placeholders = placeholders
         else:
-            self.list = list
+            self.placeholders = placeholders
         self.variety = variety
 
     def __iter__(self):
-        return iter(self.list)
+        return iter(self.placeholders)
 
     def __getitem__(self, item):
-        return self.list[item]
-
-    def __repr__(self):
-        return f'PlaceholderList[{self.variety}](' + str(self.list) + ')'
+        return self.placeholders[item]
 
     def aslist(self) -> t.List[str]:
-        return [x.identifier for x in self.list]  # type: ignore[union-attr]
+        return [x.identifier for x in self.placeholders]  # type: ignore[union-attr]
 
 
 class BaseComponent:
@@ -126,7 +127,7 @@ class Component(BaseComponent):
             if isinstance(v, Placeholder):
                 out.append(v)
             elif isinstance(v, PlaceholderList):
-                out.extend(v.list)  # type: ignore[arg-type]
+                out.extend(v.placeholders)  # type: ignore[arg-type]
         return out
 
     @contextmanager
@@ -222,18 +223,15 @@ class ComponentList(BaseComponent):
     List of base components.
     """
 
-    def __init__(self, variety, list):
+    def __init__(self, variety, components):
         self.variety = variety
-        self.list = list
+        self.components = components
 
     def __getitem__(self, item):
-        return self.list[item]
+        return self.components[item]
 
     def __iter__(self):
-        return iter(self.list)
-
-    def __repr__(self):
-        return f'ComponentList[{self.variety}](' + super().__repr__() + ')'
+        return iter(self.components)
 
     def repopulate(self, database):
         for i, item in enumerate(self):
@@ -302,7 +300,7 @@ def strip(component: BaseComponent, top_level=True):
 # ruff: noqa: E501
 def restore(component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict):
     if isinstance(component, PlaceholderList):
-        return ComponentList(component.variety, [restore(c, cache) for c in component.list])  # type: ignore[arg-type]
+        return ComponentList(component.variety, [restore(c, cache) for c in component.placeholders])  # type: ignore[arg-type]
     if isinstance(component, Placeholder):
         try:
             return cache[component.id]

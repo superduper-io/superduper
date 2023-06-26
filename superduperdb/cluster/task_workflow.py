@@ -1,66 +1,71 @@
-import datetime
 import networkx
+import copy
+import datetime
+import dataclasses as dc
+import functools
+import typing as t
 import uuid
 
 from superduperdb.cluster.function_job import function_job
 from superduperdb.cluster.job_submission import dask_client
 
 
+@dc.dataclass
 class TaskWorkflow:
-    def __init__(self, database):
-        self.G = networkx.DiGraph()
-        self._path_lengths = None
-        self.database = database
+    database: t.Any
+    G: networkx.DiGraph = dc.field(default_factory=networkx.DiGraph)
 
-    def add_edge(self, node1, node2):
+    def add_edge(self, node1, node2) -> None:
         self.G.add_edge(node1, node2)
 
-    def add_node(self, node, data=None):
+    def add_node(self, node, data=None) -> None:
         data = data or {}
         self.G.add_node(node)
-        for k, v in data.items():
-            self.G.nodes[node][k] = v
+        self.G.nodes[node].update(data)
 
-    def __mul__(self, other):
+    def asjson(self) -> t.Dict[str, t.Any]:
+        return networkx.adjacency_data(self.G)
+
+    def __imul__(self, other: 'TaskWorkflow') -> 'TaskWorkflow':
         for node in other.nodes:
             self.G.add_node(node)
         for edge in other.edges:
             self.G.add_edge(*edge)
         return self
 
-    def __add__(self, other):
+    def __iadd__(self, other: 'TaskWorkflow') -> 'TaskWorkflow':
         for node in other.nodes:
             self.G.add_node(node)
         for edge in other.edges:
             self.G.add_edge(*edge)
-        roots_other = []
-        for node in other:
-            if not networkx.ancestors(node):
-                roots_other.append(node)
-        leafs_this = []
-        for node in self.G:
-            if not networkx.descendants(node):
-                leafs_this.append(node)
+        roots_other = [i for i in other if not networkx.ancestors(i)]
+        leafs_this = [i for i in self.G if not networkx.descendants(i)]
+
         for node1 in leafs_this:
             for node2 in roots_other:
                 self.add_edge(node1, node2)
         return self
 
-    @property
-    def path_lengths(self):
-        if self._path_lengths is None:
-            self._path_lengths = {}
-            for node in networkx.topological_sort(self.G):
-                if not self._path_lengths:
-                    self._path_lengths[node] = 0
-                else:
-                    self._path_lengths[node] = (
-                        min([self._path_lengths[n] for n in self.G.predecessors(node)])
-                        + 1
-                    )
-        return self._path_lengths
+    def __mul__(self, other: 'TaskWorkflow') -> 'TaskWorkflow':
+        dc = copy.deepcopy(self)
+        dc *= other
+        return dc
 
-    def __call__(self, remote=None):
+    def __add__(self, other: 'TaskWorkflow') -> 'TaskWorkflow':
+        dc = copy.deepcopy(self)
+        dc += other
+        return dc
+
+    @functools.cached_property
+    def path_lengths(self) -> t.Dict[t.Any, int]:
+        p = {}
+
+        for node in networkx.topological_sort(self.G):
+            p[node] = len(p) and 1 + min([p[n] for n in self.G.predecessors(node)])
+
+        return p
+
+    def __call__(self, remote=None) -> networkx.DiGraph:
         if remote is None:
             remote = self.database.remote
         if remote:

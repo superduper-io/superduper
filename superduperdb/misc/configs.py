@@ -6,7 +6,6 @@ from superduperdb.misc import dicts
 import typing as t
 import os
 
-Self = t.Any
 File = t.Union[Path, str]
 
 ROOT = Path(__file__).parents[1]

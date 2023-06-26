@@ -10,13 +10,13 @@ from superduperdb.core.documents import Document
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
-from superduperdb.core.learning_task import LearningTask
+from superduperdb.core.fit import Fit
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Select, Insert, Update, Delete
 from superduperdb.misc.key_cache import KeyCache
 from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb.models.torch.wrapper import TorchTrainerConfiguration
-from superduperdb.training.validation import validate_vector_search
+from superduperdb.metrics.vector_search import validate_vector_search
 from superduperdb.types.torch.tensor import tensor
 from superduperdb.vector_search import VanillaHashSet
 from superduperdb.vector_search.vanilla.measures import css
@@ -302,7 +302,7 @@ def test_learning_task(si_validation, a_model, c_model, metric):
     )
 
     si_validation.add(configuration)
-    learning_task = LearningTask(
+    learning_task = Fit(
         'my_index',
         models=['linear_a', 'linear_c'],
         select=Select(collection='documents'),

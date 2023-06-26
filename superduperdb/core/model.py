@@ -1,10 +1,9 @@
 import typing as t
 
-from superduperdb.core import Metric
+from superduperdb.core.metric import Metric
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.encoder import Encoder
 from superduperdb.datalayer.base.query import Select
-from superduperdb.training.query_dataset import QueryDataset
 
 EncoderArg = t.Union[Encoder, Placeholder, None, str]
 
@@ -26,44 +25,8 @@ class TrainingConfiguration(Component):
         for k, v in parameters.items():
             setattr(self, k, v)
 
-    @classmethod
-    def split_and_preprocess(cls, r, models):
-        raise NotImplementedError
-
-    @classmethod
-    def save_models(cls, database, models, model_names):
-        for model, mn in zip(models, model_names):
-            with model.saving():
-                database._replace_model(mn, model)
-
-    @classmethod
-    def _get_data(cls, select, keys, features, transform):
-        train_data = QueryDataset(
-            select=select, keys=keys, fold='train', transform=transform
-        )
-
-        valid_data = QueryDataset(
-            select=select, keys=keys, fold='valid', transform=transform
-        )
-
-        return train_data, valid_data
-
     def get(self, k, default=None):
         return getattr(self, k, default)
-
-    def __call__(
-        self,
-        identifier,
-        models,
-        keys,
-        model_names,
-        select,
-        validation_sets=(),
-        metrics=None,
-        features=None,
-        download=False,
-    ):
-        raise NotImplementedError
 
 
 class Model(Component):
@@ -87,7 +50,7 @@ class Model(Component):
         encoder: EncoderArg = None,
         training_configuration: t.Optional[TrainingConfiguration] = None,
         training_select: t.Optional[Select] = None,
-        training_keys: t.Optional[t.Dict] = None,
+        training_keys: t.Optional[t.List[str]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
     ):
         super().__init__(identifier)
@@ -138,6 +101,8 @@ class ModelEnsemblePredictionError(Exception):
 
 # TODO make Component less dogmatic about having just one ``self.object`` type thing
 class ModelEnsemble:
+    variety: str = 'model'
+
     def __init__(self, models: t.List[t.Union[Model, str]]):
         self._model_ids = []
         for m in models:

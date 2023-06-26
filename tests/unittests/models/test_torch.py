@@ -1,7 +1,7 @@
 # ruff: noqa: F401, F811
 import torch
 
-from superduperdb.core import Metric
+from superduperdb.core.metric import Metric
 from superduperdb.datalayer.mongodb.query import Select
 from superduperdb.metrics.classification import compute_classification_metrics
 from superduperdb.models.torch.wrapper import (
@@ -10,7 +10,11 @@ from superduperdb.models.torch.wrapper import (
     TorchModelEnsemble,
 )
 from superduperdb.models.torch.wrapper import TorchTrainerConfiguration
-from superduperdb.training.validation import validate_vector_search
+from superduperdb.metrics.vector_search import (
+    validate_vector_search,
+    VectorSearchPerformance,
+    PatK,
+)
 from superduperdb.types.torch.tensor import tensor
 from superduperdb.vector_search import VanillaHashSet
 
@@ -130,12 +134,13 @@ def test_ensemble(si_validation, metric):
         n_iterations=4,
         validation_interval=5,
         loader_kwargs={'batch_size': 10, 'num_workers': 0},
-        optimizer_classes={
-            'linear_a': torch.optim.Adam,
-            'linear_c': torch.optim.Adam,
-        },
+        optimizer_cls=torch.optim.Adam,
         optimizer_kwargs={'lr': 0.001},
-        compute_metrics=validate_vector_search,
+        compute_metrics=VectorSearchPerformance(
+            measure='css',
+            predict_kwargs={'batch_size': 10},
+            index_key='x',
+        ),
         hash_set_cls=VanillaHashSet,
         measure=css,
         max_iterations=20,
@@ -151,4 +156,6 @@ def test_ensemble(si_validation, metric):
         training_configuration=config,
         database=si_validation,
         select=Select(collection='documents'),
+        validation_sets=['my_valid'],
+        metrics=[Metric('p@1', PatK(1))],
     )

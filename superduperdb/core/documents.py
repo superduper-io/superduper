@@ -27,7 +27,7 @@ class Document:
         return self._encode(self.content)
 
     @classmethod
-    def decode(cls, r: t.Dict, types: t.Dict):
+    def decode(cls, r: t.Union[t.Dict, 'Document'], types: t.Dict):
         if isinstance(r, Document):
             return Document(cls._decode(r, types))
         elif isinstance(r, dict):

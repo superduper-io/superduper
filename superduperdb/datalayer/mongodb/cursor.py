@@ -52,7 +52,7 @@ class SuperDuperCursor(Cursor):
             r = self._add_features(r)
         return r
 
-    def _add_features(self, r):
+    def _add_features(self, r) -> MongoStyleDict:
         r = MongoStyleDict(r)
         for k in self.features:
             r[k] = r['_outputs'][k][self.features[k]]

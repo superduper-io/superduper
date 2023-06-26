@@ -1,6 +1,6 @@
 import typing as t
 
-from pymongo.results import UpdateResult
+from pymongo import results
 
 from superduperdb.core.base import Component
 from superduperdb.datalayer.base.metadata import MetaDataStore
@@ -19,7 +19,7 @@ class MongoMetaDataStore(MetaDataStore):
         self.job_collection = db['_jobs']
         self.parent_child_mappings = db['_parent_child_mappings']
 
-    def create_parent_child(self, parent: str, child: str):
+    def create_parent_child(self, parent: str, child: str) -> results.InsertOneResult:
         self.parent_child_mappings.insert_one(
             {
                 'parent': parent,
@@ -27,19 +27,19 @@ class MongoMetaDataStore(MetaDataStore):
             }
         )
 
-    def create_component(self, info: t.Dict):
+    def create_component(self, info: t.Dict) -> results.InsertOneResult:
         if 'hidden' not in info:
             info['hidden'] = False
         return self.object_collection.insert_one(info)
 
-    def create_job(self, info: t.Dict):
+    def create_job(self, info: t.Dict) -> results.InsertOneResult:
         return self.job_collection.insert_one(info)
 
-    def get_parent_child_relations(self):
+    def get_parent_child_relations(self) -> t.List[t.Tuple]:
         c = self.parent_child_mappings.find()
         return [(r['parent'], r['child']) for r in c]
 
-    def get_component_version_children(self, unique_id: str):
+    def get_component_version_children(self, unique_id: str) -> t.List:
         return self.parent_child_mappings.distinct('child', {'parent': unique_id})
 
     def get_job(self, identifier: str):
@@ -81,15 +81,17 @@ class MongoMetaDataStore(MetaDataStore):
         except IndexError:
             raise FileNotFoundError(f'Can\'t find {variety}: {identifier} in metadata')
 
-    def update_job(self, identifier: str, key: str, value: t.Any):
+    def update_job(
+        self, identifier: str, key: str, value: t.Any
+    ) -> results.UpdateResult:
         return self.job_collection.update_one(
             {'identifier': identifier}, {'$set': {key: value}}
         )
 
-    def watch_job(self, job_id: str):
+    def watch_job(self, job_id: str) -> None:
         pass
 
-    def show_components(self, variety: str, **kwargs):
+    def show_components(self, variety: str, **kwargs: t.Any) -> t.List:
         return self.object_collection.distinct(
             'identifier', {'variety': variety, **kwargs}
         )
@@ -99,13 +101,13 @@ class MongoMetaDataStore(MetaDataStore):
             'version', {'variety': variety, 'identifier': identifier}
         )
 
-    def list_components_in_scope(self, scope: str):
+    def list_components_in_scope(self, scope: str) -> t.List[t.Tuple[str, str]]:
         out = []
         for r in self.object_collection.find({'parent': scope}):
             out.append((r['variety'], r['identifier']))
         return out
 
-    def show_jobs(self, status: bool = None) -> t.List:
+    def show_jobs(self, status: t.Any = None) -> t.List:
         status = {} if status is None else {'status': status}
         return list(
             self.job_collection.find(
@@ -210,7 +212,7 @@ class MongoMetaDataStore(MetaDataStore):
         key: str,
         value: t.Any,
         version: int,
-    ) -> UpdateResult:
+    ) -> results.UpdateResult:
         return self.object_collection.update_one(
             {'identifier': identifier, 'variety': variety}, {'$set': {key: value}}
         )

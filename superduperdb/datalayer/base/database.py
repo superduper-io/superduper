@@ -389,7 +389,11 @@ class BaseDatabase:
         return m
 
     def _build_task_workflow(
-        self, select: Select, ids=None, dependencies=(), verbose=True
+        self,
+        select: Select,
+        ids: t.Optional[t.List] = None,
+        dependencies: t.Tuple = (),
+        verbose: bool = True,
     ) -> TaskWorkflow:
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)

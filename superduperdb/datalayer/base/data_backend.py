@@ -9,6 +9,7 @@ from superduperdb.datalayer.base.query import Insert, Select, Update, Delete
 if t.TYPE_CHECKING:
     from superduperdb.datalayer.base.database import UpdateResult, DeleteResult
 
+
 class BaseDataBackend(ABC):
     models: t.Dict[str, Model]
     select_cls = Select

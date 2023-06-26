@@ -1,17 +1,17 @@
-import typing as t
 import re
-
-import boto3
-from io import BytesIO
-from contextlib import contextmanager
-from multiprocessing.pool import ThreadPool
-import requests
 import signal
 import sys
+import typing as t
 import warnings
+from contextlib import contextmanager
+from io import BytesIO
+from multiprocessing.pool import ThreadPool
 
-from superduperdb.misc.progress import progressbar
+import boto3
+import requests
+
 from superduperdb.misc.logger import logging
+from superduperdb.misc.progress import progressbar
 
 
 class TimeoutException(Exception):
@@ -82,7 +82,7 @@ class BaseDownloader:
         self.headers = headers or {}
         self.raises = raises
 
-    def go(self):
+    def go(self) -> None:
         """
         Download all files
         Uses a :py:class:`multiprocessing.pool.ThreadPool` to parallelize
@@ -120,7 +120,7 @@ class BaseDownloader:
 
         self._parallel_go(f)
 
-    def _parallel_go(self, f):
+    def _parallel_go(self, f) -> None:
         pool = ThreadPool(self.n_workers)
         try:
             pool.map(f, range(len(self.uris)))
@@ -133,7 +133,7 @@ class BaseDownloader:
         pool.close()
         pool.join()
 
-    def _sequential_go(self, f):
+    def _sequential_go(self, f) -> None:
         for i in range(len(self.uris)):
             f(i)
 
@@ -165,7 +165,7 @@ class Downloader(BaseDownloader):
         skip_existing=True,
         timeout=None,
         raises=True,
-    ):
+    ) -> None:
         super().__init__(
             uris, n_workers=n_workers, timeout=timeout, headers=headers, raises=raises
         )
@@ -178,7 +178,7 @@ class Downloader(BaseDownloader):
 
         assert len(ids) == len(uris)
 
-    def _download(self, i):
+    def _download(self, i) -> None:
         uri = self.uris[i]
         _id = self.ids[i]
         content = self.fetcher(uri)
@@ -186,18 +186,18 @@ class Downloader(BaseDownloader):
 
 
 class InMemoryDownloader(BaseDownloader):
-    def __init__(self, *args, headers=None, n_workers=0, **kwargs):
+    def __init__(self, *args, headers=None, n_workers=0, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.results = {}
         self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
 
-    def _download(self, i):
+    def _download(self, i) -> None:
         content = self.fetcher(self.uris[i])
         self.results[i] = content
 
 
 def gather_uris(
-    documents, gather_ids=True
+    documents: t.List[t.Dict], gather_ids: bool=True
 ) -> t.Tuple[t.List[str], t.List[str], t.List[int]]:
     """
     Get the URLS out of all documents as denoted by ``{"_content": ...}``
@@ -218,7 +218,7 @@ def gather_uris(
     return uris, mongo_keys, ids
 
 
-def _gather_uris_for_document(r):
+def _gather_uris_for_document(r: t.Dict) -> t.Tuple[t.List[str], t.List[str]]:
     '''
     >>> _gather_uris_for_document({'a': {'_content': {'uri': 'test'}}})
     (['test'], ['a'])

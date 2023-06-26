@@ -3,6 +3,7 @@ import typing as t
 from bson import ObjectId
 from pymongo import UpdateOne
 from pymongo.cursor import Cursor
+from pymongo import results
 
 from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
@@ -23,7 +24,7 @@ class MongoDataBackend(BaseDataBackend):
         super().__init__(conn, name)
         self.db = conn[name]
 
-    def insert(self, insert: Insert):
+    def insert(self, insert: Insert) -> results.InsertManyResult:
         encoded = [r.encode() for r in insert.documents]
         return self.db[insert.collection].insert_many(
             encoded,
@@ -31,7 +32,7 @@ class MongoDataBackend(BaseDataBackend):
             bypass_document_validation=insert.bypass_document_validation,
         )
 
-    def download_update(self, table, id, key, bytes):
+    def download_update(self, table, id, key, bytes) -> Update:
         return Update(
             collection=table,
             one=True,
@@ -39,18 +40,20 @@ class MongoDataBackend(BaseDataBackend):
             update=Document({'$set': {f'{key}._content.bytes': bytes}}),
         )
 
-    def get_ids_from_select(self, select: Select):
+    def get_ids_from_select(self, select: Select) -> t.List[str]:
         return [
             r['_id'] for r in self.db[select.collection].find(select.filter, {'_id': 1})
         ]
 
-    def get_output_from_document(self, r: Document, key: str, model: str):
+    def get_output_from_document(
+        self, r: Document, key: str, model: str
+    ) -> MongoStyleDict:
         return (
             MongoStyleDict(r.content)[f'_outputs.{key}.{model}'],  # type: ignore
             r.content['_id'],  # type: ignore
         )
 
-    def get_raw_cursor(self, select: Select):
+    def get_raw_cursor(self, select: Select) -> Cursor:
         return Cursor(
             self.db[select.collection],
             select.filter,
@@ -58,7 +61,7 @@ class MongoDataBackend(BaseDataBackend):
             **select.kwargs,
         )
 
-    def set_content_bytes(self, r, key, bytes_):
+    def set_content_bytes(self, r, key, bytes_) -> MongoStyleDict:
         if not isinstance(r, MongoStyleDict):
             r = MongoStyleDict(r)
         r[f'{key}._content.bytes'] = bytes_
@@ -74,7 +77,7 @@ class MongoDataBackend(BaseDataBackend):
                     r['_other'][k] = r['_outputs'][k][self.features[k]]
         return r
 
-    def write_outputs(self, watcher_info, outputs, _ids):
+    def write_outputs(self, watcher_info, outputs, _ids) -> None:
         logging.info('bulk writing...')
         select = Select(**watcher_info['select'])
         if watcher_info.get('target') is None:
@@ -93,29 +96,31 @@ class MongoDataBackend(BaseDataBackend):
         )
         logging.info('done.')
 
-    def update(self, update: Update):
+    def update(self, update: Update) -> results.UpdateResult:
+        row = self.db[update.collection]
         if update.replacement is not None:
-            return self.db[update.collection].replace_one(
-                update.filter, update.replacement.encode()
-            )
-        if update.one:
-            return self.db[update.collection].update_one(
-                update.filter, update.update.encode()  # type: ignore
-            )
-        return self.db[update.collection].update_many(
-            update.filter, update.update.encode()  # type: ignore
-        )
+            return row.replace_one(update.filter, update.replacement.encode())
 
-    def delete(self, delete: Delete):
+        assert update.update is not None
+        if update.one:
+            return row.update_one(update.filter, update.update.encode())
+        else:
+            return row.update_many(update.filter, update.update.encode())
+
+    def delete(self, delete: Delete) -> results.DeleteResult:
         if delete.one:
             return self.db[delete.collection].delete_one(delete.filter)
         else:
             return self.db[delete.collection].delete_many(delete.filter)
 
-    def unset_outputs(self, info: t.Dict):
+    def unset_outputs(self, info: t.Dict) -> results.UpdateResult:
         select = Select(**info['select'])
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
-        update = select.update(
-            {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}  # type: ignore
-        )
+        doc = {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}
+
+        # doc = Document(doc)
+        # TODO: The above looks like it should be correct, and fixes the mypy error, but
+        # not passing in the dict breaks two unit tests!
+
+        update = select.update(doc)  # type: ignore
         return self.db[select.collection].update_many(update.filter, update.update)

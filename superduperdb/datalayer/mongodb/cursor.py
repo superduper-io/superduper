@@ -7,7 +7,7 @@ from superduperdb.core.documents import Document
 class SuperDuperCursor(Cursor):
     def __init__(
         self, collection, *args, features=None, scores=None, similar_join=None, **kwargs
-    ):
+    ) -> None:
         """
         Cursor subclassing *pymongo.cursor.Cursor*.
         If *features* are specified, these are substituted in the records
@@ -40,7 +40,7 @@ class SuperDuperCursor(Cursor):
             self._results = sorted(self._results, key=lambda r: -self.scores[r['_id']])
             self.it = 0
 
-    def limit(self, limit: int):
+    def limit(self, limit: int) -> 'SuperDuperCursor':
         if self.scores is None:
             return super().limit(limit)
         self._results = self._results[:limit]
@@ -62,7 +62,7 @@ class SuperDuperCursor(Cursor):
                     r['_other'][k] = r['_outputs'][k][self.features[k]]
         return r
 
-    def next(self):
+    def next(self) -> Document:
         if self.scores is not None:
             try:
                 r = self._results[self.it]

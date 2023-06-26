@@ -75,7 +75,9 @@ class ArtifactStore(ABC):
     def _load_bytes(self, file_id):
         pass
 
-    def load_artifact(self, file_id: str, serializer: Serializer = Serializer.default):
+    def load_artifact(
+        self, file_id: str, serializer: Serializer = Serializer.default
+    ) -> t.Any:
         if isinstance(serializer, str):
             serializer = Serializer(serializer)
 

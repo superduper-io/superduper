@@ -1,4 +1,6 @@
-from typing import Dict, Any, Optional
+import typing as t
+
+from pymongo.results import UpdateResult
 
 from superduperdb.core.base import Component
 from superduperdb.datalayer.base.metadata import MetaDataStore
@@ -7,9 +9,9 @@ from superduperdb.datalayer.base.metadata import MetaDataStore
 class MongoMetaDataStore(MetaDataStore):
     def __init__(
         self,
-        conn: Any,
-        name: Optional[str] = None,
-    ):
+        conn: t.Any,
+        name: t.Optional[str] = None,
+    ) -> None:
         self.name = name
         db = conn[name]
         self.meta_collection = db['_meta']
@@ -25,12 +27,12 @@ class MongoMetaDataStore(MetaDataStore):
             }
         )
 
-    def create_component(self, info: Dict):
+    def create_component(self, info: t.Dict):
         if 'hidden' not in info:
             info['hidden'] = False
         return self.object_collection.insert_one(info)
 
-    def create_job(self, info: Dict):
+    def create_job(self, info: t.Dict):
         return self.job_collection.insert_one(info)
 
     def get_parent_child_relations(self):
@@ -48,7 +50,7 @@ class MongoMetaDataStore(MetaDataStore):
 
     def get_latest_version(
         self, variety: str, identifier: str, allow_hidden: bool = False
-    ):
+    ) -> t.List:
         try:
             if allow_hidden:
                 return sorted(
@@ -79,7 +81,7 @@ class MongoMetaDataStore(MetaDataStore):
         except IndexError:
             raise FileNotFoundError(f'Can\'t find {variety}: {identifier} in metadata')
 
-    def update_job(self, identifier: str, key: str, value: Any):
+    def update_job(self, identifier: str, key: str, value: t.Any):
         return self.job_collection.update_one(
             {'identifier': identifier}, {'$set': {key: value}}
         )
@@ -103,7 +105,7 @@ class MongoMetaDataStore(MetaDataStore):
             out.append((r['variety'], r['identifier']))
         return out
 
-    def show_jobs(self, status=None):
+    def show_jobs(self, status: bool = None) -> t.List:
         status = {} if status is None else {'status': status}
         return list(
             self.job_collection.find(
@@ -112,7 +114,7 @@ class MongoMetaDataStore(MetaDataStore):
         )
 
     def _component_used(
-        self, variety: str, identifier: str, version: Optional[int] = None
+        self, variety: str, identifier: str, version: t.Optional[int] = None
     ):
         if version is None:
             return bool(
@@ -167,7 +169,7 @@ class MongoMetaDataStore(MetaDataStore):
         identifier: str,
         version: int,
         allow_hidden: bool = False,
-    ):
+    ) -> t.Any:
         if not allow_hidden:
             return self.object_collection.find_one(
                 {
@@ -196,7 +198,7 @@ class MongoMetaDataStore(MetaDataStore):
                 },
             )
 
-    def get_component_version_parents(self, unique_id: str):
+    def get_component_version_parents(self, unique_id: str) -> t.List[str]:
         return [
             r['parent'] for r in self.parent_child_mappings.find({'child': unique_id})
         ]
@@ -206,20 +208,22 @@ class MongoMetaDataStore(MetaDataStore):
         identifier: str,
         variety: str,
         key: str,
-        value: Any,
+        value: t.Any,
         version: int,
-    ):
+    ) -> UpdateResult:
         return self.object_collection.update_one(
             {'identifier': identifier, 'variety': variety}, {'$set': {key: value}}
         )
 
-    def write_output_to_job(self, identifier, msg, stream):
+    def write_output_to_job(self, identifier: str, msg: str, stream: str) -> None:
         assert stream in {'stdout', 'stderr'}
         self.job_collection.update_one(
             {'identifier': identifier}, {'$push': {stream: msg}}
         )
 
-    def hide_component_version(self, variety: str, identifier: str, version: int):
+    def hide_component_version(
+        self, variety: str, identifier: str, version: int
+    ) -> None:
         self.object_collection.update_one(
             {'variety': variety, 'identifier': identifier, 'version': version},
             {'$set': {'hidden': True}},

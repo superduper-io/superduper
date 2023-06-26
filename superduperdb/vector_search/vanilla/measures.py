@@ -1,11 +1,12 @@
 import numpy
+from numpy import ndarray
 
 
-def l2(x, y):
+def l2(x, y) -> ndarray:
     return numpy.array([-numpy.linalg.norm(x - y, axis=1)])
 
 
-def dot(x, y):
+def dot(x, y) -> ndarray:
     return numpy.dot(x, y.T)
 
 

@@ -40,7 +40,7 @@ class Watcher(Component):
         identifier = f'{self.model.identifier}/{self.key}'
         super().__init__(identifier)
 
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, t.Any]:
         return {
             'model': self.model.identifier,
             'select': self.select.dict(),
@@ -51,10 +51,10 @@ class Watcher(Component):
         }
 
     @staticmethod
-    def cleanup(info, database):
+    def cleanup(info, database) -> None:
         database.db.unset_outputs(info)
 
-    def schedule_jobs(self, database, verbose=False, dependencies=()):
+    def schedule_jobs(self, database, verbose: bool = False, dependencies=()):
         if not self.active:
             return
         ids = database.db.get_ids_from_select(self.select)

@@ -1,6 +1,7 @@
-from superduperdb.core.encoder import Encodable
 import dataclasses as dc
 import typing as t
+
+from superduperdb.core.encoder import Encodable
 
 
 @dc.dataclass
@@ -34,7 +35,7 @@ class Document:
         raise NotImplementedError(f'type {type(r)} is not supported')
 
     @classmethod
-    def _decode(cls, r: t.Dict, types: t.Dict):
+    def _decode(cls, r: t.Dict, types: t.Dict) -> t.Union[t.Dict, t.List]:
         if isinstance(r, dict) and '_content' in r:
             type = types[r['_content']['type']]
             return type.decode(r['_content']['bytes'])
@@ -45,16 +46,16 @@ class Document:
                 r[k] = cls._decode(r[k], types)
         return r
 
-    def __getitem__(self, item: str):
+    def __getitem__(self, item: str) -> t.Any:
         assert isinstance(self.content, dict)
         return self.content[item]
 
-    def __setitem__(self, key: str, value: t.Any):
+    def __setitem__(self, key: str, value: t.Any) -> None:
         assert isinstance(self.content, dict)
         self.content[key] = value
 
     @classmethod
-    def _unpack_datavars(cls, item: t.Any):
+    def _unpack_datavars(cls, item: t.Any) -> t.Any:
         if isinstance(item, Encodable):
             return item.x
         elif isinstance(item, dict):
@@ -64,5 +65,5 @@ class Document:
         else:
             return item
 
-    def unpack(self):
+    def unpack(self) -> t.Any:
         return self._unpack_datavars(self.content)

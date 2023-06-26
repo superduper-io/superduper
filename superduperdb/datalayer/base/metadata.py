@@ -1,6 +1,9 @@
 import time
-from typing import Dict, Any, Optional
+import typing as t
 from abc import ABC, abstractmethod
+
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.database import UpdateResult
 
 
 class MetaDataStore(ABC):
@@ -10,14 +13,14 @@ class MetaDataStore(ABC):
 
     def __init__(
         self,
-        conn: Any,
-        name: Optional[str] = None,
+        conn: t.Any,
+        name: t.Optional[str] = None,
     ):
         self.name = name
         self.conn = conn
 
     @abstractmethod
-    def create_component(self, info: Dict):
+    def create_component(self, info: t.Dict):
         pass
 
     @abstractmethod
@@ -29,7 +32,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def update_job(self, job_id: str, key: str, value: Any):
+    def update_job(self, job_id: str, key: str, value: t.Any):
         pass
 
     @abstractmethod
@@ -63,7 +66,7 @@ class MetaDataStore(ABC):
             return
 
     @abstractmethod
-    def show_jobs(self):
+    def show_jobs(self) -> t.List:
         pass
 
     @abstractmethod
@@ -91,7 +94,7 @@ class MetaDataStore(ABC):
     @abstractmethod
     def get_latest_version(
         self, variety: str, identifier: str, allow_hidden: bool = False
-    ):
+    ) -> t.List:
         pass
 
     @abstractmethod
@@ -101,16 +104,16 @@ class MetaDataStore(ABC):
         identifier: str,
         version: int,
         allow_hidden: bool = False,
-    ):
+    ) -> t.Any:
         pass
 
     def get_component(
         self,
         variety: str,
         identifier: str,
-        version: Optional[int] = None,
+        version: t.Optional[int] = None,
         allow_hidden: bool = False,
-    ):
+    ) -> t.Any:
         if version is None:
             version = self.get_latest_version(
                 variety, identifier, allow_hidden=allow_hidden
@@ -128,24 +131,33 @@ class MetaDataStore(ABC):
         identifier: str,
         variety: str,
         key: str,
-        value: Any,
+        value: t.Any,
         version: int,
-    ):
+    ) -> 'UpdateResult':
         pass
 
-    def update_object(self, identifier, variety, key, value, version=None):
+    def update_object(
+        self,
+        identifier: str,
+        variety: str,
+        key: str,
+        value: t.Any,
+        version: t.Optional[int] = None,
+    ) -> 'UpdateResult':
         if version is not None:
             version = self.get_latest_version(variety, identifier)
         return self._update_object(identifier, variety, key, value, version=version)
 
     @abstractmethod
-    def write_output_to_job(self, identifier, msg, stream):
+    def write_output_to_job(self, identifier: str, msg: str, stream: str) -> None:
         pass
 
     @abstractmethod
-    def get_component_version_parents(self, unique_id: str):
+    def get_component_version_parents(self, unique_id: str) -> t.List[str]:
         pass
 
     @abstractmethod
-    def hide_component_version(self, variety: str, identifier: str, version: int):
+    def hide_component_version(
+        self, variety: str, identifier: str, version: int
+    ) -> None:
         pass

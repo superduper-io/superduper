@@ -79,10 +79,10 @@ class Model(Component):
         self.metrics = metrics
         self.metric_values: t.Dict = {}
 
-    def _predict(self, inputs, **kwargs):
+    def _predict(self, inputs, **kwargs) -> t.List:
         return [self.predict_one(x, **kwargs) for x in inputs]
 
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, t.Any]:
         return {
             'identifier': self.identifier,
             'type': None if self.encoder is None else self.encoder.identifier,

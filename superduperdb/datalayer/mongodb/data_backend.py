@@ -20,7 +20,7 @@ class MongoDataBackend(BaseDataBackend):
         self,
         conn: t.Any,
         name: t.Optional[str] = None,
-    ):
+    ) -> None:
         super().__init__(conn, name)
         self.db = conn[name]
 
@@ -67,7 +67,7 @@ class MongoDataBackend(BaseDataBackend):
         r[f'{key}._content.bytes'] = bytes_
         return r
 
-    def _add_features(self, r):
+    def _add_features(self, r) -> MongoStyleDict:
         r = MongoStyleDict(r)
         for k in self.features:
             r[k] = r['_outputs'][k][self.features[k]]

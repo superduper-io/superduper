@@ -76,7 +76,7 @@ class VectorIndex(Component):
         self.measure = measure
         self.database = DBPlaceholder()
 
-    def repopulate(self, database: t.Optional[t.Any] = None):
+    def repopulate(self, database: t.Optional[t.Any] = None) -> None:
         if database is None:
             database = self.database
             assert not isinstance(database, DBPlaceholder)
@@ -204,7 +204,7 @@ class VectorIndex(Component):
             )
 
     @property
-    def models_keys(self):
+    def models_keys(self) -> t.Tuple[t.List[str], t.List[str]]:
         watchers = [self.indexing_watcher, *self.compatible_watchers]
         models = [w.model.identifier for w in watchers]
         keys = [w.key for w in watchers]

@@ -93,9 +93,9 @@ class BaseDatabase:
         self,
         identifier: str,
         variety: str,
-        validation_datasets: List[str],
-        metrics: List[str],
-    ):
+        validation_datasets: t.List[str],
+        metrics: t.List[str],
+    ) -> None:
         """
         Evaluate quality of component, using `Component.validate`, if implemented.
 
@@ -296,7 +296,7 @@ class BaseDatabase:
         identifier: str,
         version: Optional[int] = None,
         force=False,
-    ):
+    ) -> None:
         """
         Remove component (version: optional)
 
@@ -441,7 +441,7 @@ class BaseDatabase:
         serializer: str = 'pickle',
         serializer_kwargs: Optional[Dict] = None,
         parent: Optional[str] = None,
-    ):
+    ) -> t.Optional[t.List]:
         if object.repopulate_on_init:
             object.repopulate(self)
 
@@ -544,16 +544,16 @@ class BaseDatabase:
                 dependencies.append(f'{model}/{key}')
         return dependencies
 
-    def _get_file_content(self, r):
+    def _get_file_content(self, r: t.Any) -> t.Any:
         for k in r:
             if isinstance(r[k], dict):
                 r[k] = self._get_file_content(r[k])
         return r
 
-    def _get_object_info(self, identifier, variety, version=None):
+    def _get_object_info(self, identifier: str, variety: str, version=None) -> t.Any:
         return self.metadata.get_component(variety, identifier, version=version)
 
-    def _get_watcher_for_learning_task(self, learning_task):
+    def _get_watcher_for_learning_task(self, learning_task: str) -> str:
         info = self.metadata.get_component('learning_task', learning_task)
         key_to_watch = info['keys_to_watch'][0]
         model_identifier = next(
@@ -600,7 +600,7 @@ class BaseDatabase:
         self.metadata.update_object(identifier, 'model', 'object', file_id)
 
     @work
-    def _fit(self, identifier) -> None:
+    def _fit(self, identifier: str) -> None:
         """
         Execute the learning task.
 

@@ -6,6 +6,8 @@ from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.cursor import SuperDuperCursor
 from superduperdb.datalayer.base.query import Insert, Select, Update, Delete
 
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.database import UpdateResult, DeleteResult
 
 class BaseDataBackend(ABC):
     models: t.Dict[str, Model]
@@ -34,7 +36,7 @@ class BaseDataBackend(ABC):
         types: t.Dict,
         features=None,
         scores=None,
-    ):
+    ) -> SuperDuperCursor:
         return SuperDuperCursor(
             self.get_raw_cursor(select),
             id_field=self.id_field,
@@ -44,11 +46,13 @@ class BaseDataBackend(ABC):
         )
 
     @abstractmethod
-    def get_ids_from_select(self, select: Select):
+    def get_ids_from_select(self, select: Select) -> t.List[int]:
         pass
 
     @abstractmethod
-    def get_output_from_document(self, r: Document, key: str, model: str):
+    def get_output_from_document(
+        self, r: Document, key: str, model: str
+    ) -> t.Tuple[t.Dict, t.Any]:
         pass
 
     @abstractmethod
@@ -56,21 +60,21 @@ class BaseDataBackend(ABC):
         pass
 
     @abstractmethod
-    def set_content_bytes(self, r, key, bytes_):
+    def set_content_bytes(self, r, key, bytes_) -> t.Dict:
         pass
 
     @abstractmethod
-    def write_outputs(self, info, outputs, _ids):
+    def write_outputs(self, info, outputs, _ids) -> None:
         pass
 
     @abstractmethod
-    def update(self, update: Update):
+    def update(self, update: Update) -> 'UpdateResult':
         pass
 
     @abstractmethod
-    def delete(self, delete: Delete):
+    def delete(self, delete: Delete) -> 'DeleteResult':
         pass
 
     @abstractmethod
-    def unset_outputs(self, info):
+    def unset_outputs(self, info: t.Dict[str, t.Any]) -> 'UpdateResult':
         pass

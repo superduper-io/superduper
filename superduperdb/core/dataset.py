@@ -32,7 +32,7 @@ class Dataset(Component):
     def random(self):
         return numpy.random.default_rng(seed=self.random_seed)
 
-    def _post_attach_database(self):
+    def _post_attach_database(self) -> None:
         data = list(self.database.execute(self.select))
         if self.sample_size is not None and self.sample_size < len(data):
             perm = self.random.permutation(len(data)).tolist()

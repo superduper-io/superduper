@@ -45,10 +45,10 @@ class SuperDuperCursor:
                     r['_other'][k] = r['_outputs'][k][self.features[k]]
         return r
 
-    def __iter__(self):
+    def __iter__(self) -> 'SuperDuperCursor':
         return self
 
-    def __next__(self):
+    def __next__(self) -> Document:
         if self.scores is not None:
             try:
                 r = self._results[self.it]

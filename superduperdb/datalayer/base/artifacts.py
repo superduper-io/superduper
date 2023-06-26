@@ -33,7 +33,7 @@ class ArtifactStore(ABC):
         self,
         conn: t.Any,
         name: t.Optional[str] = None,
-    ):
+    ) -> None:
         self.name = name
         self.conn = conn
 
@@ -42,7 +42,7 @@ class ArtifactStore(ABC):
         object: t.Any,
         serializer: Serializer = Serializer.default,
         serializer_kwargs: t.Optional[t.Dict] = None,
-    ):
+    ) -> bytes:
         if serializer == Serializer.default:
             # TODO: this was what was there, but is it right?
             serializer_kwargs = serializer_kwargs or {'recurse': True}
@@ -52,7 +52,7 @@ class ArtifactStore(ABC):
             return f.getvalue()
 
     @abstractmethod
-    def delete_artifact(self, file_id: str):
+    def delete_artifact(self, file_id: str) -> None:
         pass
 
     def create_artifact(
@@ -72,7 +72,7 @@ class ArtifactStore(ABC):
         pass
 
     @abstractmethod
-    def _load_bytes(self, file_id):
+    def _load_bytes(self, file_id) -> bytes:
         pass
 
     def load_artifact(

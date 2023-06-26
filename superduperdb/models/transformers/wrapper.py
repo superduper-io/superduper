@@ -34,7 +34,7 @@ class Pipeline(Model):
         training_select: t.Optional[Select] = None,
         training_keys: t.Optional[t.List[str]] = None,
         encoder: t.Optional[Encoder] = None,
-    ):
+    ) -> None:
         if pipeline is None:
             assert model is not None, 'must specify model for now'
             pipeline = _pipeline(task, model=model)
@@ -110,11 +110,11 @@ class Pipeline(Model):
 
 
 class TokenizingFunction:
-    def __init__(self, tokenizer, **kwargs):
+    def __init__(self, tokenizer: t.Callable, **kwargs: t.Any) -> None:
         self.tokenizer = tokenizer
         self.kwargs = kwargs
 
-    def __call__(self, sentence):
+    def __call__(self, sentence) -> t.Any:
         return self.tokenizer(sentence, batch=False, **self.kwargs)
 
 

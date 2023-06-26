@@ -51,10 +51,10 @@ class Watcher(Component):
         }
 
     @staticmethod
-    def cleanup(info, database) -> None:
+    def cleanup(info: t.Dict[str, t.Any], database) -> None:
         database.db.unset_outputs(info)
 
-    def schedule_jobs(self, database, verbose: bool = False, dependencies=()):
+    def schedule_jobs(self, database, verbose: bool = False, dependencies=()) -> t.List:
         if not self.active:
             return
         ids = database.db.get_ids_from_select(self.select)

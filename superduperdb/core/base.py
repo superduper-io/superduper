@@ -202,7 +202,7 @@ class Component(BaseComponent):
             getattr(self, attr)
             for attr in vars(self)
             if isinstance(getattr(self, attr), BaseComponent)
-            or isinstance(getattr(self, attr), BasePlaceholder)
+               or isinstance(getattr(self, attr), BasePlaceholder)
         ]
         if not subcomponents:
             return super_repr
@@ -243,7 +243,7 @@ class ComponentList(BaseComponent):
         return [c.identifier for c in self]
 
 
-def strip(component: BaseComponent, top_level=True):
+def strip(component: BaseComponent, top_level=True) -> t.Union[BaseComponent, BaseDatabase, BasePlaceholder]:
     """
     Strip component down to object which doesn't contain a BaseComponent part.
     This may be applied so that objects aren't redundantly serialized and replaced
@@ -313,7 +313,7 @@ def restore(component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict):
     return component
 
 
-def is_placeholders_or_components(items: t.Union[t.List[t.Any], t.Tuple]):
+def is_placeholders_or_components(items: t.Union[t.List[t.Any], t.Tuple]) -> t.Tuple[bool, bool]:
     """
     Test whether the list is just strings and also test whether it's just components
     """

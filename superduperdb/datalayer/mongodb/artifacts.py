@@ -17,10 +17,10 @@ class MongoArtifactStore(ArtifactStore):
         db = self.conn[self.name]
         self.filesystem = gridfs.GridFS(db)
 
-    def delete_artifact(self, file_id: str):
+    def delete_artifact(self, file_id: str) -> None:
         return self.filesystem.delete(file_id)
 
-    def _load_bytes(self, file_id: str):
+    def _load_bytes(self, file_id: str) -> bytes:
         return self.filesystem.get(file_id).read()
 
     def _save_artifact(self, serialized: bytes):

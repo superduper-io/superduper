@@ -1,6 +1,7 @@
 import typing as t
 
-from superduperdb.core import Encoder
+from superduperdb.core.encoder import Encoder
+from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model
 from transformers import (
     pipeline as _pipeline,
@@ -9,49 +10,17 @@ from transformers import (
     Trainer,
 )
 
+from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.base.query import Select
-from superduperdb.training.base.config import TrainerConfiguration
+from superduperdb.core.model import TrainingConfiguration
+from superduperdb.datalayer.query_dataset import QueryDataset
 
 
-# TODO - replace with TrainingArguments (no need for a new class here)
-class TransformersTrainerConfiguration(TrainerConfiguration):
+class TransformersTrainerConfiguration(TrainingConfiguration):
+    training_arguments: TrainingArguments
+
     def __init__(self, training_arguments: TrainingArguments, **kwargs):
         super().__init__(training_arguments=training_arguments, **kwargs)
-
-    def __call__(
-        self,
-        identifier,
-        models,
-        keys,
-        model_names,
-        select: Select,
-        splitter=None,
-        validation_sets=(),
-        metrics=None,
-        features=None,
-        save=None,
-        download=False,
-    ):
-        tokenizing_function = TokenizingFunction(models[0].tokenizer)
-        train_data, valid_data = self._get_data(
-            select=select,
-            keys=keys,
-            features=features,
-            transform=tokenizing_function,
-        )
-        optimizers = self.get('optimizers')
-
-        args = self.training_arguments
-        assert args.save_total_limit == 1, "Only top model saving supported..."
-        assert args.save_strategy == 'epoch', "Only 'epoch' save strategy supported..."
-
-        TrainerWithSaving(
-            model=models[0],
-            args=self.training_arguments,
-            train_dataset=train_data,
-            eval_dataset=valid_data,
-            optimizers=optimizers,
-        ).train()
 
 
 class Pipeline(Model):
@@ -63,7 +32,7 @@ class Pipeline(Model):
         identifier: t.Optional[str] = None,
         training_configuration: t.Optional[TransformersTrainerConfiguration] = None,
         training_select: t.Optional[Select] = None,
-        training_keys: t.Optional[t.Dict] = None,
+        training_keys: t.Optional[t.List[str]] = None,
         encoder: t.Optional[Encoder] = None,
     ):
         if pipeline is None:
@@ -81,11 +50,63 @@ class Pipeline(Model):
             encoder=encoder,
         )
 
-    def predict_one(self, r, **kwargs):
-        return self.object(r, **kwargs)
+    def _get_data(self):
+        tokenizing_function = TokenizingFunction(self.object.tokenizer)
+        train_data = QueryDataset(
+            select=self.training_select,
+            keys=self.training_keys,
+            fold='train',
+            transform=tokenizing_function,
+        )
+        valid_data = QueryDataset(
+            select=self.training_select,
+            keys=self.training_keys,
+            fold='valid',
+            transform=tokenizing_function,
+        )
+        train_data = [train_data[i] for i in range(len(train_data))]
+        valid_data = [valid_data[i] for i in range(len(valid_data))]
+        return train_data, valid_data
 
-    def predict(self, docs, **kwargs):
-        return self.object(docs, **kwargs)
+    def fit(
+        self,
+        X: str,
+        y: str,
+        select: t.Optional[Select] = None,
+        database: t.Optional[BaseDatabase] = None,
+        training_configuration: t.Optional[TransformersTrainerConfiguration] = None,
+        validation_sets: t.Optional[t.List[str]] = None,
+        metrics: t.Optional[t.List[Metric]] = None,
+        serializer: str = 'pickle',
+    ):
+        if training_configuration is not None:
+            self.training_configuration = training_configuration
+        if select is not None:
+            self.training_select = select
+        if validation_sets is not None:
+            self.validation_sets = validation_sets
+        if metrics is not None:
+            self.metrics = metrics
+
+        if isinstance(X, str):
+            train_data, valid_data = self._get_data()
+            X_train = []
+            y_train = []
+            for i in range(len(train_data)):
+                r = train_data[i]
+                X_train.append(r[X])
+                y_train.append(r[y])
+
+        # ruff: noqa: E501
+        TrainerWithSaving(
+            model=self.object,
+            args=self.training_configuration.training_arguments,  # type: ignore[union-attr]
+            train_dataset=train_data,
+            eval_dataset=valid_data,
+        ).train()
+
+    def predict(self, input, **kwargs):
+        return self.object(input, **kwargs)
 
 
 class TokenizingFunction:

@@ -7,8 +7,8 @@ from typing import Union, Optional, Dict, List, Tuple
 import click
 import networkx
 
-from .artifacts import ArtifactStore
 from .apply_watcher import apply_watcher
+from .artifacts import ArtifactStore
 from .data_backend import BaseDataBackend
 from .download_content import download_content
 from .metadata import MetaDataStore
@@ -20,7 +20,6 @@ from superduperdb.cluster.task_workflow import TaskWorkflow
 from superduperdb.core.base import Component
 from superduperdb.core.documents import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
-from superduperdb.core.learning_task import LearningTask
 from superduperdb.core.model import Model
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.fetchers.downloads import gather_uris
@@ -128,7 +127,7 @@ class BaseDatabase:
         If version is specified, then print full metadata
 
         :param variety: variety of component to show ["type", "model", "watcher",
-                       "learning_task", "training_configuration", "metric",
+                       "fit", "training_configuration", "metric",
                        "vector_index", "job"]
         :param identifier: identifying string to component
         :param version: (optional) numerical version - specify for full metadata
@@ -302,7 +301,7 @@ class BaseDatabase:
         Remove component (version: optional)
 
         :param variety: variety of component to remove ["type", "model", "watcher",
-                        "training_configuration", "learning_task", "vector_index"]
+                        "training_configuration", "fit", "vector_index"]
         :param identifier: identifier of component (see `core.base.Component`)
         :param version: [optional] numerical version to remove
         :param force: force skip confirmation (use with caution)
@@ -347,6 +346,8 @@ class BaseDatabase:
         else:
             print('aborting.')
 
+        return
+
     def load(
         self,
         variety: str,
@@ -359,7 +360,7 @@ class BaseDatabase:
         Load component using uniquely identifying information.
 
         :param variety: variety of component to remove ["type", "model", "watcher",
-                        "training_configuration", "learning_task", "vector_index"]
+                        "training_configuration", "fit", "vector_index"]
         :param identifier: identifier of component (see `core.base.Component`)
         :param version: [optional] numerical version
         :param repopulate: toggle to ``False`` to only load references to other
@@ -376,6 +377,63 @@ class BaseDatabase:
                 f'"{identifier}" has been registered.'
             )
         info.setdefault('serializer', 'pickle')
+        info.setdefault('kwargs', {})
+
+        m = self.artifact_store.load_artifact(
+            info['object'], serializer=info['serializer']
+        )
+        if repopulate:
+            m.repopulate(self)
+        if cm := self.variety_to_cache_mapping.get(variety):
+            getattr(self, cm)[m.identifier] = m
+        return m
+
+    def _build_task_workflow(
+        self, select: Select, ids=None, dependencies=(), verbose=True
+    ) -> TaskWorkflow:
+        job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
+        job_ids.update(dependencies)
+        G = TaskWorkflow(self)
+        if ids is None:
+            ids = self.db.get_ids_from_select(select.select_only_id)
+
+        G.add_node(
+            '_download_content()',
+            data={
+                'task': download_content,
+                'args': [
+                    self,
+                    select,
+                ],
+                'kwargs': {
+                    'ids': ids,
+                },
+            },
+        )
+        if not self.show('watcher'):
+            return G
+
+        for identifier in self.show('watcher'):
+            G.add_node(
+                '_apply_watcher({identifier})',
+                data={
+                    'task': apply_watcher,
+                    'args': [self, identifier],
+                    'kwargs': {
+                        'ids': ids,
+                        'verbose': verbose,
+                    },
+                },
+            )
+
+        for identifier in self.show('watcher'):
+            G.add_edge('_download_content()', '_apply_watcher({identifier})')
+            deps = self._get_dependencies_for_watcher(identifier)
+            for dep in deps:
+                G.add_edge('_apply_watcher({dep})', '_apply_watcher({identifier})')
+                G.add_edge('_download_content()', '_apply_watcher({identifier})')
+
+        return G
 
     def _add(
         self,
@@ -503,17 +561,40 @@ class BaseDatabase:
         )
         return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
 
-    def _replace_model(self, identifier: str, object: Model):
-        info = self.metadata.get_component('model', identifier, version=object.version)
+    def _replace_model(
+        self,
+        identifier: str,
+        object: Model,
+        serializer: t.Optional[str] = None,
+        serializer_kwargs: t.Optional[t.Dict] = None,
+        upsert: bool = False,
+    ):
+        try:
+            info = self.metadata.get_component(
+                'model', identifier, version=object.version
+            )
+        except FileNotFoundError as e:
+            if upsert:
+                return self.add(
+                    object,
+                    serializer=serializer,  # type: ignore[arg-type]
+                    serializer_kwargs=serializer_kwargs,
+                )
+            raise e
         if 'serializer' not in info:
             info['serializer'] = 'pickle'
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
 
+        serializer = serializer if serializer else info['serializer']
+        serializer_kwargs = (
+            serializer_kwargs if serializer_kwargs else info['serializer_kwargs']
+        )
+
         file_id = self.artifact_store.create_artifact(
             object,
-            serializer=info['serializer'],
-            serializer_kwargs=info['serializer_kwargs'],
+            serializer=serializer,
+            serializer_kwargs=serializer_kwargs,
         )
         self.artifact_store.delete_artifact(info['object'])
         self.metadata.update_object(identifier, 'model', 'object', file_id)
@@ -526,22 +607,17 @@ class BaseDatabase:
         :param identifier: Identifier of a learning task.
         """
 
-        learning_task: LearningTask = self.load(
-            'learning_task', identifier
-        )  # type: ignore
-        trainer = learning_task.training_configuration(
-            identifier=identifier,
-            keys=learning_task.keys,
-            model_names=learning_task.models.aslist(),
-            models=learning_task.models,
-            select=learning_task.select,
-            validation_sets=learning_task.validation_sets,
-            metrics={m.identifier: m for m in learning_task.metrics},
-            features=learning_task.features,
-        )  # type: ignore
-
+        fit = self.load('fit', identifier)  # type: ignore
+        # ruff: noqa: E501
         try:
-            trainer()
+            fit.model.fit(  # type: ignore[attr-defined]
+                *fit.keys,  # type: ignore[attr-defined]
+                database=self,
+                select=fit.select,  # type: ignore[attr-defined]
+                validation_sets=fit.validation_sets,  # type: ignore[attr-defined]
+                metrics=fit.metrics,  # type: ignore[attr-defined]
+                training_configuration=fit.training_configuration,  # type: ignore[attr-defined]
+            )
         except Exception as e:
-            self.remove('learning_task', identifier, force=True)
+            self.remove('fit', identifier, force=True)
             raise e

@@ -7,7 +7,7 @@ import torch
 from torch.utils import data
 from torch.utils.data import DataLoader
 
-from superduperdb.core import Metric
+from superduperdb.core.metric import Metric
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encoder, Encodable
 from superduperdb.datalayer.base.database import BaseDatabase
@@ -16,7 +16,7 @@ from superduperdb.misc import progress
 from superduperdb.core.model import Model, ModelEnsemble, TrainingConfiguration
 from superduperdb.misc.logger import logging
 from superduperdb.models.torch.utils import device_of, to_device, eval
-from superduperdb.training.query_dataset import QueryDataset
+from superduperdb.datalayer.query_dataset import QueryDataset
 
 
 class TorchTrainerConfiguration(TrainingConfiguration):
@@ -90,6 +90,14 @@ class Base(Model):
     def train(self):
         raise NotImplementedError
 
+    def build_optimizers(self):
+        return (
+            self.training_configuration.optimizer_cls(
+                self.object.parameters(),
+                **self.training_configuration.optimizer_kwargs,
+            ),
+        )
+
     def stopping_criterion(self, iteration):
         max_iterations = self.training_configuration.max_iterations
         no_improve_then_stop = self.training_configuration.no_improve_then_stop
@@ -118,8 +126,8 @@ class Base(Model):
         self,
         X: Optional[Union[List[str], str]] = None,
         *targets,
+        database: BaseDatabase,
         select: Optional[Select] = None,
-        database: Optional[BaseDatabase] = None,
         training_configuration: Optional[TorchTrainerConfiguration] = None,
         validation_sets: Optional[List[str]] = None,
         metrics: Optional[List[Metric]] = None,
@@ -134,10 +142,11 @@ class Base(Model):
         if metrics is not None:
             self.metrics = metrics
 
-        self.training_keys = (X, *targets)
+        self.training_keys = (X, *targets)  # type: ignore[assignment]
 
         train_data, valid_data = self._get_data()
-        loader_kwargs = self.training_configuration.loader_kwargs
+        # ruff: noqa: E501
+        loader_kwargs = self.training_configuration.loader_kwargs  # type: ignore[union-attr]
         train_dataloader = DataLoader(train_data, **loader_kwargs)
         valid_dataloader = DataLoader(valid_data, **loader_kwargs)
 
@@ -148,7 +157,7 @@ class Base(Model):
             train_dataloader,
             valid_dataloader,
             database=database,
-            validation_sets=validation_sets or (),
+            validation_sets=validation_sets or [],
             serializer=serializer,  # TODO - add serializer to __init__ method of Model
         )
 
@@ -223,7 +232,6 @@ class Base(Model):
         return self.training_configuration.compute_metrics(
             validation_set,
             metrics=self.metrics,
-            training_keys=self.training_keys,
             model=self,
         )
 
@@ -241,7 +249,8 @@ class Base(Model):
             for batch in train_dataloader:
                 train_objective = self.take_step(batch)
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
-                if iteration % self.training_configuration.validation_interval == 0:
+                # ruff: noqa: E501
+                if iteration % self.training_configuration.validation_interval == 0:  # type: ignore[union-attr]
                     valid_loss = self.compute_validation_objective(valid_dataloader)
                     all_metrics = {}
                     for vs in validation_sets:
@@ -301,7 +310,7 @@ class TorchPipeline(Base):
         num_directions: int = 2,
         metrics: Optional[Union[List[Metric], List[str]]] = None,
     ):
-        self.steps = steps
+        self.steps = steps  # type: ignore[misc]
         self._forward_sequential = None
         self.is_batch = is_batch
         forward_steps = self.steps[self._forward_mark : self._post_mark]
@@ -316,23 +325,15 @@ class TorchPipeline(Base):
             collate_fn=collate_fn,
             is_batch=is_batch,
             num_directions=num_directions,
-            metrics=metrics,
+            metrics=metrics,  # type: ignore[arg-type]
         )
 
     @contextmanager
     def evaluating(self):
-        yield from eval(self.object)
+        yield eval(self.object)
 
     def train(self):
         return self.object.train()
-
-    def build_optimizers(self):
-        return (
-            self.training_configuration.optimizer_cls(
-                self.object.parameters(),
-                **self.training_configuration.optimizer_kwargs,
-            ),
-        )
 
     def __repr__(self):
         lines = [
@@ -404,10 +405,7 @@ class TorchPipeline(Base):
                 x = transform(x)
         return x
 
-    # TODO move to Base class
-    def predict(
-        self, x, **kwargs
-    ):  # TODO include submodel flag predict(X, submodel='my_model')
+    def predict(self, x, **kwargs):
         if not self._test_if_batch(x):
             return self._predict_one(x, **kwargs)
         if self.preprocess_pipeline.steps:
@@ -452,7 +450,7 @@ class TorchPipeline(Base):
 
     saving = eval
 
-    @steps.setter
+    @steps.setter  # type: ignore[no-redef,attr-defined]
     def steps(self, value):
         self._steps = value
         try:
@@ -756,7 +754,7 @@ class TorchModelEnsemble(Base, ModelEnsemble):
     ):
         Base.__init__(
             self,
-            object=None,
+            object=None,  # type: ignore[arg-type]
             identifier=identifier,
             collate_fn=collate_fn,
             is_batch=is_batch,
@@ -766,7 +764,7 @@ class TorchModelEnsemble(Base, ModelEnsemble):
             training_keys=training_keys,
             num_directions=num_directions,
         )
-        ModelEnsemble.__init__(self, models)
+        ModelEnsemble.__init__(self, models)  # type: ignore[arg-type]
 
     def train_preprocess(self, r):
         out = {}

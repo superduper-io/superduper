@@ -14,12 +14,11 @@ from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encodable
 from superduperdb.core.metric import Metric
-from superduperdb.core.model import Model
+from superduperdb.core.model import Model, ModelEnsemble
 from superduperdb.core.watcher import Watcher
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.training.validation import validate_vector_search
-from superduperdb.vector_search import VanillaHashSet
+from superduperdb.metrics.vector_search import VectorSearchPerformance
 from superduperdb.vector_search.base import (
     BaseHashSet,
     VectorCollection,
@@ -223,14 +222,17 @@ class VectorIndex(Component):
         if isinstance(validation_data, str):
             validation_data = database.load('dataset', validation_data)
         unpacked = [r.unpack() for r in validation_data.data]  # type: ignore[union-attr]
-        return validate_vector_search(
-            validation_data=unpacked,
-            models=models,
-            keys=keys,
-            metrics=metrics,
-            hash_set_cls=VanillaHashSet,
+        model_ensemble = ModelEnsemble(models)
+        msg = 'Can only evaluate VectorSearch with compatible watchers...'
+        assert len(keys) >= 2, msg
+        return VectorSearchPerformance(
             measure=self.measure,
-            predict_kwargs={},
+            index_key=self.indexing_watcher.key,  # type: ignore[union-attr]
+            compatible_keys=[w.key for w in self.compatible_watchers],
+        )(
+            validation_data=unpacked,
+            model=model_ensemble,
+            metrics=metrics,
         )
 
     def asdict(self):

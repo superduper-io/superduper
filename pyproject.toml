@@ -51,7 +51,6 @@ grpcio = "<=1.49.1"
 readerwriterlock = "^1.0.9"
 fastapi = {version = "0.88.0", extras = ["all"]}
 
-
 [[tool.poetry.source]]
 name = "PyPI"
 priority = "primary"
@@ -79,6 +78,8 @@ types-requests = "^2.31.0.1"
 boto3-stubs = "^1.26.154"
 types-tqdm = "^4.65.0.1"
 types-pillow = "^9.5.0.4"
+pytest-annotate = "^1.0.5"
+
 
 [build-system]
 requires = ["poetry-core"]

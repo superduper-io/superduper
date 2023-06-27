@@ -54,13 +54,13 @@ class SuperDuperCursor(Cursor):
         self._results = self._results[:limit]
         return self
 
-    def __getitem__(self, item) -> Cursor:
+    def __getitem__(self, item: int) -> t.Union[Cursor, MongoStyleDict]:
         r = super().__getitem__(item)
         if self.features is not None and self.features:
             r = self._add_features(r)
         return r
 
-    def _add_features(self, r) -> MongoStyleDict:
+    def _add_features(self, r: t.Dict) -> MongoStyleDict:
         r = MongoStyleDict(r)
         for k in self.features:
             r[k] = r['_outputs'][k][self.features[k]]

@@ -61,7 +61,7 @@ class ArtifactStore(ABC):
         object: t.Any,
         serializer: t.Union[Serializer, str] = Serializer.default,
         serializer_kwargs: t.Optional[t.Dict] = None,
-    ):
+    ) -> t.Any:
         if isinstance(serializer, str):
             serializer = Serializer(serializer)
 
@@ -69,7 +69,7 @@ class ArtifactStore(ABC):
         return self._save_artifact(bytes), hashlib.sha1(bytes).hexdigest()
 
     @abstractmethod
-    def _save_artifact(self, serialized: bytes):
+    def _save_artifact(self, serialized: bytes) -> t.Any:
         pass
 
     @abstractmethod

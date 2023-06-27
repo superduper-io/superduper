@@ -8,18 +8,25 @@ from superduperdb.datalayer.base.backends import (
     connections as default_connections,
 )
 from superduperdb.datalayer.base.database import BaseDatabase
-from abc import ABCMeta
+
 from superduperdb.datalayer.mongodb.artifacts import MongoArtifactStore
 from superduperdb.datalayer.mongodb.data_backend import MongoDataBackend
 from superduperdb.datalayer.mongodb.metadata import MongoMetaDataStore
 from superduperdb.misc.config import DataLayer
 
+TBuild = t.TypeVar(
+    'TBuild',
+    t.Type[MongoArtifactStore],
+    t.Type[MongoDataBackend],
+    t.Type[MongoMetaDataStore],
+)
+
 
 def build_datalayer(**connections: t.Any) -> BaseDatabase:
     def build(
         cfg: DataLayer,
-        stores: t.Dict[str, ABCMeta],
-    ) -> t.Union[MongoArtifactStore, MongoDataBackend, MongoMetaDataStore]:
+        stores: t.Dict[str, TBuild],
+    ) -> t.Any:
         cls = stores[cfg.cls]
         if connections:
             connection = connections[cfg.connection]

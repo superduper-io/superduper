@@ -1,8 +1,8 @@
 import pytest
 import numpy
+import superduperdb as s
 from typing import Iterator
 
-from superduperdb.misc.config import VectorSearchConfig, MilvusConfig
 from superduperdb.vector_search.base import (
     VectorCollectionItem,
     VectorDatabase,
@@ -22,9 +22,9 @@ class TestMilvusClient:
 @pytest.mark.skip(reason='See issue #291')
 class TestMilvusVectorCollection:
     @pytest.fixture
-    def manager(self, milvus_server: MilvusConfig) -> Iterator[VectorDatabase]:
+    def manager(self, milvus_server: s.config.Milvus) -> Iterator[VectorDatabase]:
         with MilvusVectorDatabase(
-            config=VectorSearchConfig(milvus=milvus_server)
+            config=s.config.VectorSearch(milvus=milvus_server)
         ).init() as manager:
             yield manager
 

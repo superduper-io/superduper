@@ -1,10 +1,10 @@
 from contextlib import contextmanager
+import superduperdb as s
 import typing as t
 
 import numpy
 from readerwriterlock import rwlock
 
-from ..misc.config import VectorSearchConfig
 from .vanilla.hashes import VanillaHashSet
 from .base import (
     ArrayLike,
@@ -94,7 +94,7 @@ class InMemoryVectorCollection(VectorCollection):
 
 
 class InMemoryVectorDatabase(VectorDatabase):
-    def __init__(self, *, config: VectorSearchConfig) -> None:
+    def __init__(self, *, config: s.config.VectorSearch) -> None:
         self._config = config
         self._collections: t.Dict[VectorCollectionId, VectorCollection] = {}
 

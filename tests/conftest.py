@@ -5,6 +5,7 @@ from unittest import mock
 from pymongo import MongoClient
 
 import pytest
+import superduperdb as s
 
 from superduperdb.vector_search.base import VectorDatabase
 from superduperdb.datalayer.base.database import BaseDatabase
@@ -13,8 +14,6 @@ from superduperdb.misc.config import DataLayer, DataLayers
 from .conftest_mongodb import MongoDBConfig as TestMongoDBConfig
 from superduperdb.misc.config import (
     Config as SuperDuperConfig,
-    VectorSearchConfig,
-    MilvusConfig,
     MongoDB as MongoDBConfig,
 )
 
@@ -62,11 +61,9 @@ def config(mongodb_server: MongoDBConfig) -> Iterator[None]:
 
 @pytest.fixture
 def config_mongodb_milvus(
-    config: SuperDuperConfig, milvus_config: MilvusConfig
+    config: SuperDuperConfig, milvus_config: s.config.Milvus
 ) -> Iterator[None]:
-    vector_search_config = VectorSearchConfig(
-        milvus=milvus_config,
-    )
+    vector_search_config = s.config.VectorSearch(milvus=milvus_config)
     with mock.patch('superduperdb.CFG.vector_search', vector_search_config):
         with VectorDatabase.create(
             config=vector_search_config

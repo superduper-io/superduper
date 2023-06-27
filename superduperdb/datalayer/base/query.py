@@ -2,7 +2,6 @@ import superduperdb as s
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from pydantic import Field
 from superduperdb.core.documents import Document
 from superduperdb.core.suri import URIDocument
 
@@ -16,13 +15,9 @@ class Select(s.JSONable, ABC):
 
     download: bool = False
     features: t.Optional[t.Dict[str, str]] = None
-    filter: t.Optional[t.Dict] = None
-    kwargs: t.Dict = Field(default_factory=dict)
     like: t.Optional[URIDocument] = None
     n: int = 100
-    one: bool = False
     outputs: t.Optional[URIDocument] = None
-    projection: t.Optional[t.Dict[str, int]] = None
     raw: bool = False
     similar_first: bool = False
     vector_index: t.Optional[str] = None

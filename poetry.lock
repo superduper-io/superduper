@@ -3847,6 +3847,21 @@ files = [
 tests = ["pytest"]
 
 [[package]]
+name = "pyannotate"
+version = "1.2.0"
+description = "PyAnnotate: Auto-generate PEP-484 annotations"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyannotate-1.2.0-py2.py3-none-any.whl", hash = "sha256:bc2b5b4ea57aa90f99da9d71b547262eed19ea4b6ba355bf57439eeab9b90e93"},
+    {file = "pyannotate-1.2.0.tar.gz", hash = "sha256:04ed5804bab38153d5981fc92d83dcf6a22883453768561f057e777e5c057599"},
+]
+
+[package.dependencies]
+mypy-extensions = "*"
+six = "*"
+
+[[package]]
 name = "pycparser"
 version = "2.21"
 description = "C parser in Python"
@@ -4124,6 +4139,21 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 
 [package.extras]
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+
+[[package]]
+name = "pytest-annotate"
+version = "1.0.5"
+description = "pytest-annotate: Generate PyAnnotate annotations from your pytest tests."
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.5.0,!=3.5.1"
+files = [
+    {file = "pytest-annotate-1.0.5.tar.gz", hash = "sha256:09269320f8d218728247436f7ade96f33cf3fe85840b40632142d9f8968c1fd0"},
+    {file = "pytest_annotate-1.0.5-py2.py3-none-any.whl", hash = "sha256:36f4e08cd39635a467e2715d0dcfa8e490d93b280920bd9c7769af4404342637"},
+]
+
+[package.dependencies]
+pyannotate = ">=1.0.0,<2.0.0"
+pytest = ">=3.2.0,<8.0.0"
 
 [[package]]
 name = "python-dateutil"
@@ -6206,4 +6236,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1, <4.0"
-content-hash = "7b80771675b36fae7dc10d931eea947f6e704b8c4cef3e0b7024a4001f81e7e5"
+content-hash = "55baa1a2dd7ab19b5962f2bd8c8ec170981683d0af0c8a04e5ff9df538297e2d"

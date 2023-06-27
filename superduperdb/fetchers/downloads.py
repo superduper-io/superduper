@@ -80,7 +80,7 @@ class BaseDownloader:
         uris: t.List[str],
         n_workers: int = 0,
         timeout: t.Any = None,
-        headers: int = None,
+        headers: t.Optional[int] = None,
         raises: bool = True,
     ) -> None:
         self.timeout = timeout

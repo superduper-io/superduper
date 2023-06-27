@@ -73,7 +73,7 @@ class ArtifactStore(ABC):
         pass
 
     @abstractmethod
-    def _load_bytes(self, file_id) -> bytes:
+    def _load_bytes(self, file_id: str) -> bytes:
         pass
 
     def load_artifact(

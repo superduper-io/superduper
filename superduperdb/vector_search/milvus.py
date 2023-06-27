@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import uuid
 import pymilvus
+import superduperdb as s
 import typing as t
 
 import numpy
@@ -18,11 +19,10 @@ from .base import (
     VectorIndexMeasureType,
     VectorIndexMeasure,
 )
-from ..misc.config import VectorSearchConfig, MilvusConfig
 
 
 class MilvusClient:
-    def __init__(self, *, config: MilvusConfig) -> None:
+    def __init__(self, *, config: s.config.Milvus) -> None:
         self._config = config
         self._alias = str(uuid.uuid4())
         self._collections: t.Dict[str, pymilvus.Collection] = {}
@@ -142,7 +142,7 @@ class MilvusVectorDatabase(VectorDatabase):
         "dot": "IP",
     }
 
-    def __init__(self, *, config: VectorSearchConfig) -> None:
+    def __init__(self, *, config: s.config.VectorSearch) -> None:
         if not config.milvus:
             raise RuntimeError("MilvusConfig is not set")
         super().__init__(config=config)

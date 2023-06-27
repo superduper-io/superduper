@@ -5,9 +5,8 @@ from contextlib import contextmanager
 import numpy
 import numpy.typing
 import torch
+import superduperdb as s
 import typing as t
-
-from ..misc.config import VectorSearchConfig
 
 
 class BaseHashSet:
@@ -160,24 +159,24 @@ class VectorDatabase(ABC):
     operations.
     """
 
-    def __init__(self, *, config: VectorSearchConfig) -> None:
+    def __init__(self, *, config: s.config.VectorSearch) -> None:
         self._config = config
 
     @classmethod
-    def create(cls, *, config: VectorSearchConfig) -> VectorDatabase:
+    def create(cls, *, config: s.config.VectorSearch) -> VectorDatabase:
         if config.milvus:
             return cls.create_milvus(config=config)
         return cls.create_in_memory(config=config)
 
     @classmethod
-    def create_milvus(self, *, config: VectorSearchConfig) -> VectorDatabase:
+    def create_milvus(self, *, config: s.config.VectorSearch) -> VectorDatabase:
         # avoiding circular import
         from .milvus import MilvusVectorDatabase
 
         return MilvusVectorDatabase(config=config)
 
     @classmethod
-    def create_in_memory(self, *, config: VectorSearchConfig) -> VectorDatabase:
+    def create_in_memory(self, *, config: s.config.VectorSearch) -> VectorDatabase:
         # avoiding circular import
         from .inmemory import InMemoryVectorDatabase
 

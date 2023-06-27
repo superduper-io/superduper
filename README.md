@@ -40,7 +40,6 @@ python -m superduperdb
 python -m superduperdb -h       # Get help
 python -m superduperdb configs  # Print current configuration variables
 python -m superduperdb info     # Print info on platform and installation
-python -m superduperdb test     # Run tests
 ```
 
 ## Development
@@ -52,6 +51,11 @@ Our test suite relies on `docker` to run 3rd-party services.
 ```shell
 make test
 ```
+
+After the first time you can just run `pytest`.
+
+If you want to extract annotations automatically, use `pytest
+--annotate-output=./annotations.json`.
 
 ### Running Jupyter
 

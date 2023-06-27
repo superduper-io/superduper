@@ -1,15 +1,15 @@
 import pytest
-from typing import Iterator
+import superduperdb as s
+import typing as t
 
 from tenacity import RetryError, Retrying, stop_after_delay
 
-from superduperdb.misc.config import MilvusConfig
 from superduperdb.vector_search.milvus import MilvusClient
 
 
 @pytest.fixture(scope="session")
-def milvus_config() -> MilvusConfig:
-    return MilvusConfig(
+def milvus_config() -> s.config.Milvus:
+    return s.config.Milvus(
         host="localhost",
         port=19530,
         username="root",
@@ -18,7 +18,7 @@ def milvus_config() -> MilvusConfig:
     )
 
 
-def wait_for_milvus(config: MilvusConfig, *, timeout_s: float = 30) -> None:
+def wait_for_milvus(config: s.config.Milvus, *, timeout_s: float = 30) -> None:
     try:
         for attempt in Retrying(stop=stop_after_delay(timeout_s)):
             with attempt:
@@ -29,24 +29,24 @@ def wait_for_milvus(config: MilvusConfig, *, timeout_s: float = 30) -> None:
         pytest.fail("Could not connect to milvus")
 
 
-def cleanup_milvus(config: MilvusConfig) -> None:
+def cleanup_milvus(config: s.config.Milvus) -> None:
     with MilvusClient(config=config).init() as client:
         client.drop_all_collections()
 
 
 @pytest.fixture(scope="session")
-def _milvus_server(milvus_config: MilvusConfig) -> Iterator[MilvusConfig]:
+def _milvus_server(milvus_config: s.config.Milvus) -> t.Iterator[s.config.Milvus]:
     wait_for_milvus(milvus_config)
     yield milvus_config
 
 
 @pytest.fixture
-def milvus_server(_milvus_server: MilvusConfig) -> Iterator[MilvusConfig]:
+def milvus_server(_milvus_server: s.config.Milvus) -> t.Iterator[s.config.Milvus]:
     cleanup_milvus(_milvus_server)
     yield _milvus_server
 
 
 @pytest.fixture
-def milvus_client(milvus_server: MilvusConfig) -> Iterator[MilvusClient]:
+def milvus_client(milvus_server: s.config.Milvus) -> t.Iterator[MilvusClient]:
     with MilvusClient(config=milvus_server).init() as client:
         yield client

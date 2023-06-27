@@ -135,24 +135,24 @@ class Server(JSONable):
     web_server: WebServer = Factory(WebServer)
 
 
-class MilvusConfig(JSONable):
+class Milvus(JSONable):
     host: str = 'localhost'
     port: int = 19530
-    username: str = Field(default="", repr=False)
-    password: str = Field(default="", repr=False)
-    db_name: str = "default"
-    consistency_level: str = "Bounded"
+    username: str = Field(default='', repr=False)
+    password: str = Field(default='', repr=False)
+    db_name: str = 'default'
+    consistency_level: str = 'Bounded'
 
 
-class VectorSearchConfig(JSONable):
-    milvus: t.Optional[MilvusConfig] = None
+class VectorSearch(JSONable):
+    milvus: t.Optional[Milvus] = None
 
     # the fields below were left for compatibility with the vector search server
     # that is still in the codebase
     host: str = 'localhost'
     port: int = 5001
-    username: str = Field(default="", repr=False)
-    password: str = Field(default="", repr=False)
+    username: str = Field(default='', repr=False)
+    password: str = Field(default='', repr=False)
 
 
 class Config(JSONable):
@@ -165,4 +165,4 @@ class Config(JSONable):
     ray: Ray = Factory(Ray)
     remote: bool = False
     server: Server = Factory(Server)
-    vector_search: VectorSearchConfig = Factory(VectorSearchConfig)
+    vector_search: VectorSearch = Factory(VectorSearch)

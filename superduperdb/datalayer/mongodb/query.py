@@ -1,6 +1,7 @@
+from bson import ObjectId
 from dataclasses import dataclass
 from functools import cached_property
-from bson import ObjectId
+from pydantic import Field
 from superduperdb.core.documents import Document
 from superduperdb.datalayer.base import query
 import typing as t
@@ -11,6 +12,11 @@ Filter = t.Dict[str, t.Any]  # Really it's ObjectId
 
 class Select(query.Select):
     collection: str
+
+    filter: t.Optional[t.Dict] = None
+    kwargs: t.Dict = Field(default_factory=dict)
+    one: bool = False
+    projection: t.Optional[t.Dict[str, int]] = None
 
     def add_fold(self, fold: str) -> 'Select':
         return Select(

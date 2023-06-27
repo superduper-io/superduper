@@ -68,7 +68,7 @@ class ChainWrapper(Model):
     :param identifier: unique ID
     """
 
-    def __init__(self, chain: Chain, identifier: str):
+    def __init__(self, chain: Chain, identifier: str) -> None:
         msg = (
             "Chains which include a retrieval pass are handled by "
             f"{DBQAWithSourcesChain}"
@@ -103,7 +103,7 @@ class DBQAWithSourcesChain(Model):
         vector_index: t.Union[VectorIndex, str],
         chain_type: str = 'stuff',
         n: int = 5,
-    ):
+    ) -> None:
         super().__init__(llm, identifier=identifier)
         self.chain_type = chain_type
         self._retrieval_chain = None

@@ -1,3 +1,4 @@
+import types
 from abc import ABC, abstractmethod
 import dill
 import enum
@@ -18,7 +19,7 @@ class Serializer(enum.Enum):
     default = dill
 
     @property
-    def impl(self):
+    def impl(self) -> types.ModuleType:
         return dill if self.value == 'dill' else pickle
 
 

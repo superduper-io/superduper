@@ -5,7 +5,7 @@ from superduperdb.core.model import Model
 
 
 class FunctionWrapper(Model):
-    def predict_one(self, x, **kwargs: t.Any):
+    def predict_one(self, x: t.Any, **kwargs: t.Any) -> t.Any:
         return self.object(x, **kwargs)
 
     def predict(self, docs, num_workers: int = 0) -> t.List:

@@ -1,3 +1,5 @@
+import typing as t
+
 from pymongo.cursor import Cursor
 
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -6,7 +8,7 @@ from superduperdb.core.documents import Document
 
 class SuperDuperCursor(Cursor):
     def __init__(
-        self, collection, *args, features=None, scores=None, similar_join=None, **kwargs
+        self, collection, *args, features: t.Optional[t.Dict] =None, scores=None, similar_join=None, **kwargs: t.Any
     ) -> None:
         """
         Cursor subclassing *pymongo.cursor.Cursor*.
@@ -40,13 +42,13 @@ class SuperDuperCursor(Cursor):
             self._results = sorted(self._results, key=lambda r: -self.scores[r['_id']])
             self.it = 0
 
-    def limit(self, limit: int) -> 'SuperDuperCursor':
+    def limit(self, limit: int) -> Cursor:
         if self.scores is None:
             return super().limit(limit)
         self._results = self._results[:limit]
         return self
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> Cursor:
         r = super().__getitem__(item)
         if self.features is not None and self.features:
             r = self._add_features(r)

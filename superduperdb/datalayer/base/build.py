@@ -1,3 +1,5 @@
+import typing as t
+
 from superduperdb import CFG
 from superduperdb.datalayer.base.backends import (
     data_backends,
@@ -8,7 +10,7 @@ from superduperdb.datalayer.base.backends import (
 from superduperdb.datalayer.base.database import BaseDatabase
 
 
-def build_datalayer(**connections) -> BaseDatabase:
+def build_datalayer(**connections: t.Any) -> BaseDatabase:
     def build(cfg, stores):
         cls = stores[cfg.cls]
         if connections:

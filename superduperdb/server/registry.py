@@ -49,7 +49,10 @@ class Registry:
             if non_models := [t_ for t_ in types if not is_model(t_)]:
                 raise NotJSONableError(f'Not serializable: {non_models}')
 
-        def unite(a, b):
+        def unite(
+            a: t.Any,
+            b: t.Any,
+        ) -> t.Any:
             return b if a is None else t.Union[a, b]
 
         for r in parameter_types:

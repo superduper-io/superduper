@@ -34,7 +34,7 @@ def timeout(seconds):  # pragma: no cover
 
 
 class Fetcher:
-    def __init__(self, headers=None, n_workers=0):
+    def __init__(self, headers: t.Optional[int] = None, n_workers: int = 0) -> None:
         session = boto3.Session()
         self.headers = headers
         self.s3_client = session.client("s3")
@@ -60,10 +60,10 @@ class Fetcher:
         with open(path, 'rb') as f:
             return f.read()
 
-    def _download_from_uri(self, uri):
+    def _download_from_uri(self, uri: str) -> bytes:
         return self.request_session.get(uri, headers=self.headers).content
 
-    def __call__(self, uri):
+    def __call__(self, uri: str) -> bytes:
         if uri.startswith('file://'):
             return self._download_file(uri)
         elif uri.startswith('s3://'):
@@ -75,7 +75,14 @@ class Fetcher:
 
 
 class BaseDownloader:
-    def __init__(self, uris, n_workers=0, timeout=None, headers=None, raises=True):
+    def __init__(
+        self,
+        uris: t.List[str],
+        n_workers: int = 0,
+        timeout: t.Any = None,
+        headers: int = None,
+        raises: bool = True,
+    ) -> None:
         self.timeout = timeout
         self.n_workers = n_workers
         self.uris = uris
@@ -95,7 +102,7 @@ class BaseDownloader:
         self.failed = 0
         prog.prefx = "failed: 0"
 
-        def f(i):
+        def f(i: int) -> None:
             prog.update()
             try:
                 if self.timeout is not None:  # pragma: no cover
@@ -197,7 +204,7 @@ class InMemoryDownloader(BaseDownloader):
 
 
 def gather_uris(
-    documents: t.List[t.Dict], gather_ids: bool=True
+    documents: t.List[t.Dict], gather_ids: bool = True
 ) -> t.Tuple[t.List[str], t.List[str], t.List[int]]:
     """
     Get the URLS out of all documents as denoted by ``{"_content": ...}``

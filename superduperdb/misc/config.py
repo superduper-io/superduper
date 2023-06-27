@@ -110,7 +110,7 @@ class Notebook(JSONable):
     token = ''
 
     @root_validator
-    def check_one_or_none(cls, v):
+    def check_one_or_none(cls, v: t.Dict[str, t.Any]) -> t.Dict[str, t.Any]:
         assert not all(v.values()), 'At most one of password and token may be set'
         return v
 

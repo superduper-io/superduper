@@ -146,7 +146,7 @@ class Component(BaseComponent):
         :param database: Database connector responsible for saving/ loading components
         """
 
-        def reload(object):
+        def reload(object: t.Any) -> t.Any:
             if isinstance(object, Placeholder):
                 reloaded = database.load(
                     variety=object.variety,

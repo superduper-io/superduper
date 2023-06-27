@@ -54,13 +54,13 @@ class Server:
         self.count = 0
 
         @self.app.get('/')
-        def root():
+        def root() -> FileResponse:
             return FileResponse(INDEX_HTML)
 
         self.count += 1
 
         @self.app.get('/health')
-        def health():
+        def health() -> PlainTextResponse:
             return PlainTextResponse('ok')
 
         self.count += 1

@@ -6,6 +6,8 @@ from superduperdb.datalayer.base.query import Insert, Select
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.logger import logging
+from bson.objectid import ObjectId
+from pymongo.results import UpdateResult
 
 
 @work
@@ -62,7 +64,7 @@ def download_content(
         except TypeError:
             timeout = None
 
-    def update_one(id, key, bytes):
+    def update_one(id: ObjectId, key: str, bytes: bytes) -> UpdateResult:
         return db.update(db.db.download_update(query.table, id, key, bytes))
 
     downloader = Downloader(

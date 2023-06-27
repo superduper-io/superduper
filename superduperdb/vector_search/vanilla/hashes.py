@@ -1,4 +1,7 @@
 import numpy
+import typing as t
+
+from torch import Tensor
 
 from superduperdb.vector_search.base import BaseHashSet
 from superduperdb.misc.logger import logging
@@ -16,12 +19,21 @@ class VanillaHashSet(BaseHashSet):
 
     name = 'vanilla'
 
-    def __init__(self, h, index, measure='css'):
+    def __init__(
+        self,
+        h: t.Union[t.List[Tensor], numpy.ndarray, Tensor],
+        index: t.List[str],
+        measure: str = 'css',
+    ) -> None:
         if isinstance(measure, str):
             measure = getattr(measures, measure)
         super().__init__(h, index, measure)
 
-    def find_nearest_from_hashes(self, h, n=100):
+    def find_nearest_from_hashes(
+        self,
+        h: t.Union[numpy.ndarray, Tensor],
+        n: int = 100,
+    ) -> t.Tuple[t.List, t.List]:
         similarities = self.measure(h, self.h)
         logging.debug(similarities)
         scores = -numpy.sort(-similarities, axis=1)[:, :n]

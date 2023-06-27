@@ -1,12 +1,16 @@
 import datetime
 import inspect
-from functools import wraps
+import typing as t
 import uuid
+from functools import wraps
 
-from superduperdb.cluster.function_job import function_job
-from superduperdb.cluster.dask.dask_client import dask_client
-from superduperdb.misc.logger import logging
 from superduperdb import CFG
+from superduperdb.cluster.dask.dask_client import dask_client
+from superduperdb.cluster.function_job import function_job
+from superduperdb.misc.logger import logging
+
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.database import BaseDatabase
 
 
 def work(f):
@@ -15,7 +19,12 @@ def work(f):
         _dask_client = dask_client()
 
     @wraps(f)
-    def work_wrapper(database, *args, remote=None, **kwargs):
+    def work_wrapper(
+        database: 'BaseDatabase',
+        *args: t.Any,
+        remote: t.Optional[bool] = None,
+        **kwargs: t.Any,
+    ) -> t.Union[t.List[t.Dict[str, t.Dict[str, t.Any]]], t.List[int], None]:
         if remote is None:
             remote = database.remote
         if remote:

@@ -2,7 +2,6 @@ import random
 import typing as t
 import warnings
 from collections import defaultdict
-from typing import Union, Optional, Dict, List, Tuple
 
 import click
 import networkx
@@ -119,8 +118,8 @@ class BaseDatabase:
     def show(
         self,
         variety: str,
-        identifier: Optional[str] = None,
-        version: Optional[int] = None,
+        identifier: t.Optional[str] = None,
+        version: t.Optional[int] = None,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -182,7 +181,7 @@ class BaseDatabase:
             return self.update(query)
         raise TypeError(
             f'Wrong type of {query}; '
-            f'Expected object of type {Union[Select, Delete, Update, Insert]}; '
+            f'Expected object of type {t.Union[Select, Delete, Update, Insert]}; '
             f'Got {type(query)};'
         )
 
@@ -231,8 +230,8 @@ class BaseDatabase:
         )
 
     def _select_nearest(
-        self, select: Select, ids: Optional[List[str]] = None
-    ) -> Tuple[List[str], List[float]]:
+        self, select: Select, ids: t.Optional[t.List[str]] = None
+    ) -> t.Tuple[t.List[str], t.List[float]]:
         assert select.like
         like = select.like()
         content = like.content
@@ -273,7 +272,7 @@ class BaseDatabase:
         self,
         object: Component,
         serializer: str = 'pickle',
-        serializer_kwargs: Optional[Dict] = None,
+        serializer_kwargs: t.Optional[t.Dict] = None,
     ):
         """
         Add functionality in the form of components. Components are stored in the
@@ -294,7 +293,7 @@ class BaseDatabase:
         self,
         variety: str,
         identifier: str,
-        version: Optional[int] = None,
+        version: t.Optional[int] = None,
         force=False,
     ) -> None:
         """
@@ -352,7 +351,7 @@ class BaseDatabase:
         self,
         variety: str,
         identifier: str,
-        version: Optional[int] = None,
+        version: t.Optional[int] = None,
         repopulate: bool = True,
         allow_hidden: bool = False,
     ) -> t.Type[Component]:
@@ -443,8 +442,8 @@ class BaseDatabase:
         self,
         object: Component,
         serializer: str = 'pickle',
-        serializer_kwargs: Optional[Dict] = None,
-        parent: Optional[str] = None,
+        serializer_kwargs: t.Optional[t.Dict] = None,
+        parent: t.Optional[str] = None,
     ) -> t.Optional[t.List]:
         if object.repopulate_on_init:
             object.repopulate(self)
@@ -537,7 +536,7 @@ class BaseDatabase:
             self.artifact_store.delete_artifact(info['object'])
             self.metadata.delete_component_version(variety, identifier, version=version)
 
-    def _get_dependencies_for_watcher(self, identifier):
+    def _get_dependencies_for_watcher(self, identifier: str) -> t.List:
         info = self.metadata.get_component('watcher', identifier)
         if info is None:
             return []

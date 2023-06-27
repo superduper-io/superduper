@@ -1,7 +1,7 @@
 import typing as t
 
-from superduperdb.core.encoder import Encoder
 from superduperdb.core.documents import Document
+from superduperdb.core.encoder import Encoder
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 
@@ -35,7 +35,7 @@ class SuperDuperCursor:
             )
             self.it = 0
 
-    def _add_features(self, r):
+    def _add_features(self, r: t.Dict[str, t.Any]) -> MongoStyleDict:
         r = MongoStyleDict(r)
         for k in self.features:
             r[k] = r['_outputs'][k][self.features[k]]

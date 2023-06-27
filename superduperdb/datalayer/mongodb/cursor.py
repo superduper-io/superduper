@@ -8,7 +8,13 @@ from superduperdb.core.documents import Document
 
 class SuperDuperCursor(Cursor):
     def __init__(
-        self, collection, *args, features: t.Optional[t.Dict] =None, scores=None, similar_join=None, **kwargs: t.Any
+        self,
+        collection,
+        *args,
+        features: t.Optional[t.Dict] = None,
+        scores=None,
+        similar_join=None,
+        **kwargs: t.Any,
     ) -> None:
         """
         Cursor subclassing *pymongo.cursor.Cursor*.

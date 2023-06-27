@@ -39,7 +39,7 @@ class Dataset(Component):
             data = [data[perm[i]] for i in range(self.sample_size)]
         self.data = data
 
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, t.Any]:
         return {
             'identifier': self.identifier,
             'select': self.select.dict(),

@@ -34,6 +34,9 @@ class SuperDuperCursor:
                     r['_other'][k] = r['_outputs'][k][self.features[k]]
         return r
 
+    def __hash__(self):
+        return super().__hash__()
+
     def __iter__(self):
         return self
 

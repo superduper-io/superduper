@@ -123,7 +123,7 @@ def make_uri_document(**ka) -> URIDocument:
     class TestURIDocument(URIDocument):
         _cache: t.ClassVar[KeyCache[Document]] = KeyCache[Document]()
 
-    return TestURIDocument.make(Document(ka))
+    return TestURIDocument.box(Document(ka))
 
 
 def test_select(with_vector_index):

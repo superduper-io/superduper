@@ -32,8 +32,7 @@ def download_content(
             documents = list(db.select(query))
         else:
             select = query.select_using_ids(ids)
-            select = select.copy(update={'raw': True})
-            documents = list(db.select(select))
+            documents = list(db.select(select).raw_cursor)
             documents = [Document(x) for x in documents]
     else:
         documents = query.documents

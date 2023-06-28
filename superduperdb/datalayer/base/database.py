@@ -220,9 +220,6 @@ class BaseDatabase:
             select = select.select_using_ids(similar_ids)
             scores = dict(zip(similar_ids, score))
 
-        if select.raw:
-            return self.db.get_raw_cursor(select)
-
         return self.db.get_cursor(
             select,
             features=select.features,

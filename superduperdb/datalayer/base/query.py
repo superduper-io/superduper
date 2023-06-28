@@ -18,7 +18,6 @@ class Select(s.JSONable, ABC):
     like: t.Optional[URIDocument] = None
     n: int = 100
     outputs: t.Optional[URIDocument] = None
-    raw: bool = False
     similar_first: bool = False
     vector_index: t.Optional[str] = None
 

@@ -3438,6 +3438,17 @@ files = [
 ]
 
 [[package]]
+name = "overrides"
+version = "7.3.1"
+description = "A decorator to automatically detect mismatch when overriding a method."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "overrides-7.3.1-py3-none-any.whl", hash = "sha256:6187d8710a935d09b0bcef8238301d6ee2569d2ac1ae0ec39a8c7924e27f58ca"},
+    {file = "overrides-7.3.1.tar.gz", hash = "sha256:8b97c6c1e1681b78cbc9424b138d880f0803c2254c5ebaabdde57bb6c62093f2"},
+]
+
+[[package]]
 name = "packaging"
 version = "23.1"
 description = "Core utilities for Python packages"
@@ -6236,4 +6247,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1, <4.0"
-content-hash = "55baa1a2dd7ab19b5962f2bd8c8ec170981683d0af0c8a04e5ff9df538297e2d"
+content-hash = "1b57219ab27503cd33c6fc8c0e28e3f18c559fb455d04692091472003041575e"

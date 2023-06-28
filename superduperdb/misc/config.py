@@ -130,6 +130,11 @@ class Server(JSONable):
     class WebServer(JSONable):
         host = '127.0.0.1'
         port = 3223
+        protocol = 'http:'
+
+        @property
+        def uri(self) -> str:
+            return f'{self.protocol}{self.host}{self.port}'
 
     fastapi: FastAPI = Factory(FastAPI)
     web_server: WebServer = Factory(WebServer)

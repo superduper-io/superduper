@@ -4,7 +4,7 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.core.documents import Document
 
 
-class SuperDuperCursor(Cursor):
+class UnusedSuperDuperCursor(Cursor):
     def __init__(
         self, collection, *args, features=None, scores=None, similar_join=None, **kwargs
     ):

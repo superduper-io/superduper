@@ -5,6 +5,9 @@ from superduperdb.core.model import Model
 from superduperdb.datalayer.base.apply_watcher import apply_watcher
 from superduperdb.datalayer.base.query import Select
 
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.database import BaseDatabase
+
 
 class Watcher(Component):
     """
@@ -51,7 +54,7 @@ class Watcher(Component):
         }
 
     @staticmethod
-    def cleanup(info: t.Dict[str, t.Any], database) -> None:
+    def cleanup(info: t.Dict[str, t.Any], database: 'BaseDatabase') -> None:
         database.db.unset_outputs(info)
 
     def schedule_jobs(self, database, verbose: bool = False, dependencies=()) -> t.List:

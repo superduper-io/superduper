@@ -43,6 +43,6 @@ class VanillaHashSet(BaseHashSet):
         _ids = [[self.index[i] for i in sub] for sub in ix]
         return _ids, scores
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: t.Any) -> 'VanillaHashSet':
         ix = [self.lookup[i] for i in item]
         return VanillaHashSet(self.h[ix], item, self.measure)

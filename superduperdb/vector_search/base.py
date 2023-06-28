@@ -70,10 +70,12 @@ class BaseHashSet:
         _ids, scores = self.find_nearest_from_hashes(h[None, :], n=n)
         return _ids[0], scores[0]
 
-    def find_nearest_from_hashes(self, h, n=100):
+    def find_nearest_from_hashes(
+        self, h: t.Union[numpy.ndarray, torch.Tensor], n: int = 100
+    ):
         raise NotImplementedError
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: t.Any):
         raise NotImplementedError
 
 

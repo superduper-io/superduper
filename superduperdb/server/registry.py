@@ -41,7 +41,7 @@ class Registry:
 
         if self.strict:
 
-            def is_model(t_, parent=s.JSONable):
+            def is_model(t_: t.Type, parent=s.JSONable) -> bool:
                 bases = getattr(t_, '__bases__', ())
                 return t_ is parent or any(is_model(c, parent) for c in bases)
 

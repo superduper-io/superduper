@@ -33,7 +33,7 @@ class Server:
     def registry(self) -> Registry:
         return Registry()
 
-    def register(self, *methods) -> t.Optional[t.Callable]:
+    def register(self, *methods: t.Tuple[t.Callable]) -> t.Optional[t.Callable]:
         result = None
         for result in methods:
             self.registry.register(result)

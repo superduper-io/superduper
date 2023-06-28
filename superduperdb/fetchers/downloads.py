@@ -18,12 +18,12 @@ class TimeoutException(Exception):
     ...
 
 
-def timeout_handler(signum, frame):  # pragma: no cover
+def timeout_handler(signum: t.Any, frame: t.Callable):  # pragma: no cover
     raise TimeoutException()
 
 
 @contextmanager
-def timeout(seconds):  # pragma: no cover
+def timeout(seconds: int):  # pragma: no cover
     old_handler = signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(seconds)
     try:
@@ -47,7 +47,7 @@ class Fetcher:
         self.request_session.mount("http://", self.request_adapter)
         self.request_session.mount("https://", self.request_adapter)
 
-    def _download_s3_object(self, uri):
+    def _download_s3_object(self, uri: str) -> bytes:
         f = BytesIO()
         path = uri.split('s3://')[-1]
         bucket_name = path.split('/')[0]
@@ -55,7 +55,7 @@ class Fetcher:
         self.s3_client.download_fileobj(bucket_name, file, f)
         return f.getvalue()
 
-    def _download_file(self, path):
+    def _download_file(self, path: str) -> t.AnyStr:
         path = re.split('^file://', path)[-1]
         with open(path, 'rb') as f:
             return f.read()
@@ -127,7 +127,7 @@ class BaseDownloader:
 
         self._parallel_go(f)
 
-    def _parallel_go(self, f) -> None:
+    def _parallel_go(self, f: t.Callable) -> None:
         pool = ThreadPool(self.n_workers)
         try:
             pool.map(f, range(len(self.uris)))
@@ -140,7 +140,7 @@ class BaseDownloader:
         pool.close()
         pool.join()
 
-    def _sequential_go(self, f) -> None:
+    def _sequential_go(self, f: t.Callable) -> None:
         for i in range(len(self.uris)):
             f(i)
 
@@ -185,7 +185,7 @@ class Downloader(BaseDownloader):
 
         assert len(ids) == len(uris)
 
-    def _download(self, i) -> None:
+    def _download(self, i: int) -> None:
         uri = self.uris[i]
         _id = self.ids[i]
         content = self.fetcher(uri)
@@ -193,12 +193,18 @@ class Downloader(BaseDownloader):
 
 
 class InMemoryDownloader(BaseDownloader):
-    def __init__(self, *args, headers=None, n_workers=0, **kwargs) -> None:
+    def __init__(
+        self,
+        *args: t.Any,
+        headers: t.Optional[int] = None,
+        n_workers: int = 0,
+        **kwargs: t.Dict[str, t.Any],
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.results = {}
         self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
 
-    def _download(self, i) -> None:
+    def _download(self, i: int) -> None:
         content = self.fetcher(self.uris[i])
         self.results[i] = content
 

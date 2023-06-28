@@ -12,7 +12,7 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
 
     def __init__(
         self, client, database, collection: Collection, transform=None, filter=None
-    ):
+    ) -> None:
         super().__init__()
         self._client = client
         self._database = database
@@ -20,7 +20,7 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
         self.transform = transform
         self.filter = filter if filter is not None else {}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.collection.count_documents(self.filter)
 
     @property
@@ -35,7 +35,7 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
     def collection(self) -> t.Any:
         return self.database[self._collection]
 
-    def __iter__(self):
+    def __iter__(self) -> t.Iterable:
         worker_info = data.get_worker_info()
         if worker_info is None:
             for r in self.collection.find(self.filter, {'_id': 0}):

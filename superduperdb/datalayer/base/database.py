@@ -294,7 +294,7 @@ class BaseDatabase:
         variety: str,
         identifier: str,
         version: t.Optional[int] = None,
-        force=False,
+        force: bool = False,
     ) -> None:
         """
         Remove component (version: optional)
@@ -553,7 +553,9 @@ class BaseDatabase:
                 r[k] = self._get_file_content(r[k])
         return r
 
-    def _get_object_info(self, identifier: str, variety: str, version=None) -> t.Any:
+    def _get_object_info(
+        self, identifier: str, variety: str, version: t.Optional[int] = None
+    ) -> t.Any:
         return self.metadata.get_component(variety, identifier, version=version)
 
     def _get_watcher_for_learning_task(self, learning_task: str) -> str:

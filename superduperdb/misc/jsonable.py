@@ -30,7 +30,7 @@ class JSONable(BaseModel):
     TYPE_ID_TO_CLASS: t.ClassVar[t.Dict[str, t.Type]] = {}
 
     @functools.wraps(BaseModel.dict)
-    def dict(self, *a: t.Any, **ka: t.Any):
+    def dict(self, *a: t.Any, **ka: t.Any) -> t.Dict:
         d = super().dict(*a, **ka)
         properties = self.schema()['properties']
         return {k: v for k, v in d.items() if k in properties}

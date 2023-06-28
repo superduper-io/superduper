@@ -133,10 +133,10 @@ class DBQAWithSourcesChain(Model):
             chain_type=self.chain_type,
         )
 
-    def _predict_one(self, question, outputs=None, **kwargs):
+    def _predict_one(self, question, outputs=None, **kwargs) -> Chain:
         return self.chain(question)
 
-    def predict(self, question):
+    def predict(self, question) -> t.Union[Chain, t.List[Chain]]:
         if isinstance(question, list):
             return [self._predict_one(q) for q in question]
         return self._predict_one(question)

@@ -1,5 +1,6 @@
 import typing as t
 
+from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -9,7 +10,7 @@ from superduperdb.core.documents import Document
 class SuperDuperCursor(Cursor):
     def __init__(
         self,
-        collection,
+        collection: Collection,
         *args: t.Any,
         features: t.Optional[t.Dict] = None,
         scores: t.Optional[t.Dict] = None,

@@ -1,7 +1,7 @@
 import inspect
 import io
 from contextlib import contextmanager
-from typing import Optional, Callable, Union, Dict, List
+import typing as t
 
 import torch
 from torch.utils import data
@@ -56,17 +56,17 @@ class TorchTrainerConfiguration(TrainingConfiguration):
 class Base(Model):
     def __init__(
         self,
-        object: Union[torch.nn.Module, torch.jit.ScriptModule],
+        object: t.Union[torch.nn.Module, torch.jit.ScriptModule],
         identifier: str,
-        collate_fn: Optional[Callable] = None,
-        is_batch: Optional[Callable] = None,
-        encoder: Optional[Union[Encoder, str]] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
-        training_select: Optional[Select] = None,
-        training_keys: Optional[List[str]] = None,
-        validation_sets: Optional[List[str]] = None,
+        collate_fn: t.Optional[t.Callable] = None,
+        is_batch: t.Optional[t.Callable] = None,
+        encoder: t.Optional[t.Union[Encoder, str]] = None,
+        training_configuration: t.Optional[TorchTrainerConfiguration] = None,
+        training_select: t.Optional[Select] = None,
+        training_keys: t.Optional[t.List[str]] = None,
+        validation_sets: t.Optional[t.List[str]] = None,
         num_directions: int = 2,
-        metrics: Optional[List[Metric]] = None,
+        metrics: t.Optional[t.List[Metric]] = None,
     ):
         super().__init__(
             object=object,
@@ -124,13 +124,13 @@ class Base(Model):
 
     def fit(
         self,
-        X: Optional[Union[List[str], str]] = None,
+        X: t.Optional[t.Union[t.List[str], str]] = None,
         *targets,
         database: BaseDatabase,
-        select: Optional[Select] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
-        validation_sets: Optional[List[str]] = None,
-        metrics: Optional[List[Metric]] = None,
+        select: t.Optional[Select] = None,
+        training_configuration: t.Optional[TorchTrainerConfiguration] = None,
+        validation_sets: t.Optional[t.List[str]] = None,
+        metrics: t.Optional[t.List[Metric]] = None,
         serializer: str = 'pickle',
     ):
         if training_configuration is not None:
@@ -240,7 +240,7 @@ class Base(Model):
         train_dataloader: DataLoader,
         valid_dataloader: DataLoader,
         database: BaseDatabase,
-        validation_sets: List[str],
+        validation_sets: t.List[str],
         serializer: str = 'pickle',
     ):
         self.train()
@@ -301,14 +301,14 @@ class TorchPipeline(Base):
         self,
         identifier,
         steps,
-        collate_fn: Optional[Callable] = None,
-        is_batch: Optional[Callable] = None,
-        encoder: Optional[Union[Encoder, str]] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
-        training_select: Optional[Select] = None,
-        training_keys: Optional[List[str]] = None,
+        collate_fn: t.Optional[t.Callable] = None,
+        is_batch: t.Optional[t.Callable] = None,
+        encoder: t.Optional[t.Union[Encoder, str]] = None,
+        training_configuration: t.Optional[TorchTrainerConfiguration] = None,
+        training_select: t.Optional[Select] = None,
+        training_keys: t.Optional[t.List[str]] = None,
         num_directions: int = 2,
-        metrics: Optional[Union[List[Metric], List[str]]] = None,
+        metrics: t.Optional[t.Union[t.List[Metric], t.List[str]]] = None,
     ):
         self.steps = steps  # type: ignore[misc]
         self._forward_sequential = None
@@ -481,19 +481,19 @@ class TorchPipeline(Base):
 class TorchModel(Base):
     def __init__(
         self,
-        object: Union[torch.nn.Module, torch.jit.ScriptModule],
+        object: t.Union[torch.nn.Module, torch.jit.ScriptModule],
         identifier: str,
-        collate_fn: Optional[Callable] = None,
-        is_batch: Optional[Callable] = None,
-        encoder: Optional[Union[Encoder, str]] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
-        training_select: Optional[Select] = None,
-        training_keys: Optional[List[str]] = None,
-        validation_sets: Optional[List[str]] = None,
+        collate_fn: t.Optional[t.Callable] = None,
+        is_batch: t.Optional[t.Callable] = None,
+        encoder: t.Optional[t.Union[Encoder, str]] = None,
+        training_configuration: t.Optional[TorchTrainerConfiguration] = None,
+        training_select: t.Optional[Select] = None,
+        training_keys: t.Optional[t.List[str]] = None,
+        validation_sets: t.Optional[t.List[str]] = None,
         num_directions: int = 2,
-        metrics: Optional[List[Metric]] = None,
-        preprocess: Optional[Callable] = None,
-        postprocess: Optional[Callable] = None,
+        metrics: t.Optional[t.List[Metric]] = None,
+        preprocess: t.Optional[t.Callable] = None,
+        postprocess: t.Optional[t.Callable] = None,
     ):
         super().__init__(
             object=object,
@@ -617,7 +617,7 @@ class TorchModel(Base):
         return r
 
 
-def test_if_batch(x, num_directions: Union[Dict, int]):
+def test_if_batch(x, num_directions: t.Union[t.Dict, int]):
     """
     :param x: item to test whether batch or singleton
     :param num_directions: dictionary to test a leaf node in ``x`` whether batch or not
@@ -742,14 +742,14 @@ def create_batch(args):
 class TorchModelEnsemble(Base, ModelEnsemble):
     def __init__(
         self,
-        models: List[Base],
+        models: t.List[Base],
         identifier: str,
-        collate_fn: Optional[Callable] = None,
-        is_batch: Optional[Callable] = None,
-        encoder: Optional[Union[Encoder, str]] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
-        training_select: Optional[Select] = None,
-        training_keys: Optional[List[str]] = None,
+        collate_fn: t.Optional[t.Callable] = None,
+        is_batch: t.Optional[t.Callable] = None,
+        encoder: t.Optional[t.Union[Encoder, str]] = None,
+        training_configuration: t.Optional[TorchTrainerConfiguration] = None,
+        training_select: t.Optional[Select] = None,
+        training_keys: t.Optional[t.List[str]] = None,
         num_directions: int = 2,
     ):
         Base.__init__(
@@ -820,7 +820,7 @@ class TorchModelEnsemble(Base, ModelEnsemble):
         )
         return train_data, valid_data
 
-    def train_forward(self, X, *targets):
+    def train_forward(self, X, *targets) -> t.Tuple[t.List, t.List]:
         out = []
         for i, k in enumerate(self.training_keys[0]):
             submodel = getattr(self, self._model_ids[i])

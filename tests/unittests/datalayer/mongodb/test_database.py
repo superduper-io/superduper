@@ -142,7 +142,6 @@ def test_select(with_vector_index):
     assert r['_id'] == s['_id']
 
 
-@pytest.mark.skip(reason='See issue #291')
 def test_select_milvus(
     config_mongodb_milvus, random_data_factory, vector_index_factory
 ):

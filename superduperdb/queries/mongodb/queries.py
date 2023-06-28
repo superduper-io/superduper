@@ -110,7 +110,7 @@ class PreLike(Like):
             {'_id': {'$in': [ObjectId(_id) for _id in ids]}}
         )
         return SuperDuperCursor(
-            cursor=cursor,
+            raw_cursor=cursor,
             scores=dict(zip(ids, scores)),
             id_field='_id',
             types=db.types,
@@ -246,7 +246,7 @@ class Find(Select):
         if self.raw:
             return cursor
         else:
-            return SuperDuperCursor(cursor=cursor, id_field='_id', types=db.types)
+            return SuperDuperCursor(raw_cursor=cursor, id_field='_id', types=db.types)
 
 
 class FeaturizeOne(SelectOne):

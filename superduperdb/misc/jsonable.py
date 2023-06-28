@@ -9,7 +9,7 @@ TYPE_ID_ATTR = 'type_id'
 _NONE = object()
 
 
-def Factory(factory: t.Callable, **ka) -> t.Any:
+def Factory(factory: t.Callable, **ka: t.Any) -> t.Any:
     return Field(default_factory=factory, **ka)
 
 
@@ -30,7 +30,7 @@ class JSONable(BaseModel):
     TYPE_ID_TO_CLASS: t.ClassVar[t.Dict[str, t.Type]] = {}
 
     @functools.wraps(BaseModel.dict)
-    def dict(self, *a, **ka):
+    def dict(self, *a: t.Any, **ka: t.Any):
         d = super().dict(*a, **ka)
         properties = self.schema()['properties']
         return {k: v for k, v in d.items() if k in properties}
@@ -38,7 +38,7 @@ class JSONable(BaseModel):
     def deepcopy(self) -> 'JSONable':
         return self.copy(deep=True)
 
-    def __init_subclass__(cls, *a, **ka):
+    def __init_subclass__(cls, *a: t.Any, **ka: t.Any):
         super().__init_subclass__(*a, **ka)
         cls.SUBCLASSES.add(cls)
 

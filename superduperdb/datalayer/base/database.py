@@ -120,7 +120,7 @@ class BaseDatabase:
         variety: str,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
-    ):
+    ) -> t.Any:
         """
         Show available functionality which has been added using ``self.add``.
         If version is specified, then print full metadata
@@ -273,7 +273,7 @@ class BaseDatabase:
         object: Component,
         serializer: str = 'pickle',
         serializer_kwargs: t.Optional[t.Dict] = None,
-    ):
+    ) -> t.Optional[t.List]:
         """
         Add functionality in the form of components. Components are stored in the
         configured artifact store, and linked to the primary datalayer through
@@ -492,7 +492,7 @@ class BaseDatabase:
 
         return object.schedule_jobs(self)
 
-    def _create_plan(self):
+    def _create_plan(self) -> networkx.DiGraph:
         G = networkx.DiGraph()
         for identifier in self.metadata.show_components('watcher', active=True):
             G.add_node(('watcher', identifier))
@@ -503,7 +503,7 @@ class BaseDatabase:
         assert networkx.is_directed_acyclic_graph(G)
         return G
 
-    def _delete(self, delete: Delete):
+    def _delete(self, delete: Delete) -> 'DeleteResult':
         return self.db.delete(delete)
 
     def _remove_component_version(
@@ -512,7 +512,7 @@ class BaseDatabase:
         identifier: str,
         version: int,
         force: bool = False,
-    ):
+    ) -> None:
         unique_id = Component.make_unique_id(variety, identifier, version)
         if self.metadata.component_version_has_parents(variety, identifier, version):
             parents = self.metadata.get_component_version_parents(unique_id)

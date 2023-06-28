@@ -3,7 +3,11 @@ import typing as t
 from abc import ABC, abstractmethod
 
 if t.TYPE_CHECKING:
-    from superduperdb.datalayer.base.database import UpdateResult
+    from superduperdb.datalayer.base.database import (
+        UpdateResult,
+        InsertResult,
+        DeleteResult,
+    )
 
 
 class MetaDataStore(ABC):
@@ -20,23 +24,23 @@ class MetaDataStore(ABC):
         self.conn = conn
 
     @abstractmethod
-    def create_component(self, info: t.Dict):
+    def create_component(self, info: t.Dict) -> 'InsertResult':
         pass
 
     @abstractmethod
-    def create_parent_child(self, parent: str, child: str):
+    def create_parent_child(self, parent: str, child: str) -> 'InsertResult':
         pass
 
     @abstractmethod
-    def get_job(self, job_id: str):
+    def get_job(self, job_id: str) -> t.Any:
         pass
 
     @abstractmethod
-    def update_job(self, job_id: str, key: str, value: t.Any):
+    def update_job(self, job_id: str, key: str, value: t.Any) -> 'UpdateResult':
         pass
 
     @abstractmethod
-    def watch_job(self, identifier: str):
+    def watch_job(self, identifier: str) -> None:
         try:
             status = 'pending'
             n_lines = 0
@@ -70,25 +74,27 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def show_components(self, variety: str, **kwargs):
+    def show_components(self, variety: str, **kwargs) -> t.List:
         pass
 
     @abstractmethod
-    def show_component_versions(self, variety: str, identifier: str):
+    def show_component_versions(self, variety: str, identifier: str) -> t.List:
         pass
 
     @abstractmethod
-    def delete_component_version(self, variety: str, identifier: str, version: int):
+    def delete_component_version(
+        self, variety: str, identifier: str, version: int
+    ) -> 'DeleteResult':
         pass
 
     @abstractmethod
     def component_version_has_parents(
         self, variety: str, identifier: str, version: int
-    ):
+    ) -> bool:
         pass
 
     @abstractmethod
-    def get_metadata(self, key):
+    def get_metadata(self, key) -> t.Any:
         pass
 
     @abstractmethod

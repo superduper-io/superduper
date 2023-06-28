@@ -18,7 +18,7 @@ def apply_watcher(
     recompute=False,
     watcher_info=None,
     **kwargs,
-):
+) -> t.Any:
     if watcher_info is None:
         watcher_info = db.metadata.get_component('watcher', identifier)
     select = db.db.select_cls(**watcher_info['select'])  # type: ignore
@@ -72,7 +72,7 @@ def _compute_model_outputs(
     features=None,
     model=None,
     predict_kwargs=None,
-):
+) -> t.Any:
     logging.info('finding documents under filter')
     features = features or {}
     model_identifier = model_info['identifier']

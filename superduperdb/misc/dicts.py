@@ -74,7 +74,7 @@ def environ_dict(prefix: str, environ: t.Optional[t.Dict] = None) -> t.Dict:
     return {k[len(prefix) :].lower(): v for k, v in items}
 
 
-def _combine_one(target, source) -> None:
+def _combine_one(target: t.Dict, source: t.Dict) -> None:
     for k, v in source.items():
         old_v = target.get(k, _NONE)
         if old_v is _NONE:

@@ -2,6 +2,7 @@ import datetime
 from functools import cached_property
 
 import numpy
+from numpy.random import Generator
 
 from superduperdb.core.base import Component, DBPlaceholder
 from superduperdb.datalayer.base.query import Select
@@ -29,7 +30,7 @@ class Dataset(Component):
         self.random_seed = random_seed
 
     @cached_property
-    def random(self):
+    def random(self) -> Generator:
         return numpy.random.default_rng(seed=self.random_seed)
 
     def _post_attach_database(self) -> None:

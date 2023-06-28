@@ -76,7 +76,7 @@ class ChainWrapper(Model):
         assert not isinstance(chain, RetrievalQAWithSourcesChain), msg
         super().__init__(chain, identifier=identifier)
 
-    def predict_one(self, input):
+    def predict_one(self, input: t.Any) -> t.Any:
         return self.object.run(input)
 
 

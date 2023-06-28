@@ -10,9 +10,9 @@ class SuperDuperCursor(Cursor):
     def __init__(
         self,
         collection,
-        *args,
+        *args: t.Any,
         features: t.Optional[t.Dict] = None,
-        scores=None,
+        scores: t.Optional[t.Dict] = None,
         similar_join=None,
         **kwargs: t.Any,
     ) -> None:

@@ -42,7 +42,7 @@ class MongoMetaDataStore(MetaDataStore):
     def get_component_version_children(self, unique_id: str) -> t.List:
         return self.parent_child_mappings.distinct('child', {'parent': unique_id})
 
-    def get_job(self, identifier: str):
+    def get_job(self, identifier: str) -> t.Any:
         return self.job_collection.find_one({'identifier': identifier})
 
     def get_metadata(self, key: str) -> t.Any:
@@ -96,7 +96,7 @@ class MongoMetaDataStore(MetaDataStore):
             'identifier', {'variety': variety, **kwargs}
         )
 
-    def show_component_versions(self, variety: str, identifier: str):
+    def show_component_versions(self, variety: str, identifier: str) -> t.List:
         return self.object_collection.distinct(
             'version', {'variety': variety, 'identifier': identifier}
         )
@@ -117,7 +117,7 @@ class MongoMetaDataStore(MetaDataStore):
 
     def _component_used(
         self, variety: str, identifier: str, version: t.Optional[int] = None
-    ):
+    ) -> bool:
         if version is None:
             return bool(
                 self.object_collection.count_documents(
@@ -131,7 +131,7 @@ class MongoMetaDataStore(MetaDataStore):
                 )
             )
 
-    def component_has_parents(self, variety: str, identifier: str):
+    def component_has_parents(self, variety: str, identifier: str) -> bool:
         return (
             self.parent_child_mappings.count_documents(
                 {'child': {'$regex': f'^{variety}/{identifier}/'}}
@@ -141,7 +141,7 @@ class MongoMetaDataStore(MetaDataStore):
 
     def component_version_has_parents(
         self, variety: str, identifier: str, version: int
-    ):
+    ) -> bool:
         return (
             self.parent_child_mappings.count_documents(
                 {'child': Component.make_unique_id(variety, identifier, version)}
@@ -149,7 +149,9 @@ class MongoMetaDataStore(MetaDataStore):
             > 0
         )
 
-    def delete_component_version(self, variety: str, identifier: str, version: int):
+    def delete_component_version(
+        self, variety: str, identifier: str, version: int
+    ) -> results.DeleteResult:
         if self._component_used(variety, identifier, version=version):
             raise Exception('Component version already in use in other components!')
 

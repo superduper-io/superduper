@@ -21,7 +21,7 @@ def download_content(
     n_download_workers=None,
     headers=None,
     **kwargs,
-):
+) -> None:
     logging.debug(query)
     logging.debug(ids)
     update_db = False

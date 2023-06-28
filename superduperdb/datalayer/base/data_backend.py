@@ -7,7 +7,11 @@ from superduperdb.datalayer.base.cursor import SuperDuperCursor
 from superduperdb.datalayer.base.query import Insert, Select, Update, Delete
 
 if t.TYPE_CHECKING:
-    from superduperdb.datalayer.base.database import UpdateResult, DeleteResult
+    from superduperdb.datalayer.base.database import (
+        UpdateResult,
+        DeleteResult,
+        InsertResult,
+    )
 
 
 class BaseDataBackend(ABC):
@@ -24,11 +28,11 @@ class BaseDataBackend(ABC):
         self.name = name
 
     @abstractmethod
-    def insert(self, insert: Insert):
+    def insert(self, insert: Insert) -> 'InsertResult':
         pass
 
     @abstractmethod
-    def download_update(self, table, id, key, bytes):
+    def download_update(self, table, id, key, bytes) -> Update:
         pass
 
     def get_cursor(
@@ -57,7 +61,7 @@ class BaseDataBackend(ABC):
         pass
 
     @abstractmethod
-    def get_raw_cursor(self, select: Select):
+    def get_raw_cursor(self, select: Select) -> t.Any:
         pass
 
     @abstractmethod

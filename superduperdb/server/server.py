@@ -11,6 +11,7 @@ import superduperdb as s
 import typing as t
 import uvicorn
 
+
 MEDIA_TYPE = 'application/octet-stream'
 HERE = Path(__file__).parent
 FAVICON = HERE / 'favicon.ico'
@@ -50,7 +51,7 @@ class Server:
                 except NotJSONableError:
                     pass
 
-    def add_endpoints(self, obj: t.Any):
+    def add_endpoints(self, obj: t.Any) -> None:
         self.count = 0
 
         @self.app.get('/')
@@ -72,7 +73,7 @@ class Server:
         self.count += 1
 
         @self.app.get('/favicon.ico', include_in_schema=False)
-        def favicon():
+        def favicon() -> FileResponse:
             return FileResponse(FAVICON)
 
         @self.app.get('/download/{artifact_key}', response_class=Response)
@@ -97,7 +98,7 @@ class Server:
         self.count += 1
 
         @self.app.post('/upload/{artifact_key}')
-        async def upload(file: UploadFile):
+        async def upload(file: UploadFile) -> t.Dict[str, str]:
             exists = file.filename in self.artifact_store
             self.artifact_store[file.filename] = await file.read()
 
@@ -112,7 +113,7 @@ class Server:
 
             self.count += 1
 
-    def add_execute(self, obj: t.Any):
+    def add_execute(self, obj: t.Any) -> None:
         # TODO: unfortunately, mypy won't accept these computed types
         # even though FastAPI has no issue with them.
 

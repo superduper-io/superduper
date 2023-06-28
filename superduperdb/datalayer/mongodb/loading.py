@@ -1,4 +1,7 @@
+import typing as t
+
 import pymongo
+from pymongo.collection import Collection
 from torch.utils import data
 
 
@@ -7,7 +10,9 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
     Dataset iterating over a query without needing to download the whole thing first.
     """
 
-    def __init__(self, client, database, collection, transform=None, filter=None):
+    def __init__(
+        self, client, database, collection: Collection, transform=None, filter=None
+    ):
         super().__init__()
         self._client = client
         self._database = database
@@ -19,15 +24,15 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
         return self.collection.count_documents(self.filter)
 
     @property
-    def client(self):
+    def client(self) -> pymongo.MongoClient:
         return pymongo.MongoClient(**self._client)
 
     @property
-    def database(self):
+    def database(self) -> t.Any:
         return self.client[self._database]
 
     @property
-    def collection(self):
+    def collection(self) -> t.Any:
         return self.database[self._collection]
 
     def __iter__(self):

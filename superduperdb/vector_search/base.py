@@ -46,7 +46,7 @@ class BaseHashSet:
         self.measure = measure
 
     @property
-    def shape(self):  # pragma: no cover
+    def shape(self) -> property:  # pragma: no cover
         return self.h.shape
 
     def find_nearest_from_id(

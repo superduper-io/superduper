@@ -1,4 +1,5 @@
 import typing as t
+import itertools
 from contextlib import contextmanager
 
 from superduperdb.datalayer.base.query import Select
@@ -20,12 +21,28 @@ from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.metrics.vector_search import VectorSearchPerformance
 from superduperdb.vector_search.base import (
-    BaseHashSet,
     VectorCollection,
     VectorCollectionConfig,
     VectorIndexMeasureType,
     VectorCollectionItem,
 )
+
+T = t.TypeVar('T')
+
+
+def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
+    """
+    Batch an iterable into chunks of size `batch_size`
+    """
+    iterator = iter(iterable)
+    while True:
+        batch = list(itertools.islice(iterator, batch_size))
+        if not batch:
+            break
+        yield batch
+
+
+_BACKFILL_BATCH_SIZE = 100
 
 
 class VectorIndex(Component):
@@ -45,7 +62,6 @@ class VectorIndex(Component):
     variety: str = 'vector_index'
     select: Select
     watcher: t.Union[Watcher, Placeholder]
-    _hash_set: t.Optional[BaseHashSet]
 
     def __init__(
         self,
@@ -87,22 +103,22 @@ class VectorIndex(Component):
         # asynchronously
         # * backfill the index
         # * keep the index up-to-date
-        # TODO: this is quite an ineffective way to populate Milvus. we should implement
-        # a bulk add in MilvusVectorIndex
         with self._get_vector_collection() as vector_collection:
-            for record in database.execute(
-                self.indexing_watcher.select  # type: ignore
+            for record_batch in ibatch(
+                database.execute(self.indexing_watcher.select),  # type: ignore
+                _BACKFILL_BATCH_SIZE,
             ):
-                h, id = database.db.get_output_from_document(
-                    record,
-                    self.indexing_watcher.key,  # type: ignore
-                    self.indexing_watcher.model.identifier,  # type: ignore
-                )
-                if isinstance(h, Encodable):
-                    h = h.x
-                vector_collection.add(
-                    [VectorCollectionItem.create(id=str(id), vector=h)]
-                )
+                items = []
+                for record in record_batch:
+                    h, id = database.db.get_output_from_document(
+                        record,
+                        self.indexing_watcher.key,  # type: ignore
+                        self.indexing_watcher.model.identifier,  # type: ignore
+                    )
+                    if isinstance(h, Encodable):
+                        h = h.x
+                    items.append(VectorCollectionItem.create(id=str(id), vector=h))
+                vector_collection.add(items)
 
     @property
     def _dimensions(self) -> int:

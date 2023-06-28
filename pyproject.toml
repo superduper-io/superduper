@@ -50,6 +50,7 @@ sympy = "^1.12"
 grpcio = "<=1.49.1"
 readerwriterlock = "^1.0.9"
 fastapi = {version = "0.88.0", extras = ["all"]}
+overrides = "^7.3.1"
 
 [[tool.poetry.source]]
 name = "PyPI"

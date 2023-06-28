@@ -18,6 +18,8 @@ class Select(query.Select):
     one: bool = False
     projection: t.Optional[t.Dict[str, int]] = None
 
+    type_id: t.Literal['select-mongodb'] = 'select-mongodb'  # type: ignore[assignment]
+
     def add_fold(self, fold: str) -> 'Select':
         return Select(
             collection=self.collection,
@@ -71,6 +73,8 @@ class Update(query.Update):
     one: bool = False
     replacement: t.Optional[Document] = None
 
+    type_id: t.Literal['update-mongodb'] = 'update-mongodb'  # type: ignore[assignment]
+
     @cached_property
     def table(self):
         return self.collection
@@ -97,6 +101,8 @@ class Delete(query.Delete):
     filter: Filter
     one: bool = False
 
+    type_id: t.Literal['delete-mongodb'] = 'delete-mongodb'  # type: ignore[assignment]
+
     @cached_property
     def table(self):
         return self.collection
@@ -107,6 +113,8 @@ class Insert(query.Insert):
     collection: str = ''
     ordered: bool = True
     bypass_document_validation: bool = False
+
+    type_id: t.Literal['insert-mongodb'] = 'insert-mongodb'  # type: ignore[assignment]
 
     @cached_property
     def table(self):

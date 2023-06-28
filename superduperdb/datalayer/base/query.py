@@ -21,6 +21,8 @@ class Select(s.JSONable, ABC):
     similar_first: bool = False
     vector_index: t.Optional[str] = None
 
+    type_id: t.Literal['select'] = 'select'
+
     @property
     @abstractmethod
     def is_trivial(self) -> bool:
@@ -58,6 +60,8 @@ class Insert(ABC):
     refresh: bool = True
     verbose: bool = True
 
+    type_id: t.Literal['insert'] = 'insert'
+
     @property
     @abstractmethod
     def table(self):
@@ -73,12 +77,14 @@ class Insert(ABC):
 
 
 class Delete(s.JSONable, ABC):
-    ...
+    type_id: t.Literal['delete'] = 'delete'
 
 
 class Update(ABC):
     refresh: bool = True
     verbose: bool = True
+
+    type_id: t.Literal['update'] = 'update'
 
     @property
     @abstractmethod

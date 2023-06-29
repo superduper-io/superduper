@@ -5,6 +5,9 @@ from superduperdb.core.model import Model
 from superduperdb.datalayer.base.apply_watcher import apply_watcher
 from superduperdb.datalayer.base.query import Select
 
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.database import BaseDatabase
+
 
 class Watcher(Component):
     """
@@ -40,7 +43,7 @@ class Watcher(Component):
         identifier = f'{self.model.identifier}/{self.key}'
         super().__init__(identifier)
 
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, t.Any]:
         return {
             'model': self.model.identifier,
             'select': self.select.dict(),
@@ -51,10 +54,15 @@ class Watcher(Component):
         }
 
     @staticmethod
-    def cleanup(info, database):
+    def cleanup(info: t.Dict[str, t.Any], database: 'BaseDatabase') -> None:
         database.db.unset_outputs(info)
 
-    def schedule_jobs(self, database, verbose=False, dependencies=()):
+    def schedule_jobs(
+        self,
+        database: 'BaseDatabase',
+        verbose: bool = False,
+        dependencies: t.Tuple = (),
+    ) -> t.List:
         if not self.active:
             return
         ids = database.db.get_ids_from_select(self.select)

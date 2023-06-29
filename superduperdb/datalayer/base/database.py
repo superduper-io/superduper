@@ -2,7 +2,6 @@ import random
 import typing as t
 import warnings
 from collections import defaultdict
-from typing import Union, Optional, Dict, List, Tuple
 
 import click
 import networkx
@@ -93,9 +92,9 @@ class BaseDatabase:
         self,
         identifier: str,
         variety: str,
-        validation_datasets: List[str],
-        metrics: List[str],
-    ):
+        validation_datasets: t.List[str],
+        metrics: t.List[str],
+    ) -> None:
         """
         Evaluate quality of component, using `Component.validate`, if implemented.
 
@@ -119,9 +118,9 @@ class BaseDatabase:
     def show(
         self,
         variety: str,
-        identifier: Optional[str] = None,
-        version: Optional[int] = None,
-    ):
+        identifier: t.Optional[str] = None,
+        version: t.Optional[int] = None,
+    ) -> t.Any:
         """
         Show available functionality which has been added using ``self.add``.
         If version is specified, then print full metadata
@@ -151,7 +150,7 @@ class BaseDatabase:
         self,
         model_identifier: str,
         input: Document,
-    ) -> Union[List[Document], Document]:
+    ) -> t.Union[t.List[Document], Document]:
         """
         Apply model to input.
 
@@ -182,7 +181,7 @@ class BaseDatabase:
             return self.update(query)
         raise TypeError(
             f'Wrong type of {query}; '
-            f'Expected object of type {Union[Select, Delete, Update, Insert]}; '
+            f'Expected object of type {t.Union[Select, Delete, Update, Insert]}; '
             f'Got {type(query)};'
         )
 
@@ -231,8 +230,8 @@ class BaseDatabase:
         )
 
     def _select_nearest(
-        self, select: Select, ids: Optional[List[str]] = None
-    ) -> Tuple[List[str], List[float]]:
+        self, select: Select, ids: t.Optional[t.List[str]] = None
+    ) -> t.Tuple[t.List[str], t.List[float]]:
         assert select.like
         like = select.like()
         content = like.content
@@ -273,8 +272,8 @@ class BaseDatabase:
         self,
         object: Component,
         serializer: str = 'pickle',
-        serializer_kwargs: Optional[Dict] = None,
-    ):
+        serializer_kwargs: t.Optional[t.Dict] = None,
+    ) -> t.Optional[t.List]:
         """
         Add functionality in the form of components. Components are stored in the
         configured artifact store, and linked to the primary datalayer through
@@ -294,9 +293,9 @@ class BaseDatabase:
         self,
         variety: str,
         identifier: str,
-        version: Optional[int] = None,
-        force=False,
-    ):
+        version: t.Optional[int] = None,
+        force: bool = False,
+    ) -> None:
         """
         Remove component (version: optional)
 
@@ -352,7 +351,7 @@ class BaseDatabase:
         self,
         variety: str,
         identifier: str,
-        version: Optional[int] = None,
+        version: t.Optional[int] = None,
         repopulate: bool = True,
         allow_hidden: bool = False,
     ) -> t.Type[Component]:
@@ -389,7 +388,11 @@ class BaseDatabase:
         return m
 
     def _build_task_workflow(
-        self, select: Select, ids=None, dependencies=(), verbose=True
+        self,
+        select: Select,
+        ids: t.Optional[t.List] = None,
+        dependencies: t.Tuple = (),
+        verbose: bool = True,
     ) -> TaskWorkflow:
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
@@ -439,9 +442,9 @@ class BaseDatabase:
         self,
         object: Component,
         serializer: str = 'pickle',
-        serializer_kwargs: Optional[Dict] = None,
-        parent: Optional[str] = None,
-    ):
+        serializer_kwargs: t.Optional[t.Dict] = None,
+        parent: t.Optional[str] = None,
+    ) -> t.Optional[t.List]:
         if object.repopulate_on_init:
             object.repopulate(self)
 
@@ -489,7 +492,7 @@ class BaseDatabase:
 
         return object.schedule_jobs(self)
 
-    def _create_plan(self):
+    def _create_plan(self) -> networkx.DiGraph:
         G = networkx.DiGraph()
         for identifier in self.metadata.show_components('watcher', active=True):
             G.add_node(('watcher', identifier))
@@ -500,7 +503,7 @@ class BaseDatabase:
         assert networkx.is_directed_acyclic_graph(G)
         return G
 
-    def _delete(self, delete: Delete):
+    def _delete(self, delete: Delete) -> 'DeleteResult':
         return self.db.delete(delete)
 
     def _remove_component_version(
@@ -509,7 +512,7 @@ class BaseDatabase:
         identifier: str,
         version: int,
         force: bool = False,
-    ):
+    ) -> None:
         unique_id = Component.make_unique_id(variety, identifier, version)
         if self.metadata.component_version_has_parents(variety, identifier, version):
             parents = self.metadata.get_component_version_parents(unique_id)
@@ -533,7 +536,7 @@ class BaseDatabase:
             self.artifact_store.delete_artifact(info['object'])
             self.metadata.delete_component_version(variety, identifier, version=version)
 
-    def _get_dependencies_for_watcher(self, identifier):
+    def _get_dependencies_for_watcher(self, identifier: str) -> t.List:
         info = self.metadata.get_component('watcher', identifier)
         if info is None:
             return []
@@ -544,16 +547,18 @@ class BaseDatabase:
                 dependencies.append(f'{model}/{key}')
         return dependencies
 
-    def _get_file_content(self, r):
+    def _get_file_content(self, r: t.Any) -> t.Any:
         for k in r:
             if isinstance(r[k], dict):
                 r[k] = self._get_file_content(r[k])
         return r
 
-    def _get_object_info(self, identifier, variety, version=None):
+    def _get_object_info(
+        self, identifier: str, variety: str, version: t.Optional[int] = None
+    ) -> t.Any:
         return self.metadata.get_component(variety, identifier, version=version)
 
-    def _get_watcher_for_learning_task(self, learning_task):
+    def _get_watcher_for_learning_task(self, learning_task: str) -> str:
         info = self.metadata.get_component('learning_task', learning_task)
         key_to_watch = info['keys_to_watch'][0]
         model_identifier = next(
@@ -568,7 +573,7 @@ class BaseDatabase:
         serializer: t.Optional[str] = None,
         serializer_kwargs: t.Optional[t.Dict] = None,
         upsert: bool = False,
-    ):
+    ) -> t.Optional[t.List]:
         try:
             info = self.metadata.get_component(
                 'model', identifier, version=object.version
@@ -600,7 +605,7 @@ class BaseDatabase:
         self.metadata.update_object(identifier, 'model', 'object', file_id)
 
     @work
-    def _fit(self, identifier) -> None:
+    def _fit(self, identifier: str) -> None:
         """
         Execute the learning task.
 

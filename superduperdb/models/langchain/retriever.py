@@ -68,7 +68,7 @@ class ChainWrapper(Model):
     :param identifier: unique ID
     """
 
-    def __init__(self, chain: Chain, identifier: str):
+    def __init__(self, chain: Chain, identifier: str) -> None:
         msg = (
             "Chains which include a retrieval pass are handled by "
             f"{DBQAWithSourcesChain}"
@@ -76,7 +76,7 @@ class ChainWrapper(Model):
         assert not isinstance(chain, RetrievalQAWithSourcesChain), msg
         super().__init__(chain, identifier=identifier)
 
-    def predict_one(self, input):
+    def predict_one(self, input: t.Any) -> t.Any:
         return self.object.run(input)
 
 
@@ -103,7 +103,7 @@ class DBQAWithSourcesChain(Model):
         vector_index: t.Union[VectorIndex, str],
         chain_type: str = 'stuff',
         n: int = 5,
-    ):
+    ) -> None:
         super().__init__(llm, identifier=identifier)
         self.chain_type = chain_type
         self._retrieval_chain = None
@@ -133,10 +133,12 @@ class DBQAWithSourcesChain(Model):
             chain_type=self.chain_type,
         )
 
-    def _predict_one(self, question, outputs=None, **kwargs):
+    def _predict_one(
+        self, question: t.Any, outputs: t.Any = None, **kwargs: t.Dict[str, t.Any]
+    ) -> t.Dict[str, t.Any]:
         return self.chain(question)
 
-    def predict(self, question):
+    def predict(self, question: t.Any) -> t.Union[t.Dict, t.List[t.Dict]]:
         if isinstance(question, list):
             return [self._predict_one(q) for q in question]
         return self._predict_one(question)

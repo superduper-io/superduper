@@ -43,11 +43,11 @@ class Encoder(Component, EncoderDesc):
     """
 
     @wraps(EncoderDesc.__init__)
-    def __init__(self, identifier, *a, **ka):
+    def __init__(self, identifier: str, *a: t.Any, **ka: t.Any) -> None:
         Component.__init__(self, identifier)
         EncoderDesc.__init__(self, identifier, *a, **ka)
 
-    def __call__(self, x):
+    def __call__(self, x: t.Any) -> 'Encodable':
         return Encodable(x, self)
 
     def decode(self, b: bytes) -> t.Any:

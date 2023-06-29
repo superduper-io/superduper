@@ -20,7 +20,7 @@ class MongoDataBackend(BaseDataBackend):
         self,
         conn: t.Any,
         name: t.Optional[str] = None,
-    ):
+    ) -> None:
         super().__init__(conn, name)
         self.db = conn[name]
 
@@ -32,7 +32,9 @@ class MongoDataBackend(BaseDataBackend):
             bypass_document_validation=insert.bypass_document_validation,
         )
 
-    def download_update(self, table, id, key, bytes) -> Update:
+    def download_update(
+        self, table: str, id: ObjectId, key: str, bytes: bytes
+    ) -> Update:
         return Update(
             collection=table,
             one=True,
@@ -61,13 +63,13 @@ class MongoDataBackend(BaseDataBackend):
             **select.kwargs,
         )
 
-    def set_content_bytes(self, r, key, bytes_) -> MongoStyleDict:
+    def set_content_bytes(self, r: t.Dict, key: str, bytes_: bytes) -> MongoStyleDict:
         if not isinstance(r, MongoStyleDict):
             r = MongoStyleDict(r)
         r[f'{key}._content.bytes'] = bytes_
         return r
 
-    def _add_features(self, r):
+    def _add_features(self, r: t.Dict) -> MongoStyleDict:
         r = MongoStyleDict(r)
         for k in self.features:
             r[k] = r['_outputs'][k][self.features[k]]
@@ -77,7 +79,12 @@ class MongoDataBackend(BaseDataBackend):
                     r['_other'][k] = r['_outputs'][k][self.features[k]]
         return r
 
-    def write_outputs(self, watcher_info, outputs, _ids) -> None:
+    def write_outputs(
+        self,
+        watcher_info: t.Dict[str, t.Any],
+        outputs: t.List[t.Dict],
+        _ids: t.List[ObjectId],
+    ) -> None:
         logging.info('bulk writing...')
         select = Select(**watcher_info['select'])
         if watcher_info.get('target') is None:

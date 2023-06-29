@@ -6,20 +6,25 @@ from superduperdb.datalayer.base.query import Insert, Select
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.logger import logging
+from bson.objectid import ObjectId
+from pymongo.results import UpdateResult
+
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.database import BaseDatabase
 
 
 @work
 def download_content(
-    db,
+    db: 'BaseDatabase',
     query: t.Union[Select, Insert],
-    ids=None,
-    documents=None,
-    timeout=None,
-    raises=True,
-    n_download_workers=None,
-    headers=None,
-    **kwargs,
-):
+    ids: t.Optional[t.List[ObjectId]] = None,
+    documents: t.Optional[t.List[Document]] = None,
+    timeout: t.Any = None,
+    raises: bool = True,
+    n_download_workers: t.Optional[int] = None,
+    headers: t.Any = None,
+    **kwargs: t.Dict[str, t.Any],
+) -> None:
     logging.debug(query)
     logging.debug(ids)
     update_db = False
@@ -62,7 +67,7 @@ def download_content(
         except TypeError:
             timeout = None
 
-    def update_one(id, key, bytes):
+    def update_one(id: ObjectId, key: str, bytes: bytes) -> UpdateResult:
         return db.update(db.db.download_update(query.table, id, key, bytes))
 
     downloader = Downloader(

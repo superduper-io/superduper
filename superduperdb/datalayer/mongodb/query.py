@@ -2,9 +2,10 @@ from bson import ObjectId
 from dataclasses import dataclass
 from functools import cached_property
 from pydantic import Field
+import typing as t
+
 from superduperdb.core.documents import Document
 from superduperdb.datalayer.base import query
-import typing as t
 
 Filter = t.Dict[str, t.Any]  # Really it's ObjectId
 # TODO: make Filter JSONable
@@ -72,7 +73,7 @@ class Update(query.Update):
     replacement: t.Optional[Document] = None
 
     @cached_property
-    def table(self):
+    def table(self) -> str:
         return self.collection
 
     @cached_property
@@ -98,7 +99,7 @@ class Delete(query.Delete):
     one: bool = False
 
     @cached_property
-    def table(self):
+    def table(self) -> str:
         return self.collection
 
 
@@ -109,7 +110,7 @@ class Insert(query.Insert):
     bypass_document_validation: bool = False
 
     @cached_property
-    def table(self):
+    def table(self) -> str:
         return self.collection
 
     @cached_property
@@ -117,10 +118,10 @@ class Insert(query.Insert):
         return Select(collection=self.collection, filter={})
 
 
-def set_one_key_in_document(table, id, key, value):
+def set_one_key_in_document(table: str, id: t.Any, key: str, value: t.Any) -> Update:
     return Update(
         collection=table,
         filter={'_id': id},
-        update={'$set': {key: value}},
+        update=Document({'$set': {key: value}}),
         one=True,
     )

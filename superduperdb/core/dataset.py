@@ -2,6 +2,7 @@ import datetime
 from functools import cached_property
 
 import numpy
+from numpy.random import Generator
 
 from superduperdb.core.base import Component, DBPlaceholder
 from superduperdb.datalayer.base.query import Select
@@ -29,17 +30,17 @@ class Dataset(Component):
         self.random_seed = random_seed
 
     @cached_property
-    def random(self):
+    def random(self) -> Generator:
         return numpy.random.default_rng(seed=self.random_seed)
 
-    def _post_attach_database(self):
+    def _post_attach_database(self) -> None:
         data = list(self.database.execute(self.select))
         if self.sample_size is not None and self.sample_size < len(data):
             perm = self.random.permutation(len(data)).tolist()
             data = [data[perm[i]] for i in range(self.sample_size)]
         self.data = data
 
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, t.Any]:
         return {
             'identifier': self.identifier,
             'select': self.select.dict(),

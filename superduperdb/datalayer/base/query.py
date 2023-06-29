@@ -61,7 +61,7 @@ class Insert(ABC):
 
     @property
     @abstractmethod
-    def table(self):
+    def table(self) -> str:
         # extracts the table name from the object
         pass
 
@@ -83,14 +83,14 @@ class Update(ABC):
 
     @property
     @abstractmethod
-    def select(self):
+    def select(self) -> Select:
         # converts the update object to a Select object, which selects where
         # the update was made
         pass
 
     @property
     @abstractmethod
-    def select_ids(self):
+    def select_ids(self) -> Select:
         # converts the update object to a Select object, which selects where
         # the update was made, and returns only ids
         pass

@@ -41,15 +41,18 @@ class Registry:
 
         if self.strict:
 
-            def is_model(t, parent=s.JSONable):
-                bases = getattr(t, '__bases__', ())
-                return t is parent or any(is_model(c, parent) for c in bases)
+            def is_model(t_: t.Type, parent: t.Type = s.JSONable) -> bool:
+                bases = getattr(t_, '__bases__', ())
+                return t_ is parent or any(is_model(c, parent) for c in bases)
 
             types = set(parameter_types + (result_type,))
-            if non_models := [t for t in types if not is_model(t)]:
+            if non_models := [t_ for t_ in types if not is_model(t_)]:
                 raise NotJSONableError(f'Not serializable: {non_models}')
 
-        def unite(a, b):
+        def unite(
+            a: t.Any,
+            b: t.Any,
+        ) -> t.Any:
             return b if a is None else t.Union[a, b]
 
         for r in parameter_types:

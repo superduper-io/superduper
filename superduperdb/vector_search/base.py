@@ -1,11 +1,13 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+
+import typing as t
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+
 import numpy
 import numpy.typing
 import torch
-import typing as t
 
 from ..misc.config import VectorSearchConfig
 
@@ -15,9 +17,20 @@ class BaseHashSet:
     h: t.Union[torch.Tensor, numpy.ndarray, t.List]
     index: t.List[str]
     lookup: t.Dict[str, t.Union[t.Iterator[int], int]]
-    measure: str
+    measure: t.Union[str, t.Callable]
 
-    def __init__(self, h, index, measure):
+    def __init__(
+        self,
+        h: t.Union[
+            torch.Tensor,
+            numpy.ndarray,
+            t.List[torch.Tensor],
+            t.List[numpy.ndarray],
+            t.List[t.List],
+        ],
+        index: t.List[str],
+        measure: t.Union[str, t.Callable],
+    ) -> None:
         if isinstance(h, list) and isinstance(h[0], torch.Tensor):
             h = torch.stack(h).numpy()
         elif isinstance(h, list) and isinstance(h[0], numpy.ndarray):
@@ -33,26 +46,36 @@ class BaseHashSet:
         self.measure = measure
 
     @property
-    def shape(self):  # pragma: no cover
+    def shape(self) -> property:  # pragma: no cover
         return self.h.shape
 
-    def find_nearest_from_id(self, _id, n=100):
+    def find_nearest_from_id(
+        self, _id: str, n: int = 100
+    ) -> t.Tuple[t.List[str], t.List[float]]:
         _ids, scores = self.find_nearest_from_ids([_id], n=n)
         return _ids[0], scores[0]
 
-    def find_nearest_from_ids(self, _ids, n=100):
+    def find_nearest_from_ids(
+        self, _ids: t.List[str], n: int = 100
+    ) -> t.Tuple[t.List[t.List[str]], t.List[t.List[float]]]:
         ix = list(map(self.lookup.__getitem__, _ids))
         return self.find_nearest_from_hashes(self.h[ix, :], n=n)
 
-    def find_nearest_from_hash(self, h, n=100):
+    def find_nearest_from_hash(
+        self,
+        h: t.Union[numpy.ndarray, torch.Tensor],
+        n: int = 100,
+    ) -> t.Tuple[t.List, t.List]:
         h = to_numpy(h)
         _ids, scores = self.find_nearest_from_hashes(h[None, :], n=n)
         return _ids[0], scores[0]
 
-    def find_nearest_from_hashes(self, h, n=100):
+    def find_nearest_from_hashes(
+        self, h: t.Union[numpy.ndarray, torch.Tensor], n: int = 100
+    ) -> t.Tuple[t.List[t.List], t.List[t.List]]:
         raise NotImplementedError
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: t.Any) -> 'BaseHashSet':
         raise NotImplementedError
 
 

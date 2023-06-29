@@ -1,8 +1,9 @@
 from collections import defaultdict
+import typing as t
 
 
 class ArgumentDefaultDict(defaultdict):
-    def __getitem__(self, item):
+    def __getitem__(self, item: t.Any) -> t.Dict:
         if item not in self.keys():
             self[item] = self.default_factory(item)
         return super().__getitem__(item)
@@ -28,7 +29,7 @@ class MongoStyleDict(dict):
     KeyError: 'd'
     """
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: t.Any) -> t.Any:
         if '.' not in item:
             return super().__getitem__(item)
         parts = item.split('.')
@@ -37,7 +38,7 @@ class MongoStyleDict(dict):
         sub = MongoStyleDict(self.__getitem__(parent))
         return sub[child]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: t.Any, value: t.Any) -> None:
         if '.' not in key:
             super().__setitem__(key, value)
         else:
@@ -49,6 +50,6 @@ class MongoStyleDict(dict):
 
 
 class ExtensibleDict(defaultdict):
-    def append(self, other):
+    def append(self, other: t.Dict) -> None:
         for k in other:
             self[k].append(other[k])

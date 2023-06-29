@@ -1,24 +1,30 @@
 import math
 import typing as t
 
+from bson import ObjectId
+
 from .query import Select
 
 from superduperdb.cluster.job_submission import work
 from superduperdb.misc.logger import logging
+from ...core.model import Model
+
+if t.TYPE_CHECKING:
+    from .database import BaseDatabase
 
 
 @work
 def apply_watcher(
-    db,
-    identifier,
-    ids: t.Optional[t.List[str]] = None,
-    verbose=False,
-    max_chunk_size=5000,
-    model=None,
-    recompute=False,
-    watcher_info=None,
-    **kwargs,
-):
+    db: 'BaseDatabase',
+    identifier: str,
+    ids: t.Optional[t.List[ObjectId]] = None,
+    verbose: bool = False,
+    max_chunk_size: t.Optional[int] = 5000,
+    model: t.Optional[Model] = None,
+    recompute: bool = False,
+    watcher_info: t.Optional[t.Dict[str, t.Any]] = None,
+    **kwargs: t.Dict[str, t.Any],
+) -> t.Any:
     if watcher_info is None:
         watcher_info = db.metadata.get_component('watcher', identifier)
     select = db.db.select_cls(**watcher_info['select'])  # type: ignore
@@ -64,15 +70,15 @@ def apply_watcher(
 
 
 def _compute_model_outputs(
-    db,
-    model_info,
-    _ids,
+    db: 'BaseDatabase',
+    model_info: t.Dict[str, t.Any],
+    _ids: t.List[ObjectId],
     select: Select,
-    key='_base',
-    features=None,
-    model=None,
-    predict_kwargs=None,
-):
+    key: str = '_base',
+    features: t.Optional[t.Dict] = None,
+    model: t.Optional[Model] = None,
+    predict_kwargs: t.Optional[t.Dict] = None,
+) -> t.Any:
     logging.info('finding documents under filter')
     features = features or {}
     model_identifier = model_info['identifier']

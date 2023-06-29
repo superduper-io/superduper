@@ -13,7 +13,7 @@ from superduperdb.core.documents import Document
     num_replicas=int(os.environ.get("SUPERDUPERDB_NUM_REPLICAS", "1")),
 )
 class Server:
-    def __init__(self):
+    def __init__(self) -> None:
         database_type = os.environ['SUPERDUPERDB_DATABASE_TYPE']
         database_name = os.environ['SUPERDUPERDB_DATABASE_NAME']
         self.db = get_database_from_database_type(database_type, database_name)

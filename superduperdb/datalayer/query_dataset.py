@@ -1,5 +1,10 @@
+import typing as t
+
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
+
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.database import BaseDatabase
 
 
 class QueryDataset:
@@ -17,12 +22,12 @@ class QueryDataset:
     def __init__(
         self,
         select: Select,
-        keys=None,
-        fold='train',
-        suppress=(),
-        transform=None,
-        features=None,
-    ):
+        keys: t.Sequence[str] = None,
+        fold: str = 'train',
+        suppress: t.Tuple = (),
+        transform: t.Optional[t.Callable] = None,
+        features: t.Optional[t.Dict] = None,
+    ) -> None:
         super().__init__()
 
         self._database = None
@@ -35,17 +40,17 @@ class QueryDataset:
         self.features = features or {}
 
     @property
-    def database(self):
+    def database(self) -> 'BaseDatabase':
         if self._database is None:
             from superduperdb.datalayer.base.build import build_datalayer
 
             self._database = build_datalayer()
         return self._database
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._documents)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: t.Any) -> t.Any:
         r = MongoStyleDict(self._documents[item].unpack())
         s = MongoStyleDict({})
         for k in self.features:

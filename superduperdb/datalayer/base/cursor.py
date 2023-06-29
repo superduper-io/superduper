@@ -1,7 +1,9 @@
 import typing as t
 
-from superduperdb.core.encoder import Encoder
+from pymongo.cursor import Cursor
+
 from superduperdb.core.documents import Document
+from superduperdb.core.encoder import Encoder
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 
@@ -10,7 +12,7 @@ class SuperDuperCursor:
 
     def __init__(
         self,
-        cursor,
+        cursor: Cursor,
         id_field: str,
         types: t.Mapping[str, Encoder],
         features: t.Union[t.Mapping[str, str], None] = None,
@@ -35,7 +37,7 @@ class SuperDuperCursor:
             )
             self.it = 0
 
-    def _add_features(self, r):
+    def _add_features(self, r: t.Dict[str, t.Any]) -> MongoStyleDict:
         r = MongoStyleDict(r)
         for k in self.features:
             r[k] = r['_outputs'][k][self.features[k]]
@@ -45,10 +47,10 @@ class SuperDuperCursor:
                     r['_other'][k] = r['_outputs'][k][self.features[k]]
         return r
 
-    def __iter__(self):
+    def __iter__(self) -> 'SuperDuperCursor':
         return self
 
-    def __next__(self):
+    def __next__(self) -> Document:
         if self.scores is not None:
             try:
                 r = self._results[self.it]

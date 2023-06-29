@@ -1,6 +1,7 @@
-from superduperdb.core.encoder import Encodable
 import dataclasses as dc
 import typing as t
+
+from superduperdb.core.encoder import Encodable
 
 
 @dc.dataclass
@@ -12,21 +13,23 @@ class Document:
 
     content: t.Union[t.Dict, Encodable]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return super().__hash__()
 
-    def _encode(self, r: t.Any):
+    def _encode(self, r: t.Any) -> t.Dict:
         if isinstance(r, dict):
             return {k: self._encode(v) for k, v in r.items()}
         elif isinstance(r, Encodable):
             return r.encode()
         return r
 
-    def encode(self):
+    def encode(self) -> t.Dict:
         return self._encode(self.content)
 
     @classmethod
-    def decode(cls, r: t.Dict, types: t.Dict):
+    def decode(
+        cls, r: t.Union[t.Dict, 'Document'], types: t.Dict
+    ) -> t.Union['Document', t.Dict, t.List]:
         if isinstance(r, Document):
             return Document(cls._decode(r, types))
         elif isinstance(r, dict):
@@ -34,7 +37,7 @@ class Document:
         raise NotImplementedError(f'type {type(r)} is not supported')
 
     @classmethod
-    def _decode(cls, r: t.Dict, types: t.Dict):
+    def _decode(cls, r: t.Dict, types: t.Dict) -> t.Union[t.Dict, t.List]:
         if isinstance(r, dict) and '_content' in r:
             type = types[r['_content']['type']]
             return type.decode(r['_content']['bytes'])
@@ -45,16 +48,16 @@ class Document:
                 r[k] = cls._decode(r[k], types)
         return r
 
-    def __getitem__(self, item: str):
+    def __getitem__(self, item: str) -> t.Any:
         assert isinstance(self.content, dict)
         return self.content[item]
 
-    def __setitem__(self, key: str, value: t.Any):
+    def __setitem__(self, key: str, value: t.Any) -> None:
         assert isinstance(self.content, dict)
         self.content[key] = value
 
     @classmethod
-    def _unpack_datavars(cls, item: t.Any):
+    def _unpack_datavars(cls, item: t.Any) -> t.Any:
         if isinstance(item, Encodable):
             return item.x
         elif isinstance(item, dict):
@@ -64,5 +67,5 @@ class Document:
         else:
             return item
 
-    def unpack(self):
+    def unpack(self) -> t.Any:
         return self._unpack_datavars(self.content)

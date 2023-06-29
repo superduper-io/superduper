@@ -1,29 +1,30 @@
-import typing as t
 import re
-
-import boto3
-from io import BytesIO
-from contextlib import contextmanager
-from multiprocessing.pool import ThreadPool
-import requests
 import signal
 import sys
+import typing as t
 import warnings
+from contextlib import contextmanager
+from io import BytesIO
+from multiprocessing.pool import ThreadPool
 
-from superduperdb.misc.progress import progressbar
+import boto3
+import requests
+from bson import ObjectId
+
 from superduperdb.misc.logger import logging
+from superduperdb.misc.progress import progressbar
 
 
 class TimeoutException(Exception):
     ...
 
 
-def timeout_handler(signum, frame):  # pragma: no cover
+def timeout_handler(signum: t.Any, frame: t.Callable) -> None:  # pragma: no cover
     raise TimeoutException()
 
 
 @contextmanager
-def timeout(seconds):  # pragma: no cover
+def timeout(seconds: int) -> t.Generator:  # pragma: no cover
     old_handler = signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(seconds)
     try:
@@ -34,7 +35,7 @@ def timeout(seconds):  # pragma: no cover
 
 
 class Fetcher:
-    def __init__(self, headers=None, n_workers=0):
+    def __init__(self, headers: t.Optional[int] = None, n_workers: int = 0) -> None:
         session = boto3.Session()
         self.headers = headers
         self.s3_client = session.client("s3")
@@ -47,7 +48,7 @@ class Fetcher:
         self.request_session.mount("http://", self.request_adapter)
         self.request_session.mount("https://", self.request_adapter)
 
-    def _download_s3_object(self, uri):
+    def _download_s3_object(self, uri: str) -> bytes:
         f = BytesIO()
         path = uri.split('s3://')[-1]
         bucket_name = path.split('/')[0]
@@ -55,15 +56,15 @@ class Fetcher:
         self.s3_client.download_fileobj(bucket_name, file, f)
         return f.getvalue()
 
-    def _download_file(self, path):
+    def _download_file(self, path: str) -> t.AnyStr:
         path = re.split('^file://', path)[-1]
         with open(path, 'rb') as f:
             return f.read()
 
-    def _download_from_uri(self, uri):
+    def _download_from_uri(self, uri: str) -> bytes:
         return self.request_session.get(uri, headers=self.headers).content
 
-    def __call__(self, uri):
+    def __call__(self, uri: str) -> bytes:
         if uri.startswith('file://'):
             return self._download_file(uri)
         elif uri.startswith('s3://'):
@@ -75,14 +76,21 @@ class Fetcher:
 
 
 class BaseDownloader:
-    def __init__(self, uris, n_workers=0, timeout=None, headers=None, raises=True):
+    def __init__(
+        self,
+        uris: t.List[str],
+        n_workers: int = 0,
+        timeout: t.Any = None,
+        headers: t.Optional[int] = None,
+        raises: bool = True,
+    ) -> None:
         self.timeout = timeout
         self.n_workers = n_workers
         self.uris = uris
         self.headers = headers or {}
         self.raises = raises
 
-    def go(self):
+    def go(self) -> None:
         """
         Download all files
         Uses a :py:class:`multiprocessing.pool.ThreadPool` to parallelize
@@ -95,7 +103,7 @@ class BaseDownloader:
         self.failed = 0
         prog.prefx = "failed: 0"
 
-        def f(i):
+        def f(i: int) -> None:
             prog.update()
             try:
                 if self.timeout is not None:  # pragma: no cover
@@ -120,7 +128,7 @@ class BaseDownloader:
 
         self._parallel_go(f)
 
-    def _parallel_go(self, f):
+    def _parallel_go(self, f: t.Callable) -> None:
         pool = ThreadPool(self.n_workers)
         try:
             pool.map(f, range(len(self.uris)))
@@ -133,7 +141,7 @@ class BaseDownloader:
         pool.close()
         pool.join()
 
-    def _sequential_go(self, f):
+    def _sequential_go(self, f: t.Callable) -> None:
         for i in range(len(self.uris)):
             f(i)
 
@@ -156,16 +164,16 @@ class Downloader(BaseDownloader):
 
     def __init__(
         self,
-        uris,
-        update_one=None,
-        ids=None,
-        keys=None,
-        n_workers=20,
-        headers=None,
-        skip_existing=True,
-        timeout=None,
-        raises=True,
-    ):
+        uris: t.List[str],
+        update_one: t.Optional[t.Callable] = None,
+        ids: t.List[ObjectId] = None,
+        keys: t.Optional[t.List[str]] = None,
+        n_workers: int = 20,
+        headers: t.Optional[int] = None,
+        skip_existing: bool = True,
+        timeout: t.Any = None,
+        raises: bool = True,
+    ) -> None:
         super().__init__(
             uris, n_workers=n_workers, timeout=timeout, headers=headers, raises=raises
         )
@@ -178,7 +186,7 @@ class Downloader(BaseDownloader):
 
         assert len(ids) == len(uris)
 
-    def _download(self, i):
+    def _download(self, i: int) -> None:
         uri = self.uris[i]
         _id = self.ids[i]
         content = self.fetcher(uri)
@@ -186,18 +194,24 @@ class Downloader(BaseDownloader):
 
 
 class InMemoryDownloader(BaseDownloader):
-    def __init__(self, *args, headers=None, n_workers=0, **kwargs):
+    def __init__(
+        self,
+        *args: t.Any,
+        headers: t.Optional[int] = None,
+        n_workers: int = 0,
+        **kwargs: t.Dict[str, t.Any],
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.results = {}
         self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
 
-    def _download(self, i):
+    def _download(self, i: int) -> None:
         content = self.fetcher(self.uris[i])
         self.results[i] = content
 
 
 def gather_uris(
-    documents, gather_ids=True
+    documents: t.List[t.Dict], gather_ids: bool = True
 ) -> t.Tuple[t.List[str], t.List[str], t.List[int]]:
     """
     Get the URLS out of all documents as denoted by ``{"_content": ...}``
@@ -218,7 +232,7 @@ def gather_uris(
     return uris, mongo_keys, ids
 
 
-def _gather_uris_for_document(r):
+def _gather_uris_for_document(r: t.Dict) -> t.Tuple[t.List[str], t.List[str]]:
     '''
     >>> _gather_uris_for_document({'a': {'_content': {'uri': 'test'}}})
     (['test'], ['a'])

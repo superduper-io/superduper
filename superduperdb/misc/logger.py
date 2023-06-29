@@ -9,10 +9,10 @@ logging: t.Any
 
 if CFG.logging.type == 'stdout':
 
-    def logging():
+    def logging() -> None:
         pass
 
-    def dont_print(*a, **ka):
+    def dont_print(*a: t.Any, **ka: t.Dict[str, t.Any]) -> None:
         pass
 
     logging.error = logging.warn = warn

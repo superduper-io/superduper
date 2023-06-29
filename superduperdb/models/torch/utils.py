@@ -1,7 +1,11 @@
 from contextlib import contextmanager
+import typing as t
+
+import torch
+from torch import nn
 
 
-def device_of(model):
+def device_of(model: nn.Module) -> str:
     """
     Get device of a model.
 
@@ -14,7 +18,7 @@ def device_of(model):
 
 
 @contextmanager
-def eval(model):
+def eval(model: nn.Module) -> None:
     was_training = model.training
     try:
         model.eval()
@@ -25,7 +29,7 @@ def eval(model):
 
 
 @contextmanager
-def set_device(model, device):
+def set_device(model: nn.Module, device: torch.device) -> None:
     """
     Temporarily set a device of a model.
 
@@ -40,7 +44,9 @@ def set_device(model, device):
         model.to(device_before)
 
 
-def to_device(item, device):
+def to_device(
+    item: t.Union[t.Tuple, t.List, t.Dict, torch.Tensor], device: torch.device
+) -> t.Union[t.Dict, torch.Tensor]:
     """
     Send tensor leaves of nested list/ dictionaries/ tensors to device.
 

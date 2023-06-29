@@ -11,6 +11,9 @@ from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model, ModelEnsemble, TrainingConfiguration
 from superduperdb.datalayer.base.query import Select
 
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.database import BaseDatabase
+
 
 class Fit(Component):
     """
@@ -73,7 +76,7 @@ class Fit(Component):
         self.features = features or {}
         self.select = select
 
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, t.Any]:
         return {
             'identifier': self.identifier,
             'keys': list(self.keys),
@@ -84,5 +87,7 @@ class Fit(Component):
             'features': self.features,
         }
 
-    def schedule_jobs(self, database, verbose=True, dependencies=()):
+    def schedule_jobs(
+        self, database: 'BaseDatabase', verbose: bool = True, dependencies: t.Tuple = ()
+    ) -> t.List:
         return [database._fit(self.identifier)]

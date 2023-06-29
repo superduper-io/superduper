@@ -1,10 +1,12 @@
-import numpy
 import os
+import typing as t
+
 import faiss
+import numpy
 import torch
+from torch import Tensor
 
 from superduperdb.vector_search.base import BaseHashSet
-
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
@@ -23,7 +25,13 @@ class FaissHashSet(BaseHashSet):
 
     name = 'faiss'
 
-    def __init__(self, h, index, measure='l2', faiss_index=None):
+    def __init__(
+        self,
+        h: t.Union[Tensor, numpy.ndarray, t.List],
+        index: t.List,
+        measure: str = 'l2',
+        faiss_index: t.Optional[t.Any] = None,
+    ) -> None:
         super().__init__(h, index, measure)
         self.h = self.h.astype('float32')
         if faiss_index is None:
@@ -44,7 +52,9 @@ class FaissHashSet(BaseHashSet):
             faiss_index.add(self.h)
         self.faiss_index = faiss_index
 
-    def find_nearest_from_hashes(self, h, n=100):
+    def find_nearest_from_hashes(
+        self, h: numpy.ndarray, n: int = 100
+    ) -> t.Tuple[t.List[t.List], t.List[t.List[float]]]:
         if isinstance(h, list):
             h = numpy.array(h).astype('float32')
         if isinstance(h, torch.Tensor):

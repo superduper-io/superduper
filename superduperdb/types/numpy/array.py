@@ -6,23 +6,23 @@ from superduperdb.types.utils import str_shape
 
 
 class EncodeArray:
-    def __init__(self, dtype):
+    def __init__(self, dtype: str) -> None:
         self.dtype = dtype
 
-    def __call__(self, x):
+    def __call__(self, x: 'EncodeArray') -> bytes:
         assert x.dtype == self.dtype
         return memoryview(x).tobytes()
 
 
 class DecodeArray:
-    def __init__(self, dtype):
+    def __init__(self, dtype: str) -> None:
         self.dtype = dtype
 
-    def __call__(self, bytes):
+    def __call__(self, bytes: bytes) -> numpy.ndarray:
         return numpy.frombuffer(bytes, dtype=self.dtype)
 
 
-def array(dtype: str, shape: t.Tuple):
+def array(dtype: str, shape: t.Tuple) -> Encoder:
     return Encoder(
         identifier=f'numpy.{dtype}[{str_shape(shape)}]',
         encoder=EncodeArray(dtype),

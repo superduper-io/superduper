@@ -1,5 +1,10 @@
+import typing as t
+
 import pymongo
+from pymongo.collection import Collection
 from torch.utils import data
+
+from superduperdb.datalayer.base.database import BaseDatabase
 
 
 class MongoIterable(data.IterableDataset):  # pragma: no cover
@@ -7,7 +12,14 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
     Dataset iterating over a query without needing to download the whole thing first.
     """
 
-    def __init__(self, client, database, collection, transform=None, filter=None):
+    def __init__(
+        self,
+        client: t.Any,
+        database: BaseDatabase,
+        collection: Collection,
+        transform: t.Any = None,
+        filter: t.Any = None,
+    ) -> None:
         super().__init__()
         self._client = client
         self._database = database
@@ -15,22 +27,22 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
         self.transform = transform
         self.filter = filter if filter is not None else {}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.collection.count_documents(self.filter)
 
     @property
-    def client(self):
+    def client(self) -> pymongo.MongoClient:
         return pymongo.MongoClient(**self._client)
 
     @property
-    def database(self):
+    def database(self) -> t.Any:
         return self.client[self._database]
 
     @property
-    def collection(self):
+    def collection(self) -> t.Any:
         return self.database[self._collection]
 
-    def __iter__(self):
+    def __iter__(self) -> t.Iterator:
         worker_info = data.get_worker_info()
         if worker_info is None:
             for r in self.collection.find(self.filter, {'_id': 0}):

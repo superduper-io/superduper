@@ -11,11 +11,11 @@ __all__ = (
 
 
 def run(
-    args: t.Tuple[str], text: bool = True, check: bool = True, **kwargs
+    args: t.Tuple[str], text: bool = True, check: bool = True, **kwargs: t.Any
 ) -> subprocess.CompletedProcess:
     print('$', *args)
     return subprocess.run(args, text=text, check=check, **kwargs)
 
 
-def out(args: t.Tuple[str], **kwargs) -> str:
+def out(args: t.Tuple[str], **kwargs: t.Any) -> str:
     return run(args, stdout=PIPE, **kwargs).stdout.strip()

@@ -1,3 +1,5 @@
+import typing as t
+
 from superduperdb import CFG
 from superduperdb.datalayer.base.backends import (
     data_backends,
@@ -7,9 +9,24 @@ from superduperdb.datalayer.base.backends import (
 )
 from superduperdb.datalayer.base.database import BaseDatabase
 
+from superduperdb.datalayer.mongodb.artifacts import MongoArtifactStore
+from superduperdb.datalayer.mongodb.data_backend import MongoDataBackend
+from superduperdb.datalayer.mongodb.metadata import MongoMetaDataStore
+from superduperdb.misc.config import DataLayer
 
-def build_datalayer(**connections) -> BaseDatabase:
-    def build(cfg, stores):
+TBuild = t.TypeVar(
+    'TBuild',
+    t.Type[MongoArtifactStore],
+    t.Type[MongoDataBackend],
+    t.Type[MongoMetaDataStore],
+)
+
+
+def build_datalayer(**connections: t.Any) -> BaseDatabase:
+    def build(
+        cfg: DataLayer,
+        stores: t.Dict[str, TBuild],
+    ) -> t.Any:
         cls = stores[cfg.cls]
         if connections:
             connection = connections[cfg.connection]

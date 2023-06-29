@@ -19,7 +19,9 @@ from superduperdb.datalayer.query_dataset import QueryDataset
 class TransformersTrainerConfiguration(TrainingConfiguration):
     training_arguments: TrainingArguments
 
-    def __init__(self, training_arguments: TrainingArguments, **kwargs):
+    def __init__(
+        self, training_arguments: TrainingArguments, **kwargs: t.Dict[str, t.Any]
+    ) -> None:
         super().__init__(training_arguments=training_arguments, **kwargs)
 
 
@@ -34,7 +36,7 @@ class Pipeline(Model):
         training_select: t.Optional[Select] = None,
         training_keys: t.Optional[t.List[str]] = None,
         encoder: t.Optional[Encoder] = None,
-    ):
+    ) -> None:
         if pipeline is None:
             assert model is not None, 'must specify model for now'
             pipeline = _pipeline(task, model=model)
@@ -50,7 +52,7 @@ class Pipeline(Model):
             encoder=encoder,
         )
 
-    def _get_data(self):
+    def _get_data(self) -> t.Tuple[QueryDataset, QueryDataset]:
         tokenizing_function = TokenizingFunction(self.object.tokenizer)
         train_data = QueryDataset(
             select=self.training_select,
@@ -78,7 +80,7 @@ class Pipeline(Model):
         validation_sets: t.Optional[t.List[str]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
         serializer: str = 'pickle',
-    ):
+    ) -> t.Any:
         if training_configuration is not None:
             self.training_configuration = training_configuration
         if select is not None:
@@ -105,24 +107,28 @@ class Pipeline(Model):
             eval_dataset=valid_data,
         ).train()
 
-    def predict(self, input, **kwargs):
+    def predict(self, input: t.Any, **kwargs: t.Dict[str, t.Any]):
         return self.object(input, **kwargs)
 
 
 class TokenizingFunction:
-    def __init__(self, tokenizer, **kwargs):
+    def __init__(self, tokenizer: t.Callable, **kwargs: t.Any) -> None:
         self.tokenizer = tokenizer
         self.kwargs = kwargs
 
-    def __call__(self, sentence):
+    def __call__(self, sentence: t.Any) -> t.Any:
         return self.tokenizer(sentence, batch=False, **self.kwargs)
 
 
 class TrainerWithSaving(Trainer):
-    def __init__(self, custom_saver=None, **kwargs):
+    def __init__(
+        self, custom_saver: t.Optional[t.Callable] = None, **kwargs: t.Dict[str, t.Any]
+    ) -> None:
         super().__init__(**kwargs)
         self.custom_saver = custom_saver
 
-    def _save_checkpoint(self, model, trial, metrics=None):
+    def _save_checkpoint(
+        self, model: t.Any, trial: t.Any, metrics: t.Any = None
+    ) -> None:
         super()._save_checkpoint(model, trial, metrics=metrics)
         self.custom_saver(self.args.output_dir, self.model)

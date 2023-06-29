@@ -11,9 +11,9 @@ class Metric(Component):
 
     variety = 'metric'
 
-    def __init__(self, identifier: str, object: t.Callable):
+    def __init__(self, identifier: str, object: t.Callable) -> None:
         super().__init__(identifier)
         self.object = object
 
-    def __call__(self, x, y):
+    def __call__(self, x: t.Any, y: t.Any) -> t.Any:
         return self.object(x, y)

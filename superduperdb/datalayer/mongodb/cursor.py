@@ -1,3 +1,6 @@
+import typing as t
+
+from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -6,8 +9,14 @@ from superduperdb.core.documents import Document
 
 class SuperDuperCursor(Cursor):
     def __init__(
-        self, collection, *args, features=None, scores=None, similar_join=None, **kwargs
-    ):
+        self,
+        collection: Collection,
+        *args: t.Any,
+        features: t.Optional[t.Dict] = None,
+        scores: t.Optional[t.Dict] = None,
+        similar_join: t.Any = None,
+        **kwargs: t.Any,
+    ) -> None:
         """
         Cursor subclassing *pymongo.cursor.Cursor*.
         If *features* are specified, these are substituted in the records
@@ -40,19 +49,19 @@ class SuperDuperCursor(Cursor):
             self._results = sorted(self._results, key=lambda r: -self.scores[r['_id']])
             self.it = 0
 
-    def limit(self, limit: int):
+    def limit(self, limit: int) -> Cursor:
         if self.scores is None:
             return super().limit(limit)
         self._results = self._results[:limit]
         return self
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> t.Union[Cursor, MongoStyleDict]:
         r = super().__getitem__(item)
         if self.features is not None and self.features:
             r = self._add_features(r)
         return r
 
-    def _add_features(self, r):
+    def _add_features(self, r: t.Dict) -> MongoStyleDict:
         r = MongoStyleDict(r)
         for k in self.features:
             r[k] = r['_outputs'][k][self.features[k]]
@@ -62,7 +71,7 @@ class SuperDuperCursor(Cursor):
                     r['_other'][k] = r['_outputs'][k][self.features[k]]
         return r
 
-    def next(self):
+    def next(self) -> Document:
         if self.scores is not None:
             try:
                 r = self._results[self.it]

@@ -49,7 +49,7 @@ class PlaceholderList(BasePlaceholder):
         self,
         variety: str,
         placeholders: t.Union[t.List[str], t.List[Placeholder]],  # TODO - fix this type
-    ):
+    ) -> None:
         self.placeholders = placeholders
         if placeholders and isinstance(self.placeholders[0], str):
             self.placeholders = [Placeholder(arg, variety) for arg in placeholders]  # type: ignore[arg-type]
@@ -60,10 +60,10 @@ class PlaceholderList(BasePlaceholder):
             self.placeholders = placeholders
         self.variety = variety
 
-    def __iter__(self):
+    def __iter__(self) -> t.Union[t.Iterator[str], t.Iterator[Placeholder]]:
         return iter(self.placeholders)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> t.Union[str, Placeholder]:
         return self.placeholders[item]
 
     def aslist(self) -> t.List[str]:
@@ -75,11 +75,11 @@ class BaseComponent:
     Essentially just there to put Component and ComponentList on common ground.
     """
 
-    def _set_subcomponent(self, key, value):
+    def _set_subcomponent(self, key: str, value: t.Any) -> None:
         logging.warn(f'Setting {value} component at {key}')
         super().__setattr__(key, value)
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: t.Any) -> None:
         try:
             current = getattr(self, key)
             # don't allow surgery on component, since messes with version rules
@@ -105,7 +105,7 @@ class Component(BaseComponent):
         self.version: t.Optional[int] = None
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         if self.version is None:
             raise Exception('Version not yet set for component uniqueness')
         return f'{self.variety}/{self.identifier}/{self.version}'
@@ -131,7 +131,7 @@ class Component(BaseComponent):
         return out
 
     @contextmanager
-    def saving(self):
+    def saving(self) -> t.Iterator['BaseDatabase']:
         try:
             print('Stripping sub-components to references')
             cache = strip(self, top_level=True)[1]
@@ -139,14 +139,14 @@ class Component(BaseComponent):
         finally:
             restore(self, cache)
 
-    def repopulate(self, database: 'BaseDatabase'):  # noqa: F821 why?
+    def repopulate(self, database: 'BaseDatabase') -> 'BaseDatabase':  # noqa: F821 why?
         """
         Set all attributes which were separately saved and serialized.
 
         :param database: Database connector responsible for saving/ loading components
         """
 
-        def reload(object):
+        def reload(object: t.Any) -> t.Any:
             if isinstance(object, Placeholder):
                 reloaded = database.load(
                     variety=object.variety,
@@ -185,7 +185,7 @@ class Component(BaseComponent):
 
         return self
 
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, str]:
         return {'identifier': self.identifier}
 
     def was_stripped(self) -> bool:
@@ -195,7 +195,7 @@ class Component(BaseComponent):
         """
         return not any(isinstance(v, BaseComponent) for v in vars(self).values())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         super_repr = super().__repr__()
         parts = super_repr.split(' object at ')
         subcomponents = [
@@ -210,11 +210,11 @@ class Component(BaseComponent):
         lines = [parts[0], *['    ' + x for x in lines], parts[1]]
         return '\n'.join(lines)
 
-    def schedule_jobs(self, database):
+    def schedule_jobs(self, database: 'BaseDatabase') -> t.List:
         return []
 
     @classmethod
-    def make_unique_id(cls, variety, identifier, version):
+    def make_unique_id(cls, variety: str, identifier: str, version: str) -> str:
         return f'{variety}/{identifier}/{version}'
 
 
@@ -223,27 +223,31 @@ class ComponentList(BaseComponent):
     List of base components.
     """
 
-    def __init__(self, variety, components):
+    def __init__(self, variety: str, components: t.Dict[str, t.Type]) -> None:
         self.variety = variety
         self.components = components
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> t.Any:
         return self.components[item]
 
-    def __iter__(self):
+    def __iter__(self) -> t.Iterator:
         return iter(self.components)
 
-    def repopulate(self, database):
+    def repopulate(self, database: 'BaseDatabase') -> None:
         for i, item in enumerate(self):
             if isinstance(item, str):
                 self[i] = database.load(self.variety, item)
             self[i], _ = self[i].repopulate(database)
 
-    def aslist(self):
+    def aslist(self) -> t.List:
         return [c.identifier for c in self]
 
 
-def strip(component: BaseComponent, top_level=True):
+def strip(
+    component: BaseComponent, top_level: bool = True
+) -> t.Tuple[
+    BaseComponent, t.Dict[int, t.Union[Component, 'BaseDatabase', BaseComponent]]
+]:
     """
     Strip component down to object which doesn't contain a BaseComponent part.
     This may be applied so that objects aren't redundantly serialized and replaced
@@ -298,9 +302,13 @@ def strip(component: BaseComponent, top_level=True):
 
 
 # ruff: noqa: E501
-def restore(component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict):
+def restore(
+    component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict
+) -> t.Union[BaseComponent, BasePlaceholder]:
     if isinstance(component, PlaceholderList):
-        return ComponentList(component.variety, [restore(c, cache) for c in component.placeholders])  # type: ignore[arg-type]
+        return ComponentList(
+            component.variety, [restore(c, cache) for c in component.placeholders]
+        )  # type: ignore[arg-type]
     if isinstance(component, Placeholder):
         try:
             return cache[component.id]
@@ -313,7 +321,9 @@ def restore(component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict):
     return component
 
 
-def is_placeholders_or_components(items: t.Union[t.List[t.Any], t.Tuple]):
+def is_placeholders_or_components(
+    items: t.Union[t.List[t.Any], t.Tuple]
+) -> t.Tuple[bool, bool]:
     """
     Test whether the list is just strings and also test whether it's just components
     """

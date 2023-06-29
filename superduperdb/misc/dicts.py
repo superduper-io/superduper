@@ -1,14 +1,17 @@
 from pathlib import Path
 import typing as t
-import fil
 import os
 import sys
+
+import fil
 
 SEP = '_'
 _NONE = object()
 
 
-def read_all(files: t.Sequence[t.Union[Path, str]], fail=False) -> t.Sequence[t.Dict]:
+def read_all(
+    files: t.Sequence[t.Union[Path, str]], fail: bool = False
+) -> t.Sequence[t.Dict[str, t.Any]]:
     if fail:
         return [fil.read(f) for f in files]
     else:
@@ -28,7 +31,7 @@ def environ_to_config_dict(
     environ: t.Optional[t.Dict] = None,
     err: t.Optional[t.TextIO] = sys.stderr,
     fail: bool = False,
-):
+) -> t.Dict[str, t.Any]:
     env_dict = environ_dict(prefix, environ)
 
     good, bad = _env_dict_to_config_dict(env_dict, parent)
@@ -50,7 +53,9 @@ def environ_to_config_dict(
 def split_address(
     key: str, parent: t.Dict
 ) -> t.Iterator[t.Tuple[t.Dict, t.Tuple[str]]]:
-    def split(key, parent, *address):
+    def split(
+        key: str, parent: t.Dict[str, t.Any], *address: t.Tuple
+    ) -> t.Iterator[t.Tuple[t.Dict, t.Tuple[str]]]:
         if key in parent:
             yield *address, key
 
@@ -69,7 +74,7 @@ def environ_dict(prefix: str, environ: t.Optional[t.Dict] = None) -> t.Dict:
     return {k[len(prefix) :].lower(): v for k, v in items}
 
 
-def _combine_one(target, source):
+def _combine_one(target: t.Dict, source: t.Dict) -> None:
     for k, v in source.items():
         old_v = target.get(k, _NONE)
         if old_v is _NONE:

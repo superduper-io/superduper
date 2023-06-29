@@ -20,8 +20,10 @@ class SentenceTransformer(Model):
             sentence_transformer, identifier, encoder=encoder  # type: ignore
         )
 
-    def predict_one(self, sentence, **kwargs):
+    def predict_one(self, sentence: str, **kwargs: t.Any) -> t.Dict[str, t.Any]:
         return self.object.encode(sentence)
 
-    def predict(self, sentences, **kwargs):
+    def predict(
+        self, sentences: t.Union[str, t.List[str]], **kwargs: t.Any
+    ) -> t.Dict[str, t.Any]:
         return self.object.encode(sentences)

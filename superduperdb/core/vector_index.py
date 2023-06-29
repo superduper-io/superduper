@@ -110,7 +110,7 @@ class VectorIndex(Component):
             ):
                 items = []
                 for record in record_batch:
-                    h, id = database.db.get_output_from_document(
+                    h, id = database.databackend.get_output_from_document(
                         record,
                         self.indexing_watcher.key,  # type: ignore
                         self.indexing_watcher.model.identifier,  # type: ignore

@@ -60,7 +60,7 @@ class MilvusClient:
     def get_collection(
         self, name: str, *args: t.Any, **kwargs: t.Any
     ) -> pymilvus.Collection:
-        """Get a `pymilvus.Collection` by name.
+        """Get a `pymilvus.Collection` by collection.
 
         If the collection does not exist, it will be created.
 
@@ -88,7 +88,7 @@ class MilvusClient:
         If the index does not exist, it will be created.
 
         Here we simplistically assume that each collection has only one index available
-        under the default name. This can be revisited later if needed.
+        under the default collection. This can be revisited later if needed.
 
         Note that we keep track of all indices created by this client in order to avoid
         unnecessary introspection calls on every `connection.index` call.

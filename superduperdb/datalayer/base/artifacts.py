@@ -14,7 +14,6 @@ class Serializer(enum.Enum):
 
     dill = 'dill'
     pickle = 'pickle'
-
     default = dill
 
     @property
@@ -75,10 +74,12 @@ class ArtifactStore(ABC):
     def _load_bytes(self, file_id):
         pass
 
-    def load_artifact(self, file_id: str, serializer: Serializer = Serializer.default):
-        if isinstance(serializer, str):
-            serializer = Serializer(serializer)
-
+    def load_artifact(self, file_id: str, serializer: str):
         bytes = self._load_bytes(file_id)
         fp = io.BytesIO(bytes)
-        return serializer.impl.load(fp)
+        if serializer == 'dill':
+            return dill.load(fp)
+        elif serializer == 'pickle':
+            return pickle.load(fp)
+        else:
+            raise NotImplementedError

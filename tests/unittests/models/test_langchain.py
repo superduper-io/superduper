@@ -6,8 +6,8 @@ import pytest
 from superduperdb.models.sentence_transformers.wrapper import SentenceTransformer
 from superduperdb.core.watcher import Watcher
 from superduperdb.core.vector_index import VectorIndex
-from superduperdb.datalayer.mongodb.query import Select
 from superduperdb.models.langchain.retriever import DBQAWithSourcesChain
+from superduperdb.queries.mongodb.queries import Collection
 from superduperdb.types.numpy.array import array
 
 
@@ -18,12 +18,14 @@ if not SKIP_PAID:
 
 @pytest.mark.skipif(SKIP_PAID, reason='don\'t test paid API')
 def test_db_qa_with_sources_chain(nursery_rhymes):
-    nursery_rhymes.add(array(numpy.float32))
+    nursery_rhymes.add(array(numpy.float32, shape=(1024,)))
     pl = SentenceTransformer(model_name_or_path='all-MiniLM-L6-v2', encoder='array')
     nursery_rhymes.add(pl)
     nursery_rhymes.add(
         Watcher(
-            model='all-MiniLM-L6-v2', key='text', select=Select(collection='documents')
+            model='all-MiniLM-L6-v2',
+            key='text',
+            select=Collection(name='documents').find(),
         )
     )
     nursery_rhymes.add(

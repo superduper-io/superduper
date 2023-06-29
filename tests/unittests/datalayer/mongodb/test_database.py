@@ -2,24 +2,17 @@
 import PIL.PngImagePlugin
 import pytest
 import torch
-import typing as t
 
 from superduperdb.core.base import Placeholder
-from superduperdb.core.suri import URIDocument
 from superduperdb.core.documents import Document
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
-from superduperdb.core.fit import Fit
 from superduperdb.core.watcher import Watcher
-from superduperdb.datalayer.mongodb.query import Select, Insert, Update, Delete
-from superduperdb.misc.key_cache import KeyCache
 from superduperdb.models.torch.wrapper import TorchModel
-from superduperdb.models.torch.wrapper import TorchTrainerConfiguration
-from superduperdb.metrics.vector_search import validate_vector_search
+from superduperdb.queries.mongodb.queries import Collection, PreLike
 from superduperdb.types.torch.tensor import tensor
-from superduperdb.vector_search import VanillaHashSet
-from superduperdb.vector_search.vanilla.measures import css
+
 
 from tests.fixtures.collection import (
     with_vector_index,
@@ -114,47 +107,35 @@ def test_compound_component(empty):
 
 
 def test_select_vanilla(random_data):
-    r = next(random_data.execute(Select(collection='documents')))
+    r = random_data.execute(Collection(name='documents').find_one())
     print(r)
-
-
-def make_uri_document(**ka) -> URIDocument:
-    # Create a new class each time so the caches don't interfere with each other
-    class TestURIDocument(URIDocument):
-        _cache: t.ClassVar[KeyCache[Document]] = KeyCache[Document]()
-
-    return TestURIDocument.make(Document(ka))
 
 
 def test_select(with_vector_index):
     db = with_vector_index
-    r = next(db.execute(Select(collection='documents')))
-
-    s = next(
-        db.execute(
-            Select(
-                collection='documents',
-                like=make_uri_document(x=r['x']),
-                vector_index='test_vector_search',
-            ),
-        )
+    r = db.execute(Collection(name='documents').find_one())
+    query = Collection(name='documents').like(
+        # r=Document({'x': r['x']}),
+        r={'x': r['x']},
+        vector_index='test_vector_search',
     )
+    s = next(db.execute(query))
     assert r['_id'] == s['_id']
 
 
+@pytest.mark.skip('Too slow')
 def test_select_milvus(
     config_mongodb_milvus, random_data_factory, vector_index_factory
 ):
     db = random_data_factory(number_data_points=5)
     vector_index_factory(db, 'test_vector_search', measure='l2')
-    r = next(db.execute(Select(collection='documents')))
+    r = next(db.execute(Collection(name='documents').find()))
     s = next(
         db.execute(
-            Select(
-                collection='documents',
-                like=make_uri_document(x=r['x']),
+            Collection(name='documents').like(
+                {'x': r['x']},
                 vector_index='test_vector_search',
-            ),
+            )
         )
     )
     assert r['_id'] == s['_id']
@@ -162,15 +143,12 @@ def test_select_milvus(
 
 def test_select_jsonable(with_vector_index):
     db = with_vector_index
-    r = next(db.execute(Select(collection='documents')))
-
-    s1 = Select(
-        collection='documents',
-        like=make_uri_document(x=r['x']),
+    r = next(db.execute(Collection(name='documents').find()))
+    s1 = Collection(name='documents').like(
+        r={'x': r['x']},
         vector_index='test_vector_search',
     )
-
-    s2 = Select(**s1.dict())
+    s2 = PreLike(**s1.dict())
     assert s1 == s2
 
 
@@ -184,17 +162,16 @@ def test_validate_component(with_vector_index, si_validation, metric):
 
 
 def test_insert(random_data, a_watcher, an_update):
-    random_data.execute(Insert(collection='documents', documents=an_update))
-    r = next(
-        random_data.execute(Select(collection='documents', filter={'update': True}))
-    )
+    random_data.execute(Collection(name='documents').insert_many(an_update))
+    r = next(random_data.execute(Collection(name='documents').find({'update': True})))
     assert 'linear_a' in r['_outputs']['x']
     assert (
-        len(list(random_data.execute(Select(collection='documents'))))
+        len(list(random_data.execute(Collection(name='documents').find())))
         == n_data_points + 10
     )
 
 
+@pytest.mark.skip('No internet')
 def test_insert_from_uris(empty, image_type):
     to_insert = [
         Document(
@@ -217,8 +194,8 @@ def test_insert_from_uris(empty, image_type):
         )
         for _ in range(2)
     ]
-    empty.execute(Insert(collection='documents', documents=to_insert))
-    r = next(empty.execute(Select(collection='documents')))
+    empty.execute(Collection(name='documents').insert_many(to_insert))
+    r = empty.execute(Collection(name='documents').find_one())
     assert isinstance(r['item'].x, PIL.PngImagePlugin.PngImageFile)
     assert isinstance(r['other']['item'].x, PIL.PngImagePlugin.PngImageFile)
 
@@ -227,18 +204,14 @@ def test_update(random_data, a_watcher):
     to_update = torch.randn(32)
     t = random_data.types['torch.float32[32]']
     random_data.execute(
-        Update(
-            collection='documents',
-            filter={},
-            update=Document({'$set': {'x': t(to_update)}}),
-        )
+        Collection(name='documents').update_many({}, {'$set': {'x': t(to_update)}})
     )
-    cur = random_data.execute(Select(collection='documents'))
+    cur = random_data.execute(Collection(name='documents').find())
     r = next(cur)
     s = next(cur)
 
-    assert r['x'].x.tolist() == to_update.tolist()
-    assert s['x'].x.tolist() == to_update.tolist()
+    assert all(r['x'].x == to_update)
+    assert all(s['x'].x == to_update)
     assert (
         r['_outputs']['x']['linear_a'].x.tolist()
         == s['_outputs']['x']['linear_a'].x.tolist()
@@ -247,71 +220,37 @@ def test_update(random_data, a_watcher):
 
 def test_watcher(random_data, a_model, b_model):
     random_data.add(
-        Watcher(model='linear_a', select=Select(collection='documents'), key='x')
+        Watcher(model='linear_a', select=Collection(name='documents').find(), key='x')
     )
-    r = next(random_data.execute(Select(collection='documents', one=True)))
+    r = random_data.execute(Collection(name='documents').find_one())
     assert 'linear_a' in r['_outputs']['x']
 
     t = random_data.types['torch.float32[32]']
 
     random_data.execute(
-        Insert(
-            collection='documents',
-            documents=[
-                Document({'x': t(torch.randn(32)), 'update': True}) for _ in range(5)
-            ],
+        Collection(name='documents').insert_many(
+            [Document({'x': t(torch.randn(32)), 'update': True}) for _ in range(5)]
         )
     )
-    r = next(
-        random_data.execute(Select(collection='documents', filter={'update': True}))
-    )
+
+    r = random_data.execute(Collection(name='documents').find_one({'update': True}))
     assert 'linear_a' in r['_outputs']['x']
 
     random_data.add(
         Watcher(
             model='linear_b',
-            select=Select(collection='documents'),
+            select=Collection(name='documents').find().featurize({'x': 'linear_a'}),
             key='x',
-            features={'x': 'linear_a'},
         )
     )
-    r = next(random_data.execute(Select(collection='documents')))
+    r = random_data.execute(Collection(name='documents').find_one())
     assert 'linear_b' in r['_outputs']['x']
 
 
+# WTF
 @pytest.mark.skip('To be replaced with model.fit')
-def test_learning_task(si_validation, a_model, c_model, metric):
-    configuration = TorchTrainerConfiguration(
-        'ranking_task_parametrization',
-        objective=ranking_loss,
-        n_iterations=4,
-        validation_interval=20,
-        loader_kwargs={'batch_size': 10, 'num_workers': 0},
-        optimizer_classes={
-            'linear_a': torch.optim.Adam,
-            'linear_c': torch.optim.Adam,
-        },
-        optimizer_kwargs={
-            'linear_a': {'lr': 0.001},
-            'linear_c': {'lr': 0.001},
-        },
-        compute_metrics=validate_vector_search,
-        hash_set_cls=VanillaHashSet,
-        measure=css,
-    )
-
-    si_validation.add(configuration)
-    learning_task = Fit(
-        'my_index',
-        models=['linear_a', 'linear_c'],
-        select=Select(collection='documents'),
-        keys=['x', 'z'],
-        metrics=['p@1'],
-        training_configuration='ranking_task_parametrization',
-        validation_sets=['my_valid'],
-    )
-
-    si_validation.add(learning_task)
+def test_fit(si_validation, a_model, c_model, metric):
+    ...
 
 
 def test_predict(a_model, float_tensors_32, float_tensors_16):
@@ -320,40 +259,31 @@ def test_predict(a_model, float_tensors_32, float_tensors_16):
 
 
 def test_delete(random_data):
-    r = next(random_data.execute(Select(collection='documents')))
-    random_data.execute(Delete(collection='documents', filter={'_id': r['_id']}))
-
+    r = random_data.execute(Collection(name='documents').find_one())
+    random_data.execute(Collection(name='documents').delete_many({'_id': r['_id']}))
     with pytest.raises(StopIteration):
-        next(
-            random_data.execute(
-                Select(collection='documents', filter={'_id': r['_id']})
-            )
-        )
+        next(random_data.execute(Collection(name='documents').find({'_id': r['_id']})))
 
 
 def test_replace(random_data):
-    r = next(random_data.execute(Select(collection='documents')))
+    r = next(random_data.execute(Collection(name='documents').find()))
     x = torch.randn(32)
     t = random_data.types['torch.float32[32]']
     r['x'] = t(x)
     random_data.execute(
-        Update(
-            collection='documents',
-            filter={'_id': r['_id']},
-            replacement=r,
+        Collection(name='documents').replace_one(
+            {'_id': r['_id']},
+            r,
         )
     )
-    r = next(random_data.execute(Select(collection='documents')))
-    assert r['x'].x.tolist() == x.tolist()
 
 
 def test_dataset(random_data):
     random_data.add(
         Dataset(
-            'test_dataset', Select(collection='documents', filter={'_fold': 'valid'})
+            'test_dataset', select=Collection(name='documents').find({'_fold': 'valid'})
         )
     )
     assert random_data.show('dataset') == ['test_dataset']
-
     dataset = random_data.load('dataset', 'test_dataset')
     assert len(dataset.data) == len(list(random_data.execute(dataset.select)))

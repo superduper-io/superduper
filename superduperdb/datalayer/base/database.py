@@ -150,7 +150,7 @@ class BaseDatabase:
         self,
         model_identifier: str,
         input: Document,
-    ) -> Union[List[Document], Document]:
+    ) -> t.Union[t.List[Document], Document]:
         """
         Apply model to input.
 

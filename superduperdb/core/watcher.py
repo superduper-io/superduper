@@ -2,8 +2,8 @@ import typing as t
 
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.model import Model
-from superduperdb.datalayer.base.apply_watcher import apply_watcher
 from superduperdb.datalayer.base.query import Select
+from superduperdb.queries.serialization import from_dict, to_dict
 
 
 class Watcher(Component):
@@ -43,7 +43,7 @@ class Watcher(Component):
     def asdict(self):
         return {
             'model': self.model.identifier,
-            'select': self.select.dict(),
+            'select': to_dict(self.select),
             'key': self.key,
             'identifier': self.identifier,
             'features': self.features or {},
@@ -52,20 +52,21 @@ class Watcher(Component):
 
     @staticmethod
     def cleanup(info, database):
-        database.db.unset_outputs(info)
+        select = from_dict(info['select'])
+        select.model_cleanup(database, model=info['model'], key=info['key'])
 
     def schedule_jobs(self, database, verbose=False, dependencies=()):
         if not self.active:
             return
-        ids = database.db.get_ids_from_select(self.select)
+        ids = self.select.get_ids(database)
         if not ids:
             return []
-        return [
-            apply_watcher(
-                database,
+        out = [
+            database._apply_watcher(
                 self.identifier,
                 ids=ids,
                 verbose=verbose,
                 dependencies=dependencies,
             )
         ]
+        return out

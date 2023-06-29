@@ -1,4 +1,4 @@
-import random
+import math
 import typing as t
 import warnings
 from collections import defaultdict
@@ -7,24 +7,31 @@ from typing import Union, Optional, Dict, List, Tuple
 import click
 import networkx
 
-from .apply_watcher import apply_watcher
-from .artifacts import ArtifactStore
-from .data_backend import BaseDataBackend
-from .download_content import download_content
-from .metadata import MetaDataStore
-from .query import Insert, Select, Delete, Update
-
 from superduperdb import CFG
 from superduperdb.cluster.job_submission import work
 from superduperdb.cluster.task_workflow import TaskWorkflow
-from superduperdb.core.base import Component
+from superduperdb.core.base import Component, strip
 from superduperdb.core.documents import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
+from superduperdb.core.fit import Fit
 from superduperdb.core.model import Model
 from superduperdb.core.vector_index import VectorIndex
+from superduperdb.datalayer.base.artifacts import ArtifactStore
+from superduperdb.datalayer.base.data_backend import BaseDataBackend
+from superduperdb.datalayer.base.metadata import MetaDataStore
+from superduperdb.datalayer.base.query import (
+    Insert,
+    Select,
+    Delete,
+    Update,
+    SelectOne,
+    Like,
+)
+from superduperdb.fetchers.downloads import Downloader
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import ArgumentDefaultDict
+from superduperdb.queries.serialization import from_dict
 from superduperdb.vector_search.base import VectorDatabase
 from superduperdb.core.components import components
 
@@ -39,7 +46,7 @@ VECTOR_DATABASE.init().__enter__()
 DBResult = t.Any
 TaskGraph = t.Any
 
-DeleteResult = t.Dict[str, t.Any]
+DeleteResult = DBResult
 InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
 SelectResult = t.List[Document]
 UpdateResult = t.Any
@@ -86,7 +93,8 @@ class BaseDatabase:
         self.remote = CFG.remote
         self.metadata = metadata
         self.artifact_store = artifact_store
-        self.db = db
+        self.databackend = db
+        self.db = db.conn[db.name]
 
     @work
     def validate(
@@ -127,7 +135,7 @@ class BaseDatabase:
         If version is specified, then print full metadata
 
         :param variety: variety of component to show ["type", "model", "watcher",
-                       "fit", "training_configuration", "metric",
+                       "learning_task", "training_configuration", "metric",
                        "vector_index", "job"]
         :param identifier: identifying string to component
         :param version: (optional) numerical version - specify for full metadata
@@ -178,6 +186,10 @@ class BaseDatabase:
             return self.insert(query)
         if isinstance(query, Select):
             return self.select(query)
+        if isinstance(query, Like):
+            return self.like(query)
+        if isinstance(query, SelectOne):
+            return self.select_one(query)
         if isinstance(query, Update):
             return self.update(query)
         raise TypeError(
@@ -187,92 +199,36 @@ class BaseDatabase:
         )
 
     def delete(self, delete: Delete) -> DeleteResult:
-        return self.db.delete(delete).raw_result
+        return delete(self)
 
     def insert(self, insert: Insert) -> InsertResult:
-        for item in insert.documents:
-            r = random.random()
-            try:
-                valid_probability = self.metadata.get_metadata(key='valid_probability')
-            except TypeError:
-                valid_probability = 0.05  # TODO proper error handling
-            if '_fold' not in item.content:  # type: ignore
-                item['_fold'] = 'valid' if r < valid_probability else 'train'
-        output = self.db.insert(insert)
-        if not insert.refresh:  # pragma: no cover
-            return output, None
-        task_graph = self._build_task_workflow(
-            insert.select_table, ids=output.inserted_ids, verbose=insert.verbose
-        )
-        task_graph()
-        return output, task_graph
+        return insert(self)
 
     def select(self, select: Select) -> SelectResult:
-        if select.like is None:
-            scores = None
-        else:
-            if select.is_trivial or select.similar_first:
-                ids = None
-            else:
-                id_cursor = self.db.get_raw_cursor(select.select_only_id)
-                ids = [x['_id'] for x in id_cursor]
-            similar_ids, score = self._select_nearest(select, ids=ids)
-            select = select.select_using_ids(similar_ids)
-            scores = dict(zip(similar_ids, score))
+        return select(self)
 
-        if select.raw:
-            return self.db.get_raw_cursor(select)
+    def like(self, like: Like) -> SelectResult:
+        return like(self)
 
-        return self.db.get_cursor(
-            select,
-            features=select.features,
-            scores=scores,
-            types=self.types,
+    def select_one(self, select_one: SelectOne) -> SelectResult:
+        return select_one(self)
+
+    def refresh_after_update_or_insert(self, query, ids, verbose=False):
+        task_graph = self._build_task_workflow(
+            query.select_table,
+            ids=ids,
+            verbose=verbose,
         )
-
-    def _select_nearest(
-        self, select: Select, ids: Optional[List[str]] = None
-    ) -> Tuple[List[str], List[float]]:
-        assert select.like
-        like = select.like()
-        content = like.content
-        assert isinstance(content, dict)
-
-        if select.download:
-            if '_id' not in content:
-                content['_id'] = 0
-            uris = gather_uris([content])[0]
-            if uris:
-                output = download_content(self, select, documents=[content])[0]
-                like = Document(Document.decode(output, types=self.types))
-
-        vector_index: VectorIndex = self.vector_indices[select.vector_index]
-        if select.outputs is None:
-            outputs = {}
-        else:
-            outputs = select.outputs().encode()
-            if not isinstance(outputs, dict):
-                raise TypeError(f'Expected dict, got {type(outputs)}')
-        return vector_index.get_nearest(
-            like, database=self, ids=ids, n=select.n, outputs=outputs
-        )
+        task_graph()
+        return task_graph
 
     def update(self, update: Update) -> UpdateResult:
-        if update.refresh and self.metadata.show_components('model'):
-            ids = self.db.get_ids_from_select(update.select_ids)
-        result = self.db.update(update)
-        if update.refresh and self.metadata.show_components('model'):
-            task_graph = self._build_task_workflow(
-                update.select, ids=ids, verbose=update.verbose
-            )
-            task_graph()
-            return result, task_graph
-        return result
+        return update(self)
 
     def add(
         self,
         object: Component,
-        serializer: str = 'pickle',
+        serializer: str = 'dill',
         serializer_kwargs: Optional[Dict] = None,
     ):
         """
@@ -301,7 +257,7 @@ class BaseDatabase:
         Remove component (version: optional)
 
         :param variety: variety of component to remove ["type", "model", "watcher",
-                        "training_configuration", "fit", "vector_index"]
+                        "training_configuration", "learning_task", "vector_index"]
         :param identifier: identifier of component (see `core.base.Component`)
         :param version: [optional] numerical version to remove
         :param force: force skip confirmation (use with caution)
@@ -346,8 +302,6 @@ class BaseDatabase:
         else:
             print('aborting.')
 
-        return
-
     def load(
         self,
         variety: str,
@@ -360,7 +314,7 @@ class BaseDatabase:
         Load component using uniquely identifying information.
 
         :param variety: variety of component to remove ["type", "model", "watcher",
-                        "training_configuration", "fit", "vector_index"]
+                        "training_configuration", "learning_task", "vector_index"]
         :param identifier: identifier of component (see `core.base.Component`)
         :param version: [optional] numerical version
         :param repopulate: toggle to ``False`` to only load references to other
@@ -376,9 +330,10 @@ class BaseDatabase:
                 f'No such object of type "{variety}", '
                 f'"{identifier}" has been registered.'
             )
-        info.setdefault('serializer', 'pickle')
-        info.setdefault('kwargs', {})
-
+        if 'serializer' not in info:
+            info['serializer'] = 'dill'
+        if 'serializer_kwargs' not in info:
+            info['serializer_kwargs'] = {}
         m = self.artifact_store.load_artifact(
             info['object'], serializer=info['serializer']
         )
@@ -389,22 +344,17 @@ class BaseDatabase:
         return m
 
     def _build_task_workflow(
-        self, select: Select, ids=None, dependencies=(), verbose=True
+        self, query, ids=None, dependencies=(), verbose=True
     ) -> TaskWorkflow:
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
-        if ids is None:
-            ids = self.db.get_ids_from_select(select.select_only_id)
 
         G.add_node(
-            '_download_content()',
+            f'{self._download_content.__name__}()',
             data={
-                'task': download_content,
-                'args': [
-                    self,
-                    select,
-                ],
+                'task': self._download_content,
+                'args': [query],
                 'kwargs': {
                     'ids': ids,
                 },
@@ -415,10 +365,10 @@ class BaseDatabase:
 
         for identifier in self.show('watcher'):
             G.add_node(
-                '_apply_watcher({identifier})',
+                f'{self._apply_watcher.__name__}({identifier})',
                 data={
-                    'task': apply_watcher,
-                    'args': [self, identifier],
+                    'task': self._apply_watcher,
+                    'args': [identifier],
                     'kwargs': {
                         'ids': ids,
                         'verbose': verbose,
@@ -427,18 +377,53 @@ class BaseDatabase:
             )
 
         for identifier in self.show('watcher'):
-            G.add_edge('_download_content()', '_apply_watcher({identifier})')
+            G.add_edge(
+                f'{self._download_content.__name__}()',
+                f'{self._apply_watcher.__name__}({identifier})',
+            )
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:
-                G.add_edge('_apply_watcher({dep})', '_apply_watcher({identifier})')
-                G.add_edge('_download_content()', '_apply_watcher({identifier})')
+                G.add_edge(
+                    f'{self._apply_watcher.__name__}({dep})',
+                    f'{self._apply_watcher.__name__}({identifier})',
+                )
+                G.add_edge(
+                    f'{self._download_content.__name__}()',
+                    f'{self._apply_watcher.__name__}({identifier})',
+                )
 
         return G
+
+    def _compute_model_outputs(
+        self,
+        model_info,
+        _ids,
+        select: Select,
+        key='_base',
+        features=None,
+        model=None,
+        predict_kwargs=None,
+    ):
+        logging.info('finding documents under filter')
+        features = features or {}
+        model_identifier = model_info['identifier']
+        if features is None:
+            features = {}  # pragma: no cover
+        documents = list(self.execute(select.select_using_ids(_ids)))
+        logging.info('done.')
+        documents = [x.unpack() for x in documents]
+        if key != '_base' or '_base' in features:
+            passed_docs = [r[key] for r in documents]
+        else:  # pragma: no cover
+            passed_docs = documents
+        if model is None:
+            model = self.models[model_identifier]
+        return model.predict(passed_docs, **(predict_kwargs or {}))
 
     def _add(
         self,
         object: Component,
-        serializer: str = 'pickle',
+        serializer: str = 'dill',
         serializer_kwargs: Optional[Dict] = None,
         parent: Optional[str] = None,
     ):
@@ -465,28 +450,29 @@ class BaseDatabase:
             if p.version is None:
                 p.version = self.metadata.get_latest_version(p.variety, p.identifier)
 
-        with object.saving():
-            serializer_kwargs = serializer_kwargs or {}
-            file_id, sha1 = self.artifact_store.create_artifact(
-                object,
-                serializer=serializer,
-                serializer_kwargs=serializer_kwargs,
-            )
-            self.metadata.create_component(
-                {
-                    **object.asdict(),
-                    'object': file_id,
-                    'variety': object.variety,
-                    'version': version,
-                    'sha1': sha1,
-                    'serializer': serializer,
-                    'serializer_kwargs': serializer_kwargs,
-                }
-            )
-            if parent is not None:
-                self.metadata.create_parent_child(parent, object.unique_id)
-            logging.info(f'Created {object.unique_id}')
+        print('Stripping sub-components to references')
+        strip(object)
 
+        serializer_kwargs = serializer_kwargs or {}
+        file_id, sha1 = self.artifact_store.create_artifact(
+            object,
+            serializer=serializer,
+            serializer_kwargs=serializer_kwargs,
+        )
+        self.metadata.create_component(
+            {
+                **object.asdict(),
+                'object': file_id,
+                'variety': object.variety,
+                'version': version,
+                'sha1': sha1,
+            }
+        )
+        if parent is not None:
+            self.metadata.create_parent_child(parent, object.unique_id)
+        logging.info(f'Created {object.unique_id}')
+
+        object.repopulate(self)
         return object.schedule_jobs(self)
 
     def _create_plan(self):
@@ -533,6 +519,99 @@ class BaseDatabase:
             self.artifact_store.delete_artifact(info['object'])
             self.metadata.delete_component_version(variety, identifier, version=version)
 
+    @work
+    def _download_content(
+        self,
+        query: Union[Select, Insert],
+        ids=None,
+        documents=None,
+        timeout=None,
+        raises=True,
+        n_download_workers=None,
+        headers=None,
+        **kwargs,
+    ):
+        # logging.debug(query)
+        # logging.debug(ids)
+        update_db = False
+
+        if documents is not None:
+            pass
+        elif isinstance(query, Select):
+            update_db = True
+            if ids is None:
+                documents = list(self.select(query))
+            else:
+                select = query.select_using_ids(ids)
+                select.raw = True
+                documents = list(self.execute(select))
+                documents = [Document(x) for x in documents]
+        elif isinstance(query, Insert):
+            documents = query.documents
+        else:
+            raise NotImplementedError
+
+        documents = [x.content for x in documents]
+        uris, keys, place_ids = gather_uris(documents)
+        logging.info(f'found {len(uris)} uris')
+        if not uris:
+            return
+
+        if n_download_workers is None:
+            try:
+                n_download_workers = self.metadata.get_metadata(
+                    key='n_download_workers'
+                )
+            except TypeError:
+                n_download_workers = 0
+
+        if headers is None:
+            try:
+                headers = self.metadata.get_metadata(key='headers')
+            except TypeError:
+                headers = 0
+
+        if timeout is None:
+            try:
+                timeout = self.metadata.get_metadata(key='download_timeout')
+            except TypeError:
+                timeout = None
+
+        def download_update(key, id, bytes):
+            return query.download_update(db=self, key=key, id=id, bytes=bytes)
+
+        downloader = Downloader(
+            uris=uris,
+            ids=place_ids,
+            keys=keys,
+            update_one=download_update,
+            n_workers=n_download_workers,
+            timeout=timeout,
+            headers=headers,
+            raises=raises,
+        )
+        downloader.go()
+        if update_db:
+            return
+        for id_, key in zip(place_ids, keys):
+            documents[id_] = self.db.set_content_bytes(
+                documents[id_], key, downloader.results[id_]
+            )
+        return documents
+
+    def _get_content_for_filter(self, filter):
+        if isinstance(filter, dict):
+            filter = Document(filter)
+        if '_id' not in filter.content:
+            filter['_id'] = 0
+        uris = gather_uris([filter.content])[0]
+        if uris:
+            output = self._download_content(
+                self.name, documents=[filter.content], timeout=None, raises=True
+            )[0]
+            filter = Document(Document.decode(output, types=self.types))
+        return filter
+
     def _get_dependencies_for_watcher(self, identifier):
         info = self.metadata.get_component('watcher', identifier)
         if info is None:
@@ -553,13 +632,71 @@ class BaseDatabase:
     def _get_object_info(self, identifier, variety, version=None):
         return self.metadata.get_component(variety, identifier, version=version)
 
-    def _get_watcher_for_learning_task(self, learning_task):
-        info = self.metadata.get_component('learning_task', learning_task)
-        key_to_watch = info['keys_to_watch'][0]
-        model_identifier = next(
-            m for i, m in enumerate(info['models']) if info['keys'][i] == key_to_watch
+    @work
+    def _apply_watcher(  # noqa: F811
+        self,
+        identifier,
+        ids: Optional[List[str]] = None,
+        verbose=False,
+        max_chunk_size=5000,
+        model=None,
+        recompute=False,
+        watcher_info=None,
+        **kwargs,
+    ):
+        if watcher_info is None:
+            watcher_info = self.metadata.get_component('watcher', identifier)
+
+        select = from_dict(watcher_info['select'])
+        if ids is None:
+            ids = select.get_ids(self)
+        else:
+            ids = select.select_using_ids(ids=ids).get_ids(self)
+
+        ids = [str(id) for id in ids]  # type: ignore[union-attr]
+
+        if max_chunk_size is not None:
+            for it, i in enumerate(range(0, len(ids), max_chunk_size)):
+                logging.info(
+                    'computing chunk '
+                    f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
+                )
+                self._apply_watcher(
+                    identifier,
+                    ids=ids[i : i + max_chunk_size],
+                    verbose=verbose,
+                    max_chunk_size=None,
+                    model=model,
+                    recompute=recompute,
+                    watcher_info=watcher_info,
+                    remote=False,
+                    **kwargs,
+                )
+            return
+
+        model_info = self.metadata.get_component('model', watcher_info['model'])
+        outputs = self._compute_model_outputs(
+            model_info,
+            ids,
+            select,
+            key=watcher_info['key'],
+            features=watcher_info.get('features', {}),
+            model=model,
+            predict_kwargs=watcher_info.get('predict_kwargs', {}),
         )
-        return f'[{learning_task}]:{model_identifier}/{key_to_watch}'
+        type = model_info.get('type')
+        if type is not None:
+            type = self.types[type]
+            outputs = [type(x).encode() for x in outputs]
+
+        select.model_update(
+            db=self,
+            model=watcher_info['model'],
+            key=watcher_info['key'],
+            outputs=outputs,
+            ids=ids,
+        )
+        return outputs
 
     def _replace_model(
         self,
@@ -582,7 +719,7 @@ class BaseDatabase:
                 )
             raise e
         if 'serializer' not in info:
-            info['serializer'] = 'pickle'
+            info['serializer'] = 'dill'
         if 'serializer_kwargs' not in info:
             info['serializer_kwargs'] = {}
 
@@ -599,6 +736,30 @@ class BaseDatabase:
         self.artifact_store.delete_artifact(info['object'])
         self.metadata.update_object(identifier, 'model', 'object', file_id)
 
+    # ruff: noqa: E501
+    def _select_nearest(
+        self,
+        # like: Document,
+        like: t.Dict,
+        vector_index: str,
+        ids: Optional[List[str]] = None,
+        outputs: Optional[Document] = None,
+        n: int = 100,
+    ) -> Tuple[List[str], List[float]]:
+        like = Document(like)  # type: ignore[assignment]
+        like = self._get_content_for_filter(like)
+        vector_index: VectorIndex = self.vector_indices[vector_index]  # type: ignore[no-redef]
+
+        if outputs is None:
+            outputs = {}  # type: ignore[assignment]
+        else:
+            outputs = outputs.encode()
+            if not isinstance(outputs, dict):
+                raise TypeError(f'Expected dict, got {type(outputs)}')
+        return vector_index.get_nearest(  # type: ignore[attr-defined]
+            like, database=self, ids=ids, n=n, outputs=outputs
+        )
+
     @work
     def _fit(self, identifier) -> None:
         """
@@ -607,7 +768,7 @@ class BaseDatabase:
         :param identifier: Identifier of a learning task.
         """
 
-        fit = self.load('fit', identifier)  # type: ignore
+        fit: Fit = self.load('fit', identifier)  # type: ignore
         # ruff: noqa: E501
         try:
             fit.model.fit(  # type: ignore[attr-defined]

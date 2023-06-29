@@ -14,7 +14,7 @@ class SuperDuperCursor:
         id_field: str,
         types: t.Mapping[str, Encoder],
         features: t.Union[t.Mapping[str, str], None] = None,
-        scores: t.Optional[t.List[float]] = None,
+        scores: t.Optional[t.Dict[str, float]] = None,
     ):
         self.cur = cursor
         self.features = features
@@ -29,21 +29,27 @@ class SuperDuperCursor:
                     self._results.append(self.cur.next())
                 except StopIteration:
                     break
+            # ruff: noqa: E501
             self._results = sorted(
                 self._results,
-                key=lambda r: -self.scores[str(r[self.id_field])],  # type: ignore
+                key=lambda r: -self.scores[str(r[self.id_field])],  # type: ignore[index]
             )
             self.it = 0
 
-    def _add_features(self, r):
+    @staticmethod
+    def add_features(r, features):
         r = MongoStyleDict(r)
-        for k in self.features:
-            r[k] = r['_outputs'][k][self.features[k]]
+        for k in features:
+            r[k] = r['_outputs'][k][features[k]]
         if '_other' in r:
-            for k in self.features:
+            for k in features:
                 if k in r['_other']:
-                    r['_other'][k] = r['_outputs'][k][self.features[k]]
+                    r['_other'][k] = r['_outputs'][k][features[k]]
         return r
+
+    @staticmethod
+    def wrap_document(r, types):
+        return Document(Document.decode(r, types))
 
     def __iter__(self):
         return self
@@ -60,5 +66,6 @@ class SuperDuperCursor:
         if self.scores is not None:
             r['_score'] = self.scores[str(r[self.id_field])]
         if self.features is not None and self.features:
-            r = self._add_features(r)
-        return Document(Document.decode(r, self.types))
+            r = self.add_features(r, features=self.features)
+
+        return self.wrap_document(r, self.types)

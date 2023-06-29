@@ -1,9 +1,18 @@
 import superduperdb as s
 import typing as t
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from superduperdb.core.documents import Document
-from superduperdb.core.suri import URIDocument
+
+
+class SelectOne(s.JSONable, ABC):
+    @abstractmethod
+    def __call__(self, db):
+        pass
+
+
+class Like(s.JSONable, ABC):
+    @abstractmethod
+    def __call__(self, db):
+        pass
 
 
 class Select(s.JSONable, ABC):
@@ -13,16 +22,6 @@ class Select(s.JSONable, ABC):
     stored properties necessary for querying the DB.
     """
 
-    download: bool = False
-    features: t.Optional[t.Dict[str, str]] = None
-    like: t.Optional[URIDocument] = None
-    n: int = 100
-    outputs: t.Optional[URIDocument] = None
-    raw: bool = False
-    similar_first: bool = False
-    vector_index: t.Optional[str] = None
-
-    @property
     @abstractmethod
     def is_trivial(self) -> bool:
         # Determines when a select statement is "just" select everything.
@@ -32,14 +31,15 @@ class Select(s.JSONable, ABC):
 
     @property
     @abstractmethod
-    def select_only_id(self) -> 'Select':
+    def select_ids(self) -> 'Select':
         # Converts the query into a query which only returns the id
         # of each column/ document.
         pass
 
     @abstractmethod
     def select_using_ids(
-        self, ids: t.List[str], features: t.Optional[t.Dict[str, str]] = None
+        self,
+        ids: t.List[str],
     ) -> t.Any:
         # Converts the query into a query which sub-selects from the ids specified.
         pass
@@ -50,19 +50,21 @@ class Select(s.JSONable, ABC):
         # tag "fold"
         pass
 
+    @abstractmethod
+    def __call__(self, db):
+        pass
 
-@dataclass(frozen=False)
-class Insert(ABC):
+
+class Insert(s.JSONable, ABC):
     # must implement attribute/ property self.documents
-    documents: t.List[Document]
-
     refresh: bool = True
     verbose: bool = True
+    documents: t.List
 
     @property
     @abstractmethod
     def table(self):
-        # extracts the table name from the object
+        # extracts the table collection from the object
         pass
 
     @property
@@ -72,12 +74,18 @@ class Insert(ABC):
         # was inserted
         pass
 
+    @abstractmethod
+    def __call__(self, db):
+        pass
+
 
 class Delete(s.JSONable, ABC):
-    ...
+    @abstractmethod
+    def __call__(self, db):
+        pass
 
 
-class Update(ABC):
+class Update(s.JSONable, ABC):
     refresh: bool = True
     verbose: bool = True
 
@@ -93,4 +101,8 @@ class Update(ABC):
     def select_ids(self):
         # converts the update object to a Select object, which selects where
         # the update was made, and returns only ids
+        pass
+
+    @abstractmethod
+    def __call__(self, db):
         pass

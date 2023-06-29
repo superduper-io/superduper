@@ -19,6 +19,31 @@ from superduperdb.models.torch.utils import device_of, to_device, eval
 from superduperdb.datalayer.query_dataset import QueryDataset
 
 
+class BasicDataset(data.Dataset):
+    """
+    Basic database iterating over a list of documents and applying a transformation
+
+    :param documents: documents
+    :param transform: function
+    """
+
+    def __init__(self, documents, transform):
+        super().__init__()
+        self.documents = documents
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.documents)
+
+    def __getitem__(self, item):
+        document = self.documents[item]
+        if isinstance(document, Document):
+            document = document.unpack()
+        elif isinstance(document, Encodable):
+            document = document.x
+        return self.transform(document)
+
+
 class TorchTrainerConfiguration(TrainingConfiguration):
     def __init__(
         self,
@@ -625,26 +650,6 @@ def test_if_batch(x, num_directions: Union[Dict, int]):
     >>> test_if_batch(torch.randn(10), 2)
     False
     >>> test_if_batch(torch.randn(2, 10), 2)
-    True
-    >>> test_if_batch({'x': torch.randn(2, 10)}, {'x': 2})
-    True
-    >>> test_if_batch({'x': torch.randn(10)}, {'x': 2})
-    False
-    """
-    if isinstance(num_directions, int):
-        if len(x.shape) == num_directions:
-            return True
-        assert len(x.shape) == num_directions - 1
-        return False
-    else:
-        assert len(num_directions.keys()) == 1
-        key = next(iter(num_directions.keys()))
-        return test_if_batch(x[key], num_directions[key])
-
-
-class BasicDataset(data.Dataset):
-    """
-    Basic database iterating over a list of documents and applying a transformation
 
     :param documents: documents
     :param transform: function

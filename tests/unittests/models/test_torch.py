@@ -2,7 +2,6 @@
 import torch
 
 from superduperdb.core.metric import Metric
-from superduperdb.datalayer.mongodb.query import Select
 from superduperdb.metrics.classification import compute_classification_metrics
 from superduperdb.models.torch.wrapper import (
     TorchPipeline,
@@ -11,10 +10,10 @@ from superduperdb.models.torch.wrapper import (
 )
 from superduperdb.models.torch.wrapper import TorchTrainerConfiguration
 from superduperdb.metrics.vector_search import (
-    validate_vector_search,
     VectorSearchPerformance,
     PatK,
 )
+from superduperdb.queries.mongodb.queries import Collection
 from superduperdb.types.torch.tensor import tensor
 from superduperdb.vector_search import VanillaHashSet
 
@@ -108,7 +107,7 @@ def test_fit(random_data, si_validation):
         'x',
         'y',
         database=random_data,
-        select=Select(collection='documents'),
+        select=Collection(name='documents').find(),
         metrics=[Metric(identifier='acc', object=acc)],
         validation_sets=['my_valid'],
         serializer='dill',
@@ -155,7 +154,7 @@ def test_ensemble(si_validation, metric):
         ['x', 'z'],
         training_configuration=config,
         database=si_validation,
-        select=Select(collection='documents'),
+        select=Collection(name='documents').find(),
         validation_sets=['my_valid'],
         metrics=[Metric('p@1', PatK(1))],
     )

@@ -1,4 +1,5 @@
 # ruff: noqa: F401, F811
+import pytest
 import random
 
 import numpy
@@ -6,11 +7,9 @@ from sklearn.svm import SVC
 from sklearn.base import TransformerMixin
 
 from superduperdb.core.documents import Document
-from superduperdb.datalayer.mongodb.query import Insert, Select
 from superduperdb.models.sklearn.wrapper import Pipeline
+from superduperdb.queries.mongodb.queries import Collection
 
-
-import pytest
 from tests.fixtures.collection import random_arrays, arrays, empty
 
 
@@ -47,9 +46,8 @@ class TestPipeline:
     @pytest.fixture()
     def data_in_db(self, empty, X, y):
         empty.execute(
-            Insert(
-                collection='documents',
-                documents=[Document({'X': x, 'y': yy}) for x, yy in zip(X, y)],
+            Collection(name='documents').insert_many(
+                [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
             )
         )
         yield empty
@@ -65,5 +63,5 @@ class TestPipeline:
 
     def test_fit_db(self, pipeline, data_in_db):
         pipeline.fit(
-            'X', 'y', database=data_in_db, select=Select(collection='documents')
+            'X', 'y', database=data_in_db, select=Collection(name='documents').find()
         )

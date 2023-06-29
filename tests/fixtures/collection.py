@@ -12,8 +12,8 @@ from superduperdb.core.documents import Document
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.base.database import BaseDatabase
-from superduperdb.datalayer.mongodb.query import Select, Insert, Delete
 from superduperdb.models.torch.wrapper import TorchModel
+from superduperdb.queries.mongodb.queries import Collection
 from superduperdb.types.numpy.array import array
 from superduperdb.types.pillow.image import pil_image
 from superduperdb.types.torch.tensor import tensor
@@ -56,7 +56,7 @@ def random_data_factory(float_tensors_32):
                 )
             )
         float_tensors_32.execute(
-            Insert(collection='documents', documents=data, refresh=False)
+            Collection(name='documents').insert_many(data, refresh=False)
         )
         return float_tensors_32
 
@@ -76,9 +76,10 @@ def random_arrays(arrays):
         x = numpy.random.randn(32).astype(numpy.float32)
         y = int(random.random() > 0.5)
         data.append(Document({'x': float_array(x), 'y': y}))
-    arrays.execute(Insert(collection='documents', documents=data, refresh=False))
+
+    arrays.execute(Collection(name='documents').insert_many(data, refresh=False))
     yield arrays
-    arrays.execute(Delete(collection='documents', filter={}))
+    arrays.execute(Collection(name='documents').delete_many({}))
 
 
 @pytest.fixture()
@@ -106,10 +107,14 @@ def an_update(float_tensors_32):
 def vector_index_factory(a_model):
     def _factory(db, identifier, **kwargs) -> VectorIndex:
         db.add(
-            Watcher(select=Select(collection='documents'), key='x', model='linear_a')
+            Watcher(
+                select=Collection(name='documents').find(), key='x', model='linear_a'
+            )
         )
         db.add(
-            Watcher(select=Select(collection='documents'), key='z', model='linear_a')
+            Watcher(
+                select=Collection(name='documents').find(), key='z', model='linear_a'
+            )
         )
         vi = VectorIndex(
             identifier=identifier,
@@ -134,17 +139,11 @@ def si_validation(random_data):
     random_data.add(
         Dataset(
             'my_valid',
-            select=Select(collection='documents', filter={'_fold': 'valid'}),
+            select=Collection(name='documents').find({'_fold': 'valid'}),
             sample_size=100,
         )
     )
 
-    yield random_data
-
-
-@pytest.fixture()
-def imputation_validation(random_data):
-    random_data._add_validation_set('my_imputation_valid', chunk_size=100)
     yield random_data
 
 
@@ -181,7 +180,7 @@ def sentences(empty):
     data = []
     for _ in range(100):
         data.append(Document({'text': lorem.sentence()}))
-    empty.execute(Insert(collection='documents', documents=data))
+    empty.execute(Collection(name='documents').insert_many(data))
     yield empty
 
 
@@ -191,7 +190,7 @@ def nursery_rhymes(empty):
         data = json.load(f)
     for i in range(len(data)):
         data[i] = Document({'text': data[i]})
-    empty.execute(Insert(collection='documents', documents=data))
+    empty.execute(Collection(name='documents').insert_many(data))
     yield empty
 
 
@@ -234,7 +233,7 @@ def a_model_base(float_tensors_32, float_tensors_16):
 def a_watcher(a_model):
     a_model.remote = False
     a_model.add(
-        Watcher(model='linear_a', select=Select(collection='documents'), key='x')
+        Watcher(model='linear_a', select=Collection(name='documents').find(), key='x')
     )
     yield a_model
     a_model.remove('watcher', 'linear_a/x', force=True)
@@ -244,7 +243,9 @@ def a_watcher(a_model):
 def a_watcher_base(a_model_base):
     a_model_base.add(
         Watcher(
-            model='linear_a_base', select=Select(collection='documents'), key='_base'
+            model='linear_a_base',
+            select=Collection(name='documents').find(),
+            key='_base',
         )
     )
     yield a_model_base

@@ -45,7 +45,7 @@ def work(f):
             )
         else:
             logging.debug(database)
-            logging.debug(args)
+            # logging.debug(args)
             ka = dict(kwargs)
             if ids := ka.pop('ids', None):
                 if len(ids) > 10:

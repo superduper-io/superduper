@@ -1,5 +1,8 @@
 from .test_registry import setup_registry
 from fastapi.testclient import TestClient
+from pydantic import dataclasses as dc
+from pydantic import Field
+from dataclasses import InitVar, asdict, field
 from superduperdb.server.server import Server
 import io
 import json
@@ -37,7 +40,6 @@ def test_basics():
         assert response.json() == {'perhaps': 'redoc makes this pointless'}
 
 
-@skip_obsolete
 def test_methods():
     with setup_test_client().client as client:
         response = client.post('/first', json={'one': 'three'})
@@ -67,7 +69,7 @@ class Three(One):
 
 class Object:
     def first(self, one: One) -> Two:
-        return Two(**one.dict())
+        return Two(**asdict(one))
 
     def second(self, one: One, three: Three) -> One:
         return one
@@ -118,3 +120,76 @@ def test_upload():
         response = client.get('/download/test-key')
         assert response.status_code == 200
         assert response.content == blob
+
+
+@dc.dataclass
+class Un:
+    un: str = 'un'
+
+    # These two unfortunately get JSONized
+    nine: str = Field(default='ERROR', exclude=True)
+    ten: str = field(default='ERROR', repr=False, compare=False)
+    eleven: InitVar[str] = 'this goes up to'
+
+    def __post_init__(self, eleven: str):
+        self.seven = self.un + '-sept'
+        self.eleven = eleven
+
+
+UN = {
+    'un': 'un',
+    'nine': 'ERROR',
+    'ten': 'ERROR',
+}
+
+
+@dc.dataclass
+class Deux(Un):
+    deux: str = 'deux'
+
+
+@dc.dataclass
+class Trois(Un):
+    deux: str = 'trois'
+
+
+class Objet:
+    def premier(self, un: Un) -> Deux:
+        return Deux(**asdict(un))
+
+    def second(self, un: Un, trois: Trois) -> Un:
+        return un
+
+
+@dc.dataclass
+class Inclus:
+    ein: Un
+
+
+def test_dataclasses():
+    assert asdict(Un(eleven='HAHA!')) == UN
+    assert asdict(Inclus(Un())) == {'ein': UN}
+    assert Inclus(**{'ein': UN}) == Inclus(Un())
+
+
+def test_dataclasses2():
+    server = Server()
+
+    client = TestClient(server.app)
+    o = Objet()
+    server = server
+
+    server.register(o.premier)
+    server.register(o.second)
+    server.add_endpoints(o)
+    with client as client:
+        response = client.post('/premier', json={'un': 'trois'})
+        assert response.status_code == 200
+        assert response.json() == dict(UN, deux='deux', un='trois')
+
+
+class Lemon(s.JSONable):
+    un: Un
+
+    def __post_init__(self):
+        self.seven = self.un + '-sept'

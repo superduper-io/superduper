@@ -1,4 +1,5 @@
 from . import command
+from superduperdb.core.suri import URIDocument
 from superduperdb.datalayer.base import build
 from superduperdb.server.server import Server
 from threading import Thread
@@ -11,20 +12,24 @@ def serve(
     open_page: bool = True,
     open_delay: float = 0.5,
 ):
-    s = Server()
+    server = Server(document_store=URIDocument.cache)
     db = build.build_datalayer()
 
-    s.register(db.select)
-    s.register(db.delete)
+    server.register(db.delete)
+    server.register(db.insert)
+    server.register(db.select)
+    server.register(db.update)
+    server.register(db.execute)
 
     if open_page:
 
         def target():
             time.sleep(open_delay)
-            cfg = s.cfg.web_server
+            cfg = server.cfg.web_server
             url = f'http://{cfg.host}:{cfg.port}'
 
             webbrowser.open(url, new=1, autoraise=True)
 
         Thread(target=target, daemon=True).start()
-    s.run(db)
+
+    server.run(db)

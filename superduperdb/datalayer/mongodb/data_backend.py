@@ -24,13 +24,14 @@ class MongoDataBackend(BaseDataBackend):
         super().__init__(conn, name)
         self.db = conn[name]
 
-    def insert(self, insert: Insert) -> results.InsertManyResult:
+    def insert(self, insert: Insert) -> t.List[t.Any]:
         encoded = [r.encode() for r in insert.documents]
-        return self.db[insert.collection].insert_many(
+        res = self.db[insert.collection].insert_many(
             encoded,
             ordered=insert.ordered,
             bypass_document_validation=insert.bypass_document_validation,
         )
+        return res.inserted_ids
 
     def download_update(self, table, id, key, bytes) -> Update:
         return Update(
@@ -96,22 +97,24 @@ class MongoDataBackend(BaseDataBackend):
         )
         logging.info('done.')
 
-    def update(self, update: Update) -> results.UpdateResult:
+    def update(self, update: Update) -> t.Dict[str, t.Any]:
         row = self.db[update.collection]
         if update.replacement is not None:
-            return row.replace_one(update.filter, update.replacement.encode())
-
-        assert update.update is not None
-        if update.one:
-            return row.update_one(update.filter, update.update.encode())
+            res = row.replace_one(update.filter, update.replacement.encode())
+        elif update.update is None:
+            raise ValueError('Empty update')
+        elif update.one:
+            res = row.update_one(update.filter, update.update.encode())
         else:
-            return row.update_many(update.filter, update.update.encode())
+            res = row.update_many(update.filter, update.update.encode())
+        return res.raw_result
 
-    def delete(self, delete: Delete) -> results.DeleteResult:
+    def delete(self, delete: Delete) -> t.Dict[str, t.Any]:
         if delete.one:
-            return self.db[delete.collection].delete_one(delete.filter)
+            res = self.db[delete.collection].delete_one(delete.filter)
         else:
-            return self.db[delete.collection].delete_many(delete.filter)
+            res = self.db[delete.collection].delete_many(delete.filter)
+        return res.raw_result
 
     def unset_outputs(self, info: t.Dict) -> results.UpdateResult:
         select = Select(**info['select'])

@@ -34,12 +34,12 @@ class BaseDataBackend(ABC):
         types: t.Dict,
         features=None,
         scores=None,
-    ):
+    ) -> SuperDuperCursor:
         return SuperDuperCursor(
             self.get_raw_cursor(select),
             id_field=self.id_field,
             types=types,
-            features=features if features else select.features,
+            features=features if features is not None else select.features,
             scores=scores,
         )
 

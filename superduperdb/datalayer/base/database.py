@@ -21,6 +21,7 @@ from superduperdb.core.base import Component
 from superduperdb.core.documents import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.model import Model
+from superduperdb.core.suri import URICursor
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.logger import logging
@@ -36,13 +37,13 @@ from superduperdb.core.components import components
 VECTOR_DATABASE = VectorDatabase.create(config=CFG.vector_search)
 VECTOR_DATABASE.init().__enter__()
 
-DBResult = t.Any
+DBResult = t.Dict[str, t.Any]
 TaskGraph = t.Any
 
-DeleteResult = t.Dict[str, t.Any]
-InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
-SelectResult = t.List[Document]
-UpdateResult = t.Any
+DeleteResult = DBResult
+InsertResult = t.List[str]
+SelectResult = URICursor
+UpdateResult = DBResult
 
 ExecuteQuery = t.Union[Select, Delete, Update, Insert]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
@@ -187,7 +188,7 @@ class BaseDatabase:
         )
 
     def delete(self, delete: Delete) -> DeleteResult:
-        return self.db.delete(delete).raw_result
+        return self.db.delete(delete)
 
     def insert(self, insert: Insert) -> InsertResult:
         for item in insert.documents:
@@ -199,13 +200,13 @@ class BaseDatabase:
             if '_fold' not in item.content:  # type: ignore
                 item['_fold'] = 'valid' if r < valid_probability else 'train'
         output = self.db.insert(insert)
-        if not insert.refresh:  # pragma: no cover
-            return output, None
-        task_graph = self._build_task_workflow(
-            insert.select_table, ids=output.inserted_ids, verbose=insert.verbose
-        )
-        task_graph()
-        return output, task_graph
+
+        if insert.refresh:  # pragma: no cover
+            task_graph = self._build_task_workflow(
+                insert.select_table, ids=output, verbose=insert.verbose
+            )
+            task_graph()
+        return output
 
     def select(self, select: Select) -> SelectResult:
         if select.like is None:
@@ -220,12 +221,13 @@ class BaseDatabase:
             select = select.select_using_ids(similar_ids)
             scores = dict(zip(similar_ids, score))
 
-        return self.db.get_cursor(
+        cursor = self.db.get_cursor(
             select,
             features=select.features,
             scores=scores,
             types=self.types,
         )
+        return URICursor.box(cursor)
 
     def _select_nearest(
         self, select: Select, ids: Optional[List[str]] = None
@@ -263,7 +265,6 @@ class BaseDatabase:
                 update.select, ids=ids, verbose=update.verbose
             )
             task_graph()
-            return result, task_graph
         return result
 
     def add(

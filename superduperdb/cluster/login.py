@@ -6,7 +6,7 @@ def maybe_login_required(auth, service):
     Require login depending on the contents of the config file.:w
 
     :param auth: basic auth instance
-    :param service: name of the service on question
+    :param service: collection of the service on question
     """
 
     def decorator(f):

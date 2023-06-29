@@ -8,7 +8,7 @@ def get_database_from_database_type(database_type: str, database_name: str) -> t
     Import the database connection from ``superduperdb``
 
     :param database_type: type of database (supported: ['mongodb'])
-    :param database_name: name of database
+    :param database_name: collection of database
     """
     module = importlib.import_module(f'superduperdb.datalayer.{database_type}.client')
 

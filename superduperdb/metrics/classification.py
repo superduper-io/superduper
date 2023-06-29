@@ -1,4 +1,12 @@
-def compute_classification_metrics(validation_data, model, metrics):
+import typing as t
+
+from superduperdb.core.metric import Metric
+from superduperdb.models.torch.wrapper import TorchModel
+
+
+def compute_classification_metrics(
+    validation_data: t.List, model: TorchModel, metrics: t.List[Metric]
+) -> t.Dict[str, float]:
     X, y = model.training_keys
     out = {}
     predictions = model.predict([r[X] for r in validation_data])

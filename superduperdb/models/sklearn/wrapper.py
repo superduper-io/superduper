@@ -4,7 +4,7 @@ import typing as t
 from sklearn.pipeline import Pipeline as BasePipeline
 from sklearn.base import BaseEstimator
 
-from superduperdb.core.model import Model, TrainingConfiguration
+from superduperdb.core.model import Model, TrainingConfiguration, EncoderArg
 from superduperdb.core.metric import Metric
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.base.query import Select
@@ -15,7 +15,7 @@ from superduperdb.datalayer.query_dataset import QueryDataset
 # TODO fix the tests for this one, before moving onto PyTorch pipeline etc.
 
 
-def postprocess(f):
+def postprocess(f: t.Any) -> t.Any:
     f.superduper_postprocess = True
     return f
 
@@ -49,11 +49,11 @@ def get_data_from_query(
 class SklearnTrainingConfiguration(TrainingConfiguration):
     def __init__(
         self,
-        identifier,
-        fit_params=None,
-        predict_params=None,
-        y_preprocess=None,
-    ):
+        identifier: str,
+        fit_params: t.Any = None,
+        predict_params: t.Any = None,
+        y_preprocess: t.Any = None,
+    ) -> None:
         super().__init__(
             identifier,
             fit_params=fit_params or {},
@@ -65,8 +65,8 @@ class SklearnTrainingConfiguration(TrainingConfiguration):
 class Base(Model):
     def fit(
         self,
-        X,
-        y=None,
+        X: t.List,
+        y: t.Optional[t.List] = None,
         select: t.Optional[Select] = None,
         database: t.Optional[BaseDatabase] = None,
         training_configuration: t.Optional[SklearnTrainingConfiguration] = None,
@@ -104,14 +104,14 @@ class Estimator(Base):
         training_select: t.Optional[Select] = None,
         X: t.Optional[str] = None,
         y: t.Optional[str] = None,
-    ):
+    ) -> None:
         super().__init__(object=estimator, identifier=identifier)
         self.training_configuration = training_configuration
         self.training_select = training_select
         self.X = X
         self.y = y
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> t.Any:
         if item in ['predict', 'transform', 'predict_proba', 'score']:
             return getattr(self.object, item)
         else:
@@ -121,16 +121,16 @@ class Estimator(Base):
 class Pipeline(Base):
     def __init__(
         self,
-        identifier,
-        steps,
-        memory=None,
-        verbose=False,
-        encoder=None,
+        identifier: str,
+        steps: t.List,
+        memory: t.Any = None,
+        verbose: bool = False,
+        encoder: EncoderArg = None,
         training_configuration: t.Optional[SklearnTrainingConfiguration] = None,
         training_select: t.Optional[Select] = None,
         X: t.Optional[str] = None,
         y: t.Optional[str] = None,
-    ):
+    ) -> None:
         standard_steps = [
             i
             for i, s in enumerate(steps)
@@ -165,13 +165,13 @@ class Pipeline(Base):
             training_keys=training_keys,
         )
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> t.Any:
         if item in ['predict_proba', 'score']:
             return getattr(self.object, item)
         else:
             return super().__getattribute__(item)
 
-    def predict(self, X, **predict_params):
+    def predict(self, X: t.Any, **predict_params: t.Dict) -> t.List:
         out = self.object.predict(X, **predict_params).tolist()
         if self.postprocess_steps:
             for s in self.postprocess_steps:

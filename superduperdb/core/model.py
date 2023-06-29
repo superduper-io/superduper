@@ -20,12 +20,12 @@ class TrainingConfiguration(Component):
 
     variety = 'training_configuration'
 
-    def __init__(self, identifier, **parameters):
+    def __init__(self, identifier: str, **parameters: t.Dict[str, t.Any]) -> None:
         super().__init__(identifier)
         for k, v in parameters.items():
             setattr(self, k, v)
 
-    def get(self, k, default=None):
+    def get(self, k: str, default: t.Any = None) -> t.Any:
         return getattr(self, k, default)
 
 
@@ -79,7 +79,7 @@ class Model(Component):
         self.metrics = metrics
         self.metric_values: t.Dict = {}
 
-    def _predict(self, inputs, **kwargs) -> t.List:
+    def _predict(self, inputs: t.Any, **kwargs: t.Dict[str, t.Any]) -> t.List:
         return [self.predict_one(x, **kwargs) for x in inputs]
 
     def asdict(self) -> t.Dict[str, t.Any]:
@@ -88,7 +88,7 @@ class Model(Component):
             'type': None if self.encoder is None else self.encoder.identifier,
         }
 
-    def append_metrics(self, d):
+    def append_metrics(self, d: t.Dict) -> None:
         for k in d:
             if k not in self.metric_values:
                 self.metric_values[k] = []

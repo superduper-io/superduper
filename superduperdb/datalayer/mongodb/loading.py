@@ -4,6 +4,8 @@ import pymongo
 from pymongo.collection import Collection
 from torch.utils import data
 
+from superduperdb.datalayer.base.database import BaseDatabase
+
 
 class MongoIterable(data.IterableDataset):  # pragma: no cover
     """
@@ -11,7 +13,12 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
     """
 
     def __init__(
-        self, client, database, collection: Collection, transform=None, filter=None
+        self,
+        client: t.Any,
+        database: BaseDatabase,
+        collection: Collection,
+        transform: t.Any = None,
+        filter: t.Any = None,
     ) -> None:
         super().__init__()
         self._client = client

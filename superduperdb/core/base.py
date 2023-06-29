@@ -49,7 +49,7 @@ class PlaceholderList(BasePlaceholder):
         self,
         variety: str,
         placeholders: t.Union[t.List[str], t.List[Placeholder]],  # TODO - fix this type
-    ):
+    ) -> None:
         self.placeholders = placeholders
         if placeholders and isinstance(self.placeholders[0], str):
             self.placeholders = [Placeholder(arg, variety) for arg in placeholders]  # type: ignore[arg-type]
@@ -60,10 +60,10 @@ class PlaceholderList(BasePlaceholder):
             self.placeholders = placeholders
         self.variety = variety
 
-    def __iter__(self):
+    def __iter__(self) -> t.Union[t.Iterator[str], t.Iterator[Placeholder]]:
         return iter(self.placeholders)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> t.Union[str, Placeholder]:
         return self.placeholders[item]
 
     def aslist(self) -> t.List[str]:
@@ -75,11 +75,11 @@ class BaseComponent:
     Essentially just there to put Component and ComponentList on common ground.
     """
 
-    def _set_subcomponent(self, key, value):
+    def _set_subcomponent(self, key: str, value: t.Any) -> None:
         logging.warn(f'Setting {value} component at {key}')
         super().__setattr__(key, value)
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: t.Any) -> None:
         try:
             current = getattr(self, key)
             # don't allow surgery on component, since messes with version rules
@@ -195,7 +195,7 @@ class Component(BaseComponent):
         """
         return not any(isinstance(v, BaseComponent) for v in vars(self).values())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         super_repr = super().__repr__()
         parts = super_repr.split(' object at ')
         subcomponents = [
@@ -214,7 +214,7 @@ class Component(BaseComponent):
         return []
 
     @classmethod
-    def make_unique_id(cls, variety, identifier, version):
+    def make_unique_id(cls, variety: str, identifier: str, version: str) -> str:
         return f'{variety}/{identifier}/{version}'
 
 
@@ -223,17 +223,17 @@ class ComponentList(BaseComponent):
     List of base components.
     """
 
-    def __init__(self, variety, components):
+    def __init__(self, variety: str, components: t.Dict[str, t.Type]) -> None:
         self.variety = variety
         self.components = components
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> t.Any:
         return self.components[item]
 
-    def __iter__(self):
+    def __iter__(self) -> t.Iterator:
         return iter(self.components)
 
-    def repopulate(self, database):
+    def repopulate(self, database: 'BaseDatabase') -> None:
         for i, item in enumerate(self):
             if isinstance(item, str):
                 self[i] = database.load(self.variety, item)
@@ -244,7 +244,7 @@ class ComponentList(BaseComponent):
 
 
 def strip(
-    component: BaseComponent, top_level=True
+    component: BaseComponent, top_level: bool = True
 ) -> t.Tuple[
     BaseComponent, t.Dict[int, t.Union[Component, 'BaseDatabase', BaseComponent]]
 ]:
@@ -306,7 +306,9 @@ def restore(
     component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict
 ) -> t.Union[BaseComponent, BasePlaceholder]:
     if isinstance(component, PlaceholderList):
-        return ComponentList(component.variety, [restore(c, cache) for c in component.placeholders])  # type: ignore[arg-type]
+        return ComponentList(
+            component.variety, [restore(c, cache) for c in component.placeholders]
+        )  # type: ignore[arg-type]
     if isinstance(component, Placeholder):
         try:
             return cache[component.id]

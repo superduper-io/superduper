@@ -1,5 +1,7 @@
 import typing as t
 
+from pymongo.cursor import Cursor
+
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encoder
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -10,7 +12,7 @@ class SuperDuperCursor:
 
     def __init__(
         self,
-        cursor,
+        cursor: Cursor,
         id_field: str,
         types: t.Mapping[str, Encoder],
         features: t.Union[t.Mapping[str, str], None] = None,

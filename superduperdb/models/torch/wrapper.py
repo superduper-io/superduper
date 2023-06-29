@@ -22,20 +22,20 @@ from superduperdb.datalayer.query_dataset import QueryDataset
 class TorchTrainerConfiguration(TrainingConfiguration):
     def __init__(
         self,
-        identifier,
-        objective,
-        loader_kwargs,
-        optimizer_cls=torch.optim.Adam,
-        optimizer_kwargs=None,
-        max_iterations=float('inf'),
-        no_improve_then_stop=5,
-        splitter=None,
-        download=False,
-        validation_interval=100,
-        watch='objective',
-        target_preprocessors=None,
-        **kwargs,
-    ):
+        identifier: str,
+        objective: t.Callable,
+        loader_kwargs: t.Dict[str, t.Any],
+        optimizer_cls: t.Type = torch.optim.Adam,
+        optimizer_kwargs: t.Optional[t.Dict[str, t.Any]] = None,
+        max_iterations: float = float('inf'),
+        no_improve_then_stop: int = 5,
+        splitter: t.Any = None,
+        download: bool = False,
+        validation_interval: int = 100,
+        watch: str = 'objective',
+        target_preprocessors: t.Any = None,
+        **kwargs: t.Dict[str, t.Any],
+    ) -> None:
         super().__init__(
             identifier,
             loader_kwargs=loader_kwargs,
@@ -98,7 +98,7 @@ class Base(Model):
             ),
         )
 
-    def stopping_criterion(self, iteration):
+    def stopping_criterion(self, iteration: int) -> bool:
         max_iterations = self.training_configuration.max_iterations
         no_improve_then_stop = self.training_configuration.no_improve_then_stop
         if isinstance(max_iterations, int) and iteration >= max_iterations:
@@ -125,7 +125,7 @@ class Base(Model):
     def fit(
         self,
         X: t.Optional[t.Union[t.List[str], str]] = None,
-        *targets,
+        *targets: t.Tuple,
         database: BaseDatabase,
         select: t.Optional[Select] = None,
         training_configuration: t.Optional[TorchTrainerConfiguration] = None,
@@ -161,10 +161,10 @@ class Base(Model):
             serializer=serializer,  # TODO - add serializer to __init__ method of Model
         )
 
-    def preprocess(self, r):
+    def preprocess(self, r: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError  # implemented in PyTorch wrapper and PyTorch pipeline
 
-    def log(self, **kwargs):
+    def log(self, **kwargs: t.Dict) -> None:
         out = ''
         for k, v in kwargs.items():
             if isinstance(v, dict):
@@ -174,16 +174,18 @@ class Base(Model):
                 out += f'{k}: {v}; '
         logging.info(out)
 
-    def train_forward(self, X, *targets):
+    def train_forward(
+        self, X: torch.Tensor, *targets: t.Tuple[torch.Tensor]
+    ) -> t.Union[t.List[torch.Tensor], t.Tuple[t.List, t.List]]:
         if hasattr(self.object, 'train_forward'):
             return self.object.train_forward(X, *targets)
         else:
             return [self.object(X), *targets]
 
-    def forward(self, X :t.Any) -> t.Any:
+    def forward(self, X: t.Any) -> t.Any:
         return self.object(X)
 
-    def take_step(self, batch):
+    def take_step(self, batch: t.List[torch.Tensor]) -> torch.Tensor:
         if isinstance(self.training_keys[0], str):
             batch = [batch[k] for k in self.training_keys]
         else:
@@ -200,7 +202,7 @@ class Base(Model):
             opt.step()
         return objective_value
 
-    def compute_validation_objective(self, valid_dataloader):
+    def compute_validation_objective(self, valid_dataloader: DataLoader) -> float:
         objective_values = []
         with self.evaluating(), torch.no_grad():
             for batch in valid_dataloader:
@@ -226,7 +228,9 @@ class Base(Model):
             serializer=serializer,
         )  # TODO _replace_model is redundant
 
-    def compute_metrics(self, validation_set, database):
+    def compute_metrics(
+        self, validation_set: t.List[t.Dict], database: BaseDatabase
+    ) -> t.Any:
         validation_set = database.load('dataset', validation_set)
         validation_set = [r.unpack() for r in validation_set.data]
         return self.training_configuration.compute_metrics(
@@ -299,8 +303,8 @@ class TorchPipeline(Base):
 
     def __init__(
         self,
-        identifier,
-        steps,
+        identifier: str,
+        steps: t.List,
         collate_fn: t.Optional[t.Callable] = None,
         is_batch: t.Optional[t.Callable] = None,
         encoder: t.Optional[t.Union[Encoder, str]] = None,
@@ -309,7 +313,7 @@ class TorchPipeline(Base):
         training_keys: t.Optional[t.List[str]] = None,
         num_directions: int = 2,
         metrics: t.Optional[t.Union[t.List[Metric], t.List[str]]] = None,
-    ):
+    ) -> None:
         self.steps = steps  # type: ignore[misc]
         self._forward_sequential = None
         self.is_batch = is_batch
@@ -335,7 +339,7 @@ class TorchPipeline(Base):
     def train(self) -> t.Any:
         return self.object.train()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         lines = [
             'TorchPipeline(steps=[',
             *[f'   {(s[0], s[1])}' for s in self.steps],
@@ -343,7 +347,7 @@ class TorchPipeline(Base):
         ]
         return '\n'.join(lines)
 
-    def _test_if_batch(self, x):
+    def _test_if_batch(self, x: t.Any) -> bool:
         if self.is_batch is not None:
             return self.is_batch(x)
         if hasattr(self.steps[0][1], '__call__'):
@@ -362,7 +366,7 @@ class TorchPipeline(Base):
     def steps(self) -> t.Any:
         return self._steps
 
-    def preprocess(self, x):
+    def preprocess(self, x: t.Any) -> torch.Tensor:
         for s in self.steps[: self._forward_mark]:
             transform = s[1]
             if hasattr(transform, 'transform'):
@@ -405,7 +409,9 @@ class TorchPipeline(Base):
                 x = transform(x)
         return x
 
-    def predict(self, x: t.Any, **kwargs: t.Dict[str, t.Any]) -> t.Union[t.List[torch.Tensor, torch.Tensor]]:
+    def predict(
+        self, x: t.Any, **kwargs: t.Dict[str, t.Any]
+    ) -> t.Union[t.List[torch.Tensor], torch.Tensor]:
         if not self._test_if_batch(x):
             return self._predict_one(x, **kwargs)
         if self.preprocess_pipeline.steps:
@@ -427,7 +433,7 @@ class TorchPipeline(Base):
             out.extend(tmp)
         return out
 
-    def _predict_one(self, x : t.Any , **kwargs: t.Any) -> torch.Tensor:
+    def _predict_one(self, x: t.Any, **kwargs: t.Any) -> torch.Tensor:
         with torch.no_grad(), eval(self.forward_pipeline):
             x = self.preprocess(x)
             x = to_device(x, device_of(self.forward_pipeline))

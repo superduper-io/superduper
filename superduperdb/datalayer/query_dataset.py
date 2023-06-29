@@ -22,11 +22,11 @@ class QueryDataset:
     def __init__(
         self,
         select: Select,
-        keys=None,
-        fold='train',
-        suppress=(),
-        transform=None,
-        features=None,
+        keys: t.Sequence[str] = None,
+        fold: str = 'train',
+        suppress: t.Tuple = (),
+        transform: t.Optional[t.Callable] = None,
+        features: t.Optional[t.Dict] = None,
     ) -> None:
         super().__init__()
 
@@ -50,7 +50,7 @@ class QueryDataset:
     def __len__(self) -> int:
         return len(self._documents)
 
-    def __getitem__(self, item) -> t.Any:
+    def __getitem__(self, item: t.Any) -> t.Any:
         r = MongoStyleDict(self._documents[item].unpack())
         s = MongoStyleDict({})
         for k in self.features:

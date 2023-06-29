@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import typing as t
 
+from bson import ObjectId
+
 from superduperdb.core.model import Model
 from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.cursor import SuperDuperCursor
@@ -32,15 +34,17 @@ class BaseDataBackend(ABC):
         pass
 
     @abstractmethod
-    def download_update(self, table, id, key, bytes) -> Update:
+    def download_update(
+        self, table: str, id: ObjectId, key: str, bytes: bytes
+    ) -> Update:
         pass
 
     def get_cursor(
         self,
         select: Select,
         types: t.Dict,
-        features=None,
-        scores=None,
+        features: t.Union[t.Mapping[str, str], None] = None,
+        scores: t.Optional[t.List[float]] = None,
     ) -> SuperDuperCursor:
         return SuperDuperCursor(
             self.get_raw_cursor(select),
@@ -65,11 +69,16 @@ class BaseDataBackend(ABC):
         pass
 
     @abstractmethod
-    def set_content_bytes(self, r, key, bytes_) -> t.Dict:
+    def set_content_bytes(self, r: t.Dict, key: str, bytes_: bytes) -> t.Dict:
         pass
 
     @abstractmethod
-    def write_outputs(self, info, outputs, _ids) -> None:
+    def write_outputs(
+        self,
+        watcher_info: t.Dict[str, t.Any],
+        outputs: t.List[t.Dict],
+        _ids: t.List[ObjectId],
+    ) -> None:
         pass
 
     @abstractmethod

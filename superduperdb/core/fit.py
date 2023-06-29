@@ -88,6 +88,6 @@ class Fit(Component):
         }
 
     def schedule_jobs(
-        self, database: 'BaseDatabase', verbose: bool = True, dependencies=()
+        self, database: 'BaseDatabase', verbose: bool = True, dependencies: t.Tuple = ()
     ) -> t.List:
         return [database._fit(self.identifier)]

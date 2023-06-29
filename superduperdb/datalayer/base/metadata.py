@@ -74,7 +74,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def show_components(self, variety: str, **kwargs) -> t.List:
+    def show_components(self, variety: str, **kwargs: t.Dict[str, t.Any]) -> t.List:
         pass
 
     @abstractmethod
@@ -94,7 +94,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def get_metadata(self, key) -> t.Any:
+    def get_metadata(self, key: str) -> t.Any:
         pass
 
     @abstractmethod

@@ -9,6 +9,7 @@ from multiprocessing.pool import ThreadPool
 
 import boto3
 import requests
+from bson import ObjectId
 
 from superduperdb.misc.logger import logging
 from superduperdb.misc.progress import progressbar
@@ -163,15 +164,15 @@ class Downloader(BaseDownloader):
 
     def __init__(
         self,
-        uris,
-        update_one=None,
-        ids=None,
-        keys=None,
-        n_workers=20,
-        headers=None,
-        skip_existing=True,
-        timeout=None,
-        raises=True,
+        uris: t.List[str],
+        update_one: t.Optional[t.Callable] = None,
+        ids: t.List[ObjectId] = None,
+        keys: t.Optional[t.List[str]] = None,
+        n_workers: int = 20,
+        headers: t.Optional[int] = None,
+        skip_existing: bool = True,
+        timeout: t.Any = None,
+        raises: bool = True,
     ) -> None:
         super().__init__(
             uris, n_workers=n_workers, timeout=timeout, headers=headers, raises=raises

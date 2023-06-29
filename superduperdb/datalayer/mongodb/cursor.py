@@ -14,7 +14,7 @@ class SuperDuperCursor(Cursor):
         *args: t.Any,
         features: t.Optional[t.Dict] = None,
         scores: t.Optional[t.Dict] = None,
-        similar_join=None,
+        similar_join: t.Any = None,
         **kwargs: t.Any,
     ) -> None:
         """

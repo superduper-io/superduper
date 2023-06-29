@@ -113,7 +113,7 @@ class ModelEnsemble:
                 setattr(self, m, Placeholder('model', m))
                 self._model_ids.append(m)
 
-    def __getitem__(self, submodel: t.Union[int, str]):
+    def __getitem__(self, submodel: t.Union[int, str]) -> Model:
         if isinstance(submodel, int):
             submodel = next(m for i, m in enumerate(self._model_ids) if i == submodel)
         submodel = getattr(self, submodel)

@@ -50,7 +50,7 @@ class Pipeline(Model):
             encoder=encoder,
         )
 
-    def _get_data(self):
+    def _get_data(self) -> t.Tuple[QueryDataset, QueryDataset]:
         tokenizing_function = TokenizingFunction(self.object.tokenizer)
         train_data = QueryDataset(
             select=self.training_select,
@@ -78,7 +78,7 @@ class Pipeline(Model):
         validation_sets: t.Optional[t.List[str]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
         serializer: str = 'pickle',
-    ):
+    ) -> t.Any:
         if training_configuration is not None:
             self.training_configuration = training_configuration
         if select is not None:

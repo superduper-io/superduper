@@ -105,7 +105,7 @@ class Component(BaseComponent):
         self.version: t.Optional[int] = None
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         if self.version is None:
             raise Exception('Version not yet set for component uniqueness')
         return f'{self.variety}/{self.identifier}/{self.version}'
@@ -131,7 +131,7 @@ class Component(BaseComponent):
         return out
 
     @contextmanager
-    def saving(self):
+    def saving(self) -> t.Iterator['BaseDatabase']:
         try:
             print('Stripping sub-components to references')
             cache = strip(self, top_level=True)[1]
@@ -139,7 +139,7 @@ class Component(BaseComponent):
         finally:
             restore(self, cache)
 
-    def repopulate(self, database: 'BaseDatabase'):  # noqa: F821 why?
+    def repopulate(self, database: 'BaseDatabase') -> 'BaseDatabase':  # noqa: F821 why?
         """
         Set all attributes which were separately saved and serialized.
 
@@ -185,7 +185,7 @@ class Component(BaseComponent):
 
         return self
 
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, str]:
         return {'identifier': self.identifier}
 
     def was_stripped(self) -> bool:
@@ -202,7 +202,7 @@ class Component(BaseComponent):
             getattr(self, attr)
             for attr in vars(self)
             if isinstance(getattr(self, attr), BaseComponent)
-               or isinstance(getattr(self, attr), BasePlaceholder)
+            or isinstance(getattr(self, attr), BasePlaceholder)
         ]
         if not subcomponents:
             return super_repr
@@ -239,11 +239,15 @@ class ComponentList(BaseComponent):
                 self[i] = database.load(self.variety, item)
             self[i], _ = self[i].repopulate(database)
 
-    def aslist(self):
+    def aslist(self) -> t.List:
         return [c.identifier for c in self]
 
 
-def strip(component: BaseComponent, top_level=True) -> t.Union[BaseComponent, 'BaseDatabase', BasePlaceholder]:
+def strip(
+    component: BaseComponent, top_level=True
+) -> t.Tuple[
+    BaseComponent, t.Dict[int, t.Union[Component, 'BaseDatabase', BaseComponent]]
+]:
     """
     Strip component down to object which doesn't contain a BaseComponent part.
     This may be applied so that objects aren't redundantly serialized and replaced
@@ -298,7 +302,9 @@ def strip(component: BaseComponent, top_level=True) -> t.Union[BaseComponent, 'B
 
 
 # ruff: noqa: E501
-def restore(component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict):
+def restore(
+    component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict
+) -> t.Union[BaseComponent, BasePlaceholder]:
     if isinstance(component, PlaceholderList):
         return ComponentList(component.variety, [restore(c, cache) for c in component.placeholders])  # type: ignore[arg-type]
     if isinstance(component, Placeholder):
@@ -313,7 +319,9 @@ def restore(component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict):
     return component
 
 
-def is_placeholders_or_components(items: t.Union[t.List[t.Any], t.Tuple]) -> t.Tuple[bool, bool]:
+def is_placeholders_or_components(
+    items: t.Union[t.List[t.Any], t.Tuple]
+) -> t.Tuple[bool, bool]:
     """
     Test whether the list is just strings and also test whether it's just components
     """

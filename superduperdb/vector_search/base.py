@@ -72,10 +72,10 @@ class BaseHashSet:
 
     def find_nearest_from_hashes(
         self, h: t.Union[numpy.ndarray, torch.Tensor], n: int = 100
-    ):
+    ) -> t.Tuple[t.List[t.List], t.List[t.List]]:
         raise NotImplementedError
 
-    def __getitem__(self, item: t.Any):
+    def __getitem__(self, item: t.Any) -> 'BaseHashSet':
         raise NotImplementedError
 
 

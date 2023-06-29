@@ -573,7 +573,7 @@ class BaseDatabase:
         serializer: t.Optional[str] = None,
         serializer_kwargs: t.Optional[t.Dict] = None,
         upsert: bool = False,
-    ):
+    ) -> t.Optional[t.List]:
         try:
             info = self.metadata.get_component(
                 'model', identifier, version=object.version

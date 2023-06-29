@@ -25,7 +25,7 @@ def get_data_from_query(
     X: str,
     y: t.Optional[str] = None,
     y_preprocess: t.Optional[t.Callable] = None,
-):
+) -> t.Tuple[t.List, t.List]:
     data = QueryDataset(
         select=select,
         keys=[X] if y is None else [X, y],
@@ -72,7 +72,7 @@ class Base(Model):
         training_configuration: t.Optional[SklearnTrainingConfiguration] = None,
         validation_sets: t.Optional[t.List[str]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
-    ):
+    ) -> t.Any:
         if training_configuration is not None:
             self.training_configuration = training_configuration
         if select is not None:

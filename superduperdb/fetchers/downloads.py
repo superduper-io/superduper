@@ -18,12 +18,12 @@ class TimeoutException(Exception):
     ...
 
 
-def timeout_handler(signum: t.Any, frame: t.Callable):  # pragma: no cover
+def timeout_handler(signum: t.Any, frame: t.Callable) -> None:  # pragma: no cover
     raise TimeoutException()
 
 
 @contextmanager
-def timeout(seconds: int):  # pragma: no cover
+def timeout(seconds: int) -> t.Generator:  # pragma: no cover
     old_handler = signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(seconds)
     try:

@@ -84,13 +84,13 @@ class Base(Model):
         self.validation_sets = validation_sets
 
     @contextmanager
-    def evaluating(self):
+    def evaluating(self) -> t.Generator:
         raise NotImplementedError
 
-    def train(self):
+    def train(self) -> t.Any:
         raise NotImplementedError
 
-    def build_optimizers(self):
+    def build_optimizers(self) -> t.Tuple[t.Type]:
         return (
             self.training_configuration.optimizer_cls(
                 self.object.parameters(),
@@ -114,7 +114,7 @@ class Base(Model):
                 return True
         return False
 
-    def saving_criterion(self):
+    def saving_criterion(self) -> bool:
         if self.training_configuration.watch == 'objective':
             to_watch = [-x for x in self.metric_values['objective']]
         else:
@@ -132,7 +132,7 @@ class Base(Model):
         validation_sets: t.Optional[t.List[str]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
         serializer: str = 'pickle',
-    ):
+    ) -> None:
         if training_configuration is not None:
             self.training_configuration = training_configuration
         if select is not None:
@@ -180,7 +180,7 @@ class Base(Model):
         else:
             return [self.object(X), *targets]
 
-    def forward(self, X):
+    def forward(self, X :t.Any) -> t.Any:
         return self.object(X)
 
     def take_step(self, batch):
@@ -218,7 +218,7 @@ class Base(Model):
                 )
             return sum(objective_values) / len(objective_values)
 
-    def save(self, database: BaseDatabase, serializer: str = 'pickle'):
+    def save(self, database: BaseDatabase, serializer: str = 'pickle') -> None:
         database._replace_model(
             self.identifier,
             self,
@@ -242,7 +242,7 @@ class Base(Model):
         database: BaseDatabase,
         validation_sets: t.List[str],
         serializer: str = 'pickle',
-    ):
+    ) -> None:
         self.train()
         iteration = 0
         while True:
@@ -267,7 +267,7 @@ class Base(Model):
                         return
                 iteration += 1
 
-    def _get_data(self):
+    def _get_data(self) -> t.Tuple[QueryDataset, QueryDataset]:
         preprocessors = {self.training_keys[0]: self.preprocess}
         for k in self.training_keys:
             preprocessors[k] = self.training_configuration.target_preprocessors.get(
@@ -329,10 +329,10 @@ class TorchPipeline(Base):
         )
 
     @contextmanager
-    def evaluating(self):
+    def evaluating(self) -> t.Generator:
         yield eval(self.object)
 
-    def train(self):
+    def train(self) -> t.Any:
         return self.object.train()
 
     def __repr__(self):
@@ -359,7 +359,7 @@ class TorchPipeline(Base):
         return isinstance(x, list)
 
     @property
-    def steps(self):
+    def steps(self) -> t.Any:
         return self._steps
 
     def preprocess(self, x):
@@ -373,14 +373,14 @@ class TorchPipeline(Base):
         return x
 
     @property
-    def preprocess_pipeline(self):
+    def preprocess_pipeline(self) -> 'TorchPipeline':
         return TorchPipeline(
             identifier=f'{self.identifier}/preprocess',
             steps=self.steps[: self._forward_mark],
         )
 
     @property
-    def forward_pipeline(self):
+    def forward_pipeline(self) -> torch.nn.Sequential:
         if self._forward_sequential is None:
             forward_steps = self.steps[self._forward_mark : self._post_mark]
             self._forward_sequential = torch.nn.Sequential(
@@ -389,13 +389,13 @@ class TorchPipeline(Base):
         return self._forward_sequential
 
     @property
-    def postprocess_pipeline(self):
+    def postprocess_pipeline(self) -> 'TorchPipeline':
         return TorchPipeline(
             identifier=f'{self.identifier}/postprocess',
             steps=self.steps[self._post_mark :],
         )
 
-    def postprocess(self, x):
+    def postprocess(self, x: torch.Tensor) -> torch.Tensor:
         for s in self.steps[self._post_mark :]:
             transform = s[1]
             if hasattr(transform, 'transform'):
@@ -405,7 +405,7 @@ class TorchPipeline(Base):
                 x = transform(x)
         return x
 
-    def predict(self, x, **kwargs):
+    def predict(self, x: t.Any, **kwargs: t.Dict[str, t.Any]) -> t.Union[t.List[torch.Tensor, torch.Tensor]]:
         if not self._test_if_batch(x):
             return self._predict_one(x, **kwargs)
         if self.preprocess_pipeline.steps:
@@ -427,7 +427,7 @@ class TorchPipeline(Base):
             out.extend(tmp)
         return out
 
-    def _predict_one(self, x, **kwargs):
+    def _predict_one(self, x : t.Any , **kwargs: t.Any) -> torch.Tensor:
         with torch.no_grad(), eval(self.forward_pipeline):
             x = self.preprocess(x)
             x = to_device(x, device_of(self.forward_pipeline))
@@ -437,7 +437,7 @@ class TorchPipeline(Base):
             return self.postprocess(output)
 
     @contextmanager
-    def eval(self):
+    def eval(self) -> t.Generator:
         was_training = self.forward_pipeline.steps[0][1].training
         try:
             for s in self.forward_pipeline.steps:
@@ -451,7 +451,7 @@ class TorchPipeline(Base):
     saving = eval
 
     @steps.setter  # type: ignore[no-redef,attr-defined]
-    def steps(self, value):
+    def steps(self, value: t.Any) -> None:
         self._steps = value
         try:
             self._forward_mark = next(
@@ -473,7 +473,7 @@ class TorchPipeline(Base):
         except StopIteration:
             self._post_mark = len(self.steps)
 
-    def parameters(self):
+    def parameters(self) -> t.Generator:
         for s in self.forward_pipeline.steps:
             yield from s[1].parameters()
 
@@ -525,7 +525,7 @@ class TorchModel(Base):
         if hasattr(self.object, 'postprocess'):
             self._postprocess = self.object.postprocess
 
-    def build_optimizers(self):
+    def build_optimizers(self) -> t.Tuple[t.Type]:
         return (
             self.training_configuration.optimizer_cls(
                 self.object.parameters(),
@@ -534,20 +534,20 @@ class TorchModel(Base):
         )
 
     @contextmanager
-    def evaluating(self):
+    def evaluating(self) -> t.Generator:
         yield eval(self)
 
-    def train(self):
+    def train(self) -> t.Any:
         return self.object.train()
 
-    def parameters(self):
+    def parameters(self) -> t.Any:
         return self.object.parameters()
 
-    def state_dict(self):
+    def state_dict(self) -> t.Dict[str, t.Any]:
         return self.object.state_dict()
 
     @contextmanager
-    def saving(self):
+    def saving(self) -> t.Generator:
         with super().saving():
             was_training = self.object.training
             try:
@@ -557,7 +557,7 @@ class TorchModel(Base):
                 if was_training:
                     self.object.train()
 
-    def __getstate__(self):
+    def __getstate__(self) -> t.Dict:
         state = self.__dict__.copy()
         if isinstance(self.object, torch.jit.ScriptModule) or isinstance(
             self.object, torch.jit.ScriptFunction
@@ -567,7 +567,7 @@ class TorchModel(Base):
             state['_object_bytes'] = f.getvalue()
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: t.Dict) -> None:
         keys = state.keys()
         for k in keys:
             if k != '_object_bytes':
@@ -577,7 +577,7 @@ class TorchModel(Base):
                     io.BytesIO(state.pop('object_bytes'))
                 )
 
-    def _predict_one(self, x):
+    def _predict_one(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad(), eval(self.object):
             if hasattr(self.object, 'preprocess'):
                 x = self.object.preprocess(x)
@@ -590,7 +590,11 @@ class TorchModel(Base):
                 args = self.object.postprocess(args)
             return args
 
-    def predict(self, x, **kwargs):
+    def predict(
+        self,
+        x: t.Union[torch.Tensor, t.List[torch.Tensor]],
+        **kwargs: t.Dict[str, t.Any],
+    ) -> t.Union[torch.Tensor, t.List[torch.Tensor]]:
         with torch.no_grad(), eval(self.object):
             if not isinstance(x, list) and not test_if_batch(x, self.num_directions):
                 return self._predict_one(x)
@@ -606,18 +610,18 @@ class TorchModel(Base):
                 out.extend(tmp)
             return out
 
-    def preprocess(self, r):
+    def preprocess(self, r: torch.Tensor) -> torch.Tensor:
         if self._preprocess is not None:
             return self._preprocess(r)
         return r
 
-    def postprocess(self, r):
+    def postprocess(self, r: torch.Tensor) -> torch.Tensor:
         if self._postprocess is not None:
             return self._postprocess(r)
         return r
 
 
-def test_if_batch(x, num_directions: t.Union[t.Dict, int]):
+def test_if_batch(x: torch.Tensor, num_directions: t.Union[t.Dict, int]) -> bool:
     """
     :param x: item to test whether batch or singleton
     :param num_directions: dictionary to test a leaf node in ``x`` whether batch or not
@@ -650,15 +654,15 @@ class BasicDataset(data.Dataset):
     :param transform: function
     """
 
-    def __init__(self, documents, transform):
+    def __init__(self, documents: t.List[Document], transform: t.Callable) -> None:
         super().__init__()
         self.documents = documents
         self.transform = transform
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.documents)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: t.Any) -> t.Any:
         document = self.documents[item]
         if isinstance(document, Document):
             document = document.unpack()
@@ -667,7 +671,14 @@ class BasicDataset(data.Dataset):
         return self.transform(document)
 
 
-def unpack_batch(args):
+def unpack_batch(
+    args: t.Union[
+        t.List[torch.Tensor],
+        t.Tuple[torch.Tensor],
+        t.Dict[str, torch.Tensor],
+        torch.Tensor,
+    ]
+) -> t.Union[t.List[t.List], t.List[t.Dict]]:
     """
     Unpack a batch into lines of tensor output.
 
@@ -709,7 +720,16 @@ def unpack_batch(args):
             raise NotImplementedError
 
 
-def create_batch(args):
+def create_batch(
+    args: t.Union[
+        t.List[torch.Tensor],
+        t.Tuple[torch.Tensor],
+        t.Dict[str, torch.Tensor],
+        torch.Tensor,
+        float,
+        int,
+    ]
+):
     """
     Create a singleton batch in a manner similar to the PyTorch dataloader
 
@@ -766,7 +786,7 @@ class TorchModelEnsemble(Base, ModelEnsemble):
         )
         ModelEnsemble.__init__(self, models)  # type: ignore[arg-type]
 
-    def train_preprocess(self, r):
+    def train_preprocess(self, r: t.Dict[str, t.Any]) -> t.Dict[str, t.Any]:
         out = {}
         for i, k in enumerate(self.training_keys[0]):
             model_id = self._model_ids[i]
@@ -778,7 +798,7 @@ class TorchModelEnsemble(Base, ModelEnsemble):
             out[k] = preprocessor(r[k])
         return out
 
-    def build_optimizers(self):
+    def build_optimizers(self) -> t.List[t.Type]:
         optimizers = []
         for m in self._model_ids:
             optimizers.append(
@@ -790,7 +810,7 @@ class TorchModelEnsemble(Base, ModelEnsemble):
         return optimizers
 
     @contextmanager
-    def evaluating(self):
+    def evaluating(self) -> t.Generator:
         was_training = getattr(self, self._model_ids[0]).object.training
         try:
             for m in self._model_ids:
@@ -801,11 +821,11 @@ class TorchModelEnsemble(Base, ModelEnsemble):
                 for m in self._model_ids:
                     getattr(self, m).object.train()
 
-    def train(self):
+    def train(self) -> None:
         for m in self._model_ids:
             getattr(self, m).train()
 
-    def _get_data(self):
+    def _get_data(self) -> t.Tuple[QueryDataset, QueryDataset]:
         train_data = QueryDataset(
             select=self.training_select,
             keys=[*self.training_keys[0], *self.training_keys[1:]],
@@ -820,7 +840,7 @@ class TorchModelEnsemble(Base, ModelEnsemble):
         )
         return train_data, valid_data
 
-    def train_forward(self, X, *targets) -> t.Tuple[t.List, t.List]:
+    def train_forward(self, X: t.Any, *targets: t.Tuple) -> t.Tuple[t.List, t.List]:
         out = []
         for i, k in enumerate(self.training_keys[0]):
             submodel = getattr(self, self._model_ids[i])

@@ -89,10 +89,10 @@ def test_download():
     test = setup_test_client()
 
     blob = bytes(range(256))
-    test.server.artifact_store['test-key'] = blob
+    test_key = test.server.document_store.put(blob)
 
     with TestClient(test.server.app) as client:
-        response = client.get('/download/test-key')
+        response = client.get(f'/download/{test_key}')
         assert response.status_code == 200
         assert response.content == blob
 

@@ -16,7 +16,7 @@ class Cache(abc.ABC):
 
 @dc.dataclass
 class KeyCache(t.Generic[Entry], Cache):
-    def put(self, entry: Entry) -> str:
+    def put(self, entry: Entry, key: t.Optional[str] = None) -> str:
         """Put an item into the cache, return a string key"""
         with self._lock:
             try:
@@ -24,16 +24,25 @@ class KeyCache(t.Generic[Entry], Cache):
             except KeyError:
                 pass
 
-            key = str(len(self._cache))
-            self._cache.append(entry)
+            if key is None:
+                key = str(len(self._cache))
+                while key in self:
+                    key += 'x'  # Will rarely happen
+            else:
+                assert key not in self
+
+            self._cache[key] = entry
             self._inverse[entry] = key
 
             return key
 
     def get(self, key: str) -> Entry:
         """Given a key, returns an entry or raises KeyError"""
-        return self._cache[int(key)]  # Atomic operation, no lock needed.
+        return self._cache[key]  # Atomic operation, no lock needed.
 
-    _cache: t.List[Entry] = dc.field(default_factory=list)
+    def __contains__(self, key: str) -> bool:
+        return key in self._cache
+
+    _cache: t.Dict[str, Entry] = dc.field(default_factory=dict)
     _inverse: t.Dict[Entry, str] = dc.field(default_factory=dict)
     _lock: Lock = dc.field(default_factory=Lock)

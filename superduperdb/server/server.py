@@ -3,10 +3,10 @@ from enum import Enum
 from fastapi import FastAPI, HTTPException, Response, UploadFile
 from fastapi.responses import FileResponse, PlainTextResponse
 from functools import cached_property
-from http import HTTPStatus as status
+from http import HTTPStatus
 from pathlib import Path
+from superduperdb.misc.key_cache import KeyCache
 import dataclasses as dc
-import fastapi
 import superduperdb as s
 import typing as t
 import uvicorn
@@ -15,13 +15,14 @@ MEDIA_TYPE = 'application/octet-stream'
 HERE = Path(__file__).parent
 FAVICON = HERE / 'favicon.ico'
 INDEX_HTML = Path(__file__).parent / 'index.html'
+OK, NOT_FOUND = HTTPStatus.OK, HTTPStatus.NOT_FOUND
 
 
 @dc.dataclass
 class Server:
     cfg: s.config.Server = dc.field(default_factory=s.CFG.server.deepcopy)
     stats: t.Dict = dc.field(default_factory=dict)
-    artifact_store: t.Dict = dc.field(default_factory=dict)  # TODO: Use URIDocument
+    document_store: KeyCache = dc.field(default_factory=KeyCache)
     count: int = 0
 
     @cached_property
@@ -75,31 +76,30 @@ class Server:
         def favicon():
             return FileResponse(FAVICON)
 
-        @self.app.get('/download/{artifact_key}', response_class=Response)
-        def download(artifact_key: str) -> Response:
-            if not (content := self.artifact_store.get(artifact_key)):
-                print(self.artifact_store, artifact_key)
-                raise HTTPException(
-                    status.NOT_FOUND, f'Unknown artifact {artifact_key}'
-                )
+        @self.app.get('/download/{document_key}', response_class=Response)
+        def download(document_key: str) -> Response:
+            try:
+                doc = self.document_store.get(document_key)
+            except KeyError:
+                raise HTTPException(NOT_FOUND, f'Unknown document {document_key}')
 
-            elif not isinstance(content, bytes):
-                if not callable(encode := getattr(content, 'encode', None)):
-                    msg = f'Uncodable artifact {artifact_key}'
-                    raise HTTPException(status.NOT_FOUND, msg)
+            try:
+                content = doc.encode()
+            except Exception:
+                content = doc
 
-                content = encode()
+            if not isinstance(content, bytes):
+                raise HTTPException(NOT_FOUND, f'Uncodable document {document_key}')
 
-            return fastapi.Response(
-                content=content, status_code=status.OK, media_type=MEDIA_TYPE
-            )
+            return Response(content=content, status_code=OK, media_type=MEDIA_TYPE)
 
         self.count += 1
 
-        @self.app.post('/upload/{artifact_key}')
+        @self.app.post('/upload/{document_key}')
         async def upload(file: UploadFile):
-            exists = file.filename in self.artifact_store
-            self.artifact_store[file.filename] = await file.read()
+            exists = file.filename in self.document_store
+            data = await file.read()
+            self.document_store.put(data, file.filename)
 
             action = 'replaced' if exists else 'created'
             return {action: file.filename}

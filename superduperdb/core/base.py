@@ -243,7 +243,7 @@ class ComponentList(BaseComponent):
         return [c.identifier for c in self]
 
 
-def strip(component: BaseComponent, top_level=True) -> t.Union[BaseComponent, BaseDatabase, BasePlaceholder]:
+def strip(component: BaseComponent, top_level=True) -> t.Union[BaseComponent, 'BaseDatabase', BasePlaceholder]:
     """
     Strip component down to object which doesn't contain a BaseComponent part.
     This may be applied so that objects aren't redundantly serialized and replaced

@@ -47,7 +47,7 @@ class Encoder(Component, EncoderDesc):
         Component.__init__(self, identifier)
         EncoderDesc.__init__(self, identifier, *a, **ka)
 
-    def __call__(self, x: t.Any) -> Encodable:
+    def __call__(self, x: t.Any) -> 'Encodable':
         return Encodable(x, self)
 
     def decode(self, b: bytes) -> t.Any:

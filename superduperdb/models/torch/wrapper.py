@@ -384,7 +384,7 @@ class TorchPipeline(Base):
         )
 
     @property
-    def forward_pipeline(self) -> torch.nn.Sequential:
+    def forward_pipeline(self) -> t.Optional[torch.nn.Sequential]:
         if self._forward_sequential is None:
             forward_steps = self.steps[self._forward_mark : self._post_mark]
             self._forward_sequential = torch.nn.Sequential(

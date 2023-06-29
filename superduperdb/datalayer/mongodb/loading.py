@@ -42,7 +42,7 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
     def collection(self) -> t.Any:
         return self.database[self._collection]
 
-    def __iter__(self) -> t.Iterable:
+    def __iter__(self) -> t.Iterator:
         worker_info = data.get_worker_info()
         if worker_info is None:
             for r in self.collection.find(self.filter, {'_id': 0}):

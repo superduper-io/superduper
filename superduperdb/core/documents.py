@@ -1,6 +1,8 @@
 import dataclasses as dc
 import typing as t
 
+from pymongo.collection import Collection
+
 from superduperdb.core.encoder import Encodable
 
 
@@ -28,7 +30,7 @@ class Document:
 
     @classmethod
     def decode(
-        cls, r: t.Union[t.Dict, 'Document'], types: t.Dict
+        cls, r: t.Union[t.Dict, 'Document'], types: t.Union[t.Dict, Collection]
     ) -> t.Union['Document', t.Dict, t.List]:
         if isinstance(r, Document):
             return Document(cls._decode(r, types))

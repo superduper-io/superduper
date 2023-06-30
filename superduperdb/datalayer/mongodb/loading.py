@@ -15,7 +15,7 @@ class MongoIterable(data.IterableDataset):  # pragma: no cover
     def __init__(
         self,
         client: t.Any,
-        database: BaseDatabase,
+        database: str,
         collection: Collection,
         transform: t.Any = None,
         filter: t.Any = None,

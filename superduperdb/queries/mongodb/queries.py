@@ -122,7 +122,6 @@ class Find(Select):
     like_parent: t.Optional[PreLike] = None
     args: t.Optional[t.List] = Field(default_factory=lambda: [])
     kwargs: t.Optional[t.Dict] = Field(default_factory=lambda: {})
-    raw: bool = False
 
     @property
     def parent(self):
@@ -182,7 +181,6 @@ class Find(Select):
             like_parent=self.like_parent,
             args=args,
             kwargs=self.kwargs,
-            raw=self.raw,
         )
 
     def featurize(self, features):
@@ -195,7 +193,6 @@ class Find(Select):
         cursor = Find(
             collection=self.collection,
             like_parent=self.like_parent,
-            raw=self.raw,
             args=args,
             kwargs=self.kwargs,
         )(db)
@@ -243,10 +240,8 @@ class Find(Select):
             )
         else:
             raise NotImplementedError
-        if self.raw:
-            return cursor
-        else:
-            return SuperDuperCursor(raw_cursor=cursor, id_field='_id', types=db.types)
+
+        return SuperDuperCursor(raw_cursor=cursor, id_field='_id', types=db.types)
 
 
 class FeaturizeOne(SelectOne):

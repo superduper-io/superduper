@@ -12,9 +12,6 @@ from superduperdb.misc import progress
 from superduperdb.datalayer.query_dataset import QueryDataset
 
 
-# TODO fix the tests for this one, before moving onto PyTorch pipeline etc.
-
-
 def postprocess(f):
     f.superduper_postprocess = True
     return f

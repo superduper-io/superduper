@@ -29,9 +29,10 @@ class Collection(BaseModel):
     def insert_one(self, *args, **kwargs):
         return InsertOne(collection=self, args=args, kwargs=kwargs)
 
-    def insert_many(self, *args, refresh=True, **kwargs):
+    def insert_many(self, *args, refresh=True, encoders=(), **kwargs):
         return InsertMany(
             collection=self,
+            encoders=encoders,
             documents=args[0],
             args=args[1:],
             refresh=refresh,
@@ -398,6 +399,7 @@ class InsertMany(Insert):
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
     valid_prob: float = 0.05
+    encoders: t.List = Field(default_factory=list)
 
     @property
     def table(self):
@@ -411,6 +413,8 @@ class InsertMany(Insert):
         return Find(collection=self.collection, args=[{'_id': {'$in': ids}}])
 
     def __call__(self, db: BaseDatabase):
+        for e in self.encoders:
+            db.add(e)
         documents = [r.encode() for r in self.documents]
         for r in documents:
             if random.random() < self.valid_prob:

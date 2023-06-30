@@ -9,5 +9,6 @@ ICON = '🔮'
 ROOT = Path(__file__).parent
 
 from .misc import logger  # noqa: E402
+from .auto.superduper import superduper
 
 log = logger.logging

@@ -1,16 +1,15 @@
 from superduperdb.core.encoder import Encodable
-import dataclasses as dc
+from superduperdb.misc.uri_cache import Cached
 import typing as t
 
+ContentType = t.Union[t.Dict, Encodable]
 
-@dc.dataclass
-class Document:
+
+class Document(Cached[ContentType]):
     """
     A wrapper around an instance of dict or a Encodable which may be used to dump
     that resource to a mix of jsonable content or `bytes`
     """
-
-    content: t.Union[t.Dict, Encodable]
 
     def __hash__(self):
         return super().__hash__()

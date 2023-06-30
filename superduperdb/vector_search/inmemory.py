@@ -16,13 +16,15 @@ from .base import (
     VectorCollectionItem,
     VectorCollectionItemId,
     VectorCollectionItemNotFound,
-    VectorIndexMeasure,
     VectorCollectionConfig,
+    VectorIndexMeasureType,
 )
 
 
 class InMemoryVectorCollection(VectorCollection):
-    def __init__(self, *, dimensions: int, measure: VectorIndexMeasure = 'l2') -> None:
+    def __init__(
+        self, *, dimensions: int, measure: VectorIndexMeasureType = 'l2'
+    ) -> None:
         super().__init__()
         self._index = VanillaHashSet(
             numpy.empty((0, dimensions), dtype='float32'),
@@ -85,7 +87,7 @@ class InMemoryVectorCollection(VectorCollection):
             return self._convert_ids_scores_to_results(ids[offset:], scores[offset:])
 
     def _convert_ids_scores_to_results(
-        self, ids: numpy.ndarray, scores: numpy.ndarray
+        self, ids: t.List, scores: t.List[float]
     ) -> t.List[VectorCollectionResult]:
         results: t.List[VectorCollectionResult] = []
         for id, score in zip(ids, scores):
@@ -109,6 +111,6 @@ class InMemoryVectorDatabase(VectorDatabase):
         collection = self._collections.get(config.id)
         if not collection:
             collection = self._collections[config.id] = InMemoryVectorCollection(
-                dimensions=config.dimensions, measure=config.measure
+                dimensions=config.dimensions, measure=config.measure  # type: ignore
             )
         yield collection

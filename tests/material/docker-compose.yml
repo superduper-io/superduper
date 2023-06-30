@@ -124,3 +124,14 @@ services:
     depends_on:
       - milvus-etcd
       - milvus-minio
+
+  server:
+    build:
+      context: ../..
+      dockerfile: ./tests/material/server.Dockerfile
+      target: server
+    depends_on:
+      - mongodb
+    ports:
+      - "3223:3223"
+

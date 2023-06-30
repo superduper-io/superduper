@@ -536,9 +536,8 @@ class BaseDatabase:
                 documents = list(self.select(query))
             else:
                 select = query.select_using_ids(ids)
-                select.raw = True
-                documents = list(self.execute(select))
-                documents = [Document(x) for x in documents]
+                cursor = self.select(select).raw_cursor  # type: ignore[attr-defined]
+                documents = [Document(x) for x in cursor]
         elif isinstance(query, Insert):
             documents = query.documents
         else:

@@ -16,7 +16,6 @@ from superduperdb.core.documents import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.fit import Fit
 from superduperdb.core.model import Model
-from superduperdb.core.vector_index import VectorIndex
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
 from superduperdb.datalayer.base.metadata import MetaDataStore
@@ -593,7 +592,7 @@ class BaseDatabase:
             )
         return documents
 
-    def _get_content_for_filter(self, filter):
+    def _get_content_for_filter(self, filter) -> Document:
         if isinstance(filter, dict):
             filter = Document(filter)
         if '_id' not in filter.content:
@@ -730,29 +729,24 @@ class BaseDatabase:
         self.artifact_store.delete_artifact(info['object'])
         self.metadata.update_object(identifier, 'model', 'object', file_id)
 
-    # ruff: noqa: E501
     def _select_nearest(
         self,
-        # like: Document,
         like: t.Dict,
         vector_index: str,
         ids: Optional[List[str]] = None,
         outputs: Optional[Document] = None,
         n: int = 100,
     ) -> Tuple[List[str], List[float]]:
-        like = Document(like)  # type: ignore[assignment]
-        like = self._get_content_for_filter(like)
-        vector_index: VectorIndex = self.vector_indices[vector_index]  # type: ignore[no-redef]
+        dl = self._get_content_for_filter(Document(like))
+        vi = self.vector_indices[vector_index]
 
         if outputs is None:
-            outputs = {}  # type: ignore[assignment]
+            outs = {}
         else:
-            outputs = outputs.encode()
-            if not isinstance(outputs, dict):
+            outs = outputs.encode()
+            if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
-        return vector_index.get_nearest(  # type: ignore[attr-defined]
-            like, database=self, ids=ids, n=n, outputs=outputs
-        )
+        return vi.get_nearest(dl, database=self, ids=ids, n=n, outputs=outs)
 
     @work
     def _fit(self, identifier) -> None:

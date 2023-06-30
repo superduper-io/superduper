@@ -48,6 +48,7 @@ class Inclus:
 
 def test_dataclasses():
     assert Un(eleven='HAHA!').dict() == UN
+    assert Un(eleven='HAHA!').eleven == 'HAHA!'
     assert Inclus(Un()).asdict() == {'ein': UN}
     assert Inclus(**{'ein': UN}) == Inclus(Un())
 

@@ -637,7 +637,7 @@ class BaseDatabase:
         recompute=False,
         watcher_info=None,
         **kwargs,
-    ):
+    ) -> t.List:
         if watcher_info is None:
             watcher_info = self.metadata.get_component('watcher', identifier)
 

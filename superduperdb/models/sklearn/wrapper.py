@@ -8,8 +8,8 @@ from superduperdb.core.model import Model, TrainingConfiguration
 from superduperdb.core.metric import Metric
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.base.query import Select
-from superduperdb.misc import progress
 from superduperdb.datalayer.query_dataset import QueryDataset
+from tqdm import tqdm
 
 
 # TODO fix the tests for this one, before moving onto PyTorch pipeline etc.
@@ -31,7 +31,7 @@ def get_data_from_query(
         keys=[X] if y is None else [X, y],
     )
     documents = []
-    for i in progress.progressbar(range(len(data))):
+    for i in tqdm(range(len(data))):
         r = data[i]
         documents.append(r)
     X_arr = [r[X] for r in documents]

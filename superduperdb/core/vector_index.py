@@ -220,7 +220,7 @@ class VectorIndex(Component):
             )
 
     @property
-    def models_keys(self):
+    def models_keys(self) -> t.Tuple[t.List[str], t.List[str]]:
         watchers = [self.indexing_watcher, *self.compatible_watchers]
         models = [w.model.identifier for w in watchers]
         keys = [w.key for w in watchers]
@@ -232,7 +232,7 @@ class VectorIndex(Component):
         database: 'superduperdb.datalayer.base.database.Database',  # type: ignore[name-defined]
         validation_data: t.Union[str, Dataset],
         metrics: t.List[Metric],
-    ):
+    ) -> t.Dict[str, t.List]:
         models, keys = self.models_keys
         models = [database.models[m] for m in models]
         if isinstance(validation_data, str):
@@ -251,7 +251,7 @@ class VectorIndex(Component):
             metrics=metrics,
         )
 
-    def asdict(self):
+    def asdict(self) -> t.Dict[str, t.Any]:
         return {
             'identifier': self.identifier,
             'indexing_watcher': self.indexing_watcher.identifier,

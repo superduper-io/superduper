@@ -40,7 +40,7 @@ class VectorSearchPerformance:
         validation_data: t.Union[QueryDataset, t.List],
         model: t.Union[Model, ModelEnsemble],
         metrics: t.List[Metric],
-    ):
+    ) -> t.Dict[str, t.List]:
         if hasattr(model, 'training_keys') and model.training_keys is not None:
             keys = model.training_keys[0]
         else:

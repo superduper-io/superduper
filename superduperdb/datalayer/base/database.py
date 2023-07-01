@@ -1,3 +1,4 @@
+import dataclasses as dc
 import math
 import typing as t
 import warnings
@@ -30,7 +31,6 @@ from superduperdb.datalayer.base.query import (
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.logger import logging
-from superduperdb.misc.special_dicts import ArgumentDefaultDict
 from superduperdb.queries.serialization import from_dict
 from superduperdb.vector_search.base import VectorDatabase
 from superduperdb.core.components import components
@@ -79,16 +79,10 @@ class BaseDatabase:
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
     ):
-        self.metrics = ArgumentDefaultDict(
-            lambda x: self.load('metric', x)  # type: ignore
-        )
-        self.models = ArgumentDefaultDict(
-            lambda x: self.load('model', x)  # type: ignore
-        )
-        self.types = ArgumentDefaultDict(lambda x: self.load('type', x))  # type: ignore
-        self.vector_indices = ArgumentDefaultDict(
-            lambda x: self.load('vector_index', x)  # type: ignore
-        )
+        self.metrics = LoadDict(self, 'metric')
+        self.models = LoadDict(self, 'model')
+        self.types = LoadDict(self, 'type')
+        self.vector_indices = LoadDict(self, 'vector_index')
 
         self.remote = CFG.remote
         self.metadata = metadata
@@ -309,7 +303,7 @@ class BaseDatabase:
         version: Optional[int] = None,
         repopulate: bool = True,
         allow_hidden: bool = False,
-    ) -> t.Type[Component]:
+    ) -> Component:
         """
         Load component using uniquely identifying information.
 
@@ -672,7 +666,7 @@ class BaseDatabase:
                     remote=False,
                     **kwargs,
                 )
-            return
+            return []
 
         model_info = self.metadata.get_component('model', watcher_info['model'])
         outputs = self._compute_model_outputs(
@@ -782,3 +776,13 @@ class BaseDatabase:
         except Exception as e:
             self.remove('fit', identifier, force=True)
             raise e
+
+
+@dc.dataclass
+class LoadDict(dict):
+    database: BaseDatabase
+    field: str
+
+    def __missing__(self, key: str):
+        value = self[key] = self.database.load(self.field, key)
+        return value

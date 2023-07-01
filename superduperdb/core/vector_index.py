@@ -209,7 +209,7 @@ class VectorIndex(Component):
         model_input = document[key] if key != '_base' else document
 
         model = database.models[model]
-        h = model.predict(model_input)
+        h = model.predict(model_input)  # type: ignore[attr-defined]
         with self._get_vector_collection() as vector_collection:
             nearest = vector_collection.find_nearest_from_array(
                 h, within_ids=within_ids, limit=n
@@ -238,7 +238,7 @@ class VectorIndex(Component):
         if isinstance(validation_data, str):
             validation_data = database.load('dataset', validation_data)
         unpacked = [r.unpack() for r in validation_data.data]  # type: ignore[union-attr]
-        model_ensemble = ModelEnsemble(models)
+        model_ensemble = ModelEnsemble(models)  # type: ignore[arg-type]
         msg = 'Can only evaluate VectorSearch with compatible watchers...'
         assert len(keys) >= 2, msg
         return VectorSearchPerformance(

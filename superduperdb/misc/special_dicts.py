@@ -17,7 +17,7 @@ class MongoStyleDict(dict):
     Parent keys should exist in order to set subfields:
     >>> d['a.d.e'] = 3
     Traceback (most recent call last):
-    ...
+    ....
     KeyError: 'd'
     """
 

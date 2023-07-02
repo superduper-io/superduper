@@ -42,6 +42,15 @@ class TypedCache:
         name, key = key.split(SEP)
         return self._name_to_cache[name].get(key)
 
+    def expire(self, before: float) -> t.Dict[t.Type, t.Dict[str, t.Any]]:
+        cn = self._class_to_name.items()
+        cc = ((cls, self._name_to_cache[name]) for cls, name in cn)
+        return {cls: cache.expire(before) for cls, cache in cc}
+
+    def __len__(self):
+        with self._lock:
+            return sum(len(i) for i in self._name_to_cache.values())
+
     _class_to_name: t.Dict[t.Type, str] = dc.field(default_factory=dict)
     _lock: Lock = dc.field(default_factory=Lock)
     _name_to_cache: t.Dict[str, KeyCache] = dc.field(default_factory=dict)

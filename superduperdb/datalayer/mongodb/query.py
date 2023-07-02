@@ -68,6 +68,9 @@ class Collection(BaseModel):
     def replace_one(self, *args, **kwargs):
         return ReplaceOne(collection=self, args=args, kwargs=kwargs)
 
+    def change_stream(self, *args, **kwargs):
+        return ChangeStream(collection=self, args=args, kwargs=kwargs)
+
 
 class ReplaceOne(Update):
     collection: Collection
@@ -588,6 +591,27 @@ class Limit(Select):
     @property
     def select_table(self):
         raise NotImplementedError
+
+
+class ChangeStream(BaseModel):
+    collection: Collection
+    args: t.List = Field(default_factory=list)
+    kwargs: t.Dict = Field(default_factory=dict)
+
+    def __call__(self, db: BaseDatabase):
+        resume_token = self.kwargs.get("resume_token")
+        # TODO (high): need to pass change pipeline into watch
+        change = self.kwargs.get("change")
+
+        _db_clct = db.db[self.collection.name]
+        options = {}
+        if resume_token:
+            options['resumeAfter'] = resume_token
+        if options:
+            change_stream_iterator = _db_clct.watch()
+        else:
+            change_stream_iterator = _db_clct.watch()
+        return change_stream_iterator
 
 
 all_items = {

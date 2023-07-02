@@ -1,6 +1,7 @@
 from threading import Lock
 import abc
 import dataclasses as dc
+import time
 import typing as t
 
 Entry = t.TypeVar('Entry')
@@ -25,24 +26,36 @@ class KeyCache(t.Generic[Entry], Cache):
                 pass
 
             if key is None:
-                key = str(len(self._cache))
-                while key in self:
-                    key += 'x'  # Will rarely happen
+                key = str(self._count)
+                self._count += 1
             else:
                 assert key not in self
 
-            self._cache[key] = entry
+            self._cache[key] = entry, time.time()
             self._inverse[entry] = key
 
             return key
 
     def get(self, key: str) -> Entry:
         """Given a key, returns an entry or raises KeyError"""
-        return self._cache[key]  # Atomic operation, no lock needed.
+        with self._lock:
+            return self._cache[key][0]
+
+    def expire(self, before: float) -> t.Dict[str, t.Any]:
+        with self._lock:
+            old = {k: e for k, (e, time) in self._cache.items() if time < before}
+            for key, entry in old.items():
+                self._cache.pop(key)
+                self._inverse.pop(entry)
+            return old
 
     def __contains__(self, key: str) -> bool:
         return key in self._cache
 
-    _cache: t.Dict[str, Entry] = dc.field(default_factory=dict)
+    def __len__(self) -> int:
+        return len(self._cache)
+
+    _cache: t.Dict[str, t.Tuple[Entry, float]] = dc.field(default_factory=dict)
+    _count: int = 0
     _inverse: t.Dict[Entry, str] = dc.field(default_factory=dict)
     _lock: Lock = dc.field(default_factory=Lock)

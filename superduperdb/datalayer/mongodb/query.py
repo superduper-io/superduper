@@ -425,6 +425,8 @@ class InsertOne(Insert):
     my_refresh: bool = Field(default=True, alias='refresh')
     my_verbose: bool = Field(default=True, alias='verbose')
 
+    type_id: t.Literal['mongdb.InsertOne'] = 'mongdb.InsertOne'
+
     def __call__(self, db: BaseDatabase):
         insert = db.db[self.collection.name].insert_one(*self.args, **self.kwargs)
         graph = None
@@ -555,6 +557,8 @@ class Featurize(Select):
 
     type_id: t.Literal['mongdb.Featurize'] = 'mongdb.Featurize'
 
+    type_id: t.Literal['mongdb.Featurize'] = 'mongdb.Featurize'
+
     @property
     def select_table(self):
         return self.parent.select_table
@@ -598,6 +602,8 @@ class Featurize(Select):
 class Limit(Select):
     n: int
     parent: t.Union[Find, PostLike, PreLike, Featurize]
+
+    type_id: t.Literal['mongdb.Limit'] = 'mongdb.Limit'
 
     type_id: t.Literal['mongdb.Limit'] = 'mongdb.Limit'
 

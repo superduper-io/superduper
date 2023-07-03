@@ -41,8 +41,8 @@ class VectorSearchPerformance:
         model: t.Union[Model, ModelEnsemble],
         metrics: t.List[Metric],
     ) -> t.Dict[str, t.List]:
-        if hasattr(model, 'training_keys') and model.training_keys is not None:
-            keys = model.training_keys[0]
+        if hasattr(model, 'train_X') and model.train_X is not None:
+            keys = model.train_X
         else:
             keys = (
                 self.index_key,

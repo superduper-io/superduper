@@ -84,9 +84,6 @@ class MongoMetaDataStore(MetaDataStore):
             {'identifier': identifier}, {'$set': {key: value}}
         )
 
-    def watch_job(self, job_id: str):
-        pass
-
     def show_components(self, variety: str, **kwargs):
         return self.object_collection.distinct(
             'identifier', {'variety': variety, **kwargs}

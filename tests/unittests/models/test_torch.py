@@ -1,5 +1,6 @@
 # ruff: noqa: F401, F811
 import torch
+from torch.optim.adam import Adam
 
 from superduperdb.core.metric import Metric
 from superduperdb.metrics.classification import compute_classification_metrics
@@ -67,13 +68,13 @@ def test_pipeline():
         collate_fn=pad_to_ten,
     )
 
-    out = pl.predict('bla')
+    out = pl._predict('bla')
 
     print(out)
 
     assert isinstance(out, torch.Tensor)
 
-    out = pl.predict(['bla', 'testing'], batch_size=2)
+    out = pl._predict(['bla', 'testing'], batch_size=2)
 
     assert isinstance(out, list)
 
@@ -93,7 +94,7 @@ def test_fit(random_data, si_validation):
         torch.nn.Linear(32, 1),
         'test',
         training_configuration=TorchTrainerConfiguration(
-            optimizer_cls=torch.optim.Adam,
+            optimizer_cls=Adam,
             identifier='my_configuration',
             objective=my_loss,
             loader_kwargs={'batch_size': 10},
@@ -105,17 +106,15 @@ def test_fit(random_data, si_validation):
     )
     m.fit(
         'x',
-        'y',
-        database=random_data,
+        y='y',
+        db=random_data,
         select=Collection(name='documents').find(),
         metrics=[Metric(identifier='acc', object=acc)],
         validation_sets=['my_valid'],
-        serializer='dill',
     )
 
 
-def ranking_loss(X):
-    x, y = X
+def ranking_loss(x, y):
     x = x.div(x.norm(dim=1)[:, None])
     y = y.div(y.norm(dim=1)[:, None])
     similarities = x.matmul(y.T)  # causes a segmentation fault for no reason in pytest
@@ -151,9 +150,9 @@ def test_ensemble(si_validation, metric):
     )
 
     m.fit(
-        ['x', 'z'],
-        training_configuration=config,
-        database=si_validation,
+        X=['x', 'z'],
+        configuration=config,
+        db=si_validation,
         select=Collection(name='documents').find(),
         validation_sets=['my_valid'],
         metrics=[Metric('p@1', PatK(1))],

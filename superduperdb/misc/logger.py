@@ -7,6 +7,7 @@ __all__ = ('logging',)
 
 logging: t.Any
 
+
 if CFG.logging.type == 'stdout':
 
     def logging():

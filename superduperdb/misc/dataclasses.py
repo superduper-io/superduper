@@ -10,6 +10,7 @@ from dataclasses import (
 )
 from pydantic import dataclasses as pdc
 import functools
+import warnings
 
 __all__ = (
     'InitVar',
@@ -32,7 +33,9 @@ def dataclass(cls=None, **kwargs):
     if not cls:
         return functools.partial(dataclass, **kwargs)
 
-    return add_methods(pdc.dataclass(cls, **kwargs))
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=RuntimeWarning)
+        return add_methods(pdc.dataclass(cls, **kwargs))
 
 
 def add_methods(dcls):

@@ -53,6 +53,8 @@ UpdateResult = t.Any
 ExecuteQuery = t.Union[Select, Delete, Update, Insert]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
+ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'select_one', 'update'
+
 
 class BaseDatabase:
     """

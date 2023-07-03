@@ -130,14 +130,15 @@ class Server(JSONable):
     class WebServer(JSONable):
         host: str = '127.0.0.1'
         port: int = 3223
-        protocol: str = 'http:'
+        protocol: str = 'http'
 
         @property
         def uri(self) -> str:
-            return f'{self.protocol}{self.host}{self.port}'
+            return f'{self.protocol}://{self.host}:{self.port}'
 
     fastapi: FastAPI = Factory(FastAPI)
     web_server: WebServer = Factory(WebServer)
+    test_port = 32233
 
 
 class LanceDB(JSONable):

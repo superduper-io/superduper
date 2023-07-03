@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from functools import cached_property
 from http import HTTPStatus
 from pathlib import Path
-from superduperdb.misc.key_cache import KeyCache
+from superduperdb.misc.typed_cache import TypedCache
 import dataclasses as dc
 import superduperdb as s
 import typing as t
@@ -22,7 +22,7 @@ OK, NOT_FOUND = HTTPStatus.OK, HTTPStatus.NOT_FOUND
 class Server:
     cfg: s.config.Server = dc.field(default_factory=s.CFG.server.deepcopy)
     stats: t.Dict = dc.field(default_factory=dict)
-    document_store: KeyCache = dc.field(default_factory=KeyCache)
+    document_store: TypedCache = dc.field(default_factory=TypedCache)
     count: int = 0
 
     @cached_property
@@ -40,8 +40,9 @@ class Server:
         return result
 
     def run(self, obj: t.Any) -> None:
-        self.add_endpoints(obj)
-        uvicorn.run(self.app, **self.cfg.web_server.dict())
+        d = self.cfg.web_server.dict()
+        d.pop('protocol', None)
+        uvicorn.run(self.app, **d)
 
     def auto_register(self, obj: t.Any) -> None:
         for k, v in vars(obj.__class__).items():

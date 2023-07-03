@@ -104,18 +104,18 @@ def test_upload():
 
     with TestClient(test.server.app) as client:
         fp = io.BytesIO(blob)
-        files = {'file': ('test-key', fp, 'multipart/form-data')}
-        response = client.post('/upload/test-key', files=files)
+        files = {'file': ('bytes-key', fp, 'multipart/form-data')}
+        response = client.post('/upload/bytes-key', files=files)
         assert response.status_code == 200, json.dumps(response.json(), indent=2)
-        assert response.json() == {'created': 'test-key'}
+        assert response.json() == {'created': 'bytes-key'}
 
         fp = io.BytesIO(blob)
-        files = {'file': ('test-key', fp, 'multipart/form-data')}
-        response = client.post('/upload/test-key', files=files)
+        files = {'file': ('bytes-key', fp, 'multipart/form-data')}
+        response = client.post('/upload/bytes-key', files=files)
         assert response.status_code == 200, json.dumps(response.json(), indent=2)
-        assert response.json() == {'replaced': 'test-key'}
+        assert response.json() == {'replaced': 'bytes-key'}
 
-        response = client.get('/download/test-key')
+        response = client.get('/download/bytes-key')
         assert response.status_code == 200
         assert response.content == blob
 

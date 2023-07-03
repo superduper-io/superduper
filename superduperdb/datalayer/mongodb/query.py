@@ -554,9 +554,6 @@ class PostLike(Select):
 class Featurize(Select):
     features: t.Dict[str, str]
     parent: t.Union[PreLike, Find, PostLike]
-
-    type_id: t.Literal['mongdb.Featurize'] = 'mongdb.Featurize'
-
     type_id: t.Literal['mongdb.Featurize'] = 'mongdb.Featurize'
 
     @property
@@ -602,9 +599,6 @@ class Featurize(Select):
 class Limit(Select):
     n: int
     parent: t.Union[Find, PostLike, PreLike, Featurize]
-
-    type_id: t.Literal['mongdb.Limit'] = 'mongdb.Limit'
-
     type_id: t.Literal['mongdb.Limit'] = 'mongdb.Limit'
 
     def __call__(self, db: BaseDatabase):

@@ -299,23 +299,41 @@ class Base(Model):
                         return
                 iteration += 1
 
-    def _get_data(self):
+    def train_preprocess(self):
         preprocessors = {}
-        for k in self.training_keys:
-            preprocessors[k] = self.training_configuration.target_preprocessors.get(
-                k, lambda x: x
-            )
+        if isinstance(self.train_X, str):
+            preprocessors[self.train_X] = self.preprocess
+        else:
+            for _id, X in zip(self._model_ids, self.train_X):
+                preprocessors[X] = getattr(self, _id).preprocess
+        if self.train_y is not None:
+            if isinstance(self.train_y, str):
+                preprocessors[
+                    self.train_y
+                ] = self.training_configuration.target_preprocessors.get(
+                    self.train_y, lambda x: x
+                )
+            else:
+                for y in self.train_y:
+                    preprocessors[
+                        y
+                    ] = self.training_configuration.target_preprocessors.get(
+                        y, lambda x: x
+                    )
+        return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
+
+    def _get_data(self):
         train_data = QueryDataset(
             select=self.training_select,
             keys=self.training_keys,
             fold='train',
-            transform=lambda r: {k: preprocessors[k](r[k]) for k in self.training_keys},
+            transform=self.train_preprocess(),
         )
         valid_data = QueryDataset(
             select=self.training_select,
             keys=self.training_keys,
             fold='valid',
-            transform=lambda r: {k: preprocessors[k](r[k]) for k in self.training_keys},
+            transform=self.train_preprocess(),
         )
         return train_data, valid_data
 

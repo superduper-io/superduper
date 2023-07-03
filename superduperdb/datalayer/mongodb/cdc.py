@@ -1,26 +1,36 @@
 import pickle
-import typing as T
+import datetime
+from enum import Enum
+import typing as t
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
-from superduperdb.misc.logger import logging as logger
-from superduperdb.queries.mongodb.queries import Collection
+from pydantic import BaseModel
 
-MongoChangePipelines = {'generic': []}
+from superduperdb.misc.logger import logging
+from superduperdb.queries.mongodb import queries
+from superduperdb.datalayer.base.database import BaseDatabase
+from superduperdb.cluster.task_workflow import TaskWorkflow
+
+MongoChangePipelines: t.Dict[str, t.Dict] = {'generic': {}}
 
 
-@dataclass
-class DBEvent:
+class DBEvent(Enum):
+    """`DBEvent` simple enum to hold mongo basic events."""
+
     insert = 'insert'
     update = 'update'
     delete = 'delete'
 
 
 class MongoChangePipeline:
+    """`MongoChangePipeline` is a class to represent watch pipeline
+    in mongodb watch api.
+    """
+
     def __init__(
         self,
     ):
-        self.valid_ops: T.List[T.Text] = [
+        self.valid_ops: t.List[DBEvent] = [
             DBEvent.insert,
             DBEvent.update,
             DBEvent.delete,
@@ -29,20 +39,34 @@ class MongoChangePipeline:
     def validate(self):
         raise NotImplementedError
 
-    def build_matching(self, matching_operations: T.List = []):
+    def build_matching(self, matching_operations: t.List = []) -> t.Dict:
+        """A helper fxn to build a watch pipeline for mongo watch api.
+
+        :param matching_operations: A list of operations to watch.
+        :type matching_operations: t.List
+        :rtype: t.Dict
+        """
         if any([op for op in matching_operations if op not in self.valid_ops]):
             raise ValueError('not valid ops')
 
-        pipeline = {'$match': {'operationType': {'$in': [*matching_operations]}}}
-        return pipeline
+        return {'$match': {'operationType': {'$in': [*matching_operations]}}}
 
 
 class ResumeToken:
-    def __init__(self, token=''):
+    """
+    A class to represent resume tokens for `MongoDatabaseWatcher`.
+    """
+
+    def __init__(self, token: str = ''):
+        """__init__.
+
+        :param token: a resume toke use to resume change stream in mongo
+        :type token: str
+        """
         self._token = token
 
     @property
-    def token(self):
+    def token(self) -> str:
         return self._token
 
     def get_latest(self):
@@ -52,30 +76,31 @@ class ResumeToken:
 
 
 class PickledTokens:
-    NAME = '.cdc.tokens'
+    token_path = '.cdc.tokens'
 
     def __init__(self):
-        self._current_tokens = []
+        self._current_tokens: t.List[str] = []
 
-    def save(self, tokens: list = []):
-        with open(self.NAME, 'wb') as fp:
+    def save(self, tokens: t.List[str] = []) -> None:
+        with open(PickledTokens.token_path, 'wb') as fp:
             if tokens:
                 pickle.dump(tokens, fp)
             else:
                 pickle.dump(self._current_tokens, fp)
 
-    def load(self):
-        with open(self.NAME, 'rb') as fp:
+    def load(self) -> t.List[str]:
+        with open(PickledTokens.token_path, 'rb') as fp:
             tokens = pickle.load(fp)
         self._current_tokens = tokens
         return tokens
 
 
 class GenericDatabaseWatch(ABC):
-    indentity_sep = "/"
+    """GenericDatabaseWatch.
+    A Base class which defines basic functions to implement.
+    """
 
-    def __init__(self):
-        ...
+    indentity_sep = '/'
 
     @abstractmethod
     def watch(self):
@@ -87,127 +112,291 @@ class GenericDatabaseWatch(ABC):
 
 
 class MongoEventMixin:
-    _document_data_key = "documentKey"
-    _update_descriptions_key = "updateDescription"
-    exclusion_key = ["_id"]
+    """A Mixin class which defines helper fxns for `MongoDatabaseWatcher`
+    It define basic events handling methods like
+    `on_create`, `on_update`, etc.
+    """
 
-    def on_create(self, change, reference_id, db=None):
+    DEFAULT_ID: str = '_id'
+    EXCLUSION_KEYS: t.List[str] = [DEFAULT_ID]
+
+    @staticmethod
+    def submit_task_workflow(
+        cdc_query: BaseModel, db: 'BaseDatabase', ids: t.List
+    ) -> None:
+        """submit_task_workflow.
+        A fxn to build a taskflow and execute it with changed ids.
+        This also extends the task workflow graph with a node.
+        This node is responsible for applying a vector indexing watcher,
+        and copying the vectors into a vector search database.
+
+        :param cdc_query: A query which will be used by `db._build_task_workflow` method
+        to extract the desired data.
+        :type cdc_query: BaseModel
+        :param db: a superduperdb instance.
+        :type db: 'BaseDatabase'
+        :param ids: List of ids which were observed as changed document.
+        :type ids: t.List
+        :rtype: None
+        """
+
+        task_graph = db._build_task_workflow(cdc_query, ids=ids, verbose=False)
+        '''
+        task_graph = MongoEventMixin.create_vector_watcher_task(
+            task_graph, db=db, cdc_query=cdc_query
+        )
+        '''
+        task_graph()
+
+    # ruff: noqa: F821
+    @staticmethod
+    def create_vector_watcher_task(
+        task_graph: TaskWorkflow, db: 'BaseDatabase', cdc_query: BaseModel
+    ) -> TaskWorkflow:
+        """create_vector_watcher_task.
+
+        :param task_graph:
+        :type task_graph: TaskWorkflow
+        :param db:
+        :type db: 'BaseDatabase'
+        :param cdc_query:
+        :type cdc_query: BaseModel
+        :rtype: TaskWorkflow
+        """
+        for identifier in db.show('vector_index'):
+            indexing_watcher = ...
+            task_graph.add_node(
+                f'copy_vectors({indexing_watcher})',
+                FunctionJob(  # type: ignore
+                    callable=copy_vectors,  # type: ignore
+                    args=[identifier, cdc_query],
+                    kwargs={},
+                ),
+            )
+            model, key = indexing_watcher.split('/')  # type: ignore
+
+            task_graph.add_edge(
+                f'copy_vectors({indexing_watcher})',
+                f'{model}.predict({key})',
+            )
+        return task_graph
+
+    def on_create(
+        self, change: t.Dict, db: 'BaseDatabase', collection: queries.Collection
+    ) -> None:
+        """on_create.
+        A helper on create event handler which handles inserted document in the
+        change stream.
+        It basically extracts the change document and build the taskflow graph to
+        execute.
+
+        :param change: The changed document.
+        :type change: t.Dict
+        :param db: a superduperdb instance.
+        :type db: 'BaseDatabase'
+        :param collection: The collection on which change was observed.
+        :type collection: queries.Collection
+        :rtype: None
+        """
+        logging.debug('Triggerd `on_create` handler.')
         # new document added!
-        document = change[MongoEventMixin._document_data_key]
-        logger.info("Triggerd on_create handler.")
+        document = change[CDCKeys.document_data_key]
+        ids = [document[self.DEFAULT_ID]]
+        query = collection.find()
+        self.submit_task_workflow(query, db=db, ids=ids)
 
-        cdc_data = {k: v for k, v in document.items() if k not in self.exclusion_key}
-        G = db.refresh_after_update_or_insert()
-        G()
+    def on_update(self, change: t.Dict, db: 'BaseDatabase'):
+        """on_update.
 
-    def on_update(self, change, reference_id, db=None):
+        :param change:
+        :type change: t.Dict
+        :param db:
+        :type db: 'BaseDatabase'
+        """
 
         #  prepare updated document
-        updated_fields = change[MongoEventMixin._update_descriptions_key][
-            'updatedFields'
-        ]
-        removed_fields = change[MongoEventMixin._update_descriptions_key][
-            'removedFields'
-        ]
+        change[CDCKeys.update_descriptions_key]['updatedFields']
+        change[CDCKeys.update_descriptions_key]['removedFields']
 
-    def on_delete(self, change, reference_id, db=None):
-        #  prepare updated document
-        # TODO (low) : do we need Packet to send it to queue
-        # packet = Packet(event_type=DBEvent.delete, reference_id=reference_id)
-        ...
+
+class CDCKeys(Enum):
+    """
+    A enum to represent mongo change document keys.
+    """
+
+    operation_type = 'operationType'
+    document_key = 'documentKey'
+    update_descriptions_key = 'updateDescription'
+    document_data_key = 'fullDocument'
 
 
 class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
-    identity_sep = '/'
+    """
+    It is a class which helps capture data from mongodb database and handle it
+    accordingly.
 
-    def __init__(self, db, on: Collection, resume_token=None):
+    This class accepts options and db instance from user and starts a scheduler
+    which could schedule a watching service to watch change stream.
+
+    This class builds a workflow graph on each change observed.
+
+    """
+
+    identity_sep: str = '/'
+
+    def __init__(
+        self,
+        db: 'BaseDatabase',
+        on: queries.Collection,
+        identifier: 'str' = '',
+        resume_token: t.Optional[ResumeToken] = None,
+    ):
+        """__init__.
+
+        :param db: It is a superduperdb instance.
+        :type db: 'BaseDatabase'
+        :param on: It is used to define a Collection on which CDC would be performed.
+        :type on: queries.Collection
+        :param identifier: A identifier to represent the watcher service.
+        :type identifier: 'str'
+        :param resume_token: A resume token is a token used to resume
+        the change stream in mongo.
+        :type resume_token: t.Optional[ResumeToken]
+        """
         self.db = db
         self._on_component = on
-        self.__identifier = self._build_identifier([db.identifier, on.name])
+        self._identifier = self._build_identifier([identifier, on.name])
         self.tokens = PickledTokens()
 
         self.resume_token = resume_token.token if resume_token else None
-        self._operation_type = "operationType"
-        self.exclusion_key = ["_id"]
-        self._document_data_key = "fullDocument"
-        self.document_key = "documentKey"
-        self.update_descriptions_key = "updateDescription"
 
         super().__init__()
 
     @property
-    def indentity(self):
-        return self.__identifier
+    def identity(self) -> str:
+        return self._identifier
 
     @classmethod
-    def _build_identifier(cls, identifiers):
-        return cls.identity_sep.join(*identifiers)
+    def _build_identifier(cls, identifiers) -> str:
+        """_build_identifier.
+
+        :param identifiers: list of identifiers.
+        :rtype: str
+        """
+        return cls.identity_sep.join(identifiers)
 
     @staticmethod
-    def _get_stream_pipeline(change):
+    def _get_stream_pipeline(
+        change: t.Optional[t.Union[str, t.Dict]]
+    ) -> t.Optional[t.Dict]:
+        """_get_stream_pipeline.
+
+        :param change: change can be a prebuilt watch pipeline like
+        'generic' or user Defined watch pipeline.
+        :type change: t.Optional[t.Union[str, t.Dict]]
+        :rtype: t.Optional[t.Dict]
+        """
         if not change:
             return MongoChangePipelines.get('generic')
+        return None
 
-    def _get_reference_id(self, document):
+    def _get_reference_id(self, document: t.Dict) -> t.Optional[str]:
+        """_get_reference_id.
+
+        :param document:
+        :type document: t.Dict
+        :rtype: t.Optional[str]
+        """
         try:
-            document_key = document[self.document_key]
+            document_key = document[CDCKeys.document_key]
             reference_id = str(document_key['_id'])
         except KeyError:
             return None
         return reference_id
 
-    def event_handler(self, change):
-        event = change[self._operation_type]
+    def event_handler(self, change: t.Dict) -> None:
+        """event_handler.
+        A helper fxn to handle incoming changes from change stream on a collection.
+
+        :param change: The change (document) observed during the change stream.
+        :type change: t.Dict
+        :rtype: None
+        """
+        event = change[CDCKeys.operation_type]
         reference_id = self._get_reference_id(change)
+
         if not reference_id:
-            logger.warning("Document change not handled due to no document key")
+            logging.warning('Document change not handled due to no document key')
             return
 
         if event == DBEvent.insert:
-            self.on_create(change, reference_id, db=self.db)
+            self.on_create(change, db=self.db, collection=self._on_component)
 
         elif event == DBEvent.update:
-            logger.info("Triggerd on_update handler.")
-            self.on_update(change, reference_id, db=self.db)
+            self.on_update(change, db=self.db)
 
-        elif event == DBEvent.delete:
-            logger.info("Triggerd on_delete handler.")
-            self.on_delete(change, reference_id, db=self.db)
+    def dump_token(self, change: t.Dict) -> None:
+        """dump_token.
+        A helper utility to dump resume token from the changed document.
 
-    def dump_token(self, change):
+        :param change:
+        :type change: t.Dict
+        :rtype: None
+        """
         token = change['_id']['_data']
         self.tokens.save([token])
 
-    def cdc(self, change=None):
+    def cdc(self, change_pipeline: t.Optional[t.Union[str, t.Dict]] = None) -> None:
+        """cdc.
+        It is the primary entrypoint fxn to start cdc on the database and collection
+        defined by the user.
 
-        pipeline = self._get_stream_pipeline(change)
-
-        _stream = self._on_component.change_stream(
-            pipeline=pipeline, resume_token=self.resume_token
-        )
+        :param change:
+        :type change: t.Optional[t.List]
+        :rtype: None
+        """
 
         try:
-            logger.info("started listening database...")
-            for change in _stream(self.db):
-                logger.info("database change encountered.")
+            pipeline = self._get_stream_pipeline(change_pipeline)
+
+            stream = self._on_component.change_stream(
+                pipeline=pipeline, resume_token=self.resume_token
+            )
+
+            stream_iterator = stream(self.db)
+            logging.info(f'Started listening database with identity {self.identity}...')
+            for change in stream_iterator:
+                logging.debug(
+                    f'Database change encountered at {datetime.datetime.now()}'
+                )
                 self.event_handler(change)
                 self.dump_token(change)
-        except Exception as exc:
-            logger.exception("Error occured during CDC!")
+        except Exception:
+            logging.exception('Error occured during CDC!')
             raise
 
     def attach_scheduler(self, scheduler):
         self._scheduler = scheduler
 
-    def watch(self, change=None):
+    def watch(self, change_pipeline: t.Optional[t.Union[str, t.Dict]] = None) -> None:
+        """Primary fxn to initiate watching of a database on the collection
+        with defined `change_pipeline` by the user.
+
+        :param change_pipeline:
+        :rtype: None
+        """
         if not self._scheduler:
-            raise ValueError("No scheduler available!")
+            raise ValueError('No scheduler available!')
 
         try:
             self._scheduler.start()
-        except Exception as exc:
-            logger.exception("Watching service stopped!")
+        except Exception:
+            logging.exception('Watching service stopped!')
             raise
 
-    def close(self):
-        self.client.close()
+    def close(self) -> None:
+        """
+        A placeholder fxn for future instances/session to be closed.
+        Currently nothing to close.
+        """
+        ...

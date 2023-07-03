@@ -9,13 +9,10 @@ import click
 import networkx
 
 from superduperdb import CFG
-from superduperdb.cluster.job_submission import work
-from superduperdb.cluster.task_workflow import TaskWorkflow
+from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.base import Component, strip
 from superduperdb.core.documents import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
-from superduperdb.core.fit import Fit
-from superduperdb.core.model import Model
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
 from superduperdb.datalayer.base.metadata import MetaDataStore
@@ -27,10 +24,11 @@ from superduperdb.datalayer.base.query import (
     SelectOne,
     Like,
 )
+from .download_content import download_content  # type: ignore[attr-defined]
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.logger import logging
-from superduperdb.queries.serialization import from_dict
+from superduperdb.queries.serialization import from_dict, to_dict
 from superduperdb.vector_search.base import VectorDatabase
 from superduperdb.core.components import components
 
@@ -39,6 +37,9 @@ from superduperdb.core.components import components
 # to the rest of the code.
 # It should be moved to the Server's initialization code where it can be available to
 # all threads.
+from ...core.fit import Fit
+from ...core.job import FunctionJob, ComponentJob
+
 VECTOR_DATABASE = VectorDatabase.create(config=CFG.vector_search)
 VECTOR_DATABASE.init().__enter__()
 
@@ -63,7 +64,7 @@ class BaseDatabase:
     _database_type: str
     name: str
     select_cls: t.Type[Select]
-    models: t.Dict[str, Model]
+    models: t.Dict
 
     variety_to_cache_mapping = {
         'model': 'models',
@@ -74,7 +75,7 @@ class BaseDatabase:
 
     def __init__(
         self,
-        db: BaseDataBackend,
+        databackend: BaseDataBackend,
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
     ):
@@ -86,10 +87,12 @@ class BaseDatabase:
         self.remote = CFG.remote
         self.metadata = metadata
         self.artifact_store = artifact_store
-        self.databackend = db
-        self.db = db.conn[db.name]
+        self.databackend = databackend
 
-    @work
+    @property
+    def db(self):
+        return self.databackend.db
+
     def validate(
         self,
         identifier: str,
@@ -160,7 +163,7 @@ class BaseDatabase:
         :param input: input to be passed to the model.
                       Must be possible to encode with registered types
         """
-        model: Model = self.models[model_identifier]
+        model = self.models[model_identifier]
         opts = self.metadata.get_component('model', model_identifier)
         out = model.predict(input.unpack(), **opts.get('predict_kwargs', {}))
         if model.encoder is not None:
@@ -197,6 +200,16 @@ class BaseDatabase:
     def insert(self, insert: Insert) -> InsertResult:
         return insert(self)
 
+    def run(
+        self,
+        job,
+        depends_on: t.Optional[t.List] = None,
+        remote: t.Optional[bool] = None,
+    ):
+        if remote is None:
+            remote = CFG.remote
+        return job(db=self, dependencies=depends_on, remote=remote)
+
     def select(self, select: Select) -> SelectResult:
         return select(self)
 
@@ -206,13 +219,15 @@ class BaseDatabase:
     def select_one(self, select_one: SelectOne) -> SelectResult:
         return select_one(self)
 
-    def refresh_after_update_or_insert(self, query, ids, verbose=False):
-        task_graph = self._build_task_workflow(
+    def refresh_after_update_or_insert(
+        self, query: Union[Select, Update], ids: List[str], verbose=False
+    ):
+        task_graph: TaskWorkflow = self._build_task_workflow(
             query.select_table,
             ids=ids,
             verbose=verbose,
         )
-        task_graph()
+        task_graph(db=self)
         return task_graph
 
     def update(self, update: Update) -> UpdateResult:
@@ -337,52 +352,56 @@ class BaseDatabase:
         return m
 
     def _build_task_workflow(
-        self, query, ids=None, dependencies=(), verbose=True
+        self,
+        query,
+        ids=None,
+        dependencies=(),
+        verbose=True,
     ) -> TaskWorkflow:
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
 
         G.add_node(
-            f'{self._download_content.__name__}()',
-            data={
-                'task': self._download_content,
-                'args': [query],
-                'kwargs': {
-                    'ids': ids,
-                },
-            },
+            f'{download_content.__name__}()',
+            job=FunctionJob(
+                callable=download_content,
+                kwargs=dict(ids=ids, query=to_dict(query)),
+                args=[],
+            ),
         )
         if not self.show('watcher'):
             return G
 
         for identifier in self.show('watcher'):
+            if isinstance(query, Update):
+                query = query.select
+            model, key = identifier.split('/')
             G.add_node(
-                f'{self._apply_watcher.__name__}({identifier})',
-                data={
-                    'task': self._apply_watcher,
-                    'args': [identifier],
-                    'kwargs': {
-                        'ids': ids,
-                        'verbose': verbose,
-                    },
-                },
+                f'{model}.predict({key})',
+                ComponentJob(
+                    component_identifier=model,
+                    args=[key],
+                    kwargs={'ids': ids, 'select': to_dict(query)},
+                    method_name='predict',
+                    variety='model',
+                ),
             )
 
         for identifier in self.show('watcher'):
+            model, key = identifier.split('/')
             G.add_edge(
-                f'{self._download_content.__name__}()',
-                f'{self._apply_watcher.__name__}({identifier})',
+                f'{download_content.__name__}()',
+                f'{model}.predict({key})',
             )
-            deps = self._get_dependencies_for_watcher(identifier)
+            deps = self._get_dependencies_for_watcher(
+                identifier
+            )  # TODO remove features as explicit argument to watcher
             for dep in deps:
+                dep_model, dep_key = dep.split('/')
                 G.add_edge(
-                    f'{self._apply_watcher.__name__}({dep})',
-                    f'{self._apply_watcher.__name__}({identifier})',
-                )
-                G.add_edge(
-                    f'{self._download_content.__name__}()',
-                    f'{self._apply_watcher.__name__}({identifier})',
+                    f'{dep_model}.predict({dep_key})',
+                    f'{model}.predict({key})',
                 )
 
         return G
@@ -459,6 +478,8 @@ class BaseDatabase:
                 'variety': object.variety,
                 'version': version,
                 'sha1': sha1,
+                'serializer': serializer,
+                'serializer_kwargs': serializer_kwargs or {},
             }
         )
         if parent is not None:
@@ -512,10 +533,9 @@ class BaseDatabase:
             self.artifact_store.delete_artifact(info['object'])
             self.metadata.delete_component_version(variety, identifier, version=version)
 
-    @work
     def _download_content(
         self,
-        query: Union[Select, Insert],
+        query: t.Optional[Union[Select, Insert]] = None,
         ids=None,
         documents=None,
         timeout=None,
@@ -524,8 +544,6 @@ class BaseDatabase:
         headers=None,
         **kwargs,
     ):
-        # logging.debug(query)
-        # logging.debug(ids)
         update_db = False
 
         if documents is not None:
@@ -599,7 +617,7 @@ class BaseDatabase:
         uris = gather_uris([filter.content])[0]
         if uris:
             output = self._download_content(
-                self.name, documents=[filter.content], timeout=None, raises=True
+                query=None, documents=[filter.content], timeout=None, raises=True
             )[0]
             filter = Document(Document.decode(output, types=self.types))
         return filter
@@ -624,7 +642,6 @@ class BaseDatabase:
     def _get_object_info(self, identifier, variety, version=None):
         return self.metadata.get_component(variety, identifier, version=version)
 
-    @work
     def _apply_watcher(  # noqa: F811
         self,
         identifier,
@@ -693,9 +710,7 @@ class BaseDatabase:
     def _replace_model(
         self,
         identifier: str,
-        object: Model,
-        serializer: t.Optional[str] = None,
-        serializer_kwargs: t.Optional[t.Dict] = None,
+        object,
         upsert: bool = False,
     ):
         try:
@@ -706,24 +721,13 @@ class BaseDatabase:
             if upsert:
                 return self.add(
                     object,
-                    serializer=serializer,  # type: ignore[arg-type]
-                    serializer_kwargs=serializer_kwargs,
                 )
             raise e
-        if 'serializer' not in info:
-            info['serializer'] = 'dill'
-        if 'serializer_kwargs' not in info:
-            info['serializer_kwargs'] = {}
-
-        serializer = serializer if serializer else info['serializer']
-        serializer_kwargs = (
-            serializer_kwargs if serializer_kwargs else info['serializer_kwargs']
-        )
 
         file_id = self.artifact_store.create_artifact(
             object,
-            serializer=serializer,
-            serializer_kwargs=serializer_kwargs,
+            serializer=info['serializer'],
+            serializer_kwargs=info['serializer_kwargs'],
         )
         self.artifact_store.delete_artifact(info['object'])
         self.metadata.update_object(identifier, 'model', 'object', file_id)
@@ -736,8 +740,9 @@ class BaseDatabase:
         outputs: Optional[Document] = None,
         n: int = 100,
     ) -> Tuple[List[str], List[float]]:
-        dl = self._get_content_for_filter(Document(like))
-        vi = self.vector_indices[vector_index]
+        like = Document(like)  # type: ignore[assignment]
+        like = self._get_content_for_filter(like)  # type: ignore[assignment]
+        vector_index = self.vector_indices[vector_index]  # type: ignore[no-redef]
 
         if outputs is None:
             outs = {}
@@ -745,10 +750,10 @@ class BaseDatabase:
             outs = outputs.encode()
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
-        return vi.get_nearest(dl, database=self, ids=ids, n=n, outputs=outs)
+        # ruff: noqa: E501
+        return vector_index.get_nearest(like, database=self, ids=ids, n=n, outputs=outs)  # type: ignore[attr-defined]
 
-    @work
-    def _fit(self, identifier) -> None:
+    def _fit(self, identifier: str) -> None:
         """
         Execute the learning task.
 
@@ -760,11 +765,11 @@ class BaseDatabase:
         try:
             fit.model.fit(  # type: ignore[attr-defined]
                 *fit.keys,  # type: ignore[attr-defined]
-                database=self,
+                db=self,
                 select=fit.select,  # type: ignore[attr-defined]
                 validation_sets=fit.validation_sets,  # type: ignore[attr-defined]
                 metrics=fit.metrics,  # type: ignore[attr-defined]
-                training_configuration=fit.training_configuration,  # type: ignore[attr-defined]
+                configuration=fit.training_configuration,  # type: ignore[attr-defined]
             )
         except Exception as e:
             self.remove('fit', identifier, force=True)

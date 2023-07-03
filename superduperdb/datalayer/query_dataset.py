@@ -22,10 +22,11 @@ class QueryDataset:
         suppress=(),
         transform=None,
         features=None,
+        database=None,
     ):
         super().__init__()
 
-        self._database = None
+        self._database = database
         self.keys = keys
 
         self.transform = transform if transform else lambda x: x

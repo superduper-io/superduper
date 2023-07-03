@@ -50,6 +50,5 @@ def test_query_dataset_base(random_data, a_watcher_base):
         keys=['_base', 'y'],
         fold='train',
     )
-
     r = train_data[0]
     print(r)

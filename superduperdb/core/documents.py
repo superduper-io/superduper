@@ -36,7 +36,10 @@ class Document(Cached[ContentType]):
     def _decode(cls, r: t.Dict, types: t.Dict):
         if isinstance(r, dict) and '_content' in r:
             type = types[r['_content']['type']]
-            return type.decode(r['_content']['bytes'])
+            try:
+                return type.decode(r['_content']['bytes'])
+            except KeyError:
+                return r
         elif isinstance(r, list):
             return [cls._decode(x, types) for x in r]
         elif isinstance(r, dict):

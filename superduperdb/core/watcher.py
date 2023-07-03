@@ -23,6 +23,7 @@ class Watcher(Component):
     model: t.Union[Placeholder, Model]
     select: Select
     variety = 'watcher'
+    max_chunk_size: int
 
     def __init__(
         self,
@@ -31,12 +32,14 @@ class Watcher(Component):
         key: str = '_base',
         features: t.Optional[t.Dict] = None,
         active: bool = True,
+        max_chunk_size: int = 5000,
     ):
         self.model = model if isinstance(model, Model) else Placeholder(model, 'model')
         self.select = select
         self.key = key
         self.features = features or {}
         self.active = active
+        self.max_chunk_size = max_chunk_size
         identifier = f'{self.model.identifier}/{self.key}'
         super().__init__(identifier)
 
@@ -55,18 +58,14 @@ class Watcher(Component):
         select = from_dict(info['select'])
         select.model_cleanup(database, model=info['model'], key=info['key'])
 
-    def schedule_jobs(self, database, verbose=False, dependencies=()) -> t.List[t.List]:
+    def schedule_jobs(self, database, verbose=False, dependencies=(), remote=False):
         if not self.active:
-            return []
-        ids = self.select.get_ids(database)  # type: ignore[attr-defined]
-        if not ids:
-            return []
-        out = [
-            database._apply_watcher(
-                self.identifier,
-                ids=ids,
-                verbose=verbose,
-                dependencies=dependencies,
-            )
-        ]
-        return out
+            return
+        return self.model.predict(
+            X=self.key,
+            db=database,
+            select=self.select,
+            remote=remote,
+            max_chunk_size=self.max_chunk_size,
+            dependencies=dependencies,
+        )

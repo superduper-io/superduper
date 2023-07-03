@@ -12,9 +12,6 @@ from superduperdb.datalayer.query_dataset import QueryDataset
 from tqdm import tqdm
 
 
-# TODO fix the tests for this one, before moving onto PyTorch pipeline etc.
-
-
 def postprocess(f):
     f.superduper_postprocess = True
     return f
@@ -63,22 +60,23 @@ class SklearnTrainingConfiguration(TrainingConfiguration):
 
 
 class Base(Model):
-    def fit(
+    def _fit(  # type: ignore[override]
         self,
         X,
         y=None,
         select: t.Optional[Select] = None,
-        database: t.Optional[BaseDatabase] = None,
-        training_configuration: t.Optional[SklearnTrainingConfiguration] = None,
+        db: t.Optional[BaseDatabase] = None,
+        configuration: t.Optional[SklearnTrainingConfiguration] = None,
         validation_sets: t.Optional[t.List[str]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
     ):
-        if training_configuration is not None:
-            self.training_configuration = training_configuration
+        if configuration is not None:
+            self.training_configuration = configuration
         if select is not None:
             self.training_select = select
         if isinstance(X, str):
-            self.training_keys = [X, y] if y is not None else [X]
+            self.train_X = X
+            self.train_y = y
         if isinstance(X, str):
             y_preprocess = None
             if self.training_configuration is not None:
@@ -112,7 +110,7 @@ class Estimator(Base):
         self.y = y
 
     def __getattr__(self, item):
-        if item in ['predict', 'transform', 'predict_proba', 'score']:
+        if item in ['_predict', 'transform', 'predict_proba', 'score']:
             return getattr(self.object, item)
         else:
             return super().__getattribute__(item)
@@ -128,8 +126,8 @@ class Pipeline(Base):
         encoder=None,
         training_configuration: t.Optional[SklearnTrainingConfiguration] = None,
         training_select: t.Optional[Select] = None,
-        X: t.Optional[str] = None,
-        y: t.Optional[str] = None,
+        train_X: t.Optional[str] = None,
+        train_y: t.Optional[str] = None,
     ):
         standard_steps = [
             i
@@ -150,11 +148,6 @@ class Pipeline(Base):
         )
         self.postprocess_steps = [steps[i] for i in postprocess_steps]
 
-        training_keys = None
-        if X and y is None:
-            training_keys = [X]
-        elif X and y:
-            training_keys = [X, y]  # type: ignore[list-item]
         Model.__init__(
             self,
             pipeline,
@@ -162,7 +155,8 @@ class Pipeline(Base):
             encoder=encoder,
             training_configuration=training_configuration,
             training_select=training_select,
-            training_keys=training_keys,
+            train_X=train_X,
+            train_y=train_y,
         )
 
     def __getattr__(self, item):
@@ -171,7 +165,7 @@ class Pipeline(Base):
         else:
             return super().__getattribute__(item)
 
-    def predict(self, X, **predict_params):
+    def _predict(self, X, **predict_params):
         out = self.object.predict(X, **predict_params).tolist()
         if self.postprocess_steps:
             for s in self.postprocess_steps:

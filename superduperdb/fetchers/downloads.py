@@ -197,7 +197,7 @@ class InMemoryDownloader(BaseDownloader):
 
 
 def gather_uris(
-    documents, gather_ids=True
+    documents: t.List[t.Dict], gather_ids=True
 ) -> t.Tuple[t.List[str], t.List[str], t.List[int]]:
     """
     Get the URLS out of all documents as denoted by ``{"_content": ...}``
@@ -218,7 +218,7 @@ def gather_uris(
     return uris, mongo_keys, ids
 
 
-def _gather_uris_for_document(r):
+def _gather_uris_for_document(r: t.Dict):
     '''
     >>> _gather_uris_for_document({'a': {'_content': {'uri': 'test'}}})
     (['test'], ['a'])

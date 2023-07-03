@@ -1,44 +1,47 @@
+# type: ignore
 import typing as t
 
-from superduperdb.cluster.job_submission import work
 from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.query import Insert, Select
 from superduperdb.fetchers.downloads import Downloader
 from superduperdb.fetchers.downloads import gather_uris
 from superduperdb.misc.logger import logging
+from superduperdb.queries.serialization import from_dict
 
 
-@work
 def download_content(
     db,
-    query: t.Union[Select, Insert],
-    ids=None,
-    documents=None,
-    timeout=None,
-    raises=True,
-    n_download_workers=None,
-    headers=None,
+    query: t.Union[Select, Insert, t.Dict],
+    ids: t.Optional[t.List[str]] = None,
+    documents: t.Optional[t.List[Document]] = None,
+    timeout: t.Optional[int] = None,
+    raises: bool = True,
+    n_download_workers: t.Optional[int] = None,
+    headers: t.Optional[t.Dict] = None,
     **kwargs,
 ):
     logging.debug(query)
     logging.debug(ids)
     update_db = False
 
+    if isinstance(query, dict):
+        query = from_dict(query)
+
     if documents is not None:
         pass
     elif isinstance(query, Select):
         update_db = True
         if ids is None:
+            query = query.copy(update={'raw': True})
             documents = list(db.select(query))
         else:
             select = query.select_using_ids(ids)
+            select = select.copy(update={'raw': True})
             documents = list(db.select(select))
-            documents = [Document(x) for x in documents]
     else:
         documents = query.documents
 
-    documents = [x.content for x in documents]
-    uris, keys, place_ids = gather_uris(documents)
+    uris, keys, place_ids = gather_uris([d.encode() for d in documents])
     logging.info(f'found {len(uris)} uris')
     if not uris:
         return
@@ -61,14 +64,14 @@ def download_content(
         except TypeError:
             timeout = None
 
-    def update_one(id, key, bytes):
-        return db.update(db.db.download_update(query.table, id, key, bytes))
+    def download_update(key, id, bytes):
+        return query.download_update(db=db, key=key, id=id, bytes=bytes)
 
     downloader = Downloader(
         uris=uris,
         ids=place_ids,
         keys=keys,
-        update_one=update_one,
+        update_one=download_update,
         n_workers=n_download_workers,
         timeout=timeout,
         headers=headers,

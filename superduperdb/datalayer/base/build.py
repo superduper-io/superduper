@@ -20,6 +20,6 @@ def build_datalayer(**connections) -> BaseDatabase:
 
     return BaseDatabase(
         artifact_store=build(CFG.data_layers.artifact, artifact_stores),
-        db=build(CFG.data_layers.data_backend, data_backends),
+        databackend=build(CFG.data_layers.data_backend, data_backends),
         metadata=build(CFG.data_layers.metadata, metadata_stores),
     )

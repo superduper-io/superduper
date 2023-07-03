@@ -155,7 +155,7 @@ class Find(Select):
         return self.parent.table
 
     def limit(self, n: int):
-        return Limit(parent_find=self, n=n)
+        return Limit(parent=self, n=n)
 
     def like(
         self, r: t.Dict, vector_index: str = '', n: int = 100, max_ids: int = 1000
@@ -210,7 +210,7 @@ class Find(Select):
         )
 
     def featurize(self, features):
-        return Featurize(parent_find=self, features=features)
+        return Featurize(parent=self, features=features)
 
     def get_ids(self, db: BaseDatabase):
         args = [{}, {}]
@@ -540,38 +540,13 @@ class PostLike(Select):
 
 class Featurize(Select):
     features: t.Dict[str, str]
-    parent_pre_like: t.Optional[PreLike] = None
-    parent_find: t.Optional[Find] = None
-    parent_post_like: t.Optional[PostLike] = None
+    parent: t.Union[PreLike, Find, PostLike]
 
     type_id: t.Literal['mongdb.Featurize'] = 'mongdb.Featurize'
 
     @property
     def select_table(self):
         return self.parent.select_table
-
-    @property
-    def parent(self):
-        msg = 'Must specify exactly one of "parent_*"'
-        assert (
-            sum(
-                [
-                    bool(self.parent_post_like),
-                    bool(self.parent_post_like),
-                    bool(self.parent_find),
-                ]
-            )
-            == 1
-        ), msg
-        return next(
-            p
-            for p in [
-                self.parent_post_like,
-                self.parent_pre_like,
-                self.parent_find,
-            ]
-            if p
-        )
 
     def get_ids(self, *args, **kwargs):
         return self.parent.get_ids(*args, **kwargs)
@@ -609,63 +584,12 @@ class Featurize(Select):
 
 class Limit(Select):
     n: int
-    parent_find: t.Optional[Find] = None
-    parent_post_like: t.Optional[PostLike] = None
-    parent_pre_like: t.Optional[PreLike] = None
-    parent_featurize: t.Optional[Featurize] = None
+    parent: t.Union[Find, PostLike, PreLike, Featurize]
 
     type_id: t.Literal['mongdb.Limit'] = 'mongdb.Limit'
 
     def __call__(self, db: BaseDatabase):
         return self.parent(db).limit(self.n)
-
-    @property
-    def parent(self):
-        msg = 'Must specify exactly one of "parent_*"'
-        assert (
-            sum(
-                [
-                    bool(self.parent_post_like),
-                    bool(self.parent_post_like),
-                    bool(self.parent_find),
-                    bool(self.parent_featurize),
-                ]
-            )
-            == 1
-        ), msg
-        return next(
-            p
-            for p in [
-                self.parent_post_like,
-                self.parent_pre_like,
-                self.parent_find,
-                self.parent_featurize,
-            ]
-            if p is not None
-        )
-
-    def add_fold(self, fold: str) -> 'Select':
-        raise NotImplementedError
-
-    def is_trivial(self) -> bool:
-        raise NotImplementedError
-
-    @property
-    def select_ids(self) -> 'Select':
-        raise NotImplementedError
-
-    def model_update(self, db, model, key, outputs, ids):
-        raise NotImplementedError
-
-    @property
-    def select_table(self):
-        raise NotImplementedError
-
-    def select_using_ids(
-        self,
-        ids: t.List[str],
-    ) -> t.Any:
-        raise NotImplementedError
 
 
 all_items = {

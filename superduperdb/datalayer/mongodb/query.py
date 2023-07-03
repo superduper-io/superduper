@@ -417,6 +417,36 @@ class UpdateMany(Update):
         return Find(parent=self.args[0])
 
 
+class InsertOne(Insert):
+    collection: Collection
+    args: t.List = Field(default_factory=list)
+    kwargs: t.Dict = Field(default_factory=dict)
+    my_refresh: bool = Field(default=True, alias='refresh')
+    my_verbose: bool = Field(default=True, alias='verbose')
+
+    def __call__(self, db: BaseDatabase):
+        insert = db.db[self.collection.name].insert_one(*self.args, **self.kwargs)
+        graph = None
+        if self.refresh:
+            graph = db.refresh_after_update_or_insert(
+                query=self,
+                ids=[insert.id],
+                verbose=self.verbose,
+            )
+        return insert, graph
+
+    @property
+    def table(self):
+        return self.collection.name
+
+    @property
+    def select_table(self):
+        return Find(collection=self.collection)
+
+    def select_using_ids(self, ids):
+        return Find(collection=self.collection, args=[{'_id': {'$in': ids}}])
+
+
 class InsertMany(Insert):
     collection: Collection
     args: t.List = Field(default_factory=list)
@@ -601,16 +631,16 @@ class ChangeStream(BaseModel):
     def __call__(self, db: BaseDatabase):
         resume_token = self.kwargs.get("resume_token")
         # TODO (high): need to pass change pipeline into watch
-        change = self.kwargs.get("change")
+        self.kwargs.get("change")
 
-        _db_clct = db.db[self.collection.name]
+        collection = db.db[self.collection.name]
         options = {}
         if resume_token:
             options['resumeAfter'] = resume_token
         if options:
-            change_stream_iterator = _db_clct.watch()
+            change_stream_iterator = collection.watch()
         else:
-            change_stream_iterator = _db_clct.watch()
+            change_stream_iterator = collection.watch()
         return change_stream_iterator
 
 
@@ -628,4 +658,5 @@ all_items = {
     'Limit': Limit,
     'UpdateOne': UpdateOne,
     'UpdateMany': UpdateMany,
+    'ChangeStream': ChangeStream,
 }

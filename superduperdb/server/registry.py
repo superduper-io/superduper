@@ -31,9 +31,7 @@ class Registry:
 
         sig = inspect.signature(method)
         params = list(sig.parameters.items())
-        if not inspect.ismethod(method):
-            if not (params and params[0][0] == 'self'):
-                raise NotJSONableError(f'{method} not an instance method')
+        if not inspect.ismethod(method) and params and params[0][0] == 'self':
             params = params[1:]
 
         parameter_types = tuple(value.annotation for _, value in params)

@@ -16,12 +16,20 @@ class TypedCache:
     its class cache.
     """
 
-    def put(self, entry: t.Any) -> str:
+    def put(self, entry: t.Any, key: t.Optional[str] = None) -> str:
         """Put an item into the cache, return a string key"""
         name = self._get_name(type(entry))
         cache = self._name_to_cache[name]
-        key = cache.put(entry)
-        return f'{name}{SEP}{key}'
+        if key is None:
+            key = cache.put(entry)
+            return f'{name}{SEP}{key}'
+
+        k, _, rest = key.partition(SEP)
+        if k == name and rest:
+            cache.put(entry, rest)
+            return key
+
+        raise ValueError(f'Bad key {key}, expected {name}-')
 
     def _get_name(self, cls: t.Type) -> str:
         with self._lock:
@@ -46,6 +54,10 @@ class TypedCache:
         cn = self._class_to_name.items()
         cc = ((cls, self._name_to_cache[name]) for cls, name in cn)
         return {cls: cache.expire(before) for cls, cache in cc}
+
+    def __contains__(self, key: str) -> bool:
+        k, _, rest = key.partition(SEP)
+        return rest in self._name_to_cache.get(k, {})
 
     def __len__(self):
         with self._lock:

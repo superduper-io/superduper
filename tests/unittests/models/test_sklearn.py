@@ -63,5 +63,5 @@ class TestPipeline:
 
     def test_fit_db(self, pipeline, data_in_db):
         pipeline.fit(
-            'X', 'y', database=data_in_db, select=Collection(name='documents').find()
+            'X', 'y', db=data_in_db, select=Collection(name='documents').find()
         )

@@ -22,6 +22,13 @@ class Select(s.JSONable, ABC):
     stored properties necessary for querying the DB.
     """
 
+    raw: bool = False
+
+    @property
+    @abstractmethod
+    def select_table(self):
+        pass
+
     @abstractmethod
     def is_trivial(self) -> bool:
         # Determines when a select statement is "just" select everything.
@@ -48,6 +55,10 @@ class Select(s.JSONable, ABC):
     def add_fold(self, fold: str) -> 'Select':
         # Converts the query into a query which sub-selects based on the specified
         # tag "fold"
+        pass
+
+    @abstractmethod
+    def model_update(self, db, model, key, outputs, ids):
         pass
 
     @abstractmethod
@@ -88,6 +99,11 @@ class Delete(s.JSONable, ABC):
 class Update(s.JSONable, ABC):
     refresh: bool = True
     verbose: bool = True
+
+    @property
+    @abstractmethod
+    def select_table(self):
+        pass
 
     @property
     @abstractmethod

@@ -171,7 +171,6 @@ def test_insert(random_data, a_watcher, an_update):
     )
 
 
-@pytest.mark.skip('No internet')
 def test_insert_from_uris(empty, image_type):
     to_insert = [
         Document(

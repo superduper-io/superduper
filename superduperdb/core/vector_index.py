@@ -192,7 +192,7 @@ class VectorIndex(Component):
                 subout = document['_outputs'].setdefault(subkey, {})
                 f_subkey = features[subkey]
                 if f_subkey not in subout:
-                    subout[f_subkey] = database.models[f_subkey].predict(
+                    subout[f_subkey] = database.models[f_subkey]._predict(
                         document[subkey]
                     )
                 document[subkey] = subout[f_subkey]

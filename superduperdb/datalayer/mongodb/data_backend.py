@@ -1,5 +1,7 @@
 import typing as t
 
+from pymongo import MongoClient
+
 from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -10,13 +12,13 @@ from superduperdb.queries.serialization import from_dict
 class MongoDataBackend(BaseDataBackend):
     id_field = '_id'
 
-    def __init__(
-        self,
-        conn: t.Any,
-        name: t.Optional[str] = None,
-    ):
-        super().__init__(conn, name)
-        self.db = conn[name]
+    def __init__(self, conn: MongoClient, name: str):
+        super().__init__(conn=conn, name=name)
+        self._db = self.conn[self.name]
+
+    @property
+    def db(self):
+        return self._db
 
     def get_output_from_document(
         self, r: Document, key: str, model: str

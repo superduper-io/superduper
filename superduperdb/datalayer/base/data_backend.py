@@ -11,13 +11,13 @@ class BaseDataBackend(ABC):
     select_cls = Select
     id_field = 'id'
 
-    def __init__(
-        self,
-        conn: t.Any,
-        name: t.Optional[str] = None,
-    ):
+    def __init__(self, conn: t.Any, name: str):
         self.conn = conn
         self.name = name
+
+    @property
+    def db(self):
+        raise NotImplementedError
 
     @abstractmethod
     def get_output_from_document(self, r: Document, key: str, model: str):

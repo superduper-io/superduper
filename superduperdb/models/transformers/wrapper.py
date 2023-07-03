@@ -32,7 +32,8 @@ class Pipeline(Model):
         identifier: t.Optional[str] = None,
         training_configuration: t.Optional[TransformersTrainerConfiguration] = None,
         training_select: t.Optional[Select] = None,
-        training_keys: t.Optional[t.List[str]] = None,
+        train_X: t.Optional[str] = None,
+        train_y: t.Optional[str] = None,
         encoder: t.Optional[Encoder] = None,
     ):
         if pipeline is None:
@@ -46,7 +47,8 @@ class Pipeline(Model):
             identifier=identifier,
             training_configuration=training_configuration,
             training_select=training_select,
-            training_keys=training_keys,
+            train_X=train_X,
+            train_y=train_y,
             encoder=encoder,
         )
 
@@ -68,7 +70,7 @@ class Pipeline(Model):
         valid_data = [valid_data[i] for i in range(len(valid_data))]
         return train_data, valid_data
 
-    def fit(
+    def _fit(  # type: ignore[override]
         self,
         X: str,
         y: str,
@@ -77,7 +79,6 @@ class Pipeline(Model):
         training_configuration: t.Optional[TransformersTrainerConfiguration] = None,
         validation_sets: t.Optional[t.List[str]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
-        serializer: str = 'pickle',
     ):
         if training_configuration is not None:
             self.training_configuration = training_configuration
@@ -105,7 +106,7 @@ class Pipeline(Model):
             eval_dataset=valid_data,
         ).train()
 
-    def predict(self, input, **kwargs):
+    def _predict(self, input, **kwargs):
         return self.object(input, **kwargs)
 
 

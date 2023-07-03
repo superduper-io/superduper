@@ -1,34 +1,45 @@
-import inspect
-import os
-from starlette.requests import Request
-from ray import serve
 from bson import BSON
+import click
+from ray import serve as _serve
+from starlette.requests import Request
 
-from superduperdb.datalayer.base.imports import get_database_from_database_type
+from superduperdb.datalayer.base.build import build_datalayer
 from superduperdb.core.documents import Document
 
 
-@serve.deployment(
-    route_prefix=f'/predict/{os.environ.get("SUPERDUPERDB_MODEL", "ERROR")}',
-    num_replicas=int(os.environ.get("SUPERDUPERDB_NUM_REPLICAS", "1")),
-)
-class Server:
-    def __init__(self):
-        database_type = os.environ['SUPERDUPERDB_DATABASE_TYPE']
-        database_name = os.environ['SUPERDUPERDB_DATABASE_NAME']
-        self.db = get_database_from_database_type(database_type, database_name)
-        print(self.db.models[os.environ['SUPERDUPERDB_MODEL']])
-        self.sig = inspect.signature(self.db.predict_one)
+def create_server(model: str, num_replicas):
+    @_serve.deployment(
+        route_prefix=f'/predict/{model}',
+        num_replicas=num_replicas,
+    )
+    class Server:
+        def __init__(self):
+            self.db = build_datalayer()
+            self.model = self.db.models[model]
 
-    async def __call__(self, http_request: Request) -> str:
-        data = await http_request.body()
-        data = BSON.decode(data)
-        print(data)
-        data = [Document.decode(r, types=self.db.types) for r in data]
+        async def __call__(self, http_request: Request) -> str:
+            data = await http_request.body()
+            data = BSON.decode(data)
+            print(data)
+            data = [Document.decode(r, types=self.db.types) for r in data]
+            X = Document.decode(data['X'], types=self.db.types)
+            try:
+                X = X.unpack()
+            except Exception:
+                X = [x.unpack() for x in X]
+            result = self.model.predict(X)
+            return BSON.encode({'output': result.encode()})
 
-        input_ = Document.decode(data['input_'], types=self.db.types)
-        result = self.db.predict(os.environ['SUPERDUPERDB_MODEL'], input_)
-        return BSON.encode({'output': result.encode()})
+    return Server
 
 
-server = Server.bind()
+@click.command()
+@click.argument('model')
+@click.option('--num_replicas', default=1)
+def serve(model: str, num_replicas: int = 1):
+    Server = create_server(model, num_replicas=num_replicas)
+    Server.bind()
+
+
+if __name__ == '__main__':
+    serve()

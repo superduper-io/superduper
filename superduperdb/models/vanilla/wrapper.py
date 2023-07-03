@@ -6,7 +6,7 @@ class FunctionWrapper(Model):
     def predict_one(self, x, **kwargs):
         return self.object(x, **kwargs)
 
-    def predict(self, docs, num_workers=0):
+    def _predict(self, docs, num_workers=0):
         outputs = []
         if num_workers:
             pool = multiprocessing.Pool(processes=num_workers)

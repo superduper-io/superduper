@@ -1,7 +1,7 @@
 import inspect
 import io
 from contextlib import contextmanager
-from typing import Optional, Callable, Union, Dict, List
+from typing import Optional, Callable, Union, Dict, List, Any
 
 import torch
 from torch.utils import data
@@ -16,6 +16,7 @@ from superduperdb.core.model import Model, ModelEnsemble, TrainingConfiguration
 from superduperdb.misc.logger import logging
 from superduperdb.models.torch.utils import device_of, to_device, eval
 from superduperdb.datalayer.query_dataset import QueryDataset
+from superduperdb.queries.serialization import from_dict
 
 
 class BasicDataset(data.Dataset):
@@ -87,7 +88,8 @@ class Base(Model):
         encoder: Optional[Union[Encoder, str]] = None,
         training_configuration: Optional[TorchTrainerConfiguration] = None,
         training_select: Optional[Select] = None,
-        training_keys: Optional[List[str]] = None,
+        train_X: Optional[Union[str, List[str]]] = None,
+        train_y: Optional[Union[str, List[str]]] = None,
         validation_sets: Optional[List[str]] = None,
         num_directions: int = 2,
         metrics: Optional[List[Metric]] = None,
@@ -96,7 +98,8 @@ class Base(Model):
             object=object,
             identifier=identifier,
             training_configuration=training_configuration,
-            training_keys=training_keys,
+            train_X=train_X,
+            train_y=train_y,
             training_select=training_select,
             encoder=encoder,
             metrics=metrics,
@@ -146,27 +149,29 @@ class Base(Model):
         if all([to_watch[-1] >= x for x in to_watch[:-1]]):
             return True
 
-    def fit(
+    def _fit(  # type: ignore[override]
         self,
-        X: Optional[Union[List[str], str]] = None,
-        *targets,
-        database: BaseDatabase,
-        select: Optional[Select] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
+        X: Union[List[str], str],
+        y: Optional[Union[List, Any]] = None,
+        db: Optional[BaseDatabase] = None,
+        select: Optional[Union[Select, Dict]] = None,
+        configuration: Optional[TorchTrainerConfiguration] = None,
         validation_sets: Optional[List[str]] = None,
         metrics: Optional[List[Metric]] = None,
-        serializer: str = 'pickle',
     ):
-        if training_configuration is not None:
-            self.training_configuration = training_configuration
+        if configuration is not None:
+            self.training_configuration = configuration
         if select is not None:
-            self.training_select = select
+            if isinstance(select, dict):
+                select = from_dict(select)
+            self.training_select = select  # type: ignore[assignment]
         if validation_sets is not None:
             self.validation_sets = validation_sets
         if metrics is not None:
             self.metrics = metrics
 
-        self.training_keys = (X, *targets)  # type: ignore[assignment]
+        self.train_X = X
+        self.train_y = y
 
         train_data, valid_data = self._get_data()
         # ruff: noqa: E501
@@ -174,15 +179,12 @@ class Base(Model):
         train_dataloader = DataLoader(train_data, **loader_kwargs)
         valid_dataloader = DataLoader(valid_data, **loader_kwargs)
 
-        if self.optimizers is None:
-            self.optimizers = self.build_optimizers()
-
         return self._fit_with_dataloaders(
             train_dataloader,
             valid_dataloader,
-            database=database,
+            db=db,  # type: ignore[arg-type]
             validation_sets=validation_sets or [],
-            serializer=serializer,  # TODO - add serializer to __init__ method of Model
+            # TODO - add serializer to __init__ method of Model
         )
 
     def preprocess(self, r):
@@ -198,29 +200,42 @@ class Base(Model):
                 out += f'{k}: {v}; '
         logging.info(out)
 
-    def train_forward(self, X, *targets):
+    def train_forward(self, X, y=None):
         if hasattr(self.object, 'train_forward'):
-            return self.object.train_forward(X, *targets)
+            if y is None:
+                return self.object.train_forward(X)
+            else:
+                return self.object.train_forward(X, y=y)
         else:
-            return [self.object(X), *targets]
+            if y is None:
+                return (self.object(X),)
+            else:
+                return [self.object(X), y]
 
     def forward(self, X):
         return self.object(X)
 
-    def take_step(self, batch):
-        if isinstance(self.training_keys[0], str):
-            batch = [batch[k] for k in self.training_keys]
-        else:
-            batch = [
-                [batch[k] for k in self.training_keys[0]],
-                *[batch[k] for k in self.training_keys[1:]],
+    def extract_batch_key(self, batch, key: Union[List[str], str]):
+        if isinstance(key, str):
+            return batch[key]
+        return [batch[k] for k in key]
+
+    def extract_batch(self, batch):
+        if self.train_y is not None:
+            return [
+                self.extract_batch_key(batch, self.train_X),
+                self.extract_batch_key(batch, self.train_y),
             ]
+        return [self.extract_batch_key(batch, self.train_X)]
+
+    def take_step(self, batch, optimizers):
+        batch = self.extract_batch(batch)
         outputs = self.train_forward(*batch)
         objective_value = self.training_configuration.objective(*outputs)
-        for opt in self.optimizers:
+        for opt in optimizers:
             opt.zero_grad()
         objective_value.backward()
-        for opt in self.optimizers:
+        for opt in optimizers:
             opt.step()
         return objective_value
 
@@ -228,13 +243,7 @@ class Base(Model):
         objective_values = []
         with self.evaluating(), torch.no_grad():
             for batch in valid_dataloader:
-                if isinstance(self.training_keys[0], str):
-                    batch = [batch[k] for k in self.training_keys]
-                else:
-                    batch = [
-                        [batch[k] for k in self.training_keys[0]],
-                        *[batch[k] for k in self.training_keys[1:]],
-                    ]
+                batch = self.extract_batch(batch)
                 objective_values.append(
                     self.training_configuration.objective(
                         *self.train_forward(*batch)
@@ -242,12 +251,11 @@ class Base(Model):
                 )
             return sum(objective_values) / len(objective_values)
 
-    def save(self, database: BaseDatabase, serializer: str = 'pickle'):
+    def save(self, database: BaseDatabase):
         database._replace_model(
             self.identifier,
             self,
             upsert=True,
-            serializer=serializer,
         )  # TODO _replace_model is redundant
 
     def compute_metrics(self, validation_set, database):
@@ -263,36 +271,36 @@ class Base(Model):
         self,
         train_dataloader: DataLoader,
         valid_dataloader: DataLoader,
-        database: BaseDatabase,
+        db: BaseDatabase,  # type: ignore[arg-type]
         validation_sets: List[str],
-        serializer: str = 'pickle',
     ):
         self.train()
         iteration = 0
+        optimizers = self.build_optimizers()
         while True:
             for batch in train_dataloader:
-                train_objective = self.take_step(batch)
+                train_objective = self.take_step(batch, optimizers)
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
                 # ruff: noqa: E501
                 if iteration % self.training_configuration.validation_interval == 0:  # type: ignore[union-attr]
                     valid_loss = self.compute_validation_objective(valid_dataloader)
                     all_metrics = {}
                     for vs in validation_sets:
-                        metrics = self.compute_metrics(vs, database)
+                        metrics = self.compute_metrics(vs, db)
                         metrics = {f'{vs}/{k}': metrics[k] for k in metrics}
                         all_metrics.update(metrics)
                     all_metrics.update({'objective': valid_loss})
                     self.append_metrics(all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion():
-                        self.save(database, serializer)
+                        self.save(db)
                     stop = self.stopping_criterion(iteration)
                     if stop:
                         return
                 iteration += 1
 
     def _get_data(self):
-        preprocessors = {self.training_keys[0]: self.preprocess}
+        preprocessors = {}
         for k in self.training_keys:
             preprocessors[k] = self.training_configuration.target_preprocessors.get(
                 k, lambda x: x
@@ -330,7 +338,8 @@ class TorchPipeline(Base):
         encoder: Optional[Union[Encoder, str]] = None,
         training_configuration: Optional[TorchTrainerConfiguration] = None,
         training_select: Optional[Select] = None,
-        training_keys: Optional[List[str]] = None,
+        train_X: Optional[Union[str, List[str]]] = None,
+        train_y: Optional[Union[str, List[str]]] = None,
         num_directions: int = 2,
         metrics: Optional[Union[List[Metric], List[str]]] = None,
     ):
@@ -344,7 +353,8 @@ class TorchPipeline(Base):
             object=object,
             training_configuration=training_configuration,
             training_select=training_select,
-            training_keys=training_keys,
+            train_X=train_X,
+            train_y=train_y,
             encoder=encoder,
             collate_fn=collate_fn,
             is_batch=is_batch,
@@ -429,17 +439,17 @@ class TorchPipeline(Base):
                 x = transform(x)
         return x
 
-    def predict(self, x, **kwargs):
-        if not self._test_if_batch(x):
-            return self._predict_one(x, **kwargs)
+    def _predict(self, X, **kwargs):
+        if not self._test_if_batch(X):
+            return self._predict_one(X, **kwargs)
         if self.preprocess_pipeline.steps:
-            inputs = BasicDataset(x, self.preprocess)
+            inputs = BasicDataset(X, self.preprocess)
             loader = torch.utils.data.DataLoader(
                 inputs, **kwargs, collate_fn=self.collate_fn
             )
         else:
             loader = torch.utils.data.DataLoader(
-                x, **kwargs, collate_fn=self.collate_fn
+                X, **kwargs, collate_fn=self.collate_fn
             )
         out = []
         for batch in tqdm(loader, total=len(loader)):
@@ -451,11 +461,11 @@ class TorchPipeline(Base):
             out.extend(tmp)
         return out
 
-    def _predict_one(self, x, **kwargs):
+    def _predict_one(self, X, **kwargs):
         with torch.no_grad(), eval(self.forward_pipeline):
-            x = self.preprocess(x)
-            x = to_device(x, device_of(self.forward_pipeline))
-            singleton_batch = create_batch(x)
+            X = self.preprocess(X)
+            X = to_device(X, device_of(self.forward_pipeline))
+            singleton_batch = create_batch(X)
             output = self.forward(singleton_batch)
             output = unpack_batch(output)[0]
             return self.postprocess(output)
@@ -512,7 +522,8 @@ class TorchModel(Base):
         encoder: Optional[Union[Encoder, str]] = None,
         training_configuration: Optional[TorchTrainerConfiguration] = None,
         training_select: Optional[Select] = None,
-        training_keys: Optional[List[str]] = None,
+        train_X: Optional[Union[str, List[str]]] = None,
+        train_y: Optional[Union[str, List[str]]] = None,
         validation_sets: Optional[List[str]] = None,
         num_directions: int = 2,
         metrics: Optional[List[Metric]] = None,
@@ -527,7 +538,8 @@ class TorchModel(Base):
             encoder=encoder,
             training_configuration=training_configuration,
             training_select=training_select,
-            training_keys=training_keys,
+            train_X=train_X,
+            train_y=train_y,
             validation_sets=validation_sets,
             num_directions=num_directions,
             metrics=metrics,
@@ -614,7 +626,7 @@ class TorchModel(Base):
                 args = self.object.postprocess(args)
             return args
 
-    def predict(self, x, **kwargs):
+    def _predict(self, x, **kwargs):
         with torch.no_grad(), eval(self.object):
             if not isinstance(x, list) and not test_if_batch(x, self.num_directions):
                 return self._predict_one(x)
@@ -753,7 +765,8 @@ class TorchModelEnsemble(Base, ModelEnsemble):
         encoder: Optional[Union[Encoder, str]] = None,
         training_configuration: Optional[TorchTrainerConfiguration] = None,
         training_select: Optional[Select] = None,
-        training_keys: Optional[List[str]] = None,
+        train_X: Optional[Union[str, List[str]]] = None,
+        train_y: Optional[Union[str, List[str]]] = None,
         num_directions: int = 2,
     ):
         Base.__init__(
@@ -765,22 +778,11 @@ class TorchModelEnsemble(Base, ModelEnsemble):
             encoder=encoder,
             training_configuration=training_configuration,
             training_select=training_select,
-            training_keys=training_keys,
+            train_X=train_X,
+            train_y=train_y,
             num_directions=num_directions,
         )
         ModelEnsemble.__init__(self, models)  # type: ignore[arg-type]
-
-    def train_preprocess(self, r):
-        out = {}
-        for i, k in enumerate(self.training_keys[0]):
-            model_id = self._model_ids[i]
-            out[k] = getattr(self, model_id).preprocess(r[k])
-        for k in self.training_keys[1:]:
-            preprocessor = self.training_configuration.target_preprocessors.get(
-                k, lambda x: x
-            )
-            out[k] = preprocessor(r[k])
-        return out
 
     def build_optimizers(self):
         optimizers = []
@@ -809,24 +811,12 @@ class TorchModelEnsemble(Base, ModelEnsemble):
         for m in self._model_ids:
             getattr(self, m).train()
 
-    def _get_data(self):
-        train_data = QueryDataset(
-            select=self.training_select,
-            keys=[*self.training_keys[0], *self.training_keys[1:]],
-            fold='train',
-            transform=self.train_preprocess,
-        )
-        valid_data = QueryDataset(
-            select=self.training_select,
-            keys=[*self.training_keys[0], *self.training_keys[1:]],
-            fold='valid',
-            transform=self.train_preprocess,
-        )
-        return train_data, valid_data
-
-    def train_forward(self, X, *targets):
+    def train_forward(self, X, y=None):
         out = []
-        for i, k in enumerate(self.training_keys[0]):
+        for i, k in enumerate(self.train_X):
             submodel = getattr(self, self._model_ids[i])
             out.append(submodel.object(X[i]))
-        return out, *targets
+        if y is not None:
+            return out, y
+        else:
+            return out

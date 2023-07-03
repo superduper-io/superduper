@@ -14,6 +14,10 @@ from superduperdb.datalayer.base.query import Like
 class Collection(BaseModel):
     name: str
 
+    @property
+    def table(self):
+        return self.name
+
     def to_dict(self):
         return {'cls': 'Collection', 'dict': {'name': self.name}}
 
@@ -29,9 +33,10 @@ class Collection(BaseModel):
     def insert_one(self, *args, **kwargs):
         return InsertOne(collection=self, args=args, kwargs=kwargs)
 
-    def insert_many(self, *args, refresh=True, **kwargs):
+    def insert_many(self, *args, refresh=True, encoders=(), **kwargs):
         return InsertMany(
             collection=self,
+            encoders=encoders,
             documents=args[0],
             args=args[1:],
             refresh=refresh,
@@ -68,6 +73,10 @@ class ReplaceOne(Update):
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
+    @property
+    def select_table(self):
+        raise NotImplementedError
+
     def __call__(self, db: BaseDatabase):
         filter, repl = self.args[:2]
         if isinstance(repl, Document):
@@ -92,6 +101,10 @@ class PreLike(Like):
     vector_index: str
     collection: Collection
     n: int = 100
+
+    @property
+    def table(self):
+        return self.collection.name
 
     class Config:
         arbitrary_types_allowed = True
@@ -132,6 +145,10 @@ class Find(Select):
             return self.like_parent
         return self.collection
 
+    @property
+    def table(self):
+        return self.parent.table
+
     def limit(self, n: int):
         return Limit(parent_find=self, n=n)
 
@@ -153,7 +170,7 @@ class Find(Select):
         return Find(
             like_parent=self.like_parent,
             collection=self.collection,
-            args=self.args,
+            args=args,
             kwargs=self.kwargs,
         )
 
@@ -166,7 +183,11 @@ class Find(Select):
             filter = self.args[0]
         except IndexError:
             filter = {}
-        return Find(parent=self.parent, args=[filter, {'_id': 1}])
+        return Find(
+            collection=self.collection,
+            like_parent=self.like_parent,
+            args=[filter, {'_id': 1}],
+        )
 
     def select_using_ids(self, ids: t.List[str]) -> t.Any:
         args = [{}, {}]
@@ -318,6 +339,10 @@ class UpdateOne(Update):
         return db.db[self.collection.name].update_one(*self.args, **self.kwargs)
 
     @property
+    def select_table(self):
+        raise NotImplementedError
+
+    @property
     def select(self):
         return Find(collection=self.collection, args=[self.args[0]])
 
@@ -393,6 +418,7 @@ class InsertMany(Insert):
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
     valid_prob: float = 0.05
+    encoders: t.List = Field(default_factory=list)
 
     @property
     def table(self):
@@ -406,6 +432,8 @@ class InsertMany(Insert):
         return Find(collection=self.collection, args=[{'_id': {'$in': ids}}])
 
     def __call__(self, db: BaseDatabase):
+        for e in self.encoders:
+            db.add(e)
         documents = [r.encode() for r in self.documents]
         for r in documents:
             if random.random() < self.valid_prob:
@@ -424,7 +452,6 @@ class InsertMany(Insert):
                 ids=output.inserted_ids,
                 verbose=self.verbose,
             )
-            graph()
         return output, graph
 
 
@@ -460,6 +487,10 @@ class Featurize(Select):
     parent_post_like: t.Optional[PostLike] = None
 
     @property
+    def select_table(self):
+        return self.parent.select_table
+
+    @property
     def parent(self):
         msg = 'Must specify exactly one of "parent_*"'
         assert (
@@ -490,10 +521,10 @@ class Featurize(Select):
 
     @property
     def select_ids(self):
-        raise NotImplementedError
+        return self.parent.select_ids
 
     def add_fold(self, fold: str):
-        return self.parent.add_fold(fold)
+        return self.parent.add_fold(fold).featurize(self.features)
 
     def select_using_ids(self, ids: t.List[str]) -> t.Any:
         return self.parent.select_using_ids(ids=ids).featurize(features=self.features)

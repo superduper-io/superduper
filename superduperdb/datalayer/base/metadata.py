@@ -21,6 +21,10 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
+    def create_job(self, info: Dict):
+        pass
+
+    @abstractmethod
     def create_parent_child(self, parent: str, child: str):
         pass
 
@@ -32,7 +36,6 @@ class MetaDataStore(ABC):
     def update_job(self, job_id: str, key: str, value: Any):
         pass
 
-    @abstractmethod
     def watch_job(self, identifier: str):
         try:
             status = 'pending'

@@ -21,6 +21,9 @@ class Document(Cached[ContentType]):
             return r.encode()
         return r
 
+    def __repr__(self):
+        return f'Document(uri={self.uri}, _content={self._content}'
+
     def encode(self):
         return self._encode(self.content)
 

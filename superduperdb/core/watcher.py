@@ -1,5 +1,4 @@
 import typing as t
-import threading
 
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.model import Model

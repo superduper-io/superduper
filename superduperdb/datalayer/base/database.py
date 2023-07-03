@@ -611,6 +611,7 @@ class BaseDatabase:
 
         documents = [x.content for x in documents]
         uris, keys, place_ids = gather_uris(documents)
+
         logging.info(f'found {len(uris)} uris')
         if not uris:
             return

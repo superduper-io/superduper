@@ -73,6 +73,8 @@ class ReplaceOne(Update):
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
+    type_id: t.Literal['mongdb.ReplaceOne'] = 'mongdb.ReplaceOne'
+
     @property
     def select_table(self):
         raise NotImplementedError
@@ -100,6 +102,8 @@ class PreLike(Like):
     vector_index: str
     collection: Collection
     n: int = 100
+
+    type_id: t.Literal['mongdb.PreLike'] = 'mongdb.PreLike'
 
     @property
     def table(self):
@@ -134,6 +138,8 @@ class Find(Select):
     like_parent: t.Optional[PreLike] = None
     args: t.Optional[t.List] = Field(default_factory=lambda: [])
     kwargs: t.Optional[t.Dict] = Field(default_factory=lambda: {})
+
+    type_id: t.Literal['mongdb.Find'] = 'mongdb.Find'
 
     @property
     def parent(self):
@@ -268,6 +274,8 @@ class FeaturizeOne(SelectOne):
     features: t.Dict[str, str]
     parent_find_one: t.Optional[Find] = None
 
+    type_id: t.Literal['mongdb.FeaturizeOne'] = 'mongdb.FeaturizeOne'
+
     def __call__(self, db: BaseDatabase):
         r = self.parent_find_one(db)
         r = SuperDuperCursor.add_features(r.content, self.features)
@@ -279,6 +287,8 @@ class FindOne(SelectOne):
     kwargs: t.Optional[t.Dict] = Field(default_factory=dict)
     like_parent: t.Optional[PreLike] = None
     collection: t.Optional[Collection] = None
+
+    type_id: t.Literal['mongdb.FindOne'] = 'mongdb.FindOne'
 
     def __call__(self, db: BaseDatabase):
         if self.collection is not None:
@@ -307,6 +317,8 @@ class Aggregate(Select):
     kwargs: t.Dict = Field(default_factory=dict)
     collection: Collection
 
+    type_id: t.Literal['mongdb.Aggregate'] = 'mongdb.Aggregate'
+
     def __call__(self, db):
         return db.db[self.collection.name].aggregate(*self.args, **self.kwargs)
 
@@ -315,6 +327,8 @@ class DeleteOne(Delete):
     collection: Collection
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
+
+    type_id: t.Literal['mongdb.DeleteOne'] = 'mongdb.DeleteOne'
 
     def __call__(self, db: BaseDatabase):
         return db.db[self.collection.name].delete_one(*self.args, **self.kwargs)
@@ -325,6 +339,8 @@ class DeleteMany(Delete):
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
+    type_id: t.Literal['mongdb.DeleteMany'] = 'mongdb.DeleteMany'
+
     def __call__(self, db: BaseDatabase):
         return db.db[self.collection.name].delete_many(*self.args, **self.kwargs)
 
@@ -333,6 +349,8 @@ class UpdateOne(Update):
     collection: Collection
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
+
+    type_id: t.Literal['mongdb.UpdateOne'] = 'mongdb.UpdateOne'
 
     def __call__(self, db: BaseDatabase):
         return db.db[self.collection.name].update_one(*self.args, **self.kwargs)
@@ -357,6 +375,8 @@ class UpdateMany(Update):
 
     my_refresh: bool = Field(default=True, alias='refresh')
     my_verbose: bool = Field(default=True, alias='verbose')
+
+    type_id: t.Literal['mongdb.UpdateMany'] = 'mongdb.UpdateMany'
 
     def __call__(self, db: BaseDatabase):
         to_update = Document(self.args[1]).encode()
@@ -396,6 +416,8 @@ class InsertOne(Insert):
     my_refresh: bool = Field(default=True, alias='refresh')
     my_verbose: bool = Field(default=True, alias='verbose')
 
+    type_id: t.Literal['mongdb.InsertOne'] = 'mongdb.InsertOne'
+
     def __call__(self, db: BaseDatabase):
         insert = db.db[self.collection.name].insert_one(*self.args, **self.kwargs)
         graph = None
@@ -426,6 +448,8 @@ class InsertMany(Insert):
     kwargs: t.Dict = Field(default_factory=dict)
     valid_prob: float = 0.05
     encoders: t.List = Field(default_factory=list)
+
+    type_id: t.Literal['mongdb.InsertMany'] = 'mongdb.InsertMany'
 
     @property
     def table(self):
@@ -469,8 +493,12 @@ class PostLike(Select):
     n: int = 100
     max_ids: int = 1000
 
+    type_id: t.Literal['mongdb.PostLike'] = 'mongdb.PostLike'
+
     class Config:
         arbitrary_types_allowed = True
+        # TODO: the server will crash when it tries to JSONize whatever it is that
+        # this allows.
 
     def __call__(self, db: BaseDatabase):
         cursor = self.find_parent.select_ids.limit(self.max_ids)(db)
@@ -515,6 +543,8 @@ class Featurize(Select):
     parent_pre_like: t.Optional[PreLike] = None
     parent_find: t.Optional[Find] = None
     parent_post_like: t.Optional[PostLike] = None
+
+    type_id: t.Literal['mongdb.Featurize'] = 'mongdb.Featurize'
 
     @property
     def select_table(self):
@@ -583,6 +613,8 @@ class Limit(Select):
     parent_post_like: t.Optional[PostLike] = None
     parent_pre_like: t.Optional[PreLike] = None
     parent_featurize: t.Optional[Featurize] = None
+
+    type_id: t.Literal['mongdb.Limit'] = 'mongdb.Limit'
 
     def __call__(self, db: BaseDatabase):
         return self.parent(db).limit(self.n)

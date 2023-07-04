@@ -416,7 +416,6 @@ class InsertOne(Insert):
     def select_table(self):
         return Find(collection=self.collection)
 
-
     @property
     def documents(self):
         return [self.args[0]]

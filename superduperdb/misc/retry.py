@@ -15,7 +15,7 @@ class Retry:
     """
 
     exception_types: ExceptionTypes
-    cfg: s.config.Retry = s.CFG.apis.retry
+    cfg: s.config.Retry = dc.field(default_factory=lambda: s.CFG.apis.retry)
 
     def __call__(self, f: t.Callable) -> t.Any:
         retry = tenacity.retry_if_exception_type(self.exception_types)

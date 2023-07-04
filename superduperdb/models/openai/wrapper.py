@@ -1,23 +1,25 @@
 import os
+import typing as t
 
 import tqdm
 
-import superduperdb as s
 
 from openai import ChatCompletion as _ChatCompletion
 from openai import Embedding as _Embedding
 from openai import Model as OpenAIModel
 from openai.error import Timeout, RateLimitError, TryAgain, ServiceUnavailableError
 
+import superduperdb as s
 from superduperdb.misc.retry import Retry
 from superduperdb.core.model import Model
 from superduperdb.misc.compat import cache
-
-import typing as t
-
 from superduperdb.encoders.vectors.vector import vector
 
-retry = Retry((RateLimitError, ServiceUnavailableError, Timeout, TryAgain))
+
+
+retry = Retry(
+    exception_types=(RateLimitError, ServiceUnavailableError, Timeout, TryAgain)
+)
 
 
 def init_fn():

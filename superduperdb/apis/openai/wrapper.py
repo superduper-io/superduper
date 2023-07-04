@@ -1,4 +1,7 @@
 import os
+
+import tqdm
+
 import superduperdb as s
 
 from openai import ChatCompletion as _ChatCompletion
@@ -9,6 +12,10 @@ from openai.error import Timeout, RateLimitError, TryAgain, ServiceUnavailableEr
 from superduperdb.apis.retry import Retry
 from superduperdb.core.model import Model
 from superduperdb.misc.compat import cache
+
+import typing as t
+
+from superduperdb.types.vectors.vector import vector
 
 retry = Retry((RateLimitError, ServiceUnavailableError, Timeout, TryAgain))
 
@@ -24,7 +31,7 @@ def _available_models():
 
 
 class BaseOpenAI(Model):
-    def __init__(self, identifier):
+    def __init__(self, identifier: str):
         super().__init__(None, identifier)
         msg = "model not in list of OpenAI available models"
         assert identifier in _available_models(), msg
@@ -32,9 +39,17 @@ class BaseOpenAI(Model):
 
 
 class Embedding(BaseOpenAI):
+    shapes = {'text-embedding-ada-002': (1536,)}
+
+    def __init__(self, identifier: str, shape: t.Optional[int] = None):
+        super().__init__(identifier)
+        if shape is None:
+            shape = self.shapes[identifier]
+        self.encoder = vector(shape)
+
     @retry
-    def predict_one(self, text, **kwargs):
-        e = _Embedding.create(input=text, model=self.identifier, **kwargs)
+    def _predict_one(self, X, **kwargs):
+        e = _Embedding.create(input=X, model=self.identifier, **kwargs)
         return e['data'][0]['embedding']
 
     @retry
@@ -42,10 +57,12 @@ class Embedding(BaseOpenAI):
         out = _Embedding.create(input=texts, model=self.identifier, **kwargs)['data']
         return [r['embedding'] for r in out]
 
-    def predict(self, texts, batch_size=100, **kwargs):  # asyncio?
+    def _predict(self, X, batch_size=100, **kwargs):  # asyncio?
+        if isinstance(X, str):
+            return self._predict_one(X)
         out = []
-        for i in range(0, len(texts), batch_size):
-            out.extend(self._predict_a_batch(texts[i : i + batch_size], **kwargs))
+        for i in tqdm.tqdm(range(0, len(X), batch_size)):
+            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
         return out
 
 

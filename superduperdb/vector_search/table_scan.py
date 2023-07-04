@@ -1,11 +1,11 @@
 import numpy
 
-from superduperdb.vector_search.base import BaseHashSet
+from superduperdb.vector_search.base import BaseVectorIndex
 from superduperdb.misc.logger import logging
-from . import measures
+from superduperdb.vector_search import table_scan
 
 
-class VanillaHashSet(BaseHashSet):
+class VanillaVectorIndex(BaseVectorIndex):
     """
     Simple hash-set for looking up with vector similarity.
 
@@ -18,7 +18,7 @@ class VanillaHashSet(BaseHashSet):
 
     def __init__(self, h, index, measure='css'):
         if isinstance(measure, str):
-            measure = getattr(measures, measure)
+            measure = getattr(table_scan, measure)
         super().__init__(h, index, measure)
 
     def find_nearest_from_hashes(self, h, n=100):
@@ -33,4 +33,18 @@ class VanillaHashSet(BaseHashSet):
 
     def __getitem__(self, item):
         ix = [self.lookup[i] for i in item]
-        return VanillaHashSet(self.h[ix], item, self.measure)
+        return VanillaVectorIndex(self.h[ix], item, self.measure)
+
+
+def l2(x, y):
+    return numpy.array([-numpy.linalg.norm(x - y, axis=1)])
+
+
+def dot(x, y):
+    return numpy.dot(x, y.T)
+
+
+def css(x, y):
+    x = x / numpy.linalg.norm(x, axis=1)[:, None]
+    y = y / numpy.linalg.norm(y, axis=1)[:, None]
+    return dot(x, y)

@@ -5,7 +5,7 @@ import typing as t
 import numpy
 from readerwriterlock import rwlock
 
-from .vanilla.hashes import VanillaHashSet
+from superduperdb.vector_search.table_scan import VanillaVectorIndex
 from .base import (
     ArrayLike,
     to_numpy,
@@ -24,7 +24,7 @@ from .base import (
 class InMemoryVectorCollection(VectorCollection):
     def __init__(self, *, dimensions: int, measure: VectorIndexMeasure = 'l2') -> None:
         super().__init__()
-        self._index = VanillaHashSet(
+        self._index = VanillaVectorIndex(
             numpy.empty((0, dimensions), dtype='float32'),
             [],
             measure,
@@ -57,13 +57,10 @@ class InMemoryVectorCollection(VectorCollection):
         limit: int = 100,
         offset: int = 0,
     ) -> t.List[VectorCollectionResult]:
-        if within_ids:
-            raise NotImplementedError("within_ids not supported")
         with self._lock.gen_rlock():
             try:
-                ids, scores = self._index.find_nearest_from_id(
-                    identifier, n=limit + offset
-                )
+                index = self._index if not within_ids else self._index[within_ids]
+                ids, scores = index.find_nearest_from_id(identifier, n=limit + offset)
             except KeyError:
                 raise VectorCollectionItemNotFound()
             return self._convert_ids_scores_to_results(ids[offset:], scores[offset:])
@@ -76,11 +73,11 @@ class InMemoryVectorCollection(VectorCollection):
         limit: int = 100,
         offset: int = 0,
     ) -> t.List[VectorCollectionResult]:
-        if within_ids:
-            raise NotImplementedError("within_ids not supported")
         with self._lock.gen_rlock():
-            ids, scores = self._index.find_nearest_from_hash(
-                to_numpy(array), n=limit + offset
+            index = self._index if not within_ids else self._index[within_ids]
+            ids, scores = index.find_nearest_from_hash(
+                to_numpy(array),
+                n=limit + offset,
             )
             return self._convert_ids_scores_to_results(ids[offset:], scores[offset:])
 

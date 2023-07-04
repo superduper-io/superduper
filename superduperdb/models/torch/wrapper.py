@@ -323,20 +323,20 @@ class Base(Model):
                     )
         return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
 
-    def _get_data(self, db: t.Optional[BaseDatabase]):
+    def _get_data(self, db: Optional[BaseDatabase]):
         train_data = QueryDataset(
             select=self.training_select,
             keys=self.training_keys,
             fold='train',
             transform=self.train_preprocess(),
-            database=db
+            database=db,
         )
         valid_data = QueryDataset(
             select=self.training_select,
             keys=self.training_keys,
             fold='valid',
             transform=self.train_preprocess(),
-            database=db
+            database=db,
         )
         return train_data, valid_data
 

@@ -212,7 +212,8 @@ class MongoMetaDataStore(MetaDataStore):
         version: int,
     ):
         return self.object_collection.update_one(
-            {'identifier': identifier, 'variety': variety}, {'$set': {key: value}}
+            {'identifier': identifier, 'variety': variety, 'version': version},
+            {'$set': {key: value}},
         )
 
     def write_output_to_job(self, identifier, msg, stream):

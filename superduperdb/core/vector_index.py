@@ -229,16 +229,21 @@ class VectorIndex(Component):
         return models, keys
 
     # ruff: noqa: F821, E501
-    def validate(
+    def _validate(
         self,
-        database: 'superduperdb.datalayer.base.database.Database',  # type: ignore[name-defined]
-        validation_data: t.Union[str, Dataset],
-        metrics: t.List[Metric],
+        db: 'superduperdb.datalayer.base.database.Database',  # type: ignore[name-defined]
+        validation_set: t.Union[str, Dataset],
+        metrics: t.List[t.Union[Metric, str]],
     ) -> t.Dict[str, t.List]:
         models, keys = self.models_keys
-        models = [database.models[m] for m in models]
-        if isinstance(validation_data, str):
-            validation_data = database.load('dataset', validation_data)
+        models = [db.models[m] for m in models]
+        if isinstance(validation_set, str):
+            validation_data = db.load('dataset', validation_set)
+
+        metrics = list(metrics)  # in case someone passes a tuple by mistake
+        for i, m in enumerate(metrics):
+            if isinstance(m, str):
+                metrics[i] = db.load('metric', m)
         unpacked = [r.unpack() for r in validation_data.data]  # type: ignore[union-attr]
         model_ensemble = ModelEnsemble(models)  # type: ignore[arg-type]
         msg = 'Can only evaluate VectorSearch with compatible watchers...'
@@ -250,7 +255,7 @@ class VectorIndex(Component):
         )(
             validation_data=unpacked,
             model=model_ensemble,
-            metrics=metrics,
+            metrics=metrics,  # type: ignore[arg-type]
         )
 
     def asdict(self) -> t.Dict[str, t.Any]:

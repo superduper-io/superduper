@@ -409,6 +409,15 @@ class InsertOne(Insert):
         return insert, graph
 
     @property
+    def table(self):
+        return self.collection.name
+
+    @property
+    def select_table(self):
+        return Find(collection=self.collection)
+
+
+    @property
     def documents(self):
         return [self.args[0]]
 

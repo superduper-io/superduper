@@ -140,6 +140,10 @@ class Server(JSONable):
     web_server: WebServer = Factory(WebServer)
 
 
+class LanceDB(JSONable):
+    uri: str = '~/.lancedb'
+
+
 class Milvus(JSONable):
     host: str = 'localhost'
     port: int = 19530
@@ -151,6 +155,7 @@ class Milvus(JSONable):
 
 class VectorSearch(JSONable):
     milvus: t.Optional[Milvus] = None
+    lancedb: t.Optional[LanceDB] = LanceDB()
 
     # the fields below were left for compatibility with the vector search server
     # that is still in the codebase
@@ -169,5 +174,6 @@ class Config(JSONable):
     notebook: Notebook = Factory(Notebook)
     ray: Ray = Factory(Ray)
     remote: bool = False
+    cdc: bool = False
     server: Server = Factory(Server)
     vector_search: VectorSearch = Factory(VectorSearch)

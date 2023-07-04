@@ -174,7 +174,7 @@ class Base(Model):
         self.train_X = X
         self.train_y = y
 
-        train_data, valid_data = self._get_data()
+        train_data, valid_data = self._get_data(db=db)
         # ruff: noqa: E501
         loader_kwargs = self.training_configuration.loader_kwargs  # type: ignore[union-attr]
         train_dataloader = DataLoader(train_data, **loader_kwargs)
@@ -323,18 +323,20 @@ class Base(Model):
                     )
         return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
 
-    def _get_data(self):
+    def _get_data(self, db: Optional[BaseDatabase]):
         train_data = QueryDataset(
             select=self.training_select,
             keys=self.training_keys,
             fold='train',
             transform=self.train_preprocess(),
+            database=db
         )
         valid_data = QueryDataset(
             select=self.training_select,
             keys=self.training_keys,
             fold='valid',
             transform=self.train_preprocess(),
+            database=db
         )
         return train_data, valid_data
 

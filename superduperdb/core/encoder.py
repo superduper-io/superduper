@@ -1,4 +1,3 @@
-from functools import wraps
 import dataclasses as dc
 import io
 import pickle
@@ -21,16 +20,7 @@ def _pickle_encoder(x: t.Any) -> bytes:
 
 
 @dc.dataclass
-class EncoderDesc:
-    identifier: str
-    decoder: Decode = _pickle_decoder
-    encoder: Encode = _pickle_encoder
-    shape: t.Optional[t.Tuple] = None
-
-    variety = 'type'  # This cannot yet be changed
-
-
-class Encoder(Component, EncoderDesc):
+class Encoder(Component):
     """
     Storeable ``Component`` allowing byte encoding of primary data,
     i.e. data inserted using ``datalayer.base.BaseDatabase.insert``
@@ -40,12 +30,18 @@ class Encoder(Component, EncoderDesc):
                     be converted to ``bytes``
     :param decoder: callable converting a ``bytes`` string to a ``Encodable`` of
                     this ``Encoder``
+    :param shape: shape of the data, if any
     """
 
-    @wraps(EncoderDesc.__init__)
-    def __init__(self, identifier, *a, **ka):
-        Component.__init__(self, identifier)
-        EncoderDesc.__init__(self, identifier, *a, **ka)
+    identifier: str
+    decoder: Decode = _pickle_decoder
+    encoder: Encode = _pickle_encoder
+    shape: t.Optional[t.Tuple] = None
+
+    variety = 'type'  # This cannot yet be changed
+
+    def __post_init__(self):
+        super().__init__(self.identifier)
 
     def __call__(self, x):
         return Encodable(x, self)
@@ -67,7 +63,7 @@ class Encodable:
     to ``Encoder`` instance.
 
     :param x: Wrapped content
-    :param type: Identifier of type component used to encode
+    :param encoder: Instance of ``Encoder`` controlling encoding
     """
 
     x: t.Any

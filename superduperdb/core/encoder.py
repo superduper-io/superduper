@@ -54,7 +54,10 @@ class Encoder(Component, EncoderDesc):
         return self(self.decoder(b))
 
     def encode(self, x: t.Any) -> t.Dict[str, t.Any]:
-        return {'_content': {'bytes': self.encoder(x), 'type': self.identifier}}
+        if self.encoder is not None:
+            return {'_content': {'bytes': self.encoder(x), 'type': self.identifier}}
+        else:
+            return x
 
 
 @dc.dataclass

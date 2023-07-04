@@ -6,8 +6,8 @@ import typing as t
 from superduperdb.core.model import Model, ModelEnsemble
 from superduperdb.core.metric import Metric
 from superduperdb.datalayer.query_dataset import QueryDataset
-from superduperdb.vector_search import VanillaHashSet
-from superduperdb.vector_search.base import BaseHashSet
+from superduperdb.vector_search import VanillaVectorIndex
+from superduperdb.vector_search.base import BaseVectorIndex
 
 
 class PatK:
@@ -24,7 +24,7 @@ class VectorSearchPerformance:
         index_key: str,
         measure: t.Union[str, t.Callable],
         splitter: t.Optional[t.Callable] = None,
-        hash_set_cls: BaseHashSet = VanillaHashSet,
+        hash_set_cls: BaseVectorIndex = VanillaVectorIndex,
         predict_kwargs: t.Optional[t.Dict] = None,
         compatible_keys: t.Optional[t.List] = None,
     ):

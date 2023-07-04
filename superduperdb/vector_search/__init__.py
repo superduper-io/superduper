@@ -1,5 +1,5 @@
-from .faiss.hashes import FaissHashSet
-from .vanilla.hashes import VanillaHashSet
+from .faiss_index import FaissVectorIndex
+from .table_scan import VanillaVectorIndex
 
 
-hash_set_classes = {'faiss': FaissHashSet, 'vanilla': VanillaHashSet}
+hash_set_classes = {'faiss': FaissVectorIndex, 'vanilla': VanillaVectorIndex}

@@ -199,7 +199,7 @@ class Model(Component):
                 select=select,
                 y=y,
                 **kwargs,
-            )(db=db, remote=remote, dependencies=dependencies)
+            )(db=db, remote=True, dependencies=dependencies)
         else:
             return self._fit(
                 X,

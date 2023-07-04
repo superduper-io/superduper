@@ -1,6 +1,11 @@
-import typing as t
+# ruff: noqa: F821
+from collections import defaultdict
 from contextlib import contextmanager
+import typing as t
 
+from dask.distributed import Future
+
+from superduperdb.core.job import ComponentJob
 from superduperdb.misc.logger import logging
 
 if t.TYPE_CHECKING:
@@ -103,6 +108,7 @@ class Component(BaseComponent):
     def __init__(self, identifier: str):
         self.identifier: str = identifier
         self.version: t.Optional[int] = None
+        self.metric_values: t.Dict = defaultdict(lambda: {})
 
     @property
     def unique_id(self):
@@ -209,6 +215,75 @@ class Component(BaseComponent):
         lines = [str(subcomponent) for subcomponent in subcomponents]
         lines = [parts[0], *['    ' + x for x in lines], parts[1]]
         return '\n'.join(lines)
+
+    def create_validation_job(
+        self,
+        validation_set: t.Union[str, 'Dataset'],  # type: ignore[name-defined]
+        metrics: t.List[str],
+    ):
+        return ComponentJob(
+            component_identifier=self.identifier,
+            method_name='predict',
+            variety='model',
+            kwargs={
+                'remote': False,
+                'validation_set': validation_set,
+                'metrics': metrics,
+            },
+        )
+
+    def _validate(
+        self,
+        db: 'superduperdb.datalayer.base.database.Database',  # type: ignore[name-defined]
+        validation_set: t.Union[str, 'Dataset'],  # type: ignore[name-defined]
+        metrics: t.List[t.Union['Metric', str]],  # type: ignore[name-defined]
+    ):
+        raise NotImplementedError
+
+    def validate(
+        self,
+        db: 'superduperdb.datalayer.base.database.Database',  # type: ignore[name-defined]
+        validation_set: t.Union[str, 'Dataset'],  # type: ignore[name-defined]
+        metrics: t.List[t.Union['Metric', str]],  # type: ignore[name-defined]
+        remote: bool = False,
+        dependencies: t.Sequence[Future] = (),
+    ):
+        from .dataset import Dataset
+        from .metric import Metric
+
+        db.add(self)
+
+        if isinstance(validation_set, Dataset):
+            db.add(validation_set)
+            validation_set = validation_set.identifier
+
+        for i, m in enumerate(metrics):
+            if isinstance(m, Metric):
+                db.add(m)
+                metrics[i] = m.identifier
+
+        if remote:
+            return self.create_validation_job(
+                validation_set=validation_set,
+                metrics=metrics,
+            )(db=db, remote=True, dependencies=dependencies)
+
+        output = self._validate(
+            db=db,
+            validation_set=validation_set,
+            metrics=metrics,
+        )
+        if self.metric_values:
+            self.metric_values[validation_set].update(output)
+        else:
+            self.metric_values[validation_set] = output
+        db.metadata.update_object(
+            variety=self.variety,
+            identifier=self.identifier,
+            key='metric_values',
+            value=self.metric_values,
+        )
+        return self
 
     def schedule_jobs(self, database, dependencies=()):
         return []

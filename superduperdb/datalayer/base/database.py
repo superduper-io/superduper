@@ -97,7 +97,7 @@ class BaseDatabase:
         self,
         identifier: str,
         variety: str,
-        validation_datasets: List[str],
+        validation_set: str,
         metrics: List[str],
     ):
         """
@@ -110,15 +110,7 @@ class BaseDatabase:
         """
         component = self.load(variety, identifier)
         metrics = [self.load('metric', m) for m in metrics]  # type: ignore[misc]
-        for vs in validation_datasets:
-            res = component.validate(self, vs, metrics)  # type: ignore[attr-defined]
-            for m in res:
-                self.metadata.update_object(
-                    identifier,
-                    variety,
-                    f'final_metrics.{vs}.{m}',
-                    res[m],
-                )
+        return component.validate(self, validation_set, metrics)  # type: ignore[attr-defined]
 
     def show(
         self,

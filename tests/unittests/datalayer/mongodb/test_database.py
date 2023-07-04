@@ -157,7 +157,7 @@ def test_validate_component(with_vector_index, si_validation, metric):
         'test_vector_search',
         variety='vector_index',
         metrics=['p@1'],
-        validation_datasets=['my_valid'],
+        validation_set='my_valid',
     )
 
 

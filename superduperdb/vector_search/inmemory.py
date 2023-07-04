@@ -75,7 +75,7 @@ class InMemoryVectorCollection(VectorCollection):
     ) -> t.List[VectorCollectionResult]:
         with self._lock.gen_rlock():
             index = self._index if not within_ids else self._index[within_ids]
-            ids, scores = index.find_nearest_from_hash(
+            ids, scores = index.find_nearest_from_array(
                 to_numpy(array),
                 n=limit + offset,
             )

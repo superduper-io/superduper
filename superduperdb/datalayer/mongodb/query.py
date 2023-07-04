@@ -623,6 +623,37 @@ class Limit(Select):
     def select_table(self):
         raise NotImplementedError
 
+    def parent(self):
+        msg = 'Must specify exactly one of "parent_*"'
+        assert (
+            sum(
+                [
+                    bool(self.parent_post_like),
+                    bool(self.parent_post_like),
+                    bool(self.parent_find),
+                    bool(self.parent_featurize),
+                ]
+            )
+            == 1
+        ), msg
+        return next(
+            p
+            for p in [
+                self.parent_post_like,
+                self.parent_pre_like,
+                self.parent_find,
+                self.parent_featurize,
+            ]
+            if p is not None
+        )
+
+    def add_fold(self, fold: str) -> 'Select':
+        raise NotImplementedError
+
+    def is_trivial(self) -> bool:
+        raise NotImplementedError
+
+
 
 class ChangeStream(BaseModel):
     collection: Collection
@@ -643,6 +674,23 @@ class ChangeStream(BaseModel):
         else:
             change_stream_iterator = collection.watch()
         return change_stream_iterator
+
+    @property
+    def select_ids(self) -> 'Select':
+        raise NotImplementedError
+
+    def model_update(self, db, model, key, outputs, ids):
+        raise NotImplementedError
+
+    @property
+    def select_table(self):
+        raise NotImplementedError
+
+    def select_using_ids(
+        self,
+        ids: t.List[str],
+    ) -> t.Any:
+        raise NotImplementedError
 
 
 all_items = {

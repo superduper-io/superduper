@@ -21,7 +21,7 @@ class VanillaVectorIndex(BaseVectorIndex):
             measure = getattr(table_scan, measure)
         super().__init__(h, index, measure)
 
-    def find_nearest_from_hashes(self, h, n=100):
+    def find_nearest_from_arrays(self, h, n=100):
         similarities = self.measure(h, self.h)
         logging.debug(similarities)
         scores = -numpy.sort(-similarities, axis=1)[:, :n]

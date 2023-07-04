@@ -44,7 +44,7 @@ class FaissVectorIndex(BaseVectorIndex):
             faiss_index.add(self.h)
         self.faiss_index = faiss_index
 
-    def find_nearest_from_hashes(self, h, n=100):
+    def find_nearest_from_arrays(self, h, n=100):
         if isinstance(h, list):
             h = numpy.array(h).astype('float32')
         if isinstance(h, torch.Tensor):

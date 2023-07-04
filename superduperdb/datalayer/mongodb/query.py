@@ -447,6 +447,10 @@ class InsertOne(Insert):
     def select_using_ids(self, ids):
         return Find(collection=self.collection, args=[{'_id': {'$in': ids}}])
 
+    @property
+    def documents(self):
+        return [self.args[0]]
+
 
 class InsertMany(Insert):
     collection: Collection

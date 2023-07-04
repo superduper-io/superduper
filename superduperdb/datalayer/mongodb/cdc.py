@@ -1,21 +1,29 @@
 import pickle
+import json
 import datetime
+from functools import partial
+from collections import Counter
 from enum import Enum
 import typing as t
 from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
 
+import superduperdb as s
 from superduperdb.misc.logger import logging
 from superduperdb.queries.mongodb import queries
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.job import FunctionJob
+from superduperdb.queries.serialization import from_dict, to_dict
+from superduperdb.vector_search.lancedb import LanceDBClient
 
 MongoChangePipelines: t.Dict[str, t.Dict] = {'generic': {}}
 
+lance_db_client = LanceDBClient(s.CFG.vector_search.lancedb)
 
-class DBEvent(Enum):
+
+class DBEvent:
     """`DBEvent` simple enum to hold mongo basic events."""
 
     insert = 'insert'
@@ -112,6 +120,37 @@ class GenericDatabaseWatch(ABC):
         raise NotImplementedError
 
 
+def copy_vectors(
+    db,
+    indexing_watcher_identifier=None,
+    cdc_query=None,
+    ids=None,
+    vector_db_client=None,
+):
+    """
+    A helper fxn to copy vectors of a `indexing_watcher` component/model of
+    a `vector_index` watcher.
+
+    This function will be added as node to the taskworkflow after every
+    `indexing_watcher` in the defined watchers in db.
+    """
+    try:
+        query = from_dict(cdc_query)
+        select = query.select_using_ids(ids)
+        docs = db.select(select)
+        docs = [doc.unpack() for doc in docs]
+        model, key = indexing_watcher_identifier.split('/')
+        vectors = [{'vector': doc['_outputs'][key][model] for doc in docs}]
+        table = vector_db_client.get_table(indexing_watcher_identifier)
+        table.add(vectors)
+    except Exception as exc:
+        logging.exception(
+            f"Error while copying vectors for `vector_index` {indexing_watcher_identifier}"
+        )
+    else:
+        logging.info("Copying vectors for `vector_index` {indexing_watcher_identifier}")
+
+
 class MongoEventMixin:
     """A Mixin class which defines helper fxns for `MongoDatabaseWatcher`
     It define basic events handling methods like
@@ -142,43 +181,61 @@ class MongoEventMixin:
         """
 
         task_graph = db._build_task_workflow(cdc_query, ids=ids, verbose=False)
-        '''
         task_graph = MongoEventMixin.create_vector_watcher_task(
-            task_graph, db=db, cdc_query=cdc_query
+            task_graph, db=db, cdc_query=cdc_query, ids=ids
         )
-        '''
-        task_graph()
+        task_graph(db)
 
     # ruff: noqa: F821
     @staticmethod
     def create_vector_watcher_task(
-        task_graph: TaskWorkflow, db: 'BaseDatabase', cdc_query: BaseModel
+        task_graph: TaskWorkflow,
+        db: 'BaseDatabase',
+        cdc_query: BaseModel,
+        ids: t.List[str],
     ) -> TaskWorkflow:
         """create_vector_watcher_task.
+        A helper function to define a node in taskflow graph which is responsible for
+        copying vectors to a vector db.
 
-        :param task_graph:
+        :param task_graph: A DiGraph task flow which defines task on a di graph.
         :type task_graph: TaskWorkflow
-        :param db:
+        :param db: A superduperdb instance.
         :type db: 'BaseDatabase'
-        :param cdc_query:
+        :param cdc_query: A basic find query to get cursor on collection.
         :type cdc_query: BaseModel
+
+        :param ids: A list of ids observed during the change
+        :type ids: t.List[str]
         :rtype: TaskWorkflow
         """
         for identifier in db.show('vector_index'):
-            indexing_watcher = ...
+            indexing_watcher = db.load(
+                identifier=identifier, variety='vector_index', repopulate=False
+            )
+            indexing_watcher_identifier = indexing_watcher.indexing_watcher.identifier
+
+            # run_on_dask need to check if lance_client can be given
+            partial_copy_vectors = partial(
+                copy_vectors, vector_db_client=lance_db_client
+            )
             task_graph.add_node(
-                f'copy_vectors({indexing_watcher})',
+                f'copy_vectors({indexing_watcher_identifier})',
                 FunctionJob(
-                    callable=copy_vectors,  # type: ignore
-                    args=[identifier, cdc_query],
-                    kwargs={},
+                    callable=partial_copy_vectors,  # type: ignore
+                    args=[],
+                    kwargs={
+                        'indexing_watcher_identifier': indexing_watcher_identifier,
+                        'ids': ids,
+                        'cdc_query': to_dict(cdc_query),
+                    },
                 ),
             )
-            model, key = identifier.split('/')
+            model, key = indexing_watcher_identifier.split('/')
 
             task_graph.add_edge(
-                f'copy_vectors({indexing_watcher})',
                 f'{model}.predict({key})',
+                f'copy_vectors({indexing_watcher_identifier})',
             )
         return task_graph
 
@@ -220,7 +277,7 @@ class MongoEventMixin:
         change[CDCKeys.update_descriptions_key]['removedFields']
 
 
-class CDCKeys(Enum):
+class CDCKeys:
     """
     A enum to represent mongo change document keys.
     """
@@ -228,6 +285,7 @@ class CDCKeys(Enum):
     operation_type = 'operationType'
     document_key = 'documentKey'
     update_descriptions_key = 'updateDescription'
+    update_field_key = 'updatedFields'
     document_data_key = 'fullDocument'
 
 
@@ -268,6 +326,7 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         self._on_component = on
         self._identifier = self._build_identifier([identifier, on.name])
         self.tokens = PickledTokens()
+        self._change_counters = Counter(inserts=0, updates=0)
 
         self.resume_token = resume_token.token if resume_token else None
 
@@ -331,9 +390,11 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
             return
 
         if event == DBEvent.insert:
+            self._change_counters['inserts'] += 1
             self.on_create(change, db=self.db, collection=self._on_component)
 
         elif event == DBEvent.update:
+            self._change_counters['updates'] += 1
             self.on_update(change, db=self.db)
 
     def dump_token(self, change: t.Dict) -> None:
@@ -346,6 +407,16 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         """
         token = change['_id']['_data']
         self.tokens.save([token])
+
+    def check_if_superduper_change(self, change):
+        if change[CDCKeys.operation_type] == DBEvent.update:
+            updates = change[CDCKeys.update_descriptions_key]
+            updated_fields = updates[CDCKeys.update_field_key]
+            keys = updated_fields.keys()
+            for key in keys:
+                if '_outputs' in key:
+                    return True
+        return False
 
     def cdc(self, change_pipeline: t.Optional[t.Union[str, t.Dict]] = None) -> None:
         """cdc.
@@ -370,7 +441,8 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
                 logging.debug(
                     f'Database change encountered at {datetime.datetime.now()}'
                 )
-                self.event_handler(change)
+                if not self.check_if_superduper_change(change):
+                    self.event_handler(change)
                 self.dump_token(change)
         except Exception:
             logging.exception('Error occured during CDC!')
@@ -378,6 +450,19 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
 
     def attach_scheduler(self, scheduler):
         self._scheduler = scheduler
+
+    def info(
+        self,
+    ) -> t.Dict:
+        info = {}
+        info.update(
+            {
+                'inserts': self._change_counters['inserts'],
+                'updates': self._change_counters['updates'],
+            }
+        )
+        print(json.dumps(info, indent=2))
+        return info
 
     def watch(self, change_pipeline: t.Optional[t.Union[str, t.Dict]] = None) -> None:
         """Primary fxn to initiate watching of a database on the collection
@@ -390,9 +475,11 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
             raise ValueError('No scheduler available!')
 
         try:
+            s.CFG.cdc = True
             self._scheduler.start()
         except Exception:
             logging.exception('Watching service stopped!')
+            s.CFG.cdc = False
             raise
 
     def close(self) -> None:

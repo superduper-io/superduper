@@ -13,10 +13,10 @@ from superduperdb.core.vector_index import VectorIndex
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.models.torch.wrapper import TorchModel
-from superduperdb.queries.mongodb.queries import Collection
-from superduperdb.types.numpy.array import array
-from superduperdb.types.pillow.image import pil_image
-from superduperdb.types.torch.tensor import tensor
+from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.encoders.numpy.array import array
+from superduperdb.encoders.pillow.image import pil_image
+from superduperdb.encoders.torch.tensor import tensor
 from tests.material.models import BinaryClassifier, LinearBase
 from tests.material.metrics import PatK
 

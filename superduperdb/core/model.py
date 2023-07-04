@@ -8,7 +8,7 @@ from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.encoder import Encoder
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.queries.serialization import to_dict, from_dict
+from superduperdb.misc.serialization import to_dict, from_dict
 
 EncoderArg = t.Union[Encoder, Placeholder, None, str]
 

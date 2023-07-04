@@ -16,7 +16,7 @@ from superduperdb.core.model import Model, ModelEnsemble, TrainingConfiguration
 from superduperdb.misc.logger import logging
 from superduperdb.models.torch.utils import device_of, to_device, eval
 from superduperdb.datalayer.query_dataset import QueryDataset
-from superduperdb.queries.serialization import from_dict
+from superduperdb.misc.serialization import from_dict
 
 
 class BasicDataset(data.Dataset):

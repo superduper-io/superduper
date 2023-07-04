@@ -1,5 +1,5 @@
 from superduperdb.core.encoder import Encoder
-from superduperdb.types.utils import str_shape
+from superduperdb.encoders.utils import str_shape
 
 
 def vector(shape):

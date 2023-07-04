@@ -1,6 +1,6 @@
 # ruff: noqa: F401, F811
 from superduperdb.datalayer.query_dataset import QueryDataset
-from superduperdb.queries.mongodb.queries import Collection
+from superduperdb.datalayer.mongodb.query import Collection
 from tests.fixtures.collection import (
     empty,
     random_data,

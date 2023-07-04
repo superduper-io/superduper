@@ -1,4 +1,4 @@
-from superduperdb.fetchers.downloads import Fetcher
+from superduperdb.misc.downloads import Fetcher
 import os
 
 

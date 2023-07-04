@@ -2,7 +2,7 @@
 import torch
 
 from superduperdb.models.torch.wrapper import TorchModel
-from superduperdb.queries.mongodb.queries import Collection
+from superduperdb.datalayer.mongodb.query import Collection
 
 from tests.fixtures.collection import (
     si_validation,

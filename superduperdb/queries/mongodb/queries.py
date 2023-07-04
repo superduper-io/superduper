@@ -96,7 +96,6 @@ class ReplaceOne(Update):
 
 
 class PreLike(Like):
-    # r: Document
     r: t.Dict
     vector_index: str
     collection: Collection
@@ -256,7 +255,7 @@ class Find(Select):
             except IndexError:
                 filter = {}
             filter = {'$and': [filter, {'_id': {'$in': ids}}]}
-            cursor = db.db[self.collection.name].find(
+            cursor = db.db[self.like_parent.collection.name].find(
                 filter, *self.args[1:], **self.kwargs
             )
         else:
@@ -456,8 +455,7 @@ class InsertMany(Insert):
 
 
 class PostLike(Select):
-    parent_find: t.Optional[Find]
-    # r: t.Document
+    find_parent: t.Optional[Find]
     r: t.Dict
     vector_index: str
     n: int = 100
@@ -467,17 +465,41 @@ class PostLike(Select):
         arbitrary_types_allowed = True
 
     def __call__(self, db: BaseDatabase):
-        cursor = self.parent_find.select_ids.limit(self.max_ids)(db)
+        cursor = self.find_parent.select_ids.limit(self.max_ids)(db)
         ids = [r['_id'] for r in cursor]
         ids, scores = db._select_nearest(
             like=self.r,
             vector_index=self.vector_index,
             n=self.n,
-            ids=ids,
+            ids=[str(_id) for _id in ids],
         )
+        ids = [ObjectId(_id) for _id in ids]
         return Find(
-            collection=self.parent_find.collection, args=[{'_id': {'$in': ids}}]
+            collection=self.find_parent.collection, args=[{'_id': {'$in': ids}}]
         )(db)
+
+    def add_fold(self, fold: str) -> 'Select':
+        raise NotImplementedError
+
+    def is_trivial(self) -> bool:
+        raise NotImplementedError
+
+    @property
+    def select_ids(self) -> 'Select':
+        raise NotImplementedError
+
+    def model_update(self, db, model, key, outputs, ids):
+        raise NotImplementedError
+
+    @property
+    def select_table(self):
+        raise NotImplementedError
+
+    def select_using_ids(
+        self,
+        ids: t.List[str],
+    ) -> t.Any:
+        raise NotImplementedError
 
 
 class Featurize(Select):
@@ -579,7 +601,31 @@ class Limit(Select):
                 self.parent_find,
                 self.parent_featurize,
             ]
+            if p is not None
         )
+
+    def add_fold(self, fold: str) -> 'Select':
+        raise NotImplementedError
+
+    def is_trivial(self) -> bool:
+        raise NotImplementedError
+
+    @property
+    def select_ids(self) -> 'Select':
+        raise NotImplementedError
+
+    def model_update(self, db, model, key, outputs, ids):
+        raise NotImplementedError
+
+    @property
+    def select_table(self):
+        raise NotImplementedError
+
+    def select_using_ids(
+        self,
+        ids: t.List[str],
+    ) -> t.Any:
+        raise NotImplementedError
 
 
 all_items = {

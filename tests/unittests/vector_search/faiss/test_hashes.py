@@ -21,7 +21,7 @@ def test_faiss_hash_set():
 
     y = torch.randn(32)
 
-    res1, _ = h1.find_nearest_from_hash(y)
-    res2, _ = h2.find_nearest_from_hash(y)
+    res1, _ = h1.find_nearest_from_array(y)
+    res2, _ = h2.find_nearest_from_array(y)
 
     assert res1[0] == res2[0]

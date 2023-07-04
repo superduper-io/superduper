@@ -41,14 +41,14 @@ class BaseVectorIndex:
 
     def find_nearest_from_ids(self, _ids, n=100):
         ix = list(map(self.lookup.__getitem__, _ids))
-        return self.find_nearest_from_hashes(self.h[ix, :], n=n)
+        return self.find_nearest_from_arrays(self.h[ix, :], n=n)
 
-    def find_nearest_from_hash(self, h, n=100):
+    def find_nearest_from_array(self, h, n=100):
         h = to_numpy(h)
-        _ids, scores = self.find_nearest_from_hashes(h[None, :], n=n)
+        _ids, scores = self.find_nearest_from_arrays(h[None, :], n=n)
         return _ids[0], scores[0]
 
-    def find_nearest_from_hashes(self, h, n=100):
+    def find_nearest_from_arrays(self, h, n=100):
         raise NotImplementedError
 
     def __getitem__(self, item):

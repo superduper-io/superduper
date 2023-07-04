@@ -7,7 +7,7 @@ from superduperdb.core.model import Model, ModelEnsemble
 from superduperdb.core.metric import Metric
 from superduperdb.datalayer.query_dataset import QueryDataset
 from superduperdb.vector_search import VanillaVectorIndex
-from superduperdb.vector_search.base import BaseVectorIndex
+from superduperdb.vector_search.base import BaseVectorIndex, VectorCollection
 
 
 class PatK:
@@ -27,6 +27,7 @@ class VectorSearchPerformance:
         hash_set_cls: BaseVectorIndex = VanillaVectorIndex,
         predict_kwargs: t.Optional[t.Dict] = None,
         compatible_keys: t.Optional[t.List] = None,
+        vector_collection: t.Optional[VectorCollection] = None,
     ):
         self.measure = measure
         self.hash_set_cls = hash_set_cls
@@ -34,6 +35,7 @@ class VectorSearchPerformance:
         self.predict_kwargs = predict_kwargs
         self.index_key = index_key
         self.compatible_keys = compatible_keys
+        self.vector_collection = vector_collection
 
     def __call__(
         self,
@@ -80,21 +82,23 @@ class VectorSearchPerformance:
 
         random_order = numpy.random.permutation(len(inputs[0]))
         inputs = [[x[i] for i in random_order] for x in inputs]
-        predictions = [
-            model.predict(inputs[i], **(self.predict_kwargs or {}))
-            for i, model in enumerate(models)
-        ]
-        h = self.hash_set_cls(
-            predictions[ix_index],
-            list(range(len(predictions[0]))),
-            self.measure,
-        )
+        if self.vector_collection is None:
+            predictions = [
+                model.predict(inputs[i], **(self.predict_kwargs or {}))
+                for i, model in enumerate(models)
+            ]
+            vi = self.hash_set_cls(
+                predictions[ix_index],
+                list(range(len(predictions[0]))),
+                self.measure,
+            )
+        else:
+            raise NotImplementedError  # TODO
         metric_values = defaultdict(lambda: [])
         for i in range(len(predictions[ix_compatible])):
-            ix, _ = h.find_nearest_from_hash(predictions[ix_compatible][i], n=100)
+            ix, _ = vi.find_nearest_from_array(predictions[ix_compatible][i], n=100)
             for metric in metrics:
                 metric_values[metric.identifier].append(metric(ix, i))
-
         for k in metric_values:
             metric_values[k] = sum(metric_values[k]) / len(metric_values[k])
 
@@ -130,7 +134,7 @@ def validate_vector_search(
     h = hash_set_cls(predictions[0], list(range(len(predictions[0]))), measure)
     metric_values = defaultdict(lambda: [])
     for i in range(len(predictions[0])):
-        ix, _ = h.find_nearest_from_hash(predictions[0][i], n=100)
+        ix, _ = h.find_nearest_from_array(predictions[0][i], n=100)
         for metric in metrics:
             metric_values[metric.identifier].append(metric(ix, i))
 

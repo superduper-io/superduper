@@ -2,26 +2,27 @@ import typing as t
 
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 
-from superduperdb.core.encoder import Encoder
 from superduperdb.core.model import Model
+from superduperdb.types.numpy.array import array
 
 
 class SentenceTransformer(Model):
     def __init__(
         self,
-        model_name_or_path: t.Optional[str] = None,
-        identifier: t.Optional[str] = None,
-        encoder: t.Union[Encoder, None, str] = None,
+        identifier: str,
+        shape: int,
     ):
-        if identifier is None:
-            identifier = model_name_or_path
-        sentence_transformer = _SentenceTransformer(model_name_or_path)  # type: ignore
+        sentence_transformer = _SentenceTransformer(identifier)  # type: ignore
         super().__init__(
-            sentence_transformer, identifier, encoder=encoder  # type: ignore
+            sentence_transformer,
+            identifier,
+            encoder=array('float32', shape=(shape,)),
         )
 
-    def predict_one(self, sentence, **kwargs):
-        return self.object.encode(sentence)
+    def _predict_one(self, X, **kwargs):
+        return self.object.encode(X, **kwargs)
 
-    def predict(self, sentences, **kwargs):
-        return self.object.encode(sentences)
+    def _predict(self, X: t.Union[str, t.List[str]], **kwargs):
+        if isinstance(X, str):
+            return self._predict_one(X, **kwargs)
+        return self.object.encode(X, **kwargs)

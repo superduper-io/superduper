@@ -16,7 +16,6 @@ from superduperdb.misc.compat import cache
 from superduperdb.encoders.vectors.vector import vector
 
 
-
 retry = Retry(
     exception_types=(RateLimitError, ServiceUnavailableError, Timeout, TryAgain)
 )

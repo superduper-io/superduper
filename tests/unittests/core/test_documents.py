@@ -1,4 +1,4 @@
-from superduperdb.types.torch.tensor import tensor
+from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.core.documents import Document
 import torch
 

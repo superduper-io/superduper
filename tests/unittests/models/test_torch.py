@@ -14,8 +14,8 @@ from superduperdb.metrics.vector_search import (
     VectorSearchPerformance,
     PatK,
 )
-from superduperdb.queries.mongodb.queries import Collection
-from superduperdb.types.torch.tensor import tensor
+from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.vector_search import VanillaVectorIndex
 
 from tests.material.measures import css

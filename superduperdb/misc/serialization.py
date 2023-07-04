@@ -1,11 +1,11 @@
 import importlib
 
 
-def to_dict(query):
+def to_dict(item):
     return {
-        'module': query.__class__.__module__,
-        'cls': query.__class__.__name__,
-        'dict': query.dict(),
+        'module': item.__class__.__module__,
+        'cls': item.__class__.__name__,
+        'dict': item.dict(),
     }
 
 

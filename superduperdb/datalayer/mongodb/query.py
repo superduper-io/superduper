@@ -23,7 +23,6 @@ class Collection(BaseModel):
 
     def like(
         self,
-        # r: Document,
         r: t.Dict,
         vector_index: str,
         n: int = 100,
@@ -31,7 +30,9 @@ class Collection(BaseModel):
         return PreLike(collection=self, r=r, vector_index=vector_index, n=n)
 
     def insert_one(self, *args, **kwargs):
-        return InsertOne(collection=self, args=args, kwargs=kwargs)
+        return InsertMany(
+            collection=self, documents=[args[0]], args=args[1:], kwargs=kwargs
+        )
 
     def insert_many(self, *args, refresh=True, encoders=(), **kwargs):
         return InsertMany(
@@ -155,7 +156,7 @@ class Find(Select):
         return self.parent.table
 
     def limit(self, n: int):
-        return Limit(parent=self, n=n)
+        return Limit(parent=self, n=n)  # type
 
     def like(
         self, r: t.Dict, vector_index: str = '', n: int = 100, max_ids: int = 1000
@@ -167,11 +168,11 @@ class Find(Select):
     def add_fold(self, fold: str) -> 'Find':
         args = []
         try:
-            args.append(self.args[0])
+            args.append(self.args[0])  # type: ignore[index, var-annotated]
         except IndexError:
             args.append({})
-        args = args + self.args[1:]
-        args[0]['_fold'] = fold
+        args = args + self.args[1:]  # type: ignore[index]
+        args[0]['_fold'] = fold  # type: ignore[index]
         return Find(
             like_parent=self.like_parent,
             collection=self.collection,
@@ -195,8 +196,8 @@ class Find(Select):
         )
 
     def select_using_ids(self, ids: t.List[str]) -> t.Any:
-        args = [{}, {}]
-        if self.args and len(self.args) >= 1:
+        args = [{}, {}]  # type: ignore[var-annotated]
+        if self.args and len(self.args) >= 1:  # type: ignore[var-annotated]
             args[0] = self.args[0]
         if self.args and len(self.args) >= 2:
             args[1] = self.args[1]
@@ -213,9 +214,9 @@ class Find(Select):
         return Featurize(parent=self, features=features)
 
     def get_ids(self, db: BaseDatabase):
-        args = [{}, {}]
-        args[: len(self.args)] = self.args
-        args[1] = {'_id': 1}
+        args = [{}, {}]  # type: ignore[var-annotated]
+        args[: len(self.args)] = self.args  # type: ignore[var-annotated,arg-type,assignment]
+        args[1] = {'_id': 1}  # type: ignore[arg-type,assigment]
         cursor = Find(
             collection=self.collection,
             like_parent=self.like_parent,
@@ -250,19 +251,22 @@ class Find(Select):
             args=[{'_id': id}, {'$set': {f'{key}._content.bytes': bytes}}],
         )(db)
 
+    # ruff: noqq: E501
     def __call__(self, db: BaseDatabase):
         if isinstance(self.parent, Collection):
-            cursor = db.db[self.collection.name].find(*self.args, **self.kwargs)
-        elif isinstance(self.parent, Like):
+            cursor = db.db[self.collection.name].find(  # type: ignore[union-attr]
+                *self.args, **self.kwargs
+            )  #  type: ignore[union-attr]
+        elif isinstance(self.parent, Like):  # type: ignore[union-attr]
             intermediate = self.parent(db)
             ids = [ObjectId(r['_id']) for r in intermediate]
             try:
-                filter = self.args[0]
-            except IndexError:
+                filter = self.args[0]  # type: ignore[index]
+            except IndexError:  # type: ignore[index]
                 filter = {}
-            filter = {'$and': [filter, {'_id': {'$in': ids}}]}
-            cursor = db.db[self.like_parent.collection.name].find(
-                filter, *self.args[1:], **self.kwargs
+            filter = {'$and': [filter, {'_id': {'$in': ids}}]}  # type: ignore[union-attr]
+            cursor = db.db[self.like_parent.collection.name].find(  # type: ignore[index,union-attr]
+                filter, *self.args[1:], **self.kwargs  # type: ignore[index]
             )
         else:
             raise NotImplementedError
@@ -276,9 +280,10 @@ class FeaturizeOne(SelectOne):
 
     type_id: t.Literal['mongdb.FeaturizeOne'] = 'mongdb.FeaturizeOne'
 
+    # ruff: noqa: E501
     def __call__(self, db: BaseDatabase):
-        r = self.parent_find_one(db)
-        r = SuperDuperCursor.add_features(r.content, self.features)
+        r = self.parent_find_one(db)  # type: ignore[misc]
+        r = SuperDuperCursor.add_features(r.content, self.features)  # type: ignore[misc]
         return Document(r)
 
 
@@ -297,14 +302,14 @@ class FindOne(SelectOne):
                 types=db.types,
             )
         else:
-            parent_cursor = self.like_parent(db)
-            ids = [r['_id'] for r in parent_cursor]
+            parent_cursor = self.like_parent(db)  # type: ignore[misc]
+            ids = [r['_id'] for r in parent_cursor]  # type: ignore[misc]
             filter = self.args[0] if self.args else {}
             filter['_id'] = {'$in': ids}
-            r = db.db[self.like_parent.collection.name].find_one(
-                filter,
-                *self.args[1:],
-                **self.kwargs,
+            r = db.db[self.like_parent.collection.name].find_one(  # type: ignore[union-attr]
+                filter,  # type: ignore[union-attr]
+                *self.args[1:],  # type: ignore[index]
+                **self.kwargs,  # type: ignore[index]
             )
             return Document(Document.decode(r, types=db.types))
 
@@ -409,39 +414,6 @@ class UpdateMany(Update):
         return Find(parent=self.args[0])
 
 
-class InsertOne(Insert):
-    collection: Collection
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
-    my_refresh: bool = Field(default=True, alias='refresh')
-    my_verbose: bool = Field(default=True, alias='verbose')
-
-    type_id: t.Literal['mongdb.InsertOne'] = 'mongdb.InsertOne'
-
-    def __call__(self, db: BaseDatabase):
-        insert = db.db[self.collection.name].insert_one(*self.args, **self.kwargs)
-        graph = None
-        if self.refresh:
-            graph = db.refresh_after_update_or_insert(
-                query=self,
-                ids=[insert.id],
-                verbose=self.verbose,
-            )
-        return insert, graph
-
-    @property
-    def table(self):
-        return self.collection.name
-
-    @property
-    def select_table(self):
-        return Find(collection=self.collection)
-
-    @property
-    def documents(self):
-        return [self.args[0]]
-
-
 class InsertMany(Insert):
     collection: Collection
     args: t.List = Field(default_factory=list)
@@ -479,7 +451,7 @@ class InsertMany(Insert):
         graph = None
         if self.refresh:
             graph = db.refresh_after_update_or_insert(
-                query=self,
+                query=self,  # type: ignore[arg-type]
                 ids=output.inserted_ids,
                 verbose=self.verbose,
             )
@@ -501,8 +473,8 @@ class PostLike(Select):
         # this allows.
 
     def __call__(self, db: BaseDatabase):
-        cursor = self.find_parent.select_ids.limit(self.max_ids)(db)
-        ids = [r['_id'] for r in cursor]
+        cursor = self.find_parent.select_ids.limit(self.max_ids)(db)  # type: ignore[union-attr]
+        ids = [r['_id'] for r in cursor]  # type: ignore[union-attr]
         ids, scores = db._select_nearest(
             like=self.r,
             vector_index=self.vector_index,
@@ -510,8 +482,9 @@ class PostLike(Select):
             ids=[str(_id) for _id in ids],
         )
         ids = [ObjectId(_id) for _id in ids]
+        # ruff: noqa: E501
         return Find(
-            collection=self.find_parent.collection, args=[{'_id': {'$in': ids}}]
+            collection=self.find_parent.collection, args=[{'_id': {'$in': ids}}]  # type: ignore[union-attr]
         )(db)
 
     def add_fold(self, fold: str) -> 'Select':
@@ -558,11 +531,13 @@ class Featurize(Select):
     def select_ids(self):
         return self.parent.select_ids
 
+    # ruff: noqa: E501
     def add_fold(self, fold: str):
-        return self.parent.add_fold(fold).featurize(self.features)
+        return self.parent.add_fold(fold).featurize(self.features)  # type: ignore[union-attr]
 
+    # ruff: noqa: E501
     def select_using_ids(self, ids: t.List[str]) -> t.Any:
-        return self.parent.select_using_ids(ids=ids).featurize(features=self.features)
+        return self.parent.select_using_ids(ids=ids).featurize(features=self.features)  # type: ignore[union-attr]
 
     def model_update(self, *args, **kwargs):
         return self.parent.model_update(*args, **kwargs)
@@ -591,6 +566,29 @@ class Limit(Select):
     def __call__(self, db: BaseDatabase):
         return self.parent(db).limit(self.n)
 
+    def add_fold(self, fold: str) -> 'Select':
+        raise NotImplementedError
+
+    def is_trivial(self) -> bool:
+        raise NotImplementedError
+
+    def select_using_ids(
+        self,
+        ids: t.List[str],
+    ) -> t.Any:
+        raise NotImplementedError
+
+    def model_update(self, db, model, key, outputs, ids):
+        raise NotImplementedError
+
+    @property
+    def select_ids(self) -> 'Select':
+        raise NotImplementedError
+
+    @property
+    def select_table(self):
+        raise NotImplementedError
+
 
 all_items = {
     'Aggregate': Aggregate,
@@ -601,7 +599,6 @@ all_items = {
     'Find': Find,
     'FindOne': FindOne,
     'InsertMany': InsertMany,
-    'InsertOne': InsertOne,
     'PreLike': PreLike,
     'PostLike': PostLike,
     'Limit': Limit,

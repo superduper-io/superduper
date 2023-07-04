@@ -7,8 +7,8 @@ from superduperdb.models.sentence_transformers.wrapper import SentenceTransforme
 from superduperdb.core.watcher import Watcher
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.models.langchain.retriever import DBQAWithSourcesChain
-from superduperdb.queries.mongodb.queries import Collection
-from superduperdb.types.numpy.array import array
+from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.encoders.numpy.array import array
 
 
 SKIP_PAID = os.environ.get('OPENAI_API_KEY') is None

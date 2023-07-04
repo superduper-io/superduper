@@ -25,7 +25,8 @@ class ArtifactStore(ABC):
     """
     Abstraction for storing large artifacts separately from primary data.
 
-    This might include models, data artifacts...
+    :param conn: connection to the meta-data store
+    :param name: Name to identify DB using the connection
     """
 
     def __init__(
@@ -52,6 +53,10 @@ class ArtifactStore(ABC):
 
     @abstractmethod
     def delete_artifact(self, file_id: str):
+        """
+        Delete artifact from artifact store
+        :param file_id: File id uses to identify artifact in store
+        """
         pass
 
     def create_artifact(
@@ -60,6 +65,13 @@ class ArtifactStore(ABC):
         serializer: t.Union[Serializer, str] = Serializer.default,
         serializer_kwargs: t.Optional[t.Dict] = None,
     ):
+        """
+        Save serialized object in the artifact store.
+
+        :param object: Object to serialize
+        :param serializer: Serializer to use
+        :param serializer_kwargs: Keyword parameters to pass to serializer
+        """
         if isinstance(serializer, str):
             serializer = Serializer(serializer)
 
@@ -75,6 +87,12 @@ class ArtifactStore(ABC):
         pass
 
     def load_artifact(self, file_id: str, serializer: str):
+        """
+        Load artifact from artifact store, and deserialize.
+
+        :param file_id: Identifier of artifact in the store
+        :param serializer: Serializer to use for deserialization
+        """
         bytes = self._load_bytes(file_id)
         fp = io.BytesIO(bytes)
         if serializer == 'dill':

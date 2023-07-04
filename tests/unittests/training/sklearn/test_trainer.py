@@ -4,7 +4,7 @@ from sklearn.svm import SVC
 from superduperdb.core.fit import Fit
 from superduperdb.models.sklearn.wrapper import Pipeline, SklearnTrainingConfiguration
 from superduperdb.models.vanilla.wrapper import FunctionWrapper
-from superduperdb.queries.mongodb.queries import Collection
+from superduperdb.datalayer.mongodb.query import Collection
 
 from tests.fixtures.collection import random_arrays, arrays, empty
 

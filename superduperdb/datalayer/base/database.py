@@ -1,3 +1,4 @@
+from dask.distributed import Future
 import dataclasses as dc
 import math
 import typing as t
@@ -25,10 +26,10 @@ from superduperdb.datalayer.base.query import (
     Like,
 )
 from .download_content import download_content  # type: ignore[attr-defined]
-from superduperdb.fetchers.downloads import Downloader
-from superduperdb.fetchers.downloads import gather_uris
+from superduperdb.misc.downloads import Downloader
+from superduperdb.misc.downloads import gather_uris
 from superduperdb.misc.logger import logging
-from superduperdb.queries.serialization import from_dict, to_dict
+from superduperdb.misc.serialization import from_dict, to_dict
 from superduperdb.vector_search.base import VectorDatabase
 from superduperdb.core.components import components
 
@@ -105,7 +106,7 @@ class BaseDatabase:
 
         :param identifier: identifier of semantic index
         :param variety: variety of component
-        :param validation_datasets: validation-sets on which to validate
+        :param validation_set: validation dataset on which to validate
         :param metrics: metric functions to compute
         """
         component = self.load(variety, identifier)
@@ -168,7 +169,7 @@ class BaseDatabase:
 
     def execute(self, query: ExecuteQuery) -> ExecuteResult:
         """
-        Execute a query on the datalayer
+        Execute a query on the datalayer.
 
         :param query: select, insert, delete, update,
         """
@@ -191,33 +192,71 @@ class BaseDatabase:
         )
 
     def delete(self, delete: Delete) -> DeleteResult:
+        """
+        Delete data.
+
+        :param delete: delete query object
+        """
         return delete(self)
 
     def insert(self, insert: Insert) -> InsertResult:
+        """
+        Insert data.
+
+        :param insert: insert query object
+        """
         return insert(self)
 
     def run(
         self,
         job,
-        depends_on: t.Optional[t.List] = None,
+        depends_on: t.Optional[t.List[Future]] = None,
         remote: t.Optional[bool] = None,
     ):
+        """
+        Run job. See ``core.job.Job``, ``core.job.FunctionJob``, ``core.job.ComponentJob``.
+
+        :param job:
+        :param depends_on: List of dependencies
+        """
         if remote is None:
             remote = CFG.remote
         return job(db=self, dependencies=depends_on, remote=remote)
 
     def select(self, select: Select) -> SelectResult:
+        """
+        Select data.
+
+        :param select: select query object
+        """
         return select(self)
 
     def like(self, like: Like) -> SelectResult:
+        """
+        Perform vector search over data.
+
+        :param like: like query object
+        """
         return like(self)
 
     def select_one(self, select_one: SelectOne) -> SelectResult:
+        """
+        Select data and return a single result.
+
+        :param select_one: select-a-single document query object
+        """
         return select_one(self)
 
     def refresh_after_update_or_insert(
         self, query: Union[Select, Update], ids: List[str], verbose=False
     ):
+        """
+        Trigger computation jobs after data insertion.
+
+        :param query: Select or Update which reduces scope of computations
+        :param ids: ids which reduce scopy of computations
+        :param verbose: Toggle to ``True`` to get more output
+        """
         task_graph: TaskWorkflow = self._build_task_workflow(
             query.select_table,
             ids=ids,
@@ -227,6 +266,11 @@ class BaseDatabase:
         return task_graph
 
     def update(self, update: Update) -> UpdateResult:
+        """
+        Update data.
+
+        :param update: update query object
+        """
         return update(self)
 
     def add(
@@ -244,6 +288,7 @@ class BaseDatabase:
         :param object: Object to be stored
         :param serializer: Serializer to use to convert component to ``bytes``
         :param serializer_kwargs: kwargs to be passed to ``serializer``
+        :param dependencies: list of jobs which should execute before component init begins
         """
         return self._add(
             object=object,
@@ -710,12 +755,19 @@ class BaseDatabase:
         )
         return outputs
 
+    # TODO generalize to components
     def replace_model(
         self,
         identifier: str,
         object: t.Any,
         upsert: bool = False,
     ):
+        """
+        (Use-with caution!!) Replace a model in artifact store with updated object.
+        :param identifier: model-identifier
+        :param object: object to replace
+        :param upsert: toggle to ``True`` to enable even if object doesn't exist yet
+        """
         try:
             info = self.metadata.get_component(
                 'model', identifier, version=object.version

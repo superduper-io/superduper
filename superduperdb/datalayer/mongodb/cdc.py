@@ -9,7 +9,8 @@ from pydantic import BaseModel
 from superduperdb.misc.logger import logging
 from superduperdb.queries.mongodb import queries
 from superduperdb.datalayer.base.database import BaseDatabase
-from superduperdb.cluster.task_workflow import TaskWorkflow
+from superduperdb.core.task_workflow import TaskWorkflow
+from superduperdb.core.job import FunctionJob
 
 MongoChangePipelines: t.Dict[str, t.Dict] = {'generic': {}}
 
@@ -167,13 +168,13 @@ class MongoEventMixin:
             indexing_watcher = ...
             task_graph.add_node(
                 f'copy_vectors({indexing_watcher})',
-                FunctionJob(  # type: ignore
+                FunctionJob(
                     callable=copy_vectors,  # type: ignore
                     args=[identifier, cdc_query],
                     kwargs={},
                 ),
             )
-            model, key = indexing_watcher.split('/')  # type: ignore
+            model, key = identifier.split('/')
 
             task_graph.add_edge(
                 f'copy_vectors({indexing_watcher})',

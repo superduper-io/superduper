@@ -3,7 +3,7 @@ import typing as t
 from superduperdb.core.base import Component, Placeholder
 from superduperdb.core.model import Model
 from superduperdb.datalayer.base.query import Select
-from superduperdb.queries.serialization import from_dict, to_dict
+from superduperdb.misc.serialization import from_dict, to_dict
 
 
 class Watcher(Component):

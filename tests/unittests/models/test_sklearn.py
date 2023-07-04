@@ -8,7 +8,7 @@ from sklearn.base import TransformerMixin
 
 from superduperdb.core.documents import Document
 from superduperdb.models.sklearn.wrapper import Pipeline
-from superduperdb.queries.mongodb.queries import Collection
+from superduperdb.datalayer.mongodb.query import Collection
 
 from tests.fixtures.collection import random_arrays, arrays, empty
 

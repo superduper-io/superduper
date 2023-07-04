@@ -3,7 +3,7 @@ import typing as t
 from sentence_transformers import SentenceTransformer as _SentenceTransformer
 
 from superduperdb.core.model import Model
-from superduperdb.types.numpy.array import array
+from superduperdb.encoders.numpy.array import array
 
 
 class SentenceTransformer(Model):

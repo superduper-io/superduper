@@ -6,6 +6,9 @@ from abc import ABC, abstractmethod
 class MetaDataStore(ABC):
     """
     Abstraction for storing meta-data separately from primary data.
+
+    :param conn: connection to the meta-data store
+    :param name: Name to identify DB using the connection
     """
 
     def __init__(

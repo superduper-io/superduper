@@ -1,5 +1,5 @@
 # ruff: noqa: F401, F811
-from superduperdb.queries.mongodb.queries import Collection
+from superduperdb.datalayer.mongodb.query import Collection
 
 from tests.fixtures.collection import (
     empty,

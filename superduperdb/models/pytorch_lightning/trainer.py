@@ -8,4 +8,4 @@ class CustomCheckpoint(pl.callbacks.ModelCheckpoint):
 
     def _save_checkpoint(self, trainer, filepath):
         filepath = filepath.split('.')[0]
-        self.database._replace_model(filepath, trainer.lightning_module)
+        self.database.replace_object(filepath, trainer.lightning_module)

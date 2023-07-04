@@ -37,7 +37,13 @@ class Job:
         return self.db.metadata.watch_job(identifier=self.identifier)
 
     def run_locally(self, db):
-        return self.callable(*self.args, db=db, **self.kwargs)
+        try:
+            out = self.callable(*self.args, db=db, **self.kwargs)
+            db.metadata.update_job(self.identifier, 'status', 'success')
+        except Exception as e:
+            db.metadata.update_job(self.identifier, 'status', 'failed')
+            raise e
+        return out
 
     def run_on_dask(self, dependencies=()):
         raise NotImplementedError

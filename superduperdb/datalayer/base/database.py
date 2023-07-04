@@ -38,7 +38,7 @@ from superduperdb.core.components import components
 # It should be moved to the Server's initialization code where it can be available to
 # all threads.
 from ...core.fit import Fit
-from ...core.job import FunctionJob, ComponentJob
+from ...core.job import FunctionJob, ComponentJob, Job
 
 VECTOR_DATABASE = VectorDatabase.create(config=CFG.vector_search)
 VECTOR_DATABASE.init().__enter__()
@@ -138,14 +138,18 @@ class BaseDatabase:
         """
         if identifier is None:
             assert version is None, f"must specify {identifier} to go with {version}"
-            return self.metadata.show_components(variety)
+            return self.metadata.show_components(variety=variety)
         elif identifier is not None and version is None:
-            return self.metadata.show_component_versions(variety, identifier)
+            return self.metadata.show_component_versions(
+                variety=variety, identifier=identifier
+            )
         elif identifier is not None and version is not None:
             if version == -1:
-                return self._get_object_info(variety, identifier)
+                return self._get_object_info(variety=variety, identifier=identifier)
             else:
-                return self._get_object_info(variety, identifier, version)
+                return self._get_object_info(
+                    variety=variety, identifier=identifier, version=version
+                )
         else:
             raise ValueError(
                 f'Incorrect combination of {variety}, {identifier}, {version}'
@@ -238,6 +242,7 @@ class BaseDatabase:
         object: Component,
         serializer: str = 'dill',
         serializer_kwargs: Optional[Dict] = None,
+        dependencies: t.Sequence[Union[Job, str]] = (),
     ):
         """
         Add functionality in the form of components. Components are stored in the
@@ -252,6 +257,7 @@ class BaseDatabase:
             object=object,
             serializer=serializer,
             serializer_kwargs=serializer_kwargs,
+            dependencies=dependencies,
         )
 
     def remove(
@@ -331,7 +337,10 @@ class BaseDatabase:
                              components
         """
         info = self.metadata.get_component(
-            variety, identifier, version=version, allow_hidden=allow_hidden
+            variety=variety,
+            identifier=identifier,
+            version=version,
+            allow_hidden=allow_hidden,
         )
         if info is None:
             raise Exception(
@@ -438,6 +447,7 @@ class BaseDatabase:
         serializer: str = 'dill',
         serializer_kwargs: Optional[Dict] = None,
         parent: Optional[str] = None,
+        dependencies: t.Sequence[Union[Job, str]] = (),
     ):
         if object.repopulate_on_init:
             object.repopulate(self)
@@ -456,6 +466,7 @@ class BaseDatabase:
                 serializer=serializer,
                 serializer_kwargs=serializer_kwargs,
                 parent=object.unique_id,
+                dependencies=dependencies,
             )
 
         for p in object.child_references:
@@ -487,7 +498,7 @@ class BaseDatabase:
         logging.info(f'Created {object.unique_id}')
 
         object.repopulate(self)
-        return object.schedule_jobs(self)
+        return object.schedule_jobs(self, dependencies=dependencies)
 
     def _create_plan(self):
         G = networkx.DiGraph()
@@ -707,10 +718,10 @@ class BaseDatabase:
         )
         return outputs
 
-    def _replace_model(
+    def replace_model(
         self,
         identifier: str,
-        object,
+        object: t.Any,
         upsert: bool = False,
     ):
         try:
@@ -724,13 +735,19 @@ class BaseDatabase:
                 )
             raise e
 
-        file_id = self.artifact_store.create_artifact(
+        file_id, _ = self.artifact_store.create_artifact(
             object,
             serializer=info['serializer'],
             serializer_kwargs=info['serializer_kwargs'],
         )
         self.artifact_store.delete_artifact(info['object'])
-        self.metadata.update_object(identifier, 'model', 'object', file_id)
+        self.metadata.update_object(
+            identifier=identifier,
+            variety='model',
+            key='object',
+            value=file_id,
+            version=object.version,
+        )
 
     def _select_nearest(
         self,

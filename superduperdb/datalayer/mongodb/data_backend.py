@@ -6,7 +6,7 @@ from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.misc.logger import logging
-from superduperdb.queries.serialization import from_dict
+from superduperdb.misc.serialization import from_dict
 
 
 class MongoDataBackend(BaseDataBackend):

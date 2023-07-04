@@ -10,8 +10,8 @@ from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.watcher import Watcher
 from superduperdb.models.torch.wrapper import TorchModel
-from superduperdb.queries.mongodb.queries import Collection, PreLike
-from superduperdb.types.torch.tensor import tensor
+from superduperdb.datalayer.mongodb.query import Collection, PreLike
+from superduperdb.encoders.torch.tensor import tensor
 
 
 from tests.fixtures.collection import (

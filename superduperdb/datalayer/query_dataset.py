@@ -3,17 +3,6 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 
 
 class QueryDataset:
-    """
-    Dataset object wrapping a database query
-
-    :param database_type: type of database
-    :param database: database collection
-    :param query_params: parameters of database query
-    :param fold: fold of data
-    :param suppress: supply to suppress certain fields/ columns
-    :param transform: function to apply to the output
-    """
-
     def __init__(
         self,
         select: Select,

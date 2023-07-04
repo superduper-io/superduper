@@ -9,6 +9,12 @@ from superduperdb.datalayer.base.database import BaseDatabase
 
 
 def build_datalayer(**connections) -> BaseDatabase:
+    """
+    Build datalayer as per ``db = superduper(db)`` from configuration.
+
+    :param connections: cache of connections to reuse in the build process.
+    """
+
     def build(cfg, stores):
         cls = stores[cfg.cls]
         if connections:

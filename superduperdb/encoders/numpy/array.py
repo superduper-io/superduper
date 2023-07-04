@@ -2,7 +2,7 @@ import numpy
 import typing as t
 
 from superduperdb.core.encoder import Encoder
-from superduperdb.types.utils import str_shape
+from superduperdb.encoders.utils import str_shape
 
 
 class EncodeArray:

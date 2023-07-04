@@ -116,10 +116,13 @@ class MetaDataStore(ABC):
     ):
         if version is None:
             version = self.get_latest_version(
-                variety, identifier, allow_hidden=allow_hidden
+                variety=variety, identifier=identifier, allow_hidden=allow_hidden
             )
         r = self._get_component(
-            variety, identifier, version=version, allow_hidden=allow_hidden
+            variety=variety,
+            identifier=identifier,
+            version=version,
+            allow_hidden=allow_hidden,
         )
         if r is None:
             raise FileNotFoundError(f'Object {identifier} does not exist in metadata')
@@ -139,7 +142,13 @@ class MetaDataStore(ABC):
     def update_object(self, identifier, variety, key, value, version=None):
         if version is not None:
             version = self.get_latest_version(variety, identifier)
-        return self._update_object(identifier, variety, key, value, version=version)
+        return self._update_object(
+            identifier=identifier,
+            variety=variety,
+            key=key,
+            value=value,
+            version=version,
+        )
 
     @abstractmethod
     def write_output_to_job(self, identifier, msg, stream):

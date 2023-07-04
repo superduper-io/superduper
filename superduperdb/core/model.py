@@ -222,10 +222,23 @@ class Model(Component):
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
+        watch: bool = False,
         **kwargs,
     ):
         if isinstance(select, dict):
             select = from_dict(select)
+
+        if watch:
+            from superduperdb.core.watcher import Watcher
+
+            return db.add(
+                Watcher(
+                    model=self,
+                    select=select,  # type: ignore[arg-type]
+                    key=X,
+                ),
+                dependencies=dependencies,
+            )
 
         if db is not None:
             db.add(self)

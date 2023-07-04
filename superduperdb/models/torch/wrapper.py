@@ -148,6 +148,7 @@ class Base(Model):
             to_watch = self.metric_values[self.training_configuration.watch]
         if all([to_watch[-1] >= x for x in to_watch[:-1]]):
             return True
+        return False
 
     def _fit(  # type: ignore[override]
         self,
@@ -252,11 +253,11 @@ class Base(Model):
             return sum(objective_values) / len(objective_values)
 
     def save(self, database: BaseDatabase):
-        database._replace_model(
-            self.identifier,
-            self,
+        database.replace_model(
+            identifier=self.identifier,
+            object=self,
             upsert=True,
-        )  # TODO _replace_model is redundant
+        )  # TODO replace_object is redundant
 
     def compute_metrics(self, validation_set, database):
         validation_set = database.load('dataset', validation_set)

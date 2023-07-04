@@ -210,7 +210,7 @@ class Component(BaseComponent):
         lines = [parts[0], *['    ' + x for x in lines], parts[1]]
         return '\n'.join(lines)
 
-    def schedule_jobs(self, database):
+    def schedule_jobs(self, database, dependencies=()):
         return []
 
     @classmethod

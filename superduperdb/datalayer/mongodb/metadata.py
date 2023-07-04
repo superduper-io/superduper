@@ -166,7 +166,7 @@ class MongoMetaDataStore(MetaDataStore):
         allow_hidden: bool = False,
     ):
         if not allow_hidden:
-            return self.object_collection.find_one(
+            r = self.object_collection.find_one(
                 {
                     '$or': [
                         {
@@ -185,13 +185,18 @@ class MongoMetaDataStore(MetaDataStore):
                 }
             )
         else:
-            return self.object_collection.find_one(
+            r = self.object_collection.find_one(
                 {
                     'identifier': identifier,
                     'variety': variety,
                     'version': version,
                 },
             )
+        if r is None:
+            import pdb
+
+            pdb.set_trace()
+        return r
 
     def get_component_version_parents(self, unique_id: str):
         return [

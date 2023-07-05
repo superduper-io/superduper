@@ -1,29 +1,33 @@
 import threading
+import time
 import typing as t
 import datetime
 
 from superduperdb.queries.mongodb.queries import Collection
 from superduperdb.misc.logger import logging
 from superduperdb.datalayer.base.database import BaseDatabase
-from superduperdb.datalayer.mongodb.cdc import GenericDatabaseWatch
-from superduperdb.datalayer.mongodb.cdc import MongoDatabaseWatcher
+from superduperdb.datalayer.mongodb import cdc
+from superduperdb.datalayer.base import backends
+
 from superduperdb.misc.docs import api
 
-DBWatcherType = t.TypeVar('DBWatcherType', bound=MongoDatabaseWatcher)
-
-
-def duck_type_mongodb(item):
-    return hasattr(item, 'list_collection_names')
+DBWatcherType = t.TypeVar('DBWatcherType', bound=cdc.GenericDatabaseWatch)
 
 
 class _DatabaseWatcherThreadScheduler(threading.Thread):
-    def __init__(self, watcher) -> None:
+    def __init__(
+        self, watcher: cdc.GenericDatabaseWatch, stop_event: threading.Event
+    ) -> None:
         threading.Thread.__init__(self, daemon=False)
+        self.stop_event = stop_event
         self.watcher = watcher
         logging.info(f'Database watch service started at {datetime.datetime.now()}')
 
     def run(self) -> None:
-        self.watcher.cdc()
+        cdc_stream = self.watcher.setup_cdc()
+        while not self.stop_event.is_set():
+            self.watcher.next_cdc(cdc_stream)
+            time.sleep(0.1)
 
 
 class DatabaseWatcherFactory(t.Generic[DBWatcherType]):
@@ -40,9 +44,10 @@ class DatabaseWatcherFactory(t.Generic[DBWatcherType]):
         self.watcher = db_type
 
     def create(self, *args, **kwargs) -> t.Optional[DBWatcherType]:
+        stop_event = threading.Event()
         if self.watcher == 'mongodb':
-            watcher = MongoDatabaseWatcher(*args, **kwargs)
-            scheduler = _DatabaseWatcherThreadScheduler(watcher)
+            watcher = cdc.MongoDatabaseWatcher(stop_event=stop_event, *args, **kwargs)
+            scheduler = _DatabaseWatcherThreadScheduler(watcher, stop_event=stop_event)
             watcher.attach_scheduler(scheduler)
             return watcher
 
@@ -83,7 +88,7 @@ class DatabaseWatcher:
         identifier: str = '',
         *args,
         **kwargs,
-    ) -> t.Optional[GenericDatabaseWatch]:
+    ) -> t.Optional[cdc.GenericDatabaseWatch]:
         """__new__.
         A method which creates instance of `GenericDatabaseWatcher` corresponding to the
         `db`.
@@ -102,9 +107,15 @@ class DatabaseWatcher:
         :rtype: GenericDatabaseWatch
         """
         assert on is not None, '`DatabaseWatcher` needs a source collection to watch.'
-        if duck_type_mongodb(db.db):
-            db_type = 'mongodb'
-            db_factory = DatabaseWatcherFactory[MongoDatabaseWatcher](db_type=db_type)
+        db_type = [
+            db_type
+            for db_type, db_backend in backends.data_backends.items()
+            if isinstance(db.databackend, db_backend)
+        ][0]
+        if db_type == "mongodb":
+            db_factory = DatabaseWatcherFactory[cdc.MongoDatabaseWatcher](
+                db_type=db_type
+            )
             return db_factory.create(
                 db=db, on=on, identifier=identifier, *args, **kwargs
             )

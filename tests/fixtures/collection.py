@@ -83,7 +83,22 @@ def random_arrays(arrays):
 
 
 @pytest.fixture()
-def an_update(float_tensors_32):
+def an_single_insert(float_tensors_32):
+    float_tensor = float_tensors_32.types['torch.float32[32]']
+    x = torch.randn(32)
+    y = int(random.random() > 0.5)
+    z = torch.randn(32)
+    return Document(
+        {
+            'x': float_tensor(x),
+            'y': y,
+            'z': float_tensor(z),
+        }
+    )
+
+
+@pytest.fixture()
+def an_insert(float_tensors_32, update=False):
     float_tensor = float_tensors_32.types['torch.float32[32]']
     data = []
     for i in range(10):
@@ -96,11 +111,16 @@ def an_update(float_tensors_32):
                     'x': float_tensor(x),
                     'y': y,
                     'z': float_tensor(z),
-                    'update': True,
+                    'update': update,
                 }
             )
         )
     return data
+
+
+@pytest.fixture()
+def an_update(float_tensors_32):
+    return an_insert(float_tensors_32, update=True)
 
 
 @pytest.fixture

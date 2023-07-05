@@ -659,5 +659,4 @@ all_items = {
     'Limit': Limit,
     'UpdateOne': UpdateOne,
     'UpdateMany': UpdateMany,
-    'ChangeStream': ChangeStream,
 }

@@ -3,8 +3,8 @@ import typing as t
 from superduperdb.core.base import (
     Component,
     ComponentList,
-    PlaceholderList,
     Placeholder,
+    PlaceholderList,
     is_placeholders_or_components,
 )
 from superduperdb.core.metric import Metric
@@ -59,7 +59,7 @@ class Fit(Component):
         if metrics_are_strs:
             self.metrics = PlaceholderList('metric', metrics)  # type: ignore[arg-type]
         else:
-            self.metrics = ComponentList('metric', metrics)
+            self.metrics = ComponentList('metric', metrics)  # type: ignore[arg-type]
 
         self.keys = keys
         # ruff: noqa: E501

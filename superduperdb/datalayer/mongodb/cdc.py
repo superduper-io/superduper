@@ -1,5 +1,7 @@
 import pickle
+import threading
 import json
+import queue
 import datetime
 from functools import partial
 from collections import Counter
@@ -8,6 +10,8 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
+from bson.objectid import ObjectId as BsonObjectId
+from pymongo.change_stream import CollectionChangeStream
 
 import superduperdb as s
 from superduperdb.misc.logger import logging
@@ -15,12 +19,11 @@ from superduperdb.queries.mongodb import queries
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.job import FunctionJob
+from superduperdb.misc.task_queue import cdc_queue
 from superduperdb.queries.serialization import from_dict, to_dict
 from superduperdb.vector_search.lancedb import LanceDBClient
 
 MongoChangePipelines: t.Dict[str, t.Dict] = {'generic': {}}
-
-lance_db_client = LanceDBClient(s.CFG.vector_search.lancedb)
 
 
 class DBEvent:
@@ -29,6 +32,43 @@ class DBEvent:
     insert = 'insert'
     update = 'update'
     delete = 'delete'
+
+
+class ObjectId(BsonObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not isinstance(v, BsonObjectId):
+            raise TypeError('Id is required.')
+        return str(v)
+
+
+class BasePacket(BaseModel):
+    """
+    A base packet to represent message in task queue.
+    """
+
+    event_type: str = DBEvent.insert
+    ids: t.List[t.Union[ObjectId, str]]
+
+
+class ChangePacket(BasePacket):
+    """
+    A single packet representation of message in task queue.
+    """
+
+    query: BaseModel
+
+
+class BatchPacket(ChangePacket):
+    """
+    A batch of packets to be transfered to task queue.
+    """
+
+    pass
 
 
 class MongoChangePipeline:
@@ -109,23 +149,21 @@ class GenericDatabaseWatch(ABC):
     A Base class which defines basic functions to implement.
     """
 
-    indentity_sep = '/'
-
     @abstractmethod
     def watch(self):
         raise NotImplementedError
 
     @abstractmethod
-    def attach_scheduler(self):
+    def stop(self):
         raise NotImplementedError
 
 
 def copy_vectors(
     db,
-    indexing_watcher_identifier=None,
-    cdc_query=None,
-    ids=None,
-    vector_db_client=None,
+    indexing_watcher_identifier: t.Optional[str] = None,
+    cdc_query: t.Optional[BaseModel] = None,
+    ids: t.Optional[t.List[str]] = None,
+    vector_db_client: t.Any = None,
 ):
     """
     A helper fxn to copy vectors of a `indexing_watcher` component/model of
@@ -143,27 +181,33 @@ def copy_vectors(
         vectors = [{'vector': doc['_outputs'][key][model] for doc in docs}]
         table = vector_db_client.get_table(indexing_watcher_identifier)
         table.add(vectors)
-    except Exception as exc:
+    except Exception:
         logging.exception(
-            f"Error while copying vectors for `vector_index` {indexing_watcher_identifier}"
+            f"Error while copying vectors for `vector_index`: {indexing_watcher_identifier}"  # noqa: E501
         )
-    else:
-        logging.info("Copying vectors for `vector_index` {indexing_watcher_identifier}")
 
 
-class MongoEventMixin:
-    """A Mixin class which defines helper fxns for `MongoDatabaseWatcher`
-    It define basic events handling methods like
-    `on_create`, `on_update`, etc.
+class CDCHandler(threading.Thread):
+    """
+    This class is responsible for handling the change by executing the taskflow.
+    This class also extends the task graph by adding funcation job node which
+    does post model executiong jobs, i.e `copy_vectors`.
     """
 
-    DEFAULT_ID: str = '_id'
-    EXCLUSION_KEYS: t.List[str] = [DEFAULT_ID]
+    def __init__(self, db: BaseDatabase, stop_event: threading.Event):
+        """__init__.
 
-    @staticmethod
-    def submit_task_workflow(
-        cdc_query: BaseModel, db: 'BaseDatabase', ids: t.List
-    ) -> None:
+        :param db: a superduperdb instance.
+        :type db: BaseDatabase
+        :param stop_event: A threading event flag to notify for stoppage.
+        """
+        self.db = db
+        self._stop_event = stop_event
+        self.vector_db_client = LanceDBClient(s.CFG.vector_search.lancedb)
+
+        threading.Thread.__init__(self, daemon=True)
+
+    def submit_task_workflow(self, cdc_query: BaseModel, ids: t.List) -> None:
         """submit_task_workflow.
         A fxn to build a taskflow and execute it with changed ids.
         This also extends the task workflow graph with a node.
@@ -173,24 +217,20 @@ class MongoEventMixin:
         :param cdc_query: A query which will be used by `db._build_task_workflow` method
         to extract the desired data.
         :type cdc_query: BaseModel
-        :param db: a superduperdb instance.
-        :type db: 'BaseDatabase'
         :param ids: List of ids which were observed as changed document.
         :type ids: t.List
         :rtype: None
         """
 
-        task_graph = db._build_task_workflow(cdc_query, ids=ids, verbose=False)
-        task_graph = MongoEventMixin.create_vector_watcher_task(
-            task_graph, db=db, cdc_query=cdc_query, ids=ids
+        task_graph = self.db._build_task_workflow(cdc_query, ids=ids, verbose=False)
+        task_graph = self.create_vector_watcher_task(
+            task_graph, cdc_query=cdc_query, ids=ids
         )
-        task_graph(db)
+        task_graph(self.db)
 
-    # ruff: noqa: F821
-    @staticmethod
     def create_vector_watcher_task(
+        self,
         task_graph: TaskWorkflow,
-        db: 'BaseDatabase',
         cdc_query: BaseModel,
         ids: t.List[str],
     ) -> TaskWorkflow:
@@ -209,15 +249,14 @@ class MongoEventMixin:
         :type ids: t.List[str]
         :rtype: TaskWorkflow
         """
-        for identifier in db.show('vector_index'):
-            indexing_watcher = db.load(
+        for identifier in self.db.show('vector_index'):
+            indexing_watcher = self.db.load(
                 identifier=identifier, variety='vector_index', repopulate=False
             )
             indexing_watcher_identifier = indexing_watcher.indexing_watcher.identifier
 
-            # run_on_dask need to check if lance_client can be given
             partial_copy_vectors = partial(
-                copy_vectors, vector_db_client=lance_db_client
+                copy_vectors, vector_db_client=self.vector_db_client
             )
             task_graph.add_node(
                 f'copy_vectors({indexing_watcher_identifier})',
@@ -239,6 +278,70 @@ class MongoEventMixin:
             )
         return task_graph
 
+    def on_create(self, packet: ChangePacket) -> None:
+        ids = packet.ids
+        cdc_query = packet.query
+        self.submit_task_workflow(cdc_query=cdc_query, ids=ids)
+
+    def on_update(self, packet: ChangePacket) -> None:
+        # TODO: for now we treat updates as inserts.
+        self.on_create(packet)
+
+    def _handle(self, packet: ChangePacket) -> None:
+        if packet.event_type == DBEvent.insert:
+            self.on_create(packet)
+        elif packet.event_type == DBEvent.update:
+            self.on_update(packet)
+
+    @staticmethod
+    def _coallate_packets(packets: t.List[ChangePacket]) -> BatchPacket:
+        """
+        A helper function to coallate batch of packets into one
+        `BatchPacket`.
+        """
+
+        ids = [packet.ids[0] for packet in packets]
+        query = packets[0].query
+
+        # TODO: cluster BatchPacket for each event.
+        event_type = packets[0].event_type
+        return BatchPacket(ids=ids, query=query, event_type=event_type)
+
+    def get_batch_from_queue(self, batch_size: int = 100, timeout: int = 2):  # 2secs
+        """
+        A method to get a batch of packets from task queue, with a timeout.
+        """
+        packets = []
+        try:
+            for _ in range(batch_size):
+                packets.append(cdc_queue.get(block=True, timeout=timeout))
+                if self._stop_event.is_set():
+                    return None
+
+        except queue.Empty:
+            if len(packets) == 0:
+                return None
+        return CDCHandler._coallate_packets(packets)
+
+    def run(self):
+        while not self._stop_event.is_set():
+            try:
+                packets = self.get_batch_from_queue()
+                if packets:
+                    self._handle(packets)
+            except Exception as exc:
+                logging.debug(f"Error while handling cdc batches :: reason {exc}")
+
+
+class MongoEventMixin:
+    """A Mixin class which defines helper fxns for `MongoDatabaseWatcher`
+    It define basic events handling methods like
+    `on_create`, `on_update`, etc.
+    """
+
+    DEFAULT_ID: str = '_id'
+    EXCLUSION_KEYS: t.List[str] = [DEFAULT_ID]
+
     def on_create(
         self, change: t.Dict, db: 'BaseDatabase', collection: queries.Collection
     ) -> None:
@@ -256,12 +359,13 @@ class MongoEventMixin:
         :type collection: queries.Collection
         :rtype: None
         """
-        logging.debug('Triggerd `on_create` handler.')
+        logging.debug('Triggered `on_create` handler.')
         # new document added!
-        document = change[CDCKeys.document_data_key]
+        document = change[CDCKeys.document_data_key.value]
         ids = [document[self.DEFAULT_ID]]
-        query = collection.find()
-        self.submit_task_workflow(query, db=db, ids=ids)
+        cdc_query = collection.find()
+        packet = ChangePacket(ids=ids, event_type=DBEvent.insert, query=cdc_query)
+        cdc_queue.put_nowait(packet)
 
     def on_update(self, change: t.Dict, db: 'BaseDatabase'):
         """on_update.
@@ -273,11 +377,11 @@ class MongoEventMixin:
         """
 
         #  prepare updated document
-        change[CDCKeys.update_descriptions_key]['updatedFields']
-        change[CDCKeys.update_descriptions_key]['removedFields']
+        change[CDCKeys.update_descriptions_key.value]['updatedFields']
+        change[CDCKeys.update_descriptions_key.value]['removedFields']
 
 
-class CDCKeys:
+class CDCKeys(Enum):
     """
     A enum to represent mongo change document keys.
     """
@@ -301,12 +405,13 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
 
     """
 
-    identity_sep: str = '/'
+    IDENTITY_SEP: str = '/'
 
     def __init__(
         self,
         db: 'BaseDatabase',
         on: queries.Collection,
+        stop_event: threading.Event,
         identifier: 'str' = '',
         resume_token: t.Optional[ResumeToken] = None,
     ):
@@ -316,6 +421,8 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         :type db: 'BaseDatabase'
         :param on: It is used to define a Collection on which CDC would be performed.
         :type on: queries.Collection
+        :param stop_event: A threading event flag to notify for stoppage.
+        :type identifier: 'threading.Event'
         :param identifier: A identifier to represent the watcher service.
         :type identifier: 'str'
         :param resume_token: A resume token is a token used to resume
@@ -329,6 +436,8 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         self._change_counters = Counter(inserts=0, updates=0)
 
         self.resume_token = resume_token.token if resume_token else None
+        self._cdc_change_handler = CDCHandler(db=db, stop_event=stop_event)
+        self._stop_event = stop_event
 
         super().__init__()
 
@@ -343,7 +452,7 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         :param identifiers: list of identifiers.
         :rtype: str
         """
-        return cls.identity_sep.join(identifiers)
+        return cls.IDENTITY_SEP.join(identifiers)
 
     @staticmethod
     def _get_stream_pipeline(
@@ -368,7 +477,7 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         :rtype: t.Optional[str]
         """
         try:
-            document_key = document[CDCKeys.document_key]
+            document_key = document[CDCKeys.document_key.value]
             reference_id = str(document_key['_id'])
         except KeyError:
             return None
@@ -382,7 +491,7 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         :type change: t.Dict
         :rtype: None
         """
-        event = change[CDCKeys.operation_type]
+        event = change[CDCKeys.operation_type.value]
         reference_id = self._get_reference_id(change)
 
         if not reference_id:
@@ -408,26 +517,27 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         token = change['_id']['_data']
         self.tokens.save([token])
 
-    def check_if_superduper_change(self, change):
-        if change[CDCKeys.operation_type] == DBEvent.update:
-            updates = change[CDCKeys.update_descriptions_key]
-            updated_fields = updates[CDCKeys.update_field_key]
+    def check_if_superduper_change(self, change: t.Dict) -> bool:
+        """
+        A helper method to check if the cdc change is done
+        by superduperdb queries.
+        """
+        if change[CDCKeys.operation_type.value] == DBEvent.update:
+            updates = change[CDCKeys.update_descriptions_key.value]
+            updated_fields = updates[CDCKeys.update_field_key.value]
             keys = updated_fields.keys()
             for key in keys:
                 if '_outputs' in key:
                     return True
         return False
 
-    def cdc(self, change_pipeline: t.Optional[t.Union[str, t.Dict]] = None) -> None:
-        """cdc.
-        It is the primary entrypoint fxn to start cdc on the database and collection
-        defined by the user.
-
-        :param change:
-        :type change: t.Optional[t.List]
-        :rtype: None
+    def setup_cdc(
+        self, change_pipeline: t.Optional[t.Union[str, t.Dict]] = None
+    ) -> CollectionChangeStream:
         """
-
+        A method to setup cdc change stream from user provided
+        optional `change_pipeline`.
+        """
         try:
             pipeline = self._get_stream_pipeline(change_pipeline)
 
@@ -437,23 +547,43 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
 
             stream_iterator = stream(self.db)
             logging.info(f'Started listening database with identity {self.identity}...')
-            for change in stream_iterator:
+        except Exception:
+            logging.exception("Error while setting up cdc stream.")
+            raise
+        return stream_iterator
+
+    def next_cdc(self, stream: CollectionChangeStream) -> None:
+        """
+        A method to get the next stream of change observed on the given `Collection`.
+        """
+
+        try:
+            change = stream.try_next()
+            if change is not None:
                 logging.debug(
                     f'Database change encountered at {datetime.datetime.now()}'
                 )
+
+                # Who did the change.
                 if not self.check_if_superduper_change(change):
                     self.event_handler(change)
                 self.dump_token(change)
+        except StopIteration:
+            logging.exception('Change stream is close or empty!, stopping cdc!')
+            raise
         except Exception:
-            logging.exception('Error occured during CDC!')
+            logging.exception('Error occured during cdc!, stopping cdc!')
             raise
 
-    def attach_scheduler(self, scheduler):
+    def attach_scheduler(self, scheduler: threading.Thread) -> None:
         self._scheduler = scheduler
 
     def info(
         self,
     ) -> t.Dict:
+        """
+        A method to get info on the current state of watcher.
+        """
         info = {}
         info.update(
             {
@@ -468,23 +598,32 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         """Primary fxn to initiate watching of a database on the collection
         with defined `change_pipeline` by the user.
 
-        :param change_pipeline:
+        :param change_pipeline: A mongo watch pipeline defined by the user
+        for more fine grained watching.
         :rtype: None
         """
-        if not self._scheduler:
-            raise ValueError('No scheduler available!')
-
         try:
             s.CFG.cdc = True
+            self._cdc_change_handler.start()
             self._scheduler.start()
         except Exception:
             logging.exception('Watching service stopped!')
             s.CFG.cdc = False
             raise
 
+    def stop(self) -> None:
+        """
+        A method to stop watching cdc changes.
+        This stops the corresponding services as well.
+        """
+        s.CFG.cdc = False
+        self._stop_event.set()
+
+    def is_available(self):
+        """
+        A method to get the status of watcher.
+        """
+        return not self._stop_event.is_set()
+
     def close(self) -> None:
-        """
-        A placeholder fxn for future instances/session to be closed.
-        Currently nothing to close.
-        """
-        ...
+        self.stop()

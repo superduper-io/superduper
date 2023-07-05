@@ -73,6 +73,8 @@ class ReplaceOne(Update):
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
+    type_id: t.Literal['mongdb.ReplaceOne'] = 'mongdb.ReplaceOne'
+
     @property
     def select_table(self):
         raise NotImplementedError
@@ -96,11 +98,12 @@ class ReplaceOne(Update):
 
 
 class PreLike(Like):
-    # r: Document
     r: t.Dict
     vector_index: str
     collection: Collection
     n: int = 100
+
+    type_id: t.Literal['mongdb.PreLike'] = 'mongdb.PreLike'
 
     @property
     def table(self):
@@ -136,6 +139,8 @@ class Find(Select):
     args: t.Optional[t.List] = Field(default_factory=lambda: [])
     kwargs: t.Optional[t.Dict] = Field(default_factory=lambda: {})
 
+    type_id: t.Literal['mongdb.Find'] = 'mongdb.Find'
+
     @property
     def parent(self):
         msg = 'Must specify exactly one of "like_parent" and "collection"'
@@ -150,7 +155,7 @@ class Find(Select):
         return self.parent.table
 
     def limit(self, n: int):
-        return Limit(parent_find=self, n=n)
+        return Limit(parent=self, n=n)
 
     def like(
         self, r: t.Dict, vector_index: str = '', n: int = 100, max_ids: int = 1000
@@ -205,7 +210,7 @@ class Find(Select):
         )
 
     def featurize(self, features):
-        return Featurize(parent_find=self, features=features)
+        return Featurize(parent=self, features=features)
 
     def get_ids(self, db: BaseDatabase):
         args = [{}, {}]
@@ -256,7 +261,7 @@ class Find(Select):
             except IndexError:
                 filter = {}
             filter = {'$and': [filter, {'_id': {'$in': ids}}]}
-            cursor = db.db[self.collection.name].find(
+            cursor = db.db[self.like_parent.collection.name].find(
                 filter, *self.args[1:], **self.kwargs
             )
         else:
@@ -269,6 +274,8 @@ class FeaturizeOne(SelectOne):
     features: t.Dict[str, str]
     parent_find_one: t.Optional[Find] = None
 
+    type_id: t.Literal['mongdb.FeaturizeOne'] = 'mongdb.FeaturizeOne'
+
     def __call__(self, db: BaseDatabase):
         r = self.parent_find_one(db)
         r = SuperDuperCursor.add_features(r.content, self.features)
@@ -280,6 +287,8 @@ class FindOne(SelectOne):
     kwargs: t.Optional[t.Dict] = Field(default_factory=dict)
     like_parent: t.Optional[PreLike] = None
     collection: t.Optional[Collection] = None
+
+    type_id: t.Literal['mongdb.FindOne'] = 'mongdb.FindOne'
 
     def __call__(self, db: BaseDatabase):
         if self.collection is not None:
@@ -308,6 +317,8 @@ class Aggregate(Select):
     kwargs: t.Dict = Field(default_factory=dict)
     collection: Collection
 
+    type_id: t.Literal['mongdb.Aggregate'] = 'mongdb.Aggregate'
+
     def __call__(self, db):
         return db.db[self.collection.name].aggregate(*self.args, **self.kwargs)
 
@@ -316,6 +327,8 @@ class DeleteOne(Delete):
     collection: Collection
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
+
+    type_id: t.Literal['mongdb.DeleteOne'] = 'mongdb.DeleteOne'
 
     def __call__(self, db: BaseDatabase):
         return db.db[self.collection.name].delete_one(*self.args, **self.kwargs)
@@ -326,6 +339,8 @@ class DeleteMany(Delete):
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
+    type_id: t.Literal['mongdb.DeleteMany'] = 'mongdb.DeleteMany'
+
     def __call__(self, db: BaseDatabase):
         return db.db[self.collection.name].delete_many(*self.args, **self.kwargs)
 
@@ -334,6 +349,8 @@ class UpdateOne(Update):
     collection: Collection
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
+
+    type_id: t.Literal['mongdb.UpdateOne'] = 'mongdb.UpdateOne'
 
     def __call__(self, db: BaseDatabase):
         return db.db[self.collection.name].update_one(*self.args, **self.kwargs)
@@ -358,6 +375,8 @@ class UpdateMany(Update):
 
     my_refresh: bool = Field(default=True, alias='refresh')
     my_verbose: bool = Field(default=True, alias='verbose')
+
+    type_id: t.Literal['mongdb.UpdateMany'] = 'mongdb.UpdateMany'
 
     def __call__(self, db: BaseDatabase):
         to_update = Document(self.args[1]).encode()
@@ -397,6 +416,8 @@ class InsertOne(Insert):
     my_refresh: bool = Field(default=True, alias='refresh')
     my_verbose: bool = Field(default=True, alias='verbose')
 
+    type_id: t.Literal['mongdb.InsertOne'] = 'mongdb.InsertOne'
+
     def __call__(self, db: BaseDatabase):
         insert = db.db[self.collection.name].insert_one(*self.args, **self.kwargs)
         graph = None
@@ -409,6 +430,14 @@ class InsertOne(Insert):
         return insert, graph
 
     @property
+    def table(self):
+        return self.collection.name
+
+    @property
+    def select_table(self):
+        return Find(collection=self.collection)
+
+    @property
     def documents(self):
         return [self.args[0]]
 
@@ -419,6 +448,8 @@ class InsertMany(Insert):
     kwargs: t.Dict = Field(default_factory=dict)
     valid_prob: float = 0.05
     encoders: t.List = Field(default_factory=list)
+
+    type_id: t.Literal['mongdb.InsertMany'] = 'mongdb.InsertMany'
 
     @property
     def table(self):
@@ -456,62 +487,66 @@ class InsertMany(Insert):
 
 
 class PostLike(Select):
-    parent_find: t.Optional[Find]
-    # r: t.Document
+    find_parent: t.Optional[Find]
     r: t.Dict
     vector_index: str
     n: int = 100
     max_ids: int = 1000
 
+    type_id: t.Literal['mongdb.PostLike'] = 'mongdb.PostLike'
+
     class Config:
         arbitrary_types_allowed = True
+        # TODO: the server will crash when it tries to JSONize whatever it is that
+        # this allows.
 
     def __call__(self, db: BaseDatabase):
-        cursor = self.parent_find.select_ids.limit(self.max_ids)(db)
+        cursor = self.find_parent.select_ids.limit(self.max_ids)(db)
         ids = [r['_id'] for r in cursor]
         ids, scores = db._select_nearest(
             like=self.r,
             vector_index=self.vector_index,
             n=self.n,
-            ids=ids,
+            ids=[str(_id) for _id in ids],
         )
+        ids = [ObjectId(_id) for _id in ids]
         return Find(
-            collection=self.parent_find.collection, args=[{'_id': {'$in': ids}}]
+            collection=self.find_parent.collection, args=[{'_id': {'$in': ids}}]
         )(db)
+
+    def add_fold(self, fold: str) -> 'Select':
+        raise NotImplementedError
+
+    def is_trivial(self) -> bool:
+        raise NotImplementedError
+
+    @property
+    def select_ids(self) -> 'Select':
+        raise NotImplementedError
+
+    def model_update(self, db, model, key, outputs, ids):
+        raise NotImplementedError
+
+    @property
+    def select_table(self):
+        raise NotImplementedError
+
+    def select_using_ids(
+        self,
+        ids: t.List[str],
+    ) -> t.Any:
+        raise NotImplementedError
 
 
 class Featurize(Select):
     features: t.Dict[str, str]
-    parent_pre_like: t.Optional[PreLike] = None
-    parent_find: t.Optional[Find] = None
-    parent_post_like: t.Optional[PostLike] = None
+    parent: t.Union[PreLike, Find, PostLike]
+
+    type_id: t.Literal['mongdb.Featurize'] = 'mongdb.Featurize'
 
     @property
     def select_table(self):
         return self.parent.select_table
-
-    @property
-    def parent(self):
-        msg = 'Must specify exactly one of "parent_*"'
-        assert (
-            sum(
-                [
-                    bool(self.parent_post_like),
-                    bool(self.parent_post_like),
-                    bool(self.parent_find),
-                ]
-            )
-            == 1
-        ), msg
-        return next(
-            p
-            for p in [
-                self.parent_post_like,
-                self.parent_pre_like,
-                self.parent_find,
-            ]
-            if p
-        )
 
     def get_ids(self, *args, **kwargs):
         return self.parent.get_ids(*args, **kwargs)
@@ -549,37 +584,12 @@ class Featurize(Select):
 
 class Limit(Select):
     n: int
-    parent_find: t.Optional[Find] = None
-    parent_post_like: t.Optional[PostLike] = None
-    parent_pre_like: t.Optional[PreLike] = None
-    parent_featurize: t.Optional[Featurize] = None
+    parent: t.Union[Find, PostLike, PreLike, Featurize]
+
+    type_id: t.Literal['mongdb.Limit'] = 'mongdb.Limit'
 
     def __call__(self, db: BaseDatabase):
         return self.parent(db).limit(self.n)
-
-    @property
-    def parent(self):
-        msg = 'Must specify exactly one of "parent_*"'
-        assert (
-            sum(
-                [
-                    bool(self.parent_post_like),
-                    bool(self.parent_post_like),
-                    bool(self.parent_find),
-                    bool(self.parent_featurize),
-                ]
-            )
-            == 1
-        ), msg
-        return next(
-            p
-            for p in [
-                self.parent_post_like,
-                self.parent_pre_like,
-                self.parent_find,
-                self.parent_featurize,
-            ]
-        )
 
 
 all_items = {

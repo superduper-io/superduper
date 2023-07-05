@@ -16,7 +16,7 @@ from superduperdb.metrics.vector_search import (
 )
 from superduperdb.queries.mongodb.queries import Collection
 from superduperdb.types.torch.tensor import tensor
-from superduperdb.vector_search import VanillaHashSet
+from superduperdb.vector_search import VanillaVectorIndex
 
 from tests.material.measures import css
 from tests.fixtures.collection import (
@@ -139,7 +139,7 @@ def test_ensemble(si_validation, metric):
             predict_kwargs={'batch_size': 10},
             index_key='x',
         ),
-        hash_set_cls=VanillaHashSet,
+        hash_set_cls=VanillaVectorIndex,
         measure=css,
         max_iterations=20,
     )

@@ -13,14 +13,13 @@ class SuperDuperCursor:
     id_field: str
     types: t.Dict[str, Encoder] = dc.field(default_factory=dict)
     features: t.Optional[t.Dict[str, str]] = None
-    scores: t.Optional[t.List[float]] = None
+    scores: t.Optional[t.Dict[str, float]] = None
     _it: int = 0
 
     @cached_property
     def _results(self) -> t.Optional[t.List[t.Dict]]:
         def key(r):
-            # TODO: this is an actual error, because self.scores is a list
-            return -self.scores[str(r[self.id_field])]  # type: ignore
+            return -self.scores[str(r[self.id_field])]
 
         return None if self.scores is None else sorted(self.raw_cursor, key=key)
 
@@ -34,6 +33,15 @@ class SuperDuperCursor:
                 if k in r['_other']:
                     r['_other'][k] = r['_outputs'][k][features[k]]
         return r
+
+    def limit(self, *args, **kwargs):
+        return SuperDuperCursor(
+            raw_cursor=self.raw_cursor.limit(*args, **kwargs),
+            id_field=self.id_field,
+            types=self.types,
+            features=self.features,
+            scores=self.scores,
+        )
 
     @staticmethod
     def wrap_document(r, types):

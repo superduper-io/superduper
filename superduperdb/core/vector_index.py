@@ -1,15 +1,14 @@
-import typing as t
 import itertools
+import typing as t
 from contextlib import contextmanager
 
-from superduperdb.datalayer.base.query import Select
 from superduperdb.core.base import (
-    ComponentList,
-    PlaceholderList,
     Component,
-    Placeholder,
-    is_placeholders_or_components,
+    ComponentList,
     DBPlaceholder,
+    Placeholder,
+    PlaceholderList,
+    is_placeholders_or_components,
 )
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
@@ -17,14 +16,15 @@ from superduperdb.core.encoder import Encodable
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model, ModelEnsemble
 from superduperdb.core.watcher import Watcher
+from superduperdb.datalayer.base.query import Select
+from superduperdb.metrics.vector_search import VectorSearchPerformance
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.metrics.vector_search import VectorSearchPerformance
 from superduperdb.vector_search.base import (
     VectorCollection,
     VectorCollectionConfig,
-    VectorIndexMeasureType,
     VectorCollectionItem,
+    VectorIndexMeasureType,
 )
 
 T = t.TypeVar('T')
@@ -88,7 +88,9 @@ class VectorIndex(Component):
                     'watcher', compatible_watchers  # type: ignore[arg-type]
                 )
             else:
-                self.compatible_watchers = ComponentList('watcher', compatible_watchers)
+                self.compatible_watchers = ComponentList(
+                    'watcher', t.cast(t.List[Component], compatible_watchers)
+                )
         self.measure = measure
         self.database = DBPlaceholder()
 
@@ -244,7 +246,7 @@ class VectorIndex(Component):
         return VectorSearchPerformance(
             measure=self.measure,
             index_key=self.indexing_watcher.key,  # type: ignore[union-attr]
-            compatible_keys=[w.key for w in self.compatible_watchers],
+            compatible_keys=[w.key for w in self.compatible_watchers],  # type: ignore[union-attr]
         )(
             validation_data=unpacked,
             model=model_ensemble,

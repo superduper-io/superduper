@@ -227,6 +227,11 @@ class ComponentList(BaseComponent):
     def __iter__(self) -> t.Iterator[Component]:
         return iter(self.components)
 
+    def repopulate(self, database: 'BaseDatabase'):
+        return ComponentList(
+            self.variety, [c.repopulate(database) for c in self.components]
+        )
+
 
 def strip(component: BaseComponent, top_level: bool = True):
     """

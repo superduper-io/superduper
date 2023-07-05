@@ -1,3 +1,4 @@
+import dataclasses as dc
 import typing as t
 from contextlib import contextmanager
 
@@ -218,35 +219,16 @@ class Component(BaseComponent):
         return f'{variety}/{identifier}/{version}'
 
 
+@dc.dataclass
 class ComponentList(BaseComponent):
-    """
-    List of base components.
-    """
-
-    def __init__(self, variety: str, components: t.List[Component]):
-        self.variety = variety
-        self.components = components
-
-    def __getitem__(self, item: int) -> Component:
-        return self.components[item]
-
-    def __setitem__(self, idx: int, value: Component):
-        self.components[idx] = value
+    variety: str
+    components: t.List[Component]
 
     def __iter__(self) -> t.Iterator[Component]:
         return iter(self.components)
 
-    def repopulate(self, database: 'BaseDatabase') -> None:
-        for i, item in enumerate(self):
-            if isinstance(item, str):
-                self[i] = database.load(self.variety, item)
-            self[i] = self[i].repopulate(database)
 
-    def aslist(self) -> t.List[str]:
-        return [c.identifier for c in self]
-
-
-def strip(component: BaseComponent, top_level=True):
+def strip(component: BaseComponent, top_level: bool = True):
     """
     Strip component down to object which doesn't contain a BaseComponent part.
     This may be applied so that objects aren't redundantly serialized and replaced

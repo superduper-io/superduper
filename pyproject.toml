@@ -34,6 +34,8 @@ tqdm = "^4.65.0"
 werkzeug = "^2.3.4"
 openai = "^0.27.6"
 pydantic = "^1.10.7"
+lancedb = "^0.1.9"
+pandas = "^2.0.2"
 fil = "^1.1.0"
 torch = [
      {version = "^2.0.1", platform = "darwin", source="PyPI"},

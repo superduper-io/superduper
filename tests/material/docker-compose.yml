@@ -12,11 +12,20 @@ services:
     image: mongo:6
     container_name: sddb-mongodb
     restart: always
+    command : sh -c "mongod --replSet rs0 --bind_ip_all --port 27018 --dbpath /data/db/ --shardsvr "
     environment:
       MONGO_INITDB_ROOT_USERNAME: testmongodbuser
       MONGO_INITDB_ROOT_PASSWORD: testmongodbpassword
     ports:
-      - "27018:27017"
+      - "27018:27018"
+
+  mongo-init:
+    image: mongo:6
+    depends_on:
+      - mongodb
+    command: sh -c "/scripts/mongo-init.sh"
+    volumes:
+      - ./mongo-init.sh:/scripts/mongo-init.sh
 
   vector-search:
     image: superduperdb:latest

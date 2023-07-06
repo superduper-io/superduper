@@ -1,17 +1,44 @@
+# ruff: noqa: F401, F811
 import pytest
 import time
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import torch
+
 from superduperdb.datalayer.base.cdc import DatabaseWatcher
-from superduperdb.queries.mongodb.queries import Collection
+from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.misc.task_queue import cdc_queue
+
+from tests.fixtures.collection import (
+    with_vector_index,
+    random_data,
+    empty,
+    float_tensors_8,
+    float_tensors_16,
+    float_tensors_32,
+    a_model,
+    b_model,
+    a_watcher,
+    an_update,
+    a_single_insert,
+    an_insert,
+    n_data_points,
+    image_type,
+    si_validation,
+    c_model,
+    metric,
+    random_data_factory,
+    vector_index_factory,
+)
 
 
 @patch('superduperdb.datalayer.mongodb.cdc.copy_vectors')
 @pytest.fixture()
 def watch_fixture(with_vector_index):
     watcher = DatabaseWatcher(db=with_vector_index, on=Collection(name='documents'))
+    watcher._cdc_change_handler._QUEUE_TIMEOUT = 0
+    watcher._cdc_change_handler._QUEUE_BATCH_SIZE = 1
     yield watcher
     watcher.stop()
 
@@ -25,13 +52,13 @@ class TestMongoCDC:
         watch_fixture.watch()
         watch_fixture.stop()
 
-    def test_single_insert(self, watch_fixture, with_vector_index, an_single_insert):
+    def test_single_insert(self, watch_fixture, with_vector_index, a_single_insert):
         watch_fixture._cdc_change_handler = MagicMock()
         watch_fixture.watch()
         with_vector_index.execute(
-            Collection(name='documents').insert_many([an_single_insert])
+            Collection(name='documents').insert_many([a_single_insert])
         )
-        time.sleep(3)
+        time.sleep(2)
         info = watch_fixture.info()
         watch_fixture.stop()
         assert info['inserts'] == 1
@@ -45,20 +72,67 @@ class TestMongoCDC:
         watch_fixture.stop()
         assert info['inserts'] == len(an_insert)
 
+    def test_single_update(
+        self, watch_fixture, random_data, with_vector_index, an_insert
+    ):
+        watch_fixture._cdc_change_handler = MagicMock()
+        watch_fixture.watch()
+        output, _ = with_vector_index.execute(
+            Collection(name='documents').insert_many(an_insert)
+        )
+        to_update = torch.randn(32)
+        t = random_data.types['torch.float32[32]']
+        with_vector_index.execute(
+            Collection(name='documents').update_many(
+                {"_id": output.inserted_ids[0]}, {'$set': {'x': t(to_update)}}
+            )
+        )
+        time.sleep(2)
+        info = watch_fixture.info()
+        watch_fixture.stop()
+        assert info['updates'] == 1
+
+    def test_many_update(
+        self, watch_fixture, random_data, with_vector_index, an_insert
+    ):
+        watch_fixture._cdc_change_handler = MagicMock()
+        watch_fixture.watch()
+        output, _ = with_vector_index.execute(
+            Collection(name='documents').insert_many(an_insert)
+        )
+        to_update = torch.randn(32)
+        count = 5
+        t = random_data.types['torch.float32[32]']
+        find_query = {"_id": {"$in": output.inserted_ids[:count]}}
+        with_vector_index.execute(
+            Collection(name='documents').update_many(
+                find_query, {'$set': {'x': t(to_update)}}
+            )
+        )
+
+        time.sleep(2)
+        info = watch_fixture.info()
+        watch_fixture.stop()
+        assert info['updates'] == count
+
     @patch('superduperdb.datalayer.mongodb.cdc.copy_vectors')
     def test_task_workflow_on_insert(
-        self, mocked_copy_vectors, watch_fixture, with_vector_index, an_single_insert
+        self, mocked_copy_vectors, watch_fixture, with_vector_index, a_single_insert
     ):
+        """
+        A test which checks if task graph executed on insert.
+        task graph.
+        """
+
         watch_fixture.watch()
 
         # Adding this so that we ensure the _outputs where not produce
         # after Insert query refresh.
         output, _ = with_vector_index.execute(
-            Collection(name='documents').insert_many([an_single_insert], refresh=False)
+            Collection(name='documents').insert_many([a_single_insert], refresh=False)
         )
-        time.sleep(3)
+        time.sleep(2)
         _id = output.inserted_ids[0]
-        time.sleep(8)
         doc = with_vector_index.db['documents'].find_one({'_id': _id})
         watch_fixture.stop()
         assert '_outputs' in doc.keys()
@@ -66,6 +140,10 @@ class TestMongoCDC:
         assert 'linear_a' in doc['_outputs']['z'].keys()
 
     def test_cdc_stop(self, watch_fixture):
+        """
+        A small test which tests if cdc watch service has stopped
+        properly.
+        """
         watch_fixture.watch()
 
         _prev_states = [
@@ -74,7 +152,7 @@ class TestMongoCDC:
         ]
 
         watch_fixture.stop()
-        time.sleep(4)
+        time.sleep(2)
         _post_stop_states = [
             watch_fixture._scheduler.is_alive(),
             watch_fixture._cdc_change_handler.is_alive(),
@@ -88,6 +166,10 @@ class TestMongoCDC:
         )
 
     def test_insert_with_cdc(self, watch_fixture, with_vector_index, an_insert):
+        """
+        A small test which tests, insert from superduperdp should not execute
+        task graph.
+        """
         watch_fixture._cdc_change_handler = MagicMock()
         watch_fixture.watch()
         output, _ = with_vector_index.execute(

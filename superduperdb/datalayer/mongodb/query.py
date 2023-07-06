@@ -418,42 +418,6 @@ class UpdateMany(Update):
         return Find(parent=self.args[0])
 
 
-class InsertOne(Insert):
-    collection: Collection
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
-    my_refresh: bool = Field(default=True, alias='refresh')
-    my_verbose: bool = Field(default=True, alias='verbose')
-
-    type_id: t.Literal['mongdb.InsertOne'] = 'mongdb.InsertOne'
-
-    def __call__(self, db: BaseDatabase):
-        insert = db.db[self.collection.name].insert_one(*self.args, **self.kwargs)
-        graph = None
-        if self.refresh and not s.CFG.cdc:
-            graph = db.refresh_after_update_or_insert(
-                query=self,
-                ids=[insert.id],
-                verbose=self.verbose,
-            )
-        return insert, graph
-
-    @property
-    def table(self):
-        return self.collection.name
-
-    @property
-    def select_table(self):
-        return Find(collection=self.collection)
-
-    def select_using_ids(self, ids):
-        return Find(collection=self.collection, args=[{'_id': {'$in': ids}}])
-
-    @property
-    def documents(self):
-        return [self.args[0]]
-
-
 class InsertMany(Insert):
     collection: Collection
     args: t.List = Field(default_factory=list)
@@ -626,37 +590,6 @@ class Limit(Select):
     @property
     def select_table(self):
         raise NotImplementedError
-
-    def parent(self):
-        msg = 'Must specify exactly one of "parent_*"'
-        assert (
-            sum(
-                [
-                    bool(self.parent_post_like),
-                    bool(self.parent_post_like),
-                    bool(self.parent_find),
-                    bool(self.parent_featurize),
-                ]
-            )
-            == 1
-        ), msg
-        return next(
-            p
-            for p in [
-                self.parent_post_like,
-                self.parent_pre_like,
-                self.parent_find,
-                self.parent_featurize,
-            ]
-            if p is not None
-        )
-
-    def add_fold(self, fold: str) -> 'Select':
-        raise NotImplementedError
-
-    def is_trivial(self) -> bool:
-        raise NotImplementedError
-
 
 
 class ChangeStream(BaseModel):

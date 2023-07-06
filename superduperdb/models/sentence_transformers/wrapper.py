@@ -13,6 +13,7 @@ class SentenceTransformer(Model):
         shape: int,
     ):
         sentence_transformer = _SentenceTransformer(identifier)  # type: ignore
+        assert isinstance(shape, int), "A `int` shape is required"
         super().__init__(
             sentence_transformer,
             identifier,

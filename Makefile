@@ -1,3 +1,5 @@
+PYTEST_ARGUMENTS ?= -W ignore
+
 dist/.built: pyproject.toml $(shell find superduperdb)
 	poetry build --format=wheel
 	touch $@

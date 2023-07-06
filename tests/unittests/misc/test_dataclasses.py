@@ -1,5 +1,6 @@
 from pydantic import Field
 from superduperdb.misc import dataclasses as dc
+import dataclasses
 
 
 @dc.dataclass
@@ -59,3 +60,24 @@ def test_dataclasses():
 
 def test_methods():
     assert [f.name for f in Un.fields()] == ['un', 'nine', 'ten']
+
+
+@dc.dataclass
+class Cached:
+    suri: str = ''
+
+
+@dataclasses.dataclass
+class Data(Cached):
+    a: bytes = bytes()
+    b: str = ''
+    c: int = 3
+
+
+Data.__dataclass_fields__ = Cached.__dataclass_fields__
+
+
+def test_filtered_classes():
+    d = Data(a=bytes(range(3)), b='b', c=12)
+    assert d.dict() == {'suri': ''}
+    assert d.c == 12

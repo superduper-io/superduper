@@ -5,11 +5,7 @@ import random
 import typing as t
 
 from superduperdb.core.documents import Document
-from superduperdb.datalayer.base.cursor import (
-    SuperDuperCursor,
-    add_features,
-    wrap_document,
-)
+from superduperdb.datalayer.base.cursor import SuperDuperCursor
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.base.query import Select, SelectOne, Insert, Delete, Update
 from superduperdb.datalayer.base.query import Like
@@ -88,7 +84,7 @@ class ReplaceOne(Update):
         if isinstance(repl, Document):
             repl = repl.encode()
         elif isinstance(repl, dict):
-            repl = Document(repl).encode()
+            repl = Document(content=repl).encode()
         return db.db[self.collection.name].replace_one(
             filter, repl, *self.args[2:], **self.kwargs
         )
@@ -282,8 +278,8 @@ class FeaturizeOne(SelectOne):
 
     def __call__(self, db: BaseDatabase):
         r = self.parent_find_one(db)
-        r = add_features(r.content, self.features)
-        return Document(r)
+        r = SuperDuperCursor.add_features(r.content, self.features)
+        return Document(content=r)
 
 
 class FindOne(SelectOne):
@@ -296,7 +292,7 @@ class FindOne(SelectOne):
 
     def __call__(self, db: BaseDatabase):
         if self.collection is not None:
-            return wrap_document(
+            return SuperDuperCursor.wrap_document(
                 db.db[self.collection.name].find_one(*self.args, **self.kwargs),
                 types=db.types,
             )
@@ -310,7 +306,7 @@ class FindOne(SelectOne):
                 *self.args[1:],
                 **self.kwargs,
             )
-            return Document(Document.decode(r, types=db.types))
+            return Document(content=Document.decode(r, types=db.types))
 
     def featurize(self, features):
         return FeaturizeOne(parent=self, features=features)
@@ -383,7 +379,7 @@ class UpdateMany(Update):
     type_id: t.Literal['mongdb.UpdateMany'] = 'mongdb.UpdateMany'
 
     def __call__(self, db: BaseDatabase):
-        to_update = Document(self.args[1]).encode()
+        to_update = Document(content=self.args[1]).encode()
         ids = [
             r['_id'] for r in db.db[self.collection.name].find(self.args[0], {'_id': 1})
         ]
@@ -583,7 +579,7 @@ class Featurize(Select):
         else:
             r = self.parent(db)
             r = SuperDuperCursor.add_features(r.content, self.features)
-            return Document(r)
+            return Document(content=r)
 
 
 class Limit(Select):

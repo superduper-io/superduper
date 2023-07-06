@@ -4,12 +4,12 @@ from superduperdb.misc import dataclasses as dc
 from superduperdb.misc import uri_cache
 
 
-class Str(uri_cache.Cached[str]):
+class Str(uri_cache.Cached):
     def __hash__(self):
         return object.__hash__(self)
 
 
-class Tuple(uri_cache.Cached[tuple]):
+class Tuple(uri_cache.Cached):
     def __hash__(self):
         return object.__hash__(self)
 

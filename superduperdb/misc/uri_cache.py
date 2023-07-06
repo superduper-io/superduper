@@ -1,43 +1,23 @@
 from .for_each import for_each
 from .typed_cache import TypedCache
+from superduperdb.misc import dataclasses as dc
 import typing as t
-
-if t.TYPE_CHECKING:
-    import dataclasses as dc
-else:
-    from . import dataclasses as dc
 
 ContentType = t.TypeVar('ContentType')
 
 
 @dc.dataclass
-class Cached(t.Generic[ContentType]):
+class Cached:
     """A base class for classes that are cached using their uri and type"""
 
-    _content: dc.InitVar[ContentType] = None
     uri: str = ''
 
-    @property
-    def content(self) -> ContentType:
-        """Get the cached content. `content` is not JSONized"""
-        return self._content  # type: ignore[return-value, attr-defined]
+    @classmethod
+    def erase_fields(cls):
+        cls.__dataclass_fields__ = Cached.__dataclass_fields__
 
-    @content.setter
-    def content(self, content: ContentType):
-        """Set the cached content. `content` is not JSONized"""
-        self._content = content  # type: ignore[return-value, attr-defined]
-
-    def __getattr__(self, k: str) -> t.Any:
-        return getattr(self.content, k)
-
-    def __setattr__(self, k: str, v: t.Any) -> None:
-        if k in ('_content', 'content', 'uri'):
-            super().__setattr__(k, v)
-        else:
-            setattr(self.content, k, v)
-
-    def __post_init__(self, content: ContentType):
-        self.content = content
+    def __post_init__(self):
+        assert isinstance(self.url, str), 'uri must be a string'
 
 
 class URICache(TypedCache):

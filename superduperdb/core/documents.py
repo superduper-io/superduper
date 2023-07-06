@@ -5,7 +5,7 @@ import typing as t
 ContentType = t.Union[t.Dict, Encodable]
 
 
-class Document(Cached[ContentType]):
+class Document(Cached):
     """
     A wrapper around an instance of dict or a Encodable which may be used to dump
     that resource to a mix of jsonable content or `bytes`
@@ -30,7 +30,7 @@ class Document(Cached[ContentType]):
     @classmethod
     def decode(cls, r: t.Dict, types: t.Dict):
         if isinstance(r, Document):
-            return Document(cls._decode(r, types))
+            return Document(content=(cls._decode(r, types))
         elif isinstance(r, dict):
             return cls._decode(r, types)
         raise NotImplementedError(f'type {type(r)} is not supported')

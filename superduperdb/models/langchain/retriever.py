@@ -33,7 +33,7 @@ class LangchainRetriever(BaseRetriever):
         self.n = n
 
     def get_relevant_documents(self, query: str) -> t.List[Document]:
-        document_to_search = documents.Document({self.key: query})
+        document_to_search = documents.Document(content={self.key: query})
         ids, scores = self.vector_index.get_nearest(
             document_to_search,
             n=self.n,

@@ -164,7 +164,7 @@ class BaseDatabase:
         out = model.predict(input.unpack(), **opts.get('predict_kwargs', {}))
         if model.encoder is not None:
             out = model.encoder(out)  # type: ignore
-        return Document(out)
+        return Document(content=out)
 
     def execute(self, query: ExecuteQuery) -> ExecuteResult:
         """
@@ -558,7 +558,7 @@ class BaseDatabase:
             else:
                 select = query.select_using_ids(ids)
                 cursor = self.select(select).raw_cursor  # type: ignore[attr-defined]
-                documents = [Document(x) for x in cursor]
+                documents = [Document(content=x) for x in cursor]
         elif isinstance(query, Insert):
             documents = query.documents
         else:
@@ -614,7 +614,7 @@ class BaseDatabase:
 
     def _get_content_for_filter(self, filter) -> Document:
         if isinstance(filter, dict):
-            filter = Document(filter)
+            filter = Document(content=filter)
         if '_id' not in filter.content:
             filter['_id'] = 0
         uris = gather_uris([filter.content])[0]
@@ -622,7 +622,7 @@ class BaseDatabase:
             output = self._download_content(
                 query=None, documents=[filter.content], timeout=None, raises=True
             )[0]
-            filter = Document(Document.decode(output, types=self.types))
+            filter = Document(content=Document.decode(output, types=self.types))
         return filter
 
     def _get_dependencies_for_watcher(self, identifier):

@@ -1,14 +1,15 @@
 import dataclasses as dc
 import typing as t
-from functools import cached_property
+from functools import cached_property, wraps
 from pymongo.cursor import Cursor
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encoder
 from superduperdb.misc.special_dicts import MongoStyleDict
+from superduperdb.misc.uri_cache import Cached
 
 
 @dc.dataclass
-class SuperDuperCursor:
+class _SuperDuperCursor:
     raw_cursor: Cursor
     id_field: str
     types: t.Dict[str, Encoder] = dc.field(default_factory=dict)
@@ -23,17 +24,6 @@ class SuperDuperCursor:
 
         return None if self.scores is None else sorted(self.raw_cursor, key=key)
 
-    @staticmethod
-    def add_features(r, features):
-        r = MongoStyleDict(r)
-        for k in features:
-            r[k] = r['_outputs'][k][features[k]]
-        if '_other' in r:
-            for k in features:
-                if k in r['_other']:
-                    r['_other'][k] = r['_outputs'][k][features[k]]
-        return r
-
     def limit(self, *args, **kwargs):
         return SuperDuperCursor(
             raw_cursor=self.raw_cursor.limit(*args, **kwargs),
@@ -42,10 +32,6 @@ class SuperDuperCursor:
             features=self.features,
             scores=self.scores,
         )
-
-    @staticmethod
-    def wrap_document(r, types):
-        return Document(Document.decode(r, types))
 
     def __iter__(self):
         return self
@@ -62,6 +48,33 @@ class SuperDuperCursor:
         if self.scores is not None:
             r['_score'] = self.scores[str(r[self.id_field])]
         if self.features is not None and self.features:
-            r = self.add_features(r, features=self.features)
+            r = add_features(r, features=self.features)
 
-        return self.wrap_document(r, self.types)
+        return wrap_document(r, self.types)
+
+
+class SuperDuperCursor(Cached[_SuperDuperCursor]):
+    @wraps(_SuperDuperCursor.__init__)
+    def __init__(self, *a, **ka):
+        super().__init__(_SuperDuperCursor(*a, **ka))
+
+    def __iter__(self):
+        return iter(self.content)
+
+    def __next__(self):
+        return next(self.content)
+
+
+def wrap_document(r, types) -> Document:
+    return Document(Document.decode(r, types))
+
+
+def add_features(r, features):
+    r = MongoStyleDict(r)
+    for k in features:
+        r[k] = r['_outputs'][k][features[k]]
+    if '_other' in r:
+        for k in features:
+            if k in r['_other']:
+                r['_other'][k] = r['_outputs'][k][features[k]]
+    return r

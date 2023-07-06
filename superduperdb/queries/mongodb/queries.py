@@ -5,7 +5,11 @@ import random
 import typing as t
 
 from superduperdb.core.documents import Document
-from superduperdb.datalayer.base.cursor import SuperDuperCursor
+from superduperdb.datalayer.base.cursor import (
+    SuperDuperCursor,
+    add_features,
+    wrap_document,
+)
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.base.query import Select, SelectOne, Insert, Delete, Update
 from superduperdb.datalayer.base.query import Like
@@ -278,7 +282,7 @@ class FeaturizeOne(SelectOne):
 
     def __call__(self, db: BaseDatabase):
         r = self.parent_find_one(db)
-        r = SuperDuperCursor.add_features(r.content, self.features)
+        r = add_features(r.content, self.features)
         return Document(r)
 
 
@@ -292,7 +296,7 @@ class FindOne(SelectOne):
 
     def __call__(self, db: BaseDatabase):
         if self.collection is not None:
-            return SuperDuperCursor.wrap_document(
+            return wrap_document(
                 db.db[self.collection.name].find_one(*self.args, **self.kwargs),
                 types=db.types,
             )

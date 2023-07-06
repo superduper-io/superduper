@@ -7,7 +7,6 @@ if t.TYPE_CHECKING:
 else:
     from . import dataclasses as dc
 
-
 ContentType = t.TypeVar('ContentType')
 
 
@@ -27,6 +26,15 @@ class Cached(t.Generic[ContentType]):
     def content(self, content: ContentType):
         """Set the cached content. `content` is not JSONized"""
         self._content = content  # type: ignore[return-value, attr-defined]
+
+    def __getattr__(self, k: str) -> t.Any:
+        return getattr(self.content, k)
+
+    def __setattr__(self, k: str, v: t.Any) -> None:
+        if k in ('_content', 'content', 'uri'):
+            super().__setattr__(k, v)
+        else:
+            setattr(self.content, k, v)
 
     def __post_init__(self, content: ContentType):
         self.content = content

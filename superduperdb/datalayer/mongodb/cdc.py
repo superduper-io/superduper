@@ -15,23 +15,28 @@ from pymongo.change_stream import CollectionChangeStream
 
 import superduperdb as s
 from superduperdb.misc.logger import logging
-from superduperdb.queries.mongodb import queries
+from superduperdb.datalayer.mongodb import query
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.job import FunctionJob
 from superduperdb.misc.task_queue import cdc_queue
-from superduperdb.queries.serialization import from_dict, to_dict
-from superduperdb.vector_search.lancedb import LanceDBClient
+from superduperdb.misc.serialization import from_dict, to_dict
+from superduperdb.vector_search.lancedb_client import LanceDBClient
+from superduperdb.core.vector_index import VectorIndex
 
 MongoChangePipelines: t.Dict[str, t.Dict] = {'generic': {}}
 
 
-class DBEvent:
+class DBEvent(Enum):
     """`DBEvent` simple enum to hold mongo basic events."""
 
-    insert = 'insert'
-    update = 'update'
-    delete = 'delete'
+    delete: str = 'delete'
+    insert: str = 'insert'
+    update: str = 'update'
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
 
 
 class ObjectId(BsonObjectId):
@@ -51,7 +56,7 @@ class BasePacket(BaseModel):
     A base packet to represent message in task queue.
     """
 
-    event_type: str = DBEvent.insert
+    event_type: str = DBEvent.insert.value
     ids: t.List[t.Union[ObjectId, str]]
 
 
@@ -76,15 +81,6 @@ class MongoChangePipeline:
     in mongodb watch api.
     """
 
-    def __init__(
-        self,
-    ):
-        self.valid_ops: t.List[DBEvent] = [
-            DBEvent.insert,
-            DBEvent.update,
-            DBEvent.delete,
-        ]
-
     def validate(self):
         raise NotImplementedError
 
@@ -95,8 +91,8 @@ class MongoChangePipeline:
         :type matching_operations: t.List
         :rtype: t.Dict
         """
-        if any([op for op in matching_operations if op not in self.valid_ops]):
-            raise ValueError('not valid ops')
+        if bad := [op for op in matching_operations if not DBEvent.has_value(op)]:
+            raise ValueError(f'Unknown operations: {bad}')
 
         return {'$match': {'operationType': {'$in': [*matching_operations]}}}
 
@@ -128,9 +124,9 @@ class PickledTokens:
     token_path = '.cdc.tokens'
 
     def __init__(self):
-        self._current_tokens: t.List[str] = []
+        self._current_tokens = []
 
-    def save(self, tokens: t.List[str] = []) -> None:
+    def save(self, tokens: t.List[str]) -> None:
         with open(PickledTokens.token_path, 'wb') as fp:
             if tokens:
                 pickle.dump(tokens, fp)
@@ -144,8 +140,8 @@ class PickledTokens:
         return tokens
 
 
-class GenericDatabaseWatch(ABC):
-    """GenericDatabaseWatch.
+class BaseDatabaseWatcher(ABC):
+    """
     A Base class which defines basic functions to implement.
     """
 
@@ -160,10 +156,10 @@ class GenericDatabaseWatch(ABC):
 
 def copy_vectors(
     db,
-    indexing_watcher_identifier: t.Optional[str] = None,
-    cdc_query: t.Optional[BaseModel] = None,
-    ids: t.Optional[t.List[str]] = None,
-    vector_db_client: t.Any = None,
+    indexing_watcher_identifier: str,
+    cdc_query: BaseModel,
+    ids: t.List[str],
+    vector_db_client: t.Any,
 ):
     """
     A helper fxn to copy vectors of a `indexing_watcher` component/model of
@@ -177,14 +173,15 @@ def copy_vectors(
         select = query.select_using_ids(ids)
         docs = db.select(select)
         docs = [doc.unpack() for doc in docs]
-        model, key = indexing_watcher_identifier.split('/')
+        model, key = indexing_watcher_identifier.split('/')  # type: ignore
         vectors = [{'vector': doc['_outputs'][key][model] for doc in docs}]
         table = vector_db_client.get_table(indexing_watcher_identifier)
-        table.add(vectors)
+        table.add(vectors, upsert=True)
     except Exception:
         logging.exception(
             f"Error while copying vectors for `vector_index`: {indexing_watcher_identifier}"  # noqa: E501
         )
+        raise
 
 
 class CDCHandler(threading.Thread):
@@ -193,6 +190,9 @@ class CDCHandler(threading.Thread):
     This class also extends the task graph by adding funcation job node which
     does post model executiong jobs, i.e `copy_vectors`.
     """
+
+    _QUEUE_BATCH_SIZE: int = 100
+    _QUEUE_TIMEOUT: int = 2
 
     def __init__(self, db: BaseDatabase, stop_event: threading.Event):
         """__init__.
@@ -205,7 +205,7 @@ class CDCHandler(threading.Thread):
         self._stop_event = stop_event
         self.vector_db_client = LanceDBClient(s.CFG.vector_search.lancedb)
 
-        threading.Thread.__init__(self, daemon=True)
+        threading.Thread.__init__(self, daemon=False)
 
     def submit_task_workflow(self, cdc_query: BaseModel, ids: t.List) -> None:
         """submit_task_workflow.
@@ -253,6 +253,7 @@ class CDCHandler(threading.Thread):
             indexing_watcher = self.db.load(
                 identifier=identifier, variety='vector_index', repopulate=False
             )
+            indexing_watcher = t.cast(VectorIndex, indexing_watcher)
             indexing_watcher_identifier = indexing_watcher.indexing_watcher.identifier
 
             partial_copy_vectors = partial(
@@ -261,13 +262,9 @@ class CDCHandler(threading.Thread):
             task_graph.add_node(
                 f'copy_vectors({indexing_watcher_identifier})',
                 FunctionJob(
-                    callable=partial_copy_vectors,  # type: ignore
-                    args=[],
-                    kwargs={
-                        'indexing_watcher_identifier': indexing_watcher_identifier,
-                        'ids': ids,
-                        'cdc_query': to_dict(cdc_query),
-                    },
+                    callable=partial_copy_vectors,
+                    args=[indexing_watcher_identifier, ids, to_dict(cdc_query)],
+                    kwargs={},
                 ),
             )
             model, key = indexing_watcher_identifier.split('/')
@@ -288,13 +285,13 @@ class CDCHandler(threading.Thread):
         self.on_create(packet)
 
     def _handle(self, packet: ChangePacket) -> None:
-        if packet.event_type == DBEvent.insert:
+        if packet.event_type == DBEvent.insert.value:
             self.on_create(packet)
-        elif packet.event_type == DBEvent.update:
+        elif packet.event_type == DBEvent.update.value:
             self.on_update(packet)
 
     @staticmethod
-    def _coallate_packets(packets: t.List[ChangePacket]) -> BatchPacket:
+    def _collate_packets(packets: t.List[ChangePacket]) -> BatchPacket:
         """
         A helper function to coallate batch of packets into one
         `BatchPacket`.
@@ -307,21 +304,21 @@ class CDCHandler(threading.Thread):
         event_type = packets[0].event_type
         return BatchPacket(ids=ids, query=query, event_type=event_type)
 
-    def get_batch_from_queue(self, batch_size: int = 100, timeout: int = 2):  # 2secs
+    def get_batch_from_queue(self):
         """
         A method to get a batch of packets from task queue, with a timeout.
         """
         packets = []
         try:
-            for _ in range(batch_size):
-                packets.append(cdc_queue.get(block=True, timeout=timeout))
+            for _ in range(self._QUEUE_BATCH_SIZE):
+                packets.append(cdc_queue.get(block=True, timeout=self._QUEUE_TIMEOUT))
                 if self._stop_event.is_set():
                     return None
 
         except queue.Empty:
             if len(packets) == 0:
                 return None
-        return CDCHandler._coallate_packets(packets)
+        return CDCHandler._collate_packets(packets)
 
     def run(self):
         while not self._stop_event.is_set():
@@ -343,7 +340,7 @@ class MongoEventMixin:
     EXCLUSION_KEYS: t.List[str] = [DEFAULT_ID]
 
     def on_create(
-        self, change: t.Dict, db: 'BaseDatabase', collection: queries.Collection
+        self, change: t.Dict, db: 'BaseDatabase', collection: query.Collection
     ) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
@@ -356,7 +353,7 @@ class MongoEventMixin:
         :param db: a superduperdb instance.
         :type db: 'BaseDatabase'
         :param collection: The collection on which change was observed.
-        :type collection: queries.Collection
+        :type collection: query.Collection
         :rtype: None
         """
         logging.debug('Triggered `on_create` handler.')
@@ -364,7 +361,7 @@ class MongoEventMixin:
         document = change[CDCKeys.document_data_key.value]
         ids = [document[self.DEFAULT_ID]]
         cdc_query = collection.find()
-        packet = ChangePacket(ids=ids, event_type=DBEvent.insert, query=cdc_query)
+        packet = ChangePacket(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
     def on_update(self, change: t.Dict, db: 'BaseDatabase'):
@@ -393,7 +390,7 @@ class CDCKeys(Enum):
     document_data_key = 'fullDocument'
 
 
-class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
+class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
     """
     It is a class which helps capture data from mongodb database and handle it
     accordingly.
@@ -410,7 +407,7 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
     def __init__(
         self,
         db: 'BaseDatabase',
-        on: queries.Collection,
+        on: query.Collection,
         stop_event: threading.Event,
         identifier: 'str' = '',
         resume_token: t.Optional[ResumeToken] = None,
@@ -420,7 +417,7 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         :param db: It is a superduperdb instance.
         :type db: 'BaseDatabase'
         :param on: It is used to define a Collection on which CDC would be performed.
-        :type on: queries.Collection
+        :type on: query.Collection
         :param stop_event: A threading event flag to notify for stoppage.
         :type identifier: 'threading.Event'
         :param identifier: A identifier to represent the watcher service.
@@ -498,11 +495,11 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
             logging.warning('Document change not handled due to no document key')
             return
 
-        if event == DBEvent.insert:
+        if event == DBEvent.insert.value:
             self._change_counters['inserts'] += 1
             self.on_create(change, db=self.db, collection=self._on_component)
 
-        elif event == DBEvent.update:
+        elif event == DBEvent.update.value:
             self._change_counters['updates'] += 1
             self.on_update(change, db=self.db)
 
@@ -514,21 +511,20 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
         :type change: t.Dict
         :rtype: None
         """
-        token = change['_id']['_data']
+        token = change[self.DEFAULT_ID]['_data']
         self.tokens.save([token])
 
-    def check_if_superduper_change(self, change: t.Dict) -> bool:
+    def check_if_taskgraph_change(self, change: t.Dict) -> bool:
         """
         A helper method to check if the cdc change is done
-        by superduperdb queries.
+        by taskgraph nodes.
         """
-        if change[CDCKeys.operation_type.value] == DBEvent.update:
+        if change[CDCKeys.operation_type.value] == DBEvent.update.value:
             updates = change[CDCKeys.update_descriptions_key.value]
             updated_fields = updates[CDCKeys.update_field_key.value]
-            keys = updated_fields.keys()
-            for key in keys:
-                if '_outputs' in key:
-                    return True
+            return any(
+                [True for k in updated_fields.keys() if k.startswith('_outputs')]
+            )
         return False
 
     def setup_cdc(
@@ -564,8 +560,7 @@ class MongoDatabaseWatcher(GenericDatabaseWatch, MongoEventMixin):
                     f'Database change encountered at {datetime.datetime.now()}'
                 )
 
-                # Who did the change.
-                if not self.check_if_superduper_change(change):
+                if not self.check_if_taskgraph_change(change):
                     self.event_handler(change)
                 self.dump_token(change)
         except StopIteration:

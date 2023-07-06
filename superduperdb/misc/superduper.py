@@ -61,7 +61,6 @@ def superduper(item, **kwargs):
         from superduperdb.models.sklearn.wrapper import Estimator
 
         return Estimator(estimator=item, identifier=identifier, **kwargs)
-
     elif duck_type_torch(item):
         from torch import nn, jit
 

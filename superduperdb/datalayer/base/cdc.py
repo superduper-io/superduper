@@ -3,20 +3,19 @@ import time
 import typing as t
 import datetime
 
-from superduperdb.queries.mongodb.queries import Collection
+from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.misc.logger import logging
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.mongodb import cdc
 from superduperdb.datalayer.base import backends
 
-from superduperdb.misc.docs import api
 
-DBWatcherType = t.TypeVar('DBWatcherType', bound=cdc.GenericDatabaseWatch)
+DBWatcherType = t.TypeVar('DBWatcherType')
 
 
 class _DatabaseWatcherThreadScheduler(threading.Thread):
     def __init__(
-        self, watcher: cdc.GenericDatabaseWatch, stop_event: threading.Event
+        self, watcher: cdc.BaseDatabaseWatcher, stop_event: threading.Event
     ) -> None:
         threading.Thread.__init__(self, daemon=False)
         self.stop_event = stop_event
@@ -24,9 +23,9 @@ class _DatabaseWatcherThreadScheduler(threading.Thread):
         logging.info(f'Database watch service started at {datetime.datetime.now()}')
 
     def run(self) -> None:
-        cdc_stream = self.watcher.setup_cdc()
+        cdc_stream = self.watcher.setup_cdc()  # type: ignore
         while not self.stop_event.is_set():
-            self.watcher.next_cdc(cdc_stream)
+            self.watcher.next_cdc(cdc_stream)  # type: ignore
             time.sleep(0.1)
 
 
@@ -46,13 +45,14 @@ class DatabaseWatcherFactory(t.Generic[DBWatcherType]):
     def create(self, *args, **kwargs) -> t.Optional[DBWatcherType]:
         stop_event = threading.Event()
         if self.watcher == 'mongodb':
-            watcher = cdc.MongoDatabaseWatcher(stop_event=stop_event, *args, **kwargs)
+            kwargs['stop_event'] = stop_event
+            watcher = cdc.MongoDatabaseWatcher(*args, **kwargs)
             scheduler = _DatabaseWatcherThreadScheduler(watcher, stop_event=stop_event)
             watcher.attach_scheduler(scheduler)
-            return watcher
+            return t.cast(DBWatcherType, watcher)
+        raise NotImplementedError
 
 
-@api('alpha')
 class DatabaseWatcher:
     """
     Change Data Capture (CDC) is a mechanism used in database systems to track
@@ -74,26 +74,26 @@ class DatabaseWatcher:
 
     Use this module like this::
         db = any_arbitary_database.connect(...)
-        db = superduperdb(db)
+        db = superduper(db)
         watcher = DatabaseWatcher(db=db, on=Collection('test_collection'))
         watcher.watch()
     """
 
     identity_sep = '/'
 
-    def __new__(
+    def __new__(  # type: ignore
         cls,
         db: 'BaseDatabase',
         on: Collection,
         identifier: str = '',
         *args,
         **kwargs,
-    ) -> t.Optional[cdc.GenericDatabaseWatch]:
+    ) -> t.Optional[cdc.BaseDatabaseWatcher]:
         """__new__.
-        A method which creates instance of `GenericDatabaseWatcher` corresponding to the
+        A method which creates instance of `BaseDatabaseWatcher` corresponding to the
         `db`.
 
-        This returns a instance of subclass of `GenericDatabaseWatcher`
+        This returns a instance of subclass of `BaseDatabaseWatcher`
 
         :param db: A superduperdb instance.
         :type db: 'BaseDatabase'
@@ -104,13 +104,13 @@ class DatabaseWatcher:
         :type identifier: str
         :param args:
         :param kwargs:
-        :rtype: GenericDatabaseWatch
+        :rtype: BaseDatabaseWatcher
         """
         assert on is not None, '`DatabaseWatcher` needs a source collection to watch.'
         db_type = [
-            db_type
-            for db_type, db_backend in backends.data_backends.items()
-            if isinstance(db.databackend, db_backend)
+            k
+            for k, v in backends.data_backends.items()
+            if isinstance(db.databackend, v)
         ][0]
         if db_type == "mongodb":
             db_factory = DatabaseWatcherFactory[cdc.MongoDatabaseWatcher](

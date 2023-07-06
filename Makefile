@@ -18,7 +18,8 @@ build/jupyter-image: build/server-image
 
 .PHONY: test-containers
 test-containers:
-	docker compose -f tests/material/docker-compose.yml up mongodb milvus -d
+	chmod +x ./tests/material/mongo-init.sh
+	docker compose -f tests/material/docker-compose.yml up mongodb mongo-init milvus -d
 
 .PHONY: clean-test-containers
 clean-test-containers:

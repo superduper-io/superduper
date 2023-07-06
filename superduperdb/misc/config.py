@@ -141,7 +141,7 @@ class Server(JSONable):
 
 
 class LanceDB(JSONable):
-    uri: str = '~/.lancedb'
+    uri: str = './.lancedb'
 
 
 class Milvus(JSONable):
@@ -155,7 +155,7 @@ class Milvus(JSONable):
 
 class VectorSearch(JSONable):
     milvus: t.Optional[Milvus] = None
-    lancedb: t.Optional[LanceDB] = LanceDB()
+    lancedb: t.Optional[LanceDB] = Field(default_factory=LanceDB)
 
     # the fields below were left for compatibility with the vector search server
     # that is still in the codebase

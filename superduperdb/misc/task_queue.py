@@ -1,3 +1,3 @@
 import queue
 
-cdc_queue = queue.Queue()
+cdc_queue: queue.Queue = queue.Queue()

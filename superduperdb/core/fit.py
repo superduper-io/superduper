@@ -5,7 +5,8 @@ from superduperdb.core.base import (
     ComponentList,
     Placeholder,
     PlaceholderList,
-    is_placeholders_or_components,
+    is_component_list,
+    is_str_list,
 )
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model, ModelEnsemble, TrainingConfiguration
@@ -52,21 +53,21 @@ class Fit(Component):
         else:
             assert isinstance(model, Model)
 
-        err_msg = 'Must specify all metric IDs or all Metric instances directly'
-        metrics_are_strs, metrics_are_comps = is_placeholders_or_components(metrics)
-        assert metrics_are_strs or metrics_are_comps, err_msg
-
-        if metrics_are_strs:
-            self.metrics = PlaceholderList('metric', metrics)  # type: ignore[arg-type]
+        if is_str_list(metrics):
+            self.metrics = PlaceholderList('metric', metrics)
+        elif is_component_list(metrics):
+            self.metrics = ComponentList('metric', metrics)
         else:
-            self.metrics = ComponentList('metric', metrics)  # type: ignore[arg-type]
+            raise TypeError(
+                f'Fit.metrics must be list of strings or Components, got {metrics} '
+            )
 
         self.keys = keys
         # ruff: noqa: E501
         self.training_configuration = (
             training_configuration
             if isinstance(training_configuration, TrainingConfiguration)
-            else Placeholder(training_configuration, 'training_configuration')  # type: ignore[arg-type]
+            else Placeholder(training_configuration, 'training_configuration')
         )
         self.identifier = identifier
         self.validation_sets = validation_sets

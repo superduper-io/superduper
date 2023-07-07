@@ -1,9 +1,10 @@
 # ruff: noqa: F821
+import typing as t
 from collections import defaultdict
 from contextlib import contextmanager
-import typing as t
 
 from dask.distributed import Future
+from typing_extensions import TypeGuard
 
 from superduperdb.core.job import ComponentJob
 from superduperdb.misc.logger import logging
@@ -391,11 +392,15 @@ def restore(component: t.Union[BaseComponent, BasePlaceholder], cache: t.Dict):
     return component
 
 
-def is_placeholders_or_components(items: t.Union[t.List[t.Any], t.Tuple]):
-    """
-    Test whether the list is just strings and also test whether it's just components
-    """
+def is_str_list(items: t.Union[t.List[t.Any], t.Tuple]) -> TypeGuard[t.List[str]]:
+    if isinstance(items, t.List):
+        return all([isinstance(y, str) for y in items])
+    return False
 
-    is_placeholders = all([isinstance(y, str) for y in items])
-    is_components = all([isinstance(y, Component) for y in items])
-    return is_placeholders, is_components
+
+def is_component_list(
+    items: t.Union[t.List[t.Any], t.Tuple]
+) -> TypeGuard[t.List[Component]]:
+    if isinstance(items, t.List):
+        return all([isinstance(y, Component) for y in items])
+    return False

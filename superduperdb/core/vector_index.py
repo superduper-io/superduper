@@ -8,7 +8,8 @@ from superduperdb.core.base import (
     DBPlaceholder,
     Placeholder,
     PlaceholderList,
-    is_placeholders_or_components,
+    is_component_list,
+    is_str_list,
 )
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
@@ -79,17 +80,15 @@ class VectorIndex(Component):
 
         self.compatible_watchers = ()
         if compatible_watchers:
-            is_placeholders, is_components = is_placeholders_or_components(
-                compatible_watchers
-            )
-            assert is_placeholders or is_components
-            if is_placeholders:
+            if is_str_list(compatible_watchers):
                 self.compatible_watchers = PlaceholderList(
-                    'watcher', compatible_watchers  # type: ignore[arg-type]
+                    'watcher', compatible_watchers
                 )
+            elif is_component_list(compatible_watchers):
+                self.compatible_watchers = ComponentList('watcher', compatible_watchers)
             else:
-                self.compatible_watchers = ComponentList(
-                    'watcher', t.cast(t.List[Component], compatible_watchers)
+                raise TypeError(
+                    f'VectorIndex.compatible_watchers must be list of strings or Components, got {compatible_watchers} '
                 )
         self.measure = measure
         self.database = DBPlaceholder()

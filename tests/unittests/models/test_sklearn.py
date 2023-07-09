@@ -5,9 +5,10 @@ import random
 import numpy
 from sklearn.svm import SVC
 from sklearn.base import TransformerMixin
+from sklearn.pipeline import Pipeline
 
 from superduperdb.core.documents import Document
-from superduperdb.models.sklearn.wrapper import Pipeline
+from superduperdb.models.sklearn.wrapper import Estimator
 from superduperdb.datalayer.mongodb.query import Collection
 
 from tests.fixtures.collection import random_arrays, arrays, empty
@@ -35,8 +36,9 @@ class TestPipeline:
 
     @pytest.fixture()
     def pipeline(self, dictionary):
-        yield Pipeline(
-            'my-svc', [('my-encoding', Lookup(dictionary)), ('my-svc', SVC())]
+        yield Estimator(
+            identifier='my-svc',
+            object=Pipeline([('my-encoding', Lookup(dictionary)), ('my-svc', SVC())]),
         )
 
     @pytest.fixture()
@@ -63,5 +65,8 @@ class TestPipeline:
 
     def test_fit_db(self, pipeline, data_in_db):
         pipeline.fit(
-            'X', 'y', db=data_in_db, select=Collection(name='documents').find()
+            X='X',
+            y='y',
+            db=data_in_db,
+            select=Collection(name='documents').find(),
         )

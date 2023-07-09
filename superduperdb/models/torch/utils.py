@@ -57,4 +57,6 @@ def to_device(item, device):
         for k in item:
             item[k] = to_device(item[k], device)
         return item
-    return item.to(device)
+    if hasattr(item, 'to'):
+        return item.to(device)
+    return item

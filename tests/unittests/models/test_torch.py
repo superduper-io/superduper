@@ -2,10 +2,10 @@
 import torch
 from torch.optim.adam import Adam
 
+from superduperdb.core.base import Artifact
 from superduperdb.core.metric import Metric
 from superduperdb.metrics.classification import compute_classification_metrics
 from superduperdb.models.torch.wrapper import (
-    TorchPipeline,
     TorchModel,
     TorchModelEnsemble,
 )
@@ -56,29 +56,6 @@ def pad_to_ten(x):
     return torch.stack(to_stack)
 
 
-def test_pipeline():
-    pl = TorchPipeline(
-        'my-pipeline',
-        [
-            ('encode', ToDict()),
-            ('lookup', TensorLookup()),
-            ('forward', torch.nn.Linear(32, 256)),
-            ('top1', lambda x: x.topk(1)[1]),
-        ],
-        collate_fn=pad_to_ten,
-    )
-
-    out = pl._predict('bla')
-
-    print(out)
-
-    assert isinstance(out, torch.Tensor)
-
-    out = pl._predict(['bla', 'testing'], batch_size=2)
-
-    assert isinstance(out, list)
-
-
 def my_loss(X, y):
     return torch.nn.functional.binary_cross_entropy_with_logits(
         X[:, 0], y.type(torch.float)
@@ -91,10 +68,9 @@ def acc(x, y):
 
 def test_fit(random_data, si_validation):
     m = TorchModel(
-        torch.nn.Linear(32, 1),
-        'test',
+        object=torch.nn.Linear(32, 1),
+        identifier='test',
         training_configuration=TorchTrainerConfiguration(
-            optimizer_cls=Adam,
             identifier='my_configuration',
             objective=my_loss,
             loader_kwargs={'batch_size': 10},
@@ -123,29 +99,32 @@ def ranking_loss(x, y):
 
 def test_ensemble(si_validation, metric):
     encoder = tensor(torch.float, shape=(16,))
-    a_model = TorchModel(torch.nn.Linear(32, 16), 'linear_a', encoder=encoder)
-    c_model = TorchModel(torch.nn.Linear(32, 16), 'linear_c', encoder=encoder)
-
+    a_model = TorchModel(
+        object=torch.nn.Linear(32, 16),
+        identifier='linear_a',
+        encoder=encoder,
+    )
+    c_model = TorchModel(
+        object=torch.nn.Linear(32, 16),
+        identifier='linear_c',
+        encoder=encoder,
+    )
     config = TorchTrainerConfiguration(
         'ranking_task_parametrization',
         objective=ranking_loss,
-        n_iterations=4,
+        max_iterations=4,
         validation_interval=5,
         loader_kwargs={'batch_size': 10, 'num_workers': 0},
-        optimizer_cls=torch.optim.Adam,
-        optimizer_kwargs={'lr': 0.001},
         compute_metrics=VectorSearchPerformance(
             measure='css',
             predict_kwargs={'batch_size': 10},
             index_key='x',
         ),
-        hash_set_cls=VanillaVectorIndex,
-        measure=css,
-        max_iterations=20,
+        kwargs={'hash_set_cls': Artifact(VanillaVectorIndex), 'measure': 'css'},
     )
 
     m = TorchModelEnsemble(
-        [a_model, c_model],
+        models=[a_model, c_model],
         identifier='my_ranking_ensemble',
     )
 

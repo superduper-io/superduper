@@ -46,7 +46,7 @@ def test_query_dataset(random_data, a_watcher):
 
 def test_query_dataset_base(random_data, a_watcher_base):
     train_data = QueryDataset(
-        select=Collection(name='documents').find(),
+        select=Collection(name='documents').find({}, {'_id': 0}),
         keys=['_base', 'y'],
         fold='train',
     )

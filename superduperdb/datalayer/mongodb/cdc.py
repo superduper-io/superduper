@@ -14,6 +14,7 @@ from bson.objectid import ObjectId as BsonObjectId
 from pymongo.change_stream import CollectionChangeStream
 
 import superduperdb as s
+from superduperdb.core.serializable import Serializable
 from superduperdb.misc.logger import logging
 from superduperdb.datalayer.mongodb import query
 from superduperdb.datalayer.base.database import BaseDatabase
@@ -65,7 +66,7 @@ class ChangePacket(BasePacket):
     A single packet representation of message in task queue.
     """
 
-    query: BaseModel
+    query: Serializable
 
 
 class BatchPacket(ChangePacket):
@@ -157,7 +158,7 @@ class BaseDatabaseWatcher(ABC):
 def copy_vectors(
     db,
     indexing_watcher_identifier: str,
-    cdc_query: BaseModel,
+    cdc_query: Serializable,
     ids: t.List[str],
     vector_db_client: t.Any,
 ):
@@ -207,7 +208,7 @@ class CDCHandler(threading.Thread):
 
         threading.Thread.__init__(self, daemon=False)
 
-    def submit_task_workflow(self, cdc_query: BaseModel, ids: t.List) -> None:
+    def submit_task_workflow(self, cdc_query: Serializable, ids: t.List) -> None:
         """submit_task_workflow.
         A fxn to build a taskflow and execute it with changed ids.
         This also extends the task workflow graph with a node.
@@ -216,7 +217,7 @@ class CDCHandler(threading.Thread):
 
         :param cdc_query: A query which will be used by `db._build_task_workflow` method
         to extract the desired data.
-        :type cdc_query: BaseModel
+        :type cdc_query: Serializable
         :param ids: List of ids which were observed as changed document.
         :type ids: t.List
         :rtype: None
@@ -231,7 +232,7 @@ class CDCHandler(threading.Thread):
     def create_vector_watcher_task(
         self,
         task_graph: TaskWorkflow,
-        cdc_query: BaseModel,
+        cdc_query: Serializable,
         ids: t.List[str],
     ) -> TaskWorkflow:
         """create_vector_watcher_task.
@@ -243,19 +244,20 @@ class CDCHandler(threading.Thread):
         :param db: A superduperdb instance.
         :type db: 'BaseDatabase'
         :param cdc_query: A basic find query to get cursor on collection.
-        :type cdc_query: BaseModel
+        :type cdc_query: Serializable
 
         :param ids: A list of ids observed during the change
         :type ids: t.List[str]
         :rtype: TaskWorkflow
         """
         for identifier in self.db.show('vector_index'):
-            indexing_watcher = self.db.load(
-                identifier=identifier, variety='vector_index', repopulate=False
+            vector_index = self.db.load(
+                identifier=identifier,
+                variety='vector_index',
+                init_db=False,
             )
-            indexing_watcher = t.cast(VectorIndex, indexing_watcher)
-            indexing_watcher_identifier = indexing_watcher.indexing_watcher.identifier
-
+            vector_index = t.cast(VectorIndex, vector_index)
+            indexing_watcher_identifier = vector_index.indexing_watcher.identifier
             partial_copy_vectors = partial(
                 copy_vectors, vector_db_client=self.vector_db_client
             )
@@ -268,7 +270,6 @@ class CDCHandler(threading.Thread):
                 ),
             )
             model, key = indexing_watcher_identifier.split('/')
-
             task_graph.add_edge(
                 f'{model}.predict({key})',
                 f'copy_vectors({indexing_watcher_identifier})',

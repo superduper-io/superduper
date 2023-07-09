@@ -2,7 +2,7 @@ import multiprocessing
 from superduperdb.core.model import Model
 
 
-class FunctionWrapper(Model):
+class Function(Model):
     def predict_one(self, x, **kwargs):
         return self.object(x, **kwargs)
 

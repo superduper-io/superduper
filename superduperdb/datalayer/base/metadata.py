@@ -154,6 +154,20 @@ class MetaDataStore(ABC):
         )
 
     @abstractmethod
+    def _replace_object(self, info, identifier, variety, version):
+        pass
+
+    def replace_object(self, info, identifier, variety, version=None):
+        if version is not None:
+            version = self.get_latest_version(variety, identifier)
+        return self._replace_object(
+            info=info,
+            identifier=identifier,
+            variety=variety,
+            version=version,
+        )
+
+    @abstractmethod
     def write_output_to_job(self, identifier, msg, stream):
         pass
 

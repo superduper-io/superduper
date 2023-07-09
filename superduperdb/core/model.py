@@ -1,19 +1,30 @@
 from dask.distributed import Future
+import dataclasses as dc
 import typing as t
 
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.job import Job, ComponentJob
 from superduperdb.core.metric import Metric
-from superduperdb.core.base import Component, Placeholder
+from superduperdb.core.base import Component, Artifact
 from superduperdb.core.encoder import Encoder
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.misc.serialization import to_dict, from_dict
 
-EncoderArg = t.Union[Encoder, Placeholder, None, str]
+EncoderArg = t.Union[Encoder, str, None]
+ObjectsArg = t.List[t.Union[t.Any, Artifact]]
+DataArg = t.Optional[t.Union[str, t.List[str]]]
 
 
-class TrainingConfiguration(Component):
+def TrainingConfiguration(
+    identifier: str,
+    **kwargs,
+):
+    return _TrainingConfiguration(identifier=identifier, kwargs=kwargs)
+
+
+@dc.dataclass
+class _TrainingConfiguration(Component):
     """
     Training configuration object, containing all settings necessary for a particular
     learning-task use-case to be serialized and initiated. The object is ``callable``
@@ -23,68 +34,53 @@ class TrainingConfiguration(Component):
     :param **parameters: Key-values pairs, the variables which configure training.
     """
 
-    variety = 'training_configuration'
+    variety: t.ClassVar[str] = 'training_configuration'
 
-    def __init__(self, identifier, **parameters):
-        super().__init__(identifier)
-        for k, v in parameters.items():
-            setattr(self, k, v)
+    identifier: str
+    kwargs: t.Optional[t.Dict] = None
 
     def get(self, k, default=None):
-        return getattr(self, k, default)
+        try:
+            return getattr(self, k)
+        except AttributeError:
+            return self.kwargs.get(k, default=default)
 
 
+@dc.dataclass
 class Model(Component):
     """
     Model component which wraps a model to become serializable
 
     :param object: Model object, e.g. sklearn model, etc..
-    :param identifier: Unique identifying ID
     :param encoder: Encoder instance (optional)
+    :param variety: ...
     """
 
-    variety: str = 'model'
-    object: t.Any
+    variety: t.ClassVar[str] = 'model'
+    artifacts: t.ClassVar[t.List[str]] = ['object']
+
     identifier: str
-    encoder: EncoderArg
+    object: t.Union[Artifact, t.Any]
+    encoder: EncoderArg = None
+    train_X: DataArg = None
+    train_y: DataArg = None
+    training_select: t.Union[Select, None] = None
+    metrics: t.List[t.Union[str, Metric, None]] = None
+    training_configuration: t.Union[str, _TrainingConfiguration, None] = None
+    version: t.Optional[int] = None
+    metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    db: dc.InitVar[t.Optional[t.Any]] = None
 
-    def __init__(
-        self,
-        object: t.Any,
-        identifier: str,
-        encoder: EncoderArg = None,
-        training_configuration: t.Optional[TrainingConfiguration] = None,
-        training_select: t.Optional[Select] = None,
-        train_X: t.Optional[t.Union[str, t.List[str]]] = None,
-        train_y: t.Optional[t.Union[str, t.List[str]]] = None,
-        metrics: t.Optional[t.List[Metric]] = None,
-    ):
-        super().__init__(identifier)
-        self.object = object
-
-        if isinstance(encoder, str):
-            self.encoder: EncoderArg = Placeholder(encoder, 'type')
-        else:
-            self.encoder: EncoderArg = encoder  # type: ignore
-
-        try:
-            self.predict_one = object.predict_one
-        except AttributeError:
-            pass
-
-        if not hasattr(self, '_predict'):
-            try:
-                self._predict = object._predict
-            except AttributeError:
-                pass
-
-        self.training_configuration = training_configuration
-        self.training_select = training_select
-        self.train_X = train_X
-        self.train_y = train_y
-        self.metrics = metrics
-        self.metric_values: t.Dict = {}
+    def __post_init__(self, db):
         self.future: t.Optional[Future] = None
+        if not isinstance(self.object, Artifact):
+            self.object = Artifact(_artifact=self.object)
+        if isinstance(self.encoder, str):
+            self.encoder = db.load('type', self.encoder)
+
+    @property
+    def child_components(self) -> t.List['Component']:
+        return [self.encoder] if self.encoder else []  # type: ignore[list-item]
 
     @property
     def training_keys(self):
@@ -98,12 +94,6 @@ class Model(Component):
         elif isinstance(self.train_y, str):
             out.append(self.train_y)
         return out
-
-    def asdict(self):
-        return {
-            'identifier': self.identifier,
-            'type': None if self.encoder is None else self.encoder.identifier,
-        }
 
     def append_metrics(self, d):
         for k in d:
@@ -160,7 +150,7 @@ class Model(Component):
         db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
-        configuration: t.Optional[TrainingConfiguration] = None,
+        configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.List[t.Union[str, Dataset]]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
     ):
@@ -175,7 +165,7 @@ class Model(Component):
         select: t.Optional[Select] = None,
         remote: bool = False,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
-        configuration: t.Optional[TrainingConfiguration] = None,
+        configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.List[t.Union[str, Dataset]]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
         **kwargs,
@@ -269,6 +259,7 @@ class Model(Component):
                     X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
                 else:
                     X_data = [r.unpack() for r in docs]
+
                 outputs = self.predict(X=X_data, remote=False)
                 if self.encoder is not None:
                     # ruff: noqa: E501
@@ -303,23 +294,89 @@ class ModelEnsemblePredictionError(Exception):
     pass
 
 
-# TODO make Component less dogmatic about having just one ``self.object`` type thing
-class ModelEnsemble:
-    variety: str = 'model'
+@dc.dataclass
+class ModelEnsemble(Component):
+    variety: t.ClassVar[str] = 'model'
 
-    def __init__(self, models: t.List[t.Union[Model, str]]):
-        self._model_ids = []
-        for m in models:
-            if isinstance(m, Model):
-                setattr(self, m.identifier, m)
-                self._model_ids.append(m.identifier)
-            elif isinstance(m, str):
-                setattr(self, m, Placeholder('model', m))
-                self._model_ids.append(m)
+    identifier: str
+    models: t.List[t.Union[str, Model]]
+    version: t.Optional[int] = None
+    db: dc.InitVar[t.Any] = None
+    train_X: t.Optional[t.List[str]] = None
+    train_y: t.Optional[t.Union[t.List[str], str]] = None
+    metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
+
+    def __post_init__(self, db):
+        for i, m in enumerate(self.models):
+            if isinstance(m, str):
+                self.models[i] = db.load('model', m)
 
     def __getitem__(self, submodel: t.Union[int, str]):
         if isinstance(submodel, int):
             submodel = next(m for i, m in enumerate(self._model_ids) if i == submodel)
-        submodel = getattr(self, submodel)
+        else:
+            submodel = getattr(self, submodel)
         assert isinstance(submodel, Model)
         return submodel
+
+    @property
+    def training_keys(self):
+        out = []
+        out.extend(self.train_X)
+        if isinstance(self.train_y, list):
+            out.extend(self.train_y)
+        elif isinstance(self.train_y, str):
+            out.append(self.train_y)
+        return out
+
+    # ruff: noqa: F821
+    def fit(
+        self,
+        X: t.Any,
+        y: t.Optional[t.Any] = None,
+        db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
+        select: t.Optional[Select] = None,
+        remote: bool = False,
+        dependencies: t.List[Job] = (),  # type: ignore[assignment]
+        configuration: t.Optional[_TrainingConfiguration] = None,
+        validation_sets: t.Optional[t.List[t.Union[str, Dataset]]] = None,
+        metrics: t.Optional[t.List[Metric]] = None,
+        **kwargs,
+    ):
+        if isinstance(select, dict):
+            select = from_dict(select)
+
+        if validation_sets:
+            validation_sets = list(validation_sets)  # type: ignore[arg-type]
+            for i, vs in enumerate(validation_sets):
+                if isinstance(vs, Dataset):
+                    db.add(vs)  # type: ignore[union-attr]
+                    validation_sets[i] = vs.identifier
+
+        if db is not None:
+            db.add(self)
+
+        if remote:
+            return self.create_fit_job(
+                X,
+                select=select,
+                y=y,
+                **kwargs,
+            )(db=db, remote=True, dependencies=dependencies)
+        else:
+            return self._fit(
+                X,
+                y=y,
+                db=db,
+                validation_sets=validation_sets,
+                metrics=metrics,
+                configuration=configuration,
+                select=select,
+                **kwargs,
+            )
+
+    def append_metrics(self, d):
+        for k in d:
+            if k not in self.metric_values:
+                self.metric_values[k] = []
+            self.metric_values[k].append(d[k])

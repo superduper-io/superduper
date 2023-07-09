@@ -4,15 +4,15 @@ import math
 import typing as t
 import warnings
 from collections import defaultdict
-from typing import Union, Optional, Dict, List, Tuple
+from typing import Union, Optional, List, Tuple
 
 import click
 import networkx
 
 from superduperdb import CFG
 from superduperdb.core.task_workflow import TaskWorkflow
-from superduperdb.core.base import Component, strip
-from superduperdb.core.documents import Document
+from superduperdb.core.base import Component
+from superduperdb.core.documents import Document, ArtifactDocument
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
@@ -31,14 +31,12 @@ from superduperdb.misc.downloads import gather_uris
 from superduperdb.misc.logger import logging
 from superduperdb.misc.serialization import from_dict, to_dict
 from superduperdb.vector_search.base import VectorDatabase
-from superduperdb.core.components import components
 
 # TODO:
 # This global variable is a temporary solution to make VectorDatabase available
 # to the rest of the code.
 # It should be moved to the Server's initialization code where it can be available to
 # all threads.
-from ...core.fit import Fit
 from ...core.job import FunctionJob, ComponentJob, Job
 
 VECTOR_DATABASE = VectorDatabase.create(config=CFG.vector_search)
@@ -276,8 +274,6 @@ class BaseDatabase:
     def add(
         self,
         object: Component,
-        serializer: str = 'dill',
-        serializer_kwargs: Optional[Dict] = None,
         dependencies: t.Sequence[Union[Job, str]] = (),
     ):
         """
@@ -286,14 +282,11 @@ class BaseDatabase:
         the metadata.
 
         :param object: Object to be stored
-        :param serializer: Serializer to use to convert component to ``bytes``
-        :param serializer_kwargs: kwargs to be passed to ``serializer``
         :param dependencies: list of jobs which should execute before component init begins
         """
         return self._add(
             object=object,
-            serializer=serializer,
-            serializer_kwargs=serializer_kwargs,
+            cache={},
             dependencies=dependencies,
         )
 
@@ -358,8 +351,8 @@ class BaseDatabase:
         variety: str,
         identifier: str,
         version: Optional[int] = None,
-        repopulate: bool = True,
         allow_hidden: bool = False,
+        init_db: bool = True,
     ) -> Component:
         """
         Load component using uniquely identifying information.
@@ -384,15 +377,10 @@ class BaseDatabase:
                 f'No such object of type "{variety}", '
                 f'"{identifier}" has been registered.'
             )
-        if 'serializer' not in info:
-            info['serializer'] = 'dill'
-        if 'serializer_kwargs' not in info:
-            info['serializer_kwargs'] = {}
-        m = self.artifact_store.load_artifact(
-            info['object'], serializer=info['serializer']
+        info = ArtifactDocument(info).load_artifacts(
+            artifact_store=self.artifact_store, cache={}
         )
-        if repopulate:
-            m.repopulate(self)
+        m = Component.from_dict(info, db=self if init_db else None)
         if cm := self.variety_to_cache_mapping.get(variety):
             getattr(self, cm)[m.identifier] = m
         return m
@@ -481,14 +469,10 @@ class BaseDatabase:
     def _add(
         self,
         object: Component,
-        serializer: str = 'dill',
-        serializer_kwargs: Optional[Dict] = None,
+        cache: t.Dict,
         parent: Optional[str] = None,
         dependencies: t.Sequence[Union[Job, str]] = (),
     ):
-        if object.repopulate_on_init:
-            object.repopulate(self)
-
         existing_versions = self.show(object.variety, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
             logging.warn(f'{object.unique_id} already exists - doing nothing')
@@ -496,45 +480,33 @@ class BaseDatabase:
         version = existing_versions[-1] + 1 if existing_versions else 0
         object.version = version
 
-        for c in object.child_components:
-            logging.info(f'Checking upstream-component {c.variety}/{c.identifier}')
-            self._add(
-                c,
-                serializer=serializer,
-                serializer_kwargs=serializer_kwargs,
-                parent=object.unique_id,
-                dependencies=dependencies,
-            )
+        if hasattr(object, 'child_components'):
+            for c in object.child_components:
+                logging.info(f'Checking upstream-component {c.variety}/{c.identifier}')
+                if isinstance(c, Component):
+                    self._add(
+                        c,
+                        parent=object.unique_id,
+                        dependencies=dependencies,
+                        cache=cache,
+                    )
+                else:
+                    assert c.identifier in self.show(c.variety)
 
-        for p in object.child_references:
-            if p.version is None:
-                p.version = self.metadata.get_latest_version(p.variety, p.identifier)
-
-        print('Stripping sub-components to references')
-        strip(object)
-
-        serializer_kwargs = serializer_kwargs or {}
-        file_id, sha1 = self.artifact_store.create_artifact(
-            object,
-            serializer=serializer,
-            serializer_kwargs=serializer_kwargs,
+        d = object.to_dict()
+        d_doc = ArtifactDocument(d)
+        d_doc.save_artifacts(
+            artifact_store=self.artifact_store,
+            cache=cache,
         )
-        self.metadata.create_component(
-            {
-                **object.asdict(),
-                'object': file_id,
-                'variety': object.variety,
-                'version': version,
-                'sha1': sha1,
-                'serializer': serializer,
-                'serializer_kwargs': serializer_kwargs or {},
-            }
-        )
+        d_doc.content['variety'] = object.variety
+        d_doc.content['identifier'] = d_doc.content['dict']['identifier']
+        d_doc.content['version'] = d_doc.content['dict']['version']
+        self.metadata.create_component(d_doc.content)
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)
-        logging.info(f'Created {object.unique_id}')
 
-        object.repopulate(self)
+        logging.info(f'Created {object.unique_id}')
         return object.schedule_jobs(self, dependencies=dependencies)
 
     def _create_plan(self):
@@ -567,10 +539,10 @@ class BaseDatabase:
             f'You are about to delete {unique_id}, are you sure?',
             default=False,
         ):
+            component = self.load(variety, identifier, version=version)
             info = self.metadata.get_component(variety, identifier, version=version)
-            component_cls = components[variety]
-            if hasattr(component_cls, 'cleanup'):
-                component_cls.cleanup(info, self)
+            if hasattr(component, 'cleanup'):
+                component.cleanup(self)
             if variety in self.variety_to_cache_mapping:
                 try:
                     del getattr(self, self.variety_to_cache_mapping[variety])[
@@ -578,7 +550,10 @@ class BaseDatabase:
                     ]
                 except KeyError:
                     pass
-            self.artifact_store.delete_artifact(info['object'])
+
+            if hasattr(component, 'artifacts'):
+                for a in component.artifacts:
+                    self.artifact_store.delete_artifact(info['dict'][a]['file_id'])
             self.metadata.delete_component_version(variety, identifier, version=version)
 
     def _download_content(
@@ -659,7 +634,7 @@ class BaseDatabase:
 
     def _get_content_for_filter(self, filter) -> Document:
         if isinstance(filter, dict):
-            filter = Document(filter)
+            filter = Document(content=filter)  # type: ignore[arg-type]
         if '_id' not in filter.content:
             filter['_id'] = 0
         uris = gather_uris([filter.content])[0]
@@ -779,29 +754,26 @@ class BaseDatabase:
                 )
             raise e
 
-        file_id, _ = self.artifact_store.create_artifact(
-            object,
-            serializer=info['serializer'],
-            serializer_kwargs=info['serializer_kwargs'],
-        )
-        self.artifact_store.delete_artifact(info['object'])
-        self.metadata.update_object(
+        repl = ArtifactDocument(object.to_dict())
+        repl.save_artifacts(self.artifact_store, cache={}, replace=True)
+        for k in info:
+            if k not in repl.content:
+                repl.content[k] = info[k]
+        self.metadata.replace_object(
+            repl.content,
             identifier=identifier,
             variety='model',
-            key='object',
-            value=file_id,
             version=object.version,
         )
 
     def _select_nearest(
         self,
-        like: t.Dict,
+        like: Document,
         vector_index: str,
         ids: Optional[List[str]] = None,
         outputs: Optional[Document] = None,
         n: int = 100,
     ) -> Tuple[List[str], List[float]]:
-        like = Document(like)  # type: ignore[assignment]
         like = self._get_content_for_filter(like)  # type: ignore[assignment]
         vector_index = self.vector_indices[vector_index]  # type: ignore[no-redef]
 
@@ -812,29 +784,7 @@ class BaseDatabase:
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
         # ruff: noqa: E501
-        return vector_index.get_nearest(like, database=self, ids=ids, n=n, outputs=outs)  # type: ignore[attr-defined]
-
-    def _fit(self, identifier: str) -> None:
-        """
-        Execute the learning task.
-
-        :param identifier: Identifier of a learning task.
-        """
-
-        fit: Fit = self.load('fit', identifier)  # type: ignore
-        # ruff: noqa: E501
-        try:
-            fit.model.fit(  # type: ignore[attr-defined]
-                *fit.keys,  # type: ignore[attr-defined]
-                db=self,
-                select=fit.select,  # type: ignore[attr-defined]
-                validation_sets=fit.validation_sets,  # type: ignore[attr-defined]
-                metrics=fit.metrics,  # type: ignore[attr-defined]
-                configuration=fit.training_configuration,  # type: ignore[attr-defined]
-            )
-        except Exception as e:
-            self.remove('fit', identifier, force=True)
-            raise e
+        return vector_index.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)  # type: ignore[attr-defined]
 
 
 @dc.dataclass

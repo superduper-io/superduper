@@ -203,6 +203,12 @@ class MongoMetaDataStore(MetaDataStore):
             r['parent'] for r in self.parent_child_mappings.find({'child': unique_id})
         ]
 
+    def _replace_object(self, info, identifier, variety, version):
+        self.object_collection.replace_one(
+            {'identifier': identifier, 'variety': variety, 'version': version},
+            info,
+        )
+
     def _update_object(
         self,
         identifier: str,

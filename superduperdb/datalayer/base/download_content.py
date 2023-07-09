@@ -45,11 +45,9 @@ def download_content(
     elif isinstance(query, Select):
         update_db = True
         if ids is None:
-            query = query.copy(update={'raw': True})
-            documents = list(db.select(query))
+            documents = list(db.select(query).raw_cursor)
         else:
             select = query.select_using_ids(ids)
-            select = select.copy(update={'raw': True})
             documents = list(db.select(select))
     else:
         documents = query.documents

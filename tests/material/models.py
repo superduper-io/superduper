@@ -19,18 +19,6 @@ class BinaryClassifier(torch.nn.Module):
         return (x > 0.5).type(torch.float).item()
 
 
-class LinearBase(torch.nn.Module):
-    def __init__(self, input_size, output_size):
-        super().__init__()
-        self.linear = torch.nn.Linear(input_size, output_size)
-
-    def preprocess(self, r):
-        return r['x']
-
-    def forward(self, x):
-        return self.linear(x)
-
-
 class ModelAttributes(torch.nn.Module):
     def __init__(self, input_dim, d1, d2):
         super().__init__()

@@ -1,47 +1,42 @@
 import datetime
 from functools import cached_property
+import typing as t
 
 import numpy
 
-from superduperdb.core.base import Component, DBPlaceholder
-from superduperdb.datalayer.base.query import Select
+from superduperdb.core.base import Component, Artifact
+from superduperdb.core.documents import Document
+from superduperdb.datalayer.mongodb.query import Find
+import dataclasses as dc
 
-import typing as t
 
-
+@dc.dataclass
 class Dataset(Component):
-    variety = 'dataset'
-    repopulate_on_init = True
+    variety: t.ClassVar[str] = 'dataset'
 
-    def __init__(
-        self,
-        identifier: str,
-        select: Select,
-        sample_size: t.Optional[int] = None,
-        random_seed: t.Optional[int] = None,
-    ):
-        super().__init__(identifier)
+    identifier: str
+    select: t.Optional[Find] = None
+    sample_size: t.Optional[int] = None
+    random_seed: t.Optional[int] = None
+    creation_date: t.Optional[str] = None
+    raw_data: t.Optional[t.Union[Artifact, t.Any]] = None
+    version: t.Optional[int] = None
+    db: dc.InitVar[t.Optional[t.Any]] = None
 
-        self.select = select
-        self.database = DBPlaceholder()
-        self.creation_date = datetime.datetime.now()
-        self.sample_size = sample_size
-        self.random_seed = random_seed
+    def __post_init__(self, db):
+        if self.creation_date is None:
+            self.creation_date = str(datetime.datetime.now())
+        if self.raw_data is None:
+            data = list(db.execute(self.select))
+            if self.sample_size is not None and self.sample_size < len(data):
+                perm = self.random.permutation(len(data)).tolist()
+                data = [data[perm[i]] for i in range(self.sample_size)]
+            self.raw_data = Artifact(_artifact=[r.encode() for r in data])
+
+        self.data = [
+            Document(Document.decode(r, types=db.types)) for r in self.raw_data.a
+        ]
 
     @cached_property
     def random(self):
         return numpy.random.default_rng(seed=self.random_seed)
-
-    def _post_attach_database(self):
-        data = list(self.database.execute(self.select))
-        if self.sample_size is not None and self.sample_size < len(data):
-            perm = self.random.permutation(len(data)).tolist()
-            data = [data[perm[i]] for i in range(self.sample_size)]
-        self.data = data
-
-    def asdict(self):
-        return {
-            'identifier': self.identifier,
-            'select': self.select.dict(),
-            'creation_date': self.creation_date,
-        }

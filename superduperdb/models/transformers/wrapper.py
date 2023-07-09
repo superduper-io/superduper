@@ -1,56 +1,35 @@
+import dataclasses as dc
+import functools
 import typing as t
 
-from superduperdb.core.encoder import Encoder
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model
 from transformers import (
-    pipeline as _pipeline,
-    Pipeline as TransformersPipeline,
     TrainingArguments,
     Trainer,
 )
 
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.base.query import Select
-from superduperdb.core.model import TrainingConfiguration
+from superduperdb.core.model import _TrainingConfiguration
 from superduperdb.datalayer.query_dataset import QueryDataset
 
 
-class TransformersTrainerConfiguration(TrainingConfiguration):
-    training_arguments: TrainingArguments
+@functools.wraps(TrainingArguments)
+def TransformersTrainerConfiguration(identifier: str, *args, **kwargs):
+    cfg = TrainingArguments(output_dir=args[0], **kwargs)
+    return _TrainingConfiguration(identifier=identifier, kwargs=cfg.to_dict())
 
-    def __init__(self, training_arguments: TrainingArguments, **kwargs):
-        super().__init__(training_arguments=training_arguments, **kwargs)
 
-
+@dc.dataclass
 class Pipeline(Model):
-    def __init__(
-        self,
-        pipeline: t.Optional[TransformersPipeline] = None,
-        task: t.Optional[str] = None,
-        model: t.Optional[str] = None,
-        identifier: t.Optional[str] = None,
-        training_configuration: t.Optional[TransformersTrainerConfiguration] = None,
-        training_select: t.Optional[Select] = None,
-        train_X: t.Optional[str] = None,
-        train_y: t.Optional[str] = None,
-        encoder: t.Optional[Encoder] = None,
-    ):
-        if pipeline is None:
-            assert model is not None, 'must specify model for now'
-            pipeline = _pipeline(task, model=model)
+    @property
+    def pipeline(self):
+        return self.object.a
 
-        identifier = identifier or f'{pipeline.task}/{pipeline.model.name_or_path}'
-
-        super().__init__(
-            pipeline,
-            identifier=identifier,
-            training_configuration=training_configuration,
-            training_select=training_select,
-            train_X=train_X,
-            train_y=train_y,
-            encoder=encoder,
-        )
+    @functools.cached_property
+    def training_arguments(self):
+        return TrainingArguments(**self.training_configuration.dict())
 
     def _get_data(self):
         tokenizing_function = TokenizingFunction(self.object.tokenizer)
@@ -76,7 +55,7 @@ class Pipeline(Model):
         y: str,
         select: t.Optional[Select] = None,
         database: t.Optional[BaseDatabase] = None,
-        training_configuration: t.Optional[TransformersTrainerConfiguration] = None,
+        training_configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.List[str]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
     ):
@@ -98,10 +77,9 @@ class Pipeline(Model):
                 X_train.append(r[X])
                 y_train.append(r[y])
 
-        # ruff: noqa: E501
         TrainerWithSaving(
             model=self.object,
-            args=self.training_configuration.training_arguments,  # type: ignore[union-attr]
+            args=self.training_arguments,
             train_dataset=train_data,
             eval_dataset=valid_data,
         ).train()

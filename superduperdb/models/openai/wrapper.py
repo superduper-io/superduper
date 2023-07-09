@@ -4,14 +4,15 @@ import typing as t
 import tqdm
 
 
-from openai import ChatCompletion as _ChatCompletion
-from openai import Embedding as _Embedding
+from openai import ChatCompletion
+from openai import Embedding
 from openai import Model as OpenAIModel
 from openai.error import Timeout, RateLimitError, TryAgain, ServiceUnavailableError
 
 import superduperdb as s
+from superduperdb.core.base import Component
 from superduperdb.misc.retry import Retry
-from superduperdb.core.model import Model
+from superduperdb.misc import dataclasses as dc
 from superduperdb.misc.compat import cache
 from superduperdb.encoders.vectors.vector import vector
 
@@ -31,15 +32,18 @@ def _available_models():
     return tuple([r['id'] for r in OpenAIModel.list()['data']])
 
 
-class BaseOpenAI(Model):
-    def __init__(self, identifier: str):
-        super().__init__(None, identifier)
+@dc.dataclass
+class OpenAI(Component):
+    variety: t.ClassVar[str] = 'model'
+
+    def __post_init__(self):
         msg = "model not in list of OpenAI available models"
-        assert identifier in _available_models(), msg
+        assert self.identifier in _available_models(), msg
         assert 'OPENAI_API_KEY' in os.environ, "OPENAI_API_KEY not set"
 
 
-class Embedding(BaseOpenAI):
+@dc.dataclass
+class OpenAIEmbedding(OpenAI):
     shapes = {'text-embedding-ada-002': (1536,)}
 
     def __init__(self, identifier: str, shape: t.Optional[t.Sequence[int]] = None):
@@ -50,12 +54,12 @@ class Embedding(BaseOpenAI):
 
     @retry
     def _predict_one(self, X, **kwargs):
-        e = _Embedding.create(input=X, model=self.identifier, **kwargs)
+        e = Embedding.create(input=X, model=self.identifier, **kwargs)
         return e['data'][0]['embedding']
 
     @retry
     def _predict_a_batch(self, texts, **kwargs):
-        out = _Embedding.create(input=texts, model=self.identifier, **kwargs)['data']
+        out = Embedding.create(input=texts, model=self.identifier, **kwargs)['data']
         return [r['embedding'] for r in out]
 
     def _predict(self, X, batch_size=100, **kwargs):  # asyncio?
@@ -67,10 +71,10 @@ class Embedding(BaseOpenAI):
         return out
 
 
-class ChatCompletion(BaseOpenAI):
+class OpenAIChatCompletion(OpenAI):
     @retry
     def predict_one(self, message, **kwargs):
-        return _ChatCompletion.create(
+        return ChatCompletion.create(
             messages=[{'role': 'user', 'content': message}],
             model=self.identifier,
             **kwargs,

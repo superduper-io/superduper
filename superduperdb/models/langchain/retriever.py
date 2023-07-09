@@ -1,13 +1,12 @@
+import dataclasses as dc
 import typing as t
 from functools import cached_property
 
-from langchain.base_language import BaseLanguageModel
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain.chains.base import Chain
 from langchain.schema import BaseRetriever, Document
 
 from superduperdb.core import documents
-from superduperdb.core.base import Placeholder
 from superduperdb.core.model import Model
 from superduperdb.core.vector_index import VectorIndex
 
@@ -25,32 +24,28 @@ class LangchainRetriever(BaseRetriever):
     def __init__(
         self,
         key: str,
+        db: t.Any,
         vector_index: VectorIndex,
         n: int = 100,
     ):
         self.vector_index = vector_index
         self.key = key
         self.n = n
+        self.db = db
 
     def get_relevant_documents(self, query: str) -> t.List[Document]:
-        document_to_search = documents.Document({self.key: query})
+        document_to_search = documents.Document(content={self.key: query})
         ids, scores = self.vector_index.get_nearest(
             document_to_search,
             n=self.n,
             featurize=False,
         )
-        select = self.vector_index.select.select_using_ids(ids)
-        out = list(
-            self.vector_index.database.select(  # type: ignore
-                select, features=self.vector_index.watcher.features  # type: ignore
-            )
-        )
+        select = self.vector_index.indexing_watcher.select.select_using_ids(ids)
+        out = list(self.db.execute(select))
         out = [
             Document(
                 page_content=x[self.key],
-                metadata={
-                    'source': x[self.vector_index.database.id_field]  # type: ignore
-                },
+                metadata={'source': x[self.db.databackend.id_field]},  # type: ignore
             )
             for x in out
         ]
@@ -68,18 +63,11 @@ class ChainWrapper(Model):
     :param identifier: unique ID
     """
 
-    def __init__(self, chain: Chain, identifier: str):
-        msg = (
-            "Chains which include a retrieval pass are handled by "
-            f"{DBQAWithSourcesChain}"
-        )
-        assert not isinstance(chain, RetrievalQAWithSourcesChain), msg
-        super().__init__(chain, identifier=identifier)
-
     def predict_one(self, input):
         return self.object.run(input)
 
 
+@dc.dataclass
 class DBQAWithSourcesChain(Model):
     """
     Model which applies ``langchain.chains.RetrievalQAWithSourcesChain`` to the
@@ -93,34 +81,21 @@ class DBQAWithSourcesChain(Model):
     :param n: Number of documents to retrieve as seed for chain
     """
 
-    vector_index: t.Union[Placeholder, VectorIndex]
+    vector_index: t.Union[VectorIndex, str] = None
+    chain_type: str = ('stuff',)
+    n: int = (5,)
 
-    def __init__(
-        self,
-        identifier: str,
-        key: str,
-        llm: BaseLanguageModel,
-        vector_index: t.Union[VectorIndex, str],
-        chain_type: str = 'stuff',
-        n: int = 5,
-    ):
-        super().__init__(llm, identifier=identifier)
-        self.chain_type = chain_type
-        self._retrieval_chain = None
-        self.vector_index = (
-            vector_index
-            if isinstance(vector_index, VectorIndex)
-            else Placeholder(variety='vector_index', identifier=vector_index)
-        )
-        self.key = key
-        self.n = n
+    def __post_init__(self, db):
+        if isinstance(self.vector_index, str):
+            self.vector_index = db.load('vector_index', self.vector_index)
+        self.db = db
 
     @cached_property
     def retriever(self) -> LangchainRetriever:
-        assert not isinstance(self.vector_index, Placeholder)
         return LangchainRetriever(
-            self.key,
-            vector_index=self.vector_index,
+            key=self.vector_index.indexing_watcher.key,
+            db=self.db,
+            vector_index=self.vector_index,  # type: ignore[arg-type]
             n=self.n,
         )
 
@@ -128,7 +103,7 @@ class DBQAWithSourcesChain(Model):
     def chain(self) -> Chain:
         assert hasattr(self, 'retriever')
         return RetrievalQAWithSourcesChain.from_chain_type(
-            llm=self.object,
+            llm=self.object.a,
             retriever=self.retriever,
             chain_type=self.chain_type,
         )
@@ -136,7 +111,7 @@ class DBQAWithSourcesChain(Model):
     def _predict_one(self, question, outputs=None, **kwargs):
         return self.chain(question)
 
-    def predict(self, question):
+    def _predict(self, question):
         if isinstance(question, list):
             return [self._predict_one(q) for q in question]
         return self._predict_one(question)

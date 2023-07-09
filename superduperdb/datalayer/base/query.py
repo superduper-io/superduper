@@ -1,9 +1,12 @@
-import superduperdb as s
+from superduperdb.core.serializable import Serializable
+from superduperdb.misc import dataclasses as dc
+
 import typing as t
 from abc import ABC, abstractmethod
 
 
-class SelectOne(s.JSONable, ABC):
+@dc.dataclass
+class SelectOne(ABC, Serializable):
     """
     Base class for queries which return a single line/ record of data
     """
@@ -13,7 +16,8 @@ class SelectOne(s.JSONable, ABC):
         pass
 
 
-class Like(s.JSONable, ABC):
+@dc.dataclass
+class Like(ABC, Serializable):
     """
     Base class for queries which invoke vector-search
     """
@@ -23,11 +27,12 @@ class Like(s.JSONable, ABC):
         pass
 
 
-class Select(s.JSONable, ABC):
+@dc.dataclass
+class Select(ABC, Serializable):
     """
     Abstract base class, encapsulating Select database queries/ datalayer reads.
     This allows the concrete implementation of each datalayer to differ substantially on
-    stored properties necessary for querying the DB.
+    stored properties necessary for Serializableing the DB.
     """
 
     @property
@@ -45,7 +50,7 @@ class Select(s.JSONable, ABC):
     @property
     @abstractmethod
     def select_ids(self) -> 'Select':
-        # Converts the query into a query which only returns the id
+        # Converts the Serializable into a Serializable which only returns the id
         # of each column/ document.
         pass
 
@@ -55,11 +60,10 @@ class Select(s.JSONable, ABC):
         ids: t.List[str],
     ) -> t.Any:
         """
-        Create a select using the same query, subset to the specified ids
+        Create a select using the same Serializable, subset to the specified ids
 
         :param ids: string ids to which subsetting should occur
         """
-        # Converts the query into a query which sub-selects from the ids specified.
         pass
 
     @abstractmethod
@@ -70,8 +74,6 @@ class Select(s.JSONable, ABC):
 
         :param fold: possible values {'train', 'valid'}
         """
-        # Converts the query into a query which sub-selects based on the specified
-        # tag "fold"
         pass
 
     @abstractmethod
@@ -90,14 +92,15 @@ class Select(s.JSONable, ABC):
     @abstractmethod
     def __call__(self, db):
         """
-        Apply query to datalayer
+        Apply Serializable to datalayer
 
         :param db: datalayer instance
         """
         pass
 
 
-class Insert(s.JSONable, ABC):
+@dc.dataclass
+class Insert(ABC, Serializable):
     """
     Base class for database inserts.
 
@@ -109,8 +112,6 @@ class Insert(s.JSONable, ABC):
     """
 
     # must implement attribute/ property self.documents
-    refresh: bool = True
-    verbose: bool = True
     documents: t.List
 
     @property
@@ -129,14 +130,15 @@ class Insert(s.JSONable, ABC):
     @abstractmethod
     def __call__(self, db):
         """
-        Apply query to datalayer
+        Apply Serializable to datalayer
 
         :param db: datalayer instance
         """
         pass
 
 
-class Delete(s.JSONable, ABC):
+@dc.dataclass
+class Delete(ABC, Serializable):
     """
     Base class for deleting documents from datalayer
     """
@@ -144,14 +146,15 @@ class Delete(s.JSONable, ABC):
     @abstractmethod
     def __call__(self, db):
         """
-        Apply query to datalayer
+        Apply Serializable to datalayer
 
         :param db: datalayer instance
         """
         pass
 
 
-class Update(s.JSONable, ABC):
+@dc.dataclass
+class Update(ABC, Serializable):
     """
     Base class for database updates.
 
@@ -160,9 +163,6 @@ class Update(s.JSONable, ABC):
     :param verbose: toggle tp ``False`` to suppress/reduce stdout
 
     """
-
-    refresh: bool = True
-    verbose: bool = True
 
     @property
     @abstractmethod
@@ -190,7 +190,7 @@ class Update(s.JSONable, ABC):
     @abstractmethod
     def __call__(self, db):
         """
-        Apply query to datalayer.
+        Apply Serializable to datalayer.
 
         :param db: datalayer instance
         """

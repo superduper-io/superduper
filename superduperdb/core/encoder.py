@@ -1,9 +1,10 @@
-import dataclasses as dc
+from superduperdb.misc import dataclasses as dc
+import dataclasses
 import io
 import pickle
 import typing as t
 
-from superduperdb.core.base import Component
+from superduperdb.core.base import Component, Artifact
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
@@ -19,7 +20,7 @@ def _pickle_encoder(x: t.Any) -> bytes:
     return f.getvalue()
 
 
-@dc.dataclass
+@dataclasses.dataclass
 class Encoder(Component):
     """
     Storeable ``Component`` allowing byte encoding of primary data,
@@ -33,25 +34,30 @@ class Encoder(Component):
     :param shape: shape of the data, if any
     """
 
-    identifier: str
-    decoder: Decode = _pickle_decoder
-    encoder: Encode = _pickle_encoder
-    shape: t.Optional[t.Tuple] = None
+    variety: t.ClassVar[str] = 'type'  # This cannot yet be changed
+    artifacts: t.ClassVar[t.List[str]] = ['decoder', 'encoder']
 
-    variety = 'type'  # This cannot yet be changed
+    identifier: str
+    decoder: t.Union[t.Callable, Artifact] = Artifact(_artifact=_pickle_decoder)
+    encoder: t.Union[t.Callable, Artifact] = Artifact(_artifact=_pickle_encoder)
+    shape: t.Optional[t.Tuple] = None
+    version: t.Optional[int] = None
 
     def __post_init__(self):
-        super().__init__(self.identifier)
+        if isinstance(self.decoder, t.Callable):
+            self.decoder = Artifact(_artifact=self.decoder)
+        if isinstance(self.encoder, t.Callable):
+            self.encoder = Artifact(_artifact=self.encoder)
 
     def __call__(self, x):
         return Encodable(x, self)
 
     def decode(self, b: bytes) -> t.Any:
-        return self(self.decoder(b))
+        return self(self.decoder.a(b))
 
     def encode(self, x: t.Any) -> t.Dict[str, t.Any]:
         if self.encoder is not None:
-            return {'_content': {'bytes': self.encoder(x), 'type': self.identifier}}
+            return {'_content': {'bytes': self.encoder.a(x), 'type': self.identifier}}
         else:
             return x
 
@@ -67,7 +73,10 @@ class Encodable:
     """
 
     x: t.Any
-    encoder: Encoder
+    encoder: t.Callable
 
     def encode(self) -> t.Dict[str, t.Any]:
         return self.encoder.encode(self.x)
+
+
+default_encoder = Encoder(identifier='_default')

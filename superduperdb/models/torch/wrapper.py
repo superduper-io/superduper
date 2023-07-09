@@ -1,18 +1,21 @@
-import inspect
+import dataclasses as dc
 import io
 from contextlib import contextmanager
 from typing import Optional, Callable, Union, Dict, List, Any
+import typing as t
 
 import torch
 from torch.utils import data
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from superduperdb.core.base import Artifact
 from superduperdb.core.metric import Metric
 from superduperdb.core.documents import Document
-from superduperdb.core.encoder import Encoder, Encodable
+from superduperdb.core.encoder import Encodable
+from superduperdb.core.model import Model, ModelEnsemble, _TrainingConfiguration
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.base.query import Select
-from superduperdb.core.model import Model, ModelEnsemble, TrainingConfiguration
 from superduperdb.misc.logger import logging
 from superduperdb.models.torch.utils import device_of, to_device, eval
 from superduperdb.datalayer.query_dataset import QueryDataset
@@ -44,71 +47,38 @@ class BasicDataset(data.Dataset):
         return self.transform(document)
 
 
-class TorchTrainerConfiguration(TrainingConfiguration):
-    def __init__(
-        self,
-        identifier,
-        objective,
-        loader_kwargs,
-        optimizer_cls=torch.optim.Adam,
-        optimizer_kwargs=None,
-        max_iterations=float('inf'),
-        no_improve_then_stop=5,
-        splitter=None,
-        download=False,
-        validation_interval=100,
-        watch='objective',
-        target_preprocessors=None,
-        **kwargs,
-    ):
-        super().__init__(
-            identifier,
-            loader_kwargs=loader_kwargs,
-            objective=objective,
-            optimizer_cls=optimizer_cls,
-            optimizer_kwargs=optimizer_kwargs or {},
-            no_improve_then_stop=no_improve_then_stop,
-            max_iterations=max_iterations,
-            splitter=splitter,
-            download=download,
-            validation_interval=validation_interval,
-            target_preprocessors=target_preprocessors or {},
-            watch=watch,
-            **kwargs,
-        )
+@dc.dataclass
+class TorchTrainerConfiguration(_TrainingConfiguration):
+    objective: t.Optional[t.Union[Artifact, t.Callable]] = None
+    loader_kwargs: t.Dict = dc.field(default_factory=dict)
+    max_iterations: int = 10**100
+    no_improve_then_stop: int = 5
+    splitter: t.Optional[Artifact] = None
+    download: bool = False
+    validation_interval: int = 100
+    watch: str = 'objective'
+    target_preprocessors: t.Optional[t.Union[Artifact, t.Dict]] = None
+    compute_metrics: t.Optional[t.Union[Artifact, t.Callable]] = None
+
+    def __post_init__(self):
+        if self.compute_metrics and not isinstance(self.compute_metrics, Artifact):
+            self.compute_metrics = Artifact(_artifact=self.compute_metrics)
+
+        if self.objective and not isinstance(self.objective, Artifact):
+            self.objective = Artifact(_artifact=self.objective)
+
+        if self.target_preprocessors and not isinstance(
+            self.target_preprocessors, Artifact
+        ):
+            self.target_preprocessors = Artifact(_artifact=self.target_preprocessors)
 
 
-class Base(Model):
-    def __init__(
-        self,
-        object: Union[torch.nn.Module, torch.jit.ScriptModule],
-        identifier: str,
-        collate_fn: Optional[Callable] = None,
-        is_batch: Optional[Callable] = None,
-        encoder: Optional[Union[Encoder, str]] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
-        training_select: Optional[Select] = None,
-        train_X: Optional[Union[str, List[str]]] = None,
-        train_y: Optional[Union[str, List[str]]] = None,
-        validation_sets: Optional[List[str]] = None,
-        num_directions: int = 2,
-        metrics: Optional[List[Metric]] = None,
-    ):
-        super().__init__(
-            object=object,
-            identifier=identifier,
-            training_configuration=training_configuration,
-            train_X=train_X,
-            train_y=train_y,
-            training_select=training_select,
-            encoder=encoder,
-            metrics=metrics,
-        )
-        self.optimizers = None
-        self.collate_fn = collate_fn
-        self.is_batch = is_batch
-        self.num_directions = num_directions
-        self.validation_sets = validation_sets
+@dc.dataclass
+class Base:
+    collate_fn: t.Optional[t.Union[Artifact, t.Callable]] = None
+    is_batch: t.Optional[t.Union[Artifact, t.Callable]] = None
+    num_directions: int = 2
+    metrics: t.Optional[t.List[t.Union[str, Metric]]] = None
 
     @contextmanager
     def evaluating(self):
@@ -116,14 +86,6 @@ class Base(Model):
 
     def train(self):
         raise NotImplementedError
-
-    def build_optimizers(self):
-        return (
-            self.training_configuration.optimizer_cls(
-                self.object.parameters(),
-                **self.training_configuration.optimizer_kwargs,
-            ),
-        )
 
     def stopping_criterion(self, iteration):
         max_iterations = self.training_configuration.max_iterations
@@ -185,7 +147,6 @@ class Base(Model):
             valid_dataloader,
             db=db,  # type: ignore[arg-type]
             validation_sets=validation_sets or [],
-            # TODO - add serializer to __init__ method of Model
         )
 
     def preprocess(self, r):
@@ -201,20 +162,8 @@ class Base(Model):
                 out += f'{k}: {v}; '
         logging.info(out)
 
-    def train_forward(self, X, y=None):
-        if hasattr(self.object, 'train_forward'):
-            if y is None:
-                return self.object.train_forward(X)
-            else:
-                return self.object.train_forward(X, y=y)
-        else:
-            if y is None:
-                return (self.object(X),)
-            else:
-                return [self.object(X), y]
-
     def forward(self, X):
-        return self.object(X)
+        return self.object.a(X)
 
     def extract_batch_key(self, batch, key: Union[List[str], str]):
         if isinstance(key, str):
@@ -232,12 +181,12 @@ class Base(Model):
     def take_step(self, batch, optimizers):
         batch = self.extract_batch(batch)
         outputs = self.train_forward(*batch)
-        objective_value = self.training_configuration.objective(*outputs)
+        objective_value = self.training_configuration.objective.a(*outputs)
         for opt in optimizers:
-            opt.zero_grad()
+            opt.a.zero_grad()
         objective_value.backward()
         for opt in optimizers:
-            opt.step()
+            opt.a.step()
         return objective_value
 
     def compute_validation_objective(self, valid_dataloader):
@@ -246,7 +195,7 @@ class Base(Model):
             for batch in valid_dataloader:
                 batch = self.extract_batch(batch)
                 objective_values.append(
-                    self.training_configuration.objective(
+                    self.training_configuration.objective.a(
                         *self.train_forward(*batch)
                     ).item()
                 )
@@ -262,7 +211,7 @@ class Base(Model):
     def compute_metrics(self, validation_set, database):
         validation_set = database.load('dataset', validation_set)
         validation_set = [r.unpack() for r in validation_set.data]
-        return self.training_configuration.compute_metrics(
+        return self.training_configuration.compute_metrics.a(
             validation_set,
             metrics=self.metrics,
             model=self,
@@ -277,10 +226,11 @@ class Base(Model):
     ):
         self.train()
         iteration = 0
-        optimizers = self.build_optimizers()
+        if self.optimizers is None:
+            self.optimizers: t.List[torch.optim.Optimizer] = self.build_optimizers()
         while True:
             for batch in train_dataloader:
-                train_objective = self.take_step(batch, optimizers)
+                train_objective = self.take_step(batch, self.optimizers)
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
                 # ruff: noqa: E501
                 if iteration % self.training_configuration.validation_interval == 0:  # type: ignore[union-attr]
@@ -303,18 +253,30 @@ class Base(Model):
     def train_preprocess(self):
         preprocessors = {}
         if isinstance(self.train_X, str):
-            preprocessors[self.train_X] = self.preprocess
+            preprocessors[self.train_X] = (
+                self.preprocess if self.preprocess else lambda x: x
+            )
         else:
-            for _id, X in zip(self._model_ids, self.train_X):
-                preprocessors[X] = getattr(self, _id).preprocess
+            for model, X in zip(self.models, self.train_X):
+                preprocessors[X] = (
+                    model.preprocess if model.preprocess is not None else lambda x: x
+                )
         if self.train_y is not None:
-            if isinstance(self.train_y, str):
+            if (
+                isinstance(self.train_y, str)
+                and self.training_configuration.target_preprocessors
+            ):
                 preprocessors[
                     self.train_y
                 ] = self.training_configuration.target_preprocessors.get(
                     self.train_y, lambda x: x
                 )
-            else:
+            elif isinstance(self.train_y, str):
+                preprocessors[self.train_y] = lambda x: x
+            elif (
+                isinstance(self.train_y, list)
+                and self.training_configuration.target_preprocessors
+            ):
                 for y in self.train_y:
                     preprocessors[
                         y
@@ -341,253 +303,28 @@ class Base(Model):
         return train_data, valid_data
 
 
-class TorchPipeline(Base):
-    """
-    Sklearn style PyTorch pipeline.
+@dc.dataclass
+class TorchModel(Base, Model):
+    preprocess: t.Union[Callable, Artifact, None] = None
+    postprocess: t.Union[Callable, Artifact, None] = None
+    optimizers: t.Optional[t.List[Artifact]] = None
 
-    :param steps: List of ``sklearn`` style steps/ transforms
-    :param identifier: Unique identifier
-    :param collate_fn: Function for collating batches
-    """
+    def __post_init__(self, db):
+        super().__post_init__(db)
 
-    def __init__(
-        self,
-        identifier,
-        steps,
-        collate_fn: Optional[Callable] = None,
-        is_batch: Optional[Callable] = None,
-        encoder: Optional[Union[Encoder, str]] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
-        training_select: Optional[Select] = None,
-        train_X: Optional[Union[str, List[str]]] = None,
-        train_y: Optional[Union[str, List[str]]] = None,
-        num_directions: int = 2,
-        metrics: Optional[Union[List[Metric], List[str]]] = None,
-    ):
-        self.steps = steps  # type: ignore[misc]
-        self._forward_sequential = None
-        self.is_batch = is_batch
-        forward_steps = self.steps[self._forward_mark : self._post_mark]
-        object = torch.nn.Sequential(*[s[1] for s in forward_steps])
-        super().__init__(
-            identifier=identifier,
-            object=object,
-            training_configuration=training_configuration,
-            training_select=training_select,
-            train_X=train_X,
-            train_y=train_y,
-            encoder=encoder,
-            collate_fn=collate_fn,
-            is_batch=is_batch,
-            num_directions=num_directions,
-            metrics=metrics,  # type: ignore[arg-type]
-        )
-
-    @contextmanager
-    def evaluating(self):
-        yield eval(self.object)
-
-    def train(self):
-        return self.object.train()
-
-    def __repr__(self):
-        lines = [
-            'TorchPipeline(steps=[',
-            *[f'   {(s[0], s[1])}' for s in self.steps],
-            '])',
-        ]
-        return '\n'.join(lines)
-
-    def _test_if_batch(self, x):
-        if self.is_batch is not None:
-            return self.is_batch(x)
-        if hasattr(self.steps[0][1], '__call__'):
-            type = next(
-                iter(inspect.signature(self.steps[0][1].__call__).parameters.values())
-            ).annotation
-        else:
-            type = next(
-                iter(inspect.signature(self.steps[0][1]).parameters.values())
-            ).annotation
-        if type != inspect._empty:
-            return not isinstance(x, type)
-        return isinstance(x, list)
-
-    @property
-    def steps(self):
-        return self._steps
-
-    def preprocess(self, x):
-        for s in self.steps[: self._forward_mark]:
-            transform = s[1]
-            if hasattr(transform, 'transform'):
-                x = transform.transform(x)
-            else:
-                assert callable(transform)
-                x = transform(x)
-        return x
-
-    @property
-    def preprocess_pipeline(self):
-        return TorchPipeline(
-            identifier=f'{self.identifier}/preprocess',
-            steps=self.steps[: self._forward_mark],
-        )
-
-    @property
-    def forward_pipeline(self):
-        if self._forward_sequential is None:
-            forward_steps = self.steps[self._forward_mark : self._post_mark]
-            self._forward_sequential = torch.nn.Sequential(
-                *[s[1] for s in forward_steps]
-            )
-        return self._forward_sequential
-
-    @property
-    def postprocess_pipeline(self):
-        return TorchPipeline(
-            identifier=f'{self.identifier}/postprocess',
-            steps=self.steps[self._post_mark :],
-        )
-
-    def postprocess(self, x):
-        for s in self.steps[self._post_mark :]:
-            transform = s[1]
-            if hasattr(transform, 'transform'):
-                x = transform.transform(x)
-            else:
-                assert callable(transform)
-                x = transform(x)
-        return x
-
-    def _predict(self, X, **kwargs):
-        if not self._test_if_batch(X):
-            return self._predict_one(X, **kwargs)
-        if self.preprocess_pipeline.steps:
-            inputs = BasicDataset(X, self.preprocess)
-            loader = torch.utils.data.DataLoader(
-                inputs, **kwargs, collate_fn=self.collate_fn
-            )
-        else:
-            loader = torch.utils.data.DataLoader(
-                X, **kwargs, collate_fn=self.collate_fn
-            )
-        out = []
-        for batch in tqdm(loader, total=len(loader)):
-            batch = to_device(batch, device_of(self.forward_pipeline))
-            tmp = self.forward(batch)
-            tmp = to_device(tmp, 'cpu')
-            tmp = unpack_batch(tmp)
-            tmp = list(map(self.postprocess, tmp))
-            out.extend(tmp)
-        return out
-
-    def _predict_one(self, X, **kwargs):
-        with torch.no_grad(), eval(self.forward_pipeline):
-            X = self.preprocess(X)
-            X = to_device(X, device_of(self.forward_pipeline))
-            singleton_batch = create_batch(X)
-            output = self.forward(singleton_batch)
-            output = unpack_batch(output)[0]
-            return self.postprocess(output)
-
-    @contextmanager
-    def eval(self):
-        was_training = self.forward_pipeline.steps[0][1].training
-        try:
-            for s in self.forward_pipeline.steps:
-                s[1].eval()
-            yield
-        finally:
-            if was_training:
-                for s in self.forward_pipeline.steps:
-                    s[1].eval()
-
-    saving = eval
-
-    @steps.setter  # type: ignore[no-redef,attr-defined]
-    def steps(self, value):
-        self._steps = value
-        try:
-            self._forward_mark = next(
-                i
-                for i, s in enumerate(value)
-                if isinstance(s[1], torch.nn.Module)
-                or isinstance(s[1], torch.jit.ScriptModule)
-            )
-        except StopIteration:
-            self._forward_mark = len(self.steps)
-
-        try:
-            self._post_mark = next(
-                len(value) - i
-                for i, s in enumerate(value[::-1])
-                if isinstance(s[1], torch.nn.Module)
-                or isinstance(s[1], torch.jit.ScriptModule)
-            )
-        except StopIteration:
-            self._post_mark = len(self.steps)
-
-    def parameters(self):
-        for s in self.forward_pipeline.steps:
-            yield from s[1].parameters()
-
-
-class TorchModel(Base):
-    def __init__(
-        self,
-        object: Union[torch.nn.Module, torch.jit.ScriptModule],
-        identifier: str,
-        collate_fn: Optional[Callable] = None,
-        is_batch: Optional[Callable] = None,
-        encoder: Optional[Union[Encoder, str]] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
-        training_select: Optional[Select] = None,
-        train_X: Optional[Union[str, List[str]]] = None,
-        train_y: Optional[Union[str, List[str]]] = None,
-        validation_sets: Optional[List[str]] = None,
-        num_directions: int = 2,
-        metrics: Optional[List[Metric]] = None,
-        preprocess: Optional[Callable] = None,
-        postprocess: Optional[Callable] = None,
-    ):
-        super().__init__(
-            object=object,
-            identifier=identifier,
-            collate_fn=collate_fn,
-            is_batch=is_batch,
-            encoder=encoder,
-            training_configuration=training_configuration,
-            training_select=training_select,
-            train_X=train_X,
-            train_y=train_y,
-            validation_sets=validation_sets,
-            num_directions=num_directions,
-            metrics=metrics,
-        )
-        self._preprocess = preprocess
-        self._postprocess = postprocess
-        if hasattr(self.object, 'preprocess') and preprocess is not None:
-            raise Exception(
-                'Ambiguous preprocessing between passed preprocess '
-                'and object.preprocess'
-            )
-        if hasattr(self.object, 'postprocess') and postprocess is not None:
-            raise Exception(
-                'Ambiguous postprocessing between passed postprocess '
-                'and object.postprocess'
-            )
-        if hasattr(self.object, 'preprocess'):
-            self._preprocess = self.object.preprocess
-        if hasattr(self.object, 'postprocess'):
-            self._postprocess = self.object.postprocess
+        if self.preprocess and not isinstance(self.preprocess, Artifact):
+            self.preprocess = Artifact(_artifact=self.preprocess, serializer='dill')
+        if self.postprocess and not isinstance(self.postprocess, Artifact):
+            self.postprocess = Artifact(_artifact=self.postprocess, serializer='dill')
 
     def build_optimizers(self):
-        return (
-            self.training_configuration.optimizer_cls(
-                self.object.parameters(),
-                **self.training_configuration.optimizer_kwargs,
-            ),
+        return [self.build_optimizer()]
+
+    def build_optimizer(self):
+        return Artifact(
+            _artifact=torch.optim.Adam(self.object.a.parameters()),
+            serializer='torch::state',
+            info={'cls': 'Adam', 'module': 'torch.optim', 'dict': {'lr': 0.0001}},
         )
 
     @contextmanager
@@ -595,7 +332,10 @@ class TorchModel(Base):
         yield eval(self)
 
     def train(self):
-        return self.object.train()
+        return self.object.a.train()
+
+    def eval(self):
+        return self.object.a.eval()
 
     def parameters(self):
         return self.object.parameters()
@@ -635,43 +375,49 @@ class TorchModel(Base):
                 )
 
     def _predict_one(self, x):
-        with torch.no_grad(), eval(self.object):
-            if hasattr(self.object, 'preprocess'):
-                x = self.object.preprocess(x)
-            x = to_device(x, device_of(self.object))
+        with torch.no_grad(), eval(self.object.a):
+            if self.preprocess is not None:
+                x = self.preprocess(x)
+            x = to_device(x, device_of(self.object.a))
             singleton_batch = create_batch(x)
-            output = self.object(singleton_batch)
+            output = self.object.a(singleton_batch)
             output = to_device(output, 'cpu')
             args = unpack_batch(output)[0]
-            if hasattr(self.object, 'postprocess'):
-                args = self.object.postprocess(args)
+            if hasattr(self.object.a, 'postprocess'):
+                args = self.object.a.postprocess(args)
             return args
 
     def _predict(self, x, **kwargs):
-        with torch.no_grad(), eval(self.object):
+        with torch.no_grad(), eval(self.object.a):
             if not isinstance(x, list) and not test_if_batch(x, self.num_directions):
                 return self._predict_one(x)
-            inputs = BasicDataset(x, self.preprocess)
+            inputs = BasicDataset(
+                x,
+                self.preprocess.a if self.preprocess else lambda x: x,
+            )
             loader = torch.utils.data.DataLoader(inputs, **kwargs)
             out = []
             for batch in tqdm(loader, total=len(loader)):
-                batch = to_device(batch, device_of(self.object))
-                tmp = self.object(batch)
+                batch = to_device(batch, device_of(self.object.a))
+                tmp = self.object.a(batch)
                 tmp = to_device(tmp, 'cpu')
                 tmp = unpack_batch(tmp)
-                tmp = list(map(self.postprocess, tmp))
+                if self.postprocess is not None:
+                    tmp = list(map(self.postprocess.a, tmp))
                 out.extend(tmp)
             return out
 
-    def preprocess(self, r):
-        if self._preprocess is not None:
-            return self._preprocess(r)
-        return r
-
-    def postprocess(self, r):
-        if self._postprocess is not None:
-            return self._postprocess(r)
-        return r
+    def train_forward(self, X, y=None):
+        if hasattr(self.object.a, 'train_forward'):
+            if y is None:
+                return self.object.a.train_forward(X)
+            else:
+                return self.object.a.train_forward(X, y=y)
+        else:
+            if y is None:
+                return (self.object.a(X),)
+            else:
+                return [self.object.a(X), y]
 
 
 def test_if_batch(x, num_directions: Union[Dict, int]):
@@ -776,67 +522,39 @@ def create_batch(args):
     )  # pragma: no cover
 
 
+@dc.dataclass
 class TorchModelEnsemble(Base, ModelEnsemble):
-    def __init__(
-        self,
-        models: List[Base],
-        identifier: str,
-        collate_fn: Optional[Callable] = None,
-        is_batch: Optional[Callable] = None,
-        encoder: Optional[Union[Encoder, str]] = None,
-        training_configuration: Optional[TorchTrainerConfiguration] = None,
-        training_select: Optional[Select] = None,
-        train_X: Optional[Union[str, List[str]]] = None,
-        train_y: Optional[Union[str, List[str]]] = None,
-        num_directions: int = 2,
-    ):
-        Base.__init__(
-            self,
-            object=None,  # type: ignore[arg-type]
-            identifier=identifier,
-            collate_fn=collate_fn,
-            is_batch=is_batch,
-            encoder=encoder,
-            training_configuration=training_configuration,
-            training_select=training_select,
-            train_X=train_X,
-            train_y=train_y,
-            num_directions=num_directions,
-        )
-        ModelEnsemble.__init__(self, models)  # type: ignore[arg-type]
+    training_configuration: t.Optional[TorchTrainerConfiguration] = None
+    optimizers: t.Optional[t.List[Artifact]] = None
 
     def build_optimizers(self):
         optimizers = []
-        for m in self._model_ids:
-            optimizers.append(
-                self.training_configuration.optimizer_cls(
-                    getattr(self, m).object.parameters(),
-                    **self.training_configuration.optimizer_kwargs,
-                )
-            )
+        for m in self.models:
+            if m.optimizers is None:
+                optimizers.extend(m.build_optimizers())
         return optimizers
 
     @contextmanager
     def evaluating(self):
-        was_training = getattr(self, self._model_ids[0]).object.training
+        was_training = self.models[0].object.a.training
         try:
-            for m in self._model_ids:
-                getattr(self, m).object.eval()
+            for m in self.models:
+                m.eval()
             yield
         finally:
             if was_training:
-                for m in self._model_ids:
-                    getattr(self, m).object.train()
+                for m in self.models:
+                    m.train()
 
     def train(self):
-        for m in self._model_ids:
-            getattr(self, m).train()
+        for m in self.models:
+            m.train()
 
     def train_forward(self, X, y=None):
         out = []
         for i, k in enumerate(self.train_X):
-            submodel = getattr(self, self._model_ids[i])
-            out.append(submodel.object(X[i]))
+            submodel = self.models[i]
+            out.append(submodel.object.a(X[i]))
         if y is not None:
             return out, y
         else:

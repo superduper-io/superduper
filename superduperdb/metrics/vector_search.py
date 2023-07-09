@@ -52,8 +52,8 @@ class VectorSearchPerformance:
             )
         if isinstance(model, ModelEnsemble):
             msg = 'Model ensemble should only be used in case of multi-model retrieval'
-            assert len(model._model_ids) > 1, msg
-            models = [model[i] for i in range(len(model._model_ids))]
+            assert len(model.models) > 1, msg
+            models = model.models
         else:
             models = [model for _ in range(2)]
             keys = [keys[0] for _ in range(2)]

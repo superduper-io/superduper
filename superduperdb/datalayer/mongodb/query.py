@@ -1,5 +1,5 @@
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import Field
 from pymongo import UpdateOne as _UpdateOne
 import random
 import typing as t
@@ -7,20 +7,18 @@ import typing as t
 import superduperdb as s
 from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.cursor import SuperDuperCursor
-from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.base.query import Select, SelectOne, Insert, Delete, Update
 from superduperdb.datalayer.base.query import Like
+from superduperdb.misc import dataclasses as dc
 
 
-class Collection(BaseModel):
+@dc.dataclass
+class Collection:
     name: str
 
     @property
     def table(self):
         return self.name
-
-    def to_dict(self):
-        return {'cls': 'Collection', 'dict': {'name': self.name}}
 
     def like(
         self,
@@ -73,18 +71,21 @@ class Collection(BaseModel):
         return ChangeStream(collection=self, args=args, kwargs=kwargs)
 
 
+@dc.dataclass
 class ReplaceOne(Update):
     collection: Collection
+    refresh: bool = True
+    verbose: bool = True
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
-    type_id: t.Literal['mongdb.ReplaceOne'] = 'mongdb.ReplaceOne'
+    type_id: t.Literal['mongodb.ReplaceOne'] = 'mongodb.ReplaceOne'
 
     @property
     def select_table(self):
         raise NotImplementedError
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         filter, repl = self.args[:2]
         if isinstance(repl, Document):
             repl = repl.encode()
@@ -102,20 +103,18 @@ class ReplaceOne(Update):
         return Find(parent=self.collection, args=[self.args[0]]).select_ids
 
 
+@dc.dataclass
 class PreLike(Like):
-    r: t.Dict
+    r: Document
     vector_index: str
     collection: Collection
     n: int = 100
 
-    type_id: t.Literal['mongdb.PreLike'] = 'mongdb.PreLike'
+    type_id: t.Literal['mongodb.PreLike'] = 'mongodb.PreLike'
 
     @property
     def table(self):
         return self.collection.name
-
-    class Config:
-        arbitrary_types_allowed = True
 
     def find(self, *args, **kwargs):
         return Find(like_parent=self, args=args, kwargs=kwargs)
@@ -138,13 +137,14 @@ class PreLike(Like):
         )
 
 
+@dc.dataclass
 class Find(Select):
     collection: t.Optional[Collection] = None
     like_parent: t.Optional[PreLike] = None
     args: t.Optional[t.List] = Field(default_factory=lambda: [])
     kwargs: t.Optional[t.Dict] = Field(default_factory=lambda: {})
 
-    type_id: t.Literal['mongdb.Find'] = 'mongdb.Find'
+    type_id: t.Literal['mongodb.Find'] = 'mongodb.Find'
 
     @property
     def parent(self):
@@ -217,7 +217,7 @@ class Find(Select):
     def featurize(self, features):
         return Featurize(parent=self, features=features)
 
-    def get_ids(self, db: BaseDatabase):
+    def get_ids(self, db):
         args = [{}, {}]  # type: ignore[var-annotated]
         args[: len(self.args)] = self.args  # type: ignore[var-annotated,arg-type,assignment]
         args[1] = {'_id': 1}  # type: ignore[arg-type,assigment]
@@ -256,7 +256,7 @@ class Find(Select):
         )(db)
 
     # ruff: noqq: E501
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         if isinstance(self.parent, Collection):
             cursor = db.db[self.collection.name].find(  # type: ignore[union-attr]
                 *self.args, **self.kwargs
@@ -278,28 +278,30 @@ class Find(Select):
         return SuperDuperCursor(raw_cursor=cursor, id_field='_id', types=db.types)
 
 
+@dc.dataclass
 class FeaturizeOne(SelectOne):
     features: t.Dict[str, str]
     parent_find_one: t.Optional[Find] = None
 
-    type_id: t.Literal['mongdb.FeaturizeOne'] = 'mongdb.FeaturizeOne'
+    type_id: t.Literal['mongodb.FeaturizeOne'] = 'mongodb.FeaturizeOne'
 
     # ruff: noqa: E501
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         r = self.parent_find_one(db)  # type: ignore[misc]
         r = SuperDuperCursor.add_features(r.content, self.features)  # type: ignore[misc]
         return Document(r)
 
 
+@dc.dataclass
 class FindOne(SelectOne):
     args: t.Optional[t.List] = Field(default_factory=list)
     kwargs: t.Optional[t.Dict] = Field(default_factory=dict)
     like_parent: t.Optional[PreLike] = None
     collection: t.Optional[Collection] = None
 
-    type_id: t.Literal['mongdb.FindOne'] = 'mongdb.FindOne'
+    type_id: t.Literal['mongodb.FindOne'] = 'mongodb.FindOne'
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         if self.collection is not None:
             return SuperDuperCursor.wrap_document(
                 db.db[self.collection.name].find_one(*self.args, **self.kwargs),
@@ -321,47 +323,53 @@ class FindOne(SelectOne):
         return FeaturizeOne(parent=self, features=features)
 
 
+@dc.dataclass
 class Aggregate(Select):
+    collection: Collection
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
-    collection: Collection
 
-    type_id: t.Literal['mongdb.Aggregate'] = 'mongdb.Aggregate'
+    type_id: t.Literal['mongodb.Aggregate'] = 'mongodb.Aggregate'
 
     def __call__(self, db):
         return db.db[self.collection.name].aggregate(*self.args, **self.kwargs)
 
 
+@dc.dataclass
 class DeleteOne(Delete):
     collection: Collection
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
-    type_id: t.Literal['mongdb.DeleteOne'] = 'mongdb.DeleteOne'
+    type_id: t.Literal['mongodb.DeleteOne'] = 'mongodb.DeleteOne'
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         return db.db[self.collection.name].delete_one(*self.args, **self.kwargs)
 
 
+@dc.dataclass
 class DeleteMany(Delete):
     collection: Collection
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
-    type_id: t.Literal['mongdb.DeleteMany'] = 'mongdb.DeleteMany'
+    type_id: t.Literal['mongodb.DeleteMany'] = 'mongodb.DeleteMany'
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         return db.db[self.collection.name].delete_many(*self.args, **self.kwargs)
 
 
+@dc.dataclass
 class UpdateOne(Update):
     collection: Collection
+    refresh: bool = True
+    verbose: bool = True
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
-    type_id: t.Literal['mongdb.UpdateOne'] = 'mongdb.UpdateOne'
+    type_id: t.Literal['mongodb.UpdateOne'] = 'mongodb.UpdateOne'
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         return db.db[self.collection.name].update_one(*self.args, **self.kwargs)
 
     @property
@@ -377,17 +385,17 @@ class UpdateOne(Update):
         raise NotImplementedError
 
 
+@dc.dataclass
 class UpdateMany(Update):
     collection: Collection
+    refresh: bool = True
+    verbose: bool = True
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
-    my_refresh: bool = Field(default=True, alias='refresh')
-    my_verbose: bool = Field(default=True, alias='verbose')
+    type_id: t.Literal['mongodb.UpdateMany'] = 'mongodb.UpdateMany'
 
-    type_id: t.Literal['mongdb.UpdateMany'] = 'mongdb.UpdateMany'
-
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         to_update = Document(self.args[1]).encode()
         ids = [
             r['_id'] for r in db.db[self.collection.name].find(self.args[0], {'_id': 1})
@@ -418,14 +426,17 @@ class UpdateMany(Update):
         return Find(parent=self.args[0])
 
 
+@dc.dataclass
 class InsertMany(Insert):
     collection: Collection
+    refresh: bool = True
+    verbose: bool = True
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
     valid_prob: float = 0.05
     encoders: t.List = Field(default_factory=list)
 
-    type_id: t.Literal['mongdb.InsertMany'] = 'mongdb.InsertMany'
+    type_id: t.Literal['mongodb.InsertMany'] = 'mongodb.InsertMany'
 
     @property
     def table(self):
@@ -438,7 +449,7 @@ class InsertMany(Insert):
     def select_using_ids(self, ids):
         return Find(collection=self.collection, args=[{'_id': {'$in': ids}}])
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         for e in self.encoders:
             db.add(e)
         documents = [r.encode() for r in self.documents]
@@ -462,6 +473,7 @@ class InsertMany(Insert):
         return output, graph
 
 
+@dc.dataclass
 class PostLike(Select):
     find_parent: t.Optional[Find]
     r: t.Dict
@@ -469,14 +481,14 @@ class PostLike(Select):
     n: int = 100
     max_ids: int = 1000
 
-    type_id: t.Literal['mongdb.PostLike'] = 'mongdb.PostLike'
+    type_id: t.Literal['mongodb.PostLike'] = 'mongodb.PostLike'
 
     class Config:
         arbitrary_types_allowed = True
         # TODO: the server will crash when it tries to JSONize whatever it is that
         # this allows.
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         cursor = self.find_parent.select_ids.limit(self.max_ids)(db)  # type: ignore[union-attr]
         ids = [r['_id'] for r in cursor]  # type: ignore[union-attr]
         ids, scores = db._select_nearest(
@@ -515,10 +527,11 @@ class PostLike(Select):
         raise NotImplementedError
 
 
+@dc.dataclass
 class Featurize(Select):
     features: t.Dict[str, str]
     parent: t.Union[PreLike, Find, PostLike]
-    type_id: t.Literal['mongdb.Featurize'] = 'mongdb.Featurize'
+    type_id: t.Literal['mongodb.Featurize'] = 'mongodb.Featurize'
 
     @property
     def select_table(self):
@@ -545,7 +558,7 @@ class Featurize(Select):
     def model_update(self, *args, **kwargs):
         return self.parent.model_update(*args, **kwargs)
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         if (
             isinstance(self.parent, Find)
             or isinstance(self.parent, Limit)
@@ -560,12 +573,13 @@ class Featurize(Select):
             return Document(r)
 
 
+@dc.dataclass
 class Limit(Select):
     n: int
     parent: t.Union[Find, PostLike, PreLike, Featurize]
-    type_id: t.Literal['mongdb.Limit'] = 'mongdb.Limit'
+    type_id: t.Literal['mongodb.Limit'] = 'mongodb.Limit'
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         return self.parent(db).limit(self.n)
 
     def add_fold(self, fold: str) -> 'Select':
@@ -592,12 +606,13 @@ class Limit(Select):
         raise NotImplementedError
 
 
-class ChangeStream(BaseModel):
+@dc.dataclass
+class ChangeStream:
     collection: Collection
     args: t.List = Field(default_factory=list)
     kwargs: t.Dict = Field(default_factory=dict)
 
-    def __call__(self, db: BaseDatabase):
+    def __call__(self, db):
         resume_token = self.kwargs.get("resume_token")
         # TODO (high): need to pass change pipeline into watch
         self.kwargs.get("change")

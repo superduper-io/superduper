@@ -17,7 +17,7 @@ from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.encoders.numpy.array import array
 from superduperdb.encoders.pillow.image import pil_image
 from superduperdb.encoders.torch.tensor import tensor
-from tests.material.models import BinaryClassifier, LinearBase
+from tests.material.models import BinaryClassifier
 from tests.material.metrics import PatK
 
 
@@ -145,18 +145,25 @@ def vector_index_factory(a_model):
     def _factory(db, identifier, **kwargs) -> VectorIndex:
         db.add(
             Watcher(
-                select=Collection(name='documents').find(), key='x', model='linear_a'
+                select=Collection(name='documents').find(),
+                key='x',
+                model='linear_a',
+                db=a_model,
             )
         )
         db.add(
             Watcher(
-                select=Collection(name='documents').find(), key='z', model='linear_a'
+                select=Collection(name='documents').find(),
+                key='z',
+                model='linear_a',
+                db=a_model,
             )
         )
         vi = VectorIndex(
             identifier=identifier,
             indexing_watcher='linear_a/x',
             compatible_watchers=['linear_a/z'],
+            db=a_model,
             **kwargs,
         )
         db.add(vi)
@@ -173,14 +180,13 @@ def with_vector_index(random_data, vector_index_factory):
 
 @pytest.fixture()
 def si_validation(random_data):
-    random_data.add(
-        Dataset(
-            'my_valid',
-            select=Collection(name='documents').find({'_fold': 'valid'}),
-            sample_size=100,
-        )
+    d = Dataset(
+        identifier='my_valid',
+        select=Collection(name='documents').find({'_fold': 'valid'}),
+        sample_size=100,
+        db=random_data,
     )
-
+    random_data.add(d)
     yield random_data
 
 
@@ -241,7 +247,12 @@ def image_type(empty):
 @pytest.fixture()
 def a_model(float_tensors_32, float_tensors_16):
     float_tensors_32.add(
-        TorchModel(torch.nn.Linear(32, 16), 'linear_a', encoder='torch.float32[16]')
+        TorchModel(
+            object=torch.nn.Linear(32, 16),
+            identifier='linear_a',
+            encoder='torch.float32[16]',
+            db=float_tensors_16,
+        )
     )
     yield float_tensors_32
     try:
@@ -255,7 +266,13 @@ def a_model(float_tensors_32, float_tensors_16):
 @pytest.fixture()
 def a_model_base(float_tensors_32, float_tensors_16):
     float_tensors_32.add(
-        TorchModel(LinearBase(32, 16), 'linear_a_base', encoder='torch.float32[16]'),
+        TorchModel(
+            object=torch.nn.Linear(32, 16),
+            identifier='linear_a_base',
+            encoder='torch.float32[16]',
+            db=float_tensors_16,
+            preprocess=lambda r: r['x'],
+        ),
     )
     yield float_tensors_32
     try:
@@ -270,7 +287,12 @@ def a_model_base(float_tensors_32, float_tensors_16):
 def a_watcher(a_model):
     a_model.remote = False
     a_model.add(
-        Watcher(model='linear_a', select=Collection(name='documents').find(), key='x')
+        Watcher(
+            model='linear_a',
+            select=Collection(name='documents').find(),
+            key='x',
+            db=a_model,
+        )
     )
     yield a_model
     a_model.remove('watcher', 'linear_a/x', force=True)
@@ -281,8 +303,9 @@ def a_watcher_base(a_model_base):
     a_model_base.add(
         Watcher(
             model='linear_a_base',
-            select=Collection(name='documents').find(),
+            select=Collection(name='documents').find({}, {'_id': 0}),
             key='_base',
+            db=a_model_base,
         )
     )
     yield a_model_base
@@ -292,7 +315,10 @@ def a_watcher_base(a_model_base):
 @pytest.fixture()
 def a_classifier(float_tensors_32):
     float_tensors_32.add(
-        TorchModel(BinaryClassifier(32), 'classifier'),
+        TorchModel(
+            object=BinaryClassifier(32),
+            identifier='classifier',
+        ),
     )
     yield float_tensors_32
     try:
@@ -306,7 +332,12 @@ def a_classifier(float_tensors_32):
 @pytest.fixture()
 def b_model(float_tensors_32, float_tensors_16, float_tensors_8):
     float_tensors_32.add(
-        TorchModel(torch.nn.Linear(16, 8), 'linear_b', encoder='torch.float32[8]'),
+        TorchModel(
+            object=torch.nn.Linear(16, 8),
+            identifier='linear_b',
+            encoder='torch.float32[8]',
+            db=float_tensors_32,
+        ),
     )
     yield float_tensors_32
     try:
@@ -321,9 +352,10 @@ def b_model(float_tensors_32, float_tensors_16, float_tensors_8):
 def c_model(float_tensors_32, float_tensors_16):
     float_tensors_32.add(
         TorchModel(
-            torch.nn.Linear(32, 16),
-            'linear_c',
+            object=torch.nn.Linear(32, 16),
+            identifier='linear_c',
             encoder='torch.float32[16]',
+            db=float_tensors_16,
         ),
     )
     yield float_tensors_32

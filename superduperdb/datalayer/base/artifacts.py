@@ -6,6 +6,8 @@ import io
 import pickle
 import typing as t
 
+from superduperdb.misc.serialization import serializers
+
 
 class Serializer(enum.Enum):
     """
@@ -60,22 +62,19 @@ class ArtifactStore(ABC):
         pass
 
     def create_artifact(
-        self,
-        object: t.Any,
-        serializer: t.Union[Serializer, str] = Serializer.default,
-        serializer_kwargs: t.Optional[t.Dict] = None,
+        self, object: t.Any, serializer: t.Any, info: t.Optional[t.Dict] = None
     ):
         """
         Save serialized object in the artifact store.
 
         :param object: Object to serialize
         :param serializer: Serializer to use
-        :param serializer_kwargs: Keyword parameters to pass to serializer
         """
-        if isinstance(serializer, str):
-            serializer = Serializer(serializer)
-
-        bytes = self._serialize(object, serializer, serializer_kwargs)
+        serializer = serializers[serializer]
+        if info is not None:
+            bytes = serializer.encode(object, info)
+        else:
+            bytes = serializer.encode(object)
         return self._save_artifact(bytes), hashlib.sha1(bytes).hexdigest()
 
     @abstractmethod
@@ -86,7 +85,9 @@ class ArtifactStore(ABC):
     def _load_bytes(self, file_id):
         pass
 
-    def load_artifact(self, file_id: str, serializer: str):
+    def load_artifact(
+        self, file_id: str, serializer: str, info: t.Optional[t.Dict] = None
+    ):
         """
         Load artifact from artifact store, and deserialize.
 
@@ -94,10 +95,8 @@ class ArtifactStore(ABC):
         :param serializer: Serializer to use for deserialization
         """
         bytes = self._load_bytes(file_id)
-        fp = io.BytesIO(bytes)
-        if serializer == 'dill':
-            return dill.load(fp)
-        elif serializer == 'pickle':
-            return pickle.load(fp)
+        serializer_function = serializers[serializer]
+        if info is not None:
+            return serializer_function.decode(bytes, info)
         else:
-            raise NotImplementedError
+            return serializer_function.decode(bytes)

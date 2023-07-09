@@ -3,7 +3,7 @@ import PIL.PngImagePlugin
 import pytest
 import torch
 
-from superduperdb.core.base import Placeholder
+from superduperdb.core.base import Artifact
 from superduperdb.core.documents import Document
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.encoder import Encoder
@@ -39,16 +39,17 @@ IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
 
 
 def test_create_component(empty, float_tensors_16, float_tensors_32):
-    empty.add(TorchModel(torch.nn.Linear(16, 32), 'my-test-module'))
+    empty.add(TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module'))
     assert 'my-test-module' in empty.show('model')
     model = empty.models['my-test-module']
+    print(model)
     output = model.predict(torch.randn(16))
     assert output.shape[0] == 32
 
 
 def test_update_component(empty):
-    empty.add(TorchModel(torch.nn.Linear(16, 32), 'my-test-module'))
-    m = TorchModel(torch.nn.Linear(16, 32), 'my-test-module')
+    empty.add(TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module'))
+    m = TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module')
     empty.add(m)
     assert empty.show('model', 'my-test-module') == [0, 1]
     empty.add(m)
@@ -87,10 +88,7 @@ def test_compound_component(empty):
     assert empty.show('model', 'my-test-module') == [0, 1]
     assert empty.show('type', 'torch.float32[32]') == [0]
 
-    m = empty.load(variety='model', identifier='my-test-module', repopulate=False)
-    assert isinstance(m.encoder, Placeholder)
-
-    m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
+    m = empty.load(variety='model', identifier='my-test-module')
     assert isinstance(m.encoder, Encoder)
 
     with pytest.raises(ComponentInUseError):
@@ -98,10 +96,6 @@ def test_compound_component(empty):
 
     with pytest.warns(ComponentInUseWarning):
         empty.remove('type', 'torch.float32[32]', force=True)
-
-    # checks that can reload hidden type if part of another component
-    m = empty.load(variety='model', identifier='my-test-module', repopulate=True)
-    assert isinstance(m.encoder, Encoder)
 
     empty.remove('model', 'my-test-module', force=True)
 
@@ -115,8 +109,7 @@ def test_select(with_vector_index):
     db = with_vector_index
     r = db.execute(Collection(name='documents').find_one())
     query = Collection(name='documents').like(
-        # r=Document({'x': r['x']}),
-        r={'x': r['x']},
+        r=Document({'x': r['x']}),
         vector_index='test_vector_search',
     )
     s = next(db.execute(query))
@@ -133,7 +126,7 @@ def test_select_milvus(
     s = next(
         db.execute(
             Collection(name='documents').like(
-                {'x': r['x']},
+                Document({'x': r['x']}),
                 vector_index='test_vector_search',
             )
         )
@@ -150,6 +143,10 @@ def test_select_jsonable(with_vector_index):
     )
     s2 = PreLike(**s1.dict())
     assert s1 == s2
+
+
+def test_reload_dataset(si_validation):
+    si_validation.load('dataset', 'my_valid')
 
 
 def test_validate_component(with_vector_index, si_validation, metric):
@@ -219,7 +216,12 @@ def test_update(random_data, a_watcher):
 
 def test_watcher(random_data, a_model, b_model):
     random_data.add(
-        Watcher(model='linear_a', select=Collection(name='documents').find(), key='x')
+        Watcher(
+            model='linear_a',
+            select=Collection(name='documents').find(),
+            key='x',
+            db=random_data,
+        ),
     )
     r = random_data.execute(Collection(name='documents').find_one())
     assert 'linear_a' in r['_outputs']['x']
@@ -240,16 +242,11 @@ def test_watcher(random_data, a_model, b_model):
             model='linear_b',
             select=Collection(name='documents').find().featurize({'x': 'linear_a'}),
             key='x',
+            db=random_data,
         )
     )
     r = random_data.execute(Collection(name='documents').find_one())
     assert 'linear_b' in r['_outputs']['x']
-
-
-# WTF
-@pytest.mark.skip('To be replaced with model.fit')
-def test_fit(si_validation, a_model, c_model, metric):
-    ...
 
 
 def test_predict(a_model, float_tensors_32, float_tensors_16):
@@ -278,11 +275,12 @@ def test_replace(random_data):
 
 
 def test_dataset(random_data):
-    random_data.add(
-        Dataset(
-            'test_dataset', select=Collection(name='documents').find({'_fold': 'valid'})
-        )
+    d = Dataset(
+        identifier='test_dataset',
+        select=Collection(name='documents').find({'_fold': 'valid'}),
+        db=random_data,
     )
+    random_data.add(d)
     assert random_data.show('dataset') == ['test_dataset']
     dataset = random_data.load('dataset', 'test_dataset')
     assert len(dataset.data) == len(list(random_data.execute(dataset.select)))

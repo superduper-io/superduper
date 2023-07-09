@@ -2,7 +2,6 @@ import numpy
 
 from superduperdb.vector_search.base import BaseVectorIndex
 from superduperdb.misc.logger import logging
-from superduperdb.vector_search import table_scan
 
 
 class VanillaVectorIndex(BaseVectorIndex):
@@ -18,11 +17,11 @@ class VanillaVectorIndex(BaseVectorIndex):
 
     def __init__(self, h, index, measure='css'):
         if isinstance(measure, str):
-            measure = getattr(table_scan, measure)
+            measure = measures[measure]
         super().__init__(h, index, measure)
 
     def find_nearest_from_arrays(self, h, n=100):
-        similarities = self.measure(h, self.h)
+        similarities = self.measure(h, self.h)  # mypy: ignore
         logging.debug(similarities)
         scores = -numpy.sort(-similarities, axis=1)[:, :n]
         ix = numpy.argsort(-similarities, axis=1)[:, :n]
@@ -48,3 +47,6 @@ def css(x, y):
     x = x / numpy.linalg.norm(x, axis=1)[:, None]
     y = y / numpy.linalg.norm(y, axis=1)[:, None]
     return dot(x, y)
+
+
+measures = {'css': css, 'dot': dot, 'l2': l2}

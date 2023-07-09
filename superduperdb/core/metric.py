@@ -1,19 +1,26 @@
-from superduperdb.core.base import Component
+import dataclasses as dc
+from superduperdb.core.base import Component, Artifact
 
 import typing as t
 
 
+@dc.dataclass
 class Metric(Component):
     """
     Metric base object with which to evaluate performance on a data-set.
     These objects are ``callable`` and are applied row-wise to the data, and averaged.
     """
 
-    variety = 'metric'
+    variety: t.ClassVar[str] = 'metric'
+    artifacts: t.ClassVar[t.List[str]] = ['object']
 
-    def __init__(self, identifier: str, object: t.Callable):
-        super().__init__(identifier)
-        self.object = object
+    identifier: str
+    object: t.Union[Artifact, t.Callable, None] = None
+    version: t.Optional[int] = None
+
+    def __post_init__(self):
+        if self.object and not isinstance(self.object, Artifact):
+            self.object = Artifact(_artifact=self.object)
 
     def __call__(self, x, y):
-        return self.object(x, y)
+        return self.object.a(x, y)

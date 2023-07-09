@@ -1,22 +1,16 @@
 import itertools
 import typing as t
 from contextlib import contextmanager
+import dataclasses as dc
 
-from superduperdb.core.base import (
-    Component,
-    ComponentList,
-    DBPlaceholder,
-    Placeholder,
-    PlaceholderList,
-    is_placeholders_or_components,
-)
+
+from superduperdb.core.base import Component
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encodable
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model, ModelEnsemble
 from superduperdb.core.watcher import Watcher
-from superduperdb.datalayer.base.query import Select
 from superduperdb.metrics.vector_search import VectorSearchPerformance
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -45,6 +39,7 @@ def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
 _BACKFILL_BATCH_SIZE = 100
 
 
+@dc.dataclass
 class VectorIndex(Component):
     """
     Vector-index
@@ -56,49 +51,23 @@ class VectorIndex(Component):
     :param measure: Measure which is used to compare vectors in index
     """
 
-    compatible_watchers: t.Union[t.Tuple, PlaceholderList, ComponentList]
-    indexing_watcher: t.Union[Watcher, Placeholder]
-    models: t.Union[PlaceholderList, ComponentList]
-    variety: str = 'vector_index'
-    select: Select
-    watcher: t.Union[Watcher, Placeholder]
+    variety: t.ClassVar[str] = 'vector_index'
 
-    def __init__(
-        self,
-        identifier: str,
-        indexing_watcher: t.Union[Watcher, str],
-        compatible_watchers: t.Union[t.List[Watcher], t.List[str], None] = None,
-        measure: VectorIndexMeasureType = 'css',
-    ):
-        super().__init__(identifier)
-        self.indexing_watcher = (
-            Placeholder(indexing_watcher, 'watcher')
-            if isinstance(indexing_watcher, str)
-            else indexing_watcher
-        )
+    identifier: str
+    indexing_watcher: t.Union[Watcher, str]
+    compatible_watchers: t.List[t.Union[Watcher, str]] = dc.field(default_factory=list)
+    measure: VectorIndexMeasureType = 'css'
+    db: dc.InitVar[t.Optional[t.Any]] = None
+    version: t.Optional[int] = None
+    metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
-        self.compatible_watchers = ()
-        if compatible_watchers:
-            is_placeholders, is_components = is_placeholders_or_components(
-                compatible_watchers
-            )
-            assert is_placeholders or is_components
-            if is_placeholders:
-                self.compatible_watchers = PlaceholderList(
-                    'watcher', compatible_watchers  # type: ignore[arg-type]
-                )
-            else:
-                self.compatible_watchers = ComponentList(
-                    'watcher', t.cast(t.List[Component], compatible_watchers)
-                )
-        self.measure = measure
-        self.database = DBPlaceholder()
+    def __post_init__(self, db):
+        if isinstance(self.indexing_watcher, str):
+            self.indexing_watcher = db.load('watcher', self.indexing_watcher)
+        for i, w in enumerate(self.compatible_watchers):
+            if isinstance(w, str):
+                self.compatible_watchers[i] = db.load('watcher', w)
 
-    def repopulate(self, database: t.Optional[t.Any] = None):
-        if database is None:
-            database = self.database
-            assert not isinstance(database, DBPlaceholder)
-        super().repopulate(database)
         logging.info(f'loading hashes: {self.identifier!r}')
 
         # TODO: this is a temporary solution until we implement a CDC process that will
@@ -107,12 +76,12 @@ class VectorIndex(Component):
         # * keep the index up-to-date
         with self._get_vector_collection() as vector_collection:
             for record_batch in ibatch(
-                database.execute(self.indexing_watcher.select),  # type: ignore
+                db.execute(self.indexing_watcher.select),  # type: ignore
                 _BACKFILL_BATCH_SIZE,
             ):
                 items = []
                 for record in record_batch:
-                    h, id = database.databackend.get_output_from_document(
+                    h, id = db.databackend.get_output_from_document(
                         record,
                         self.indexing_watcher.key,  # type: ignore
                         self.indexing_watcher.model.identifier,  # type: ignore
@@ -129,8 +98,6 @@ class VectorIndex(Component):
         if not isinstance(self.indexing_watcher.model, Model):
             raise NotImplementedError
         model_encoder = self.indexing_watcher.model.encoder
-        if isinstance(model_encoder, Placeholder):
-            raise NotImplementedError
         try:
             dimensions = int(model_encoder.shape[-1])  # type: ignore
         except Exception:
@@ -157,25 +124,21 @@ class VectorIndex(Component):
     def get_nearest(
         self,
         like: Document,
-        database: t.Optional[t.Any] = None,
+        db: t.Optional[t.Any] = None,
         outputs: t.Optional[t.Dict] = None,
         featurize: bool = True,
         ids: t.Optional[t.List[str]] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
-        if database is None:
-            database = self.database
-            assert not isinstance(database, DBPlaceholder)
-
         models, keys = self.models_keys
         assert len(models) == len(keys)
 
         within_ids = ids or ()
 
-        if database.db.id_field in like.content:  # type: ignore
+        if db.db.id_field in like.content:  # type: ignore
             with self._get_vector_collection() as vector_collection:
                 nearest = vector_collection.find_nearest_from_id(
-                    str(like[database.db.id_field]), within_ids=within_ids, limit=n
+                    str(like[db.db.id_field]), within_ids=within_ids, limit=n
                 )
                 return (
                     [result.id for result in nearest],
@@ -194,9 +157,7 @@ class VectorIndex(Component):
                 subout = document['_outputs'].setdefault(subkey, {})
                 f_subkey = features[subkey]
                 if f_subkey not in subout:
-                    subout[f_subkey] = database.models[f_subkey]._predict(
-                        document[subkey]
-                    )
+                    subout[f_subkey] = db.models[f_subkey]._predict(document[subkey])
                 document[subkey] = subout[f_subkey]
         available_keys = list(document.keys()) + ['_base']
         try:
@@ -210,7 +171,7 @@ class VectorIndex(Component):
             )
         model_input = document[key] if key != '_base' else document
 
-        model = database.models[model]
+        model = db.models[model]
         h = model.predict(model_input)  # type: ignore[attr-defined]
         with self._get_vector_collection() as vector_collection:
             nearest = vector_collection.find_nearest_from_array(
@@ -236,7 +197,7 @@ class VectorIndex(Component):
         metrics: t.List[t.Union[Metric, str]],
     ) -> t.Dict[str, t.List]:
         models, keys = self.models_keys
-        models = [db.models[m] for m in models]
+        models = [db.models[m] for m in models]  # type: ignore[arg-type]
         if isinstance(validation_set, str):
             validation_data = db.load('dataset', validation_set)
 
@@ -244,8 +205,11 @@ class VectorIndex(Component):
         for i, m in enumerate(metrics):
             if isinstance(m, str):
                 metrics[i] = db.load('metric', m)
+
         unpacked = [r.unpack() for r in validation_data.data]  # type: ignore[union-attr]
-        model_ensemble = ModelEnsemble(models)  # type: ignore[arg-type]
+        model_ensemble = ModelEnsemble(
+            identifier='tmp', models=models  # type: ignore[arg-type]
+        )
         msg = 'Can only evaluate VectorSearch with compatible watchers...'
         assert len(keys) >= 2, msg
         return VectorSearchPerformance(
@@ -257,11 +221,3 @@ class VectorIndex(Component):
             model=model_ensemble,
             metrics=metrics,  # type: ignore[arg-type]
         )
-
-    def asdict(self) -> t.Dict[str, t.Any]:
-        return {
-            'identifier': self.identifier,
-            'indexing_watcher': self.indexing_watcher.identifier,
-            'compatible_watchers': [w.identifier for w in self.compatible_watchers],
-            'measure': self.measure,
-        }

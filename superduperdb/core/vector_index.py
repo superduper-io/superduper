@@ -1,9 +1,9 @@
 import itertools
 import typing as t
-from contextlib import contextmanager
 import dataclasses as dc
 
 
+import superduperdb as s
 from superduperdb.core.component import Component
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
@@ -14,12 +14,7 @@ from superduperdb.core.watcher import Watcher
 from superduperdb.metrics.vector_search import VectorSearchPerformance
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.vector_search.base import (
-    VectorCollection,
-    VectorCollectionConfig,
-    VectorCollectionItem,
-    VectorIndexMeasureType,
-)
+from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 
 T = t.TypeVar('T')
 
@@ -36,6 +31,7 @@ def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
         yield batch
 
 
+# TODO configurable
 _BACKFILL_BATCH_SIZE = 100
 
 
@@ -56,7 +52,7 @@ class VectorIndex(Component):
     identifier: str
     indexing_watcher: t.Union[Watcher, str]
     compatible_watchers: t.List[t.Union[Watcher, str]] = dc.field(default_factory=list)
-    measure: VectorIndexMeasureType = 'css'
+    measure: str = 'cosine'
     db: dc.InitVar[t.Optional[t.Any]] = None
     version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
@@ -64,32 +60,38 @@ class VectorIndex(Component):
     def __post_init__(self, db):
         if isinstance(self.indexing_watcher, str):
             self.indexing_watcher = db.load('watcher', self.indexing_watcher)
+
+        self.vector_table = db.vector_database.get_table(
+            VectorCollectionConfig(
+                id=self.identifier,
+                dimensions=self._dimensions,
+                measure=self.measure,
+            )
+        )
+
         for i, w in enumerate(self.compatible_watchers):
             if isinstance(w, str):
                 self.compatible_watchers[i] = db.load('watcher', w)
+        if not s.CFG.cdc:
+            self._initialize_vector_database(db)
 
+    def _initialize_vector_database(self, db):
         logging.info(f'loading hashes: {self.identifier!r}')
-
-        # TODO: this is a temporary solution until we implement a CDC process that will
-        # asynchronously
-        # * backfill the index
-        # * keep the index up-to-date
-        with self._get_vector_collection() as vector_collection:
-            for record_batch in ibatch(
-                db.execute(self.indexing_watcher.select),  # type: ignore
-                _BACKFILL_BATCH_SIZE,
-            ):
-                items = []
-                for record in record_batch:
-                    h, id = db.databackend.get_output_from_document(
-                        record,
-                        self.indexing_watcher.key,  # type: ignore
-                        self.indexing_watcher.model.identifier,  # type: ignore
-                    )
-                    if isinstance(h, Encodable):
-                        h = h.x
-                    items.append(VectorCollectionItem.create(id=str(id), vector=h))
-                vector_collection.add(items)
+        for record_batch in ibatch(
+            db.execute(self.indexing_watcher.select),  # type: ignore
+            _BACKFILL_BATCH_SIZE,
+        ):
+            items = []
+            for record in record_batch:
+                h, id = db.databackend.get_output_from_document(
+                    record,
+                    self.indexing_watcher.key,  # type: ignore
+                    self.indexing_watcher.model.identifier,  # type: ignore
+                )
+                if isinstance(h, Encodable):
+                    h = h.x
+                items.append(VectorCollectionItem.create(id=str(id), vector=h))
+            self.vector_table.add(items)
 
     @property
     def _dimensions(self) -> int:
@@ -108,19 +110,6 @@ class VectorIndex(Component):
             )
         return dimensions
 
-    @contextmanager
-    def _get_vector_collection(self) -> t.Iterator[VectorCollection]:
-        from superduperdb.datalayer.base.database import VECTOR_DATABASE
-
-        with VECTOR_DATABASE.get_collection(
-            VectorCollectionConfig(
-                id=self.identifier,
-                dimensions=self._dimensions,
-                measure=self.measure,
-            )
-        ) as vector_collection:
-            yield vector_collection
-
     def get_nearest(
         self,
         like: Document,
@@ -136,14 +125,13 @@ class VectorIndex(Component):
         within_ids = ids or ()
 
         if db.db.id_field in like.content:  # type: ignore
-            with self._get_vector_collection() as vector_collection:
-                nearest = vector_collection.find_nearest_from_id(
-                    str(like[db.db.id_field]), within_ids=within_ids, limit=n
-                )
-                return (
-                    [result.id for result in nearest],
-                    [result.score for result in nearest],
-                )
+            nearest = self.vector_table.find_nearest_from_id(
+                str(like[db.db.id_field]), within_ids=within_ids, limit=n
+            )
+            return (
+                [result.id for result in nearest],
+                [result.score for result in nearest],
+            )
 
         document = MongoStyleDict(like.unpack())
 
@@ -173,14 +161,13 @@ class VectorIndex(Component):
 
         model = db.models[model]
         h = model.predict(model_input)  # type: ignore[attr-defined]
-        with self._get_vector_collection() as vector_collection:
-            nearest = vector_collection.find_nearest_from_array(
-                h, within_ids=within_ids, limit=n
-            )
-            return (
-                [result.id for result in nearest],
-                [result.score for result in nearest],
-            )
+        nearest = self.vector_table.find_nearest_from_array(
+            h, within_ids=within_ids, limit=n
+        )
+        return (
+            [result.id for result in nearest],
+            [result.score for result in nearest],
+        )
 
     @property
     def models_keys(self) -> t.Tuple[t.List[str], t.List[str]]:

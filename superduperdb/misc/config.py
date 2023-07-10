@@ -142,28 +142,34 @@ class Server(JSONable):
 
 
 class LanceDB(JSONable):
+    lancedb: bool = True
     uri: str = './.lancedb'
+    backfill_batch_size: int = 100
+
+
+class InMemory(JSONable):
+    inmemory: bool = True
+    uri: str = ''
+    backfill_batch_size: int = 100
 
 
 class Milvus(JSONable):
+    milvus: bool = True
     host: str = 'localhost'
     port: int = 19530
     username: str = Field(default='', repr=False)
     password: str = Field(default='', repr=False)
     db_name: str = 'default'
     consistency_level: str = 'Bounded'
+    backfill_batch_size: int = 100
 
 
 class VectorSearch(JSONable):
-    milvus: t.Optional[Milvus] = None
-    lancedb: t.Optional[LanceDB] = Field(default_factory=LanceDB)
-
-    # the fields below were left for compatibility with the vector search server
-    # that is still in the codebase
-    host: str = 'localhost'
-    port: int = 5001
+    type: t.Union[LanceDB, InMemory, Milvus] = Field(default_factory=InMemory)
     username: str = Field(default='', repr=False)
     password: str = Field(default='', repr=False)
+    host: str = 'localhost'
+    port: int = 19530
 
 
 class Config(JSONable):
@@ -174,7 +180,7 @@ class Config(JSONable):
     data_layers: DataLayers = Factory(DataLayers)
     notebook: Notebook = Factory(Notebook)
     ray: Ray = Factory(Ray)
-    remote: bool = False
+    distributed: bool = False
     cdc: bool = False
     server: Server = Factory(Server)
     vector_search: VectorSearch = Factory(VectorSearch)

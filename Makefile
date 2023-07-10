@@ -1,4 +1,5 @@
 PYTEST_ARGUMENTS ?= -W ignore
+COMPOSE_ARGUMENTS ?=
 
 dist/.built: pyproject.toml $(shell find superduperdb)
 	poetry build --format=wheel
@@ -21,11 +22,11 @@ build/jupyter-image: build/server-image
 .PHONY: test-containers
 test-containers:
 	chmod +x ./tests/material/mongo-init.sh
-	docker compose -f tests/material/docker-compose.yml up mongodb mongo-init milvus -d
+	docker compose -f tests/material/docker-compose.yml up mongodb mongo-init milvus -d $(COMPOSE_ARGUMENTS)
 
 .PHONY: clean-test-containers
 clean-test-containers:
-	docker compose -f tests/material/docker-compose.yml down
+	docker compose -f tests/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
 
 .PHONY: test
 test: test-containers
@@ -48,7 +49,7 @@ clean-test: clean-test-containers
 
 .PHONY: jupyter
 jupyter: build/jupyter-image
-	docker compose -f tests/material/docker-compose.yml up jupyter -d
+	docker compose -f tests/material/docker-compose.yml up jupyter -d $(COMPOSE_ARGUMENTS)
 	# wait until the Jupyter HTTP server responds
 	until curl -s -o /dev/null http://127.0.0.1:28888; do sleep 1; done
 	open http://127.0.0.1:28888

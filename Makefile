@@ -22,6 +22,11 @@ build/jupyter-image: build/server-image
 .PHONY: test-containers
 test-containers:
 	chmod +x ./tests/material/mongo-init.sh
+	docker compose -f tests/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
+
+.PHONY: test-containers-milvus
+test-containers:
+	chmod +x ./tests/material/mongo-init.sh
 	docker compose -f tests/material/docker-compose.yml up mongodb mongo-init milvus -d $(COMPOSE_ARGUMENTS)
 
 .PHONY: clean-test-containers
@@ -41,7 +46,7 @@ fix-and-test: test-containers
 	black superduperdb tests
 	ruff check --fix superduperdb tests
 	mypy
-	poetry lock --check
+	poetry lock --no-update
 	$(COVERAGE_PREFIX) pytest $(PYTEST_ARGUMENTS)
 
 .PHONY: clean-test

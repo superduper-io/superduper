@@ -1,4 +1,3 @@
-# ruff: noqa: F401, F811
 import pytest
 import time
 from unittest.mock import MagicMock
@@ -9,28 +8,6 @@ import torch
 from superduperdb.datalayer.base.cdc import DatabaseWatcher
 from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.misc.task_queue import cdc_queue
-
-from tests.fixtures.collection import (
-    with_vector_index,
-    random_data,
-    empty,
-    float_tensors_8,
-    float_tensors_16,
-    float_tensors_32,
-    a_model,
-    b_model,
-    a_watcher,
-    an_update,
-    a_single_insert,
-    an_insert,
-    n_data_points,
-    image_type,
-    si_validation,
-    c_model,
-    metric,
-    random_data_factory,
-    vector_index_factory,
-)
 
 
 @patch('superduperdb.datalayer.mongodb.cdc.copy_vectors')

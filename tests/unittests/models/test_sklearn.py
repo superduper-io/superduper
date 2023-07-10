@@ -1,4 +1,3 @@
-# ruff: noqa: F401, F811
 import pytest
 import random
 
@@ -10,8 +9,6 @@ from sklearn.pipeline import Pipeline
 from superduperdb.core.documents import Document
 from superduperdb.models.sklearn.wrapper import Estimator
 from superduperdb.datalayer.mongodb.query import Collection
-
-from tests.fixtures.collection import random_arrays, arrays, empty
 
 
 class Lookup(TransformerMixin):

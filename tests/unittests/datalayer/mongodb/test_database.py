@@ -1,9 +1,7 @@
-# ruff: noqa: F401, F811
 import PIL.PngImagePlugin
 import pytest
 import torch
 
-from superduperdb.core.base import Artifact
 from superduperdb.core.documents import Document
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.encoder import Encoder
@@ -13,27 +11,7 @@ from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb.datalayer.mongodb.query import Collection, PreLike
 from superduperdb.encoders.torch.tensor import tensor
 
-
-from tests.fixtures.collection import (
-    with_vector_index,
-    random_data,
-    empty,
-    float_tensors_8,
-    float_tensors_16,
-    float_tensors_32,
-    a_model,
-    b_model,
-    a_watcher,
-    an_update,
-    n_data_points,
-    image_type,
-    si_validation,
-    c_model,
-    metric,
-    random_data_factory,
-    vector_index_factory,
-)
-from tests.material.losses import ranking_loss
+n_data_points = 250
 
 IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
 

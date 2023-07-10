@@ -147,12 +147,7 @@ class MilvusVectorDatabase(VectorDatabase):
             raise RuntimeError("MilvusConfig is not set")
         super().__init__(config=config)
         self._milvus_config = config.milvus
-
-    @contextmanager
-    def init(self) -> t.Iterator["VectorDatabase"]:
-        with MilvusClient(config=self._milvus_config).init() as client:
-            self._client = client
-            yield self
+        self._client = MilvusClient(config=self._milvus_config)
 
     def _create_collection_schema(self, dimensions: int) -> pymilvus.CollectionSchema:
         return pymilvus.CollectionSchema(
@@ -196,22 +191,15 @@ class MilvusVectorDatabase(VectorDatabase):
         except KeyError:
             raise ValueError(f"Unsupported measure type: {measure}")
 
-    @contextmanager
-    def get_collection(
-        self, config: VectorCollectionConfig
-    ) -> t.Iterator[VectorCollection]:
+    def get_table(self, config: VectorCollectionConfig) -> VectorCollection:
         collection = self._get_collection(config=config)
-        with MilvusVectorCollection(collection=collection).init() as vector_collection:
-            yield vector_collection
+        vector_collection = MilvusVectorCollection(collection=collection)
+        return vector_collection
 
 
 class MilvusVectorCollection(VectorCollection):
     def __init__(self, *, collection: pymilvus.Collection) -> None:
         self._collection = collection
-
-    @contextmanager
-    def init(self) -> t.Iterator["MilvusVectorCollection"]:
-        yield self
 
     def add(self, items: t.Sequence[VectorCollectionItem]) -> None:
         self._collection.insert(

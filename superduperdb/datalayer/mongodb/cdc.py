@@ -3,7 +3,6 @@ import threading
 import json
 import queue
 import datetime
-from functools import partial
 from collections import Counter
 from enum import Enum
 import typing as t
@@ -22,7 +21,6 @@ from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.job import FunctionJob
 from superduperdb.misc.task_queue import cdc_queue
 from superduperdb.misc.serialization import from_dict, to_dict
-from superduperdb.vector_search.lancedb_client import LanceDBClient
 from superduperdb.core.vector_index import VectorIndex
 
 MongoChangePipelines: t.Dict[str, t.Dict] = {'generic': {}}
@@ -160,7 +158,6 @@ def copy_vectors(
     indexing_watcher_identifier: str,
     cdc_query: Serializable,
     ids: t.List[str],
-    vector_db_client: t.Any,
 ):
     """
     A helper fxn to copy vectors of a `indexing_watcher` component/model of
@@ -176,7 +173,7 @@ def copy_vectors(
         docs = [doc.unpack() for doc in docs]
         model, key = indexing_watcher_identifier.split('/')  # type: ignore
         vectors = [{'vector': doc['_outputs'][key][model] for doc in docs}]
-        table = vector_db_client.get_table(indexing_watcher_identifier)
+        table = db.vector_database.get_table(indexing_watcher_identifier)
         table.add(vectors, upsert=True)
     except Exception:
         logging.exception(
@@ -204,7 +201,6 @@ class CDCHandler(threading.Thread):
         """
         self.db = db
         self._stop_event = stop_event
-        self.vector_db_client = LanceDBClient(s.CFG.vector_search.lancedb)
 
         threading.Thread.__init__(self, daemon=False)
 
@@ -258,13 +254,10 @@ class CDCHandler(threading.Thread):
             )
             vector_index = t.cast(VectorIndex, vector_index)
             indexing_watcher_identifier = vector_index.indexing_watcher.identifier
-            partial_copy_vectors = partial(
-                copy_vectors, vector_db_client=self.vector_db_client
-            )
             task_graph.add_node(
                 f'copy_vectors({indexing_watcher_identifier})',
                 FunctionJob(
-                    callable=partial_copy_vectors,
+                    callable=copy_vectors,
                     args=[indexing_watcher_identifier, ids, to_dict(cdc_query)],
                     kwargs={},
                 ),

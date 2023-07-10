@@ -70,9 +70,9 @@ class Model(Component):
     version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     db: dc.InitVar[t.Optional[t.Any]] = None
+    future: t.Optional[Future] = None
 
     def __post_init__(self, db):
-        self.future: t.Optional[Future] = None
         if not isinstance(self.object, Artifact):
             self.object = Artifact(_artifact=self.object)
         if isinstance(self.encoder, str):

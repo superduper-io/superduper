@@ -1,4 +1,4 @@
-from superduperdb.core.base import Artifact
+from superduperdb.core.artifact import Artifact
 from superduperdb.core.encoder import Encodable
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.misc.uri_cache import Cached

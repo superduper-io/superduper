@@ -5,7 +5,8 @@ import typing as t
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.job import Job, ComponentJob
 from superduperdb.core.metric import Metric
-from superduperdb.core.base import Component, Artifact
+from superduperdb.core.artifact import Artifact
+from superduperdb.core.component import Component
 from superduperdb.core.encoder import Encoder
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict

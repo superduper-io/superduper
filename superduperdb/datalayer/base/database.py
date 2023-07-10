@@ -39,8 +39,6 @@ from superduperdb.vector_search.base import VectorDatabase
 # all threads.
 from ...core.job import FunctionJob, ComponentJob, Job
 
-VECTOR_DATABASE = VectorDatabase.create(config=CFG.vector_search)
-VECTOR_DATABASE.init().__enter__()
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -78,16 +76,18 @@ class BaseDatabase:
         databackend: BaseDataBackend,
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
+        vector_database: VectorDatabase,
     ):
         self.metrics = LoadDict(self, 'metric')
         self.models = LoadDict(self, 'model')
         self.encoders = LoadDict(self, 'encoder')
         self.vector_indices = LoadDict(self, 'vector_index')
 
-        self.remote = CFG.remote
+        self.remote = CFG.distributed
         self.metadata = metadata
         self.artifact_store = artifact_store
         self.databackend = databackend
+        self.vector_database = vector_database
 
     @property
     def db(self):
@@ -219,7 +219,7 @@ class BaseDatabase:
         :param depends_on: List of dependencies
         """
         if remote is None:
-            remote = CFG.remote
+            remote = CFG.distributed
         return job(db=self, dependencies=depends_on, remote=remote)
 
     def select(self, select: Select) -> SelectResult:

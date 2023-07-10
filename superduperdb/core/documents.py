@@ -90,26 +90,26 @@ class Document(Cached[ContentType]):
         return self._encode(self.content)
 
     @classmethod
-    def decode(cls, r: t.Dict, types: t.Dict):
+    def decode(cls, r: t.Dict, encoders: t.Dict):
         if isinstance(r, Document):
-            return Document(cls._decode(r, types))
+            return Document(cls._decode(r, encoders))
         elif isinstance(r, dict):
-            return cls._decode(r, types)
+            return cls._decode(r, encoders)
         raise NotImplementedError(f'type {type(r)} is not supported')
 
     @classmethod
-    def _decode(cls, r: t.Dict, types: t.Dict):
+    def _decode(cls, r: t.Dict, encoders: t.Dict):
         if isinstance(r, dict) and '_content' in r:
-            type = types[r['_content']['type']]
+            type = encoders[r['_content']['encoder']]
             try:
                 return type.decode(r['_content']['bytes'])
             except KeyError:
                 return r
         elif isinstance(r, list):
-            return [cls._decode(x, types) for x in r]
+            return [cls._decode(x, encoders) for x in r]
         elif isinstance(r, dict):
             for k in r:
-                r[k] = cls._decode(r[k], types)
+                r[k] = cls._decode(r[k], encoders)
         return r
 
     def __getitem__(self, item: str):

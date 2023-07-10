@@ -133,7 +133,7 @@ class PreLike(Like):
             raw_cursor=cursor,
             scores=dict(zip(ids, scores)),
             id_field='_id',
-            types=db.types,
+            encoders=db.encoders,
         )
 
 
@@ -275,7 +275,7 @@ class Find(Select):
         else:
             raise NotImplementedError
 
-        return SuperDuperCursor(raw_cursor=cursor, id_field='_id', types=db.types)
+        return SuperDuperCursor(raw_cursor=cursor, id_field='_id', encoders=db.encoders)
 
 
 @dc.dataclass
@@ -305,7 +305,7 @@ class FindOne(SelectOne):
         if self.collection is not None:
             return SuperDuperCursor.wrap_document(
                 db.db[self.collection.name].find_one(*self.args, **self.kwargs),
-                types=db.types,
+                encoders=db.encoders,
             )
         else:
             parent_cursor = self.like_parent(db)  # type: ignore[misc]
@@ -317,7 +317,7 @@ class FindOne(SelectOne):
                 *self.args[1:],  # type: ignore[index]
                 **self.kwargs,  # type: ignore[index]
             )
-            return Document(Document.decode(r, types=db.types))
+            return Document(Document.decode(r, encoders=db.encoders))
 
     def featurize(self, features):
         return FeaturizeOne(parent=self, features=features)

@@ -7,7 +7,6 @@ import dataclasses as dc
 from superduperdb.core.base import Component
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
-from superduperdb.core.encoder import Encodable
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model, ModelEnsemble
 from superduperdb.core.watcher import Watcher
@@ -17,7 +16,6 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import (
     VectorCollection,
     VectorCollectionConfig,
-    VectorCollectionItem,
     VectorIndexMeasureType,
 )
 
@@ -69,27 +67,6 @@ class VectorIndex(Component):
                 self.compatible_watchers[i] = db.load('watcher', w)
 
         logging.info(f'loading hashes: {self.identifier!r}')
-
-        # TODO: this is a temporary solution until we implement a CDC process that will
-        # asynchronously
-        # * backfill the index
-        # * keep the index up-to-date
-        with self._get_vector_collection() as vector_collection:
-            for record_batch in ibatch(
-                db.execute(self.indexing_watcher.select),  # type: ignore
-                _BACKFILL_BATCH_SIZE,
-            ):
-                items = []
-                for record in record_batch:
-                    h, id = db.databackend.get_output_from_document(
-                        record,
-                        self.indexing_watcher.key,  # type: ignore
-                        self.indexing_watcher.model.identifier,  # type: ignore
-                    )
-                    if isinstance(h, Encodable):
-                        h = h.x
-                    items.append(VectorCollectionItem.create(id=str(id), vector=h))
-                vector_collection.add(items)
 
     @property
     def _dimensions(self) -> int:

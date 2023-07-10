@@ -1,6 +1,6 @@
 import pprint
 
-from superduperdb.core.base import Artifact
+from superduperdb.core.artifact import Artifact
 from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.core.model import Model
 import torch

@@ -4,7 +4,8 @@ import io
 import pickle
 import typing as t
 
-from superduperdb.core.base import Component, Artifact
+from superduperdb.core.artifact import Artifact
+from superduperdb.core.component import Component
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]

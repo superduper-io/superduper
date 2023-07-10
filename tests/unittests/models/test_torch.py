@@ -1,6 +1,6 @@
 import torch
 
-from superduperdb.core.base import Artifact
+from superduperdb.core.artifact import Artifact
 from superduperdb.core.metric import Metric
 from superduperdb.metrics.classification import compute_classification_metrics
 from superduperdb.models.torch.wrapper import (

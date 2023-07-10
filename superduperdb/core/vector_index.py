@@ -4,7 +4,7 @@ from contextlib import contextmanager
 import dataclasses as dc
 
 
-from superduperdb.core.base import Component
+from superduperdb.core.component import Component
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encodable

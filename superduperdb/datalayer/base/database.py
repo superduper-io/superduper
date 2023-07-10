@@ -11,7 +11,7 @@ import networkx
 
 from superduperdb import CFG
 from superduperdb.core.task_workflow import TaskWorkflow
-from superduperdb.core.base import Component
+from superduperdb.core.component import Component
 from superduperdb.core.documents import Document, ArtifactDocument
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.datalayer.base.artifacts import ArtifactStore

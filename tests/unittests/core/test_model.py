@@ -1,18 +1,7 @@
-# ruff: noqa: F401, F811
 import torch
 
 from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb.datalayer.mongodb.query import Collection
-
-from tests.fixtures.collection import (
-    si_validation,
-    empty,
-    random_data,
-    float_tensors_32,
-    float_tensors_16,
-    random_data_factory,
-    metric,
-)
 
 
 def test_predict(random_data, float_tensors_32):

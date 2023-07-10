@@ -11,7 +11,7 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 class SuperDuperCursor:
     raw_cursor: Cursor
     id_field: str
-    types: t.Dict[str, Encoder] = dc.field(default_factory=dict)
+    encoders: t.Dict[str, Encoder] = dc.field(default_factory=dict)
     features: t.Optional[t.Dict[str, str]] = None
     scores: t.Optional[t.Dict[str, float]] = None
     _it: int = 0
@@ -38,14 +38,14 @@ class SuperDuperCursor:
         return SuperDuperCursor(
             raw_cursor=self.raw_cursor.limit(*args, **kwargs),
             id_field=self.id_field,
-            types=self.types,
+            encoders=self.encoders,
             features=self.features,
             scores=self.scores,
         )
 
     @staticmethod
-    def wrap_document(r, types):
-        return Document(Document.decode(r, types))
+    def wrap_document(r, encoders):
+        return Document(Document.decode(r, encoders))
 
     def __iter__(self):
         return self
@@ -64,4 +64,4 @@ class SuperDuperCursor:
         if self.features is not None and self.features:
             r = self.add_features(r, features=self.features)
 
-        return self.wrap_document(r, self.types)
+        return self.wrap_document(r, self.encoders)

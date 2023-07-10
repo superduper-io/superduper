@@ -22,17 +22,17 @@ REST_API_VERSION = '0.1.0'
 
 
 class HasPort(JSONable):
-    port = 0
-    password = ''
-    username = ''
+    port: int = 0
+    password: str = ''
+    username: str = ''
 
 
 class HostPort(HasPort):
-    host = 'localhost'
+    host: str = 'localhost'
 
 
 class IpPort(HasPort):
-    ip = 'localhost'
+    ip: str = 'localhost'
 
 
 class Api(JSONable):
@@ -40,11 +40,11 @@ class Api(JSONable):
 
 
 class Retry(JSONable):
-    wait_multiplier = 1.0
-    wait_min = 4.0
-    wait_max = 10.0
+    wait_multiplier: float = 1.0
+    wait_min: float = 4.0
+    wait_max: float = 10.0
 
-    stop_after_attempt = 2
+    stop_after_attempt: int = 2
 
 
 class Apis(JSONable):
@@ -53,15 +53,15 @@ class Apis(JSONable):
 
 
 class Dask(IpPort):
-    port = 8786
+    port: int = 8786
 
     serializers: t.List[str] = Factory(list)
     deserializers: t.List[str] = Factory(list)
 
 
 class Deployment(JSONable):
-    database = ''
-    model = ''
+    database: str = ''
+    model: str = ''
 
 
 class LogLevel(str, Enum):
@@ -82,12 +82,12 @@ class Logging(JSONable):
 
 
 class ModelServer(HostPort):
-    host = '127.0.0.1'
-    port = 5001
+    host: str = '127.0.0.1'
+    port: int = 5001
 
 
 class MongoDB(HostPort):
-    port = 27017
+    port: str = 27017
 
 
 class DataLayer(JSONable):
@@ -104,10 +104,10 @@ class DataLayers(JSONable):
 
 
 class Notebook(JSONable):
-    ip = '0.0.0.0'
-    port = 8888
-    password = ''
-    token = ''
+    ip: str = '0.0.0.0'
+    port: int = 8888
+    password: str = ''
+    token: str = ''
 
     @root_validator
     def check_one_or_none(cls, v):
@@ -116,21 +116,21 @@ class Notebook(JSONable):
 
 
 class Ray(HostPort):
-    host = '127.0.0.1'
+    host: str = '127.0.0.1'
 
     deployments: t.List[Deployment] = Factory(list)
 
 
 class Server(JSONable):
     class FastAPI(JSONable):
-        debug = False
-        title = 'SuperDuperDB server'
-        version = REST_API_VERSION
+        debug: bool = False
+        title: str = 'SuperDuperDB server'
+        version: str = REST_API_VERSION
 
     class WebServer(JSONable):
-        host = '127.0.0.1'
-        port = 3223
-        protocol = 'http:'
+        host: str = '127.0.0.1'
+        port: int = 3223
+        protocol: str = 'http:'
 
         @property
         def uri(self) -> str:

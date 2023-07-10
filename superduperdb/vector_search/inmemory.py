@@ -91,21 +91,14 @@ class InMemoryVectorCollection(VectorCollection):
 
 
 class InMemoryVectorDatabase(VectorDatabase):
-    def __init__(self, *, config: s.config.VectorSearch) -> None:
+    def __init__(self, config: s.config.VectorSearch) -> None:
         self._config = config
         self._collections: t.Dict[VectorCollectionId, VectorCollection] = {}
 
-    @contextmanager
-    def init(self) -> t.Iterator["VectorDatabase"]:
-        yield self
-
-    @contextmanager
-    def get_collection(
-        self, config: VectorCollectionConfig
-    ) -> t.Iterator[VectorCollection]:
+    def get_table(self, config: VectorCollectionConfig) -> VectorCollection:
         collection = self._collections.get(config.id)
         if not collection:
             collection = self._collections[config.id] = InMemoryVectorCollection(
                 dimensions=config.dimensions, measure=config.measure
             )
-        yield collection
+        return collection

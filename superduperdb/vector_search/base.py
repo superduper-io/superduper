@@ -1,7 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 import numpy
 import numpy.typing
 import torch
@@ -92,9 +91,12 @@ class VectorCollectionItem:
 
     @classmethod
     def create(
-        self, *, id: VectorCollectionItemId, vector: ArrayLike
+        cls, *, id: VectorCollectionItemId, vector: ArrayLike
     ) -> VectorCollectionItem:
         return VectorCollectionItem(id=id, vector=to_numpy(vector))
+
+    def to_dict(self) -> t.Dict:
+        return {'id': self.id, 'vector': self.vector}
 
 
 @dataclass(frozen=True)
@@ -112,11 +114,6 @@ class VectorCollection(ABC):
     It is assumed that a vector collection is associated with a single vector column or
     field within a vector database.
     """
-
-    @contextmanager
-    @abstractmethod
-    def init(self) -> t.Iterator["VectorCollection"]:
-        pass
 
     @abstractmethod
     def add(self, items: t.Sequence[VectorCollectionItem]) -> None:
@@ -162,42 +159,11 @@ class VectorDatabase(ABC):
     def __init__(self, *, config: s.config.VectorSearch) -> None:
         self._config = config
 
-    @classmethod
-    def create(cls, *, config: s.config.VectorSearch) -> VectorDatabase:
-        if config.milvus:
-            return cls.create_milvus(config=config)
-        return cls.create_in_memory(config=config)
-
-    @classmethod
-    def create_milvus(self, *, config: s.config.VectorSearch) -> VectorDatabase:
-        # avoiding circular import
-        from .milvus import MilvusVectorDatabase
-
-        return MilvusVectorDatabase(config=config)
-
-    @classmethod
-    def create_in_memory(self, *, config: s.config.VectorSearch) -> VectorDatabase:
-        # avoiding circular import
-        from .inmemory import InMemoryVectorDatabase
-
-        return InMemoryVectorDatabase(config=config)
-
-    @contextmanager
     @abstractmethod
-    def init(self) -> t.Iterator["VectorDatabase"]:
-        """Initialize the database.
-
-        This method makes sure all necessary connections to the underlying vector
-        database are established.
-        """
-        pass
-
-    @contextmanager
-    @abstractmethod
-    def get_collection(
+    def get_table(
         self,
         config: VectorCollectionConfig,
-    ) -> t.Iterator[VectorCollection]:
+    ) -> VectorCollection:
         """Get a vector collection by its identifier.
 
         If the collection does not exist, it is created with the specified

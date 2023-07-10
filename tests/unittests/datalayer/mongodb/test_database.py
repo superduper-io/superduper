@@ -48,13 +48,13 @@ def test_compound_component(empty):
     )
 
     empty.add(m)
-    assert 'torch.float32[32]' in empty.show('type')
+    assert 'torch.float32[32]' in empty.show('encoder')
     assert 'my-test-module' in empty.show('model')
     assert empty.show('model', 'my-test-module') == [0]
 
     empty.add(m)
     assert empty.show('model', 'my-test-module') == [0]
-    assert empty.show('type', 'torch.float32[32]') == [0]
+    assert empty.show('encoder', 'torch.float32[32]') == [0]
 
     empty.add(
         TorchModel(
@@ -64,16 +64,16 @@ def test_compound_component(empty):
         )
     )
     assert empty.show('model', 'my-test-module') == [0, 1]
-    assert empty.show('type', 'torch.float32[32]') == [0]
+    assert empty.show('encoder', 'torch.float32[32]') == [0]
 
     m = empty.load(variety='model', identifier='my-test-module')
     assert isinstance(m.encoder, Encoder)
 
     with pytest.raises(ComponentInUseError):
-        empty.remove('type', 'torch.float32[32]')
+        empty.remove('encoder', 'torch.float32[32]')
 
     with pytest.warns(ComponentInUseWarning):
-        empty.remove('type', 'torch.float32[32]', force=True)
+        empty.remove('encoder', 'torch.float32[32]', force=True)
 
     empty.remove('model', 'my-test-module', force=True)
 
@@ -153,14 +153,14 @@ def test_insert_from_uris(empty, image_type):
                 'item': {
                     '_content': {
                         'uri': IMAGE_URL,
-                        'type': 'pil_image',
+                        'encoder': 'pil_image',
                     }
                 },
                 'other': {
                     'item': {
                         '_content': {
                             'uri': IMAGE_URL,
-                            'type': 'pil_image',
+                            'encoder': 'pil_image',
                         }
                     }
                 },
@@ -176,7 +176,7 @@ def test_insert_from_uris(empty, image_type):
 
 def test_update(random_data, a_watcher):
     to_update = torch.randn(32)
-    t = random_data.types['torch.float32[32]']
+    t = random_data.encoders['torch.float32[32]']
     random_data.execute(
         Collection(name='documents').update_many({}, {'$set': {'x': t(to_update)}})
     )
@@ -204,7 +204,7 @@ def test_watcher(random_data, a_model, b_model):
     r = random_data.execute(Collection(name='documents').find_one())
     assert 'linear_a' in r['_outputs']['x']
 
-    t = random_data.types['torch.float32[32]']
+    t = random_data.encoders['torch.float32[32]']
 
     random_data.execute(
         Collection(name='documents').insert_many(
@@ -228,7 +228,7 @@ def test_watcher(random_data, a_model, b_model):
 
 
 def test_predict(a_model, float_tensors_32, float_tensors_16):
-    t = float_tensors_32.types['torch.float32[32]']
+    t = float_tensors_32.encoders['torch.float32[32]']
     a_model.predict('linear_a', Document(t(torch.randn(32))))
 
 
@@ -242,7 +242,7 @@ def test_delete(random_data):
 def test_replace(random_data):
     r = next(random_data.execute(Collection(name='documents').find()))
     x = torch.randn(32)
-    t = random_data.types['torch.float32[32]']
+    t = random_data.encoders['torch.float32[32]']
     r['x'] = t(x)
     random_data.execute(
         Collection(name='documents').replace_one(

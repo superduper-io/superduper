@@ -21,8 +21,8 @@ def create_server(model: str, num_replicas):
             data = await http_request.body()
             data = BSON.decode(data)
             print(data)
-            data = [Document.decode(r, types=self.db.types) for r in data]
-            X = Document.decode(data['X'], types=self.db.types)
+            data = [Document.decode(r, encoders=self.db.encoders) for r in data]
+            X = Document.decode(data['X'], encoders=self.db.encoders)
             try:
                 X = X.unpack()
             except Exception:

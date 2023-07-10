@@ -5,7 +5,7 @@ from superduperdb.datalayer.mongodb.query import Collection
 
 
 def test_predict(random_data, float_tensors_32):
-    encoder = random_data.types['torch.float32[32]']
+    encoder = random_data.encoders['torch.float32[32]']
 
     m = TorchModel(
         identifier='my-model',

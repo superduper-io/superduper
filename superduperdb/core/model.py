@@ -77,7 +77,7 @@ class Model(Component):
         if not isinstance(self.object, Artifact):
             self.object = Artifact(_artifact=self.object)
         if isinstance(self.encoder, str):
-            self.encoder = db.load('type', self.encoder)
+            self.encoder = db.load('encoder', self.encoder)
 
     @property
     def child_components(self) -> t.List['Component']:

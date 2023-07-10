@@ -35,7 +35,7 @@ class Dataset(Component):
             self.raw_data = Artifact(_artifact=[r.encode() for r in data])
 
         self.data = [
-            Document(Document.decode(r, types=db.types)) for r in self.raw_data.a
+            Document(Document.decode(r, encoders=db.encoders)) for r in self.raw_data.a
         ]
 
     @cached_property

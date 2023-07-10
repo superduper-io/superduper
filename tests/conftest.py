@@ -106,7 +106,7 @@ def metric(empty):
 
 @pytest.fixture
 def random_data_factory(float_tensors_32):
-    float_tensor = float_tensors_32.types['torch.float32[32]']
+    float_tensor = float_tensors_32.encoders['torch.float32[32]']
 
     def _factory(number_data_points=n_data_points):
         data = []
@@ -138,7 +138,7 @@ def random_data(random_data_factory):
 
 @pytest.fixture()
 def random_arrays(arrays):
-    float_array = arrays.types['numpy.float32[32]']
+    float_array = arrays.encoders['numpy.float32[32]']
     data = []
     for i in range(n_data_points):
         x = numpy.random.randn(32).astype(numpy.float32)
@@ -152,7 +152,7 @@ def random_arrays(arrays):
 
 @pytest.fixture()
 def a_single_insert(float_tensors_32):
-    float_tensor = float_tensors_32.types['torch.float32[32]']
+    float_tensor = float_tensors_32.encoders['torch.float32[32]']
     x = torch.randn(32)
     y = int(random.random() > 0.5)
     z = torch.randn(32)
@@ -167,7 +167,7 @@ def a_single_insert(float_tensors_32):
 
 @pytest.fixture()
 def an_insert(float_tensors_32):
-    float_tensor = float_tensors_32.types['torch.float32[32]']
+    float_tensor = float_tensors_32.encoders['torch.float32[32]']
     data = []
     for i in range(10):
         x = torch.randn(32)
@@ -188,7 +188,7 @@ def an_insert(float_tensors_32):
 
 @pytest.fixture()
 def an_update(float_tensors_32):
-    float_tensor = float_tensors_32.types['torch.float32[32]']
+    float_tensor = float_tensors_32.encoders['torch.float32[32]']
     data = []
     for i in range(10):
         x = torch.randn(32)
@@ -262,28 +262,28 @@ def si_validation(random_data):
 def float_tensors_32(empty):
     empty.add(tensor(torch.float, shape=(32,)))
     yield empty
-    empty.remove('type', 'torch.float32[32]', force=True)
+    empty.remove('encoder', 'torch.float32[32]', force=True)
 
 
 @pytest.fixture()
 def float_tensors_16(empty):
     empty.add(tensor(torch.float, shape=(16,)))
     yield empty
-    empty.remove('type', 'torch.float32[16]', force=True)
+    empty.remove('encoder', 'torch.float32[16]', force=True)
 
 
 @pytest.fixture()
 def float_tensors_8(empty):
     empty.add(tensor(torch.float, shape=(8,)))
     yield empty
-    empty.remove('type', 'torch.float32[8]', force=True)
+    empty.remove('encoder', 'torch.float32[8]', force=True)
 
 
 @pytest.fixture()
 def arrays(empty):
     empty.add(array('float32', shape=(32,)))
     yield empty
-    empty.remove('type', 'numpy.float32[32]', force=True)
+    empty.remove('encoder', 'numpy.float32[32]', force=True)
 
 
 @pytest.fixture()
@@ -309,7 +309,7 @@ def nursery_rhymes(empty):
 def image_type(empty):
     empty.add(pil_image)
     yield empty
-    empty.remove('type', 'pil_image', force=True)
+    empty.remove('encoder', 'pil_image', force=True)
 
 
 @pytest.fixture()

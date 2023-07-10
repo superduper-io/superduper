@@ -10,7 +10,7 @@ from openai import Model as OpenAIModel
 from openai.error import Timeout, RateLimitError, TryAgain, ServiceUnavailableError
 
 import superduperdb as s
-from superduperdb.core.base import Component
+from superduperdb.core.component import Component
 from superduperdb.misc.retry import Retry
 from superduperdb.misc import dataclasses as dc
 from superduperdb.misc.compat import cache

@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
 
-from superduperdb.core.base import Component
+from superduperdb.core.component import Component
 from superduperdb.datalayer.base.metadata import MetaDataStore
 
 

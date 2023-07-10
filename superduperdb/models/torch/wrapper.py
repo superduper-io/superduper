@@ -9,7 +9,7 @@ from torch.utils import data
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from superduperdb.core.base import Artifact
+from superduperdb.core.artifact import Artifact
 from superduperdb.core.metric import Metric
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encodable

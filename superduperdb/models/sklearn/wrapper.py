@@ -4,7 +4,7 @@ import typing as t
 from pydantic import Field
 from tqdm import tqdm
 
-from superduperdb.core.base import Artifact
+from superduperdb.core.artifact import Artifact
 from superduperdb.core.model import Model, _TrainingConfiguration
 from superduperdb.core.metric import Metric
 from superduperdb.datalayer.base.database import BaseDatabase

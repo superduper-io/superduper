@@ -1,6 +1,6 @@
 import typing as t
 
-from superduperdb.core.base import Component
+from superduperdb.core.component import Component
 from superduperdb.core.model import Model
 from superduperdb.datalayer.base.query import Select
 import dataclasses as dc

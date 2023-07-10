@@ -35,7 +35,7 @@ class Encoder(Component):
     :param shape: shape of the data, if any
     """
 
-    variety: t.ClassVar[str] = 'type'  # This cannot yet be changed
+    variety: t.ClassVar[str] = 'encoder'  # This cannot yet be changed
     artifacts: t.ClassVar[t.List[str]] = ['decoder', 'encoder']
 
     identifier: str
@@ -58,7 +58,9 @@ class Encoder(Component):
 
     def encode(self, x: t.Any) -> t.Dict[str, t.Any]:
         if self.encoder is not None:
-            return {'_content': {'bytes': self.encoder.a(x), 'type': self.identifier}}
+            return {
+                '_content': {'bytes': self.encoder.a(x), 'encoder': self.identifier}
+            }
         else:
             return x
 

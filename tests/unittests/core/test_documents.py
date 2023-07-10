@@ -10,4 +10,4 @@ def test_document_encoding():
 
     print(r.encode())
 
-    Document.decode(r.encode(), types={'torch.float32[20]': t})
+    Document.decode(r.encode(), encoders={'torch.float32[20]': t})

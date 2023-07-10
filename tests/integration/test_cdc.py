@@ -58,7 +58,7 @@ class TestMongoCDC:
             Collection(name='documents').insert_many(an_insert)
         )
         to_update = torch.randn(32)
-        t = random_data.types['torch.float32[32]']
+        t = random_data.encoders['torch.float32[32]']
         with_vector_index.execute(
             Collection(name='documents').update_many(
                 {"_id": output.inserted_ids[0]}, {'$set': {'x': t(to_update)}}
@@ -79,7 +79,7 @@ class TestMongoCDC:
         )
         to_update = torch.randn(32)
         count = 5
-        t = random_data.types['torch.float32[32]']
+        t = random_data.encoders['torch.float32[32]']
         find_query = {"_id": {"$in": output.inserted_ids[:count]}}
         with_vector_index.execute(
             Collection(name='documents').update_many(

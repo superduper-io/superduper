@@ -170,6 +170,7 @@ dmypy.json
 .direnv/
 .envrc
 lightning_logs/
+.cdc.tokens
 
 # pyannotate
 annotations.json

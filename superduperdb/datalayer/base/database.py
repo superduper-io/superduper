@@ -58,8 +58,7 @@ ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'select_one', 'upda
 
 class BaseDatabase:
     """
-    Base database connector for SuperDuperDB - all database types should subclass this
-    type.
+    Base database connector for SuperDuperDB
     """
 
     _database_type: str
@@ -70,7 +69,7 @@ class BaseDatabase:
     variety_to_cache_mapping = {
         'model': 'models',
         'metric': 'metrics',
-        'type': 'types',
+        'encoder': 'encoders',
         'vector_index': 'vector_indices',
     }
 
@@ -82,7 +81,7 @@ class BaseDatabase:
     ):
         self.metrics = LoadDict(self, 'metric')
         self.models = LoadDict(self, 'model')
-        self.types = LoadDict(self, 'type')
+        self.encoders = LoadDict(self, 'encoder')
         self.vector_indices = LoadDict(self, 'vector_index')
 
         self.remote = CFG.remote
@@ -123,7 +122,7 @@ class BaseDatabase:
         Show available functionality which has been added using ``self.add``.
         If version is specified, then print full metadata
 
-        :param variety: variety of component to show ["type", "model", "watcher",
+        :param variety: variety of component to show ["encoder", "model", "watcher",
                        "learning_task", "training_configuration", "metric",
                        "vector_index", "job"]
         :param identifier: identifying string to component
@@ -158,7 +157,7 @@ class BaseDatabase:
 
         :param model_identifier: model or ``str`` referring to an uploaded model
         :param input: input to be passed to the model.
-                      Must be possible to encode with registered types
+                      Must be possible to encode with registered encoders
         """
         model = self.models[model_identifier]
         opts = self.metadata.get_component('model', model_identifier)
@@ -302,7 +301,7 @@ class BaseDatabase:
         """
         Remove component (version: optional)
 
-        :param variety: variety of component to remove ["type", "model", "watcher",
+        :param variety: variety of component to remove ["encoder", "model", "watcher",
                         "training_configuration", "learning_task", "vector_index"]
         :param identifier: identifier of component (see `core.base.Component`)
         :param version: [optional] numerical version to remove
@@ -359,7 +358,7 @@ class BaseDatabase:
         """
         Load component using uniquely identifying information.
 
-        :param variety: variety of component to remove ["type", "model", "watcher",
+        :param variety: variety of component to remove ["encoder", "model", "watcher",
                         "training_configuration", "learning_task", "vector_index"]
         :param identifier: identifier of component (see `core.base.Component`)
         :param version: [optional] numerical version
@@ -644,7 +643,7 @@ class BaseDatabase:
             output = self._download_content(
                 query=None, documents=[filter.content], timeout=None, raises=True
             )[0]
-            filter = Document(Document.decode(output, types=self.types))
+            filter = Document(Document.decode(output, encoders=self.encoders))
         return filter
 
     def _get_dependencies_for_watcher(self, identifier):
@@ -720,7 +719,7 @@ class BaseDatabase:
         )
         type = model_info.get('type')
         if type is not None:
-            type = self.types[type]
+            type = self.encoders[type]
             outputs = [type(x).encode() for x in outputs]
 
         select.model_update(

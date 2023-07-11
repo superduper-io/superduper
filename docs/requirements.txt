@@ -3,5 +3,6 @@ nbsphinx
 sphinx_rtd_theme
 pandoc
 ipython
+myst_parser
 
 

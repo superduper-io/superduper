@@ -63,9 +63,6 @@ class Artifact:
         cache[r['file_id']] = a._artifact
         return a
 
-    def dict(self):
-        ...
-
     @property
     def a(self):
         return self._artifact

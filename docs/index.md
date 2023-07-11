@@ -1,28 +1,58 @@
 # SuperDuperDB documentation
 
-🚀 Welcome to SuperDuperDB! 🚀
+🚀 Welcome to SuperDuperDB! 🚀 
+
+## What is SuperDuperDB?
+
+SuperDuperDB is a Python package providing tools for developers to apply AI and machine learning
+in their database, and set up a scalable, open-source and auditable environment to do this.
 
 ## Mission
 
 SuperDuperDB is an open-source project, whose primary goal is to smoothen the developer journey
-between data and AI models.
+between data and AI models. We aim to:
 
-- An easy-to-use, extensible and comprehensive python framework for integrating AI and 
+- Create an easy-to-use, extensible and comprehensive python framework for integrating AI and 
   ML directly to the datalayer.
   
-- To empower developers, data scientists and architects to leverage the vast PyData, python AI
+- Empower developers, data scientists and architects to leverage the vast PyData, python AI
   and open-source ecosystem in their datalayer deployments.
   
-- Provide ways-of-working with data which enable scalability and industrial scale deployment,
+- To enable ways-of-working with AI and data which enable scalability and industrial scale deployment,
   as well as providing easy-to-use tools for the individual developer.
   
-- Open-source (Apache 2.0) and prioritizing open-source integrations in our roadmap going forward
+- To follow a fully open-source approach, in particular prioritizing open-source integrations 
+  in our roadmap going forward
 
-- Enable individuals and organizations to circumvent vendor lock-in strategies now ubiquitous
+- To enable individuals and organizations to circumvent vendor lock-in strategies now ubiquitous
   in the AI and ML landscapes, by providing a clear toolset to flexibly deploy AI at the 
-  datalayer without necessitating subscriptions, cloud installations, OpenAI functionality 
+  datalayer without necessitating subscriptions, cloud installations, gated-model-API functionality.
+  
+## Background
 
-## Features
+SuperDuperDB is the result of years of experience in research, development and production for 
+AI and data. We have come to believe that AI development with data does not need to be as hard as it 
+currently is. (Read "{doc}`common_issues`"
+for more context.) By moving to a closer symbiosis of AI and datalayer/ database, we believe
+many pain-points in AI development become non-issues. With SuperDuperDB:
+  
+- Model predictions may be [evaluated and inserted back into the database](#model-frameworks-directly-integrated-with-databases), without ever needing 
+  to load data from the database to the client-side.
+
+- Training may be [deployed in one line](#model-frameworks-directly-integrated-with-databases), without having to munge, preprocess or fetch data;
+  simply point to the data with a data-base query.
+
+- Models may be configured to ["listen" to incoming data](#continuous-model processing-on-incoming data), maintaining a catalogue of up-to-date
+  predictions and features.
+  
+- Working [with difficult data types](#support-for-tricky-datatypes), (images, audio, etc.) requires no additional effort in comparison
+  to working with "standard data" (numbers, text, etc.)
+  
+- Outputs of configured AI models may be used to "navigate" the database, including [configuring
+  and using vector-search](#use-your-classical-database-as-a-vector-database)
+  with just a few lines of Python code.
+
+## High-Level Features
 
 ### Model frameworks directly integrated with databases
 
@@ -52,6 +82,15 @@ model.fit(X='input_col', y='predict_col', db=db, select=coll.find({'_fold': 'tra
 model.predict(X='input_col', db=db, select=coll.find({'_fold': 'valid'}))
 ```
 
+### Continuous model processing on incoming data
+SuperDuperDB contains components allowing developers to configure models to continuously infer outputs on specified data, and save the outputs back to the database.
+
+```python
+# Watch the database for incoming data, and process this with a model
+# Model outputs are continuously stored in the input records
+model.predict(X='input_col', db=db, select=coll.find(), watch=True)
+```
+
 ### Support for "tricky" datatypes
 
 SuperDuperDB includes tools for working in the database with the complex data types necessary for AI, such as vectors, tensors, images, audio etc. Native python types may be flexibly saved to the DB, to ease use in tricky AI use-cases, such as computer vision.
@@ -77,21 +116,6 @@ The data loaded are instances of the same Python classes as inserted.
 <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=1164x860> 
 ```
 
-### Continuous model processing on incoming data
-SuperDuperDB contains components allowing developers to configure models to continuously infer outputs on specified data, and save the outputs back to the database.
-
-```python
-# Watch the database for incoming data, and process this with a model
-# Model outputs are continuously stored in the input records
-db.add(
-    Watcher(
-    	model=my_model,       # model which processes data
-    	key='X',              # key/ field/ column as model input
-    	select=collection.find({'img': {'$exists': 1}})        # data which should be processed
-    )
-)
-```
-
 ### Use your classical database as a vector database
 
 SuperDuperDB contains functionality allowing users to treat their standard database as a vector-search database, integrating your primary database with key-players in the open-source vector-search space.
@@ -113,6 +137,7 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 ```{toctree}
 :maxdepth: 2
 
+getting_started
 common_issues
-
+full_usage
 ```

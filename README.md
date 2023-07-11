@@ -43,9 +43,7 @@ If you want to extract annotations automatically, use `pytest
 
 SuperDuperDB has "config variables" that can be set to customize its operation.
 
-You can see a list of their default values in this file https://github.com/SuperDuperDB/superduperdb-stealth/blob/main/default-configs.json.
-
-In the code, configs are simple data classes, defined here: https://github.com/SuperDuperDB/superduperdb-stealth/blob/main/superduperdb/misc/config.py
+In the code, configs are simple data classes, defined [here](https://github.com/SuperDuperDB/superduperdb-stealth/blob/main/superduperdb/misc/config.py).
 
 There are three ways to set a config variable
 

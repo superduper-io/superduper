@@ -227,7 +227,7 @@ Both VS Code and pycharm should automatically detect and integrate with the test
 via `pytest`. For this, you need to ensure:
 
 * that the project root is the repository root, not sub- or super-folder
-* that you are using the developer python environment (as above)
+* that you are using the developer python environment (as above), not the base or demo env
 
 For a console based or manual setup of tests, the current command to run
 the full test suite locally is

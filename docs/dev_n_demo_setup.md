@@ -12,6 +12,22 @@ Both of the above differ from a professional deployment setup
 by using a specific local mock MongoDB instance, instead of a cloud database instance.
 
 
+## Prerequisites: jupyter user, and/or python developer IDE
+
+We will assume that:
+
+* users who want to run the demo are familiar with `jupyter`, or using
+  a developer IDE such as VS Code or pycharm to run `jupyter` notebooks
+* developer-contributors already have a local set-up of a developer IDE such as
+  VS Code or pycharm
+
+If not, we refer to these great intro resources:
+
+* [using `jupyter` to open and run `jupyter` notebooks](https://jupyter-notebook.readthedocs.io/en/latest/notebook.html#opening-notebooks)
+* [setting up VS Code](https://code.visualstudio.com/docs/setup/setup-overview), also see the python section
+* [pycharm quick start guide](https://www.jetbrains.com/help/pycharm/quick-start-guide.html)
+
+
 ## Setting up a local mock MongoDB database server
 
 A local mock MongoDB instance is a prerequisite for both the user demo setup and the

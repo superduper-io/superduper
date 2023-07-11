@@ -2,11 +2,11 @@
 import typing as t
 
 from superduperdb.core.documents import Document
+from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.query import Insert, Select
 from superduperdb.misc.downloads import Downloader
 from superduperdb.misc.downloads import gather_uris
 from superduperdb.misc.logger import logging
-from superduperdb.misc.serialization import from_dict
 
 
 def download_content(
@@ -36,9 +36,8 @@ def download_content(
     logging.debug(query)
     logging.debug(ids)
     update_db = False
-
     if isinstance(query, dict):
-        query = from_dict(query)
+        query = Serializable.from_dict(query)
 
     if documents is not None:
         pass

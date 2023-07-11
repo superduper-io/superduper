@@ -8,9 +8,9 @@ from superduperdb.core.metric import Metric
 from superduperdb.core.artifact import Artifact
 from superduperdb.core.component import Component
 from superduperdb.core.encoder import Encoder
+from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.misc.serialization import to_dict, from_dict
 
 EncoderArg = t.Union[Encoder, str, None]
 ObjectsArg = t.List[t.Union[t.Any, Artifact]]
@@ -116,8 +116,8 @@ class Model(Component):
             variety='model',
             args=[X],
             kwargs={
-                'distributed': False,
-                'select': to_dict(select) if select else None,
+                'remote': False,
+                'select': select.to_dict() if select else None,
                 'ids': ids,
                 'max_chunk_size': max_chunk_size,
                 **kwargs,
@@ -138,8 +138,8 @@ class Model(Component):
             args=[X],
             kwargs={
                 'y': y,
-                'distributed': False,
-                'select': to_dict(select) if select else None,
+                'remote': False,
+                'select': select.to_dict() if select else None,
                 **kwargs,
             },
         )
@@ -172,7 +172,7 @@ class Model(Component):
         **kwargs,
     ):
         if isinstance(select, dict):
-            select = from_dict(select)
+            select = Serializable.from_dict(select)
 
         if validation_sets:
             validation_sets = list(validation_sets)  # type: ignore[arg-type]
@@ -217,7 +217,7 @@ class Model(Component):
         **kwargs,
     ):
         if isinstance(select, dict):
-            select = from_dict(select)
+            select = Serializable.from_dict(select)
 
         if watch:
             from superduperdb.core.watcher import Watcher
@@ -345,7 +345,7 @@ class ModelEnsemble(Component):
         **kwargs,
     ):
         if isinstance(select, dict):
-            select = from_dict(select)
+            select = Serializable.from_dict(select)
 
         if validation_sets:
             validation_sets = list(validation_sets)  # type: ignore[arg-type]

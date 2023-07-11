@@ -1,7 +1,6 @@
 from superduperdb.core.artifact import Artifact
 from superduperdb.core.encoder import Encodable
 from superduperdb.datalayer.base.artifacts import ArtifactStore
-from superduperdb.misc.uri_cache import Cached
 import typing as t
 
 ContentType = t.Union[t.Dict, Encodable]
@@ -68,13 +67,14 @@ class ArtifactDocument:
         )
 
 
-class Document(Cached[ContentType]):
+class Document:
     """
     A wrapper around an instance of dict or a Encodable which may be used to dump
     that resource to a mix of jsonable content or `bytes`
     """
 
-    content: t.Dict
+    def __init__(self, content: t.Dict):
+        self.content = content
 
     def __hash__(self):
         return super().__hash__()
@@ -111,6 +111,9 @@ class Document(Cached[ContentType]):
             for k in r:
                 r[k] = cls._decode(r[k], encoders)
         return r
+
+    def __repr__(self):
+        return f'Document({self.content.__repr__()})'
 
     def __getitem__(self, item: str):
         assert isinstance(self.content, dict)

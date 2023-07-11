@@ -1,5 +1,5 @@
+import dataclasses as dc
 from superduperdb.core.serializable import Serializable
-from superduperdb.misc import dataclasses as dc
 
 import typing as t
 from abc import ABC, abstractmethod

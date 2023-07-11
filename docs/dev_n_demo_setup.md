@@ -211,7 +211,9 @@ but integration may have to be setup with a professional developer IDE
 on project or repository basis.
 
 You will typically need to enable `black` and `ruff` linting in developer IDEs
-such as VS Code or pycharm.
+such as [VS Code (link to setup guide)](https://code.visualstudio.com/docs/python/linting)
+or pycharm ([black guide](https://black.readthedocs.io/en/stable/integrations/editors.html#pycharm-intellij-idea)
+and [ruff plugin](https://koxudaxi.github.io/ruff-pycharm-plugin/install/)).
 
 For a console based or manual setup of tests, the current command to run
 the full test suite locally is

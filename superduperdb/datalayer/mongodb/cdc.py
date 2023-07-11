@@ -167,7 +167,9 @@ def copy_vectors(
     `indexing_watcher` in the defined watchers in db.
     """
     try:
-        query = from_dict(cdc_query)
+        # BROKEN: cdc_query is a Serializable, from_dict wants a dict
+        query = from_dict(cdc_query)  # type: ignore[arg-type]
+
         select = query.select_using_ids(ids)
         docs = db.select(select)
         docs = [doc.unpack() for doc in docs]
@@ -258,6 +260,9 @@ class CDCHandler(threading.Thread):
                 f'copy_vectors({indexing_watcher_identifier})',
                 FunctionJob(
                     callable=copy_vectors,
+                    # BROKEN: the arguments in `args` are in the wrong order.
+                    # BROKEN: cdc_query has its own ``to_dict`` method which
+                    # probably should be called here.
                     args=[indexing_watcher_identifier, ids, to_dict(cdc_query)],
                     kwargs={},
                 ),

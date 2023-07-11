@@ -79,6 +79,7 @@ class Base:
     is_batch: t.Optional[t.Union[Artifact, t.Callable]] = None
     num_directions: int = 2
     metrics: t.Optional[t.List[t.Union[str, Metric]]] = None
+    training_select: t.Optional[Select] = None
 
     @contextmanager
     def evaluating(self):
@@ -126,7 +127,7 @@ class Base:
             self.training_configuration = configuration
         if select is not None:
             if isinstance(select, dict):
-                select = from_dict(select)
+                select = from_dict(select)  # type: ignore[arg-type]
             self.training_select = select  # type: ignore[assignment]
         if validation_sets is not None:
             self.validation_sets = validation_sets

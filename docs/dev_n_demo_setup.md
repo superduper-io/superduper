@@ -139,7 +139,7 @@ The easiest and quickest might be fork and clone to another folder and/or
 delete the original clone.
 Alternatively, point your existing clone to the fork (via fiddly `git remote` varia).
 
-### Setting up developer python environment for the `superduperdb` package
+### Setting up developer python environment for `superduperdb` contributions
 
 An editable python environment is required for contributing to `superduperdb`.
 This can be setup with:

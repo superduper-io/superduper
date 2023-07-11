@@ -119,7 +119,7 @@ Ensure to use the environment `superduperdb_demo` created above, in the notebook
 ## developer-contributor setup
 
 Users who would like to contribute to `superduperdb` need
-a standard GitHub contributor setup with a mock database, this includes:
+a standard GitHub contributor setup with a local mock database, this includes:
 
 * a running local MongoDB server
 * a fork and a local `git` clone of the repository to support

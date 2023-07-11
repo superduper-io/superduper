@@ -202,7 +202,7 @@ Requires: `python` and [`poetry`](https://python-poetry.org/docs/#installation)
 `poetry install`
 
 
-### One-time configuration for local testing workflows
+### One-time configuration for local linting and testing workflows
 
 We use `pytest` for testing and `black` and `ruff` for linting.
 
@@ -210,10 +210,24 @@ These packages are included in the install of the developer environment above,
 but integration may have to be setup with a professional developer IDE
 on project or repository basis.
 
+
+#### Developer IDE setup - linting
+
 You will typically need to enable `black` and `ruff` linting in developer IDEs
 such as [VS Code (link to setup guide)](https://code.visualstudio.com/docs/python/linting)
 or pycharm ([black guide](https://black.readthedocs.io/en/stable/integrations/editors.html#pycharm-intellij-idea)
 and [ruff plugin](https://koxudaxi.github.io/ruff-pycharm-plugin/install/)).
+
+The above configurations need to be carried out only once, at repository or project setup.
+
+
+#### Developer IDE setup - testing
+
+Both VS Code and pycharm should automatically detect and integrate with the test suite
+via `pytest`. For this, you need to ensure:
+
+* that the project root is the repository root, not sub- or super-folder
+* that you are using the developer python environment (as above)
 
 For a console based or manual setup of tests, the current command to run
 the full test suite locally is

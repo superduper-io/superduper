@@ -1,26 +1,8 @@
 from abc import ABC, abstractmethod
-import dill
-import enum
 import hashlib
-import io
-import pickle
 import typing as t
 
-from superduperdb.misc.serialization import serializers
-
-
-class Serializer(enum.Enum):
-    """
-    Enumerates the types of Python serializers to use
-    """
-
-    dill = 'dill'
-    pickle = 'pickle'
-    default = dill
-
-    @property
-    def impl(self):
-        return dill if self.value == 'dill' else pickle
+from superduperdb.misc.serialization import serializers, Info
 
 
 class ArtifactStore(ABC):
@@ -39,20 +21,6 @@ class ArtifactStore(ABC):
         self.name = name
         self.conn = conn
 
-    def _serialize(
-        self,
-        object: t.Any,
-        serializer: Serializer = Serializer.default,
-        serializer_kwargs: t.Optional[t.Dict] = None,
-    ):
-        if serializer == Serializer.default:
-            # TODO: this was what was there, but is it right?
-            serializer_kwargs = serializer_kwargs or {'recurse': True}
-
-        with io.BytesIO() as f:
-            serializer.impl.dump(object, f, **serializer_kwargs)
-            return f.getvalue()
-
     @abstractmethod
     def delete_artifact(self, file_id: str):
         """
@@ -62,8 +30,8 @@ class ArtifactStore(ABC):
         pass
 
     def create_artifact(
-        self, object: t.Any, serializer: t.Any, info: t.Optional[t.Dict] = None
-    ):
+        self, object: t.Any, serializer: str, info: Info = None
+    ) -> t.Any:
         """
         Save serialized object in the artifact store.
 
@@ -71,23 +39,18 @@ class ArtifactStore(ABC):
         :param serializer: Serializer to use
         """
         serializer = serializers[serializer]
-        if info is not None:
-            bytes = serializer.encode(object, info)
-        else:
-            bytes = serializer.encode(object)
+        bytes = serializer.encode(object, info)  # type: ignore[arg-type]
         return self._save_artifact(bytes), hashlib.sha1(bytes).hexdigest()
 
     @abstractmethod
-    def _save_artifact(self, serialized: bytes):
+    def _save_artifact(self, serialized: bytes) -> t.Any:
         pass
 
     @abstractmethod
-    def _load_bytes(self, file_id):
+    def _load_bytes(self, file_id: str) -> bytes:
         pass
 
-    def load_artifact(
-        self, file_id: str, serializer: str, info: t.Optional[t.Dict] = None
-    ):
+    def load_artifact(self, file_id: str, serializer: str, info: Info = None) -> t.Any:
         """
         Load artifact from artifact store, and deserialize.
 
@@ -96,7 +59,4 @@ class ArtifactStore(ABC):
         """
         bytes = self._load_bytes(file_id)
         serializer_function = serializers[serializer]
-        if info is not None:
-            return serializer_function.decode(bytes, info)
-        else:
-            return serializer_function.decode(bytes)
+        return serializer_function.decode(bytes, info)

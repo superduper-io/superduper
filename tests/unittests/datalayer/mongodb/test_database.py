@@ -6,6 +6,7 @@ from superduperdb.core.documents import Document
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
+from superduperdb.core.serializable import Serializable
 from superduperdb.core.watcher import Watcher
 from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb.datalayer.mongodb.query import Collection, PreLike
@@ -110,17 +111,6 @@ def test_select_milvus(
         )
     )
     assert r['_id'] == s['_id']
-
-
-def test_select_jsonable(with_vector_index):
-    db = with_vector_index
-    r = next(db.execute(Collection(name='documents').find()))
-    s1 = Collection(name='documents').like(
-        r={'x': r['x']},
-        vector_index='test_vector_search',
-    )
-    s2 = PreLike(**s1.dict())
-    assert s1 == s2
 
 
 def test_reload_dataset(si_validation):

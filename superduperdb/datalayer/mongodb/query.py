@@ -1,19 +1,19 @@
 from bson import ObjectId
-from pydantic import Field
 from pymongo import UpdateOne as _UpdateOne
 import random
 import typing as t
+import dataclasses as dc
 
 import superduperdb as s
 from superduperdb.core.documents import Document
+from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.cursor import SuperDuperCursor
 from superduperdb.datalayer.base.query import Select, SelectOne, Insert, Delete, Update
 from superduperdb.datalayer.base.query import Like
-from superduperdb.misc import dataclasses as dc
 
 
 @dc.dataclass
-class Collection:
+class Collection(Serializable):
     name: str
 
     @property
@@ -22,7 +22,7 @@ class Collection:
 
     def like(
         self,
-        r: t.Dict,
+        r: Document,
         vector_index: str,
         n: int = 100,
     ):
@@ -30,7 +30,7 @@ class Collection:
 
     def insert_one(self, *args, **kwargs):
         return InsertMany(
-            collection=self, documents=[args[0]], args=args[1:], kwargs=kwargs
+            collection=self, documents=[args[0]], args=list(args[1:]), kwargs=kwargs
         )
 
     def insert_many(self, *args, refresh=True, encoders=(), **kwargs):
@@ -38,37 +38,37 @@ class Collection:
             collection=self,
             encoders=encoders,
             documents=args[0],
-            args=args[1:],
+            args=list(args[1:]),
             refresh=refresh,
             kwargs=kwargs,
         )
 
     def delete_one(self, *args, **kwargs):
-        return DeleteOne(collection=self, args=args, kwargs=kwargs)
+        return DeleteOne(collection=self, args=list(args), kwargs=kwargs)
 
     def delete_many(self, *args, **kwargs):
-        return DeleteMany(collection=self, args=args, kwargs=kwargs)
+        return DeleteMany(collection=self, args=list(args), kwargs=kwargs)
 
     def update_one(self, *args, **kwargs):
-        return UpdateOne(collection=self, args=args, kwargs=kwargs)
+        return UpdateOne(collection=self, args=list(args), kwargs=kwargs)
 
     def update_many(self, *args, **kwargs):
-        return UpdateMany(collection=self, args=args, kwargs=kwargs)
+        return UpdateMany(collection=self, args=list(args), kwargs=kwargs)
 
     def find(self, *args, **kwargs):
-        return Find(collection=self, args=args, kwargs=kwargs)
+        return Find(collection=self, args=list(args), kwargs=kwargs)
 
     def find_one(self, *args, **kwargs):
-        return FindOne(collection=self, args=args, kwargs=kwargs)
+        return FindOne(collection=self, args=list(args), kwargs=kwargs)
 
     def aggregate(self, *args, **kwargs):
-        return Aggregate(collection=self, args=args, kwargs=kwargs)
+        return Aggregate(collection=self, args=list(args), kwargs=kwargs)
 
     def replace_one(self, *args, **kwargs):
-        return ReplaceOne(collection=self, args=args, kwargs=kwargs)
+        return ReplaceOne(collection=self, args=list(args), kwargs=kwargs)
 
     def change_stream(self, *args, **kwargs):
-        return ChangeStream(collection=self, args=args, kwargs=kwargs)
+        return ChangeStream(collection=self, args=list(args), kwargs=kwargs)
 
 
 @dc.dataclass
@@ -76,8 +76,8 @@ class ReplaceOne(Update):
     collection: Collection
     refresh: bool = True
     verbose: bool = True
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.ReplaceOne'] = 'mongodb.ReplaceOne'
 
@@ -141,8 +141,8 @@ class PreLike(Like):
 class Find(Select):
     collection: t.Optional[Collection] = None
     like_parent: t.Optional[PreLike] = None
-    args: t.Optional[t.List] = Field(default_factory=lambda: [])
-    kwargs: t.Optional[t.Dict] = Field(default_factory=lambda: {})
+    args: t.Optional[t.List] = dc.field(default_factory=lambda: [])
+    kwargs: t.Optional[t.Dict] = dc.field(default_factory=lambda: {})
 
     type_id: t.Literal['mongodb.Find'] = 'mongodb.Find'
 
@@ -293,8 +293,8 @@ class FeaturizeOne(SelectOne):
 
 @dc.dataclass
 class FindOne(SelectOne):
-    args: t.Optional[t.List] = Field(default_factory=list)
-    kwargs: t.Optional[t.Dict] = Field(default_factory=dict)
+    args: t.Optional[t.List] = dc.field(default_factory=list)
+    kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     like_parent: t.Optional[PreLike] = None
     collection: t.Optional[Collection] = None
 
@@ -325,8 +325,8 @@ class FindOne(SelectOne):
 @dc.dataclass
 class Aggregate(Select):
     collection: Collection
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.Aggregate'] = 'mongodb.Aggregate'
 
@@ -337,8 +337,8 @@ class Aggregate(Select):
 @dc.dataclass
 class DeleteOne(Delete):
     collection: Collection
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.DeleteOne'] = 'mongodb.DeleteOne'
 
@@ -349,8 +349,8 @@ class DeleteOne(Delete):
 @dc.dataclass
 class DeleteMany(Delete):
     collection: Collection
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.DeleteMany'] = 'mongodb.DeleteMany'
 
@@ -363,8 +363,8 @@ class UpdateOne(Update):
     collection: Collection
     refresh: bool = True
     verbose: bool = True
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.UpdateOne'] = 'mongodb.UpdateOne'
 
@@ -389,8 +389,8 @@ class UpdateMany(Update):
     collection: Collection
     refresh: bool = True
     verbose: bool = True
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.UpdateMany'] = 'mongodb.UpdateMany'
 
@@ -430,10 +430,10 @@ class InsertMany(Insert):
     collection: Collection
     refresh: bool = True
     verbose: bool = True
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
     valid_prob: float = 0.05
-    encoders: t.List = Field(default_factory=list)
+    encoders: t.List = dc.field(default_factory=list)
 
     type_id: t.Literal['mongodb.InsertMany'] = 'mongodb.InsertMany'
 
@@ -475,7 +475,7 @@ class InsertMany(Insert):
 @dc.dataclass
 class PostLike(Select):
     find_parent: t.Optional[Find]
-    r: t.Dict
+    r: Document
     vector_index: str
     n: int = 100
     max_ids: int = 1000
@@ -608,8 +608,8 @@ class Limit(Select):
 @dc.dataclass
 class ChangeStream:
     collection: Collection
-    args: t.List = Field(default_factory=list)
-    kwargs: t.Dict = Field(default_factory=dict)
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __call__(self, db):
         resume_token = self.kwargs.get("resume_token")

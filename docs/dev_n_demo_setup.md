@@ -57,6 +57,8 @@ e.g., unix terminal, vs code terminal, or Anaconda terminal.
 
 #### Using conda env
 
+Requires: `python` and [`conda`](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
+
 1. Create a python virtual environment:
 `conda create -y -n superduperdb_demo python=3.10`
 2. Install required packages:
@@ -67,6 +69,8 @@ e.g., unix terminal, vs code terminal, or Anaconda terminal.
 `python -m ipykernel install --user --name=superduperdb_demo`
 
 #### Using python venv
+
+Requires: `python`
 
 1. Create a python virtual environment:
 `python -m venv superduperdb_demo`
@@ -101,10 +105,10 @@ Ensure to use the environment `superduperdb_demo` created above, in the notebook
 Users who would like to run the demo notebooks locally need to ensure:
 
 * a running local MongoDB server
-* an editable python environment containing the `superduperdb` package,
-  with core and developer dependencies
 * a fork and a local `git` clone of the repository to support
   the basic GitHub flow contributor workflow we use
+* an editable python environment containing the `superduperdb` package,
+  with core and developer dependencies
 * completed configuration steps to enable local testing workflows
 
 
@@ -114,12 +118,64 @@ For this prerequisite, follow the instructions of the guide
 "setting up a local mock MongoDB database server" above.
 
 
-### Setting up developer python environment for the `superduperdb` package
-
-
-
 ### Setting up a GitHub fork and local `git` clone of the repository
 
+We follow the standard GitHub flow contribution pattern, this requires:
+
+* a fork of `superduperdb` in your own GitHub account
+* a local clone of your fork for local testing and development
+* both the fork and the clone synced to the upstream
+
+For that, you can follow [GitHub's instructions on setting up a development fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo#forking-a-repository).
+
+Alternatively, you can use [GitHub Desktop to clone and fork](https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/adding-and-cloning-repositories/cloning-and-forking-repositories-from-github-desktop)
+for a more GUI-based developer experience.
+
+
+### Setting up developer python environment for the `superduperdb` package
+
+An editable python environment is required for contributing to `superduperdb`.
+This can be setup with:
+
+* python `venv`
+* `conda` with `pip`
+* python `venv` with `poetry`
+
+The below need to be typed into a console, in the root directory of your
+local `git` repository (see above).
+
+#### Using python venv
+
+Requires: `python`
+
+1. Create a python virtual environment:
+`python -m venv superduperdb_dev`
+2. Activate your environment:
+`source superduperdb_dev/bin/activate`
+3. Install the requirements:
+`pip install -e.[dev]`
+
+#### Using conda env
+
+Requires: `python` and [`conda`](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
+
+1. Create a python virtual environment:
+`conda create -y -n superduperdb_dev python=3.10`
+2. Install required packages:
+`conda install -y -n superduperdb_dev pip -e .[dev]`
+3. Activate your environment:
+`conda activate superduperdb_dev`
+
+#### Using poetry
+
+Requires: `python` and [`poetry`](https://python-poetry.org/docs/#installation)
+
+1. Create a python virtual environment:
+`python -m venv superduperdb_dev`
+2. Activate your environment:
+`source superduperdb_dev/bin/activate`
+3. Install the requirements:
+`poetry install`
 
 
 ### One-time configuration for local testing workflows

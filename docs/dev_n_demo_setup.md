@@ -118,7 +118,8 @@ Ensure to use the environment `superduperdb_demo` created above, in the notebook
 
 ## developer-contributor setup
 
-Users who would like to run the demo notebooks locally need to ensure:
+Users who would like to contribute to `superduperdb` need
+a standard GitHub contributor setup with a mock database, this includes:
 
 * a running local MongoDB server
 * a fork and a local `git` clone of the repository to support

@@ -53,7 +53,7 @@ the workflow below for:
 * python `venv`
 
 The below need to be typed into a console with python or `conda`,
-e.g., unix terminal, vs code terminal, or Anaconda terminal.
+e.g., unix terminal, VS Code terminal, or Anaconda terminal.
 
 #### Using conda env
 
@@ -131,6 +131,13 @@ For that, you can follow [GitHub's instructions on setting up a development fork
 Alternatively, you can use [GitHub Desktop to clone and fork](https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/adding-and-cloning-repositories/cloning-and-forking-repositories-from-github-desktop)
 for a more GUI-based developer experience.
 
+Note: if you have followed the "user demo setup" instructions and
+have now decided to contribute :smiley:, you will already have
+a clone but it does not point to a fork.
+
+The easiest and quickest might be fork and clone to another folder and/or
+delete the original clone.
+Alternatively, point your existing clone to the fork (via fiddly `git remote` varia).
 
 ### Setting up developer python environment for the `superduperdb` package
 
@@ -179,3 +186,19 @@ Requires: `python` and [`poetry`](https://python-poetry.org/docs/#installation)
 
 
 ### One-time configuration for local testing workflows
+
+We use `pytest` for testing and `black` and `ruff` for linting.
+
+These packages are included in the install of the developer environment above,
+but integration may have to be setup with a professional developer IDE
+on project or repository basis.
+
+You will typically need to enable `black` and `ruff` linting in developer IDEs
+such as VS Code or pycharm.
+
+For a console based or manual setup of tests, the current command to run
+the full test suite locally is
+
+```
+black --check superduperdb tests && ruff check superduperdb tests && pytest
+```

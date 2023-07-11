@@ -29,7 +29,6 @@ from .download_content import download_content  # type: ignore[attr-defined]
 from superduperdb.misc.downloads import Downloader
 from superduperdb.misc.downloads import gather_uris
 from superduperdb.misc.logger import logging
-from superduperdb.misc.serialization import from_dict, to_dict
 from superduperdb.vector_search.base import VectorDatabase
 
 # TODO:
@@ -38,6 +37,7 @@ from superduperdb.vector_search.base import VectorDatabase
 # It should be moved to the Server's initialization code where it can be available to
 # all threads.
 from ...core.job import FunctionJob, ComponentJob, Job
+from ...core.serializable import Serializable
 
 
 DBResult = t.Any
@@ -403,11 +403,12 @@ class BaseDatabase:
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
 
+        # TODO extract this logic from this class
         G.add_node(
             f'{download_content.__name__}()',
             job=FunctionJob(
                 callable=download_content,
-                kwargs=dict(ids=ids, query=to_dict(query)),
+                kwargs=dict(ids=ids, query=query.to_dict()),
                 args=[],
             ),
         )
@@ -423,7 +424,7 @@ class BaseDatabase:
                 ComponentJob(
                     component_identifier=model,
                     args=[key],
-                    kwargs={'ids': ids, 'select': to_dict(query)},
+                    kwargs={'ids': ids, 'select': query.to_dict()},
                     method_name='predict',
                     variety='model',
                 ),
@@ -686,7 +687,7 @@ class BaseDatabase:
         if watcher_info is None:
             watcher_info = self.metadata.get_component('watcher', identifier)
 
-        select = from_dict(watcher_info['select'])
+        select = Serializable.from_dict(watcher_info['select'])
         if ids is None:
             ids = select.get_ids(self)
         else:

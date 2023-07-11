@@ -14,12 +14,12 @@ from superduperdb.core.metric import Metric
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encodable
 from superduperdb.core.model import Model, ModelEnsemble, _TrainingConfiguration
+from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.logger import logging
 from superduperdb.models.torch.utils import device_of, to_device, eval
 from superduperdb.datalayer.query_dataset import QueryDataset
-from superduperdb.misc.serialization import from_dict
 
 
 class BasicDataset(data.Dataset):
@@ -127,7 +127,7 @@ class Base:
             self.training_configuration = configuration
         if select is not None:
             if isinstance(select, dict):
-                select = from_dict(select)  # type: ignore[arg-type]
+                select = Serializable.deserialize(select)
             self.training_select = select  # type: ignore[assignment]
         if validation_sets is not None:
             self.validation_sets = validation_sets

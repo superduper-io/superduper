@@ -1,6 +1,6 @@
 
 
-# Getting started with SuperDuperDB
+# Getting started with SuperDuperDB - setup for demo notebooks and contributors
 
 This page contains setup instructions for:
 
@@ -14,7 +14,7 @@ by using a specific local mock MongoDB instance, instead of a cloud database ins
 
 ## Setting up a local mock MongoDB database server
 
-A local mock MongoDB instance is  a prerequisite for both the user demo setup and the
+A local mock MongoDB instance is a prerequisite for both the user demo setup and the
 basic developer-contributor setup.
 
 For this, follow the base instructions for a

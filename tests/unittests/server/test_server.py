@@ -1,6 +1,6 @@
 from .test_registry import setup_registry
 from fastapi.testclient import TestClient
-from tests.unittests.misc.test_dataclasses import Objet, UN
+from tests.unittests.misc.test_dataclasses import Objet
 from superduperdb.server.server import Server
 import io
 import json
@@ -133,4 +133,4 @@ def test_dataclasses():
     with client as client:
         response = client.post('/premier', json={'un': 'trois'})
         assert response.status_code == 200
-        assert response.json() == dict(UN, deux='deux', un='trois')
+        assert response.json() == dict(ten='ERROR', deux='deux', un='trois')

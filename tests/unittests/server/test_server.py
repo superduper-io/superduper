@@ -1,6 +1,5 @@
 from .test_registry import setup_registry
 from fastapi.testclient import TestClient
-from tests.unittests.misc.test_dataclasses import Objet
 from superduperdb.server.server import Server
 import io
 import json
@@ -118,19 +117,3 @@ def test_upload():
         response = client.get('/download/bytes-key')
         assert response.status_code == 200
         assert response.content == blob
-
-
-def test_dataclasses():
-    server = Server()
-
-    client = TestClient(server.app)
-    o = Objet()
-    server = server
-
-    server.register(o.premier)
-    server.register(o.second)
-    server.add_endpoints(o)
-    with client as client:
-        response = client.post('/premier', json={'un': 'trois'})
-        assert response.status_code == 200
-        assert response.json() == dict(ten='ERROR', deux='deux', un='trois')

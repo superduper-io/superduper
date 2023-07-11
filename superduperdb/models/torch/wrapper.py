@@ -313,6 +313,8 @@ class TorchModel(Base, Model):
     def __post_init__(self, db):
         super().__post_init__(db)
 
+        self.object.serializer = 'torch'
+
         if self.preprocess and not isinstance(self.preprocess, Artifact):
             self.preprocess = Artifact(_artifact=self.preprocess, serializer='dill')
         if self.postprocess and not isinstance(self.postprocess, Artifact):

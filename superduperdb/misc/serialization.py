@@ -7,6 +7,8 @@ import torch
 import typing as t
 import typing_extensions as te
 
+from superduperdb.models.torch.utils import device_of
+
 Info = t.Optional[t.Dict[str, t.Any]]
 
 
@@ -75,10 +77,10 @@ class DillSerializer(Serializer):
 class TorchSerializer(Serializer):
     @staticmethod
     def encode(object: t.Any, info: Info = None) -> bytes:
-        was_gpu = object.device == 'cuda'
+        was_gpu = str(device_of(object)) == 'cuda'
         object.to('cpu')
         f = io.BytesIO()
-        object.save(f)
+        torch.save(object, f)
         if was_gpu:
             object.to('cuda')
         return f.getvalue()

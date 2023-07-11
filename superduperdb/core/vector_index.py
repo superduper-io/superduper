@@ -61,14 +61,6 @@ class VectorIndex(Component):
         if isinstance(self.indexing_watcher, str):
             self.indexing_watcher = db.load('watcher', self.indexing_watcher)
 
-        self.vector_table = db.vector_database.get_table(
-            VectorCollectionConfig(
-                id=self.identifier,
-                dimensions=self._dimensions,
-                measure=self.measure,
-            )
-        )
-
         for i, w in enumerate(self.compatible_watchers):
             if isinstance(w, str):
                 self.compatible_watchers[i] = db.load('watcher', w)

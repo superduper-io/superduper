@@ -1,4 +1,3 @@
-import importlib
 import io
 import pickle
 from abc import ABC
@@ -19,29 +18,7 @@ class ModuleClassDict(te.TypedDict):
     cls: str
     dict: t.Dict[str, t.Any]
 
-
-def to_dict(item: t.Any) -> ModuleClassDict:
-    """Convert an item into a ``ModuleClassDict``
-
-    :param item
-        The item to be converted
-    """
-    return ModuleClassDict(
-        module=item.__class__.__module__,
-        cls=item.__class__.__name__,
-        dict=item.dict(),
-    )
-
-
-def from_dict(r: ModuleClassDict, **kwargs) -> t.Any:
-    """Construct an item from a ``ModuleClassDict``
-
-    :param r
-        A ModuleClassDict with the module, class and JSONization of an object
-    """
-    module = importlib.import_module(r['module'])
-    cls = getattr(module, r['cls'])
-    return cls(**r['dict'], **kwargs)
+from superduperdb.core.serializable import Serializable
 
 
 class Serializer(ABC):
@@ -98,9 +75,8 @@ class TorchStateSerializer(Serializer):
         return f.getvalue()
 
     @staticmethod
-    def decode(object: t.Any, info: Info = None) -> t.Any:
-        # BROKEN: decode's first argument is bytes, not t.Any!
-        instance = from_dict(info)  # type: ignore[arg-type]
+    def decode(object, info):
+        instance = Serializable.from_dict(info)
         instance.load_state_dict(object)
         return instance
 

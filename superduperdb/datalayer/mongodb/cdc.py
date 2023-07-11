@@ -20,7 +20,7 @@ from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.job import FunctionJob
 from superduperdb.misc.task_queue import cdc_queue
-from superduperdb.misc.serialization import from_dict, to_dict
+from superduperdb.vector_search.lancedb_client import LanceDBClient
 from superduperdb.core.vector_index import VectorIndex
 
 MongoChangePipelines: t.Dict[str, t.Dict] = {'generic': {}}
@@ -167,9 +167,7 @@ def copy_vectors(
     `indexing_watcher` in the defined watchers in db.
     """
     try:
-        # BROKEN: cdc_query is a Serializable, from_dict wants a dict
-        query = from_dict(cdc_query)  # type: ignore[arg-type]
-
+        query = Serializable.from_dict(cdc_query)
         select = query.select_using_ids(ids)
         docs = db.select(select)
         docs = [doc.unpack() for doc in docs]
@@ -256,9 +254,7 @@ class CDCHandler(threading.Thread):
                 f'copy_vectors({indexing_watcher_identifier})',
                 FunctionJob(
                     callable=copy_vectors,
-                    # BROKEN: cdc_query has its own ``to_dict`` method which
-                    # probably should be called here.
-                    args=[indexing_watcher_identifier, to_dict(cdc_query), ids],
+                    args=[indexing_watcher_identifier, ids, cdc_query.to_dict()],
                     kwargs={},
                 ),
             )

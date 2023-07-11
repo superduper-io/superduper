@@ -3,10 +3,10 @@ import typing as t
 from pymongo import MongoClient
 
 from superduperdb.core.documents import Document
+from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.misc.logger import logging
-from superduperdb.misc.serialization import from_dict
 
 
 class MongoDataBackend(BaseDataBackend):
@@ -35,7 +35,7 @@ class MongoDataBackend(BaseDataBackend):
         return r
 
     def unset_outputs(self, info: t.Dict):
-        select = from_dict(info['select'])
+        select = Serializable.from_dict(info['select'])
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
         doc = {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}
 

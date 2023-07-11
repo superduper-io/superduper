@@ -274,7 +274,6 @@ class Find(Select):
             )
         else:
             raise NotImplementedError
-
         return SuperDuperCursor(raw_cursor=cursor, id_field='_id', encoders=db.encoders)
 
 

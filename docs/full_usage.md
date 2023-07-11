@@ -1,6 +1,7 @@
-Full usage
-==========
+# Full Usage
 
+
+```{eval-rst}
 .. autoclass:: superduperdb.datalayer.base.database.BaseDatabase
   :members:
 .. autoclass:: superduperdb.core.component.Component
@@ -21,3 +22,4 @@ Full usage
   :members:
 .. autoclass:: superduperdb.core.vector_index.VectorIndex
   :members:
+```

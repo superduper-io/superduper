@@ -39,8 +39,12 @@ class Encoder(Component):
     artifacts: t.ClassVar[t.List[str]] = ['decoder', 'encoder']
 
     identifier: str
-    decoder: t.Union[t.Callable, Artifact] = Artifact(_artifact=_pickle_decoder)
-    encoder: t.Union[t.Callable, Artifact] = Artifact(_artifact=_pickle_encoder)
+    decoder: t.Union[t.Callable, Artifact] = dc.field(
+        default_factory=lambda: Artifact(_artifact=_pickle_decoder)
+    )
+    encoder: t.Union[t.Callable, Artifact] = dc.field(
+        default_factory=lambda: Artifact(_artifact=_pickle_encoder)
+    )
     shape: t.Optional[t.Tuple] = None
     version: t.Optional[int] = None
 

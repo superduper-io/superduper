@@ -381,7 +381,7 @@ class BaseDatabase:
         info = ArtifactDocument(info).load_artifacts(
             artifact_store=self.artifact_store, cache={}
         )
-        m = Component.from_dict(info, db=self if init_db else None)
+        m = Component.deserialize(info, db=self if init_db else None)
         if cm := self.variety_to_cache_mapping.get(variety):
             getattr(self, cm)[m.identifier] = m
         return m
@@ -494,7 +494,7 @@ class BaseDatabase:
                 else:
                     assert c.identifier in self.show(c.variety)
 
-        d = object.to_dict()
+        d = object.serialize()
         d_doc = ArtifactDocument(d)
         d_doc.save_artifacts(
             artifact_store=self.artifact_store,
@@ -755,7 +755,7 @@ class BaseDatabase:
                 )
             raise e
 
-        repl = ArtifactDocument(object.to_dict())
+        repl = ArtifactDocument(object.serialize())
         repl.save_artifacts(self.artifact_store, cache={}, replace=True)
         for k in info:
             if k not in repl.content:

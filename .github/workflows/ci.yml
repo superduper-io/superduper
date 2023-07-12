@@ -65,7 +65,7 @@ jobs:
           poetry run make lint
 
   test:
-    needs: lint
+    #needs: lint
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -88,7 +88,7 @@ jobs:
           curl -sSL https://install.python-poetry.org | python - -y
 
       - name: Update PATH
-        if: ${{ matrix.os != 'Windows' }}
+        if: ${{ matrix.os != 'windows-latest' }}
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Update Path for Windows
@@ -96,7 +96,7 @@ jobs:
         run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
 
       - name: Enable long paths for git on Windows
-        if: ${{ matrix.os == 'Windows' }}
+        if: ${{ matrix.os == 'windows-latest' }}
         # Enable handling long path names (+260 char) on the Windows platform
         # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation
         run: git config --system core.longpaths true
@@ -124,7 +124,7 @@ jobs:
         run: poetry install
 
       - name: Setup docker (missing on MacOS)
-        if: runner.os == 'macos-latest'
+        if: ${{ matrix.os == 'macos-latest' }}
         run: |
           brew install docker
 

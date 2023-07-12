@@ -46,7 +46,7 @@ fix-and-test: test-containers
 	black superduperdb tests
 	ruff check --fix superduperdb tests
 	mypy
-	poetry lock --no-update
+	poetry lock --check
 	$(COVERAGE_PREFIX) pytest $(PYTEST_ARGUMENTS)
 
 .PHONY: clean-test

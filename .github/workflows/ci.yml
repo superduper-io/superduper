@@ -28,7 +28,7 @@ jobs:
           brew install docker
           brew install docker-compose
           echo "$HOMEBREW_PREFIX/bin" >> $GITHUB_PATH
-          echo docker-compose --version >> $GITHUB_OUTPUT
+          echo $(docker-compose --version) >> $GITHUB_OUTPUT
 
       - name: Set up Python
         id: setup-python

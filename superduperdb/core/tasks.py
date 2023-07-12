@@ -62,6 +62,7 @@ def callable_job(
     dependencies=(),
 ):
     from superduperdb.datalayer.base.build import build_datalayer
+
     db = build_datalayer()
     db.metadata.update_job(job_id, 'status', 'running')
     try:

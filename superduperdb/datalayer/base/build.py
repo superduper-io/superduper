@@ -1,5 +1,3 @@
-import pymongo
-
 from superduperdb import CFG
 from superduperdb.datalayer.base.backends import (
     data_backends,
@@ -50,5 +48,5 @@ def build_datalayer(**connections) -> BaseDatabase:
         vector_database=build_vector_database(
             CFG.vector_search.type, vector_database_stores
         ),
-        distributed_client=build_distributed_client(CFG)
+        distributed_client=build_distributed_client(CFG),
     )

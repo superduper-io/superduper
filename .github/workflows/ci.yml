@@ -17,8 +17,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
+  debug:
     runs-on: macos-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Setup docker-compose (missing on MacOS)
+        run: |
+          brew install docker
+          brew install docker-compose
+          echo "$HOMEBREW_PREFIX/bin" >> $GITHUB_PATH
+          mkdir -p /Users/runner/.docker/cli-plugins
+          ln -sfn $HOMEBREW_PREFIX/opt/docker-compose/bin/docker-compose /Users/runner/.docker/cli-plugins/docker-compose
+          echo $(docker --version)
+          echo $(docker-compose --version)
+
+  lint:
+    needs: debug
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -64,7 +81,7 @@ jobs:
           poetry run make lint
 
   test:
-    #needs: lint
+    needs: lint
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

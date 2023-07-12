@@ -1,4 +1,3 @@
-from superduperdb import CFG
 from superduperdb.datalayer.base.backends import (
     data_backends,
     metadata_stores,
@@ -10,26 +9,23 @@ from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.cluster.dask.dask_client import dask_client
 
 
-def build_datalayer(**connections) -> BaseDatabase:
+def build_datalayer(cfg=None, **connections) -> BaseDatabase:
     """
     Build datalayer as per ``db = superduper(db)`` from configuration.
 
     :param connections: cache of connections to reuse in the build process.
     """
-    """
-    connection_name = CFG.data_layers.data_backend.connection
-    connection = connections[connection_name] 
-    if isinstance(connection, dict): # This implies db config.
-        connection = pymongo.MongoClient(**connection)
-        connections[connection_name] = connection
-    """
+    if not cfg:
+        from superduperdb import CFG
+    else:
+        CFG = cfg
 
     def build_vector_database(cfg, stores):
         cls = stores[cfg.__class__]
         return cls(cfg)
 
     def build_distributed_client(cfg):
-        if cfg.remote:
+        if cfg.distributed:
             return dask_client(cfg.dask)
 
     def build(cfg, stores):
@@ -37,6 +33,8 @@ def build_datalayer(**connections) -> BaseDatabase:
         if connections:
             connection = connections[cfg.connection]
         else:
+            # cast port to an integer.
+            cfg.kwargs['port'] = int(cfg.kwargs['port'])
             connection = default_connections[cfg.connection](**cfg.kwargs)
 
         return cls(name=cfg.name, conn=connection)

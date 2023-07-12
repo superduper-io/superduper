@@ -35,7 +35,7 @@ class Component(Serializable):
             method_name='predict',
             variety='model',
             kwargs={
-                'remote': False,
+                'distributed': False,
                 'validation_set': validation_set,
                 'metrics': metrics,
             },
@@ -56,7 +56,7 @@ class Component(Serializable):
         db: 'superduperdb.datalayer.base.database.Database',  # type: ignore[name-defined]
         validation_set: t.Union[str, 'Dataset'],  # type: ignore[name-defined]
         metrics: t.List[t.Union['Metric', str]],  # type: ignore[name-defined]
-        remote: bool = False,
+        distributed: bool = False,
         dependencies: t.Sequence[Future] = (),
     ):
         from .dataset import Dataset
@@ -73,11 +73,11 @@ class Component(Serializable):
                 db.add(m)
                 metrics[i] = m.identifier
 
-        if remote:
+        if distributed:
             return self.create_validation_job(
                 validation_set=validation_set,
                 metrics=metrics,
-            )(db=db, remote=True, dependencies=dependencies)
+            )(db=db, distributed=True, dependencies=dependencies)
 
         output = self._validate(
             db=db,

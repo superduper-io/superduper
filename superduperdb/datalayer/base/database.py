@@ -84,7 +84,7 @@ class BaseDatabase:
         self.encoders = LoadDict(self, 'encoder')
         self.vector_indices = LoadDict(self, 'vector_index')
 
-        self.remote = CFG.remote
+        self.distributed = CFG.distributed
         self.metadata = metadata
         self.artifact_store = artifact_store
         self.databackend = databackend
@@ -216,7 +216,7 @@ class BaseDatabase:
         self,
         job,
         depends_on: t.Optional[t.List[Future]] = None,
-        remote: t.Optional[bool] = None,
+        distributed: t.Optional[bool] = None,
     ):
         """
         Run job. See ``core.job.Job``, ``core.job.FunctionJob``, ``core.job.ComponentJob``.
@@ -224,9 +224,9 @@ class BaseDatabase:
         :param job:
         :param depends_on: List of dependencies
         """
-        if remote is None:
-            remote = CFG.remote
-        return job(db=self, dependencies=depends_on, remote=remote)
+        if distributed is None:
+            distributed = CFG.distributed
+        return job(db=self, dependencies=depends_on, distributed=distributed)
 
     def select(self, select: Select) -> SelectResult:
         """
@@ -267,7 +267,7 @@ class BaseDatabase:
             ids=ids,
             verbose=verbose,
         )
-        task_graph(db=self, remote=self.remote)
+        task_graph(db=self, distributed=self.distributed)
         return task_graph
 
     def update(self, update: Update) -> UpdateResult:
@@ -708,7 +708,7 @@ class BaseDatabase:
                     model=model,
                     recompute=recompute,
                     watcher_info=watcher_info,
-                    remote=False,
+                    distributed=False,
                     **kwargs,
                 )
             return []

@@ -4,7 +4,7 @@ from pathlib import Path
 
 __all__ = 'CFG', 'ICON', 'JSONable', 'ROOT', 'config', 'log'
 
-CFG = configs.CONFIG.config
+CFG = configs.build_config()
 ICON = '🔮'
 ROOT = Path(__file__).parent
 

@@ -45,4 +45,6 @@ class ConfigSettings:
         return self.cls(**dicts.combine((*data, environ_dict)))
 
 
-CONFIG = ConfigSettings(config.Config, ALL_CONFIGS, PREFIX)
+def build_config():
+    CONFIG = ConfigSettings(config.Config, ALL_CONFIGS, PREFIX)
+    return CONFIG.config

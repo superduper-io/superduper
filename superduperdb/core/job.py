@@ -2,8 +2,8 @@ import datetime
 import typing as t
 import uuid
 
+
 from superduperdb.core.tasks import method_job, callable_job
-from superduperdb.cluster.dask.dask_client import dask_client
 
 
 def job(f):
@@ -45,7 +45,7 @@ class Job:
             raise e
         return out
 
-    def run_on_dask(self, dependencies=()):
+    def run_on_dask(self, client, dependencies=()):
         raise NotImplementedError
 
     def dict(self):
@@ -78,9 +78,8 @@ class FunctionJob(Job):
         d['cls'] = 'FunctionJob'
         return d
 
-    def run_on_dask(self, dependencies=()):
-        _dask_client = dask_client()
-        self.future = _dask_client.submit(
+    def run_on_dask(self, client, dependencies=()):
+        future = client.submit(
             callable_job,
             function_to_call=self.callable,
             job_id=self.identifier,
@@ -89,6 +88,7 @@ class FunctionJob(Job):
             key=self.identifier,
             dependencies=dependencies,
         )
+        self.future = future
         return
 
     def __call__(self, db: t.Optional[t.Any] = None, remote=False, dependencies=()):
@@ -100,7 +100,7 @@ class FunctionJob(Job):
         if not remote:
             self.run_locally(db)
         else:
-            self.run_on_dask(dependencies=dependencies)
+            self.run_on_dask(client=db.distributed_client, dependencies=dependencies)
         return self
 
 
@@ -129,9 +129,8 @@ class ComponentJob(Job):
         self._component = value
         self.callable = getattr(self._component, self.method_name)
 
-    def run_on_dask(self, dependencies=()):
-        _dask_client = dask_client()
-        self.future = _dask_client.submit(
+    def run_on_dask(self,client, dependencies=()):
+        future = client.submit(
             method_job,
             variety=self.variety,
             identifier=self.component_identifier,
@@ -142,6 +141,8 @@ class ComponentJob(Job):
             key=self.identifier,
             dependencies=dependencies,
         )
+
+        self.future = future
         return
 
     def __call__(self, db: t.Optional[t.Any] = None, remote=False, dependencies=()):
@@ -155,7 +156,7 @@ class ComponentJob(Job):
         if not remote:
             self.run_locally(db)
         else:
-            self.run_on_dask(dependencies=dependencies)
+            self.run_on_dask(client=db.distributed_client, dependencies=dependencies)
         return self
 
     def dict(self):

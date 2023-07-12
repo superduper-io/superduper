@@ -79,7 +79,7 @@ class FunctionJob(Job):
         return d
 
     def run_on_dask(self, client, dependencies=()):
-        future = client.submit(
+        future = client.submit_and_forget(
             callable_job,
             function_to_call=self.callable,
             job_id=self.identifier,
@@ -129,8 +129,8 @@ class ComponentJob(Job):
         self._component = value
         self.callable = getattr(self._component, self.method_name)
 
-    def run_on_dask(self,client, dependencies=()):
-        future = client.submit(
+    def run_on_dask(self, client, dependencies=()):
+        future = client.submit_and_forget(
             method_job,
             variety=self.variety,
             identifier=self.component_identifier,

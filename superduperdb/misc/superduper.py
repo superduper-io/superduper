@@ -42,7 +42,7 @@ def superduper(item, **kwargs):
             metadata=MongoMetaDataStore(conn=item.client, name=item.name),
             artifact_store=MongoArtifactStore(
                 conn=item.client, name=f'_filesystem:{item.name}'
-            )
+            ),
         )
     elif duck_type_sklearn(item):
         from sklearn.pipeline import Pipeline as BasePipeline

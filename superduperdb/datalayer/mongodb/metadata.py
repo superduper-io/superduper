@@ -192,10 +192,6 @@ class MongoMetaDataStore(MetaDataStore):
                     'version': version,
                 },
             )
-        if r is None:
-            import pdb
-
-            pdb.set_trace()
         return r
 
     def get_component_version_parents(self, unique_id: str):

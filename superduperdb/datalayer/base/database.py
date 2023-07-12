@@ -77,21 +77,27 @@ class BaseDatabase:
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
         vector_database: VectorDatabase,
+        distributed_client = None
     ):
         self.metrics = LoadDict(self, 'metric')
         self.models = LoadDict(self, 'model')
         self.encoders = LoadDict(self, 'encoder')
         self.vector_indices = LoadDict(self, 'vector_index')
 
-        self.remote = CFG.distributed
+        self.remote = CFG.remote
         self.metadata = metadata
         self.artifact_store = artifact_store
         self.databackend = databackend
         self.vector_database = vector_database
+        self._distributed_client = distributed_client
 
     @property
     def db(self):
         return self.databackend.db
+
+    @property
+    def distributed_client(self):
+        return self._distributed_client
 
     def validate(
         self,
@@ -219,7 +225,7 @@ class BaseDatabase:
         :param depends_on: List of dependencies
         """
         if remote is None:
-            remote = CFG.distributed
+            remote = CFG.remote
         return job(db=self, dependencies=depends_on, remote=remote)
 
     def select(self, select: Select) -> SelectResult:
@@ -261,7 +267,7 @@ class BaseDatabase:
             ids=ids,
             verbose=verbose,
         )
-        task_graph(db=self)
+        task_graph(db=self, remote=self.remote)
         return task_graph
 
     def update(self, update: Update) -> UpdateResult:

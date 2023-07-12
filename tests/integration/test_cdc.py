@@ -92,7 +92,6 @@ class TestMongoCDC:
         watch_fixture.stop()
         assert info['updates'] == count
 
-    @pytest.mark.skip('Broken')
     @patch('superduperdb.datalayer.mongodb.cdc.copy_vectors')
     def test_task_workflow_on_insert(
         self, mocked_copy_vectors, watch_fixture, with_vector_index, a_single_insert
@@ -112,9 +111,6 @@ class TestMongoCDC:
         time.sleep(4)
         _id = output.inserted_ids[0]
         doc = with_vector_index.db['documents'].find_one({'_id': _id})
-        import pdb
-
-        pdb.set_trace()
         watch_fixture.stop()
         assert '_outputs' in doc.keys()
         assert 'linear_a' in doc['_outputs']['x'].keys()

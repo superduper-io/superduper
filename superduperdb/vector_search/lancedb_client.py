@@ -79,7 +79,7 @@ class LanceTable:
         :param data: Sequence of ``VectorCollectionItem`` objects.
         :param upsert: Whether to perform an upsert operation. Defaults to ``False``.
         """
-        dict_data = [d.to_dict() for d in data]
+        dict_data = [d.serialize() for d in data]
         df = pd.DataFrame(dict_data)
         try:
             self.table.add(df)

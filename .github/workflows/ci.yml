@@ -23,16 +23,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Setup docker-compose (missing on MacOS)
-        run: |
-          brew install docker
-          brew install docker-compose
-          echo "$HOMEBREW_PREFIX/bin" >> $GITHUB_PATH
-          echo $(docker-compose --version) >> $GITHUB_OUTPUT
-
       - name: Set up Python
         id: setup-python
-
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -136,6 +128,7 @@ jobs:
       - name: Setup docker-compose (missing on MacOS)
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
+          brew install docker
           brew install docker-compose
           echo "$HOMEBREW_PREFIX/bin" >> $GITHUB_PATH
 

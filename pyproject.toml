@@ -62,6 +62,7 @@ tenacity = ">=8.1.0"
 types-pillow = ">=9.5.0.4"
 types-requests = ">=2.31.0.1"
 types-tqdm = ">=4.65.0.1"
+myst-parser = "^2.0.0"
 
 [tool.poetry.group.legacy]
 optional = false

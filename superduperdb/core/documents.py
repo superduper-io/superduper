@@ -1,6 +1,7 @@
-from superduperdb.core.artifact import Artifact
+from superduperdb.core.artifact import Artifact, InMemoryArtifacts
 from superduperdb.core.encoder import Encodable
 from superduperdb.datalayer.base.artifacts import ArtifactStore
+from bson import BSON
 import typing as t
 
 ContentType = t.Union[t.Dict, Encodable]
@@ -14,7 +15,7 @@ class ArtifactDocument:
         return self._load_artifacts(self.content, artifact_store, cache)
 
     @staticmethod
-    def _load_artifacts(d: t.Any, artifact_store: ArtifactStore, cache: t.Dict):
+    def _load_artifacts(d: t.Any, artifact_store: t.Union[ArtifactStore, InMemoryArtifacts], cache: t.Dict):
         if isinstance(d, dict):
             if 'file_id' in d and 'serializer' in d:
                 return Artifact.load(d, artifact_store, cache)
@@ -32,8 +33,8 @@ class ArtifactDocument:
     @staticmethod
     def _save_artifacts(
         d: t.Any,
-        artifact_store: ArtifactStore,
         cache: t.Dict,
+        artifact_store: t.Union[ArtifactStore, InMemoryArtifacts],
         replace: bool = False,
     ):
         if isinstance(d, dict):
@@ -41,30 +42,21 @@ class ArtifactDocument:
             for k in keys:
                 v = d[k]
                 if isinstance(v, dict) or isinstance(v, list):
-                    ArtifactDocument._save_artifacts(v, artifact_store, cache)
+                    ArtifactDocument._save_artifacts(v, cache, artifact_store)
                 if isinstance(v, Artifact):
-                    v.save(
-                        artifact_store=artifact_store,
-                        cache=cache,
-                        replace=replace,
-                    )
+                    v.save(cache=cache, artifact_store=artifact_store, replace=replace)
                     d[k] = cache[id(v._artifact)]
         if isinstance(d, list):
             for i, x in enumerate(d):
                 if isinstance(x, Artifact):
-                    x.save(
-                        artifact_store=artifact_store,
-                        cache=cache,
-                    )
+                    x.save(cache=cache, artifact_store=artifact_store)
                     d[i] = cache[id(x._artifact)]
-                ArtifactDocument._save_artifacts(x, artifact_store, cache)
+                ArtifactDocument._save_artifacts(x, cache, artifact_store)
 
     def save_artifacts(
-        self, artifact_store: ArtifactStore, cache: t.Dict, replace: bool = False
+        self, artifact_store: t.Union[ArtifactStore, InMemoryArtifacts], cache: t.Dict, replace: bool = False
     ):
-        return self._save_artifacts(
-            self.content, artifact_store, cache, replace=replace
-        )
+        return self._save_artifacts(self.content, cache, artifact_store, replace=replace)
 
 
 class Document:
@@ -78,6 +70,22 @@ class Document:
 
     def __hash__(self):
         return super().__hash__()
+
+    def dumps(self):
+        return BSON.encode(self.encode())
+
+    @staticmethod
+    def loads(content, encoders):
+        return Document(Document.decode(BSON.decode(content), encoders=encoders))
+
+    @staticmethod
+    def dumps_many(documents):
+        return bytes(BSON.encode({'docs': [d.encode() for d in documents]}))
+
+    @staticmethod
+    def loads_many(content: bytearray, encoders: t.Dict):
+        documents = BSON.decode(content)['docs']
+        return [Document(Document.decode(r, encoders=encoders)) for r in documents]
 
     def _encode(self, r: t.Any):
         if isinstance(r, dict):

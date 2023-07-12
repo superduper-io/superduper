@@ -360,6 +360,7 @@ class BaseDatabase:
         version: Optional[int] = None,
         allow_hidden: bool = False,
         init_db: bool = True,
+        info_only: bool = False,
     ) -> Component:
         """
         Load component using uniquely identifying information.
@@ -379,6 +380,8 @@ class BaseDatabase:
             version=version,
             allow_hidden=allow_hidden,
         )
+        if info_only:
+            return info
         if info is None:
             raise Exception(
                 f'No such object of type "{variety}", '

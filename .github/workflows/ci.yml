@@ -72,6 +72,9 @@ jobs:
       matrix:
         os: [ "windows-latest", "macos-latest" ]  #"ubuntu-latest",
         python-version: ["3.8"]  # TODO: Increase range of supported CPython versions
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -126,7 +129,7 @@ jobs:
       - name: Setup docker (missing on MacOS)
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          brew install docker
+          brew install docker-compose
 
       - name: Test
         run: |

@@ -179,7 +179,7 @@ def copy_vectors(
         table.add(vectors, upsert=True)
     except Exception:
         logging.exception(
-            f"Error while copying vectors for `vector_index`: {indexing_watcher_identifier}"  # noqa: E501
+            f"Error while copying vectors for `vector_index`: {indexing_watcher_identifier}"
         )
         raise
 

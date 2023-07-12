@@ -166,7 +166,7 @@ def copy_vectors(
     `indexing_watcher` in the defined watchers in db.
     """
     try:
-        query = Serializable.from_dict(cdc_query)
+        query = Serializable.deserialize(cdc_query)
         select = query.select_using_ids(ids)
         docs = db.select(select)
         docs = [doc.unpack() for doc in docs]

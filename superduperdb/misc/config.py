@@ -87,21 +87,21 @@ class ModelServer(HostPort):
 
 
 class MongoDB(HostPort):
-    port: int = 27017
-    host: str = 'localhost'
-    username: str = 'testmongodbuser'
-    password: str = 'testmongodbpassword'
+    host: str = "localhost"
+    port: int = 27018
+    username: str = "testmongodbuser"
+    password: str = "testmongodbpassword"
 
 
 class DataLayer(JSONable):
     cls: str = 'mongodb'
     connection: str = 'pymongo'
     kwargs: t.Dict = Factory(lambda: MongoDB().dict())
-    name: str = 'documents'
+    name: str = 'test_db'
 
 
 class DataLayers(JSONable):
-    artifact: DataLayer = Factory(lambda: DataLayer(name='_filesystem:documents'))
+    artifact: DataLayer = Factory(lambda: DataLayer(name='_filesystem:test_db'))
     data_backend: DataLayer = Factory(DataLayer)
     metadata: DataLayer = Factory(DataLayer)
 
@@ -125,23 +125,13 @@ class Ray(HostPort):
 
 
 class Server(JSONable):
-    class FastAPI(JSONable):
-        debug: bool = False
-        title: str = 'SuperDuperDB server'
-        version: str = REST_API_VERSION
+    host: str = '127.0.0.1'
+    port: int = 3223
+    protocol: str = 'http'
 
-    class WebServer(JSONable):
-        host: str = '127.0.0.1'
-        port: int = 3223
-        protocol: str = 'http'
-
-        @property
-        def uri(self) -> str:
-            return f'{self.protocol}://{self.host}:{self.port}'
-
-    fastapi: FastAPI = Factory(FastAPI)
-    web_server: WebServer = Factory(WebServer)
-    test_port = 32233
+    @property
+    def uri(self) -> str:
+        return f'{self.protocol}://{self.host}:{self.port}'
 
 
 class LanceDB(JSONable):

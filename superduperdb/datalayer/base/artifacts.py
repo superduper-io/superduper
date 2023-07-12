@@ -29,17 +29,13 @@ class ArtifactStore(ABC):
         """
         pass
 
-    def create_artifact(
-        self, object: t.Any, serializer: str, info: Info = None
-    ) -> t.Any:
+    def create_artifact(self, bytes: t.Any):
         """
         Save serialized object in the artifact store.
 
         :param object: Object to serialize
-        :param serializer: Serializer to use
+        :param bytes: Serialized object
         """
-        serializer = serializers[serializer]
-        bytes = serializer.encode(object, info)  # type: ignore[arg-type]
         return self._save_artifact(bytes), hashlib.sha1(bytes).hexdigest()
 
     @abstractmethod

@@ -67,9 +67,9 @@ def test_db(mongodb_server: MongoDBConfig) -> Iterator[BaseDatabase]:
 def config(mongodb_server: MongoDBConfig) -> Iterator[None]:
     kwargs = asdict(TestMongoDBConfig())
     data_layers_cfg = DataLayers(
-        artifact=DataLayer(name='_filesystem:documents', kwargs=kwargs),
-        data_backend=DataLayer(name='documents', kwargs=kwargs),
-        metadata=DataLayer(name='documents', kwargs=kwargs),
+        artifact=DataLayer(name='_filesystem:test_db', kwargs=kwargs),
+        data_backend=DataLayer(name='test_db', kwargs=kwargs),
+        metadata=DataLayer(name='test_db', kwargs=kwargs),
     )
 
     with mock.patch('superduperdb.CFG.data_layers', data_layers_cfg):
@@ -353,7 +353,7 @@ def a_model_base(float_tensors_32, float_tensors_16):
 
 @pytest.fixture()
 def a_watcher(a_model):
-    a_model.remote = False
+    a_model.distributed = False
     a_model.add(
         Watcher(
             model='linear_a',

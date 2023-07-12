@@ -9,13 +9,13 @@ from superduperdb.core.tasks import method_job, callable_job
 def job(f):
     def wrapper(
         *args,
-        remote=False,
+        distributed=False,
         db: t.Optional[t.Any] = None,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
         **kwargs,
     ):
         j = FunctionJob(callable=f, args=args, kwargs=kwargs)  # type: ignore[arg-type]
-        return j(db=db, remote=remote, dependencies=dependencies)
+        return j(db=db, distributed=distributed, dependencies=dependencies)
 
     return wrapper
 
@@ -59,7 +59,9 @@ class Job:
             'stderr': [],
         }
 
-    def __call__(self, db: t.Optional[t.Any] = None, remote=False, dependencies=()):
+    def __call__(
+        self, db: t.Optional[t.Any] = None, distributed=False, dependencies=()
+    ):
         raise NotImplementedError
 
 
@@ -79,8 +81,12 @@ class FunctionJob(Job):
         return d
 
     def run_on_dask(self, client, dependencies=()):
-        future = client.submit_and_forget(
+        from superduperdb.misc.configs import build_config
+
+        CFG = build_config()
+        self.future = client.submit(
             callable_job,
+            cfg=CFG,
             function_to_call=self.callable,
             job_id=self.identifier,
             args=self.args,
@@ -88,16 +94,17 @@ class FunctionJob(Job):
             key=self.identifier,
             dependencies=dependencies,
         )
-        self.future = future
         return
 
-    def __call__(self, db: t.Optional[t.Any] = None, remote=False, dependencies=()):
+    def __call__(
+        self, db: t.Optional[t.Any] = None, distributed=False, dependencies=()
+    ):
         if db is None:
             from superduperdb.datalayer.base.build import build_datalayer
 
             db = build_datalayer()
         db.metadata.create_job(self.dict())
-        if not remote:
+        if not distributed:
             self.run_locally(db)
         else:
             self.run_on_dask(client=db.distributed_client, dependencies=dependencies)
@@ -130,8 +137,12 @@ class ComponentJob(Job):
         self.callable = getattr(self._component, self.method_name)
 
     def run_on_dask(self, client, dependencies=()):
-        future = client.submit_and_forget(
+        from superduperdb.misc.configs import build_config
+
+        CFG = build_config()
+        self.future = client.submit(
             method_job,
+            cfg=CFG,
             variety=self.variety,
             identifier=self.component_identifier,
             method_name=self.method_name,
@@ -142,10 +153,11 @@ class ComponentJob(Job):
             dependencies=dependencies,
         )
 
-        self.future = future
         return
 
-    def __call__(self, db: t.Optional[t.Any] = None, remote=False, dependencies=()):
+    def __call__(
+        self, db: t.Optional[t.Any] = None, distributed=False, dependencies=()
+    ):
         if db is None:
             from superduperdb.datalayer.base.build import build_datalayer
 
@@ -153,7 +165,7 @@ class ComponentJob(Job):
         db.metadata.create_job(self.dict())
         if self.component is None:
             self.component = db.load(self.variety, self.component_identifier)
-        if not remote:
+        if not distributed:
             self.run_locally(db)
         else:
             self.run_on_dask(client=db.distributed_client, dependencies=dependencies)

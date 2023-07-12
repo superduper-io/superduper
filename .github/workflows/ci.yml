@@ -70,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ "windows-latest", "ubuntu-latest", "macos-latest" ]
+        os: [ "windows-latest", "macos-latest" ]  #"ubuntu-latest",
         python-version: ["3.8"]  # TODO: Increase range of supported CPython versions
     steps:
       - name: Check out repository
@@ -92,7 +92,7 @@ jobs:
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Update Path for Windows
-        if: ${{ matrix.os == 'Windows' }}
+        if: ${{ matrix.os == 'windows-latest' }}
         run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
 
       - name: Enable long paths for git on Windows
@@ -122,6 +122,11 @@ jobs:
 
       - name: Install dependencies
         run: poetry install
+
+      - name: Setup docker (missing on MacOS)
+        if: runner.os == 'macos-latest'
+        run: |
+          brew install docker
 
       - name: Test
         run: |

@@ -131,8 +131,8 @@ jobs:
           brew install docker
           brew install docker-compose
           echo "$HOMEBREW_PREFIX/bin" >> $GITHUB_PATH
-          mkdir -p $HOME/.docker/cli-plugins
-          ln -sfn $HOMEBREW_PREFIX/opt/docker-compose/bin/docker-compose $HOME/.docker/cli-plugins/docker-compose
+          mkdir -p /Users/runner/.docker/cli-plugins
+          ln -sfn $HOMEBREW_PREFIX/opt/docker-compose/bin/docker-compose /Users/runner/.docker/cli-plugins/docker-compose
 
       - name: Test
         run: |

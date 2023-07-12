@@ -117,7 +117,7 @@ class Model(Component):
             args=[X],
             kwargs={
                 'remote': False,
-                'select': select.to_dict() if select else None,
+                'select': select.serialize() if select else None,
                 'ids': ids,
                 'max_chunk_size': max_chunk_size,
                 **kwargs,
@@ -139,7 +139,7 @@ class Model(Component):
             kwargs={
                 'y': y,
                 'remote': False,
-                'select': select.to_dict() if select else None,
+                'select': select.serialize() if select else None,
                 **kwargs,
             },
         )
@@ -172,7 +172,7 @@ class Model(Component):
         **kwargs,
     ):
         if isinstance(select, dict):
-            select = Serializable.from_dict(select)
+            select = Serializable.deserialize(select)
 
         if validation_sets:
             validation_sets = list(validation_sets)  # type: ignore[arg-type]
@@ -217,7 +217,7 @@ class Model(Component):
         **kwargs,
     ):
         if isinstance(select, dict):
-            select = Serializable.from_dict(select)
+            select = Serializable.deserialize(select)
 
         if watch:
             from superduperdb.core.watcher import Watcher
@@ -345,7 +345,7 @@ class ModelEnsemble(Component):
         **kwargs,
     ):
         if isinstance(select, dict):
-            select = Serializable.from_dict(select)
+            select = Serializable.deserialize(select)
 
         if validation_sets:
             validation_sets = list(validation_sets)  # type: ignore[arg-type]

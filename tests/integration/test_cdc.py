@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import torch
 
+from superduperdb.core.documents import Document
 from superduperdb.datalayer.base.cdc import DatabaseWatcher
 from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.misc.task_queue import cdc_queue
@@ -61,7 +62,7 @@ class TestMongoCDC:
         t = random_data.encoders['torch.float32[32]']
         with_vector_index.execute(
             Collection(name='documents').update_many(
-                {"_id": output.inserted_ids[0]}, {'$set': {'x': t(to_update)}}
+                {"_id": output.inserted_ids[0]}, Document({'$set': {'x': t(to_update)}})
             )
         )
         time.sleep(2)
@@ -83,7 +84,7 @@ class TestMongoCDC:
         find_query = {"_id": {"$in": output.inserted_ids[:count]}}
         with_vector_index.execute(
             Collection(name='documents').update_many(
-                find_query, {'$set': {'x': t(to_update)}}
+                find_query, Document({'$set': {'x': t(to_update)}})
             )
         )
 

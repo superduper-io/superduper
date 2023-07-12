@@ -35,7 +35,7 @@ class MongoDataBackend(BaseDataBackend):
         return r
 
     def unset_outputs(self, info: t.Dict):
-        select = Serializable.from_dict(info['select'])
+        select = Serializable.deserialize(info['select'])
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
         doc = {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}
 

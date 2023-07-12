@@ -360,6 +360,7 @@ class BaseDatabase:
         version: Optional[int] = None,
         allow_hidden: bool = False,
         init_db: bool = True,
+        info_only: bool = False,
     ) -> Component:
         """
         Load component using uniquely identifying information.
@@ -379,6 +380,8 @@ class BaseDatabase:
             version=version,
             allow_hidden=allow_hidden,
         )
+        if info_only:
+            return info
         if info is None:
             raise Exception(
                 f'No such object of type "{variety}", '
@@ -408,7 +411,7 @@ class BaseDatabase:
             f'{download_content.__name__}()',
             job=FunctionJob(
                 callable=download_content,
-                kwargs=dict(ids=ids, query=query.to_dict()),
+                kwargs=dict(ids=ids, query=query.serialize()),
                 args=[],
             ),
         )
@@ -424,7 +427,7 @@ class BaseDatabase:
                 ComponentJob(
                     component_identifier=model,
                     args=[key],
-                    kwargs={'ids': ids, 'select': query.to_dict()},
+                    kwargs={'ids': ids, 'select': query.serialize()},
                     method_name='predict',
                     variety='model',
                 ),
@@ -687,7 +690,7 @@ class BaseDatabase:
         if watcher_info is None:
             watcher_info = self.metadata.get_component('watcher', identifier)
 
-        select = Serializable.from_dict(watcher_info['select'])
+        select = Serializable.deserialize(watcher_info['select'])
         if ids is None:
             ids = select.get_ids(self)
         else:

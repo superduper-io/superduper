@@ -50,10 +50,22 @@ class Collection(Serializable):
         return DeleteMany(collection=self, args=list(args), kwargs=kwargs)
 
     def update_one(self, *args, **kwargs):
-        return UpdateOne(collection=self, args=list(args), kwargs=kwargs)
+        return UpdateOne(
+            collection=self,
+            filter=args[0],
+            update=args[1],
+            args=list(args),
+            kwargs=kwargs,
+        )
 
     def update_many(self, *args, **kwargs):
-        return UpdateMany(collection=self, args=list(args), kwargs=kwargs)
+        return UpdateMany(
+            collection=self,
+            filter=args[0],
+            update=args[1],
+            args=list(args[2:]),
+            kwargs=kwargs,
+        )
 
     def find(self, *args, **kwargs):
         return Find(collection=self, args=list(args), kwargs=kwargs)
@@ -65,7 +77,13 @@ class Collection(Serializable):
         return Aggregate(collection=self, args=list(args), kwargs=kwargs)
 
     def replace_one(self, *args, **kwargs):
-        return ReplaceOne(collection=self, args=list(args), kwargs=kwargs)
+        return ReplaceOne(
+            collection=self,
+            filter=args[0],
+            update=args[1],
+            args=list(args),
+            kwargs=kwargs,
+        )
 
     def change_stream(self, *args, **kwargs):
         return ChangeStream(collection=self, args=list(args), kwargs=kwargs)
@@ -74,6 +92,8 @@ class Collection(Serializable):
 @dc.dataclass
 class ReplaceOne(Update):
     collection: Collection
+    filter: t.Dict
+    update: Document
     refresh: bool = True
     verbose: bool = True
     args: t.List = dc.field(default_factory=list)
@@ -86,13 +106,9 @@ class ReplaceOne(Update):
         raise NotImplementedError
 
     def __call__(self, db):
-        filter, repl = self.args[:2]
-        if isinstance(repl, Document):
-            repl = repl.encode()
-        elif isinstance(repl, dict):
-            repl = Document(repl).encode()
+        update = self.update.encode()
         return db.db[self.collection.name].replace_one(
-            filter, repl, *self.args[2:], **self.kwargs
+            self.filter, update, *self.args[2:], **self.kwargs
         )
 
     def select(self):
@@ -163,7 +179,7 @@ class Find(Select):
         return Limit(parent=self, n=n)  # type
 
     def like(
-        self, r: t.Dict, vector_index: str = '', n: int = 100, max_ids: int = 1000
+        self, r: Document, vector_index: str = '', n: int = 100, max_ids: int = 1000
     ):
         return PostLike(
             find_parent=self, r=r, n=n, max_ids=max_ids, vector_index=vector_index
@@ -252,7 +268,8 @@ class Find(Select):
     def download_update(self, db, id, key, bytes):
         return UpdateOne(
             collection=self.collection,
-            args=[{'_id': id}, {'$set': {f'{key}._content.bytes': bytes}}],
+            filter={'_id': id},
+            update={'$set': {f'{key}._content.bytes': bytes}},
         )(db)
 
     # ruff: noqq: E501
@@ -361,6 +378,8 @@ class DeleteMany(Delete):
 @dc.dataclass
 class UpdateOne(Update):
     collection: Collection
+    update: Document
+    filter: t.Dict
     refresh: bool = True
     verbose: bool = True
     args: t.List = dc.field(default_factory=list)
@@ -369,7 +388,12 @@ class UpdateOne(Update):
     type_id: t.Literal['mongodb.UpdateOne'] = 'mongodb.UpdateOne'
 
     def __call__(self, db):
-        return db.db[self.collection.name].update_one(*self.args, **self.kwargs)
+        return db.db[self.collection.name].update_one(
+            self.filter,
+            self.update,
+            *self.args,
+            **self.kwargs,
+        )
 
     @property
     def select_table(self):
@@ -387,6 +411,8 @@ class UpdateOne(Update):
 @dc.dataclass
 class UpdateMany(Update):
     collection: Collection
+    filter: t.Dict
+    update: Document
     refresh: bool = True
     verbose: bool = True
     args: t.List = dc.field(default_factory=list)
@@ -395,9 +421,9 @@ class UpdateMany(Update):
     type_id: t.Literal['mongodb.UpdateMany'] = 'mongodb.UpdateMany'
 
     def __call__(self, db):
-        to_update = Document(self.args[1]).encode()
+        to_update = self.update.encode()
         ids = [
-            r['_id'] for r in db.db[self.collection.name].find(self.args[0], {'_id': 1})
+            r['_id'] for r in db.db[self.collection.name].find(self.filter, {'_id': 1})
         ]
         out = db.db[self.collection.name].update_many(
             {'_id': {'$in': ids}},

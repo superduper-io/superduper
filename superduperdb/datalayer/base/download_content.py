@@ -37,7 +37,7 @@ def download_content(
     logging.debug(ids)
     update_db = False
     if isinstance(query, dict):
-        query = Serializable.from_dict(query)
+        query = Serializable.deserialize(query)
 
     if documents is not None:
         pass

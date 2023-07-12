@@ -8,7 +8,7 @@ from superduperdb.core.encoder import Encoder
 
 def encode_pil_image(x):
     buffer = io.BytesIO()
-    x.save(buffer, format='png')
+    x.save(buffer, 'png')
     return buffer.getvalue()
 
 

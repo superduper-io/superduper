@@ -77,7 +77,7 @@ class BaseDatabase:
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
         vector_database: VectorDatabase,
-        distributed_client = None
+        distributed_client=None,
     ):
         self.metrics = LoadDict(self, 'metric')
         self.models = LoadDict(self, 'model')

@@ -44,7 +44,6 @@ class TestMongoCDC:
         watch_fixture._cdc_change_handler = MagicMock()
         watch_fixture.watch()
         with_vector_index.execute(Collection(name='documents').insert_many(an_insert))
-        time.sleep(3)
         info = watch_fixture.info()
         watch_fixture.stop()
         assert info['inserts'] == len(an_insert)

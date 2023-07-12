@@ -179,7 +179,7 @@ def copy_vectors(
         table.add(vectors, upsert=True)
     except Exception:
         logging.exception(
-            f"Error while copying vectors for `vector_index`: {indexing_watcher_identifier}"
+            f"Error in copying_vectors for vector_index: {indexing_watcher_identifier}"
         )
         raise
 
@@ -249,21 +249,16 @@ class CDCHandler(threading.Thread):
         :rtype: TaskWorkflow
         """
         for identifier in self.db.show('vector_index'):
-            vector_index = self.db.load(
-                identifier=identifier,
-                variety='vector_index',
-                init_db=False,
-            )
+            vector_index = self.db.load(identifier=identifier, variety='vector_index')
             vector_index = t.cast(VectorIndex, vector_index)
             indexing_watcher_identifier = vector_index.indexing_watcher.identifier
             task_graph.add_node(
                 f'copy_vectors({indexing_watcher_identifier})',
                 FunctionJob(
                     callable=copy_vectors,
-                    # BROKEN: the arguments in `args` are in the wrong order.
                     # BROKEN: cdc_query has its own ``to_dict`` method which
                     # probably should be called here.
-                    args=[indexing_watcher_identifier, ids, to_dict(cdc_query)],
+                    args=[indexing_watcher_identifier, to_dict(cdc_query), ids],
                     kwargs={},
                 ),
             )

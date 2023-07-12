@@ -116,7 +116,7 @@ class Model(Component):
             variety='model',
             args=[X],
             kwargs={
-                'remote': False,
+                'distributed': False,
                 'select': to_dict(select) if select else None,
                 'ids': ids,
                 'max_chunk_size': max_chunk_size,
@@ -138,7 +138,7 @@ class Model(Component):
             args=[X],
             kwargs={
                 'y': y,
-                'remote': False,
+                'distributed': False,
                 'select': to_dict(select) if select else None,
                 **kwargs,
             },
@@ -164,7 +164,7 @@ class Model(Component):
         y: t.Optional[t.Any] = None,
         db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
-        remote: bool = False,
+        distributed: bool = False,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
         configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.List[t.Union[str, Dataset]]] = None,
@@ -184,13 +184,13 @@ class Model(Component):
         if db is not None:
             db.add(self)
 
-        if remote:
+        if distributed:
             return self.create_fit_job(
                 X,
                 select=select,
                 y=y,
                 **kwargs,
-            )(db=db, remote=True, dependencies=dependencies)
+            )(db=db, distributed=True, dependencies=dependencies)
         else:
             return self._fit(
                 X,
@@ -209,7 +209,7 @@ class Model(Component):
         X: t.Any,
         db: 'BaseDatabase' = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
-        remote: bool = False,
+        distributed: bool = False,
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
@@ -234,10 +234,10 @@ class Model(Component):
         if db is not None:
             db.add(self)
 
-        if remote:
+        if distributed:
             return self.create_predict_job(
                 X, select=select, ids=ids, max_chunk_size=max_chunk_size, **kwargs
-            )(db=db, remote=remote, dependencies=dependencies)
+            )(db=db, distributed=distributed, dependencies=dependencies)
         else:
             if select is not None and ids is None:
                 ids = [
@@ -248,7 +248,7 @@ class Model(Component):
                     X=X,
                     db=db,
                     ids=ids,
-                    remote=False,
+                    distributed=False,
                     select=select,
                     max_chunk_size=max_chunk_size,
                     **kwargs,
@@ -261,7 +261,7 @@ class Model(Component):
                 else:
                     X_data = [r.unpack() for r in docs]
 
-                outputs = self.predict(X=X_data, remote=False)
+                outputs = self.predict(X=X_data, distributed=False)
                 if self.encoder is not None:
                     # ruff: noqa: E501
                     outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
@@ -337,7 +337,7 @@ class ModelEnsemble(Component):
         y: t.Optional[t.Any] = None,
         db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
-        remote: bool = False,
+        distributed: bool = False,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
         configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.List[t.Union[str, Dataset]]] = None,
@@ -357,13 +357,13 @@ class ModelEnsemble(Component):
         if db is not None:
             db.add(self)
 
-        if remote:
+        if distributed:
             return self.create_fit_job(
                 X,
                 select=select,
                 y=y,
                 **kwargs,
-            )(db=db, remote=True, dependencies=dependencies)
+            )(db=db, distributed=True, dependencies=dependencies)
         else:
             return self._fit(
                 X,

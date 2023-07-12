@@ -41,14 +41,16 @@ class Watcher(Component):
     def cleanup(self, database) -> None:
         self.select.model_cleanup(database, model=self.model.identifier, key=self.key)
 
-    def schedule_jobs(self, database, verbose=False, dependencies=(), remote=False):
+    def schedule_jobs(
+        self, database, verbose=False, dependencies=(), distributed=False
+    ):
         if not self.active:
             return
         return self.model.predict(
             X=self.key,
             db=database,
             select=self.select,
-            remote=remote,
+            distributed=distributed,
             max_chunk_size=self.max_chunk_size,
             dependencies=dependencies,
         )

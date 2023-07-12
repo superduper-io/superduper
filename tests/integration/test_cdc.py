@@ -35,15 +35,16 @@ class TestMongoCDC:
         with_vector_index.execute(
             Collection(name='documents').insert_many([a_single_insert])
         )
-        time.sleep(2)
-        info = watch_fixture.info()
+        time.sleep(1)
         watch_fixture.stop()
+        info = watch_fixture.info()
         assert info['inserts'] == 1
 
     def test_many_insert(self, watch_fixture, with_vector_index, an_insert):
         watch_fixture._cdc_change_handler = MagicMock()
         watch_fixture.watch()
         with_vector_index.execute(Collection(name='documents').insert_many(an_insert))
+        time.sleep(2)
         info = watch_fixture.info()
         watch_fixture.stop()
         assert info['inserts'] == len(an_insert)

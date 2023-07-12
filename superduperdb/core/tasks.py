@@ -3,6 +3,7 @@ import traceback
 
 
 def method_job(
+    cfg,
     variety,
     identifier,
     method_name,
@@ -13,7 +14,7 @@ def method_job(
 ):
     from superduperdb.datalayer.base.build import build_datalayer
 
-    db = build_datalayer()
+    db = build_datalayer(cfg)
     component = db.load(variety, identifier)
     method = getattr(component, method_name)
     db.metadata.update_job(job_id, 'status', 'running')
@@ -55,6 +56,7 @@ def handle_function_output(function, db, job_id, args, kwargs):
 
 
 def callable_job(
+    cfg,
     function_to_call,
     args,
     kwargs,
@@ -63,7 +65,7 @@ def callable_job(
 ):
     from superduperdb.datalayer.base.build import build_datalayer
 
-    db = build_datalayer()
+    db = build_datalayer(cfg)
     db.metadata.update_job(job_id, 'status', 'running')
     try:
         handle_function_output(

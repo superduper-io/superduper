@@ -1,25 +1,51 @@
 import uuid
+import typing as t
 
-from dask.distributed import LocalCluster
-from dask.distributed import Client, wait, fire_and_forget
+from dask import distributed
 
 from superduperdb.misc.logger import logging
 
 
 class DaskClient:
-    def __init__(self, address: str, serializers=None, deserializers=None, local=False):
-        self.futures_collection = {}
+    """
+    A client for interacting with a Dask cluster.
+    """
+
+    def __init__(
+        self,
+        address: str,
+        serializers: t.Optional[t.Sequence[t.Callable]] = None,
+        deserializers: t.Optional[t.Sequence[t.Callable]] = None,
+        local: bool = False,
+        envs: t.Dict[str, t.Any] = {},
+    ):
+        """
+        Initialize the DaskClient.
+
+        :param address: The address of the Dask cluster.
+        :param serializers: A list of serializers to be used by the client. (optional)
+        :param local: Set to True to create a local Dask cluster. (optional)
+        :param envs: An environment dict for cluster.
+        """
+        self.futures_collection: t.Dict[str, distributed.Future] = {}
         if local:
-            cluster = LocalCluster(n_workers=1)
-            self.client = Client(cluster)
+            cluster = distributed.LocalCluster(env=envs)
+            self.client = distributed.Client(cluster)
         else:
-            self.client = Client(
+            self.client = distributed.Client(
                 address=address,
                 serializers=serializers,
                 deserializers=deserializers,
+                env=envs,
             )
 
-    def submit(self, function, **kwargs):
+    def submit(self, function: t.Callable, **kwargs) -> distributed.Future:
+        """
+        Submits a function to the Dask cluster for execution.
+
+        :param function: The function to be executed.
+        :param kwargs: Additional keyword arguments to be passed to the function.
+        """
         future = self.client.submit(function, **kwargs)
         identifier = kwargs.get('identifier', None)
         if not identifier:
@@ -30,27 +56,54 @@ class DaskClient:
         self.futures_collection[identifier] = future
         return future
 
-    def submit_and_forget(self, function, **kwargs):
+    def submit_and_forget(self, function: t.Callable, **kwargs) -> distributed.Future:
+        """
+        Submits a function to the Dask cluster and keep executing the future
+        even if it is no longer referenced.
+
+        :param function: The function to be executed.
+        :param kwargs: Additional keyword arguments to be passed to the function.
+        """
         future = self.submit(function, **kwargs)
-        fire_and_forget(future)
+        distributed.fire_and_forget(future)
         return future
 
-    def shutdown(self):
+    def shutdown(self) -> None:
+        """
+        Shuts down the Dask client.
+        """
         self.client.shutdown()
 
-    def wait_all_pending_tasks(self):
+    def wait_all_pending_tasks(self) -> None:
+        """
+        Waits for all pending tasks to complete.
+        """
         futures = list(self.futures_collection.values())
-        wait(futures)
+        distributed.wait(futures)
 
-    def get_result(self, identifier: str):
+    def get_result(self, identifier: str) -> t.Any:
+        """
+        Retrieves the result of a previously submitted task.
+        Note: This will block until the future is completed.
+
+        :param identifier: The identifier of the submitted task.
+        """
         future = self.futures_collection[identifier]
         return self.client.gather(future)
 
 
-def dask_client(cfg, local=False):
+def dask_client(cfg, local: bool = False, envs: t.Dict[str, t.Any] = {}) -> DaskClient:
+    """
+    Creates a DaskClient instance.
+
+    :param cfg: Configuration object containing Dask cluster details.
+    :param local: Set to True to create a local Dask cluster. (optional)
+    :param envs: An environment dict for cluster.
+    """
     return DaskClient(
         address=f'tcp://{cfg.ip}:{cfg.port}',
         serializers=cfg.serializers,
         deserializers=cfg.deserializers,
         local=local,
+        envs=envs,
     )

@@ -6,10 +6,9 @@ from superduperdb.core.documents import Document
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
-from superduperdb.core.serializable import Serializable
 from superduperdb.core.watcher import Watcher
 from superduperdb.models.torch.wrapper import TorchModel
-from superduperdb.datalayer.mongodb.query import Collection, PreLike
+from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.encoders.torch.tensor import tensor
 
 n_data_points = 250
@@ -168,7 +167,9 @@ def test_update(random_data, a_watcher):
     to_update = torch.randn(32)
     t = random_data.encoders['torch.float32[32]']
     random_data.execute(
-        Collection(name='documents').update_many({}, {'$set': {'x': t(to_update)}})
+        Collection(name='documents').update_many(
+            {}, Document({'$set': {'x': t(to_update)}})
+        )
     )
     cur = random_data.execute(Collection(name='documents').find())
     r = next(cur)

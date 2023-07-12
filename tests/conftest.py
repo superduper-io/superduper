@@ -67,9 +67,9 @@ def test_db(mongodb_server: MongoDBConfig) -> Iterator[BaseDatabase]:
 def config(mongodb_server: MongoDBConfig) -> Iterator[None]:
     kwargs = asdict(TestMongoDBConfig())
     data_layers_cfg = DataLayers(
-        artifact=DataLayer(name='_filesystem:test_db', kwargs=kwargs),
-        data_backend=DataLayer(name='test_db', kwargs=kwargs),
-        metadata=DataLayer(name='test_db', kwargs=kwargs),
+        artifact=DataLayer(name='_filesystem:documents', kwargs=kwargs),
+        data_backend=DataLayer(name='documents', kwargs=kwargs),
+        metadata=DataLayer(name='documents', kwargs=kwargs),
     )
 
     with mock.patch('superduperdb.CFG.data_layers', data_layers_cfg):

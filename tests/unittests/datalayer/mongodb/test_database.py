@@ -137,7 +137,7 @@ def test_validate_component(with_vector_index, si_validation, metric):
 
 
 def test_insert(random_data, a_watcher, an_update):
-    random_data.execute(Collection(name='documents').insert_many(an_update))
+    random_data.execute(Collection(name='documents').insert_many(an_update, flag=True))
     r = next(random_data.execute(Collection(name='documents').find({'update': True})))
     assert 'linear_a' in r['_outputs']['x']
     assert (

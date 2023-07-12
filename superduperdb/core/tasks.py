@@ -51,7 +51,7 @@ class Logger:
 def handle_function_output(function, db, job_id, args, kwargs):
     with contextlib.redirect_stdout(Logger(db, job_id)):
         with contextlib.redirect_stderr(Logger(db, job_id, stream='stderr')):
-            return function(db, *args, **kwargs)
+            return function(db=db, *args, **kwargs)
 
 
 def callable_job(
@@ -62,7 +62,6 @@ def callable_job(
     dependencies=(),
 ):
     from superduperdb.datalayer.base.build import build_datalayer
-
     db = build_datalayer()
     db.metadata.update_job(job_id, 'status', 'running')
     try:

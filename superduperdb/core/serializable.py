@@ -5,37 +5,44 @@ import typing as t
 
 
 def _deserialize(r, db=None):
-    if isinstance(r, dict) and {'cls', 'module', 'dict'}.issubset(set(r.keys())):
-        module = importlib.import_module(f'{r["module"]}')
-        component_cls = getattr(module, r['cls'])
-        if 'db' in inspect.signature(component_cls.__init__).parameters:
-            return component_cls(**_deserialize(r['dict']), db=db)
-        else:
-            return component_cls(**_deserialize(r['dict']))
-    elif isinstance(r, dict):
-        for k, v in r.items():
-            r[k] = _deserialize(v, db=db)
-    elif isinstance(r, list):
-        for i, x in enumerate(r):
-            r[i] = _deserialize(x, db=db)
-    return r
+    if isinstance(r, list):
+        return [_deserialize(i, db=db) for i in r]
+
+    if not isinstance(r, dict):
+        return r
+
+    if not ({'cls', 'dict', 'module'} <= set(r)):
+        return {k: _deserialize(v, db=db) for k, v in r.items()}
+
+    module = importlib.import_module(r['module'])
+    component_cls = getattr(module, r['cls'])
+
+    kwargs = _deserialize(r['dict'])
+    if 'db' in inspect.signature(component_cls.__init__).parameters:
+        kwargs.update(db=db)
+
+    return component_cls(**kwargs)
 
 
 def _serialize(item: t.Any) -> t.Dict[str, t.Any]:
-    d = item.dict()
-    for k in d:
-        c = getattr(item, k)
-        if isinstance(c, Serializable):
-            d[k] = _serialize(c)
-        elif isinstance(c, list):
-            for i, sc in enumerate(c):
+    def fix(k, v):
+        attr = getattr(item, k)
+        if isinstance(attr, Serializable):
+            return _serialize(attr)
+
+        if isinstance(attr, list):
+            for i, sc in enumerate(attr):
                 if isinstance(sc, Serializable):
-                    d[k][i] = _serialize(sc)
-        # TODO: what about dict?
+                    v[i] = _serialize(sc)
+
+        return v
+
+    d = {k: fix(k, v) for k, v in item.dict().items()}
+
     return {
         'cls': item.__class__.__name__,
-        'module': item.__class__.__module__,
         'dict': d,
+        'module': item.__class__.__module__,
     }
 
 

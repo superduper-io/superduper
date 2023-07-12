@@ -1,5 +1,6 @@
 import io
 import typing as t
+
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.misc.serialization import serializers
 

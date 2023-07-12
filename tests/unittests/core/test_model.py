@@ -15,7 +15,7 @@ def test_predict(random_data, float_tensors_32):
 
     X = [r['x'] for r in random_data.execute(Collection(name='documents').find())]
 
-    out = m.predict(X=X, remote=False)
+    out = m.predict(X=X, distributed=False)
 
     assert len(out) == len(X)
 
@@ -23,5 +23,5 @@ def test_predict(random_data, float_tensors_32):
         X='x',
         db=random_data,
         select=Collection(name='documents').find(),
-        remote=False,
+        distributed=False,
     )

@@ -20,13 +20,15 @@ class TaskWorkflow:
     def dependencies(self, node):
         return [self.G.nodes[a]['job'].future for a in self.G.predecessors(node)]
 
-    def __call__(self, db=None, remote: bool = False):
+    def __call__(self, db=None, distributed: bool = False):
         current_group = [n for n in self.G.nodes if not networkx.ancestors(self.G, n)]
         done = []
         while current_group:
             for node in current_group:
                 job: Job = self.G.nodes[node]['job']
-                job(db=db, dependencies=self.dependencies(node), remote=remote)
+                job(
+                    db=db, dependencies=self.dependencies(node), distributed=distributed
+                )
                 done.append(node)
 
             current_group = [

@@ -87,7 +87,7 @@ class ModelServer(HostPort):
 
 
 class MongoDB(HostPort):
-    port: str = 27018
+    port: int = 27017
     host: str = 'localhost'
     username: str = 'testmongodbuser'
     password: str = 'testmongodbpassword'
@@ -183,7 +183,6 @@ class Config(JSONable):
     data_layers: DataLayers = Factory(DataLayers)
     notebook: Notebook = Factory(Notebook)
     ray: Ray = Factory(Ray)
-    remote: bool = False
     distributed: bool = False
     cdc: bool = False
     server: Server = Factory(Server)

@@ -27,7 +27,7 @@ database = build_datalayer()
 @maybe_login_required(auth, 'vector_search')
 def serve():
     data = BSON.decode(request.get_data())
-    database.remote = False
+    database.distributed = False
     method = getattr(database, data['method'])
     result = method.f(database, *data['args'], **data['kwargs'])
     logging.info('results')

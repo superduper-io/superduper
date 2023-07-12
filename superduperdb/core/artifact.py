@@ -1,3 +1,4 @@
+import dataclasses as dc
 import io
 import typing as t
 from superduperdb.datalayer.base.artifacts import ArtifactStore
@@ -8,6 +9,7 @@ class ArtifactSavingError(Exception):
     pass
 
 
+@dc.dataclass
 class Artifact:
     def __init__(
         self,
@@ -20,6 +22,7 @@ class Artifact:
         self._artifact = _artifact
         self.info = info
         self.file_id = file_id
+        print('XXXXXXXXXXXXXX this does get called XXXXXXXXXXXXXXX')
 
     def __repr__(self):
         return f'<Artifact artifact={str(self._artifact)} serializer={self.serializer}>'

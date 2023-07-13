@@ -8,6 +8,5 @@ pytest
 redis
 requests
 rq
-supervisor
 torch
 tqdm

@@ -3,7 +3,6 @@ import time
 
 import click
 from collections import defaultdict
-import copy
 import hashlib
 import multiprocessing
 
@@ -12,6 +11,9 @@ import math
 import networkx
 import random
 import warnings
+
+from superduperdb.cursor import SuperDuperCursor
+from superduperdb.types.utils import convert_types
 
 warnings.filterwarnings('ignore')
 from pymongo import UpdateOne
@@ -24,80 +26,9 @@ from superduperdb.lookup import hashes
 from superduperdb.models import loading
 from superduperdb import getters as superduper_requests
 from superduperdb import training
-from superduperdb.utils import unpack_batch, MongoStyleDict, Downloader, progressbar
+from superduperdb.utils import unpack_batch, MongoStyleDict, Downloader, progressbar, \
+    ArgumentDefaultDict
 from superduperdb.models.utils import apply_model
-
-
-class ArgumentDefaultDict(defaultdict):
-    def __getitem__(self, item):
-        if item not in self.keys():
-            self[item] = self.default_factory(item)
-        return super().__getitem__(item)
-
-
-def convert_types(r, converters=None):
-    if converters is None:
-        converters = {}  # pragma: no cover
-    for k in r:
-        if isinstance(r[k], dict):
-            if '_content' in r[k]:
-                converter = converters[r[k]['_content']['converter']]
-                r[k] = converter.decode(r[k]['_content']['bytes'])
-            else:
-                convert_types(r[k], converters=converters)
-    return r
-
-
-class SuperDuperCursor(Cursor):
-    def __init__(self, collection, *args, features=None, scores=None,
-                 similar_join=None, **kwargs):
-        """
-        Cursor subclassing *pymongo.cursor.Cursor*.
-        If *features* are specified, these are substituted in the records
-        for the raw data. This is useful, for instance if images are present, and they should
-        be featurized by a certain model. If *scores* are added, these are added to the results
-        records.
-
-        :param collection: collection
-        :param *args: args to pass to super()
-        :param features: feature dictionary
-        :param convert: toggle to *True* to interpret bytes in records using converters
-        :param scores: similarity scores to add to records
-        :param similar_join: replace ids by documents in subfield of _like
-        :param **kwargs: kwargs to pass to super()
-        """
-        super().__init__(collection, *args, **kwargs)
-        self.attr_collection = collection
-        self.features = features
-        self.scores = scores
-        self.similar_join = similar_join
-        self._args = args
-        self._kwargs = kwargs
-
-    def next(self):
-        r = super().next()
-        if self.scores is not None:
-            r['_score'] = self.scores[r['_id']]
-        if self.features is not None and self.features:
-            r = MongoStyleDict(r)
-            for k in self.features:
-                r[k] =  r['_outputs'][k][self.features[k]]
-            if '_other' in r:
-                for k in self.features:
-                    r['_other'][k] = r['_outputs'][k][self.features[k]]
-
-        if self.similar_join is not None:
-            if self.similar_join in r.get('_like', {}):
-                ids = r['_like'][self.similar_join]
-                lookup = {r['_id']: r for r in self.collection.find({'_id': {'$in': ids}},
-                                                                    *self._args[1:],
-                                                                    **self._kwargs)}
-                for i, id_ in enumerate(r['_like'][self.similar_join]):
-                    r['_like'][self.similar_join][i] = lookup[id_]
-
-        return convert_types(r, converters=self.attr_collection.converters)
-
-    __next__ = next
 
 
 class Collection(BaseCollection):
@@ -107,20 +38,36 @@ class Collection(BaseCollection):
 
     Creating objects:
 
-    - *create_model*
-    - *create_semantic_index*
-    - *create_imputation*
     - *create_converter*
+    - *create_imputation*
     - *create_loss*
     - *create_metric*
+    - *create_model*
+    - *create_neighbourhood*
+    - *create_semantic_index*
+    - *create_splitter*
 
-    Inserting, searching and updating data:
+    Deleting objects:
 
-    - *insert_one
+    - *delete_converter*
+    - *delete_imputation*
+    - *delete_loss*
+    - *delete_metric*
+    - *delete_model*
+    - *delete_neighbourhood*
+    - *delete_semantic_index*
+    - *delete_splitter*
+
+    Accessing data:
+
     - *find_one*
+    - *find*
+
+    Inserting and updating data:
+    - *insert_many*
+    - *insert_one*
+    - *replace_one*
     - *update_one*
-    - *insert_many
-    - *find_many*
     - *update_many*
 
     Viewing meta-data
@@ -132,13 +79,19 @@ class Collection(BaseCollection):
     - *list_losss*
     - *list_metrics*
 
+    Watching jobs
+
+    - *watch_job*
+
     Key properties:
 
-    - *models* (dictionary of models)
     - *converters* (dictionary of converters)
+    - *hash_set* (in memory vectors for neighbourhood search)
     - *losses* (dictionary of losses)
-    - *metrics* (dictionary of metrics)
     - *measures* (dictionary of measures)
+    - *metrics* (dictionary of metrics)
+    - *models* (dictionary of models)
+    - *remote* (whether the client sends requests in thread or to a server)
     - *splitters* (dictionary of splitters)
 
     """
@@ -416,7 +369,16 @@ class Collection(BaseCollection):
 
     def create_semantic_index(self, name, models, measure, metrics=None, loss=None,
                               splitter=None, **trainer_kwargs):
-
+        """
+        :param name: Name of index
+        :param models: List of existing models, or parameters to :code:`Collection.create_model`
+        :param measure: Measure name, or parameters to :code:`Collection.create_measure`
+        :param metrics: List of existing metrics, or parameters to :code:`Collection.create_metric`
+        :param loss: Loss name, or parameters to :code:`Collection.create_loss`
+        :param splitter: Splitter name, or parameters to :code:`Collection.create_splitter`
+        :param trainer_kwargs: Keyword arguments to be passed to :code:`training.train_tools.RepresentationTrainer`
+        :return: List of job identifiers if :code:`self.remote`
+        """
         for i, man in enumerate(models):  # pragma: no cover
             if isinstance(man, str):
                 assert man in self.list_models()
@@ -504,7 +466,7 @@ class Collection(BaseCollection):
                     **model_info.get('loader_kwargs', {}),
                     max_chunk_size=model_info.get('max_chunk_size', 5000),
                 ))
-        if not remote:
+        if not self.remote:
             return
         return job_ids
 
@@ -518,30 +480,72 @@ class Collection(BaseCollection):
         return self._create_object('splitters', name, object)
 
     def list_neighbourhoods(self):
+        """
+        List neighbourhoods.
+        """
         return self['_neighbourhoods'].distinct('name')
 
     def list_jobs(self):
+        """
+        List jobs.
+        """
         return self['_jobs'].distinct('identifier')
 
     def delete_converter(self, converter, force=False):
+        """
+        Delete converter from collection
+
+        :param name: Name of converter
+        :param force: Toggle to :code:`True` to skip confirmation
+        """
         return self._delete_objects('converters', objects=[converter], force=force)
 
     def delete_imputation(self, name, force=False):
+        """
+        Delete imputation from collection
+
+        :param name: Name of imputation
+        :param force: Toggle to :code:`True` to skip confirmation
+        """
         info = self['_imputations'].find_one()
         self.delete_model(info['model'], force=force)
         self.delete_model(info['target'], force=force)
         self['_imputations'].delete_many({'name': name})
 
     def delete_loss(self, loss, force=False):
+        """
+        Delete loss from collection
+
+        :param name: Name of loss
+        :param force: Toggle to :code:`True` to skip confirmation
+        """
         return self._delete_objects('losses', objects=[loss], force=force)
 
     def delete_measure(self, name, force=False):
+        """
+        Delete measure from collection
+
+        :param name: Name of measure
+        :param force: Toggle to :code:`True` to skip confirmation
+        """
         return self._delete_objects('measures', objects=[name], force=force)
 
     def delete_metric(self, metric=None, force=False):
+        """
+        Delete metric from collection
+
+        :param name: Name of metric
+        :param force: Toggle to :code:`True` to skip confirmation
+        """
         return self._delete_objects('metrics', objects=[metric], force=force)
 
     def delete_model(self, name, force=False):
+        """
+        Delete model from collection
+
+        :param name: Name of model
+        :param force: Toggle to :code:`True` to skip confirmation
+        """
         all_models = self.list_models()
         if '.' in name:  # pragma: no cover
             raise Exception('must delete parent model in order to delete <model>.<attribute>')
@@ -568,6 +572,12 @@ class Collection(BaseCollection):
                 )
 
     def delete_neighbourhood(self, name, force=False):
+        """
+        Delete neighbourhood from collection documents.
+
+        :param name: Name of neighbourhood
+        :param force: Toggle to :code:`True` to skip confirmation
+        """
         info = self['_neighbourhoods'].find_one({'name': name})
         si_info = self['_semantic_indexes'].find_one({'name': info['semantic_index']})
         model = self.list_models(**{'active': True, 'name': {'$in': si_info['models']}})[0]
@@ -581,6 +591,12 @@ class Collection(BaseCollection):
             print('aborting') # pragma: no cover
 
     def delete_semantic_index(self, name, force=False):
+        """
+        Delete semantic index.
+
+        :param name: Name of semantic index
+        :param force: Toggle to :code:`True` to skip confirmation
+        """
         r = self['_semantic_indexes'].find_one({'name': name}, {'models': 1})
         if r is None:  # pragma: no cover
             return
@@ -616,14 +632,14 @@ class Collection(BaseCollection):
         Behaves like MongoDB *find* with exception of "$like" operator.
 
         :param filter: filter dictionary
-        :param *args: args passed to super()
+        :param args: args passed to super()
         :param similar_first: toggle to *True* to first find similar things, and then
                               apply filter to these things
         :param raw: toggle to *True* to not convert bytes to Python objects but return raw bytes
         :param features: dictionary of model outputs to replace for dictionary elements
         :param download: toggle to *True* in case query has downloadable "_content" components
         :param similar_join: replace ids by documents
-        :param **kwargs: kwargs to be passed to super()
+        :param kwargs: kwargs to be passed to super()
         """
 
         if filter is None:
@@ -647,25 +663,15 @@ class Collection(BaseCollection):
                 return SuperDuperCursor(self, filter, *args, features=features,
                                         similar_join=similar_join, **kwargs)
 
-    def find_one(self, filter=None, *args, similar_first=False, raw=False, features=None,
-                 download=False, similar_join=None, **kwargs):
+    def find_one(self, *args, **kwargs):
         """
         Behaves like MongoDB *find_one* with exception of "$like" operator.
         See *Collection.find* for more details.
 
-        :param filter: filter dictionary
-        :param *args: args passed to super()
-        :param similar_first: toggle to *True* to first find similar things, and then
-                              apply filter to these things
-        :param raw: toggle to *True* to not convert bytes to Python objects but return raw bytes
-        :param features: dictionary of model outputs to replace for dictionary elements
-        :param download: toggle to *True* in case query has downloadable "_content" components
-        :param similar_join: replace ids by documents
-        :param **kwargs: kwargs to be passed to super()
+        :param args: args passed to super()
+        :param kwargs: kwargs to be passed to super()
         """
-        cursor = self.find(filter, *args, raw=raw, features=features,
-                           download=download, similar_join=similar_join,
-                           similar_first=similar_first, **kwargs)
+        cursor = self.find(*args, **kwargs)
         for result in cursor.limit(-1):
             return result
 
@@ -674,8 +680,8 @@ class Collection(BaseCollection):
         Insert a document into database.
 
         :param documents: list of documents
-        :param *args: args to be passed to super()
-        :param **kwargs: kwargs to be passed to super()
+        :param args: args to be passed to super()
+        :param kwargs: kwargs to be passed to super()
         """
         return self.insert_many([document], *args, **kwargs)
 
@@ -684,9 +690,9 @@ class Collection(BaseCollection):
         Insert many documents into database.
 
         :param documents: list of documents
-        :param *args: args to be passed to super()
+        :param args: args to be passed to super()
         :param verbose: toggle to *True* to display outputs during computation
-        :param **kwargs: kwargs to be passed to super()
+        :param kwargs: kwargs to be passed to super()
         """
         for document in documents:
             r = random.random()
@@ -705,27 +711,59 @@ class Collection(BaseCollection):
         return output, job_ids
 
     def list_converters(self):
+        """
+        List converters
+        :return: list of converters
+        """
         return self['_converters'].distinct('name')
 
     def list_imputations(self):
+        """
+        List imputations
+        :return: list of imputations
+        """
         return self['_imputations'].distinct('name')
 
     def list_losses(self):
+        """
+        List losses
+        :return: list of losses
+        """
         return self['_losses'].distinct('name')
 
     def list_measures(self):
+        """
+        List measures
+        :return: list of measures
+        """
         return self['_measures'].distinct('name')
 
     def list_metrics(self):
+        """
+        List metrics
+        :return: list of metrics
+        """
         return self['_metrics'].distinct('name')
 
     def list_models(self, **kwargs):
+        """
+        List models
+        :return: list of models
+        """
         return self['_models'].distinct('name', kwargs)
 
     def list_semantic_indexes(self):
+        """
+        List semantic_indexes
+        :return: list of semantic_indexes
+        """
         return self['_semantic_indexes'].distinct('name')
 
     def list_splitters(self):
+        """
+        List splitters
+        :return: list of splitters
+        """
         return self['_splitters'].distinct('name')
 
     def replace_one(self, filter, replacement, *args, refresh=True, **kwargs):
@@ -734,9 +772,10 @@ class Collection(BaseCollection):
         document.
 
         :param filter: MongoDB like filter
-        :param *args: args to be passed to super()
+        :param replacement: Replacement document
+        :param args: args to be passed to super()
         :param refresh: Toggle to *False* to not process document again with models.
-        :param **kwargs: kwargs to be passed to super()
+        :param kwargs: kwargs to be passed to super()
         """
         id_ = super().find_one(filter, *args, **kwargs)['_id']
         result = super().replace_one({'_id': id_}, replacement, *args, **kwargs)
@@ -745,6 +784,15 @@ class Collection(BaseCollection):
         return result
 
     def update_many(self, filter, *args, refresh=True, **kwargs):
+        """
+        Update the collection at the documents specified by the filter.
+
+        :param filter: Filter dictionary selecting documents to be updated
+        :param args: Arguments to be passed to :code:`super()`
+        :param refresh: Toggle to :code:`False` to stop models being applied to updated documents
+        :param kwargs: Keyword arguments to be passed to :code:`super()`
+        :return: :code:`result` or :code:`(result, job_ids)` depending on :code:`self.remote`
+        """
         if refresh and self.list_models():
             ids = [r['_id'] for r in super().find(filter, {'_id': 1})]
         result = super().update_many(filter, *args, **kwargs)
@@ -755,21 +803,30 @@ class Collection(BaseCollection):
 
     def update_one(self, filter, *args, refresh=True, **kwargs):
         """
-        Update a document in the database.
+        Update a single document specified by the filter.
 
-        :param filter: MongoDB like filter
-        :param *args: args to be passed to super()
-        :param refresh: Toggle to *False* to not process document again with models.
-        :param **kwargs: kwargs to be passed to super()
+        :param filter: Filter dictionary selecting documents to be updated
+        :param args: Arguments to be passed to :code:`super()`
+        :param refresh: Toggle to :code:`False` to stop models being applied to updated documents
+        :param kwargs: Keyword arguments to be passed to :code:`super()`
+        :return: :code:`result` or :code:`(result, job_ids)` depending on :code:`self.remote`
         """
         id_ = super().find_one(filter, {'_id': 1})['_id']
         return self.update_many({'_id': id_}, *args, refresh=refresh, **kwargs)
 
     def unset_hash_set(self):
+        """
+        Drop the hash_set currently in-use.
+        """
         if self.semantic_index in self._all_hash_sets:
             del self._all_hash_sets[self.semantic_index]
 
     def watch_job(self, identifier):
+        """
+        Watch the standard output of a collection job.
+
+        :param identifier: Job identifier
+        """
         try:
             status = 'pending'
             n_lines = 0

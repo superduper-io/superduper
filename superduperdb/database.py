@@ -3,6 +3,10 @@ import superduperdb.collection
 
 
 class Database(BaseDatabase):
+    """
+    Database building on top of :code:`pymongo.database.Database`. Collections in the
+    database are SuperDuperDB objects :code:`superduperdb.collection.Collection`.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

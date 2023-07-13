@@ -98,7 +98,7 @@ class Server:
 
         @self.app.post('/upload/{document_key}')
         async def upload(file: UploadFile):
-            exists = file.filename in self.document_store
+            exists = file.filename in self.document_store  # type: ignore
             data = await file.read()
             self.document_store.put(data, file.filename)
 

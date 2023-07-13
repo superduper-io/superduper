@@ -1,24 +1,22 @@
+from collections import defaultdict
 import hashlib
 import multiprocessing
-import warnings
-
 import networkx
 import random
-from collections import defaultdict
 
 from pymongo import UpdateOne
 from pymongo.collection import Collection as BaseCollection
 from pymongo.cursor import Cursor
-from sddb import models
-from sddb.lookup import hashes
 import torch.utils.data
 import tqdm
 
 from sddb import cf
+from sddb import models
+from sddb.lookup import hashes
 from sddb.models.converters import decode, encode
+from sddb import requests as sddb_requests
 from sddb.training.loading import BasicDataset
 from sddb.utils import apply_model, unpack_batch, MongoStyleDict, Downloader
-from sddb import requests as sddb_requests
 
 
 class ArgumentDefaultDict(defaultdict):
@@ -152,6 +150,9 @@ class Collection(BaseCollection):
             self._semantic_index_data = self['_semantic_indexes'].find_one(
                 {'name': self.meta['semantic_index']}
             )
+        for i, r_m in enumerate(self._semantic_index_data['models']):
+            if isinstance(r_m, str):
+                self._semantic_index_data['models'][i] = self._model_info[r_m]
         return self._semantic_index_data
 
     @semantic_index.setter
@@ -212,11 +213,12 @@ class Collection(BaseCollection):
     def hash_set(self):
         if self.semantic_index_name is None:
             raise Exception('No semantic index has been set!')
-        return self._all_hash_sets[self.semantic_index['models'][0]]
+        active_key = next(m['name'] for m in self.semantic_index['models'] if m['active'])
+        return self._all_hash_sets[active_key]
 
     def process_documents_with_model(self, model_name, ids=None, batch_size=10,
                                      verbose=False):
-        if 'requires' in self._model_info[model_name]:
+        if 'requires' not in self._model_info[model_name]:
             filter = {'_id': {'$in': ids}}
         else:
             filter = {'_id': {'$in': ids},
@@ -251,12 +253,17 @@ class Collection(BaseCollection):
                 else:
                     outputs.extend(unpack_batch(output))
         else:
-            pool = multiprocessing.Pool(processes=self.meta.get('n_workers', 3))
+            n_workers = self.meta.get('n_workers', 0)
             outputs = []
-            for r in pool.map(model.preprocess, passed_docs):
-                outputs.append(r)
-            pool.close()
-            pool.join()
+            if n_workers:
+                pool = multiprocessing.Pool(processes=n_workers)
+                for r in pool.map(model.preprocess, passed_docs):
+                    outputs.append(r)
+                pool.close()
+                pool.join()
+            else:
+                for r in passed_docs:
+                    outputs.append(model.preprocess(r))
 
         if 'converter' in self._model_info[model_name]:
             tmp = [
@@ -401,7 +408,6 @@ class Collection(BaseCollection):
         output = super().insert_one(document, *args, **kwargs)
         if self.list_models():
             self._process_documents([output.inserted_id],
-                                    [document] if self.single_thread else None,
                                     blocking=True)
         return output
 
@@ -497,7 +503,7 @@ class Collection(BaseCollection):
                 model=model,
             )
 
-    def find_one(self, filter=None, projection=None, *args, similar_first=True, raw=False, features=None,
+    def find_one(self, filter=None, *args, similar_first=True, raw=False, features=None,
                  convert=True, **kwargs):
         if self.remote:
             return sddb_requests.client.find_one(
@@ -510,7 +516,8 @@ class Collection(BaseCollection):
                 features=features,
                 **kwargs,
             )
-        cursor = self.find(filter, *args, raw=raw, features=features, convert=convert, **kwargs)
+        cursor = self.find(filter, *args,
+                           raw=raw, features=features, convert=convert, **kwargs)
         for result in cursor.limit(-1):
             return result
         return None
@@ -521,14 +528,14 @@ class Collection(BaseCollection):
             else filter[like_place]['$like']['document']
         )
         model = next(
-            m for m in self.semantic_index['models']
-            if self._model_info[m].get('key', '_base') == like_place
+            man['name'] for man in self.semantic_index['models']
+            if man.get('key', '_base') == like_place
         )
         return self.find_nearest(
             semantic_index=self.semantic_index['name'],
             model=model,
             document=document,
-            n=filter['$like']['n'],
+            n=filter[like_place]['$like']['n'] if like_place != '_base' else filter['$like']['n'],
             ids=ids,
         )
 
@@ -621,7 +628,7 @@ class Collection(BaseCollection):
         else:
             return SddbCursor(self, {'_id': {'$in': similar['ids']}}, convert=convert)
 
-    def find(self, filter=None, projection=None, *args, similar_first=True, raw=False,
+    def find(self, filter=None, *args, similar_first=True, raw=False,
              features=None, convert=True, **kwargs):
         if filter is None:
             filter = {}
@@ -736,7 +743,7 @@ class Collection(BaseCollection):
                     'filter': '<active-set-of-model>',
                     'key': 'the-key'
                 },
-            },
+            ],
             'metrics': [
                 {
                     'name': 'p@1',
@@ -764,7 +771,9 @@ class Collection(BaseCollection):
             'type': '<import-type>',
             'args': '<arguments-to-import-type>',
             'filter': '<active-set-of-model>',
-            'converter': '<import-path-of-converter[optional]>'
+            'converter': '<import-path-of-converter[optional]>',
+            'object': '<python-object[optional]>',
+            'active': '<toggle-to-false-for-not-watching-inserts[optional]',
         }
         '''
         assert manifest['name'] not in self['_models'].distinct('name'), \
@@ -779,7 +788,7 @@ class Collection(BaseCollection):
             'name': '<metric-name>',
             'type': '<object-type>',  # import, pickle, ...
             'args': '<arguments-to-import-type>',
-            'task': 'imputation/classification',
+            'task': '<imputation/classification>',
         }
         '''
         assert manifest['name'] not in self['_metrics'].distinct('name'), \

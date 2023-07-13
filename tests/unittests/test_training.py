@@ -3,7 +3,9 @@ import torch
 from sddb import cf
 from sddb.training.losses import NegativeLoss
 from sddb.training.training import RepresentationTrainer, ImputationTrainer
+
 from tests.material.models import Dummy, DummyClassifier, DummyLabel
+from tests.fixtures.collection import collection_no_hashes
 
 
 def test_representation_trainer(collection_no_hashes):

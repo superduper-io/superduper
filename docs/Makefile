@@ -176,7 +176,3 @@ pseudoxml:
 	@echo
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
 
- github:
-	cd docs
-	@make html
-	@cp -a _build/html/. .

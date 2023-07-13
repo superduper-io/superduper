@@ -93,7 +93,7 @@ def test_insert(random_vectors):
     # check that the model has been applied to the new datapoints
     assert 'linear' in r['_outputs']['x']
 
-    random_vectors.single_thread = False
+    random_vectors.remote = True
     job_ids = random_vectors.insert_one({
         'update': True,
         'i': 2001,
@@ -243,7 +243,7 @@ def test_create_delete_semantic_index(random_vectors):
     # check that the deletion was effective
     assert 'ranking' not in random_vectors.list_semantic_indexes()
 
-    random_vectors.single_thread = False
+    random_vectors.remote = True
 
     job_ids = f()
     print(job_ids)
@@ -333,7 +333,7 @@ def test_create_delete_imputation(random_vectors):
     # check that deleting works
     assert 'classifier' not in random_vectors.list_imputations()
 
-    random_vectors.single_thread = False
+    random_vectors.remote = True
 
     job_ids = f()
 
@@ -371,7 +371,7 @@ def test_create_delete_neighbourhood(random_vectors):
     print(r)
     assert 'test_sim' not in r.get('_like', {})
 
-    random_vectors.single_thread = False
+    random_vectors.remote = True
 
     job_id = random_vectors.create_neighbourhood('test_sim', n=7)
 

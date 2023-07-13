@@ -21,11 +21,11 @@ def parse_requirements(filename):
 
 
 setuptools.setup(
-    name="ai-jsonable",
+    name="SuperDuperDB",
     version=versions['__version__'],
     author="Duncan Blythe",
     author_email="opensource@superduperdb.com",
-    description="PyTorch models running inside MongoDB.",
+    description="Super power your database with AI.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/blythed/superduperdb",
@@ -42,11 +42,6 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     install_requires=parse_requirements('requirements.txt'),
-    package_data={'': ['requirements.txt']},
+    package_data={'': ['requirements.txt', 'img/*.png']},
     include_package_data=True,
-    entry_points={
-        'console_scripts': [
-            'aijson = aijson.__main__:cli'
-        ]
-    }
 )

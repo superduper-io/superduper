@@ -19,7 +19,7 @@ def create_server(model: str, num_replicas):
 
         async def __call__(self, http_request: Request) -> str:
             data = await http_request.body()
-            data = BSON.decode(data)
+            data = BSON.decode(data)  # type: ignore[arg-type]
             print(data)
             data = [Document.decode(r, encoders=self.db.encoders) for r in data]
             X = Document.decode(data['X'], encoders=self.db.encoders)
@@ -28,12 +28,12 @@ def create_server(model: str, num_replicas):
             except Exception:
                 X = [x.unpack() for x in X]
             result = self.model.predict(X)
-            return BSON.encode({'output': result.encode()})
+            return BSON.encode({'output': result.encode()})  # type: ignore
 
     return Server
 
 
-@click.command()
+@click.command()  # type: ignore[arg-type]
 @click.argument('model')
 @click.option('--num_replicas', default=1)
 def serve(model: str, num_replicas: int = 1):

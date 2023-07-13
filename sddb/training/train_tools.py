@@ -1,20 +1,22 @@
+import random
 import time
 from collections import defaultdict
-
 import torch.utils.data
 
-from sddb.client import SddbClient
+from sddb import client
 from sddb.training.loading import QueryDataset
 from sddb.utils import MongoStyleDict, apply_model
 
 
 class Trainer:
     def __init__(self,
+                 train_name,
                  client,
                  database,
                  collection,
                  encoders,
                  fields,
+                 save_names,
                  metrics=None,
                  splitter=None,
                  loss=None,
@@ -22,18 +24,25 @@ class Trainer:
                  optimizers=(),
                  lr=0.0001,
                  num_workers=0,
+                 projection=None,
                  filter=None,
-                 n_epochs=None,
+                 features=None,
+                 n_epochs=100,
+                 save=None,
+                 watch='loss',
                  download=False):
 
+        self.train_name = train_name
         self._client = client
         self._database = database
         self._collection = collection
         self._collection_object = None
+
         self.encoders = encoders
         self.fields = fields
         self.splitter = splitter
         self.loss = loss
+        self.features = features
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.filter = filter if filter is not None else {}
@@ -45,7 +54,9 @@ class Trainer:
             database=self._database,
             collection=self._collection,
             filter={**self.filter, '_fold': 'train'},
-            transform=lambda x: self.apply_splitter_and_encoders(x),
+            transform=self.apply_splitter_and_encoders,
+            projection=projection,
+            features=features,
         )
         self.valid_data = QueryDataset(
             client=self._client,
@@ -53,23 +64,80 @@ class Trainer:
             collection=self._collection,
             filter={**self.filter, '_fold': 'valid'},
             download=True,
-            transform=lambda x: self.apply_splitter_and_encoders(x),
+            transform=self.apply_splitter_and_encoders,
+            projection=projection,
+            features=features,
         )
-        self.metrics = metrics if metrics is not None else ()
+        self.best = []
+        self.metrics = metrics if metrics is not None else {}
         if isinstance(self.fields, str):
             self.fields = (self.fields,)
-        if not isinstance(self.encoders, tuple):
+        if not isinstance(self.encoders, tuple) and not isinstance(self.encoders, list):
             self.encoders = (self.encoders,)
         self.learn_fields = self.fields
         self.learn_encoders = self.encoders
         if len(self.fields) == 1:
             self.learn_fields = (self.fields[0], self.fields[0])
             self.learn_encoders = (self.encoders[0], self.encoders[0])
-        self.optimizers = optimizers if optimizers else (
+        self.optimizers = optimizers if optimizers else [
             self._get_optimizer(encoder, lr) for encoder in self.encoders
+            if isinstance(encoder, torch.nn.Module)
+        ]
+        self.save_names = save_names
+        self.watch = watch
+        self.metric_values = defaultdict(lambda: [])
+        self.lr = lr
+        self.weights_dict = defaultdict(lambda: [])
+        self._weights_choices = {}
+        self._init_gradients()
+        self.save = save
+
+    def _init_gradients(self):
+        for i, e in enumerate(self.encoders):
+            try:
+                sd = e.state_dict()
+            except AttributeError:
+                continue
+            self._weights_choices[i] = {}
+            for p in sd:
+                if len(sd[p].shape) == 2:
+                    indexes = [(random.randrange(sd[p].shape[0]), random.randrange(sd[p].shape[1]))
+                                for _ in range(min(10, max(sd[p].shape[0], sd[p].shape[1])))]
+                else:
+                    assert len(sd[p].shape) == 1
+                    indexes = [(random.randrange(sd[p].shape[0]),)
+                               for _ in range(min(10, sd[p].shape[0]))]
+                self._weights_choices[i][p] = indexes
+
+    def log_gradients(self):
+        for i, f in enumerate(self._weights_choices):
+            sd = self.encoders[i].state_dict()
+            for p in self._weights_choices[f]:
+                indexes = self._weights_choices[f][p]
+                tmp = []
+                for ind in indexes:
+                    param = sd[p]
+                    if len(ind) == 1:
+                        tmp.append(param[ind[0]].item())
+                    elif len(ind) == 2:
+                        tmp.append(param[ind[0], ind[1]].item())
+                    else:
+                        raise Exception('3d tensors not supported')
+                self.weights_dict[p].append(tmp)
+
+    def _save_metrics(self):
+        self.collection[self.sub_collection].update_one(
+            {'name': self.train_name},
+            {'$set': {'metric_values': self.metric_values, 'weights': self.weights_dict}}
         )
 
-    def load_metrics(self):
+    def _save_best_model(self):
+        agg = min if self.watch == 'loss' else max
+        if self.watch == 'loss' and self.metric_values['loss'][-1] == agg(self.metric_values['loss']):
+            for sn, encoder in zip(self.save_names, self.encoders):
+                self.save(sn, encoder)
+
+    def _load_metrics(self):
         for m in self.metrics:
             self.metrics[m] = self.collection.load_metric(m)
 
@@ -85,7 +153,7 @@ class Trainer:
 
     @property
     def client(self):
-        return SddbClient(**self._client)
+        return client.SddbClient(**self._client)
 
     @property
     def database(self):
@@ -98,7 +166,8 @@ class Trainer:
         return self._collection_object
 
     def _get_optimizer(self, encoder, lr):
-        return torch.optim.Adam(encoder.parameters(), lr=lr)
+        learnable_parameters = [x for x in encoder.parameters() if x.requires_grad]
+        return torch.optim.Adam(learnable_parameters, lr=lr)
 
     def apply_splitter_and_encoders(self, sample):
         if self.splitter is not None:
@@ -126,85 +195,82 @@ class Trainer:
     @staticmethod
     def apply_models_to_batch(batch, models):
         output = []
-        for subbatch, model in zip(batch, models):
+        for subbatch, model in list(zip(batch, models)):
             output.append(model.forward(subbatch))
         return output
 
     def take_step(self, loss):
         for opt in self.optimizers:
             opt.zero_grad()
-
         loss.backward()
-
         for opt in self.optimizers:
             opt.step()
-
+        self.log_gradients()
         return loss
 
 
 class ImputationTrainer(Trainer):
+
+    sub_collection = '_imputations'
 
     def __init__(self, *args, inference_model=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.inference_model = inference_model if inference_model is not None else self.encoders[0]
 
     def validate_model(self, data_loader, *args, **kwargs):
-
-        metrics = defaultdict(lambda: [])
-        docs = list(self.collection.find({**self.filter, '_fold': 'valid'}))
+        for e in self.encoders:
+            if hasattr(e, 'eval'):
+                e.eval()
+        docs = list(self.collection.find(
+            {**self.filter, '_fold': 'valid'},
+            features=self.features,
+        ))
+        inputs_ = [r[self.fields[0]] for r in docs]
+        targets = [r[self.fields[1]] for r in docs]
         outputs = apply_model(
             self.inference_model,
-            [r[self.fields[0]] for r in docs],
+            inputs_,
             single=False,
             verbose=True,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )
-
-        for output in outputs:
-            for metric in self.metrics:
-                metrics[metric].append(self.metrics[metric](*output))
-
+        for metric in self.metrics:
+            self.metric_values[metric].append(self.metrics[metric](outputs, targets))
+        loss = []
         for batch in data_loader:
-            metrics['loss'].append(self.loss(*batch))
-
-        for k in metrics:
-            metrics[k] = sum(metrics[k]) / len(metrics[k])
-
-        return metrics
+            outputs = self.apply_models_to_batch(batch, self.encoders)
+            loss.append(self.loss(*outputs).item())
+        self.metric_values['loss'].append(sum(loss) / len(loss))
+        self._save_metrics()
+        for e in self.encoders:
+            if hasattr(e, 'train'):
+                e.train()
 
     def train(self):
         for i in range(len(self.encoders)):
             self.calibrate(i)
-
-        name = f'_training_index_{self.training_id}'
-        self.collection.create_imputation({
-            'name': name,
-            'input': 'test',
-            'label': 'fruit',
-            'models': {
-                'test': 'dummy',
-                'type': 'in_memory',
-                'object': self.encoders[0],
-                'active': False,
-            }
-        })
+        for e in self.encoders:
+            if hasattr(e, 'train'):
+                e.train()
 
         it = 0
         epoch = 0
-
         while True:
-
             train_loader, valid_loader = self.data_loaders
-
             for batch in train_loader:
                 outputs = self.apply_models_to_batch(batch, self.encoders)
                 l_ = self.take_step(self.loss(*outputs))
                 self.log_progress(fold='TRAIN', iteration=it, loss=l_.item())
                 it += 1
 
-            metrics = self.validate_model(valid_loader, epoch)
-            self.log_progress(fold='VALID', iteration=it, **metrics)
+            self.validate_model(valid_loader, epoch)
+            self._save_best_model()
+            self.log_progress(
+                fold='VALID',
+                iteration=it,
+                **{k: v[-1] for k, v in self.metric_values.items()},
+            )
 
             epoch += 1
             if self.n_epochs is not None and epoch >= self.n_epochs:
@@ -223,6 +289,11 @@ class _Mapped:
 
 
 class RepresentationTrainer(Trainer):
+    sub_collection = '_semantic_indexes'
+
+    def __init__(self, semantic_index_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.semantic_index_name = semantic_index_name
 
     def prepare_validation_set(self):
         for r in self.collection.find({**self.filter, '_fold': 'valid'}):
@@ -230,26 +301,24 @@ class RepresentationTrainer(Trainer):
             self.collection.replace_one(
                 {'_id': r['_id']},
                 {'_backup': r, '_query': left, **right},
+                refresh=False,
             )
 
     def validate_model(self, data_loader, epoch):
         active_models = self.collection.active_models
-        self.collection.active_models = \
-            [f'_training_index_{self.training_id}:{len(self.fields) - 1}']
-        # use update to force hashes to be updated
-        try:
-            del self.collection._all_hash_sets[self.collection.semantic_index_name]
-        except KeyError:
-            pass
+
+        self.collection.semantic_index = self.semantic_index_name
+        self.collection.active_models = self.collection.semantic_index['active_models']
         self.collection.update_many({'_fold': 'valid'}, {'$set': {'epoch': epoch}})
         self.collection.active_models = active_models
+
         metrics_values = defaultdict(lambda: [])
 
         for r in self.collection.find({**self.filter, '_fold': 'valid'}):
-            results = self.collection.find(
-                {'_fold': 'valid', self.fields[0]: {'$like': {'document': r['_query'], 'n': 100}}},
-                {'_id': 1},
-            )
+            results = list(self.collection.find(
+                {'$like': {'document': r, 'n': 100}},
+                {'_id': 1}
+            ))
             for metric in self.metrics:
                 metrics_values[metric].append(self.metrics[metric](r, results))
 
@@ -267,25 +336,6 @@ class RepresentationTrainer(Trainer):
             self.calibrate(i)
 
         self.prepare_validation_set()
-        name = f'_training_index_{self.training_id}'
-        self.collection.create_semantic_index({
-            'name': name,
-            'keys': self.fields,
-            'models': [
-                {
-                    'name': f'{name}:{i}',
-                    'object': self.encoders[i],
-                    'active': i == len(self.fields) - 1,
-                    'type': 'in_memory',
-                    'args': {},
-                    'filter': {'_fold': 'valid'},
-                    'converter': 'sddb.models.converters.FloatTensor',
-                    'key': self.fields[i],
-                }
-                for i, k in enumerate(self.fields)
-            ],
-        })
-        self.collection.semantic_index = name
 
         it = 0
         epoch = 0

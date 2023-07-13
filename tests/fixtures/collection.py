@@ -44,6 +44,7 @@ def collection_no_hashes():
             collection.insert_one({'test': random_string(), '_fold': 'valid',
                                    'fruit': lookup[random.random() < 0.5]})
     yield sddb_client().test_db.test_collection
+    mongo_client().drop_database(collection._filesystem_name)
     mongo_client().drop_database('test_db')
 
 
@@ -76,6 +77,7 @@ def collection_many_models():
         dependencies=['extra-1-1'],
     )
     yield collection
+    mongo_client().drop_database(collection._filesystem_name)
     mongo_client().drop_database('test_db')
 
 

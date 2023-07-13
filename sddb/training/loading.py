@@ -71,8 +71,9 @@ class MongoIterable(data.IterableDataset):
 
 class QueryDataset(data.Dataset):
     def __init__(self, client, database, collection, filter=None, transform=None, download=False,
-                 splitter=None):
+                 splitter=None, features=None, projection=None):
         super().__init__()
+
         self._client = client
         self._database = database
         self._collection = collection
@@ -80,21 +81,26 @@ class QueryDataset(data.Dataset):
         self.transform = transform
         self.filter = filter if filter is not None else {}
         self.download = download
+        self.features = features
+        self.projection = projection
 
         from sddb.utils import Progress
         if not self.download:
             cursor = self.collection.find(self.filter, {'_id': 1})
             self.ids = []
+            print(f'downloading ids for {filter}')
             docs = Progress()(cursor, total=len(self))
-            docs.set_description(f'downloading ids for {filter}')
             for r in docs:
                 self.ids.append(r['_id'])
         else:
-            cursor = self.collection.find(self.filter)
+            if projection is None:
+                cursor = self.collection.find(self.filter, features=self.features)
+            else:
+                cursor = self.collection.find(self.filter, self.projection, features=self.features)
             self.ids = []
             self.documents = {}
+            print(f'downloading records for {filter}')
             docs = Progress()(cursor, total=len(self))
-            docs.set_description(f'downloading records for {filter}')
             for r in docs:
                 self.ids.append(r['_id'])
                 self.documents[r['_id']] = r
@@ -119,7 +125,11 @@ class QueryDataset(data.Dataset):
         if self.download:
             r = self.documents[self.ids[item]]
         else:
-            r = self.collection.find_one({'_id': self.ids[item]})
+            if self.projection is None:
+                r = self.collection.find_one({'_id': self.ids[item]}, features=self.features)
+            else:
+                r = self.collection.find_one({'_id': self.ids[item]}, self.projection,
+                                             features=self.features)
 
         if self.splitter is not None:
             r = self.splitter(r)
@@ -128,6 +138,8 @@ class QueryDataset(data.Dataset):
             del r['_id']
 
         if self.transform is not None:
-            return self.transform(r)
+            out = self.transform(r)
         else:
-            return r
+            out = r
+
+        return out

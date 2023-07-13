@@ -1,6 +1,6 @@
 from superduperdb.client import SuperDuperClient
-from bson import BSON
-from flask import request, Flask
+from bson import BSON, ObjectId
+from flask import request, Flask, jsonify
 
 # https://flask.palletsprojects.com/en/2.1.x/patterns/streaming/ streaming for the find endpoint
 
@@ -12,42 +12,30 @@ client = SuperDuperClient(**cf['mongodb'])
 collections = {}
 
 
-@app.route('/find', methods=['GET'])
-def find():
+@app.route('/_find_nearest', methods=['GET'])
+def _find_nearest():
     data = request.get_json()
     database = data['database']
     collection = data['collection']
-    args = data['args']
-    kwargs = data['kwargs']
-    if f'{database}.{collection}' not in collections:
-        collections[f'{database}.{collection}'] = client[database][collection]
-    collection = collections[f'{database}.{collection}']
-    collection.remote = False
-    result = collection.find(*args, convert=False, **kwargs)
-    def generate():
-        for r in result:
-            yield bytes(BSON.encode(r))
-    return app.response_class(generate(), mimetype='text/csv')
-
-
-@app.route('/find_one', methods=['GET'])
-def find_one():
-    data = request.get_json()
-    database = data['database']
-    collection = data['collection']
-    args = data['args']
     if 'filter' in data:
         filter = BSON.decode(data['filter'].encode('iso-8859-1'))
     else:
         filter = {}
-    kwargs = data['kwargs']
+    if 'ids' not in data:
+        ids = None
+    else:
+        ids = [ObjectId(_id) for _id in data['ids']]
     if f'{database}.{collection}' not in collections:
         collections[f'{database}.{collection}'] = client[database][collection]
     collection = collections[f'{database}.{collection}']
     collection.remote = False
     collection.single_thread = True
-    result = collection.find_one(filter, *args, convert=False, **kwargs)
-    return bytes(BSON.encode(result))
+    from superduperdb.collection import convert_types
+    filter = convert_types(filter, converters=collection.converters)
+    result = collection._find_nearest(filter, ids=ids)
+    for i, _id in enumerate(result['ids']):
+        result['ids'][i] = str(_id)
+    return jsonify(result)
 
 
 if __name__ == '__main__':

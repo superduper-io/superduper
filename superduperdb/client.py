@@ -1,6 +1,6 @@
 from pymongo.mongo_client import MongoClient
 
-from . import database
+import superduperdb.database
 from superduperdb import cf
 
 
@@ -11,7 +11,7 @@ class SuperDuperClient(MongoClient):
         self.kwargs = kwargs
 
     def __getitem__(self, name: str):
-        return database.Database(self, name)
+        return superduperdb.database.Database(self, name)
 
 
 the_client = SuperDuperClient(**cf['mongodb'])

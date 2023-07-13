@@ -1,4 +1,4 @@
-![w:200](img/black.png)
+![w:200](img/white_on_purple.png)
 
 ## Installation
 

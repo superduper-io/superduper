@@ -97,11 +97,19 @@ def create_model():
     manifest = json.loads(request.args['manifest'])
     collection = request.args['collection']
     database = request.args['database']
+    si = request.args['semantic_index'] == 'true'
+    print(f'Is semantic index {si}')
     file_bytes = request.files['file'].read()
     model = pickle.loads(file_bytes)
     assert manifest['name'].split('.pkl')[0]
-    manifest['path'] = f'models/{manifest["name"]}.pkl'
-    client[database][collection].create_model({'object': model, **manifest})
+    if si:
+        client[database][collection].create_semantic_index({
+            'name': manifest['name'],
+            'models': [{'object': model, **manifest}],
+            'measure': 'css'
+        })
+    else:
+        client[database][collection].create_model(object=model, **manifest)
     return 'ok'
 
 

@@ -181,8 +181,8 @@ class Client:
 
         document = ArtifactDocument(response.json())
         document.load_artifacts(
-            artifact_store=ClientArtifactStore(
-                request_id=request_id,  # type: ignore[arg-type]
+            artifact_store=ClientArtifactStore(  # type: ignore[arg-type]
+                request_id=request_id,
                 get=self._get,
                 put=self._put,
             ),

@@ -11,11 +11,12 @@ If you change a class below, you must regenerate `default-config.json with
     $ python -m tests.unittests.misc.test_config
 """
 
-from .jsonable import JSONable, Factory
-from enum import Enum
-from pydantic import Field, root_validator
 import typing as t
+from enum import Enum
 
+from pydantic import Field, root_validator
+
+from .jsonable import Factory, JSONable
 
 _BAD_KEY = '...bad.key...'
 REST_API_VERSION = '0.1.0'
@@ -146,19 +147,8 @@ class InMemory(JSONable):
     backfill_batch_size: int = 100
 
 
-class Milvus(JSONable):
-    milvus: bool = True
-    host: str = 'localhost'
-    port: int = 19530
-    username: str = Field(default='', repr=False)
-    password: str = Field(default='', repr=False)
-    db_name: str = 'default'
-    consistency_level: str = 'Bounded'
-    backfill_batch_size: int = 100
-
-
 class VectorSearch(JSONable):
-    type: t.Union[LanceDB, InMemory, Milvus] = Field(default_factory=InMemory)
+    type: t.Union[LanceDB, InMemory] = Field(default_factory=InMemory)
     username: str = Field(default='', repr=False)
     password: str = Field(default='', repr=False)
     host: str = 'localhost'

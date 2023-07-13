@@ -33,7 +33,7 @@ class LangchainRetriever(BaseRetriever):
         self.n = n
         self.db = db
 
-    def get_relevant_documents(self, query: str) -> t.List[Document]:
+    def get_relevant_documents(self, query: str) -> t.List[Document]:  # type: ignore
         document_to_search = documents.Document(content={self.key: query})
         ids, scores = self.vector_index.get_nearest(
             document_to_search,
@@ -51,7 +51,9 @@ class LangchainRetriever(BaseRetriever):
         ]
         return out
 
-    async def aget_relevant_documents(self, query: str) -> t.List[Document]:
+    async def aget_relevant_documents(  # type:ignore
+        self, query: str
+    ) -> t.List[Document]:
         raise NotImplementedError
 
 
@@ -92,7 +94,7 @@ class DBQAWithSourcesChain(Model):
 
     @cached_property
     def retriever(self) -> LangchainRetriever:
-        return LangchainRetriever(
+        return LangchainRetriever(  # type: ignore
             key=self.vector_index.indexing_watcher.key,
             db=self.db,
             vector_index=self.vector_index,  # type: ignore[arg-type]

@@ -69,7 +69,7 @@ class VectorSearchPerformance:
             ix_compatible = 0
             single_model = True
 
-        inputs = [[] for _ in models]
+        inputs: t.List[t.List] = [[] for _ in models]
         for i in range(len(validation_data)):
             r = validation_data[i]
             if single_model:
@@ -87,7 +87,7 @@ class VectorSearchPerformance:
                 model.predict(inputs[i], **(self.predict_kwargs or {}))
                 for i, model in enumerate(models)
             ]
-            vi = self.hash_set_cls(
+            vi = self.hash_set_cls(  # type: ignore[operator]
                 predictions[ix_index],
                 list(range(len(predictions[0]))),
                 self.measure,

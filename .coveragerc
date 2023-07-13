@@ -1,6 +1,0 @@
-[report]
-omit =
-    _remote_module_non_scriptable.py
-    superduperdb/servers/*
-    superduperdb/jobs/*
-    superduperdb/requests/*

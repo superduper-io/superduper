@@ -5,16 +5,15 @@ import uuid
 
 import click
 import requests
-
 from superduperdb.core.component import Component
-from superduperdb.core.documents import Document, ArtifactDocument
+from superduperdb.core.documents import ArtifactDocument, Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.database import ExecuteQuery
 from superduperdb.datalayer.base.query import (
     Delete,
     Insert,
-    Select,
     Like,
+    Select,
     SelectOne,
     Update,
 )
@@ -117,7 +116,7 @@ class Client:
         ad = ArtifactDocument(component.to_dict())
         request_id = str(uuid.uuid4())
         ad.save_artifacts(
-            artifact_store=ClientArtifactStore(
+            artifact_store=ClientArtifactStore(  # type: ignore[arg-type]
                 request_id=request_id,
                 put=self._put,
                 get=self._get,
@@ -183,7 +182,7 @@ class Client:
         document = ArtifactDocument(response.json())
         document.load_artifacts(
             artifact_store=ClientArtifactStore(
-                request_id=request_id,
+                request_id=request_id,  # type: ignore[arg-type]
                 get=self._get,
                 put=self._put,
             ),

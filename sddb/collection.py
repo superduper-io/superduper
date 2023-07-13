@@ -135,7 +135,22 @@ class Collection(BaseCollection):
         return self._create_object('losses', name, object)
 
     def create_model(self, name, object, filter=None, converter=None, active=True, in_memory=False,
-                     dependencies=None, key='_base'):
+                     dependencies=None, key='_base', verbose=False, semantic_index=False,
+                     process_docs=False):
+        if semantic_index:
+            return self.create_semantic_index(
+                name=name,
+                models=[{
+                    'name': name,
+                    'object': object,
+                    'filter': filter,
+                    'converter': converter,
+                    'active': active,
+                    'dependencies': dependencies,
+                    'key': key,
+                }],
+                verbose=verbose,
+            )
         if dependencies is None:
             dependencies = []
         assert name not in self['_models'].distinct('name'), \
@@ -159,6 +174,11 @@ class Collection(BaseCollection):
             })
         else:
             self.models[name] = object
+
+        if process_docs:
+            ids = [r['_id'] for r in self.find(filter if filter else {}, {'_id': 1})]
+            if ids:
+                self.process_documents_with_model(name, ids, verbose=verbose)
 
     def _load_object(self, type, name):
         manifest = self[f'_{type}'].find_one({'name': name})
@@ -716,15 +736,18 @@ class Collection(BaseCollection):
     def _delete_objects(self, type, objects=None, force=False):
         if objects is None:
             objects = self[f'_{type}'].distinct('name')
+
+        data = list(self[f'_{type}'].find({'name': {'$in': objects}}))
         for k in objects:
             if k in getattr(self, type):
                 del getattr(self, type)[k]
 
-        if click.confirm(f'You are about to delete these {type}: {objects}, are you sure?',
-                         default=False) or force:
+        if force or click.confirm(f'You are about to delete these {type}: {objects}, are you sure?',
+                                  default=False):
             for r in self[f'_{type}'].find({'name': {'$in': objects}}):
                 self.filesystem.delete(r['object'])
                 self[f'_{type}'].delete_one({'name': r['name']})
+        return data
 
     def delete_converters(self, converters=None, force=False):
         return self._delete_objects('converters', objects=converters, force=force)
@@ -736,7 +759,21 @@ class Collection(BaseCollection):
         return self._delete_objects('losses', objects=losses, force=force)
 
     def delete_models(self, models=None, force=False):
-        return self._delete_objects('models', objects=models, force=force)
+        if models is None:
+            models = self.list_models()
+        if not force:
+            combined_filter = {'$and': [self._model_info[m].get('filter', {}) for m in models]}
+            n_documents = self.count_documents(combined_filter)
+        if force or click.confirm(f'Are you sure you want to delete these models: {models}; '
+                                  f'{n_documents} documents will be affected.',
+                                  default=False):
+            deleted_info = self._delete_objects('models', objects=models, force=True)
+            for r in deleted_info:
+                print(f'unsetting output field _outputs.{r["key"]}.{r["name"]}')
+                super().update_many(
+                    r.get('filter', {}),
+                    {'$unset': {f'_outputs.{r["key"]}.{r["name"]}': 1}}
+                )
 
     def delete_one(
         self,
@@ -781,11 +818,12 @@ class Collection(BaseCollection):
     def create_imputation(self, *args, **kwargs):
         raise NotImplementedError
 
-    def create_semantic_index(self, name, models, metrics=None, loss=None, measure=None):
+    def create_semantic_index(self, name, models, metrics=None, loss=None, measure=None,
+                              verbose=False):
         for i, man in enumerate(models):
             if isinstance(man, str):
                 continue
-            self.create_model(**man)
+            self.create_model(**man, verbose=verbose)
             models[i] = man['name']
 
         if metrics is not None:

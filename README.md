@@ -2,19 +2,16 @@
 
 # Welcome to SuperDuperDB!
 
-> An AI-database solution revolutionizing how AI models and data work together
+> An AI-database management system for the full PyTorch model-development lifecycle
 
+Full documentation [here](https://superduperdb.github.io/superduperdb).
 
 ## Installation
 
-### Mac OSX
+Requires:
 
-Install redis and mongodb
-
-```
-brew install redis
-brew install mongodb
-```
+- MongoDB
+- RedisDB
 
 Then install the python requirements
 
@@ -24,7 +21,7 @@ pip install -r requirements.txt
 
 ## Architecture
 
-![](https://raw.githubusercontent.com/blythed/superduperdb/main/img/architecture.png)
+![](https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/img/architecture.png)
 
 1. Client - run on client to send off requests to various work horses.
 1. MongoDB - standard mongo deployment.

@@ -1,9 +1,11 @@
+import pytest
 import random
 import time
 
 from tests.fixtures.collection import (
     collection_hashes, test_document, test_document2, delete, special_test_document,
-    collection_many_models, random_string,
+    collection_many_models, random_string, loaded_model, loaded_converter,
+    cleanup_models, collection_no_hashes
 )
 
 
@@ -59,3 +61,20 @@ def test_get_hash_set(collection_hashes):
 
 def test_get_plan(collection_many_models):
     collection_many_models._create_plan()
+
+
+def test_create_model(collection_no_hashes, loaded_model, loaded_converter, cleanup_models):
+    collection_no_hashes.create_model(
+        name='test-model',
+        object=loaded_model,
+        converter={'name': 'float_tensor', 'object': loaded_converter},
+        active=False,
+    )
+    print(collection_no_hashes.models['test-model'])
+    with pytest.raises(AssertionError):
+        collection_no_hashes.create_model(
+            name='test-model',
+            object=loaded_model,
+            converter={'name': 'float_tensor', 'object': loaded_converter},
+            active=False
+        )

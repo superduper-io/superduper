@@ -111,6 +111,7 @@ def apply_model(model, args, single=True, verbose=False, **kwargs):
         prepared = model.preprocess(args)
         singleton_batch = create_batch(prepared)
         output = model.forward(singleton_batch)
+        output = unpack_batch(output)[0]
         if hasattr(model, 'postprocess'):
             return model.postprocess(output)
         return output
@@ -136,11 +137,6 @@ def import_object(path):
     object_ = path.split('.')[-1]
     module = importlib.import_module(module)
     return getattr(module, object_)
-
-
-class FileDownloader:
-    def __init__(self):
-        raise NotImplementedError
 
 
 class TimeoutException(Exception):
@@ -258,16 +254,18 @@ class Downloader:
             print("--keyboard interrupt--")
             pool.terminate()
             pool.join()
-            self.callback_pool.terminate()
-            self.callback_pool.join()
-            self.callback_pool = None
+            if self.callback_pool is not None:
+                self.callback_pool.terminate()
+                self.callback_pool.join()
+                self.callback_pool = None
             sys.exit(1)
 
         pool.close()
         pool.join()
-        self.callback_pool.close()
-        self.callback_pool.join()
-        self.callback_pool = None
+        if self.callback_pool is not None:
+            self.callback_pool.close()
+            self.callback_pool.join()
+            self.callback_pool = None
 
     def _sequential_go(self, f):
         for i in range(len(self.urls)):
@@ -334,7 +332,7 @@ def basic_progress(iterator, *args, total=None, **kwargs):
 
 
 class Progress:
-    style = 'basic'
+    style = 'tqdm'
 
     def __call__(self, *args, **kwargs):
         if self.style == 'tqdm':

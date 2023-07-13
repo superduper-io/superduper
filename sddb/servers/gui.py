@@ -1,3 +1,4 @@
+import pickle
 from contextlib import redirect_stdout, redirect_stderr
 import io
 import json
@@ -89,6 +90,19 @@ def replace_id_with_object_id(filter):
         elif isinstance(filter[k], dict):
             filter[k] = replace_id_with_object_id(filter[k])
     return filter
+
+
+@app.route('/create_model', methods=['POST'])
+def create_model():
+    manifest = json.loads(request.args['manifest'])
+    collection = request.args['collection']
+    database = request.args['database']
+    file_bytes = request.files['file'].read()
+    model = pickle.loads(file_bytes)
+    assert manifest['name'].split('.pkl')[0]
+    manifest['path'] = f'models/{manifest["name"]}.pkl'
+    client[database][collection].create_model({'object': model, **manifest})
+    return 'ok'
 
 
 @app.route('/find', methods=['POST'])

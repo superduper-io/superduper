@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Data
+/data
+
+# Presentation material
+/img/*.monopic

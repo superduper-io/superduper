@@ -1,14 +1,14 @@
-from sddb.client import SddbClient
+from superduperdb.client import SuperDuperClient
 from bson import BSON
 from flask import request, Flask
 
 # https://flask.palletsprojects.com/en/2.1.x/patterns/streaming/ streaming for the find endpoint
 
-from sddb import cf
+from superduperdb import cf
 
 app = Flask(__name__)
 
-client = SddbClient(**cf['mongodb'])
+client = SuperDuperClient(**cf['mongodb'])
 collections = {}
 
 

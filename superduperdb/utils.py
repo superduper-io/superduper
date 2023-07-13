@@ -13,7 +13,7 @@ import torch
 import torch.utils.data
 import tqdm
 
-from sddb.training.loading import BasicDataset
+from superduperdb.training.loading import BasicDataset
 
 
 class MongoStyleDict(dict):

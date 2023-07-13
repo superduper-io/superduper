@@ -1,8 +1,10 @@
+from contextlib import contextmanager
 import importlib
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 import os
 import requests
+import signal
 import sys
 from time import sleep
 import warnings
@@ -15,6 +17,7 @@ from sddb.training.loading import BasicDataset
 
 
 class MongoStyleDict(dict):
+    # TODO consider adding '_base' as special case
     def __getitem__(self, item):
         if '.' not in item:
             return super().__getitem__(item)
@@ -24,6 +27,16 @@ class MongoStyleDict(dict):
             child = '.'.join(parts[1:])
             sub = MongoStyleDict(self.__getitem__(parent))
             return sub[child]
+
+    def __setitem__(self, key, value):
+        if '.' not in key:
+            super().__setitem__(key, value)
+        else:
+            parent = key.split('.')[0]
+            child = '.'.join(key.split('.')[1:])
+            parent_item = MongoStyleDict(self[parent])
+            parent_item[child] = value
+            self[parent] = parent_item
 
 
 def create_batch(args):
@@ -115,6 +128,25 @@ class FileDownloader:
         raise NotImplementedError
 
 
+class TimeoutException(Exception):
+    ...
+
+
+def timeout_handler(signum, frame):
+    raise TimeoutException()
+
+
+@contextmanager
+def timeout(seconds):
+    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
+
+
 class Downloader:
     def __init__(
         self,
@@ -127,6 +159,7 @@ class Downloader:
         max_queue=10,
         headers=None,
         skip_existing=True,
+        timeout=None,
     ):
         """
         Parallel file downloader
@@ -147,6 +180,7 @@ class Downloader:
         self.failed = 0
         self.headers = headers
         self.skip_existing = skip_existing
+        self.timeout = timeout
 
         assert len(files) == len(urls)
 
@@ -161,9 +195,11 @@ class Downloader:
         progress_bar.set_description('downloading from urls')
         self.failed = 0
         progress_bar.set_description("failed: 0")
+        print(f'number of workers {self.n_workers}')
         request_session = requests.Session()
         request_adapter = requests.adapters.HTTPAdapter(
-            max_retries=3, pool_connections=self.n_workers if self.n_workers else 1,
+            max_retries=3,
+            pool_connections=self.n_workers if self.n_workers else 1,
             pool_maxsize=self.n_workers * 10
         )
         request_session.mount("http://", request_adapter)
@@ -172,7 +208,13 @@ class Downloader:
         def f(i):
             progress_bar.update()
             try:
-                self.download(i, request_session=request_session)
+                if self.timeout is not None:
+                    with timeout(self.timeout):
+                        self.download(i, request_session=request_session)
+                else:
+                    self.download(i, request_session=request_session)
+            except TimeoutException:
+                print(f'timed out {i}')
             except KeyboardInterrupt:  # pragma: no cover
                 raise
             except Exception as e:

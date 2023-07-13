@@ -1,5 +1,6 @@
 from pymongo.mongo_client import MongoClient
 from . import database
+from sddb import cf
 
 
 class SddbClient(MongoClient):
@@ -13,3 +14,6 @@ class SddbClient(MongoClient):
 
     def __getitem__(self, name: str):
         return database.Database(self, name)
+
+
+client = SddbClient(**cf['mongodb'])

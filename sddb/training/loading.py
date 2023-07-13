@@ -16,7 +16,8 @@ class BasicDataset(data.Dataset):
         if self.transform is None:
             return self.documents[item]
         else:
-            return self.transform(self.documents[item])
+            r = self.transform(self.documents[item])
+            return r
 
 
 class MongoIterable(data.IterableDataset):

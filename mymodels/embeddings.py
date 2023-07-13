@@ -37,6 +37,20 @@ class SimpleGlove:
         return tensor
 
 
+class Identity:
+    def __init__(self):
+        pass
+
+    def eval(self):
+        pass
+
+    def preprocess(self, r):
+        return r['captions'] + 1
+
+    def forward(self, x):
+        return x
+
+
 class AverageOfGloves:
     def __init__(self):
         self.glove = SimpleGlove()

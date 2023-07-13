@@ -1,3 +1,5 @@
+import time
+
 from tests.fixtures.collection import (
     collection_hashes, test_document, test_document2, delete, special_test_document
 )
@@ -30,6 +32,7 @@ def test_insert_one(collection_hashes, special_test_document, delete):
 
 def test_insert_many(collection_hashes, test_document, test_document2, delete):
     collection_hashes.insert_many([test_document, test_document2])
+    time.sleep(1) # necessary because insert_many doesn't block for the job
     assert collection_hashes.count_documents({}) == 12
     docs = list(collection_hashes.find())
     assert all(['dummy' in x['_outputs']['_base'] for x in docs])

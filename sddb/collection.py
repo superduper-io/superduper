@@ -10,6 +10,7 @@ from sddb.lookup import hashes
 import torch.utils.data
 import tqdm
 
+from sddb import cf
 from sddb.models.converters import decode, encode
 from sddb.training.loading import BasicDataset
 from sddb.utils import apply_model, unpack_batch, MongoStyleDict, Downloader
@@ -63,18 +64,21 @@ class Collection(BaseCollection):
         self._model_info = ArgumentDefaultDict(self._get_model_info)
         self._models = ArgumentDefaultDict(self._load_model)
         self._all_hash_sets = ArgumentDefaultDict(self._load_hashes)
-        self.single_thread = True
+        self.single_thread = cf.get('single_thread', True)
 
     def _load_model(self, name):
         manifest = self['_models'].find_one({'name': name})
         if manifest is None:
             raise Exception(f'No such model "{name}" has been registered.')
-        m = models.load(manifest)
+        m = models.loading.load(manifest)
         m.eval()
         return m
 
     def _get_meta(self):
-        self._meta = self['_meta'].find_one()
+        m = self['_meta'].find_one()
+        if m is None:
+            return {}
+        return m
 
     def _get_model_info(self, name):
         return self['_models'].find_one({'name': name})
@@ -99,9 +103,7 @@ class Collection(BaseCollection):
 
     @property
     def meta(self):
-        if self._meta is None:
-            self._get_meta()
-        return self._meta if self._meta is not None else {}
+        return self._get_meta()
 
     @property
     def semantic_index_name(self):
@@ -216,7 +218,7 @@ class Collection(BaseCollection):
             ]
         else:
             tmp = [{model_name: out} for out in outputs]
-        key = self._model_info[model].get('key', '_base')
+        key = self._model_info[model_name].get('key', '_base')
         for i, r in enumerate(tmp):
             if '_outputs' not in documents[i]:
                 documents[i]['_outputs'] = {}
@@ -225,7 +227,7 @@ class Collection(BaseCollection):
             documents[i]['_outputs'][key].update(r)
         self.bulk_write([
             UpdateOne({'_id': id},
-                      {'$set': {f'_outputs.{key}.{model}': r['_outputs'][key][model]}})
+                      {'$set': {f'_outputs.{key}.{model_name}': r['_outputs'][key][model_name]}})
             for id, r in zip(ids, documents)
         ])
         return tmp
@@ -246,7 +248,7 @@ class Collection(BaseCollection):
         sd = Collection.standardize_dict(d)
         return str(sd)
 
-    def _process_documents(self, ids, documents=None, batch_size=10, verbose=False):
+    def _process_documents(self, ids, documents=None, batch_size=10, verbose=False, blocking=False):
         # TODO have concept of precedence (some computations depending on others)
         if documents is not None:
             documents = [MongoStyleDict(r) for r in documents]
@@ -257,7 +259,7 @@ class Collection(BaseCollection):
         lookup = {}
         for filter_str in filter_lookup:
             if filter_str not in lookup:
-                ids = [
+                tmp_ids = [
                     r['_id']
                     for r in super().find({
                         '$and': [{'_id': {'$in': ids}}, filter_lookup[filter_str]]
@@ -265,11 +267,11 @@ class Collection(BaseCollection):
                 ]
                 if documents is not None:
                     lookup[filter_str] = {
-                        'ids': ids,
-                        'documents': [d for id_, d in zip(ids, documents) if id_ in ids]
+                        'ids': tmp_ids,
+                        'documents': [d for id_, d in zip(ids, documents) if id_ in tmp_ids]
                     }
                 else:
-                    lookup[filter_str] = {'ids': ids}
+                    lookup[filter_str] = {'ids': tmp_ids}
 
         for model in self.active_models:
             filter = self._model_info[model].get('filter', {})
@@ -289,7 +291,7 @@ class Collection(BaseCollection):
 
             if self.single_thread:
                 self.process_documents_with_model(
-                    model_name=model, ids=ids, documents=passed_docs, batch_size=batch_size,
+                    model_name=model, ids=sub_ids, documents=passed_docs, batch_size=batch_size,
                     verbose=verbose,
                 )
             else:
@@ -300,6 +302,7 @@ class Collection(BaseCollection):
                     ids=ids,
                     batch_size=batch_size,
                     verbose=verbose,
+                    blocking=blocking
                 )
 
     def insert_one(
@@ -316,7 +319,8 @@ class Collection(BaseCollection):
         output = super().insert_one(document, *args, **kwargs)
         if self.list_models():
             self._process_documents([output.inserted_id],
-                                    [document] if self.single_thread else None)
+                                    [document] if self.single_thread else None,
+                                    blocking=True)
         return output
 
     def _download_content(self, documents):
@@ -416,7 +420,8 @@ class Collection(BaseCollection):
             else:
                 document = filter['$like']['document']
                 n = filter['$like']['n']
-            output = apply_model(model, document, True)[0]
+            with torch.no_grad():
+                output = apply_model(model, document, True)[0]
             # similar = self.hash_set.find_nearest_from_hash(output, n=n)
             similar = self.find_nearest_from_hash(self.semantic_index['name'], output, n)
             only_like = self._test_only_like(filter)
@@ -700,7 +705,7 @@ class Collection(BaseCollection):
 
     def load_metric(self, name):
         r = self['_metrics'].find_one({'name': name})
-        m = models.load(r)
+        m = models.loading.load(r)
         return m
 
     def update_meta_data(self, key, value):

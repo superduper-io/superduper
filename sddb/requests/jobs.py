@@ -8,16 +8,19 @@ def process_documents_with_model(
     model_name,
     ids,
     batch_size=10,
-    verbose=False
+    verbose=False,
+    blocking=False,
 ):
-    requests.get(
-        f'{cf["jobs"]["url"]}/process_documents_with_model',
-        params={
+    ids = [str(id_) for id_ in ids]
+    requests.post(
+        f'http://{cf["jobs"]["host"]}:{cf["jobs"]["port"]}/process_documents_with_model',
+        json={
             'collection': collection,
             'database': database,
             'model_name': model_name,
             'batch_size': batch_size,
             'verbose': verbose,
             'ids': ids,
+            'blocking': blocking,
         }
     )

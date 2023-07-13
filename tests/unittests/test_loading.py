@@ -1,11 +1,12 @@
 from sddb.training.loading import QueryDataset
 import torch
 import torch.utils.data
+from sddb import cf
 
 
 def test_query_dataset(collection_hashes):
     ds = QueryDataset(
-        client={},
+        client=cf['mongodb'],
         database='test_db',
         collection='test_collection',
     )

@@ -133,3 +133,9 @@ dmypy.json
 
 # Presentation material
 /img/*.monopic
+
+# PyCharm
+/.idea
+
+# Supervisord logs
+/logs

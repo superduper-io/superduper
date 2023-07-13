@@ -107,20 +107,28 @@ def apply_model(model, args, single=True, verbose=False, **kwargs):
     :param kwargs: key, value pairs to be passed to dataloader
     """
     if single:
-        prepared = model.preprocess(args)
-        singleton_batch = create_batch(prepared)
-        output = model.forward(singleton_batch)
-        output = unpack_batch(output)[0]
+        if hasattr(model, 'preprocess'):
+            args = model.preprocess(args)
+        if hasattr(model, 'forward'):
+            singleton_batch = create_batch(args)
+            output = model.forward(singleton_batch)
+            args = unpack_batch(output)[0]
         if hasattr(model, 'postprocess'):
-            return model.postprocess(output)
-        return output
+            return model.postprocess(args)
+        return args
     else:
-        inputs = BasicDataset(args, model.preprocess)
-        loader = torch.utils.data.DataLoader(inputs, **kwargs)
+        if hasattr(model, 'preprocess'):
+            inputs = BasicDataset(args, model.preprocess)
+            loader = torch.utils.data.DataLoader(inputs, **kwargs)
+        else:
+            loader = torch.utils.data.DataLoader(args, **kwargs)
         out = []
         for batch in Progress()(loader, total=len(loader)):
-            tmp = model.forward(batch)
-            tmp = unpack_batch(tmp)
+            if hasattr(model, 'forward'):
+                tmp = model.forward(batch)
+                tmp = unpack_batch(tmp)
+            else:
+                tmp = unpack_batch(batch)
             if hasattr(model, 'postprocess'):
                 tmp = list(map(model.postprocess, tmp))
             out.extend(tmp)
@@ -329,7 +337,7 @@ def basic_progress(iterator, *args, total=None, n_chunks=10, **kwargs):
 
 
 class Progress:
-    style = 'basic'
+    style = 'tqdm'
     n_chunks = 25
 
     def __call__(self, *args, **kwargs):

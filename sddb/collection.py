@@ -1136,7 +1136,7 @@ class Collection(BaseCollection):
     def _train_imputation(self, name):
 
         if self.remote:
-            sddb_requests.jobs.train_imputation(name)
+            return sddb_requests.jobs.train_imputation(name)
 
         info = self['_imputations'].find_one({'name': name})
 
@@ -1231,7 +1231,7 @@ class Collection(BaseCollection):
     def _train_semantic_index(self, name, encoders, loss, measure, metrics=None,
                               splitter=None, **trainer_kwargs):
         if self.remote:
-            sddb_requests.jobs.train_semantic_index(
+            return sddb_requests.jobs.train_semantic_index(
                 name,
                 encoders,
                 loss,

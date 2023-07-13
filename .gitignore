@@ -145,3 +145,7 @@ dmypy.json
 
 # Annoying Mac thingy
 .DS_Store
+
+# links
+/architectures
+/sddb/servers/static

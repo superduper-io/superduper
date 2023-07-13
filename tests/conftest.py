@@ -1,22 +1,17 @@
+import json
 import multiprocessing
+import random
 import time
+from contextlib import contextmanager
+from dataclasses import asdict
 from typing import Iterator
 from unittest import mock
-import json
+
 import lorem
 import numpy
 import pytest
-import random
-
-
-import superduperdb as s
 import torch
-
-from .conftest_mongodb import MongoDBConfig as TestMongoDBConfig
-from contextlib import contextmanager
-from dataclasses import asdict
 from pymongo import MongoClient
-
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
 from superduperdb.core.metric import Metric
@@ -28,23 +23,19 @@ from superduperdb.encoders.numpy.array import array
 from superduperdb.encoders.pillow.image import pil_image
 from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.misc.config import DataLayer, DataLayers
+from superduperdb.misc.config import MongoDB as MongoDBConfig
 from superduperdb.models.torch.wrapper import TorchModel
-from superduperdb.vector_search.base import VectorDatabase
 from superduperdb.serve.server import serve
 
 from tests.material.metrics import PatK
 from tests.material.models import BinaryClassifier
 
-from superduperdb.misc.config import (
-    Config as SuperDuperConfig,
-    MongoDB as MongoDBConfig,
-)
+from .conftest_mongodb import MongoDBConfig as TestMongoDBConfig
 
 n_data_points = 250
 
 pytest_plugins = [
     "tests.conftest_mongodb",
-    "tests.integration.conftest_milvus",
 ]
 
 
@@ -92,22 +83,6 @@ def config(mongodb_server: MongoDBConfig) -> Iterator[None]:
 
     with mock.patch('superduperdb.CFG.data_layers', data_layers_cfg):
         yield
-
-
-@pytest.fixture
-def config_mongodb_milvus(
-    config: SuperDuperConfig, milvus_config: s.config.Milvus
-) -> Iterator[None]:
-    vector_search_config = s.config.VectorSearch(milvus=milvus_config)
-    with mock.patch('superduperdb.CFG.vector_search', vector_search_config):
-        with VectorDatabase.create(
-            config=vector_search_config
-        ).init() as vector_database:
-            with mock.patch(
-                'superduperdb.datalayer.base.database.VECTOR_DATABASE',
-                vector_database,
-            ):
-                yield
 
 
 @pytest.fixture()

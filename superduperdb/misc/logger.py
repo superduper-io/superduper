@@ -1,14 +1,11 @@
-import typing as t
+from warnings import warn
 
 from superduperdb import CFG
-from warnings import warn
 
 __all__ = ('logging',)
 
-logging: t.Any
 
-
-if CFG.logging.type == 'stdout':
+if CFG.logging.type == 'stdout':  # type: ignore[has-type]
 
     def logging():
         pass
@@ -17,7 +14,7 @@ if CFG.logging.type == 'stdout':
         pass
 
     logging.error = logging.warn = warn
-    level = CFG.logging.level
+    level = CFG.logging.level  # type: ignore[has-type]
 
     if level == level.DEBUG:
         logging.debug = print
@@ -34,6 +31,6 @@ if CFG.logging.type == 'stdout':
 else:
     import logging
 
-    level = getattr(logging, CFG.logging.level.name)
-    logging.basicConfig(level=level, **CFG.logging.kwargs)
+    level = getattr(logging, CFG.logging.level.name)  # type: ignore[has-type]
+    logging.basicConfig(level=level, **CFG.logging.kwargs)  # type: ignore[has-type]
     logging.getLogger('distributed').propagate = True

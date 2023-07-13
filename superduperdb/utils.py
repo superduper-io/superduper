@@ -1,7 +1,6 @@
 import os
 from collections import defaultdict
 from contextlib import contextmanager
-from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 import requests
 import signal

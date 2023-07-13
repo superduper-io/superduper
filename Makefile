@@ -12,17 +12,17 @@ clean-test-containers:
 
 .PHONY: test
 test: test-containers
-	black --check superduperdb tests
-	ruff check superduperdb tests
-	mypy superduperdb
+	black --check src tests
+	ruff check src tests
+	mypy src
 	poetry lock --check
 	pytest $(PYTEST_ARGUMENTS)
 
 .PHONY: fix-and-test
 fix-and-test: test-containers
-	black superduperdb tests
-	ruff check --fix superduperdb tests
-	mypy superduperdb
+	black src tests
+	ruff check --fix src tests
+	mypy src
 	poetry lock --check
 	pytest $(PYTEST_ARGUMENTS)
 

@@ -1,36 +1,30 @@
-Concepts
-========
+# Important Concepts
 
 The SuperDuperDB workflow looks like this:
 
-1. The user adds data to SuperDuperDB, which may include user defined **types**, and external web or other **content**.
-2. The user uploads one or more **models** including weights to SuperDuperDB, configuring which models should be applied to which data, by linking models to a
+1. The user adds data to SuperDuperDB, which may include user defined **encoders**, and external web or other content.
+2. The user uploads one or more **models** including weights or parameters to SuperDuperDB, configuring which models should be applied to which data, by linking models to a
    query and key. 
-3. (Optionally) SuperDuperDB creates a **job** to train the uploaded models on the data contained in the database;
-   the user can choose from two varieties of training: **semantic index** or **imputation**.
-4. SuperDuperDB creates a **job** applying the **models** to their configured data and the outputs are stored in the documents to which
-   the **models** were applied.
+3. (Optionally) SuperDuperDB creates a **job** to train the uploaded models on the data contained in the database.
+4. SuperDuperDB creates a **job** applying the **models** to their configured data and the outputs are stored in the documents to which the **models** were applied.
 5. SuperDuperDB **watches** for when new data comes in, when the **models** which have already been uploaded are reactivated.
 6. (Optionally) SuperDuperDB retrains **models** on the latest data.
 7. SuperDuperDB creates a **job** to apply the **models** to data, which has yet to be processed, and the outputs
    are stored in the documents to which the **models** were applied.
+8. At inference time, the outputs of the applied **models** may be queried using classifical DB queries,
+   or, if the outputs are vectors, searched using a **vector-index**.
 
-.. image:: img/cycle-linear.svg
+![](img/cycle-linear.svg)
 
 The key concepts are:
 
-* :ref:`Types_short`
-* :ref:`Content_short`
-* :ref:`Models_short`
-* :ref:`Watchers_short`
-* :ref:`Semantic_indexes_short`
-* :ref:`Imputations_short`
-* :ref:`Jobs_short`
+* [Encoders](#encoders)
+* [Models](#models)
+* [Watchers](#watchers)
+* [Vector-Indexes](#vector-indexes)
+* [Jobs](#jobs)
 
-.. _Types_short:
-
-Types
------
+## Encoders
 
 A type is a Python object registered with a SuperDuperDB collection which manages how
 model outputs or database content are converted to and from ``bytes`` so that these may be
@@ -41,12 +35,9 @@ of a more sophisticated variety, such as images, tensors and so forth.
 A type is any class with ``.encode`` and ``.decode`` methods
 as well as an optional ``.types`` property.
 
-Read in more detail :ref:`here <Types>`.
+Read in more detail here.
 
-.. _Content_short:
-
-Content
--------
+*Content*
 
 Often building and training AI applications requires the awkward task of downloading, pulling and
 scraping diverse bits of data from the web, file-servers and systems, and object storage.
@@ -55,24 +46,17 @@ using references to external sources.
 For those bits of content which are referred to in this way, SuperDuperDB creates a :ref:`job <Jobs>` which fetches the bytes from the
 described location, and inserts these into MongoDB.
 
-Read in more detail :ref:`here <Content>`.
 
-.. _Models_short:
-
-Models
-------
+## Models
 
 A **model** in SuperDuperDB is a PyTorch model, with (optionally) two additional methods ``preprocess``
 and ``postprocess``. These methods are necessary so that the model knows how to convert content from 
 the database to tensors, and also to convert outputs of the object into a form which is appropriate 
 to be saved in the database.
 
-Read in more detail :ref:`here <Models>`
+Read in more detail here.
 
-.. _Watchers_short:
-
-Watchers
---------
+## Watchers
 
 Once you have one or more models registered with SuperDuperDB, the model(s) can be set up to 
 **watch** certain sub-keys (``key``) or full documents in MongoDB collections, and to compute outputs
@@ -85,19 +69,15 @@ and finally unpacks the batch and applies the model's ``postprocess`` method to 
 output from the model. The results are saved in ``"_outputs.<key>.<model_name>"`` of the collection 
 documents.
 
-Read in more detail :ref:`here <Watchers>`.
+Read in more detail here.
 
-.. _Semantic_indexes_short:
-
-Semantic Indexes
-----------------
+## Vector-Indexes
 
 Models and their outputs may be used in concert, to make the content of SuperDuperDB collections
-searchable. A **semantic index** consists of one or more models, which produce PyTorch vector or tensor
-outputs. A semantic index may be leveraged using the ``Collection.find`` or ``Collection.find_one``
-method, for finding matches based on the individual models which are registered with the semantic index.
+searchable. A **vector-index** consists of one or more models, which produce PyTorch vector or tensor
+outputs.
 
-Examples of the use of semantic indexes are:
+Examples of the use of vector-indexes are:
 
 * Search by meaning in NLP
 * Similar image recommendation
@@ -110,31 +90,9 @@ the other understands images. Using this pair, one can search for images using a
 
 SuperDuperDB may be used to train or fine-tune semantic-indexes.
 
-Read in more detail :ref:`here <Semantic indexes>`.
+Read in more detail here.
 
-.. _Imputations_short:
-
-Imputations
------------
-
-An **imputation** is a pair of model, and target function (potentially also a model),
-where one model is used to predict the output of the other model.
-This subsumes many use cases:
-
-* Classification
-* Regression
-* Autoregressive modelling (language modelling, time-series modelling, ...)
-* Generative adversarial learning
-* Image segmentation
-* Bounding box regression
-* ... (there are many possibilities)
-
-Read in more detail :ref:`here <Imputations>`.
-
-.. _Jobs_short:
-
-Jobs
-----
+## Jobs
 
 Whenever SuperDuperDB does any of the following:
 
@@ -146,10 +104,10 @@ Whenever SuperDuperDB does any of the following:
 * Neighbourhood calculations
 
 then SuperDuperDB is required to perform certain longer running computations.
-These computations are wrapped as **jobs** and the **jobs** are carried out asynchronously on
+These computations are wrapped as **jobs** and these are executed asynchronously on
 a pool of parallel workers.
 
 SuperDuperDB may also be used in the foreground, so that calculations block the Python program. 
 This is recommended for development purposes only.
 
-Read in more detail :ref:`here <Jobs>`.
+Read in more detail here.

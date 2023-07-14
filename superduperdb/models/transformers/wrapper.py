@@ -25,7 +25,7 @@ def TransformersTrainerConfiguration(identifier: str, *args, **kwargs):
 class Pipeline(Model):
     @property
     def pipeline(self):
-        return self.object.a
+        return self.object.artifact
 
     @functools.cached_property
     def training_arguments(self):

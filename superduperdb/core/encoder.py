@@ -59,12 +59,15 @@ class Encoder(Component):
         return Encodable(x, self)
 
     def decode(self, b: bytes) -> t.Any:
-        return self(self.decoder.a(b))
+        return self(self.decoder.artifact(b))
 
     def encode(self, x: t.Any) -> t.Dict[str, t.Any]:
         if self.encoder is not None:
             return {
-                '_content': {'bytes': self.encoder.a(x), 'encoder': self.identifier}
+                '_content': {
+                    'bytes': self.encoder.artifact(x),
+                    'encoder': self.identifier,
+                }
             }
         else:
             return x

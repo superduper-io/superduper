@@ -25,26 +25,15 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python - -y
-      - name: Update PATH
-        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: Configure poetry
-        run: poetry config virtualenvs.in-project true  
-      - name: Set up cache
+          cache: 'pip'
+          cache-dependency-path: 'requirements/requirements-dev.txt'
+      - name: Install Python packages
+        run: pip install -r requirements/requirements-dev.txt
+      - name: Cache mypy
         uses: actions/cache@v3
-        id: cache
         with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Ensure cache is healthy
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: |  
-            # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
-            timeout 10s poetry run pip --version || rm -rf .venv 
-      - name: Install dependencies
-        run: poetry install
-      - name: Test
-        run: |
-          poetry run make test
+          path: ./.mypy_cache
+          key: mypy|${{ matrix.python-version }}|${{ hashFiles('pyproject.toml') }}
+      - name: Run tests
+        run: make test
+        

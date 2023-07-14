@@ -7,7 +7,7 @@ Follow these steps:
 1. Create a virtual environment: `python -m venv /path/to/new/virtual/environment`
 2. Activate the virtual environment (see [here](https://docs.python.org/3/library/venv.html#how-venvs-work) for cross-platform details)
 3. Upgrade `pip` and install [`pip-tools`](https://pip-tools.readthedocs.io/en/latest/): `python -m pip install --upgrade pip-tools`
-4. Install the environment: `python -m pip install -r requirements/requirements-dev.txt`
+4. Install the environment: `python -m pip install -r requirements/requirements-dev.in`
 
 ## How do I add/remove a dependency? :link:
 

@@ -150,4 +150,5 @@ jobs
 cluster
 common_issues
 full_usage
+examples/index
 ```

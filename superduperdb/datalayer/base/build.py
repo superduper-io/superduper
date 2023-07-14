@@ -9,6 +9,11 @@ from superduperdb.datalayer.base.database import BaseDatabase
 from superduperdb.cluster.dask.dask_client import dask_client
 
 
+def build_vector_database(cfg):
+    cls = vector_database_stores[cfg.__class__]
+    return cls(cfg)
+
+
 def build_datalayer(cfg=None, **connections) -> BaseDatabase:
     """
     Build datalayer as per ``db = superduper(db)`` from configuration.
@@ -19,10 +24,6 @@ def build_datalayer(cfg=None, **connections) -> BaseDatabase:
         from superduperdb import CFG
     else:
         CFG = cfg
-
-    def build_vector_database(cfg, stores):
-        cls = stores[cfg.__class__]
-        return cls(cfg)
 
     def build_distributed_client(cfg):
         if cfg.distributed:
@@ -43,8 +44,6 @@ def build_datalayer(cfg=None, **connections) -> BaseDatabase:
         artifact_store=build(CFG.data_layers.artifact, artifact_stores),
         databackend=build(CFG.data_layers.data_backend, data_backends),
         metadata=build(CFG.data_layers.metadata, metadata_stores),
-        vector_database=build_vector_database(
-            CFG.vector_search.type, vector_database_stores
-        ),
+        vector_database=build_vector_database(CFG.vector_search.type),
         distributed_client=build_distributed_client(CFG),
     )

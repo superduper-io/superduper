@@ -75,6 +75,8 @@ class Document:
     that resource to a mix of jsonable content or `bytes`
     """
 
+    _DEFAULT_ID_KEY = '_id'
+
     def __init__(self, content: t.Dict):
         self.content = content
 
@@ -106,6 +108,12 @@ class Document:
 
     def encode(self):
         return self._encode(self.content)
+
+    @property
+    def id(
+        self,
+    ):
+        return self.content[self._DEFAULT_ID_KEY]
 
     @classmethod
     def decode(cls, r: t.Dict, encoders: t.Dict):

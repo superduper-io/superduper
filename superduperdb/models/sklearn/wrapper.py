@@ -80,6 +80,7 @@ class Estimator(Model):
         configuration: t.Optional[SklearnTrainingConfiguration] = None,
         validation_sets: t.Optional[t.List[str]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
+        data_prefetch: bool = False,
     ):
         if configuration is not None:
             self.training_configuration = configuration

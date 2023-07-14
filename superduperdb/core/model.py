@@ -72,6 +72,7 @@ class Model(Component):
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     db: dc.InitVar[t.Any] = None
     future: t.Optional[Future] = None
+    device: str = "cpu"
 
     def __post_init__(self, db):
         if not isinstance(self.object, Artifact):
@@ -169,6 +170,7 @@ class Model(Component):
         configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.List[t.Union[str, Dataset]]] = None,
         metrics: t.Optional[t.List[Metric]] = None,
+        data_prefetch: bool = False,
         **kwargs,
     ):
         if isinstance(select, dict):
@@ -200,6 +202,7 @@ class Model(Component):
                 metrics=metrics,
                 configuration=configuration,
                 select=select,
+                data_prefetch=data_prefetch,
                 **kwargs,
             )
 

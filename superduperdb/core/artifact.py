@@ -12,31 +12,31 @@ class ArtifactSavingError(Exception):
 class Artifact:
     def __init__(
         self,
-        _artifact: t.Any = None,
+        artifact: t.Any = None,
         serializer: str = 'dill',
         info: t.Optional[t.Dict] = None,
         file_id: t.Any = None,
     ):
         self.serializer = serializer
-        self._artifact = _artifact
+        self.artifact = artifact
         self.info = info
         self.file_id = file_id
 
     def __repr__(self):
-        return f'<Artifact artifact={str(self._artifact)} serializer={self.serializer}>'
+        return f'<Artifact artifact={str(self.artifact)} serializer={self.serializer}>'
 
     def serialize(self):
         serializer = serializers[self.serializer]
         if self.info is not None:
-            bytes = serializer.encode(self._artifact, self.info)
+            bytes = serializer.encode(self.artifact, self.info)
         else:
-            bytes = serializer.encode(self._artifact)
+            bytes = serializer.encode(self.artifact)
         return bytes
 
     def save(
         self, cache, artifact_store: t.Optional[ArtifactStore] = None, replace=False
     ):
-        object_id = id(self._artifact)
+        object_id = id(self.artifact)
         if object_id not in cache:
             bytes = self.serialize()
             file_id, sha1 = artifact_store.create_artifact(bytes=bytes)
@@ -45,7 +45,7 @@ class Artifact:
             elif not replace and self.file_id is not None:
                 raise ArtifactSavingError(
                     "Something has gone wrong in saving, "
-                    f"Artifact {self._artifact} was already saved."
+                    f"Artifact {self.artifact} was already saved."
                 )
             self.file_id = file_id
             details = {
@@ -56,7 +56,7 @@ class Artifact:
                 'info': self.info,
             }
             cache[object_id] = details
-        return cache[id(self._artifact)]
+        return cache[id(self.artifact)]
 
     @staticmethod
     def load(r, artifact_store: ArtifactStore, cache):
@@ -66,16 +66,17 @@ class Artifact:
             r['file_id'], r['serializer'], info=r['info']
         )
         a = Artifact(
-            _artifact=artifact,
+            artifact=artifact,
             serializer=r['serializer'],
             info=r['info'],
         )
-        cache[r['file_id']] = a._artifact
+        cache[r['file_id']] = a.artifact
         return a
 
     @property
     def a(self):
-        return self._artifact
+        # DEPRECATED
+        return self.artifact
 
 
 class InMemoryArtifacts:

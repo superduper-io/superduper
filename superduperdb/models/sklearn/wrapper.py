@@ -53,7 +53,7 @@ class Estimator(Model):
     def __post_init__(self, db):
         super().__post_init__(db)
         if self.postprocess and not isinstance(self.postprocess, Artifact):
-            self.postprocess = Artifact(_artifact=self.postprocess)
+            self.postprocess = Artifact(artifact=self.postprocess)
 
     @property
     def estimator(self):

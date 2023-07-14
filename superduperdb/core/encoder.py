@@ -40,19 +40,20 @@ class Encoder(Component):
 
     identifier: str
     decoder: t.Union[t.Callable, Artifact] = dc.field(
-        default_factory=lambda: Artifact(_artifact=_pickle_decoder)
+        default_factory=lambda: Artifact(artifact=_pickle_decoder)
     )
     encoder: t.Union[t.Callable, Artifact] = dc.field(
-        default_factory=lambda: Artifact(_artifact=_pickle_encoder)
+        default_factory=lambda: Artifact(artifact=_pickle_encoder)
     )
+
     shape: t.Optional[t.Tuple] = None
     version: t.Optional[int] = None
 
     def __post_init__(self):
         if isinstance(self.decoder, t.Callable):
-            self.decoder = Artifact(_artifact=self.decoder)
+            self.decoder = Artifact(artifact=self.decoder)
         if isinstance(self.encoder, t.Callable):
-            self.encoder = Artifact(_artifact=self.encoder)
+            self.encoder = Artifact(artifact=self.encoder)
 
     def __call__(self, x):
         return Encodable(x, self)

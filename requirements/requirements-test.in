@@ -1,0 +1,6 @@
+-r requirements.in
+httpx>=0.24.1
+impall>=1.2.0
+lorem>=0.1.1
+pytest>=7.3.1
+tenacity>=8.1.0

@@ -15,7 +15,6 @@ test: test-containers
 	black --check superduperdb tests
 	ruff check superduperdb tests
 	mypy superduperdb
-	poetry lock --check
 	pytest $(PYTEST_ARGUMENTS)
 
 .PHONY: fix-and-test
@@ -23,7 +22,6 @@ fix-and-test: test-containers
 	black superduperdb tests
 	ruff check --fix superduperdb tests
 	mypy superduperdb
-	poetry lock --check
 	pytest $(PYTEST_ARGUMENTS)
 
 .PHONY: clean-test

@@ -73,11 +73,6 @@ class Artifact:
         cache[r['file_id']] = a.artifact
         return a
 
-    @property
-    def a(self):
-        # DEPRECATED
-        return self.artifact
-
 
 class InMemoryArtifacts:
     def __init__(self):

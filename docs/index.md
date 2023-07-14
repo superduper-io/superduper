@@ -5,28 +5,32 @@
 ## What is SuperDuperDB?
 
 SuperDuperDB is a Python package providing tools for developers to apply AI and machine learning
-in their database, and set up a scalable, open-source and auditable environment to do this.
+in their already deployed datalayer, and simulatenously to set-up a scalable, open-source and auditable environment to do this.
+
+![](img/overview.png)
 
 ## Mission
 
-SuperDuperDB is an open-source project, whose primary goal is to smoothen the developer journey
-between data and AI models. We aim to:
+At SuperDuperDB, our goal is to massively smoothen and accelerate the developer journey between data and AI models. We aim to:
 
-- Create an easy-to-use, extensible and comprehensive python framework for integrating AI and 
-  ML directly to the datalayer.
+- Create an **easy-to-use**, **extensible** and **comprehensive** Python framework for integrating AI and 
+  ML directly to the datalayer: to databases, object-storage, data-lakes and data-warehouses.
   
-- Empower developers, data scientists and architects to leverage the vast PyData, python AI
-  and open-source ecosystem in their datalayer deployments.
+- Empower developers, data scientists and architects to leverage the vast **PyData**, AI
+  **open-source ecosystem** in their datalayer deployments.
   
-- To enable ways-of-working with AI and data which enable scalability and industrial scale deployment,
-  as well as providing easy-to-use tools for the individual developer.
+- Enable ways-of-working with AI and data which **enable scalability** and industrial scale deployment,
+  as well as providing easy-to-use tools for the **individual developer**.
+
+- Make possible continued use of **already existing or deployed databases**, in combination with AI and ML; 
+  **no migration of data** to a fancy, new fangled vector-database required.
   
-- To follow a fully open-source approach, in particular prioritizing open-source integrations 
+- Follow a **fully open-source approach**, in particular prioritizing open-source integrations 
   in our roadmap going forward
 
-- To enable individuals and organizations to circumvent vendor lock-in strategies now ubiquitous
+- Enable individuals and organizations to **circumvent vendor lock-in strategies** now ubiquitous
   in the AI and ML landscapes, by providing a clear toolset to flexibly deploy AI at the 
-  datalayer without necessitating subscriptions, cloud installations, gated-model-API functionality.
+  datalayer **without necessitating subscriptions**, cloud installations, gated-model-API functionality.
   
 ## Background
 
@@ -35,32 +39,30 @@ AI and data. We have come to believe that AI development with data does not need
 currently is. (Read "{doc}`common_issues`"
 for more context.) By moving to a closer symbiosis of AI and datalayer/ database, we believe
 many pain-points in AI development become non-issues. With SuperDuperDB:
-  
+
 - Model predictions may be [evaluated and inserted back into the database](#model-frameworks-directly-integrated-with-databases), without ever needing 
   to load data from the database to the client-side.
-
 - Training may be [deployed in one line](#model-frameworks-directly-integrated-with-databases), without having to munge, preprocess or fetch data;
   simply point to the data with a data-base query.
-
-- Models may be configured to ["listen" to incoming data](#continuous-model processing-on-incoming data), maintaining a catalogue of up-to-date
+- Models may be configured to [watch for incoming data](#continuous-model-processing-on-incoming-data), maintaining a catalogue of up-to-date
   predictions and features.
-  
 - Working [with difficult data types](#support-for-tricky-datatypes), (images, audio, etc.) requires no additional effort in comparison
   to working with "standard data" (numbers, text, etc.)
-  
 - Outputs of configured AI models may be used to "navigate" the database, including [configuring
   and using vector-search](#use-your-classical-database-as-a-vector-database)
   with just a few lines of Python code.
 
 ## High-Level Features
 
-### Model frameworks directly integrated with databases
+In the initial [v0.1 release]() we have built the following features on top of MongoDB, with a view to greatly expanding our breadth to a range of datalayer implementations, especially implementations which use SQL-dialects  as the query-language. You can follow the high-level roadmap [here]().
 
-SuperDuperDB includes wrappers for treating models from diverse AI frameworks across the open-source Python ecosystem uniformly in combination with databases, using a scikit-learn-like
+### Model frameworks directly integrated with the datalayer
+
+SuperDuperDB includes wrappers for treating models from diverse AI frameworks across the open-source Python ecosystem uniformly in combination with the datalayer, using a scikit-learn-like
 `.fit` and `.predict` API.
 
 ```python
-# [ Code vignettes assume access to a running MongoDB instance read/write ]
+# [ Code snippets assume access to a running MongoDB instance read/write ]
 from sklearn.svm import SVC
 import pymongo
 
@@ -107,8 +109,7 @@ db.execute(
 )
 ```
 
-Data may be reloaded using standard database queries, and conveniently reused in downstream applications, or consumed as direct inputs to AI models.
-The data loaded are instances of the same Python classes as inserted.
+Data may be reloaded using standard database queries, and conveniently reused in downstream applications, or consumed as direct inputs to AI models. The data loaded are instances of the same Python classes as inserted.
 
 ```python
 >>> r = db.execute(coll.find_one())
@@ -138,6 +139,15 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 :maxdepth: 2
 
 getting_started
+concepts
+encoders
+data_references
+models
+prediction_and_training
+watchers
+vector_index
+jobs
+cluster
 common_issues
 full_usage
 ```

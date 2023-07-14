@@ -1,39 +1,48 @@
 name: CI
 
-on:
+on: # rules for when this action will be triggered
   push:
     branches:
       - main
+    paths-ignore: # ignore docs in this action - handled in a separate action
+      - 'docs/**'
+      - '*.md'
+      - '*.rst'
   pull_request:
     branches:
       - main
-  workflow_dispatch: # allows you to trigger manually
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '*.rst'
+  workflow_dispatch: # allows triggering a github action manually - see 'Actions' tab
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-        python-version: ["3.8"]
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        id: setup-python
-        uses: actions/setup-python@v4
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4 # installs CPython
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: 'requirements/requirements-dev.txt'
-      - name: Install Python packages
-        run: pip install -r requirements/requirements-dev.txt
-      - name: Cache mypy
+          python-version: 3.8
+
+      - name: Cache mypy and virtual envrionment
         uses: actions/cache@v3
+        id: cache
         with:
-          path: ./.mypy_cache
-          key: mypy|${{ matrix.python-version }}|${{ hashFiles('pyproject.toml') }}
+          path: |  # these are the items that will be stored in the cache on the GitHub runners
+            ./.mypy_cache  # contains type information previously compute by mypy
+            ${{ env.pythonLocation }}  # https://blog.allenai.org/python-caching-in-github-actions-e9452698e98d
+          # we cache data based on mypy config (pyproject.toml) and pinned project dependencies (requirements-dev.txt)
+          key: 3.8-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements/requirements-dev.txt') }}
+
+      - name: Install pip dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -r requirements/requirements-dev.txt
+
       - name: Run tests
         run: make test
-        
+       

@@ -32,7 +32,6 @@ dependencies = { file = ["requirements/requirements.in"] }
 [project.urls]
 homepage = "https://www.superduperdb.com/"
 documentation = "https://www.superduperdb.com/"  # TO BE UPDATED BEFORE RELEASE
-source = "https://www.superduperdb.com/"  # TO BE UPDATED BEFORE RELEASE
 
 [tool.black]
 skip-string-normalization = true

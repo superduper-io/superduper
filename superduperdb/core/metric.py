@@ -21,7 +21,7 @@ class Metric(Component):
 
     def __post_init__(self):
         if self.object and not isinstance(self.object, Artifact):
-            self.object = Artifact(_artifact=self.object)
+            self.object = Artifact(artifact=self.object)
 
     def __call__(self, x, y):
         return self.object.a(x, y)

@@ -32,7 +32,7 @@ class Dataset(Component):
             if self.sample_size is not None and self.sample_size < len(data):
                 perm = self.random.permutation(len(data)).tolist()
                 data = [data[perm[i]] for i in range(self.sample_size)]
-            self.raw_data = Artifact(_artifact=[r.encode() for r in data])
+            self.raw_data = Artifact(artifact=[r.encode() for r in data])
 
         self.data = [
             Document(Document.decode(r, encoders=db.encoders)) for r in self.raw_data.a

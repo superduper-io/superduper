@@ -75,7 +75,7 @@ class Model(Component):
 
     def __post_init__(self, db):
         if not isinstance(self.object, Artifact):
-            self.object = Artifact(_artifact=self.object)
+            self.object = Artifact(artifact=self.object)
         if isinstance(self.encoder, str):
             self.encoder = db.load('encoder', self.encoder)
 

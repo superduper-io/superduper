@@ -7,7 +7,6 @@ import typing as t
 import typing_extensions as te
 
 from superduperdb.models.torch.utils import device_of
-from superduperdb.core.serializable import Serializable
 
 Info = t.Optional[t.Dict[str, t.Any]]
 
@@ -53,12 +52,16 @@ class DillSerializer(Serializer):
 class TorchSerializer(Serializer):
     @staticmethod
     def encode(object: t.Any, info: Info = None) -> bytes:
-        was_gpu = str(device_of(object)) == 'cuda'
-        object.to('cpu')
-        f = io.BytesIO()
-        torch.save(object, f)
-        if was_gpu:
-            object.to('cuda')
+        if not isinstance(object, dict):
+            was_gpu = str(device_of(object)) == 'cuda'
+            object.to('cpu')
+            f = io.BytesIO()
+            torch.save(object, f)
+            if was_gpu:
+                object.to('cuda')
+        else:
+            f = io.BytesIO()
+            torch.save(object, f)
         return f.getvalue()
 
     @staticmethod
@@ -66,24 +69,8 @@ class TorchSerializer(Serializer):
         return torch.load(io.BytesIO(b))
 
 
-class TorchStateSerializer(Serializer):
-    @staticmethod
-    def encode(object: t.Any, info: Info = None) -> bytes:
-        f = io.BytesIO()
-        torch.save(object.state_dict(), f)
-        return f.getvalue()
-
-    @staticmethod
-    def decode(bytes, info):
-        instance = Serializable.deserialize(info)
-        object = torch.load(io.BytesIO(bytes))
-        instance.load_state_dict(object)
-        return instance
-
-
 serializers: t.Dict[str, t.Type] = {
     'pickle': PickleSerializer,
     'dill': DillSerializer,
     'torch': TorchSerializer,
-    'torch::state': TorchStateSerializer,
 }

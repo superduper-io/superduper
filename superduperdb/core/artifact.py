@@ -13,7 +13,7 @@ class Artifact:
     def __init__(
         self,
         _artifact: t.Optional[t.Any] = None,
-        serializer: str = 'pickle',
+        serializer: str = 'dill',
         info: t.Optional[t.Dict] = None,
         file_id: t.Optional[t.Any] = None,
     ):

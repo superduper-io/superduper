@@ -57,7 +57,7 @@ class Estimator(Model):
 
     @property
     def estimator(self):
-        return self.object.a
+        return self.object.artifact
 
     def __getattr__(self, item):
         if item in ['transform', 'predict_proba', 'score']:
@@ -93,7 +93,7 @@ class Estimator(Model):
             if self.training_configuration is not None:
                 y_preprocess = self.training_configuration.get('y_preprocess', None)
                 if isinstance(y_preprocess, Artifact):
-                    y_preprocess = y_preprocess.a
+                    y_preprocess = y_preprocess.artifact
             # ruff: noqa: E501
             X, y = get_data_from_query(
                 select=select, X=X, y=y, y_preprocess=y_preprocess  # type: ignore[arg-type]

@@ -1,4 +1,7 @@
 from superduperdb.datalayer.mongodb.data_backend import MongoDataBackend
+from superduperdb.datalayer.base.build import build_vector_database
+
+from superduperdb import CFG
 
 
 def duck_type_mongodb(item):
@@ -43,6 +46,7 @@ def superduper(item, **kwargs):
             artifact_store=MongoArtifactStore(
                 conn=item.client, name=f'_filesystem:{item.name}'
             ),
+            vector_database=build_vector_database(CFG.vector_search.type),
         )
     elif duck_type_sklearn(item):
         from sklearn.pipeline import Pipeline as BasePipeline

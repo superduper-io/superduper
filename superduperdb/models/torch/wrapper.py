@@ -1,4 +1,5 @@
 import dataclasses as dc
+from functools import cached_property
 import io
 from contextlib import contextmanager
 from typing import Optional, Callable, Union, Dict, List, Any
@@ -57,6 +58,8 @@ class TorchTrainerConfiguration(_TrainingConfiguration):
     download: bool = False
     validation_interval: int = 100
     watch: str = 'objective'
+    optimizer_cls: Artifact = Artifact(torch.optim.Adam, serializer='pickle')
+    optimizer_kwargs: t.Dict = dc.field(default_factory=dict)
     target_preprocessors: t.Optional[t.Union[Artifact, t.Dict]] = None
     compute_metrics: t.Optional[t.Union[Artifact, t.Callable]] = None
 
@@ -184,10 +187,10 @@ class Base:
         outputs = self.train_forward(*batch)
         objective_value = self.training_configuration.objective.a(*outputs)
         for opt in optimizers:
-            opt.a.zero_grad()
+            opt.zero_grad()
         objective_value.backward()
         for opt in optimizers:
-            opt.a.step()
+            opt.step()
         return objective_value
 
     def compute_validation_objective(self, valid_dataloader):
@@ -201,13 +204,6 @@ class Base:
                     ).item()
                 )
             return sum(objective_values) / len(objective_values)
-
-    def save(self, database: BaseDatabase):
-        database.replace_model(
-            identifier=self.identifier,
-            object=self,
-            upsert=True,
-        )  # TODO replace_object is redundant
 
     def compute_metrics(self, validation_set, database):
         validation_set = database.load('dataset', validation_set)
@@ -227,8 +223,6 @@ class Base:
     ):
         self.train()
         iteration = 0
-        if self.optimizers is None:
-            self.optimizers: t.List[torch.optim.Optimizer] = self.build_optimizers()
         while True:
             for batch in train_dataloader:
                 train_objective = self.take_step(batch, self.optimizers)
@@ -284,6 +278,10 @@ class Base:
                     ] = self.training_configuration.target_preprocessors.get(
                         y, lambda x: x
                     )
+
+        for k in preprocessors:
+            if isinstance(preprocessors[k], Artifact):
+                preprocessors[k] = preprocessors[k].a
         return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
 
     def _get_data(self, db: Optional[BaseDatabase]):
@@ -308,27 +306,37 @@ class Base:
 class TorchModel(Base, Model):
     preprocess: t.Union[Callable, Artifact, None] = None
     postprocess: t.Union[Callable, Artifact, None] = None
-    optimizers: t.Optional[t.List[Artifact]] = None
+    optimizer_state: t.Optional[Artifact] = None
 
     def __post_init__(self, db):
         super().__post_init__(db)
 
         self.object.serializer = 'torch'
 
+        if self.optimizer_state is not None:
+            self.optimizer.load_state_dict(self.optimizer_state.a)
         if self.preprocess and not isinstance(self.preprocess, Artifact):
             self.preprocess = Artifact(_artifact=self.preprocess, serializer='dill')
         if self.postprocess and not isinstance(self.postprocess, Artifact):
             self.postprocess = Artifact(_artifact=self.postprocess, serializer='dill')
 
-    def build_optimizers(self):
-        return [self.build_optimizer()]
-
-    def build_optimizer(self):
-        return Artifact(
-            _artifact=torch.optim.Adam(self.object.a.parameters()),
-            serializer='torch::state',
-            info={'cls': 'Adam', 'module': 'torch.optim', 'dict': {'lr': 0.0001}},
+    @cached_property
+    def optimizer(self):
+        return self.training_configuration.optimizer_cls.a(
+            self.object.a.parameters(), **self.training_configuration.optimizer_kwargs
         )
+
+    @property
+    def optimizers(self):
+        return [self.optimizer]
+
+    def save(self, database: BaseDatabase):
+        self.optimizer_state = Artifact(self.optimizer.state_dict(), serializer='torch')
+        database.replace_model(
+            identifier=self.identifier,
+            object=self,
+            upsert=True,
+        )  # TODO replace_object is redundant
 
     @contextmanager
     def evaluating(self):
@@ -528,14 +536,34 @@ def create_batch(args):
 @dc.dataclass
 class TorchModelEnsemble(Base, ModelEnsemble):
     training_configuration: t.Optional[TorchTrainerConfiguration] = None
-    optimizers: t.Optional[t.List[Artifact]] = None
+    optimizer_states: t.Optional[t.List[Artifact]] = None
 
-    def build_optimizers(self):
-        optimizers = []
-        for m in self.models:
-            if m.optimizers is None:
-                optimizers.extend(m.build_optimizers())
-        return optimizers
+    def __post_init__(self, db):
+        if self.optimizer_states is not None:
+            for i in range(len(self.models)):
+                self.optimizers[i].load_state_dict(self.optimizer_states[i].a)
+        return super().__post_init__(db)
+
+    @cached_property
+    def optimizers(self):
+        return [
+            self.training_configuration.optimizer_cls.a(
+                m.object.a.parameters(),
+                **self.training_configuration.optimizer_kwargs,
+            )
+            for m in self.models
+        ]
+
+    def save(self, database: BaseDatabase):
+        states = []
+        for o in self.optimizers:
+            states.append(Artifact(o.state_dict(), serializer='torch'))
+        self.optimizer_states = states
+        database.replace_model(
+            identifier=self.identifier,
+            object=self,
+            upsert=True,
+        )  # TODO replace_object is redundant
 
     @contextmanager
     def evaluating(self):

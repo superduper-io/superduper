@@ -103,7 +103,7 @@ class FunctionJob(Job):
             from superduperdb.datalayer.base.build import build_datalayer
 
             db = build_datalayer()
-        db.metadata.create_job(self.dict())
+        db.metadata.create_job(self.dict())  # type: ignore[has-type]
         if not distributed:
             self.run_locally(db)
         else:
@@ -162,7 +162,7 @@ class ComponentJob(Job):
             from superduperdb.datalayer.base.build import build_datalayer
 
             db = build_datalayer()
-        db.metadata.create_job(self.dict())
+        db.metadata.create_job(self.dict())  # type: ignore[has-type]
         if self.component is None:
             self.component = db.load(self.variety, self.component_identifier)
         if not distributed:

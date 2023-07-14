@@ -65,15 +65,15 @@ class TorchTrainerConfiguration(_TrainingConfiguration):
 
     def __post_init__(self):
         if self.compute_metrics and not isinstance(self.compute_metrics, Artifact):
-            self.compute_metrics = Artifact(_artifact=self.compute_metrics)
+            self.compute_metrics = Artifact(artifact=self.compute_metrics)
 
         if self.objective and not isinstance(self.objective, Artifact):
-            self.objective = Artifact(_artifact=self.objective)
+            self.objective = Artifact(artifact=self.objective)
 
         if self.target_preprocessors and not isinstance(
             self.target_preprocessors, Artifact
         ):
-            self.target_preprocessors = Artifact(_artifact=self.target_preprocessors)
+            self.target_preprocessors = Artifact(artifact=self.target_preprocessors)
 
 
 @dc.dataclass
@@ -316,9 +316,9 @@ class TorchModel(Base, Model):
         if self.optimizer_state is not None:
             self.optimizer.load_state_dict(self.optimizer_state.a)
         if self.preprocess and not isinstance(self.preprocess, Artifact):
-            self.preprocess = Artifact(_artifact=self.preprocess, serializer='dill')
+            self.preprocess = Artifact(artifact=self.preprocess, serializer='dill')
         if self.postprocess and not isinstance(self.postprocess, Artifact):
-            self.postprocess = Artifact(_artifact=self.postprocess, serializer='dill')
+            self.postprocess = Artifact(artifact=self.postprocess, serializer='dill')
 
     @cached_property
     def optimizer(self):

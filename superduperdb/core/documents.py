@@ -50,12 +50,12 @@ class ArtifactDocument:
                     ArtifactDocument._save_artifacts(v, cache, artifact_store)
                 if isinstance(v, Artifact):
                     v.save(cache=cache, artifact_store=artifact_store, replace=replace)  # type: ignore[arg-type]
-                    d[k] = cache[id(v._artifact)]
+                    d[k] = cache[id(v.artifact)]
         if isinstance(d, list):
             for i, x in enumerate(d):
                 if isinstance(x, Artifact):
                     x.save(cache=cache, artifact_store=artifact_store)  # type: ignore[arg-type]
-                    d[i] = cache[id(x._artifact)]
+                    d[i] = cache[id(x.artifact)]
                 ArtifactDocument._save_artifacts(x, cache, artifact_store)
 
     def save_artifacts(

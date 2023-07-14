@@ -76,9 +76,17 @@ class BaseDatabase:
         databackend: BaseDataBackend,
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
-        vector_database: VectorDatabase,
+        vector_database: t.Optional[VectorDatabase] = None,
         distributed_client=None,
     ):
+        """__init__.
+
+        :param databackend:
+        :param metadata:
+        :param artifact_store:
+        :param vector_database:
+        :param distributed_client:
+        """
         self.metrics = LoadDict(self, 'metric')
         self.models = LoadDict(self, 'model')
         self.encoders = LoadDict(self, 'encoder')

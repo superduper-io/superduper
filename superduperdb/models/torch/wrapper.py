@@ -125,6 +125,7 @@ class Base:
         configuration: Optional[TorchTrainerConfiguration] = None,
         validation_sets: Optional[List[str]] = None,
         metrics: Optional[List[Metric]] = None,
+        data_prefetch: bool = False,
     ):
         if configuration is not None:
             self.training_configuration = configuration

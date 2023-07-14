@@ -34,6 +34,9 @@ class SuperDuperCursor:
                     r['_other'][k] = r['_outputs'][k][features[k]]
         return r
 
+    def count(self):
+        return len(list(self.raw_cursor.clone()))
+
     def limit(self, *args, **kwargs):
         return SuperDuperCursor(
             raw_cursor=self.raw_cursor.limit(*args, **kwargs),

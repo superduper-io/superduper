@@ -20,6 +20,9 @@ class Collection(Serializable):
     def table(self):
         return self.name
 
+    def count_documents(self, *args, **kwargs):
+        return CountDocuments(collection=self, args=list(args), kwargs=kwargs)
+
     def like(
         self,
         r: Document,
@@ -178,6 +181,9 @@ class Find(Select):
     def limit(self, n: int):
         return Limit(parent=self, n=n)  # type
 
+    def count(self, *args, **kwargs):
+        return Count(parent=self, *args, **kwargs)  # type
+
     def like(
         self, r: Document, vector_index: str = '', n: int = 100, max_ids: int = 1000
     ):
@@ -295,6 +301,17 @@ class Find(Select):
 
 
 @dc.dataclass
+class CountDocuments(Find):
+    collection: t.Optional[Collection] = None
+    like_parent: t.Optional[PreLike] = None
+    args: t.Optional[t.List] = dc.field(default_factory=lambda: [])
+    kwargs: t.Optional[t.Dict] = dc.field(default_factory=lambda: {})
+
+    def __call__(self, db):
+        return db.db[self.collection.name].count_documents(*self.args, **self.kwargs)
+
+
+@dc.dataclass
 class FeaturizeOne(SelectOne):
     features: t.Dict[str, str]
     parent_find_one: t.Optional[Find] = None
@@ -340,7 +357,7 @@ class FindOne(SelectOne):
 
 
 @dc.dataclass
-class Aggregate(Select):
+class Aggregate(SelectOne):
     collection: Collection
     args: t.List = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
@@ -596,6 +613,40 @@ class Featurize(Select):
             r = self.parent(db)
             r = SuperDuperCursor.add_features(r.content, self.features)
             return Document(r)
+
+
+@dc.dataclass
+class Count(SelectOne):
+    parent: t.Union[Find, PostLike, PreLike, Featurize]
+    type_id: t.Literal['mongodb.Count'] = 'mongodb.Count'
+    args: t.List = dc.field(default_factory=list)
+    kwargs: t.Dict = dc.field(default_factory=dict)
+
+    def __call__(self, db):
+        return db[self.parent.name].count_documents()
+
+    def add_fold(self, fold: str) -> 'Select':
+        raise NotImplementedError
+
+    def is_trivial(self) -> bool:
+        raise NotImplementedError
+
+    def select_using_ids(
+        self,
+        ids: t.List[str],
+    ) -> t.Any:
+        raise NotImplementedError
+
+    def model_update(self, db, model, key, outputs, ids):
+        raise NotImplementedError
+
+    @property
+    def select_ids(self) -> 'Select':
+        raise NotImplementedError
+
+    @property
+    def select_table(self):
+        raise NotImplementedError
 
 
 @dc.dataclass

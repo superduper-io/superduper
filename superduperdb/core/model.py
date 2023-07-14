@@ -182,7 +182,8 @@ class Model(Component):
                     validation_sets[i] = vs.identifier
 
         if db is not None:
-            db.add(self)
+            pass
+        # db.add(self)
 
         if distributed:
             return self.create_fit_job(

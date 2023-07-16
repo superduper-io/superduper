@@ -70,7 +70,7 @@ class Model(Component):
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
     version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    db: dc.InitVar[t.Optional[t.Any]] = None
+    db: dc.InitVar[t.Any] = None
     future: t.Optional[Future] = None
 
     def __post_init__(self, db):
@@ -147,7 +147,7 @@ class Model(Component):
     def _fit(
         self,
         X: t.Any,
-        y: t.Optional[t.Any] = None,
+        y: t.Any = None,
         db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
@@ -161,7 +161,7 @@ class Model(Component):
     def fit(
         self,
         X: t.Any,
-        y: t.Optional[t.Any] = None,
+        y: t.Any = None,
         db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
         distributed: bool = False,
@@ -334,7 +334,7 @@ class ModelEnsemble(Component):
     def fit(
         self,
         X: t.Any,
-        y: t.Optional[t.Any] = None,
+        y: t.Any = None,
         db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
         distributed: bool = False,

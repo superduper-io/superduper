@@ -22,7 +22,7 @@ class Dataset(Component):
     creation_date: t.Optional[str] = None
     raw_data: t.Optional[t.Union[Artifact, t.Any]] = None
     version: t.Optional[int] = None
-    db: dc.InitVar[t.Optional[t.Any]] = None
+    db: dc.InitVar[t.Any] = None
 
     def __post_init__(self, db):
         if self.creation_date is None:

@@ -10,7 +10,7 @@ def job(f):
     def wrapper(
         *args,
         distributed=False,
-        db: t.Optional[t.Any] = None,
+        db: t.Any = None,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
         **kwargs,
     ):
@@ -59,9 +59,7 @@ class Job:
             'stderr': [],
         }
 
-    def __call__(
-        self, db: t.Optional[t.Any] = None, distributed=False, dependencies=()
-    ):
+    def __call__(self, db: t.Any = None, distributed=False, dependencies=()):
         raise NotImplementedError
 
 
@@ -96,9 +94,7 @@ class FunctionJob(Job):
         )
         return
 
-    def __call__(
-        self, db: t.Optional[t.Any] = None, distributed=False, dependencies=()
-    ):
+    def __call__(self, db: t.Any = None, distributed=False, dependencies=()):
         if db is None:
             from superduperdb.datalayer.base.build import build_datalayer
 
@@ -155,9 +151,7 @@ class ComponentJob(Job):
 
         return
 
-    def __call__(
-        self, db: t.Optional[t.Any] = None, distributed=False, dependencies=()
-    ):
+    def __call__(self, db: t.Any = None, distributed=False, dependencies=()):
         if db is None:
             from superduperdb.datalayer.base.build import build_datalayer
 

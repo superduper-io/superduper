@@ -53,7 +53,7 @@ class VectorIndex(Component):
     indexing_watcher: t.Union[Watcher, str]
     compatible_watchers: t.List[t.Union[Watcher, str]] = dc.field(default_factory=list)
     measure: str = 'cosine'
-    db: dc.InitVar[t.Optional[t.Any]] = None
+    db: dc.InitVar[t.Any] = None
     version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
@@ -113,7 +113,7 @@ class VectorIndex(Component):
     def get_nearest(
         self,
         like: Document,
-        db: t.Optional[t.Any] = None,
+        db: t.Any = None,
         outputs: t.Optional[t.Dict] = None,
         featurize: bool = True,
         ids: t.Optional[t.List[str]] = None,

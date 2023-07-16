@@ -164,12 +164,9 @@ class Find(Select):
 
     @property
     def parent(self):
-        msg = 'Must specify exactly one of "like_parent" and "collection"'
-        assert not (self.like_parent and self.collection), msg
-        assert self.like_parent or self.collection, msg
-        if self.like_parent is not None:
-            return self.like_parent
-        return self.collection
+        if bool(self.like_parent) == bool(self.collection):
+            raise ValueError('Exactly one of "like_parent" or "collection" must be set')
+        return self.collection if self.like_parent is None else self.like_parent
 
     @property
     def table(self):

@@ -169,14 +169,16 @@ class Downloader(BaseDownloader):
         super().__init__(
             uris, n_workers=n_workers, timeout=timeout, headers=headers, raises=raises
         )
+
+        if len(ids) != len(uris):
+            raise ValueError(f'len(ids={ids}) != len(uris={uris})')
+
         self.ids = ids
         self.keys = keys
         self.failed = 0
         self.skip_existing = skip_existing
         self.update_one = update_one
         self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
-
-        assert len(ids) == len(uris)
 
     def _download(self, i):
         uri = self.uris[i]

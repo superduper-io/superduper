@@ -219,7 +219,8 @@ class MongoMetaDataStore(MetaDataStore):
         )
 
     def write_output_to_job(self, identifier, msg, stream):
-        assert stream in {'stdout', 'stderr'}
+        if stream not in ('stdout', 'stderr'):
+            raise ValueError(f'stream is "{stream}", should be stdout or stderr')
         self.job_collection.update_one(
             {'identifier': identifier}, {'$push': {stream: msg}}
         )

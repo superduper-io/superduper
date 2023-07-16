@@ -37,9 +37,12 @@ class OpenAI(Component):
     variety: t.ClassVar[str] = 'model'
 
     def __post_init__(self):
-        msg = "model not in list of OpenAI available models"
-        assert self.identifier in _available_models(), msg
-        assert 'OPENAI_API_KEY' in os.environ, "OPENAI_API_KEY not set"
+        if self.identifier not in (mo := _available_models()):
+            msg = f'model {self.identifier} not in OpenAI available models, {mo}'
+            raise ValueError(msg)
+
+        if 'OPENAI_API_KEY' not in os.environ:
+            raise ValueError('OPENAI_API_KEY not set')
 
 
 @dc.dataclass

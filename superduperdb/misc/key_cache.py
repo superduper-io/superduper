@@ -28,8 +28,8 @@ class KeyCache(t.Generic[Entry], Cache):
             if key is None:
                 key = str(self._count)
                 self._count += 1
-            else:
-                assert key not in self
+            elif key in self:
+                raise ValueError(f'Tried to insert duplicate key {key}')
 
             self._cache[key] = entry, time.time()
             self._inverse[entry] = key

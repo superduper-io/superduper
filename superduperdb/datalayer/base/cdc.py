@@ -106,18 +106,15 @@ class DatabaseWatcher:
         :param kwargs:
         :rtype: BaseDatabaseWatcher
         """
-        assert on is not None, '`DatabaseWatcher` needs a source collection to watch.'
-        db_type = [
-            k
-            for k, v in backends.data_backends.items()
-            if isinstance(db.databackend, v)
-        ][0]
-        if db_type == "mongodb":
-            db_factory = DatabaseWatcherFactory[cdc.MongoDatabaseWatcher](
-                db_type=db_type
-            )
-            return db_factory.create(
-                db=db, on=on, identifier=identifier, *args, **kwargs
-            )
+        it = backends.data_backends.items()
+        if types := [k for k, v in it if isinstance(db.databackend, v)]:
+            db_type = types[0]
         else:
-            raise NotImplementedError('Database not supported yet!')
+            raise ValueError('No backends found')
+
+        if db_type != 'mongodb':
+            raise NotImplementedError(f'Database {db_type} not supported yet!')
+
+        factory_factory = DatabaseWatcherFactory[cdc.MongoDatabaseWatcher]
+        db_factory = factory_factory(db_type=db_type)
+        return db_factory.create(db=db, on=on, identifier=identifier, *args, **kwargs)

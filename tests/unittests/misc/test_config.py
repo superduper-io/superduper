@@ -17,7 +17,7 @@ bad_name
 VALIDATION_ERROR = """
 1 validation error for Notebook
 __root__
-  At most one of password and token may be set (type=assertion_error)
+  At most one of password and token may be set (type=value_error)
 """
 
 

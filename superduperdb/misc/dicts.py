@@ -62,7 +62,8 @@ def split_address(
 
 
 def environ_dict(prefix: str, environ: t.Optional[t.Dict] = None) -> t.Dict:
-    assert prefix.isupper() and prefix.endswith(SEP) and not prefix.startswith(SEP)
+    if not (prefix.isupper() and prefix.endswith(SEP) and not prefix.startswith(SEP)):
+        raise ValueError(f'Bad prefix={prefix}')
 
     d = os.environ if environ is None else environ
     items = ((k, v) for k, v in d.items() if k.isupper() and k.startswith(prefix))

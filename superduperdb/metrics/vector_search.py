@@ -52,7 +52,8 @@ class VectorSearchPerformance:
             )
         if isinstance(model, ModelEnsemble):
             msg = 'Model ensemble should only be used in case of multi-model retrieval'
-            assert len(model.models) > 1, msg
+            if len(model.models) <= 1:
+                raise ValueError(msg)
             models = model.models
         else:
             models = [model for _ in range(2)]
@@ -63,8 +64,10 @@ class VectorSearchPerformance:
             ix_compatible = next(i for i, k in enumerate(keys) if k != self.index_key)
             single_model = False
         else:
-            msg = 'Single model retrieval must be tested using a "splitter"'
-            assert self.splitter is not None, msg
+            if self.splitter is None:
+                msg = 'Single model retrieval must be tested using a "splitter"'
+                raise ValueError(msg)
+
             ix_index = 0
             ix_compatible = 0
             single_model = True

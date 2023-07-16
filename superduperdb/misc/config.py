@@ -115,7 +115,8 @@ class Notebook(JSONable):
 
     @root_validator
     def check_one_or_none(cls, v):
-        assert not all(v.values()), 'At most one of password and token may be set'
+        if v['password'] and v['token']:
+            raise ValueError('At most one of password and token may be set')
         return v
 
 

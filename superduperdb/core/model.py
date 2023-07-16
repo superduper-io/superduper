@@ -317,8 +317,10 @@ class ModelEnsemble(Component):
             submodel = next(m for i, m in enumerate(self._model_ids) if i == submodel)
         else:
             submodel = getattr(self, submodel)
-        assert isinstance(submodel, Model)
-        return submodel
+
+        if isinstance(submodel, Model):
+            return submodel
+        raise ValueError(f'Expected a Model but got {type(submodel)}: {submodel}')
 
     @property
     def training_keys(self):

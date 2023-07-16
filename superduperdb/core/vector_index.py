@@ -120,7 +120,8 @@ class VectorIndex(Component):
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
         models, keys = self.models_keys
-        assert len(models) == len(keys)
+        if len(models) != len(keys):
+            raise ValueError(f'len(models={models}) != len(keys={keys})')
 
         within_ids = ids or ()
 
@@ -197,8 +198,10 @@ class VectorIndex(Component):
         model_ensemble = ModelEnsemble(
             identifier='tmp', models=models  # type: ignore[arg-type]
         )
-        msg = 'Can only evaluate VectorSearch with compatible watchers...'
-        assert len(keys) >= 2, msg
+        if len(keys) < 2:
+            msg = 'Can only evaluate VectorSearch with compatible watchers...'
+            raise ValueError(msg)
+
         return VectorSearchPerformance(
             measure=self.measure,
             index_key=self.indexing_watcher.key,  # type: ignore[union-attr]

@@ -11,7 +11,8 @@ class EncodeTensor:
         self.dtype = dtype
 
     def __call__(self, x):
-        assert self.dtype == x.dtype
+        if x.dtype != self.dtype:
+            raise TypeError(f'dtype was {x.dtype}, expected {self.dtype}')
         return memoryview(x.numpy()).tobytes()
 
 

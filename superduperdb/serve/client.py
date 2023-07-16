@@ -259,8 +259,8 @@ class Client:
         json: t.Optional[t.Dict] = None,
         data: t.Optional[t.Dict] = None,
     ):
-        msg = 'Only PUT or POST methods supported by this function'
-        assert method in ['PUT', 'POST'], msg
+        if method not in ['PUT', 'POST']:
+            raise ServerSideException('Only PUT or POST methods are supported')
         fn = getattr(requests, method.lower())
         response = fn(
             f'{self.uri}/{route}',
@@ -276,7 +276,7 @@ class Client:
         return response
 
 
-class ServerSideException(Exception):
+class ServerSideException(ValueError):
     pass
 
 

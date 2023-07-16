@@ -29,7 +29,7 @@ class Watcher(Component):
     active: bool = True
     version: t.Optional[int] = None
     identifier: t.Optional[str] = None
-    db: dc.InitVar[t.Optional[t.Any]] = None
+    db: dc.InitVar[t.Any] = None
 
     def __post_init__(self, db):
         if isinstance(self.model, str) and db is not None:

@@ -104,7 +104,6 @@ class DBQAWithSourcesChain(Model):
 
     @cached_property
     def chain(self) -> Chain:
-        assert hasattr(self, 'retriever')
         return RetrievalQAWithSourcesChain.from_chain_type(
             llm=t.cast(BaseLanguageModel, self.object.artifact),
             retriever=self.retriever,

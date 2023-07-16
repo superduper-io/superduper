@@ -35,7 +35,9 @@ def superduper(item, **kwargs):
     if duck_type_mongodb(item):
         from pymongo.database import Database
 
-        assert isinstance(item, Database)
+        if not isinstance(item, Database):
+            raise TypeError('Expected Database but got {type(item)}')
+
         from superduperdb.datalayer.base.database import BaseDatabase
         from superduperdb.datalayer.mongodb.metadata import MongoMetaDataStore
         from superduperdb.datalayer.mongodb.artifacts import MongoArtifactStore
@@ -48,11 +50,14 @@ def superduper(item, **kwargs):
             ),
             vector_database=build_vector_database(CFG.vector_search.type),
         )
+
     elif duck_type_sklearn(item):
         from sklearn.pipeline import Pipeline as BasePipeline
         from sklearn.base import BaseEstimator
 
-        assert isinstance(item, BaseEstimator)
+        if not isinstance(item, BaseEstimator):
+            raise TypeError('Expected BaseEstimator but got {type(item)}')
+
         identifier = auto_identify(item)
 
         if isinstance(item, BasePipeline):
@@ -65,10 +70,13 @@ def superduper(item, **kwargs):
         from superduperdb.models.sklearn.wrapper import Estimator
 
         return Estimator(estimator=item, identifier=identifier, **kwargs)
+
     elif duck_type_torch(item):
         from torch import nn, jit
 
-        assert isinstance(item, nn.Module) or isinstance(item, jit.ScriptModule)
+        if not (isinstance(item, nn.Module) or isinstance(item, jit.ScriptModule)):
+            raise TypeError('Expected a Module but got {type(item)}')
+
         from superduperdb.models.torch.wrapper import TorchModel
 
         identifier = auto_identify(item)

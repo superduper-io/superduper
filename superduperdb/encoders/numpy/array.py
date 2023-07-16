@@ -10,7 +10,8 @@ class EncodeArray:
         self.dtype = dtype
 
     def __call__(self, x):
-        assert x.dtype == self.dtype
+        if x.dtype != self.dtype:
+            raise TypeError(f'dtype was {x.dtype}, expected {self.dtype}')
         return memoryview(x).tobytes()
 
 

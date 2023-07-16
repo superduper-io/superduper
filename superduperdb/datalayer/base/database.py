@@ -134,24 +134,23 @@ class BaseDatabase:
         :param identifier: identifying string to component
         :param version: (optional) numerical version - specify for full metadata
         """
+        if identifier is None and version is not None:
+            raise ValueError(f'must specify {identifier} to go with {version}')
+
         if identifier is None:
-            assert version is None, f"must specify {identifier} to go with {version}"
             return self.metadata.show_components(variety=variety)
-        elif identifier is not None and version is None:
+
+        if version is None:
             return self.metadata.show_component_versions(
                 variety=variety, identifier=identifier
             )
-        elif identifier is not None and version is not None:
-            if version == -1:
-                return self._get_object_info(variety=variety, identifier=identifier)
-            else:
-                return self._get_object_info(
-                    variety=variety, identifier=identifier, version=version
-                )
-        else:
-            raise ValueError(
-                f'Incorrect combination of {variety}, {identifier}, {version}'
-            )
+
+        if version == -1:
+            return self._get_object_info(variety=variety, identifier=identifier)
+
+        return self._get_object_info(
+            variety=variety, identifier=identifier, version=version
+        )
 
     def predict(
         self,
@@ -501,8 +500,8 @@ class BaseDatabase:
                         dependencies=dependencies,
                         cache=cache,
                     )
-                else:
-                    assert c.identifier in self.show(c.variety)
+                elif c.identifier not in (show := self.show(c.variety)):
+                    raise ValueError(f'c.identifier={c.identifier} not in show={show}')
 
         d = object.serialize()
         d_doc = ArtifactDocument(d)
@@ -528,7 +527,8 @@ class BaseDatabase:
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:
                 G.add_edge(('watcher', dep), ('watcher', identifier))
-        assert networkx.is_directed_acyclic_graph(G)
+        if not networkx.is_directed_acyclic_graph(G):
+            raise ValueError('G is not a directed, acyclic graph')
         return G
 
     def _delete(self, delete: Delete):

@@ -1,4 +1,4 @@
-from superduperdb.core.artifact import Artifact, InMemoryArtifacts
+from superduperdb.core.artifact import Artifact, InMemoryArtifacts, load_artifact
 from superduperdb.core.encoder import Encodable
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 import bson
@@ -22,7 +22,7 @@ class ArtifactDocument:
     ):
         if isinstance(d, dict):
             if 'file_id' in d and 'serializer' in d:
-                return Artifact.load(d, artifact_store, cache)  # type: ignore[arg-type]
+                return load_artifact(d, artifact_store, cache)  # type: ignore[arg-type]
             else:
                 for k, v in d.items():
                     if isinstance(v, dict) or isinstance(v, list):

@@ -1,60 +1,80 @@
+import uuid
+
+import pytest
 import torch
 
-from superduperdb.core.documents import Document
-from superduperdb.serve.client import Client
 from superduperdb import CFG
-from superduperdb.datalayer.mongodb.query import Collection
-
+from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encoder
+from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.encoders.torch.tensor import tensor
+from superduperdb.serve.client import Client
 
 
-coll = Collection(name='documents')
+@pytest.fixture(scope="module")
+def client(test_server):  # Warning: Magic so that test_server is started, don't remove!
+    return Client(CFG.server.uri)
 
 
-def test_load(random_data):
-    c = Client(CFG.server.uri)
-    e = c.load('encoder', 'torch.float32[32]')
-    print(e)
-    assert isinstance(e, Encoder)
+@pytest.fixture(
+    scope="function"
+)  # scope="function" so that each test gets a new collection
+def test_collection():
+    collection_name = str(uuid.uuid4())
+    return Collection(name=collection_name)
 
 
-def test_select_one(random_data):
-    c = Client(CFG.server.uri)
-    r = random_data.execute(Collection(name='documents').find_one())
-    s = c.execute(coll.find_one())
+def test_load(client):
+    encoder = client.load('encoder', 'torch.float32[32]')
+    assert isinstance(encoder, Encoder)
+
+
+def test_show(client):
+    encoders = client.show('encoder')
+    assert encoders == ['torch.float32[16]', 'torch.float32[32]']
+
+
+def test_select_one(
+    client, database_with_default_encoders_and_model, test_collection, fake_inserts
+):
+    database_with_default_encoders_and_model.execute(
+        test_collection.insert_many([fake_inserts[0]])
+    )
+    r = database_with_default_encoders_and_model.execute(test_collection.find_one())
+    s = client.execute(test_collection.find_one())
     assert r['_id'] == s['_id']
-    print(r)
-    print(s)
 
 
-def test_insert(random_data, an_update):
-    c = Client(CFG.server.uri)
-    n1 = random_data.db.documents.count_documents({})
-    c.execute(coll.insert_many(an_update))
-    n2 = random_data.db.documents.count_documents({})
-    assert n2 == n1 + len(an_update)
+def test_insert(
+    client, database_with_default_encoders_and_model, test_collection, fake_inserts
+):
+    client.execute(test_collection.insert_many([fake_inserts[0]]))
+    r = database_with_default_encoders_and_model.execute(test_collection.find_one())
+    assert all(torch.eq(r['x'].x, fake_inserts[0]['x'].x))
 
 
-def test_show(random_data):
-    c = Client(CFG.server.uri)
-    encoders = c.show('encoder')
-    assert encoders == ['torch.float32[32]']
+def test_remove(client, database_with_default_encoders_and_model):
+    database_with_default_encoders_and_model.add(tensor(torch.float64, shape=(32,)))
+    encoders = client.show('encoder')
+    assert encoders == ['torch.float32[16]', 'torch.float32[32]', 'torch.float64[32]']
+
+    client.remove('encoder', 'torch.float64[32]', force=True)
+    encoders = client.show('encoder')
+    assert encoders == ['torch.float32[16]', 'torch.float32[32]']
 
 
-def test_update(random_data):
-    c = Client(CFG.server.uri)
-    t = c.encoders['torch.float32[32]']
-    update = Document({'$set': {'x': t(torch.randn(32))}})
-    c.execute(coll.update_many({}, update))
-    all_x_0 = [
-        r['x'].x.tolist()[0]
-        for r in random_data.execute(coll.find({}, {'_id': 0, 'x': 1}))
-    ]
-    assert len(set(all_x_0)) == 1
-
-
-def test_remove(random_data):
-    c = Client(CFG.server.uri)
-    c.remove('encoder', 'torch.float32[32]', force=True)
-    encoders = c.show('encoder')
-    assert encoders == []
+def test_update(
+    client, database_with_default_encoders_and_model, test_collection, fake_inserts
+):
+    database_with_default_encoders_and_model.execute(
+        test_collection.insert_many([fake_inserts[0]])
+    )
+    encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
+    updated_values = torch.randn(32)
+    client.execute(
+        test_collection.update_many(
+            {}, Document({'$set': {'x': encoder(updated_values)}})
+        )
+    )
+    r = database_with_default_encoders_and_model.execute(test_collection.find_one())
+    assert all(torch.eq(r['x'].x, updated_values))

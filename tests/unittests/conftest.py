@@ -1,17 +1,18 @@
 import json
-import multiprocessing
 import random
-import time
 from contextlib import contextmanager
-from dataclasses import asdict
+from dataclasses import asdict, dataclass, field
 from typing import Iterator
 from unittest import mock
 
 import lorem
 import numpy
+import pymongo
 import pytest
 import torch
 from pymongo import MongoClient
+from tenacity import RetryError, Retrying, stop_after_delay
+
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
 from superduperdb.core.metric import Metric
@@ -25,28 +26,77 @@ from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.misc.config import DataLayer, DataLayers
 from superduperdb.misc.config import MongoDB as MongoDBConfig
 from superduperdb.models.torch.wrapper import TorchModel
-from superduperdb.serve.server import serve
-
 from tests.material.metrics import PatK
 from tests.material.models import BinaryClassifier
 
-from .conftest_mongodb import MongoDBConfig as TestMongoDBConfig
-
 n_data_points = 250
 
-pytest_plugins = [
-    "tests.conftest_mongodb",
-]
+
+@dataclass(frozen=True)
+class TestMongoDBConfig:
+    host: str = "localhost"
+    port: int = 27018
+    username: str = field(repr=False, default="testmongodbuser")
+    password: str = field(repr=False, default="testmongodbpassword")
+    serverSelectionTimeoutMS: float = 5.0
 
 
-@pytest.fixture(scope="session", autouse=True)
-def start_stop_server():
-    p = multiprocessing.Process(target=serve)  # couldn't get this to work with threads
-    p.start()
-    time.sleep(3)  # need to wait for the process to initialize
-    yield
-    p.terminate()
-    p.join()
+@contextmanager
+def create_mongodb_client(config: TestMongoDBConfig) -> Iterator[pymongo.MongoClient]:
+    client: pymongo.MongoClient
+    with pymongo.MongoClient(
+        host=config.host,
+        port=config.port,
+        username=config.username,
+        password=config.password,
+        serverSelectionTimeoutMS=int(config.serverSelectionTimeoutMS * 1000),
+    ) as client:
+        yield client
+
+
+def wait_for_mongodb(config: TestMongoDBConfig, *, timeout_s: float = 30) -> None:
+    try:
+        for attempt in Retrying(stop=stop_after_delay(timeout_s)):
+            with attempt:
+                with create_mongodb_client(config) as client:
+                    client.is_mongos
+                    return
+            print("Waiting for mongodb to start...")
+    except RetryError:
+        pytest.fail("Could not connect to mongodb")
+
+
+def cleanup_mongodb(config: TestMongoDBConfig) -> None:
+    with create_mongodb_client(config) as client:
+        for database_name in client.list_database_names():
+            if database_name in ("admin", "config", "local"):
+                continue
+            client.drop_database(database_name)
+
+
+@pytest.fixture(scope='package')
+def mongodb_config() -> TestMongoDBConfig:
+    return TestMongoDBConfig()
+
+
+@pytest.fixture(scope='package')
+def _mongodb_server(mongodb_config: TestMongoDBConfig) -> Iterator[TestMongoDBConfig]:
+    wait_for_mongodb(mongodb_config)
+    yield mongodb_config
+
+
+@pytest.fixture
+def mongodb_server(_mongodb_server: TestMongoDBConfig) -> Iterator[TestMongoDBConfig]:
+    # we are cleaning up the database before each test because in case of a test failure
+    # one might want to inspect the state of the database
+    cleanup_mongodb(_mongodb_server)
+    yield _mongodb_server
+
+
+@pytest.fixture
+def mongodb_client(mongodb_server: TestMongoDBConfig) -> Iterator[pymongo.MongoClient]:
+    with create_mongodb_client(mongodb_server) as client:
+        yield client
 
 
 @contextmanager

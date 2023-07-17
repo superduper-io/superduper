@@ -1,62 +1,73 @@
-import os
+import uuid
+from contextlib import contextmanager
 from unittest.mock import patch
 
-import pytest
-
+from superduperdb import CFG
+from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.cluster.dask.dask_client import dask_client
 
 
-@pytest.fixture(scope="module")
-def local_dask_client():
-    from superduperdb import CFG
+@contextmanager
+def add_and_cleanup_watcher(database, collection_name):
+    """Add watcher to the database and remove it after the test"""
+    watcher_x = Watcher(
+        model='model_linear_a',
+        select=Collection(name=collection_name).find(),
+        key='x',
+        db=database,
+    )
 
-    for component in ['DATA_BACKEND', 'ARTIFACT', 'METADATA']:
-        os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_PORT'] = '27018'
-        os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_HOST'] = 'localhost'
-        os.environ[
-            f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_USERNAME'
-        ] = 'testmongodbuser'
-        os.environ[
-            f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_PASSWORD'
-        ] = 'testmongodbpassword'
-
-        os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_NAME'] = (
-            '_filesystem:test_db' if component == "ARTIFACT" else 'test_db'
-        )
-    client = dask_client(CFG.dask, local=True)
-    yield client
-    client.shutdown()
+    database.add(watcher_x)
+    try:
+        yield database
+    finally:
+        database.remove('watcher', 'model_linear_a/x', force=True)
 
 
 def test_taskgraph_futures_with_dask(
-    local_dask_client, a_watcher, random_data, an_update
+    local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
-    from superduperdb import CFG
-
+    collection_name = str(uuid.uuid4())
     with patch.object(CFG, "distributed", True):
-        random_data.distributed = True
-        random_data._distributed_client = local_dask_client
-        _, graph = random_data.execute(
-            Collection(name='documents').insert_many(an_update)
+        database_with_default_encoders_and_model.distributed = True
+        database_with_default_encoders_and_model._distributed_client = local_dask_client
+        _, graph = database_with_default_encoders_and_model.execute(
+            Collection(name=collection_name).insert_many(fake_updates)
         )
 
-    next(random_data.execute(Collection(name='documents').find({'update': True})))
+    next(
+        database_with_default_encoders_and_model.execute(
+            Collection(name=collection_name).find({'update': True})
+        )
+    )
     local_dask_client.wait_all_pending_tasks()
+
     nodes = graph.G.nodes
     jobs = [nodes[node]['job'] for node in nodes]
+
     assert all([job.future.status == 'finished' for job in jobs])
 
 
-def test_insert_with_dask(a_watcher, random_data, local_dask_client, an_update):
-    from superduperdb import CFG
-
+def test_insert_with_dask(
+    local_dask_client, database_with_default_encoders_and_model, fake_updates
+):
+    collection_name = str(uuid.uuid4())
     with patch.object(CFG, "distributed", True):
-        random_data.distributed = True
-        random_data._distributed_client = local_dask_client
-        random_data.execute(Collection(name='documents').insert_many(an_update))
-        local_dask_client.wait_all_pending_tasks()
-        r = next(
-            random_data.execute(Collection(name='documents').find({'update': True}))
-        )
-    assert 'linear_a' in r['_outputs']['x']
+        with add_and_cleanup_watcher(
+            database_with_default_encoders_and_model, collection_name
+        ) as database_with_watcher:
+            database_with_watcher.distributed = True
+            database_with_watcher._distributed_client = local_dask_client
+
+            database_with_watcher.execute(
+                Collection(name=collection_name).insert_many(fake_updates)
+            )
+            local_dask_client.wait_all_pending_tasks()
+
+            r = next(
+                database_with_watcher.execute(
+                    Collection(name=collection_name).find({'update': True})
+                ),
+            )
+
+            assert 'model_linear_a' in r['_outputs']['x']

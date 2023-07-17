@@ -1,18 +1,10 @@
 version: "3.9"
-networks:
-  default:
-    name: sddb
-
-configs:
-  sddb-config:
-    file: config.json
-
 services:
   mongodb:
     image: mongo:6
     container_name: sddb-mongodb
     restart: always
-    command : sh -c "mongod --replSet rs0 --bind_ip_all --port 27018 --dbpath /data/db/ --shardsvr "
+    command : sh -c "mongod --replSet rs0 --port 27018 --bind_ip 0.0.0.0 --dbpath /data/db/ --shardsvr "
     environment:
       MONGO_INITDB_ROOT_USERNAME: testmongodbuser
       MONGO_INITDB_ROOT_PASSWORD: testmongodbpassword

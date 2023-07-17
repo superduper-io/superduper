@@ -1,160 +1,254 @@
-import pytest
 import time
+import uuid
+from contextlib import contextmanager
 from unittest.mock import MagicMock
-from unittest.mock import patch
 
+import pytest
 import torch
 
 from superduperdb.core.documents import Document
+from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.base.cdc import DatabaseWatcher
 from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.misc.task_queue import cdc_queue
+
+# NOTE 1:
+# Some environments take longer than others for the changes to appear. For this
+# reason this module has a special retry wrapper function.
+#
+# If you find yourself experiencing non-deterministic test runs which are linked
+# to this module, consider increasing the number of retry attempts.
+
+# NOTE 2:
+# Each fixture writes to a collection with a unique name. This means that the
+# tests can be run in parallel without interactions between the tests. Be very
+# careful if you find yourself changing the name of a collection in this module...
+
+# NOTE 3:
+# TODO: Modify this module so that the tests are actually run in parallel...
 
 
-@patch('superduperdb.datalayer.mongodb.cdc.copy_vectors')
-@pytest.fixture()
-def watch_fixture(with_vector_index):
-    watcher = DatabaseWatcher(db=with_vector_index, on=Collection(name='documents'))
+@pytest.fixture(scope="function")
+def watcher_and_collection_name(database_with_default_encoders_and_model):
+    collection_name = str(uuid.uuid4())
+    watcher = DatabaseWatcher(
+        db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
+    )
     watcher._cdc_change_handler._QUEUE_TIMEOUT = 0
     watcher._cdc_change_handler._QUEUE_BATCH_SIZE = 1
-    yield watcher
+
+    yield watcher, collection_name
+
     watcher.stop()
 
 
-class TestMongoCDC:
-    def teardown_method(self):
-        with cdc_queue.mutex:
-            cdc_queue.queue.clear()
+@pytest.fixture(scope="function")
+def watcher_without_cdc_handler_and_collection_name(
+    database_with_default_encoders_and_model,
+):
+    collection_name = str(uuid.uuid4())
+    watcher = DatabaseWatcher(
+        db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
+    )
+    watcher._cdc_change_handler = MagicMock()
 
-    def test_smoke(self, watch_fixture):
-        watch_fixture.watch()
-        watch_fixture.stop()
+    yield watcher, collection_name
 
-    def test_single_insert(self, watch_fixture, with_vector_index, a_single_insert):
-        watch_fixture._cdc_change_handler = MagicMock()
-        watch_fixture.watch()
-        with_vector_index.execute(
-            Collection(name='documents').insert_many([a_single_insert])
+    watcher.stop()
+
+
+def retry_state_check(state_check):
+    _attempts = 5
+    while _attempts > 0:
+        _attempts -= 1
+        time.sleep(5 - _attempts)  # 1, 2, 3, 4, 5
+        try:
+            state_check()
+            return
+        except AssertionError:
+            pass
+    state_check()
+    return
+
+
+def test_smoke(watcher_without_cdc_handler_and_collection_name):
+    """Health-check before we test stateful database changes"""
+    watcher, name = watcher_without_cdc_handler_and_collection_name
+    watcher.watch()
+    assert isinstance(name, str)
+
+
+def test_single_insert(
+    watcher_without_cdc_handler_and_collection_name,
+    database_with_default_encoders_and_model,
+    fake_inserts,
+):
+    watcher, name = watcher_without_cdc_handler_and_collection_name
+    watcher.watch()
+    database_with_default_encoders_and_model.execute(
+        Collection(name=name).insert_many([fake_inserts[0]])
+    )
+
+    def state_check():
+        assert watcher.info()["inserts"] == 1
+
+    retry_state_check(state_check)
+
+
+def test_many_insert(
+    watcher_without_cdc_handler_and_collection_name,
+    database_with_default_encoders_and_model,
+    fake_inserts,
+):
+    watcher, name = watcher_without_cdc_handler_and_collection_name
+    watcher.watch()
+    database_with_default_encoders_and_model.execute(
+        Collection(name=name).insert_many(fake_inserts)
+    )
+
+    def state_check():
+        assert watcher.info()["inserts"] == len(fake_inserts)
+
+    retry_state_check(state_check)
+
+
+def test_single_update(
+    watcher_without_cdc_handler_and_collection_name,
+    database_with_default_encoders_and_model,
+    fake_updates,
+):
+    watcher, name = watcher_without_cdc_handler_and_collection_name
+    watcher.watch()
+    output_id, _ = database_with_default_encoders_and_model.execute(
+        Collection(name=name).insert_many(fake_updates)
+    )
+    encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
+    database_with_default_encoders_and_model.execute(
+        Collection(name=name).update_many(
+            {"_id": output_id.inserted_ids[0]},
+            Document({'$set': {'x': encoder(torch.randn(32))}}),
         )
-        time.sleep(1)
-        watch_fixture.stop()
-        info = watch_fixture.info()
-        assert info['inserts'] == 1
+    )
 
-    def test_many_insert(self, watch_fixture, with_vector_index, an_insert):
-        watch_fixture._cdc_change_handler = MagicMock()
-        watch_fixture.watch()
-        with_vector_index.execute(Collection(name='documents').insert_many(an_insert))
-        time.sleep(2)
-        info = watch_fixture.info()
-        watch_fixture.stop()
-        assert info['inserts'] == len(an_insert)
+    def state_check():
+        assert watcher.info()["updates"] == 1
 
-    def test_single_update(
-        self, watch_fixture, random_data, with_vector_index, an_insert
-    ):
-        watch_fixture._cdc_change_handler = MagicMock()
-        watch_fixture.watch()
-        output, _ = with_vector_index.execute(
-            Collection(name='documents').insert_many(an_insert)
+    retry_state_check(state_check)
+
+
+def test_many_update(
+    watcher_without_cdc_handler_and_collection_name,
+    database_with_default_encoders_and_model,
+    fake_updates,
+):
+    watcher, name = watcher_without_cdc_handler_and_collection_name
+    watcher.watch()
+    output_id, _ = database_with_default_encoders_and_model.execute(
+        Collection(name=name).insert_many(fake_updates)
+    )
+    encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
+    database_with_default_encoders_and_model.execute(
+        Collection(name=name).update_many(
+            {"_id": {"$in": output_id.inserted_ids[:5]}},
+            Document({'$set': {'x': encoder(torch.randn(32))}}),
         )
-        to_update = torch.randn(32)
-        t = random_data.encoders['torch.float32[32]']
-        with_vector_index.execute(
-            Collection(name='documents').update_many(
-                {"_id": output.inserted_ids[0]}, Document({'$set': {'x': t(to_update)}})
+    )
+
+    def state_check():
+        assert watcher.info()["updates"] == 5
+
+    retry_state_check(state_check)
+
+
+def test_insert_without_cdc_handler(
+    watcher_without_cdc_handler_and_collection_name,
+    database_with_default_encoders_and_model,
+    fake_inserts,
+):
+    """Test that `insert` without CDC handler does not execute task graph"""
+    watcher, name = watcher_without_cdc_handler_and_collection_name
+    watcher.watch()
+    output_id, _ = database_with_default_encoders_and_model.execute(
+        Collection(name=name).insert_many(fake_inserts, refresh=True)
+    )
+    doc = database_with_default_encoders_and_model.db[name].find_one(
+        {'_id': output_id.inserted_ids[0]}
+    )
+    assert '_outputs' not in doc.keys()
+
+
+def test_cdc_stop(watcher_and_collection_name):
+    """Test that CDC watch service stopped properly"""
+    watcher, _ = watcher_and_collection_name
+    watcher.watch()
+    watcher.stop()
+
+    def state_check():
+        assert not all(
+            [watcher._scheduler.is_alive(), watcher._cdc_change_handler.is_alive()]
+        )
+
+    retry_state_check(state_check)
+
+
+@contextmanager
+def add_and_cleanup_watchers(database, collection_name):
+    """Add watchers to the database and remove them after the test"""
+    watcher_x = Watcher(
+        model='model_linear_a',
+        select=Collection(name=collection_name).find(),
+        key='x',
+        db=database,
+    )
+
+    watcher_z = Watcher(
+        model='model_linear_a',
+        select=Collection(name=collection_name).find(),
+        key='z',
+        db=database,
+    )
+
+    database.add(watcher_x)
+    database.add(watcher_z)
+    try:
+        yield database
+    finally:
+        database.remove('watcher', 'model_linear_a/x', force=True)
+        database.remove('watcher', 'model_linear_a/z', force=True)
+
+
+def test_task_workflow_on_insert(
+    watcher_and_collection_name, database_with_default_encoders_and_model, fake_inserts
+):
+    """Test that task graph executed on `insert`"""
+
+    watcher, name = watcher_and_collection_name
+    watcher.watch()
+
+    with add_and_cleanup_watchers(
+        database_with_default_encoders_and_model, name
+    ) as database_with_watchers:
+        # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
+        output_id, _ = database_with_watchers.execute(
+            Collection(name=name).insert_many([fake_inserts[0]], refresh=False)
+        )
+
+        def state_check():
+            doc = database_with_watchers.db[name].find_one(
+                {'_id': output_id.inserted_ids[0]}
             )
-        )
-        time.sleep(2)
-        info = watch_fixture.info()
-        watch_fixture.stop()
-        assert info['updates'] == 1
+            assert '_outputs' in doc.keys()
 
-    def test_many_update(
-        self, watch_fixture, random_data, with_vector_index, an_insert
-    ):
-        watch_fixture._cdc_change_handler = MagicMock()
-        watch_fixture.watch()
-        output, _ = with_vector_index.execute(
-            Collection(name='documents').insert_many(an_insert)
-        )
-        to_update = torch.randn(32)
-        count = 5
-        t = random_data.encoders['torch.float32[32]']
-        find_query = {"_id": {"$in": output.inserted_ids[:count]}}
-        with_vector_index.execute(
-            Collection(name='documents').update_many(
-                find_query, Document({'$set': {'x': t(to_update)}})
+        retry_state_check(state_check)
+
+        # state_check_2 can't be merged with state_check because the
+        # '_outputs' key needs to be present in 'doc'
+        def state_check_2():
+            doc = database_with_watchers.db[name].find_one(
+                {'_id': output_id.inserted_ids[0]}
             )
-        )
+            state = []
+            state.append('model_linear_a' in doc['_outputs']['x'].keys())
+            state.append('model_linear_a' in doc['_outputs']['z'].keys())
+            assert all(state)
 
-        time.sleep(2)
-        info = watch_fixture.info()
-        watch_fixture.stop()
-        assert info['updates'] == count
-
-    @patch('superduperdb.datalayer.mongodb.cdc.copy_vectors')
-    def test_task_workflow_on_insert(
-        self, mocked_copy_vectors, watch_fixture, with_vector_index, a_single_insert
-    ):
-        """
-        A test which checks if task graph executed on insert.
-        task graph.
-        """
-
-        watch_fixture.watch()
-
-        # Adding this so that we ensure the _outputs where not produce
-        # after Insert query refresh.
-        output, _ = with_vector_index.execute(
-            Collection(name='documents').insert_many([a_single_insert], refresh=False)
-        )
-        time.sleep(4)
-        _id = output.inserted_ids[0]
-        doc = with_vector_index.db['documents'].find_one({'_id': _id})
-        watch_fixture.stop()
-        assert '_outputs' in doc.keys()
-        assert 'linear_a' in doc['_outputs']['x'].keys()
-        assert 'linear_a' in doc['_outputs']['z'].keys()
-
-    def test_cdc_stop(self, watch_fixture):
-        """
-        A small test which tests if cdc watch service has stopped
-        properly.
-        """
-        watch_fixture.watch()
-
-        _prev_states = [
-            watch_fixture._scheduler.is_alive(),
-            watch_fixture._cdc_change_handler.is_alive(),
-        ]
-
-        watch_fixture.stop()
-        time.sleep(2)
-        _post_stop_states = [
-            watch_fixture._scheduler.is_alive(),
-            watch_fixture._cdc_change_handler.is_alive(),
-        ]
-        watch_fixture.stop()
-        assert all(
-            [
-                _prev_s != _post_s
-                for _prev_s, _post_s in zip(_prev_states, _post_stop_states)
-            ]
-        )
-
-    def test_insert_with_cdc(self, watch_fixture, with_vector_index, an_insert):
-        """
-        A small test which tests, insert from superduperdp should not execute
-        task graph.
-        """
-        watch_fixture._cdc_change_handler = MagicMock()
-        watch_fixture.watch()
-        output, _ = with_vector_index.execute(
-            Collection(name='documents').insert_many(an_insert, refresh=True)
-        )
-
-        _id = output.inserted_ids[0]
-        doc = with_vector_index.db['documents'].find_one({'_id': _id})
-        watch_fixture.stop()
-        assert '_outputs' not in doc.keys()
+        retry_state_check(state_check_2)

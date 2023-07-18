@@ -169,6 +169,7 @@ dmypy.json
 
 lightning_logs/
 .cdc.tokens
+.lancedb
 
 # docs
 /docs/source/

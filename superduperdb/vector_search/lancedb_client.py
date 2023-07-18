@@ -72,6 +72,16 @@ class LanceTable:
     table: lancedb.table.LanceTable
     measure: str = "cosine"
 
+    def get(self, identifier: str, limit: int = 1) -> t.List[t.Any]:
+        """
+        Get a vector from the ``LanceTable``.
+
+        :param identifier: Identifier of the vector.
+        """
+        vector_df = self.table.search(f"id = '{identifier}'").limit(limit).to_df()
+        vector = vector_df[VECTOR_FIELD_NAME]
+        return vector
+
     def add(self, data: t.Sequence[VectorCollectionItem], upsert: bool = False) -> None:
         """
         Add vectors to the ``LanceTable``.
@@ -79,7 +89,7 @@ class LanceTable:
         :param data: Sequence of ``VectorCollectionItem`` objects.
         :param upsert: Whether to perform an upsert operation. Defaults to ``False``.
         """
-        dict_data = [d.serialize() for d in data]
+        dict_data = [d.to_dict() for d in data]
         df = pd.DataFrame(dict_data)
         try:
             self.table.add(df)
@@ -99,8 +109,7 @@ class LanceTable:
         :param limit: Maximum number of nearest vectors to return. Defaults to 100.
         :param measure: Distance measure for vector search. Defaults to ``None``.
         """
-        vector_df = self.table.where(f"id = '{identifier}'").limit(1)
-        vector = vector_df[VECTOR_FIELD_NAME]
+        vector = self.get(identifier, limit=limit)
         return self.find_nearest_from_array(vector, limit=limit, measure=measure)
 
     def find_nearest_from_array(

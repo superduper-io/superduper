@@ -10,6 +10,7 @@ import numpy
 import pymongo
 import pytest
 import torch
+
 from pymongo import MongoClient
 from tenacity import RetryError, Retrying, stop_after_delay
 
@@ -26,6 +27,7 @@ from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.misc.config import DataLayer, DataLayers
 from superduperdb.misc.config import MongoDB as MongoDBConfig
 from superduperdb.models.torch.wrapper import TorchModel
+
 from tests.material.metrics import PatK
 from tests.material.models import BinaryClassifier
 
@@ -259,7 +261,6 @@ def vector_index_factory(a_model):
                 select=Collection(name='documents').find(),
                 key='x',
                 model='linear_a',
-                db=a_model,
             )
         )
         db.add(
@@ -267,14 +268,12 @@ def vector_index_factory(a_model):
                 select=Collection(name='documents').find(),
                 key='z',
                 model='linear_a',
-                db=a_model,
             )
         )
         vi = VectorIndex(
             identifier=identifier,
             indexing_watcher='linear_a/x',
-            compatible_watchers=['linear_a/z'],
-            db=a_model,
+            compatible_watcher='linear_a/z',
             **kwargs,
         )
         db.add(vi)
@@ -295,7 +294,6 @@ def si_validation(random_data):
         identifier='my_valid',
         select=Collection(name='documents').find({'_fold': 'valid'}),
         sample_size=100,
-        db=random_data,
     )
     random_data.add(d)
     yield random_data
@@ -362,7 +360,6 @@ def a_model(float_tensors_32, float_tensors_16):
             object=torch.nn.Linear(32, 16),
             identifier='linear_a',
             encoder='torch.float32[16]',
-            db=float_tensors_16,
         )
     )
     yield float_tensors_32
@@ -381,7 +378,6 @@ def a_model_base(float_tensors_32, float_tensors_16):
             object=torch.nn.Linear(32, 16),
             identifier='linear_a_base',
             encoder='torch.float32[16]',
-            db=float_tensors_16,
             preprocess=lambda r: r['x'],
         ),
     )
@@ -402,7 +398,6 @@ def a_watcher(a_model):
             model='linear_a',
             select=Collection(name='documents').find(),
             key='x',
-            db=a_model,
         )
     )
     yield a_model
@@ -416,7 +411,6 @@ def a_watcher_base(a_model_base):
             model='linear_a_base',
             select=Collection(name='documents').find({}, {'_id': 0}),
             key='_base',
-            db=a_model_base,
         )
     )
     yield a_model_base
@@ -447,7 +441,6 @@ def b_model(float_tensors_32, float_tensors_16, float_tensors_8):
             object=torch.nn.Linear(16, 8),
             identifier='linear_b',
             encoder='torch.float32[8]',
-            db=float_tensors_32,
         ),
     )
     yield float_tensors_32
@@ -466,7 +459,6 @@ def c_model(float_tensors_32, float_tensors_16):
             object=torch.nn.Linear(32, 16),
             identifier='linear_c',
             encoder='torch.float32[16]',
-            db=float_tensors_16,
         ),
     )
     yield float_tensors_32

@@ -148,7 +148,6 @@ class ComponentJob(Job):
             key=self.identifier,
             dependencies=dependencies,
         )
-
         return
 
     def __call__(self, db: t.Any = None, distributed=False, dependencies=()):

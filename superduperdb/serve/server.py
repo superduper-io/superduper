@@ -4,15 +4,21 @@ import uuid
 
 from flask import Flask, jsonify, make_response, request
 
+from superduperdb.core.artifact import (
+    get_artifacts,
+    put_artifacts_back,
+    replace_artifacts_with_dict,
+)
 from superduperdb import CFG
-from superduperdb.core.artifact import InMemoryArtifacts
-from superduperdb.core.documents import ArtifactDocument, Document
+from superduperdb.misc.serialization import serializers
+
+from superduperdb.core.documents import Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.build import build_datalayer
 
 
 def make_endpoints(app, db):
-    cache = collections.defaultdict(lambda: InMemoryArtifacts())
+    cache = collections.defaultdict(lambda: {})
 
     @app.route('/select', methods=['GET'])
     def select():
@@ -20,7 +26,7 @@ def make_endpoints(app, db):
         query = Serializable.deserialize(d['query'])
         output = list(db.execute(query))  # TODO - support cursor with flask streaming
         file_id = str(uuid.uuid4())
-        cache[d['request_id']].cache[file_id] = Document.dump_bson(output)
+        cache[d['request_id']][file_id] = Document.dump_bson(output)
         return jsonify({'file_id': file_id})
 
     @app.route('/select_one', methods=['GET'])
@@ -29,13 +35,13 @@ def make_endpoints(app, db):
         query = Serializable.deserialize(d['query'])
         output = db.execute(query)
         file_id = str(uuid.uuid4())
-        cache[d['request_id']].cache[file_id] = Document.dump_bson(output)
+        cache[d['request_id']][file_id] = Document.dump_bson(output)
         return jsonify({'file_id': file_id})
 
     @app.route('/insert', methods=['POST'])
     def insert():
         d = request.get_json()
-        binary = cache[d['request_id']].cache[d['documents']]
+        binary = cache[d['request_id']][d['documents']]
         del cache[d['request_id']]
         documents = Document.load_bsons(binary, encoders=db.encoders)
         query = Serializable.deserialize(d['query'])
@@ -46,7 +52,7 @@ def make_endpoints(app, db):
     @app.route('/update', methods=['POST'])
     def update():
         d = request.get_json()
-        binary = cache[d['request_id']].cache[d['update']]
+        binary = cache[d['request_id']][d['update']]
         del cache[d['request_id']]
         update = Document.load_bson(binary, encoders=db.encoders)
         query = Serializable.deserialize(d['query'])
@@ -64,23 +70,28 @@ def make_endpoints(app, db):
     @app.route('/add', methods=['POST'])
     def add():
         d = request.get_json()
-        ad = ArtifactDocument(d)
-        ad.load_artifacts(artifact_store=cache[d['request_id']], cache={})
-        object = Serializable.deserialize(d)
+        artifact_cache = cache[d['request_id']]
+        for a in artifact_cache:
+            artifact_cache[a] = serializers[d['serializers'][a]].decode(
+                artifact_cache[a]
+            )
+        d = put_artifacts_back(d, artifact_cache)
+        object = Serializable.deserialize(d['component'])
         db.add(object)
+        del cache[d['request_id']]
         return jsonify({'msg': 'ok'})
 
     @app.route('/artifacts/get/<request_id>/<file_id>', methods=['GET'])
     def get(request_id, file_id):
-        bytes = cache[request_id].cache[file_id]
-        del cache[request_id].cache[file_id]
+        bytes = cache[request_id][file_id]
+        del cache[request_id][file_id]
         if not cache[request_id]:
             del cache[request_id]
         return make_response(bytes)
 
     @app.route('/artifacts/put/<request_id>/<file_id>', methods=['PUT'])
     def put(request_id, file_id):
-        cache[request_id].cache[file_id] = request.get_data()
+        cache[request_id][file_id] = request.get_data()
         return jsonify({'msg': 'ok'})
 
     @app.route('/load', methods=['GET'])
@@ -91,10 +102,16 @@ def make_endpoints(app, db):
         if version:
             version = int(version)
         m = db.load(variety=d['variety'], identifier=d['identifier'], version=version)
-        ad = ArtifactDocument(m.serialize())
-        ad.save_artifacts(artifact_store=cache[request_id], cache={})
-        print(ad.content)
-        return jsonify(ad.content)
+        to_send = m.serialize()
+        artifacts = get_artifacts(to_send)
+        lookup = {a: str(uuid.uuid4()) for a in artifacts}
+        s_lookup = {lookup[a]: a.serializer for a in artifacts}
+        to_send = replace_artifacts_with_dict(to_send, lookup)
+        for a in artifacts:
+            cache[request_id][lookup[a]] = serializers[s_lookup[lookup[a]]].encode(
+                a.artifact
+            )
+        return jsonify(to_send)
 
     @app.route('/remove', methods=['POST'])
     def remove():
@@ -102,6 +119,7 @@ def make_endpoints(app, db):
         version = d.get('version')
         if version:
             version = int(version)
+
         db.remove(
             variety=d['variety'],
             identifier=d['identifier'],

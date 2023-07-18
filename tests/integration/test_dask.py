@@ -14,7 +14,6 @@ def add_and_cleanup_watcher(database, collection_name):
         model='model_linear_a',
         select=Collection(name=collection_name).find(),
         key='x',
-        db=database,
     )
 
     database.add(watcher_x)

@@ -16,6 +16,16 @@ class Component(Serializable):
 
     variety: t.ClassVar[str]
 
+    def _on_load(self, db):
+        pass
+
+    def _on_create(self, db):
+        pass
+
+    @property
+    def child_components(self):
+        return []
+
     @property
     def unique_id(self):
         if self.version is None:
@@ -93,7 +103,8 @@ class Component(Serializable):
         db.metadata.update_object(
             variety=self.variety,
             identifier=self.identifier,
-            key='metric_values',
+            version=self.version,
+            key='dict.metric_values',
             value=self.metric_values,
         )
         return self

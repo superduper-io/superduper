@@ -12,7 +12,7 @@ import networkx
 from superduperdb import CFG
 from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.component import Component
-from superduperdb.core.documents import Document, ArtifactDocument
+from superduperdb.core.documents import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
@@ -36,6 +36,13 @@ from superduperdb.vector_search.base import VectorDatabase
 # to the rest of the code.
 # It should be moved to the Server's initialization code where it can be available to
 # all threads.
+from ...core.artifact import (
+    Artifact,
+    get_artifacts,
+    infer_artifacts,
+    put_artifacts_back,
+    replace_artifacts,
+)
 from ...core.job import FunctionJob, ComponentJob, Job
 from ...core.serializable import Serializable
 
@@ -164,6 +171,7 @@ class BaseDatabase:
         self,
         model_identifier: str,
         input: Document,
+        one: bool = False,
     ) -> Union[List[Document], Document]:
         """
         Apply model to input.
@@ -171,13 +179,19 @@ class BaseDatabase:
         :param model_identifier: model or ``str`` referring to an uploaded model
         :param input: input to be passed to the model.
                       Must be possible to encode with registered encoders
+        :param one: if True passed a single document else passed multiple documents
         """
         model = self.models[model_identifier]
         opts = self.metadata.get_component('model', model_identifier)
-        out = model.predict(input.unpack(), **opts.get('predict_kwargs', {}))
-        if model.encoder is not None:
-            out = model.encoder(out)  # type: ignore
-        return Document(out)
+        out = model.predict(input.unpack(), **opts.get('predict_kwargs', {}), one=one)
+        if one:
+            if model.encoder is not None:
+                out = model.encoder(out)  # type: ignore
+            return Document(out)
+        else:
+            if model.encoder is not None:
+                out = [model.encoder(x) for x in out]  # type: ignore
+            return [Document(x) for x in out]
 
     def execute(self, query: ExecuteQuery) -> ExecuteResult:
         """
@@ -300,7 +314,6 @@ class BaseDatabase:
         """
         return self._add(
             object=object,
-            cache={},
             dependencies=dependencies,
         )
 
@@ -366,7 +379,6 @@ class BaseDatabase:
         identifier: str,
         version: Optional[int] = None,
         allow_hidden: bool = False,
-        init_db: bool = True,
         info_only: bool = False,
     ) -> Component:
         """
@@ -387,17 +399,39 @@ class BaseDatabase:
             version=version,
             allow_hidden=allow_hidden,
         )
-        if info_only:
-            return info
+
         if info is None:
             raise Exception(
                 f'No such object of type "{variety}", '
                 f'"{identifier}" has been registered.'
             )
-        info = ArtifactDocument(info).load_artifacts(
-            artifact_store=self.artifact_store, cache={}
-        )
-        m = Component.deserialize(info, db=self if init_db else None)
+
+        if info_only:
+            return info
+
+        def get_children(info):
+            return {
+                k: v
+                for k, v in info['dict'].items()
+                if isinstance(v, dict)
+                and set(v.keys()) == {'variety', 'identifier', 'version'}
+            }
+
+        def replace_children(r):
+            if isinstance(r, dict):
+                children = get_children(r)
+                for k, v in children.items():
+                    r['dict'][k] = replace_children(
+                        self.metadata.get_component(**v, allow_hidden=True)
+                    )
+            return r
+
+        info = replace_children(info)
+        info = put_artifacts_back(info, lookup={}, artifact_store=self.artifact_store)
+
+        m = Component.deserialize(info)
+        m._on_load(self)
+
         if cm := self.variety_to_cache_mapping.get(variety):
             getattr(self, cm)[m.identifier] = m
         return m
@@ -426,15 +460,19 @@ class BaseDatabase:
             return G
 
         for identifier in self.show('watcher'):
-            if isinstance(query, Update):
-                query = query.select
+            info = self.metadata.get_component('watcher', identifier)
+            query = info['dict']['select']
             model, key = identifier.split('/')
             G.add_node(
                 f'{model}.predict({key})',
                 ComponentJob(
                     component_identifier=model,
                     args=[key],
-                    kwargs={'ids': ids, 'select': query.serialize()},
+                    kwargs={
+                        'ids': ids,
+                        'select': query,
+                        **info['dict']['predict_kwargs'],
+                    },
                     method_name='predict',
                     variety='model',
                 ),
@@ -484,48 +522,70 @@ class BaseDatabase:
             model = self.models[model_identifier]
         return model.predict(passed_docs, **(predict_kwargs or {}))
 
+    def _save_artifacts(self, artifact_dictionary: t.Dict):
+        raise NotImplementedError  # TODO use in the server code...
+
     def _add(
         self,
         object: Component,
-        cache: t.Dict,
-        parent: Optional[str] = None,
         dependencies: t.Sequence[Union[Job, str]] = (),
+        serialized: t.Optional[t.Dict] = None,
+        parent: t.Optional[str] = None,
     ):
+        object._on_create(self)
+
         existing_versions = self.show(object.variety, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
             logging.warn(f'{object.unique_id} already exists - doing nothing')
             return
-        version = existing_versions[-1] + 1 if existing_versions else 0
-        object.version = version
 
-        if hasattr(object, 'child_components'):
-            for c in object.child_components:
-                logging.info(f'Checking upstream-component {c.variety}/{c.identifier}')
-                if isinstance(c, Component):
-                    self._add(
-                        c,
-                        parent=object.unique_id,
-                        dependencies=dependencies,
-                        cache=cache,
-                    )
-                elif c.identifier not in (show := self.show(c.variety)):
-                    raise ValueError(f'c.identifier={c.identifier} not in show={show}')
+        if existing_versions:
+            object.version = max(existing_versions) + 1
+        else:
+            object.version = 0
 
-        d = object.serialize()
-        d_doc = ArtifactDocument(d)
-        d_doc.save_artifacts(
-            artifact_store=self.artifact_store,
-            cache=cache,
-        )
-        d_doc.content['variety'] = object.variety
-        d_doc.content['identifier'] = d_doc.content['dict']['identifier']
-        d_doc.content['version'] = d_doc.content['dict']['version']
-        self.metadata.create_component(d_doc.content)
+        if serialized is None:
+            serialized = object.serialize()
+            artifacts = list(set(get_artifacts(serialized)))
+            artifact_info = {}
+            for a in artifacts:
+                artifact_info[hash(a)] = a.save(self.artifact_store)
+            replace_artifacts(serialized, artifact_info)
+
+        else:
+            serialized['version'] = object.version
+            serialized['dict']['version'] = object.version
+
+        self._create_children(object, serialized)
+
+        self.metadata.create_component(serialized)
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)
-
-        logging.info(f'Created {object.unique_id}')
+        object._on_load(self)
         return object.schedule_jobs(self, dependencies=dependencies)
+
+    def _create_children(self, object: Component, serialized: t.Dict):
+        for k, child_variety in object.child_components:
+            child = getattr(object, k)
+            if isinstance(child, str):
+                serialized['dict'][k] = {
+                    'variety': child_variety,
+                    'identifier': child,
+                }
+                serialized['dict'][k]['version'] = self.metadata.get_latest_version(
+                    child_variety, child
+                )
+            else:
+                self._add(
+                    child,
+                    serialized=serialized['dict'][k],
+                    parent=object.unique_id,
+                )
+                serialized['dict'][k] = {
+                    'variety': child.variety,
+                    'identifier': child.identifier,
+                    'version': child.version,
+                }
 
     def _create_plan(self):
         G = networkx.DiGraph()
@@ -750,9 +810,8 @@ class BaseDatabase:
         return outputs
 
     # TODO generalize to components
-    def replace_model(
+    def replace(
         self,
-        identifier: str,
         object: t.Any,
         upsert: bool = False,
     ):
@@ -764,7 +823,7 @@ class BaseDatabase:
         """
         try:
             info = self.metadata.get_component(
-                'model', identifier, version=object.version
+                object.variety, object.identifier, version=object.version
             )
         except FileNotFoundError as e:
             if upsert:
@@ -773,14 +832,35 @@ class BaseDatabase:
                 )
             raise e
 
-        repl = ArtifactDocument(object.serialize())
-        repl.save_artifacts(self.artifact_store, cache={}, replace=True)
-        for k in info:
-            if k not in repl.content:
-                repl.content[k] = info[k]
+        new_info = object.serialize()
+        all_artifacts = list(set(get_artifacts(new_info)))
+        artifact_details = dict()
+        for a in all_artifacts:
+            artifact_details[hash(a)] = a.save(self.artifact_store)
+        old_artifacts = list(set(infer_artifacts(info)))
+        for oa in old_artifacts:
+            self.artifact_store.delete_artifact(oa)
+
+        def replace_artifacts(new_info):
+            if isinstance(new_info, dict):
+                for k, v in new_info.items():
+                    if isinstance(v, Artifact):
+                        new_info[k] = artifact_details[hash(v)]
+                    else:
+                        new_info[k] = replace_artifacts(new_info[k])
+            elif isinstance(new_info, list):
+                for i, x in enumerate(new_info):
+                    if isinstance(x, Artifact):
+                        new_info[i] = artifact_details[hash(x)]
+                    else:
+                        new_info[i] = replace_artifacts(x)
+            return new_info
+
+        new_info = replace_artifacts(new_info)
+
         self.metadata.replace_object(
-            repl.content,
-            identifier=identifier,
+            new_info,
+            identifier=object.identifier,
             variety='model',
             version=object.version,
         )

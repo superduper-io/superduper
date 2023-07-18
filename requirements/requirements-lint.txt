@@ -6,11 +6,11 @@
 #
 black==23.7.0
     # via -r requirements-lint.in
-boto3-stubs==1.28.3.post1
+boto3-stubs==1.28.4
     # via -r requirements-lint.in
-botocore-stubs==1.31.3
+botocore-stubs==1.31.5
     # via boto3-stubs
-click==8.1.5
+click==8.1.6
     # via black
 mypy==1.4.1
     # via -r requirements-lint.in
@@ -22,7 +22,7 @@ packaging==23.1
     # via black
 pathspec==0.11.1
     # via black
-platformdirs==3.8.1
+platformdirs==3.9.1
     # via black
 ruff==0.0.278
     # via -r requirements-lint.in
@@ -30,7 +30,7 @@ tomli==2.0.1
     # via
     #   black
     #   mypy
-types-awscrt==0.16.24
+types-awscrt==0.16.25
     # via
     #   botocore-stubs
     #   types-s3transfer

@@ -75,6 +75,19 @@ def create_mongodb_client_clean_and_close():
     mongo_client.close()
 
 
+@pytest.fixture()
+def fresh_client():
+    mongo_client = MongoClient(**mongodb_test_config)
+    try:
+        for attempt in Retrying(stop=stop_after_delay(15)):
+            with attempt:
+                mongo_client.is_mongos
+                print("Connected to test MongoDB client!")
+    except RetryError:
+        pytest.fail("Could not connect to mongodb,")
+    yield mongo_client
+
+
 @pytest.fixture(scope="package")
 def database_with_default_encoders_and_model(create_mongodb_client_clean_and_close):
     database = build_datalayer(pymongo=create_mongodb_client_clean_and_close)
@@ -85,7 +98,6 @@ def database_with_default_encoders_and_model(create_mongodb_client_clean_and_clo
             object=torch.nn.Linear(32, 16),
             identifier='model_linear_a',
             encoder='torch.float32[16]',
-            db=database,
         )
     )
 
@@ -94,6 +106,18 @@ def database_with_default_encoders_and_model(create_mongodb_client_clean_and_clo
     database.remove('model', 'model_linear_a', force=True)
     database.remove('encoder', 'torch.float32[16]', force=True)
     database.remove('encoder', 'torch.float32[32]', force=True)
+
+
+@pytest.fixture
+def fresh_database(fresh_client):
+    database = build_datalayer(pymongo=fresh_client)
+    yield database
+    for m in database.show('model'):
+        if m != 'model_linear_a':
+            database.remove('model', m, force=True)
+    for e in database.show('encoder'):
+        if e not in {'torch.float32[16]', 'torch.float32[32]'}:
+            database.remove('encoder', e, force=True)
 
 
 def fake_tensor_data(encoder, update=True):

@@ -68,3 +68,5 @@ class SuperDuperCursor:
             r = self.add_features(r, features=self.features)
 
         return self.wrap_document(r, self.encoders)
+
+    next = __next__

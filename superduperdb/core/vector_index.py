@@ -9,7 +9,7 @@ from superduperdb.core.dataset import Dataset
 from superduperdb.core.documents import Document
 from superduperdb.core.encoder import Encodable
 from superduperdb.core.metric import Metric
-from superduperdb.core.model import Model, ModelEnsemble
+from superduperdb.core.model import ModelEnsemble
 from superduperdb.core.watcher import Watcher
 from superduperdb.metrics.vector_search import VectorSearchPerformance
 from superduperdb.misc.logger import logging
@@ -51,16 +51,18 @@ class VectorIndex(Component):
 
     identifier: str
     indexing_watcher: t.Union[Watcher, str]
-    compatible_watchers: t.List[t.Union[Watcher, str]] = dc.field(default_factory=list)
+    compatible_watcher: t.Union[Watcher, str] = dc.field(default_factory=list)
     measure: str = 'cosine'
-    db: dc.InitVar[t.Any] = None
     version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db):
+    def _on_create(self, db):
         if isinstance(self.indexing_watcher, str):
             self.indexing_watcher = db.load('watcher', self.indexing_watcher)
+        if isinstance(self.compatible_watcher, str):
+            self.compatible_watcher = db.load('watcher', self.compatible_watcher)
 
+    def _on_load(self, db):
         self.vector_table = db.vector_database.get_table(
             VectorCollectionConfig(
                 id=self.identifier,
@@ -69,11 +71,15 @@ class VectorIndex(Component):
             )
         )
 
-        for i, w in enumerate(self.compatible_watchers):
-            if isinstance(w, str):
-                self.compatible_watchers[i] = db.load('watcher', w)
         if not s.CFG.cdc:
             self._initialize_vector_database(db)
+
+    @property
+    def child_components(self) -> t.List[t.Tuple[str, str]]:
+        out = [('indexing_watcher', 'watcher')]
+        if self.compatible_watcher is not None:
+            out.append(('compatible_watcher', 'watcher'))
+        return out
 
     def _initialize_vector_database(self, db):
         logging.info(f'loading hashes: {self.identifier!r}')
@@ -97,8 +103,10 @@ class VectorIndex(Component):
     def _dimensions(self) -> int:
         if not isinstance(self.indexing_watcher, Watcher):
             raise NotImplementedError
-        if not isinstance(self.indexing_watcher.model, Model):
-            raise NotImplementedError
+        if not hasattr(self.indexing_watcher.model.encoder, 'shape'):
+            raise NotImplementedError(
+                'Couldn\'t find shape of model outputs, based on model encoder.'
+            )
         model_encoder = self.indexing_watcher.model.encoder
         try:
             dimensions = int(model_encoder.shape[-1])  # type: ignore
@@ -161,7 +169,7 @@ class VectorIndex(Component):
         model_input = document[key] if key != '_base' else document
 
         model = db.models[model]
-        h = model.predict(model_input)  # type: ignore[attr-defined]
+        h = model.predict(model_input, one=True)  # type: ignore[attr-defined]
         nearest = self.vector_table.find_nearest_from_array(
             h, within_ids=within_ids, limit=n
         )
@@ -172,7 +180,10 @@ class VectorIndex(Component):
 
     @property
     def models_keys(self) -> t.Tuple[t.List[str], t.List[str]]:
-        watchers = [self.indexing_watcher, *self.compatible_watchers]
+        if self.compatible_watcher:
+            watchers = [self.indexing_watcher, self.compatible_watcher]
+        else:
+            watchers = [self.indexing_watcher]
         models = [w.model.identifier for w in watchers]
         keys = [w.key for w in watchers]
         return models, keys
@@ -205,7 +216,7 @@ class VectorIndex(Component):
         return VectorSearchPerformance(
             measure=self.measure,
             index_key=self.indexing_watcher.key,  # type: ignore[union-attr]
-            compatible_keys=[w.key for w in self.compatible_watchers],  # type: ignore[union-attr]
+            compatible_keys=[self.compatible_watcher.key],  # type: ignore[union-attr]
         )(
             validation_data=unpacked,
             model=model_ensemble,

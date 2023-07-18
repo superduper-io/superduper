@@ -23,20 +23,28 @@ class Watcher(Component):
 
     key: str
     model: t.Union[str, Model]
-    select: t.Union[Select] = None
+    select: t.Optional[Select] = None
     features: t.Optional[t.Dict] = None
     max_chunk_size: int = 5000
     active: bool = True
     version: t.Optional[int] = None
     identifier: t.Optional[str] = None
-    db: dc.InitVar[t.Any] = None
+    predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db):
-        if isinstance(self.model, str) and db is not None:
+    @property
+    def child_components(self):
+        return [('model', 'model')]
+
+    def _on_create(self, db):
+        if isinstance(self.model, str):
             self.model = db.load('model', self.model)
 
-        if self.identifier is None:
-            self.identifier = f'{self.model.identifier}/{self.key}'
+    def __post_init__(self):
+        if self.identifier is None and self.model is not None:
+            if isinstance(self.model, str):
+                self.identifier = f'{self.model}/{self.key}'
+            else:
+                self.identifier = f'{self.model.identifier}/{self.key}'
 
     def cleanup(self, database) -> None:
         self.select.model_cleanup(database, model=self.model.identifier, key=self.key)
@@ -46,6 +54,7 @@ class Watcher(Component):
     ):
         if not self.active:
             return
+
         return self.model.predict(
             X=self.key,
             db=database,
@@ -53,4 +62,5 @@ class Watcher(Component):
             distributed=distributed,
             max_chunk_size=self.max_chunk_size,
             dependencies=dependencies,
+            **self.predict_kwargs,
         )

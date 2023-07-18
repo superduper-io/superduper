@@ -7,6 +7,102 @@ from superduperdb.misc.serialization import serializers
 ArtifactCache = t.Dict[int, t.Any]
 
 
+def put_artifacts_back(d, lookup, artifact_store: t.Optional[ArtifactStore] = None):
+    if isinstance(d, dict):
+        for k, v in d.items():
+            if isinstance(v, dict) and 'file_id' in set(v.keys()):
+                if v['file_id'] in lookup:
+                    d[k] = lookup[v['file_id']]
+                else:
+                    d[k] = Artifact(
+                        artifact_store.load_artifact(
+                            file_id=v['file_id'],
+                            serializer=v['serializer'],
+                        ),
+                        serializer=v['serializer'],
+                        info=v.get('info'),
+                    )
+                    lookup[v['file_id']] = d[k]
+            else:
+                d[k] = put_artifacts_back(
+                    v, lookup=lookup, artifact_store=artifact_store
+                )
+    elif isinstance(d, list):
+        for i, x in enumerate(d):
+            d[i] = put_artifacts_back(x, lookup=lookup, artifact_store=artifact_store)
+    return d
+
+
+def get_artifacts(r):
+    out = []
+    if isinstance(r, Artifact):
+        out.extend([r])
+    elif isinstance(r, dict):
+        out.extend(sum([get_artifacts(v) for v in r.values()], []))
+    elif isinstance(r, list):
+        out.extend(sum([get_artifacts(x) for x in r], []))
+    return out
+
+
+def infer_artifacts(r):
+    if isinstance(r, dict):
+        out = []
+        for k, v in r.items():
+            if isinstance(v, dict) and 'file_id' in v:
+                out.append(v['file_id'])
+            else:
+                out.extend(infer_artifacts(v))
+    if isinstance(r, list):
+        return sum([infer_artifacts(x) for x in r], [])
+    return []
+
+
+def replace_artifacts_with_dict(d, info):
+    if isinstance(d, dict):
+        items = d.items() if isinstance(d, dict) else enumerate(d)
+        for k, v in items:
+            if isinstance(v, Artifact):
+                d[k] = {
+                    'file_id': info[v],
+                    'sha1': v.sha1,
+                    'serializer': v.serializer,
+                }
+            elif isinstance(v, dict) or isinstance(v, list):
+                d[k] = replace_artifacts_with_dict(v, info)
+    return d
+
+
+def replace_artifacts(d, info):
+    if isinstance(d, dict):
+        for k, v in d.items():
+            if isinstance(v, Artifact):
+                d[k] = info[hash(v)]
+            elif isinstance(v, dict):
+                replace_artifacts(v, info)
+            elif isinstance(v, list):
+                replace_artifacts(v, info)
+    if isinstance(d, list):
+        for x in d:
+            replace_artifacts(x, info)
+
+
+def load_artifacts(d, getter, cache):
+    if isinstance(d, dict) or isinstance(d, list):
+        items = d.items() if isinstance(d, dict) else enumerate(d)
+        for k, v in items:
+            if isinstance(v, dict) and 'file_id' in v:
+                if v['file_id'] not in cache:
+                    bytes = getter(v['file_id'])
+                    cache[v['file_id']] = Artifact(
+                        artifact=serializers[v['serializer']].decode(bytes),
+                        serializer=v['serializer'],
+                    )
+                d[k] = cache[v['file_id']]
+            elif isinstance(v, dict) or isinstance(v, list):
+                d[k] = load_artifacts(v, getter, cache)
+    return d
+
+
 class Artifact:
     """
     An artifact from a computation that can be serialized or deserialized
@@ -28,7 +124,7 @@ class Artifact:
     save_method: t.Optional[str] = None
 
     #: The name of the serializer
-    serializer: str = 'pickle'
+    serializer: str = 'dill'
 
     #: The sha1 hash of the artifact
     sha1: str = ''
@@ -39,7 +135,7 @@ class Artifact:
         file_id: t.Any = None,
         info: t.Optional[t.Dict] = None,
         object_id: int = 0,
-        serializer: str = 'pickle',
+        serializer: str = 'dill',
         sha1: str = '',
     ):
         self.artifact = artifact
@@ -48,6 +144,20 @@ class Artifact:
         self.object_id = object_id
         self.serializer = serializer
         self.sha1 = sha1
+
+    def __hash__(self):
+        try:
+            return hash(self.artifact)
+        except TypeError as e:
+            if isinstance(self.artifact, list):
+                return hash(str(self.artifact[:100]))
+            elif isinstance(self.artifact, dict):
+                return hash(str(self.artifact))
+            else:
+                raise e
+
+    def __eq__(self, other):
+        return self.artifact == other.artifact
 
     def __repr__(self):
         return f'<Artifact artifact={str(self.artifact)} serializer={self.serializer}>'
@@ -62,84 +172,26 @@ class Artifact:
 
     def save(
         self,
-        cache: ArtifactCache,
-        artifact_store: t.Optional[ArtifactStore] = None,
-        replace=False,
-    ) -> t.Dict[str, t.Any]:
-        """Fill in this Artifact and save it in an ArtifactStore.
+        artifact_store: ArtifactStore,
+    ):
+        bytes = self.serialize()
+        file_id, sha1 = artifact_store.create_artifact(bytes=bytes)
+        return {'file_id': file_id, 'sha1': sha1, 'serializer': self.serializer}
 
-        :param artifact_store
-            The store that will hold this Artifact
-
-        :param cache
-            An artifact cache
-
-        :param replace
-            If False, trying to replace an artifact in the store raises an Exception
-        """
-        self.object_id = id(self.artifact)
-        try:
-            return cache[self.object_id]
-        except KeyError:
-            pass
-
-        file_id, sha1 = artifact_store.create_artifact(bytes=self.serialize())
-        if self.file_id is not None:
-            if replace:
-                artifact_store.delete_artifact(self.file_id)
-            else:
-                raise ArtifactSavingError(f"Artifact {self.artifact} already saved.")
-
-        self.file_id = file_id
-        cache[self.object_id] = cache_contents = self.cache_contents()
-        return cache_contents
-
-    def cache_contents(self) -> t.Dict[str, t.Any]:
-        # TODO: trying to stash the actual artifact in this cache, which is the
-        # only thing that would make it useful, results in obscure test
-        # breakages elsewhere in the code.
-        #
-        # It is likely that other parts of the code are using this cache in an
-        # undisciplined fashion.  We should formalize this cache.
-        return {
-            # 'artifact': self.artifact,  :-(
-            'file_id': self.file_id,
-            'info': self.info,
-            'object_id': self.object_id,
-            'serializer': self.serializer,
-            'sha1': self.sha1,
-        }
-
-
-def load_artifact(
-    r: t.Dict[str, t.Any],
-    artifact_store: ArtifactStore,
-    cache: ArtifactCache,
-) -> Artifact:
-    """Load this artifact from an ArtifactStore.
-
-    :param artifact_store
-        The store that will hold this Artifact
-
-    :param cache
-        An artifact cache
-    """
-    r = dict(r)
-    object_id = r.pop('object_id', None)
-    try:
-        # TODO: this won't be any use without 'artifact' being set
-        return Artifact(**cache[object_id])
-    except KeyError:
-        pass
-
-    # TODO: if `file_id` is not popped but passed to the constructor of Artifact,
-    # it causes seemingly unrelated test failures elsewhere.  Why?
-    file_id = r.pop('file_id')
-    artifact = artifact_store.load_artifact(file_id, r['serializer'], info=r['info'])
-
-    a = Artifact(artifact=artifact, object_id=id(artifact), **r)
-    cache[object_id] = a.cache_contents()
-    return a
+    @staticmethod
+    def load(r, artifact_store: ArtifactStore, cache):
+        if r['file_id'] in cache:
+            return cache[r['file_id']]
+        artifact = artifact_store.load_artifact(
+            r['file_id'], r['serializer'], info=r['info']
+        )
+        a = Artifact(
+            artifact=artifact,
+            serializer=r['serializer'],
+            info=r['info'],
+        )
+        cache[r['file_id']] = a.artifact
+        return a
 
 
 class InMemoryArtifacts:

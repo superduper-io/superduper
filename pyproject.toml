@@ -48,3 +48,6 @@ disable_error_code = [
     "misc",
     "assignment"
     ]
+
+[tool.pytest.ini_options]
+addopts = "-W ignore"

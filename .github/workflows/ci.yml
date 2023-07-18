@@ -1,10 +1,10 @@
-name: CI
+name: ci
 
-on: # rules for when this action will be triggered
+on:  # rules for when this action will be triggered
   push:
     branches:
       - main
-    paths-ignore: # ignore docs in this action - handled in a separate action
+    paths-ignore:  # ignore docs in this action - handled in a separate action
       - 'docs/**'
       - '*.md'
       - '*.rst'
@@ -15,34 +15,94 @@ on: # rules for when this action will be triggered
       - 'docs/**'
       - '*.md'
       - '*.rst'
-  workflow_dispatch: # allows triggering a github action manually - see 'Actions' tab
+  workflow_dispatch:  # allows triggering a github action manually - see 'Actions' tab
 
+# When this workflow is queued, automatically cancel any previous running
+# or pending jobs from the same branch
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+# https://blog.netnerds.net/2022/11/docker-macos-github-actions/
 jobs:
-  test:
+  lint-and-type-check:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
     steps:
+      
       - name: Check out repository
         uses: actions/checkout@v3
-
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v4 # installs CPython
+      
+      - name: Set up Python 3.10
+        id: setup-python
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.8
-
-      - name: Cache mypy and virtual envrionment
+          python-version: '3.10'
+      
+      - name: Cache dependencies and mypy analysis
         uses: actions/cache@v3
         id: cache
         with:
-          path: |  # these are the items that will be stored in the cache on the GitHub runners
-            ./.mypy_cache  # contains type information previously compute by mypy
-            ${{ env.pythonLocation }}  # https://blog.allenai.org/python-caching-in-github-actions-e9452698e98d
-          # we cache data based on mypy config (pyproject.toml) and pinned project dependencies (requirements-dev.txt)
-          key: 3.8-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements/requirements-dev.txt') }}
-
-      - name: Install pip dependencies
+          # https://blog.allenai.org/python-caching-in-github-actions-e9452698e98d
+          path: |
+            ./.mypy_cache  
+            ${{ env.pythonLocation }}  
+          key: 3.8-ubuntu-latest-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements/requirements-lint.txt') }}
+      
+      - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements/requirements-dev.txt
+        run: pip install -r requirements/requirements-lint.txt
+      
+      - name: Basic health check 
+        run: |
+          black --version
+          ruff --version
+          mypy --version
+      
+      - name: Lint and type-check
+        run: |
+          make lint-and-type-check
+        
+  test:
+    needs: lint-and-type-check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # "macos-latest" removed for now as Docker action is slow
+        os: [ "ubuntu-latest" ]  # TODO: add "windows-latest"
+        python-version: ["3.8", "3.9", "3.10"]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+            ${{ env.pythonLocation }}
+          key: ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements/requirements-test.txt') }}
+      
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -r requirements/requirements-test.txt
 
-      - name: Run tests
-        run: make test
-       
+        # TODO: vendor only the parts that we need from the following action
+      - name: Docker
+        if: ${{ matrix.os == 'macos-latest' }}
+        uses: douglascamata/setup-docker-macos-action@5f13b5b88a09467c10f8462810902b60ff70fb75
+
+      - name: test
+        run: |
+          make test

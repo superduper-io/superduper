@@ -1,3 +1,4 @@
+import inspect
 from dask.distributed import Future
 import dataclasses as dc
 import typing as t
@@ -39,6 +40,7 @@ class _TrainingConfiguration(Component):
 
     identifier: str
     kwargs: t.Optional[t.Dict] = None
+    version: t.Optional[int] = None
 
     def get(self, k, default=None):
         try:
@@ -47,8 +49,107 @@ class _TrainingConfiguration(Component):
             return self.kwargs.get(k, default=default)
 
 
+class PredictMixin:
+    # ruff: noqa: F821
+    def predict(
+        self,
+        X: t.Any,
+        db: 'BaseDatabase' = None,  # type: ignore[name-defined]
+        select: t.Optional[Select] = None,
+        distributed: bool = False,
+        ids: t.Optional[t.List[str]] = None,
+        max_chunk_size: t.Optional[int] = None,
+        dependencies: t.List[Job] = (),  # type: ignore[assignment]
+        watch: bool = False,
+        one: bool = False,
+        **kwargs,
+    ):
+        if isinstance(select, dict):
+            select = Serializable.deserialize(select)
+
+        if watch:
+            from superduperdb.core.watcher import Watcher
+
+            return db.add(
+                Watcher(
+                    model=self,  # type: ignore[arg-type]
+                    select=select,  # type: ignore[arg-type]
+                    key=X,
+                ),
+                dependencies=dependencies,
+            )
+
+        if db is not None:
+            db.add(self)
+
+        if distributed:
+            assert not one
+            return self.create_predict_job(
+                X, select=select, ids=ids, max_chunk_size=max_chunk_size, **kwargs
+            )(db=db, distributed=distributed, dependencies=dependencies)
+        else:
+            if select is not None and ids is None:
+                assert not one
+                ids = [
+                    str(r[db.databackend.id_field])
+                    for r in db.execute(select.select_ids)
+                ]
+                return self.predict(
+                    X=X,
+                    db=db,
+                    ids=ids,
+                    distributed=False,
+                    select=select,
+                    max_chunk_size=max_chunk_size,
+                    one=False,
+                    **kwargs,
+                )
+
+            elif select is not None and ids is not None and max_chunk_size is None:
+                assert not one
+                docs = list(db.execute(select.select_using_ids(ids)))
+                if X != '_base':
+                    X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
+                else:
+                    X_data = [r.unpack() for r in docs]
+
+                outputs = self.predict(X=X_data, one=False, distributed=False)
+                if self.encoder is not None:
+                    # ruff: noqa: E501
+                    outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
+
+                select.model_update(
+                    db=db,
+                    model=self.identifier,
+                    outputs=outputs,
+                    key=X,
+                    ids=ids,
+                )
+                return
+
+            elif select is not None and ids is not None and max_chunk_size is not None:
+                assert not one
+                for i in range(0, len(ids), max_chunk_size):
+                    self.predict(
+                        X=X,
+                        db=db,
+                        ids=ids[i : i + max_chunk_size],
+                        select=select,
+                        max_chunk_size=None,
+                        one=False,
+                        **kwargs,
+                    )
+                return
+
+            else:
+                if 'one' in inspect.signature(self._predict).parameters:
+                    return self._predict(X, one=one, **kwargs)
+                else:
+                    return self._predict(X, **kwargs)
+
+
 @dc.dataclass
-class Model(Component):
+class Model(Component, PredictMixin):
     """
     Model component which wraps a model to become serializable
 
@@ -70,19 +171,21 @@ class Model(Component):
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
     version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    db: dc.InitVar[t.Any] = None
     future: t.Optional[Future] = None
     device: str = "cpu"
 
-    def __post_init__(self, db):
+    def __post_init__(self):
         if not isinstance(self.object, Artifact):
             self.object = Artifact(artifact=self.object)
-        if isinstance(self.encoder, str):
-            self.encoder = db.load('encoder', self.encoder)
 
     @property
-    def child_components(self) -> t.List['Component']:
-        return [self.encoder] if self.encoder else []  # type: ignore[list-item]
+    def child_components(self) -> t.List[t.Tuple[str, str]]:
+        out = []
+        if self.encoder is not None:
+            out.append(('encoder', 'encoder'))
+        if self.training_configuration is not None:
+            out.append(('training_configuration', 'training_configuration'))
+        return out
 
     @property
     def training_keys(self):
@@ -205,93 +308,6 @@ class Model(Component):
                 data_prefetch=data_prefetch,
                 **kwargs,
             )
-
-    # ruff: noqa: F821
-    def predict(
-        self,
-        X: t.Any,
-        db: 'BaseDatabase' = None,  # type: ignore[name-defined]
-        select: t.Optional[Select] = None,
-        distributed: bool = False,
-        ids: t.Optional[t.List[str]] = None,
-        max_chunk_size: t.Optional[int] = None,
-        dependencies: t.List[Job] = (),  # type: ignore[assignment]
-        watch: bool = False,
-        **kwargs,
-    ):
-        if isinstance(select, dict):
-            select = Serializable.deserialize(select)
-
-        if watch:
-            from superduperdb.core.watcher import Watcher
-
-            return db.add(
-                Watcher(
-                    model=self,
-                    select=select,  # type: ignore[arg-type]
-                    key=X,
-                ),
-                dependencies=dependencies,
-            )
-
-        if db is not None:
-            db.add(self)
-
-        if distributed:
-            return self.create_predict_job(
-                X, select=select, ids=ids, max_chunk_size=max_chunk_size, **kwargs
-            )(db=db, distributed=distributed, dependencies=dependencies)
-        else:
-            if select is not None and ids is None:
-                ids = [
-                    str(r[db.databackend.id_field])
-                    for r in db.execute(select.select_ids)
-                ]
-                return self.predict(
-                    X=X,
-                    db=db,
-                    ids=ids,
-                    distributed=False,
-                    select=select,
-                    max_chunk_size=max_chunk_size,
-                    **kwargs,
-                )
-
-            elif select is not None and ids is not None and max_chunk_size is None:
-                docs = list(db.execute(select.select_using_ids(ids)))
-                if X != '_base':
-                    X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
-                else:
-                    X_data = [r.unpack() for r in docs]
-
-                outputs = self.predict(X=X_data, distributed=False)
-                if self.encoder is not None:
-                    # ruff: noqa: E501
-                    outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
-
-                select.model_update(
-                    db=db,
-                    model=self.identifier,
-                    outputs=outputs,
-                    key=X,
-                    ids=ids,
-                )
-                return
-
-            elif select is not None and ids is not None and max_chunk_size is not None:
-                for i in range(0, len(ids), max_chunk_size):
-                    self.predict(
-                        X=X,
-                        db=db,
-                        ids=ids[i : i + max_chunk_size],
-                        select=select,
-                        max_chunk_size=None,
-                        **kwargs,
-                    )
-                return
-
-            else:
-                return self._predict(X, **kwargs)
 
 
 class ModelEnsemblePredictionError(Exception):

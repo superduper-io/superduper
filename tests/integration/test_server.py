@@ -3,9 +3,9 @@ import uuid
 import pytest
 import torch
 
+from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb import CFG
 from superduperdb.core.documents import Document
-from superduperdb.core.encoder import Encoder
 from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.serve.client import Client
@@ -24,12 +24,21 @@ def test_collection():
     return Collection(name=collection_name)
 
 
-def test_load(client):
-    encoder = client.load('encoder', 'torch.float32[32]')
-    assert isinstance(encoder, Encoder)
+def test_add_load(client, fresh_database, test_collection):
+    m = TorchModel(
+        identifier='test-add-client',
+        object=torch.nn.Linear(10, 20),
+        encoder=tensor(torch.float, shape=(20,)),
+    )
+    client.add(m)
+    models = fresh_database.show('model')
+    print(models)
+    assert 'test-add-client' in models
+    m = client.load('model', 'test-add-client')
+    assert isinstance(m.object.artifact, torch.nn.Module)
 
 
-def test_show(client):
+def test_show(client, database_with_default_encoders_and_model):
     encoders = client.show('encoder')
     assert encoders == ['torch.float32[16]', 'torch.float32[32]']
 

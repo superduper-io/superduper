@@ -39,10 +39,21 @@ def _serialize(item: t.Any) -> t.Dict[str, t.Any]:
 
     d = {k: fix(k, v) for k, v in item.dict().items()}
 
+    from superduperdb.core.component import Component
+
+    to_add = {}
+    if isinstance(item, Component):
+        to_add = {
+            'variety': item.variety,
+            'identifier': item.identifier,
+            'version': getattr(item, 'version', None),
+        }
+
     return {
         'cls': item.__class__.__name__,
         'dict': d,
         'module': item.__class__.__module__,
+        **to_add,
     }
 
 

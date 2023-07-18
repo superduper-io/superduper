@@ -20,7 +20,7 @@ def test_create_component(empty, float_tensors_16, float_tensors_32):
     assert 'my-test-module' in empty.show('model')
     model = empty.models['my-test-module']
     print(model)
-    output = model.predict(torch.randn(16))
+    output = model.predict(torch.randn(16), one=True)
     assert output.shape[0] == 32
 
 
@@ -170,7 +170,6 @@ def test_watcher(random_data, a_model, b_model):
             model='linear_a',
             select=Collection(name='documents').find(),
             key='x',
-            db=random_data,
         ),
     )
     r = random_data.execute(Collection(name='documents').find_one())
@@ -192,7 +191,6 @@ def test_watcher(random_data, a_model, b_model):
             model='linear_b',
             select=Collection(name='documents').find().featurize({'x': 'linear_a'}),
             key='x',
-            db=random_data,
         )
     )
     r = random_data.execute(Collection(name='documents').find_one())
@@ -201,7 +199,7 @@ def test_watcher(random_data, a_model, b_model):
 
 def test_predict(a_model, float_tensors_32, float_tensors_16):
     t = float_tensors_32.encoders['torch.float32[32]']
-    a_model.predict('linear_a', Document(t(torch.randn(32))))
+    a_model.predict('linear_a', Document(t(torch.randn(32))), one=True)
 
 
 def test_delete(random_data):
@@ -228,7 +226,6 @@ def test_dataset(random_data):
     d = Dataset(
         identifier='test_dataset',
         select=Collection(name='documents').find({'_fold': 'valid'}),
-        db=random_data,
     )
     random_data.add(d)
     assert random_data.show('dataset') == ['test_dataset']

@@ -1,4 +1,3 @@
-import datetime
 from functools import cached_property
 import typing as t
 
@@ -22,11 +21,8 @@ class Dataset(Component):
     creation_date: t.Optional[str] = None
     raw_data: t.Optional[t.Union[Artifact, t.Any]] = None
     version: t.Optional[int] = None
-    db: dc.InitVar[t.Any] = None
 
-    def __post_init__(self, db):
-        if self.creation_date is None:
-            self.creation_date = str(datetime.datetime.now())
+    def _on_create(self, db):
         if self.raw_data is None:
             data = list(db.execute(self.select))
             if self.sample_size is not None and self.sample_size < len(data):
@@ -34,8 +30,9 @@ class Dataset(Component):
                 data = [data[perm[i]] for i in range(self.sample_size)]
             self.raw_data = Artifact(artifact=[r.encode() for r in data])
 
+    def _on_load(self, db):
         self.data = [
-            Document(Document.decode(r, encoders=db.encoders))
+            Document(Document.decode(r.copy(), encoders=db.encoders))
             for r in self.raw_data.artifact
         ]
 

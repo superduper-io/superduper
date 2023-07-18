@@ -5,8 +5,13 @@ import uuid
 
 import click
 import requests
+from superduperdb.core.artifact import (
+    get_artifacts,
+    replace_artifacts_with_dict,
+    load_artifacts,
+)
 from superduperdb.core.component import Component
-from superduperdb.core.documents import ArtifactDocument, Document
+from superduperdb.core.documents import Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.database import ExecuteQuery
 from superduperdb.datalayer.base.query import (
@@ -113,17 +118,28 @@ class Client:
         return response.text
 
     def add(self, component: Component):
-        ad = ArtifactDocument(component.to_dict())
         request_id = str(uuid.uuid4())
-        ad.save_artifacts(
-            artifact_store=ClientArtifactStore(  # type: ignore[arg-type]
+        d = component.serialize()
+        artifacts = set(get_artifacts(d))
+        lookup = {a: str(uuid.uuid4()) for a in artifacts}
+        serializers = {lookup[a]: a.serializer for a in artifacts}
+        d = replace_artifacts_with_dict(d, lookup)
+        request_id = str(uuid.uuid4())
+        for a in artifacts:
+            self._put(
                 request_id=request_id,
-                put=self._put,
-                get=self._get,
-            ),
-            cache={},
+                file_id=lookup[a],
+                data=a.serialize(),
+            )
+        self._make_post_or_put_request(
+            'add',
+            method='POST',
+            json={
+                'component': d,
+                'serializers': serializers,
+                'request_id': request_id,
+            },
         )
-        return 'ok'
 
     def show(
         self,
@@ -169,7 +185,7 @@ class Client:
 
     def load(self, variety: str, identifier: str, version: t.Optional[int] = None):
         request_id = str(uuid.uuid4())
-        response = self._make_get_request(
+        d = self._make_get_request(
             'load',
             json={
                 'variety': variety,
@@ -177,18 +193,11 @@ class Client:
                 'version': version,
                 'request_id': request_id,
             },
+        ).json()
+        d = load_artifacts(
+            d, getter=lambda x: self._get(request_id=request_id, file_id=x), cache={}
         )
-
-        document = ArtifactDocument(response.json())
-        document.load_artifacts(
-            artifact_store=ClientArtifactStore(  # type: ignore[arg-type]
-                request_id=request_id,
-                get=self._get,
-                put=self._put,
-            ),
-            cache={},
-        )
-        return Serializable.deserialize(document.content)
+        return Serializable.deserialize(d)
 
     def select_one(self, query: SelectOne) -> t.Dict:
         request_id = str(uuid.uuid4())

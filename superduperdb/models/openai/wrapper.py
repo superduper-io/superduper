@@ -11,6 +11,7 @@ from openai.error import Timeout, RateLimitError, TryAgain, ServiceUnavailableEr
 
 import superduperdb as s
 from superduperdb.core.component import Component
+from superduperdb.core.model import PredictMixin
 from superduperdb.misc.retry import Retry
 from superduperdb.misc import dataclasses as dc
 from superduperdb.misc.compat import cache
@@ -33,8 +34,10 @@ def _available_models():
 
 
 @dc.dataclass
-class OpenAI(Component):
+class OpenAI(Component, PredictMixin):
     variety: t.ClassVar[str] = 'model'
+    identifier: str
+    version: t.Optional[int] = None
 
     def __post_init__(self):
         if self.identifier not in (mo := _available_models()):
@@ -48,12 +51,13 @@ class OpenAI(Component):
 @dc.dataclass
 class OpenAIEmbedding(OpenAI):
     shapes = {'text-embedding-ada-002': (1536,)}
+    shape: t.Optional[t.Sequence[int]] = None
 
-    def __init__(self, identifier: str, shape: t.Optional[t.Sequence[int]] = None):
-        super().__init__(identifier)
-        if shape is None:
-            shape = self.shapes[identifier]
-        self.encoder = vector(shape)
+    def __post_init__(self):
+        super().__post_init__()
+        if self.shape is None:
+            self.shape = self.shapes[self.identifier]
+        self.encoder = vector(self.shape)
 
     @retry
     def _predict_one(self, X, **kwargs):

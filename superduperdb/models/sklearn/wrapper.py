@@ -50,8 +50,8 @@ class SklearnTrainingConfiguration(_TrainingConfiguration):
 class Estimator(Model):
     postprocess: t.Union[Artifact, t.Callable, None] = None
 
-    def __post_init__(self, db):
-        super().__post_init__(db)
+    def __post_init__(self):
+        super().__post_init__()
         if self.postprocess and not isinstance(self.postprocess, Artifact):
             self.postprocess = Artifact(artifact=self.postprocess)
 

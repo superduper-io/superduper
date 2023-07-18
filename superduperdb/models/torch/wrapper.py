@@ -308,9 +308,11 @@ class TorchModel(Base, Model):
     preprocess: t.Union[Callable, Artifact, None] = None
     postprocess: t.Union[Callable, Artifact, None] = None
     optimizer_state: t.Optional[Artifact] = None
+    forward_method: str = '__call__'
+    train_forward_method: str = '__call__'
 
-    def __post_init__(self, db):
-        super().__post_init__(db)
+    def __post_init__(self):
+        super().__post_init__()
 
         self.object.serializer = 'torch'
 
@@ -334,11 +336,10 @@ class TorchModel(Base, Model):
 
     def save(self, database: BaseDatabase):
         self.optimizer_state = Artifact(self.optimizer.state_dict(), serializer='torch')
-        database.replace_model(
-            identifier=self.identifier,
+        database.replace(
             object=self,
             upsert=True,
-        )  # TODO replace_object is redundant
+        )
 
     @contextmanager
     def evaluating(self):
@@ -390,19 +391,20 @@ class TorchModel(Base, Model):
     def _predict_one(self, x):
         with torch.no_grad(), eval(self.object.artifact):
             if self.preprocess is not None:
-                x = self.preprocess(x)
+                x = self.preprocess.artifact(x)
             x = to_device(x, device_of(self.object.artifact))
             singleton_batch = create_batch(x)
-            output = self.object.artifact(singleton_batch)
+            method = getattr(self.object.artifact, self.forward_method)
+            output = method(singleton_batch)
             output = to_device(output, 'cpu')
             args = unpack_batch(output)[0]
             if hasattr(self.object.artifact, 'postprocess'):
                 args = self.object.artifact.postprocess(args)
             return args
 
-    def _predict(self, x, **kwargs):
+    def _predict(self, x, one: bool = False, **kwargs):
         with torch.no_grad(), eval(self.object.artifact):
-            if not isinstance(x, list) and not test_if_batch(x, self.num_directions):
+            if one:
                 return self._predict_one(x)
             inputs = BasicDataset(
                 x,
@@ -412,7 +414,9 @@ class TorchModel(Base, Model):
             out = []
             for batch in tqdm(loader, total=len(loader)):
                 batch = to_device(batch, device_of(self.object.artifact))
-                tmp = self.object.artifact(batch)
+
+                method = getattr(self.object.artifact, self.forward_method)
+                tmp = method(batch)
                 tmp = to_device(tmp, 'cpu')
                 tmp = unpack_batch(tmp)
                 if self.postprocess is not None:
@@ -421,46 +425,17 @@ class TorchModel(Base, Model):
             return out
 
     def train_forward(self, X, y=None):
+        method = getattr(self.object.artifact, self.train_forward_method)
         if hasattr(self.object.artifact, 'train_forward'):
             if y is None:
-                return self.object.artifact.train_forward(X)
+                return method(X)
             else:
-                return self.object.artifact.train_forward(X, y=y)
+                return method(X, y=y)
         else:
             if y is None:
-                return (self.object.artifact(X),)
+                return (method(X),)
             else:
-                return [self.object.artifact(X), y]
-
-
-def test_if_batch(x, num_directions: Union[Dict, int]):
-    """
-    :param x: item to test whether batch or singleton
-    :param num_directions: dictionary to test a leaf node in ``x`` whether batch or not
-
-    >>> test_if_batch(torch.randn(10), 2)
-    False
-    >>> test_if_batch(torch.randn(2, 10), 2)
-
-    :param documents: documents
-    :param transform: function
-    """
-
-    def __init__(self, documents, transform):
-        super().__init__()
-        self.documents = documents
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.documents)
-
-    def __getitem__(self, item):
-        document = self.documents[item]
-        if isinstance(document, Document):
-            document = document.unpack()
-        elif isinstance(document, Encodable):
-            document = document.x
-        return self.transform(document)
+                return [method(X), y]
 
 
 def unpack_batch(args):
@@ -561,11 +536,7 @@ class TorchModelEnsemble(Base, ModelEnsemble):
         for o in self.optimizers:
             states.append(Artifact(o.state_dict(), serializer='torch'))
         self.optimizer_states = states
-        database.replace_model(
-            identifier=self.identifier,
-            object=self,
-            upsert=True,
-        )  # TODO replace_object is redundant
+        database.replace(object=self, upsert=True)
 
     @contextmanager
     def evaluating(self):
@@ -587,7 +558,8 @@ class TorchModelEnsemble(Base, ModelEnsemble):
         out = []
         for i, k in enumerate(self.train_X):
             submodel = self.models[i]
-            out.append(submodel.object.artifact(X[i]))
+            method = getattr(submodel.object.artifact, submodel.train_forward_method)
+            out.append(method(X[i]))
         if y is not None:
             return out, y
         else:

@@ -1,4 +1,3 @@
-MONGO_INIT_SH=./mongo_init.sh
 MONGO_INITDB_USERNAME=testmongodbuser
 MONGO_INITDB_PASSWORD=testmongodbpassword
 MONGO_PORT=27018

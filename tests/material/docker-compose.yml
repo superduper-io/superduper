@@ -4,7 +4,8 @@ services:
     image: mongo:6
     container_name: sddb-mongodb
     restart: always
-    command : sh -c "mongod --replSet rs0 --port 27018 --bind_ip 0.0.0.0 --dbpath /data/db/ --shardsvr "
+    # use ["x", "y", ...] syntax for cross-platform compatibility
+    command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27018 --bind_ip 0.0.0.0 --dbpath /data/db/"]
     environment:
       MONGO_INITDB_ROOT_USERNAME: testmongodbuser
       MONGO_INITDB_ROOT_PASSWORD: testmongodbpassword
@@ -18,4 +19,3 @@ services:
     command: sh -c "/scripts/mongo-init.sh"
     volumes:
       - ./mongo-init.sh:/scripts/mongo-init.sh
-

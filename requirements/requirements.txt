@@ -15,7 +15,9 @@ aiosignal==1.3.1
     #   aiohttp
     #   ray
 anyio==3.7.1
-    # via starlette
+    # via
+    #   httpcore
+    #   starlette
 arrow==1.2.3
     # via lightning
 async-timeout==4.0.2
@@ -38,19 +40,21 @@ blessed==1.20.0
     # via inquirer
 blinker==1.6.2
     # via flask
-boto3==1.28.3
+boto3==1.28.5
     # via -r requirements.in
-botocore==1.31.3
+botocore==1.31.5
     # via
     #   boto3
     #   s3transfer
 certifi==2023.5.7
-    # via requests
+    # via
+    #   httpcore
+    #   requests
 charset-normalizer==3.2.0
     # via
     #   aiohttp
     #   requests
-click==8.1.5
+click==8.1.6
     # via
     #   dask
     #   distributed
@@ -70,7 +74,7 @@ dask[distributed]==2023.5.0
     # via
     #   -r requirements.in
     #   distributed
-dataclasses-json==0.5.9
+dataclasses-json==0.5.12
     # via langchain
 dateutils==0.6.12
     # via lightning
@@ -82,7 +86,7 @@ dill==0.3.6
     # via -r requirements.in
 distributed==2023.5.0
     # via dask
-dnspython==2.3.0
+dnspython==2.4.0
     # via pymongo
 environs==9.5.0
     # via pymilvus
@@ -128,7 +132,11 @@ grpcio==1.49.1
     #   pymilvus
     #   ray
 h11==0.14.0
-    # via uvicorn
+    # via
+    #   httpcore
+    #   uvicorn
+httpcore==0.17.3
+    # via dnspython
 huggingface-hub==0.16.4
     # via transformers
 idna==3.4
@@ -162,15 +170,15 @@ jmespath==1.0.1
     #   botocore
 joblib==1.3.1
     # via scikit-learn
-jsonschema==4.18.3
+jsonschema==4.18.4
     # via ray
-jsonschema-specifications==2023.6.1
+jsonschema-specifications==2023.7.1
     # via jsonschema
 lancedb==0.1.10
     # via -r requirements.in
-langchain==0.0.232
+langchain==0.0.235
     # via -r requirements.in
-langsmith==0.0.5
+langsmith==0.0.7
     # via langchain
 lightning==2.0.5
     # via -r requirements.in
@@ -195,9 +203,6 @@ marshmallow==3.19.0
     # via
     #   dataclasses-json
     #   environs
-    #   marshmallow-enum
-marshmallow-enum==1.5.1
-    # via dataclasses-json
 mdurl==0.1.2
     # via markdown-it-py
 mpmath==1.3.0
@@ -285,9 +290,9 @@ pydantic==1.10.11
     #   openapi-schema-pydantic
 pygments==2.15.1
     # via rich
-pyjwt==2.7.0
+pyjwt==2.8.0
     # via lightning-cloud
-pylance==0.5.5
+pylance==0.5.8
     # via lancedb
 pymilvus==2.2.13
     # via -r requirements.in
@@ -314,7 +319,7 @@ pytz==2023.3
     # via
     #   dateutils
     #   pandas
-pyyaml==6.0
+pyyaml==6.0.1
     # via
     #   dask
     #   distributed
@@ -332,7 +337,7 @@ readchar==4.0.5
     # via inquirer
 readerwriterlock==1.0.9
     # via -r requirements.in
-referencing==0.29.1
+referencing==0.30.0
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -356,7 +361,7 @@ rich==13.4.2
     # via
     #   lightning
     #   lightning-cloud
-rpds-py==0.8.10
+rpds-py==0.9.2
     # via
     #   jsonschema
     #   referencing
@@ -377,12 +382,15 @@ six==1.16.0
     #   lightning-cloud
     #   python-dateutil
 sniffio==1.3.0
-    # via anyio
+    # via
+    #   anyio
+    #   dnspython
+    #   httpcore
 sortedcontainers==2.4.0
     # via distributed
 soupsieve==2.4.1
     # via beautifulsoup4
-sqlalchemy==2.0.18
+sqlalchemy==2.0.19
     # via langchain
 starlette==0.27.0
     # via
@@ -429,7 +437,7 @@ tqdm==4.65.0
     #   transformers
 traitlets==5.9.0
     # via lightning
-transformers==4.30.2
+transformers==4.31.0
     # via -r requirements.in
 typer==0.9.0
     # via -r requirements.in
@@ -449,6 +457,7 @@ typing-extensions==4.7.1
     #   torchmetrics
     #   typer
     #   typing-inspect
+    #   uvicorn
 typing-inspect==0.9.0
     # via dataclasses-json
 tzdata==2023.3
@@ -462,7 +471,7 @@ urllib3==1.26.16
     #   lightning
     #   lightning-cloud
     #   requests
-uvicorn==0.22.0
+uvicorn==0.23.1
     # via
     #   lightning
     #   lightning-cloud
@@ -482,7 +491,7 @@ yarl==1.9.2
     # via aiohttp
 zict==3.0.0
     # via distributed
-zipp==3.16.1
+zipp==3.16.2
     # via
     #   importlib-metadata
     #   importlib-resources

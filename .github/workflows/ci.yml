@@ -105,4 +105,13 @@ jobs:
 
       - name: test
         run: |
-          make test
+          make test PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml tests"
+
+      # TODO: Activate after releasing first version
+      #- name: Upload code coverage to Codecov
+      #  uses: codecov/codecov-action@v3.1.4
+      #  with:
+      #    env_vars: RUNNER_OS,PYTHON_VERSION
+      #    file: ./coverage.xml
+      #    fail_ci_if_error: false
+      #    name: codecov-umbrella

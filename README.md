@@ -1,17 +1,30 @@
-<a href="https://www.superduperdb.com">
-  <img
-    src="https://raw.githubusercontent.com/superduperdb/superduperdb-stealth/img/symbol_purple.png"
-    width="150"
-    align="right"
-    />
+<p align="center">
+   <a href="https://www.superduperdb.com">
+      <picture>
+         <img src=".github/logos/SuperDuperDB_logo_color.svg?raw=true" width="100%" alt="superduperdb" />
+      </picture>
+   </a>
+</p>
+
+
+<p align="center">
+<a href="https://github.com/SuperDuperDB/superduperdb-stealth/actions?query=workflow%3Aci+event%3Apush+branch%3Amain" target="_blank">
+    <img src="https://github.com/SuperDuperDB/superduperdb-stealth/workflows/CI/badge.svg?event=push&branch=main" alt="CI">
 </a>
+<a href="https://codecov.io/gh/SuperDuperDB/superduperdb-stealth/branch/main" target="_blank">
+    <img src="https://codecov.io/gh/SuperDuperDB/superduperdb-stealth/branch/main/graph/badge.svg" alt="Coverage">
+</a>
+<a href="https://pypi.org/project/superduperdb" target="_blank">
+    <img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version">
+</a>
+<a href="https://pypi.org/project/superduperdb" target="_blank">
+    <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
+</a>
+</p>
 
-# Welcome to SuperDuperDB!
-
-
-> An AI-database management system for the full PyTorch model-development lifecycle
-
-Full documentation [here](https://superduperdb.github.io/superduperdb).
+<p align="center">
+    <em>An AI-database management system for the full PyTorch model-development lifecycle</em>
+</p>
 
 ## Installation
 

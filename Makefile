@@ -1,4 +1,4 @@
-PYTEST_ARGUMENTS ?= -W ignore
+PYTEST_ARGUMENTS ?=
 COMPOSE_ARGUMENTS ?=
 
 .PHONY: test-containers

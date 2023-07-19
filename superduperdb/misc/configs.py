@@ -8,17 +8,24 @@ import os
 
 File = t.Union[Path, str]
 
-ROOT = Path(__file__).parents[1]
+# The top-level directory of the project
+ROOT = Path(__file__).parents[2]
+
+# The default prefix used for config environment variables
 PREFIX = 'SUPERDUPERDB_'
+
+# The name of the environment variable used to read the config files.
+# This value needs to be read before all the other config values are.
 FILES_NAME = 'CONFIG_FILES'
 
+# The base name of the configs file
 CONFIG_FILE = 'configs.json'
 
-LOCAL_CONFIG = Path(CONFIG_FILE)
-PROJECT_CONFIG = ROOT / CONFIG_FILE
-USER_CONFIG = Path(f'~/.superduperdb/{CONFIG_FILE}').expanduser()
+_LOCAL_CONFIG = Path(CONFIG_FILE)
+_PROJECT_CONFIG = ROOT / CONFIG_FILE
+_USER_CONFIG = Path(f'~/.superduperdb/{CONFIG_FILE}').expanduser()
 
-ALL_CONFIGS = PROJECT_CONFIG, LOCAL_CONFIG, USER_CONFIG
+_ALL_CONFIGS = _PROJECT_CONFIG, _LOCAL_CONFIG, _USER_CONFIG
 
 FILE_SEP = ','
 
@@ -46,5 +53,5 @@ class ConfigSettings:
 
 
 def build_config():
-    CONFIG = ConfigSettings(config.Config, ALL_CONFIGS, PREFIX)
+    CONFIG = ConfigSettings(config.Config, _ALL_CONFIGS, PREFIX)
     return CONFIG.config

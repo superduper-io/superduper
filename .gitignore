@@ -156,11 +156,8 @@ dmypy.json
 /.jd
 /.syncignore
 /supervisord.conf
-/docs/examples/data
 /cloudformation
 /*jd*
-/docs/examples/annotations
-/docs/examples/*.zip
 /notebooks/data
 /custom_requirements.txt
 /notebooks/*.json
@@ -169,8 +166,10 @@ dmypy.json
 # direnv
 .direnv/
 .envrc
+
 lightning_logs/
 .cdc.tokens
 
-# pyannotate
-annotations.json
+# docs
+/docs/source/
+/docs/examples/*.zip

@@ -20,25 +20,28 @@
 <a href="https://pypi.org/project/superduperdb" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
 </a>
+<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
+    <img src="https://img.shields.io/badge/Slack-superduperdb-8A2BE2?logo=slack" alt="Slack">
+</a>
 </p>
 
 <p align="center">
     <em>An AI-database management system for the full PyTorch model-development lifecycle</em>
 </p>
 
-## Installation
+## Quickstart
 
 Requires:
 
 - MongoDB
-- RedisDB
-- poetry
 
-Then install the python requirements
+To install the project simply run `pip install superduperdb`.
 
-```
-poetry install
-```
+SuperDuperDB is in *alpha*. Please expect:
+
+- breaking changes
+- rough edges
+- fast pace of new feature development
 
 ### Running Tests
 
@@ -47,11 +50,6 @@ Our test suite relies on `docker` to run 3rd-party services.
 ```shell
 make test
 ```
-
-After the first time you can just run `pytest`.
-
-If you want to extract annotations automatically, use `pytest
---annotate-output=./annotations.json`.
 
 ## Using configs
 
@@ -71,19 +69,4 @@ For example, these three forms are identical:
 * Setting environment variables `SUPERDUPERDB_REMOTE=true` and
   `SUPERDUPERDB_DASK_IP=1.1.1.1`
 * In Python, `CFG.remote = True; CFG.dask.ip = '1.1.1.1'`
-
-## Contributing
-
-SuperDuperDB is in *alpha*. Please expect:
-
-- breaking changes
-- rough edges
-- fast pace of new feature development
-
-If you'd like to contribute to the project we need help in many places:
-
-- Trying out the features and commenting on the issues boards
-- Adding additional unittests and doctests
-- Augmenting doc-strings to make the usage patterns clearer for the uninitiated
-- Expanding the documentation, tutorials and examples
 

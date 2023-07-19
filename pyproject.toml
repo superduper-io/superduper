@@ -27,7 +27,7 @@ dynamic = ["dependencies", "version"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements/requirements.in"] }
-version = {file = ["./.SUPERDUPERDB_VERSION"]}
+version = {attr = "superduperdb.__version__"}
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"

@@ -331,6 +331,9 @@ class FindOne(SelectOne):
 
     type_id: t.Literal['mongodb.FindOne'] = 'mongodb.FindOne'
 
+    def add_fold(self, fold: str) -> 'Select':
+        raise NotImplementedError
+
     def __call__(self, db):
         if self.collection is not None:
             return SuperDuperCursor.wrap_document(
@@ -360,6 +363,12 @@ class Aggregate(Select):
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.Aggregate'] = 'mongodb.Aggregate'
+
+    def add_fold(self, fold: str) -> 'Select':
+        raise NotImplementedError
+
+    def is_trivial(self) -> bool:
+        raise NotImplementedError
 
     @property
     def select_ids(self) -> 'Select':

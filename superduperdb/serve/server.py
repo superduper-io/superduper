@@ -4,7 +4,7 @@ import uuid
 
 from flask import Flask, jsonify, make_response, request
 
-from superduperdb.core.artifact import (
+from superduperdb.core.artifact_tree import (
     get_artifacts,
     put_artifacts_back,
     replace_artifacts_with_dict,

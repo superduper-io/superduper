@@ -103,11 +103,11 @@ def test_ensemble(si_validation, metric):
         validation_interval=5,
         loader_kwargs={'batch_size': 10, 'num_workers': 0},
         compute_metrics=VectorSearchPerformance(
-            measure='cosine',
+            measure='css',
             predict_kwargs={'batch_size': 10},
             index_key='x',
         ),
-        kwargs={'hash_set_cls': Artifact(VanillaVectorIndex), 'measure': 'cosine'},
+        kwargs={'hash_set_cls': Artifact(VanillaVectorIndex), 'measure': 'css'},
     )
 
     m = TorchModelEnsemble(

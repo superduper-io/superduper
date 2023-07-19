@@ -7,7 +7,6 @@ packages = ["superduperdb"]
 
 [project]
 name = "superduperdb"
-version = "0.0.4"  # TO BE UPDATED BEFORE RELEASE
 description = "🔮 Super-power your database with AI 🔮"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -24,10 +23,11 @@ classifiers = [  # TO BE EXTENDED BEFORE RELEASE
     "Typing :: Typed"  # TO BE CONFIRMED BEFORE RELEASE
 ]
 requires-python = ">=3.8"
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "version"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements/requirements.in"] }
+version = {file = ["./.SUPERDUPERDB_VERSION"]}
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"

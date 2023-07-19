@@ -1,0 +1,58 @@
+name: Release
+on:
+  workflow_dispatch:  # allows triggering a github action manually - see 'Actions' tab
+    inputs:
+      version:
+        description: Version number to be attached to Python package
+        type: string
+        required: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+        run:
+          shell: bash
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python 3.10
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+ 
+      - name: Install dependencies
+        run: pip install -r requirements/requirements-lint.txt
+
+      - name: Create version dotfile for build
+        run: |
+          touch .SUPERDUPERDB_VERSION
+          echo ${{ github.event.inputs.version }} > .SUPERDUPERDB_VERSION
+
+      - name: Build
+        run: python -m build
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          path: ./dist
+
+  create-release:
+    needs: ['build']
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      
+        # Artifacts located in artifact/
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+
+      - name: create release
+        run: >
+          gh release create --draft --repo ${{ github.repository }}
+          ${{ github.ref_name }}
+          artifact/*
+        env:
+          GH_TOKEN: ${{ github.token }}

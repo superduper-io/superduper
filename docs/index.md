@@ -1,6 +1,6 @@
 # SuperDuperDB documentation
 
-🚀 Welcome to SuperDuperDB! 🚀 
+🚀 Welcome to SuperDuperDB! 🚀
 
 ## What is SuperDuperDB?
 
@@ -13,34 +13,34 @@ in their already deployed datalayer, and simulatenously to set-up a scalable, op
 
 At SuperDuperDB, our goal is to massively smoothen and accelerate the developer journey between data and AI models. We aim to:
 
-- Create an **easy-to-use**, **extensible** and **comprehensive** Python framework for integrating AI and 
+- Create an **easy-to-use**, **extensible** and **comprehensive** Python framework for integrating AI and
   ML directly to the datalayer: to databases, object-storage, data-lakes and data-warehouses.
-  
+
 - Empower developers, data scientists and architects to leverage the vast **PyData**, AI
   **open-source ecosystem** in their datalayer deployments.
-  
+
 - Enable ways-of-working with AI and data which **enable scalability** and industrial scale deployment,
   as well as providing easy-to-use tools for the **individual developer**.
 
-- Make possible continued use of **already existing or deployed databases**, in combination with AI and ML; 
+- Make possible continued use of **already existing or deployed databases**, in combination with AI and ML;
   **no migration of data** to a fancy, new fangled vector-database required.
-  
-- Follow a **fully open-source approach**, in particular prioritizing open-source integrations 
+
+- Follow a **fully open-source approach**, in particular prioritizing open-source integrations
   in our roadmap going forward
 
 - Enable individuals and organizations to **circumvent vendor lock-in strategies** now ubiquitous
-  in the AI and ML landscapes, by providing a clear toolset to flexibly deploy AI at the 
+  in the AI and ML landscapes, by providing a clear toolset to flexibly deploy AI at the
   datalayer **without necessitating subscriptions**, cloud installations, gated-model-API functionality.
-  
+
 ## Background
 
-SuperDuperDB is the result of years of experience in research, development and production for 
-AI and data. We have come to believe that AI development with data does not need to be as hard as it 
+SuperDuperDB is the result of years of experience in research, development and production for
+AI and data. We have come to believe that AI development with data does not need to be as hard as it
 currently is. (Read "{doc}`common_issues`"
 for more context.) By moving to a closer symbiosis of AI and datalayer/ database, we believe
 many pain-points in AI development become non-issues. With SuperDuperDB:
 
-- Model predictions may be [evaluated and inserted back into the database](#model-frameworks-directly-integrated-with-databases), without ever needing 
+- Model predictions may be [evaluated and inserted back into the database](#model-frameworks-directly-integrated-with-databases), without ever needing
   to load data from the database to the client-side.
 - Training may be [deployed in one line](#model-frameworks-directly-integrated-with-databases), without having to munge, preprocess or fetch data;
   simply point to the data with a data-base query.
@@ -114,7 +114,7 @@ Data may be reloaded using standard database queries, and conveniently reused in
 ```python
 >>> r = db.execute(coll.find_one())
 >>> r['img'].x
-<PIL.PngImagePlugin.PngImageFile image mode=RGBA size=1164x860> 
+<PIL.PngImagePlugin.PngImageFile image mode=RGBA size=1164x860>
 ```
 
 ### Use your classical database as a vector database
@@ -127,7 +127,7 @@ indexing_watcher = Watcher(model=OpenAIEmbedding(), key='text', select=collectio
 # This "Watcher" is linked with a "VectorIndex"
 db.add(VectorIndex('my-index', indexing_watcher=indexing_watcher))
 
-# The "VectorIndex" may be used to search data. Items to be searched against are passed 
+# The "VectorIndex" may be used to search data. Items to be searched against are passed
 # to the registered model and vectorized. No additional app layer is required.
 # By default, SuperDuperDB uses LanceDB for vector comparison operations
 db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
@@ -151,4 +151,5 @@ cluster
 common_issues
 full_usage
 examples/index
+source/modules
 ```

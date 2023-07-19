@@ -14,7 +14,8 @@ class Git:
     out: t.Callable = run.out
 
     def __call__(self, *a, **ka):
-        return self.out(('git', *a), **ka).splitlines()
+        s = self.out(('git', *a), **ka)
+        return s.splitlines() if isinstance(s, str) else s
 
     def commit(self, msg: str, *files, **kwargs) -> None:
         if not (files and self.is_dirty(**kwargs)):

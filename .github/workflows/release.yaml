@@ -25,10 +25,9 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade build
 
-      - name: Create version dotfile for build
+      - name: Update version number
         run: |
-          touch .SUPERDUPERDB_VERSION
-          echo ${{ github.event.inputs.version }} > .SUPERDUPERDB_VERSION
+          sed -i "s/__version__ = '0.0.0'/__version__ = '${{ github.event.inputs.version }}'/" superduperdb/__init__.py
 
       - name: Build
         run: python -m build

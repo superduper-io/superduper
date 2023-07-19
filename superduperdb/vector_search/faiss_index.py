@@ -1,7 +1,5 @@
 import numpy
 import os
-import faiss
-import torch
 
 from superduperdb.vector_search.base import BaseVectorIndex
 
@@ -24,6 +22,8 @@ class FaissVectorIndex(BaseVectorIndex):
     name = 'faiss'
 
     def __init__(self, h, index, measure='l2', faiss_index=None):
+        import faiss
+
         super().__init__(h, index, measure)
         self.h = self.h.astype('float32')
         if faiss_index is None:
@@ -45,6 +45,8 @@ class FaissVectorIndex(BaseVectorIndex):
         self.faiss_index = faiss_index
 
     def find_nearest_from_arrays(self, h, n=100):
+        import torch
+
         if isinstance(h, list):
             h = numpy.array(h).astype('float32')
         if isinstance(h, torch.Tensor):

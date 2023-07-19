@@ -1,0 +1,21 @@
+superduperdb.encoders.vectors package
+=====================================
+
+Submodules
+----------
+
+superduperdb.encoders.vectors.vector module
+-------------------------------------------
+
+.. automodule:: superduperdb.encoders.vectors.vector
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.encoders.vectors
+   :members:
+   :undoc-members:
+   :show-inheritance:

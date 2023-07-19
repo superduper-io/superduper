@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.unittests.conftest &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">tests.unittests.conftest</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for tests.unittests.conftest</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">mock</span>
+
+<span class="kn">import</span> <span class="nn">lorem</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">pymongo</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">from</span> <span class="nn">pymongo</span> <span class="kn">import</span> <span class="n">MongoClient</span>
+<span class="kn">from</span> <span class="nn">tenacity</span> <span class="kn">import</span> <span class="n">RetryError</span><span class="p">,</span> <span class="n">Retrying</span><span class="p">,</span> <span class="n">stop_after_delay</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb.core.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.metric</span> <span class="kn">import</span> <span class="n">Metric</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.vector_index</span> <span class="kn">import</span> <span class="n">VectorIndex</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.watcher</span> <span class="kn">import</span> <span class="n">Watcher</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.database</span> <span class="kn">import</span> <span class="n">BaseDatabase</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb.query</span> <span class="kn">import</span> <span class="n">Collection</span>
+<span class="kn">from</span> <span class="nn">superduperdb.encoders.numpy.array</span> <span class="kn">import</span> <span class="n">array</span>
+<span class="kn">from</span> <span class="nn">superduperdb.encoders.pillow.image</span> <span class="kn">import</span> <span class="n">pil_image</span>
+<span class="kn">from</span> <span class="nn">superduperdb.encoders.torch.tensor</span> <span class="kn">import</span> <span class="n">tensor</span>
+<span class="kn">from</span> <span class="nn">superduperdb.misc.config</span> <span class="kn">import</span> <span class="n">DataLayer</span><span class="p">,</span> <span class="n">DataLayers</span>
+<span class="kn">from</span> <span class="nn">superduperdb.misc.config</span> <span class="kn">import</span> <span class="n">MongoDB</span> <span class="k">as</span> <span class="n">MongoDBConfig</span>
+<span class="kn">from</span> <span class="nn">superduperdb.models.torch.wrapper</span> <span class="kn">import</span> <span class="n">TorchModel</span>
+
+<span class="kn">from</span> <span class="nn">tests.material.metrics</span> <span class="kn">import</span> <span class="n">PatK</span>
+<span class="kn">from</span> <span class="nn">tests.material.models</span> <span class="kn">import</span> <span class="n">BinaryClassifier</span>
+
+<span class="n">n_data_points</span> <span class="o">=</span> <span class="mi">250</span>
+
+
+<div class="viewcode-block" id="TestMongoDBConfig"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.TestMongoDBConfig">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">TestMongoDBConfig</span><span class="p">:</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">27018</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;testmongodbuser&quot;</span><span class="p">)</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;testmongodbpassword&quot;</span><span class="p">)</span>
+    <span class="n">serverSelectionTimeoutMS</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span></div>
+
+
+<div class="viewcode-block" id="create_mongodb_client"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.create_mongodb_client">[docs]</a><span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">create_mongodb_client</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">TestMongoDBConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">]:</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span>
+    <span class="k">with</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">(</span>
+        <span class="n">host</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">host</span><span class="p">,</span>
+        <span class="n">port</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+        <span class="n">username</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+        <span class="n">password</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+        <span class="n">serverSelectionTimeoutMS</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">serverSelectionTimeoutMS</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">),</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">client</span></div>
+
+
+<div class="viewcode-block" id="wait_for_mongodb"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.wait_for_mongodb">[docs]</a><span class="k">def</span> <span class="nf">wait_for_mongodb</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">TestMongoDBConfig</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">timeout_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="n">Retrying</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop_after_delay</span><span class="p">(</span><span class="n">timeout_s</span><span class="p">)):</span>
+            <span class="k">with</span> <span class="n">attempt</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">create_mongodb_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+                    <span class="n">client</span><span class="o">.</span><span class="n">is_mongos</span>
+                    <span class="k">return</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Waiting for mongodb to start...&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">RetryError</span><span class="p">:</span>
+        <span class="n">pytest</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s2">&quot;Could not connect to mongodb&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cleanup_mongodb"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.cleanup_mongodb">[docs]</a><span class="k">def</span> <span class="nf">cleanup_mongodb</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">TestMongoDBConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">create_mongodb_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">database_name</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">list_database_names</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">database_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">drop_database</span><span class="p">(</span><span class="n">database_name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="mongodb_config"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.mongodb_config">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s1">&#39;package&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">mongodb_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">TestMongoDBConfig</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">TestMongoDBConfig</span><span class="p">()</span></div>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s1">&#39;package&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_mongodb_server</span><span class="p">(</span><span class="n">mongodb_config</span><span class="p">:</span> <span class="n">TestMongoDBConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">TestMongoDBConfig</span><span class="p">]:</span>
+    <span class="n">wait_for_mongodb</span><span class="p">(</span><span class="n">mongodb_config</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">mongodb_config</span>
+
+
+<div class="viewcode-block" id="mongodb_server"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.mongodb_server">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">mongodb_server</span><span class="p">(</span><span class="n">_mongodb_server</span><span class="p">:</span> <span class="n">TestMongoDBConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">TestMongoDBConfig</span><span class="p">]:</span>
+    <span class="c1"># we are cleaning up the database before each test because in case of a test failure</span>
+    <span class="c1"># one might want to inspect the state of the database</span>
+    <span class="n">cleanup_mongodb</span><span class="p">(</span><span class="n">_mongodb_server</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">_mongodb_server</span></div>
+
+
+<div class="viewcode-block" id="mongodb_client"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.mongodb_client">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">mongodb_client</span><span class="p">(</span><span class="n">mongodb_server</span><span class="p">:</span> <span class="n">TestMongoDBConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">]:</span>
+    <span class="k">with</span> <span class="n">create_mongodb_client</span><span class="p">(</span><span class="n">mongodb_server</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">client</span></div>
+
+
+<div class="viewcode-block" id="create_datalayer"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.create_datalayer">[docs]</a><span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">create_datalayer</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">mongodb_config</span><span class="p">:</span> <span class="n">MongoDBConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BaseDatabase</span><span class="p">]:</span>
+    <span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.build</span> <span class="kn">import</span> <span class="n">build_datalayer</span>
+
+    <span class="n">mongo_client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span>
+        <span class="n">host</span><span class="o">=</span><span class="n">mongodb_config</span><span class="o">.</span><span class="n">host</span><span class="p">,</span>
+        <span class="n">port</span><span class="o">=</span><span class="n">mongodb_config</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+        <span class="n">username</span><span class="o">=</span><span class="n">mongodb_config</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+        <span class="n">password</span><span class="o">=</span><span class="n">mongodb_config</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+        <span class="n">serverSelectionTimeoutMS</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">mongodb_config</span><span class="o">.</span><span class="n">serverSelectionTimeoutMS</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">mongo_client</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">build_datalayer</span><span class="p">(</span>
+            <span class="n">pymongo</span><span class="o">=</span><span class="n">mongo_client</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="test_db"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.test_db">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">test_db</span><span class="p">(</span><span class="n">mongodb_server</span><span class="p">:</span> <span class="n">MongoDBConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">BaseDatabase</span><span class="p">]:</span>
+    <span class="k">with</span> <span class="n">create_datalayer</span><span class="p">(</span><span class="n">mongodb_config</span><span class="o">=</span><span class="n">mongodb_server</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">db</span></div>
+
+
+<div class="viewcode-block" id="config"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.config">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">config</span><span class="p">(</span><span class="n">mongodb_server</span><span class="p">:</span> <span class="n">MongoDBConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="n">TestMongoDBConfig</span><span class="p">())</span>
+    <span class="n">data_layers_cfg</span> <span class="o">=</span> <span class="n">DataLayers</span><span class="p">(</span>
+        <span class="n">artifact</span><span class="o">=</span><span class="n">DataLayer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;_filesystem:test_db&#39;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">),</span>
+        <span class="n">data_backend</span><span class="o">=</span><span class="n">DataLayer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;test_db&#39;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">),</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="n">DataLayer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;test_db&#39;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s1">&#39;superduperdb.CFG.data_layers&#39;</span><span class="p">,</span> <span class="n">data_layers_cfg</span><span class="p">):</span>
+        <span class="k">yield</span></div>
+
+
+<div class="viewcode-block" id="empty"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.empty">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="n">test_db</span><span class="p">:</span> <span class="n">BaseDatabase</span><span class="p">):</span>
+    <span class="k">yield</span> <span class="n">test_db</span></div>
+
+
+<div class="viewcode-block" id="metric"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.metric">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">metric</span><span class="p">(</span><span class="n">empty</span><span class="p">):</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Metric</span><span class="p">(</span><span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;p@1&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="o">=</span><span class="n">PatK</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="k">yield</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;metric&#39;</span><span class="p">,</span> <span class="s1">&#39;p@1&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="random_data_factory"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.random_data_factory">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">random_data_factory</span><span class="p">(</span><span class="n">float_tensors_32</span><span class="p">):</span>
+    <span class="n">float_tensor</span> <span class="o">=</span> <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="s1">&#39;torch.float32[32]&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_factory</span><span class="p">(</span><span class="n">number_data_points</span><span class="o">=</span><span class="n">n_data_points</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_data_points</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Document</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">float_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+                        <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span>
+                        <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">float_tensor</span><span class="p">(</span><span class="n">z</span><span class="p">),</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">float_tensors_32</span>
+
+    <span class="k">return</span> <span class="n">_factory</span></div>
+
+
+<div class="viewcode-block" id="random_data"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.random_data">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">random_data</span><span class="p">(</span><span class="n">random_data_factory</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">random_data_factory</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="random_arrays"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.random_arrays">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">random_arrays</span><span class="p">(</span><span class="n">arrays</span><span class="p">):</span>
+    <span class="n">float_array</span> <span class="o">=</span> <span class="n">arrays</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="s1">&#39;numpy.float32[32]&#39;</span><span class="p">]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_data_points</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Document</span><span class="p">({</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">float_array</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">}))</span>
+
+    <span class="n">arrays</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="k">yield</span> <span class="n">arrays</span>
+    <span class="n">arrays</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">delete_many</span><span class="p">({}))</span></div>
+
+
+<div class="viewcode-block" id="a_single_insert"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.a_single_insert">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">a_single_insert</span><span class="p">(</span><span class="n">float_tensors_32</span><span class="p">):</span>
+    <span class="n">float_tensor</span> <span class="o">=</span> <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="s1">&#39;torch.float32[32]&#39;</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Document</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">float_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+            <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span>
+            <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">float_tensor</span><span class="p">(</span><span class="n">z</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="an_insert"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.an_insert">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">an_insert</span><span class="p">(</span><span class="n">float_tensors_32</span><span class="p">):</span>
+    <span class="n">float_tensor</span> <span class="o">=</span> <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="s1">&#39;torch.float32[32]&#39;</span><span class="p">]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">float_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+                    <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span>
+                    <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">float_tensor</span><span class="p">(</span><span class="n">z</span><span class="p">),</span>
+                    <span class="s1">&#39;update&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="an_update"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.an_update">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">an_update</span><span class="p">(</span><span class="n">float_tensors_32</span><span class="p">):</span>
+    <span class="n">float_tensor</span> <span class="o">=</span> <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="s1">&#39;torch.float32[32]&#39;</span><span class="p">]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Document</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">float_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+                    <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span>
+                    <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">float_tensor</span><span class="p">(</span><span class="n">z</span><span class="p">),</span>
+                    <span class="s1">&#39;update&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="vector_index_factory"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.vector_index_factory">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">vector_index_factory</span><span class="p">(</span><span class="n">a_model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_factory</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VectorIndex</span><span class="p">:</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="n">Watcher</span><span class="p">(</span>
+                <span class="n">select</span><span class="o">=</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(),</span>
+                <span class="n">key</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="s1">&#39;linear_a&#39;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="n">Watcher</span><span class="p">(</span>
+                <span class="n">select</span><span class="o">=</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(),</span>
+                <span class="n">key</span><span class="o">=</span><span class="s1">&#39;z&#39;</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="s1">&#39;linear_a&#39;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">vi</span> <span class="o">=</span> <span class="n">VectorIndex</span><span class="p">(</span>
+            <span class="n">identifier</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span>
+            <span class="n">indexing_watcher</span><span class="o">=</span><span class="s1">&#39;linear_a/x&#39;</span><span class="p">,</span>
+            <span class="n">compatible_watcher</span><span class="o">=</span><span class="s1">&#39;linear_a/z&#39;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">vi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vi</span>
+
+    <span class="k">return</span> <span class="n">_factory</span></div>
+
+
+<div class="viewcode-block" id="with_vector_index"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.with_vector_index">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">with_vector_index</span><span class="p">(</span><span class="n">random_data</span><span class="p">,</span> <span class="n">vector_index_factory</span><span class="p">):</span>
+    <span class="n">vector_index_factory</span><span class="p">(</span><span class="n">random_data</span><span class="p">,</span> <span class="s1">&#39;test_vector_search&#39;</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">random_data</span></div>
+
+
+<div class="viewcode-block" id="si_validation"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.si_validation">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">si_validation</span><span class="p">(</span><span class="n">random_data</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span>
+        <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;my_valid&#39;</span><span class="p">,</span>
+        <span class="n">select</span><span class="o">=</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;valid&#39;</span><span class="p">}),</span>
+        <span class="n">sample_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">random_data</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">random_data</span></div>
+
+
+<div class="viewcode-block" id="float_tensors_32"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.float_tensors_32">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">float_tensors_32</span><span class="p">(</span><span class="n">empty</span><span class="p">):</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tensor</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,)))</span>
+    <span class="k">yield</span> <span class="n">empty</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">,</span> <span class="s1">&#39;torch.float32[32]&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="float_tensors_16"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.float_tensors_16">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">float_tensors_16</span><span class="p">(</span><span class="n">empty</span><span class="p">):</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tensor</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,)))</span>
+    <span class="k">yield</span> <span class="n">empty</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">,</span> <span class="s1">&#39;torch.float32[16]&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="float_tensors_8"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.float_tensors_8">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">float_tensors_8</span><span class="p">(</span><span class="n">empty</span><span class="p">):</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tensor</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,)))</span>
+    <span class="k">yield</span> <span class="n">empty</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">,</span> <span class="s1">&#39;torch.float32[8]&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="arrays"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.arrays">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">arrays</span><span class="p">(</span><span class="n">empty</span><span class="p">):</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">array</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,)))</span>
+    <span class="k">yield</span> <span class="n">empty</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">,</span> <span class="s1">&#39;numpy.float32[32]&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sentences"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.sentences">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">sentences</span><span class="p">(</span><span class="n">empty</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Document</span><span class="p">({</span><span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="n">lorem</span><span class="o">.</span><span class="n">sentence</span><span class="p">()}))</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+    <span class="k">yield</span> <span class="n">empty</span></div>
+
+
+<div class="viewcode-block" id="nursery_rhymes"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.nursery_rhymes">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">nursery_rhymes</span><span class="p">(</span><span class="n">empty</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;tests/material/data/rhymes.json&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)):</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Document</span><span class="p">({</span><span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]})</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+    <span class="k">yield</span> <span class="n">empty</span></div>
+
+
+<div class="viewcode-block" id="image_type"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.image_type">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">image_type</span><span class="p">(</span><span class="n">empty</span><span class="p">):</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pil_image</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">empty</span>
+    <span class="n">empty</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">,</span> <span class="s1">&#39;pil_image&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="a_model"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.a_model">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">a_model</span><span class="p">(</span><span class="n">float_tensors_32</span><span class="p">,</span> <span class="n">float_tensors_16</span><span class="p">):</span>
+    <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">TorchModel</span><span class="p">(</span>
+            <span class="nb">object</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+            <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;linear_a&#39;</span><span class="p">,</span>
+            <span class="n">encoder</span><span class="o">=</span><span class="s1">&#39;torch.float32[16]&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">yield</span> <span class="n">float_tensors_32</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="s1">&#39;linear_a&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;&#39;NoneType&#39; object is not subscriptable&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">raise</span> <span class="n">e</span></div>
+
+
+<div class="viewcode-block" id="a_model_base"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.a_model_base">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">a_model_base</span><span class="p">(</span><span class="n">float_tensors_32</span><span class="p">,</span> <span class="n">float_tensors_16</span><span class="p">):</span>
+    <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">TorchModel</span><span class="p">(</span>
+            <span class="nb">object</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+            <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;linear_a_base&#39;</span><span class="p">,</span>
+            <span class="n">encoder</span><span class="o">=</span><span class="s1">&#39;torch.float32[16]&#39;</span><span class="p">,</span>
+            <span class="n">preprocess</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">yield</span> <span class="n">float_tensors_32</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="s1">&#39;linear_a_base&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;&#39;NoneType&#39; object is not subscriptable&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">raise</span> <span class="n">e</span></div>
+
+
+<div class="viewcode-block" id="a_watcher"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.a_watcher">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">a_watcher</span><span class="p">(</span><span class="n">a_model</span><span class="p">):</span>
+    <span class="n">a_model</span><span class="o">.</span><span class="n">distributed</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">a_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">Watcher</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="s1">&#39;linear_a&#39;</span><span class="p">,</span>
+            <span class="n">select</span><span class="o">=</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(),</span>
+            <span class="n">key</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">yield</span> <span class="n">a_model</span>
+    <span class="n">a_model</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;watcher&#39;</span><span class="p">,</span> <span class="s1">&#39;linear_a/x&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="a_watcher_base"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.a_watcher_base">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">a_watcher_base</span><span class="p">(</span><span class="n">a_model_base</span><span class="p">):</span>
+    <span class="n">a_model_base</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">Watcher</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="s1">&#39;linear_a_base&#39;</span><span class="p">,</span>
+            <span class="n">select</span><span class="o">=</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">({},</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}),</span>
+            <span class="n">key</span><span class="o">=</span><span class="s1">&#39;_base&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">yield</span> <span class="n">a_model_base</span>
+    <span class="n">a_model_base</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;watcher&#39;</span><span class="p">,</span> <span class="s1">&#39;linear_a_base/_base&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="a_classifier"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.a_classifier">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">a_classifier</span><span class="p">(</span><span class="n">float_tensors_32</span><span class="p">):</span>
+    <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">TorchModel</span><span class="p">(</span>
+            <span class="nb">object</span><span class="o">=</span><span class="n">BinaryClassifier</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
+            <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;classifier&#39;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">yield</span> <span class="n">float_tensors_32</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="s1">&#39;classifier&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;&#39;NoneType&#39; object is not subscriptable&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">raise</span> <span class="n">e</span></div>
+
+
+<div class="viewcode-block" id="b_model"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.b_model">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">b_model</span><span class="p">(</span><span class="n">float_tensors_32</span><span class="p">,</span> <span class="n">float_tensors_16</span><span class="p">,</span> <span class="n">float_tensors_8</span><span class="p">):</span>
+    <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">TorchModel</span><span class="p">(</span>
+            <span class="nb">object</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+            <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;linear_b&#39;</span><span class="p">,</span>
+            <span class="n">encoder</span><span class="o">=</span><span class="s1">&#39;torch.float32[8]&#39;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">yield</span> <span class="n">float_tensors_32</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="s1">&#39;linear_b&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;&#39;NoneType&#39; object is not subscriptable&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">raise</span> <span class="n">e</span></div>
+
+
+<div class="viewcode-block" id="c_model"><a class="viewcode-back" href="../../../source/tests.unittests.html#tests.unittests.conftest.c_model">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">c_model</span><span class="p">(</span><span class="n">float_tensors_32</span><span class="p">,</span> <span class="n">float_tensors_16</span><span class="p">):</span>
+    <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">TorchModel</span><span class="p">(</span>
+            <span class="nb">object</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+            <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;linear_c&#39;</span><span class="p">,</span>
+            <span class="n">encoder</span><span class="o">=</span><span class="s1">&#39;torch.float32[16]&#39;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">yield</span> <span class="n">float_tensors_32</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">float_tensors_32</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="s1">&#39;linear_c&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;&#39;NoneType&#39; object is not subscriptable&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">raise</span> <span class="n">e</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

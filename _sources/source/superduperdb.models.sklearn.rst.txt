@@ -1,0 +1,21 @@
+superduperdb.models.sklearn package
+===================================
+
+Submodules
+----------
+
+superduperdb.models.sklearn.wrapper module
+------------------------------------------
+
+.. automodule:: superduperdb.models.sklearn.wrapper
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.models.sklearn
+   :members:
+   :undoc-members:
+   :show-inheritance:

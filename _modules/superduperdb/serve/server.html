@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>superduperdb.serve.server &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">superduperdb.serve.server</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for superduperdb.serve.server</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">jsonify</span><span class="p">,</span> <span class="n">make_response</span><span class="p">,</span> <span class="n">request</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb.core.artifact</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_artifacts</span><span class="p">,</span>
+    <span class="n">put_artifacts_back</span><span class="p">,</span>
+    <span class="n">replace_artifacts_with_dict</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">superduperdb</span> <span class="kn">import</span> <span class="n">CFG</span>
+<span class="kn">from</span> <span class="nn">superduperdb.misc.serialization</span> <span class="kn">import</span> <span class="n">serializers</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb.core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.serializable</span> <span class="kn">import</span> <span class="n">Serializable</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.build</span> <span class="kn">import</span> <span class="n">build_datalayer</span>
+
+
+<div class="viewcode-block" id="make_endpoints"><a class="viewcode-back" href="../../../source/superduperdb.serve.html#superduperdb.serve.server.make_endpoints">[docs]</a><span class="k">def</span> <span class="nf">make_endpoints</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">db</span><span class="p">):</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/select&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">select</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Serializable</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;query&#39;</span><span class="p">])</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">))</span>  <span class="c1"># TODO - support cursor with flask streaming</span>
+        <span class="n">file_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="n">cache</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;request_id&#39;</span><span class="p">]][</span><span class="n">file_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">Document</span><span class="o">.</span><span class="n">dump_bson</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;file_id&#39;</span><span class="p">:</span> <span class="n">file_id</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/select_one&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">select_one</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Serializable</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;query&#39;</span><span class="p">])</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">file_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="n">cache</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;request_id&#39;</span><span class="p">]][</span><span class="n">file_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">Document</span><span class="o">.</span><span class="n">dump_bson</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;file_id&#39;</span><span class="p">:</span> <span class="n">file_id</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/insert&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">insert</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="n">binary</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;request_id&#39;</span><span class="p">]][</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;documents&#39;</span><span class="p">]]</span>
+        <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;request_id&#39;</span><span class="p">]]</span>
+        <span class="n">documents</span> <span class="o">=</span> <span class="n">Document</span><span class="o">.</span><span class="n">load_bsons</span><span class="p">(</span><span class="n">binary</span><span class="p">,</span> <span class="n">encoders</span><span class="o">=</span><span class="n">db</span><span class="o">.</span><span class="n">encoders</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Serializable</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;query&#39;</span><span class="p">])</span>
+        <span class="n">query</span><span class="o">.</span><span class="n">documents</span> <span class="o">=</span> <span class="n">documents</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;msg&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/update&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="n">binary</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;request_id&#39;</span><span class="p">]][</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;update&#39;</span><span class="p">]]</span>
+        <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;request_id&#39;</span><span class="p">]]</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="n">Document</span><span class="o">.</span><span class="n">load_bson</span><span class="p">(</span><span class="n">binary</span><span class="p">,</span> <span class="n">encoders</span><span class="o">=</span><span class="n">db</span><span class="o">.</span><span class="n">encoders</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Serializable</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;query&#39;</span><span class="p">])</span>
+        <span class="n">query</span><span class="o">.</span><span class="n">update</span> <span class="o">=</span> <span class="n">update</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;msg&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/delete&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()[</span><span class="s1">&#39;query&#39;</span><span class="p">]</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Serializable</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;msg&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/add&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="n">artifact_cache</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;request_id&#39;</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">artifact_cache</span><span class="p">:</span>
+            <span class="n">artifact_cache</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">serializers</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;serializers&#39;</span><span class="p">][</span><span class="n">a</span><span class="p">]]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+                <span class="n">artifact_cache</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">put_artifacts_back</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">artifact_cache</span><span class="p">)</span>
+        <span class="nb">object</span> <span class="o">=</span> <span class="n">Serializable</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;component&#39;</span><span class="p">])</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;request_id&#39;</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;msg&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/artifacts/get/&lt;request_id&gt;/&lt;file_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">request_id</span><span class="p">,</span> <span class="n">file_id</span><span class="p">):</span>
+        <span class="nb">bytes</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">request_id</span><span class="p">][</span><span class="n">file_id</span><span class="p">]</span>
+        <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">request_id</span><span class="p">][</span><span class="n">file_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cache</span><span class="p">[</span><span class="n">request_id</span><span class="p">]:</span>
+            <span class="k">del</span> <span class="n">cache</span><span class="p">[</span><span class="n">request_id</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="nb">bytes</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/artifacts/put/&lt;request_id&gt;/&lt;file_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PUT&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="n">request_id</span><span class="p">,</span> <span class="n">file_id</span><span class="p">):</span>
+        <span class="n">cache</span><span class="p">[</span><span class="n">request_id</span><span class="p">][</span><span class="n">file_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;msg&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/load&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="n">request_id</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;request_id&#39;</span><span class="p">]</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;version&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">version</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">variety</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;variety&#39;</span><span class="p">],</span> <span class="n">identifier</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;identifier&#39;</span><span class="p">],</span> <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">)</span>
+        <span class="n">to_send</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">serialize</span><span class="p">()</span>
+        <span class="n">artifacts</span> <span class="o">=</span> <span class="n">get_artifacts</span><span class="p">(</span><span class="n">to_send</span><span class="p">)</span>
+        <span class="n">lookup</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">artifacts</span><span class="p">}</span>
+        <span class="n">s_lookup</span> <span class="o">=</span> <span class="p">{</span><span class="n">lookup</span><span class="p">[</span><span class="n">a</span><span class="p">]:</span> <span class="n">a</span><span class="o">.</span><span class="n">serializer</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">artifacts</span><span class="p">}</span>
+        <span class="n">to_send</span> <span class="o">=</span> <span class="n">replace_artifacts_with_dict</span><span class="p">(</span><span class="n">to_send</span><span class="p">,</span> <span class="n">lookup</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">artifacts</span><span class="p">:</span>
+            <span class="n">cache</span><span class="p">[</span><span class="n">request_id</span><span class="p">][</span><span class="n">lookup</span><span class="p">[</span><span class="n">a</span><span class="p">]]</span> <span class="o">=</span> <span class="n">serializers</span><span class="p">[</span><span class="n">s_lookup</span><span class="p">[</span><span class="n">lookup</span><span class="p">[</span><span class="n">a</span><span class="p">]]]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">artifact</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">to_send</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/remove&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">remove</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;version&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">version</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
+
+        <span class="n">db</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span>
+            <span class="n">variety</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;variety&#39;</span><span class="p">],</span>
+            <span class="n">identifier</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;identifier&#39;</span><span class="p">],</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;msg&#39;</span><span class="p">:</span> <span class="s1">&#39;ok&#39;</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/show&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">show</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="o">**</span><span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">()))</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">errorhandler</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">handle_500</span><span class="p">(</span><span class="n">error</span><span class="p">):</span>
+        <span class="n">error_traceback</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;traceback&#39;</span><span class="p">:</span> <span class="n">error_traceback</span><span class="p">,</span>
+            <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">),</span>
+            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)),</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">response</span><span class="p">),</span> <span class="mi">500</span></div>
+
+
+<div class="viewcode-block" id="serve"><a class="viewcode-back" href="../../../source/superduperdb.serve.html#superduperdb.serve.server.serve">[docs]</a><span class="k">def</span> <span class="nf">serve</span><span class="p">(</span><span class="n">db</span><span class="p">):</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+    <span class="n">make_endpoints</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">app</span></div>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../source/superduperdb.serve.html#superduperdb.serve.server.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">db</span> <span class="o">=</span> <span class="n">build_datalayer</span><span class="p">()</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">serve</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">CFG</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">CFG</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">port</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

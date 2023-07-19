@@ -1,0 +1,46 @@
+superduperdb.cluster package
+============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   superduperdb.cluster.dask
+   superduperdb.cluster.ray
+
+Submodules
+----------
+
+superduperdb.cluster.login module
+---------------------------------
+
+.. automodule:: superduperdb.cluster.login
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.cluster.model\_server module
+-----------------------------------------
+
+.. automodule:: superduperdb.cluster.model_server
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.cluster.vector\_search module
+------------------------------------------
+
+.. automodule:: superduperdb.cluster.vector_search
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.cluster
+   :members:
+   :undoc-members:
+   :show-inheritance:

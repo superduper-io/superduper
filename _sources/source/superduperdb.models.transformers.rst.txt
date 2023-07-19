@@ -1,0 +1,21 @@
+superduperdb.models.transformers package
+========================================
+
+Submodules
+----------
+
+superduperdb.models.transformers.wrapper module
+-----------------------------------------------
+
+.. automodule:: superduperdb.models.transformers.wrapper
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.models.transformers
+   :members:
+   :undoc-members:
+   :show-inheritance:

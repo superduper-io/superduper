@@ -1,0 +1,37 @@
+tests.unittests.models package
+==============================
+
+Submodules
+----------
+
+tests.unittests.models.test\_langchain module
+---------------------------------------------
+
+.. automodule:: tests.unittests.models.test_langchain
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.models.test\_sklearn module
+-------------------------------------------
+
+.. automodule:: tests.unittests.models.test_sklearn
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.models.test\_torch module
+-----------------------------------------
+
+.. automodule:: tests.unittests.models.test_torch
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: tests.unittests.models
+   :members:
+   :undoc-members:
+   :show-inheritance:

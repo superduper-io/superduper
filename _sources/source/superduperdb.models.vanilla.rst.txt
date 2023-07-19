@@ -1,0 +1,21 @@
+superduperdb.models.vanilla package
+===================================
+
+Submodules
+----------
+
+superduperdb.models.vanilla.wrapper module
+------------------------------------------
+
+.. automodule:: superduperdb.models.vanilla.wrapper
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.models.vanilla
+   :members:
+   :undoc-members:
+   :show-inheritance:

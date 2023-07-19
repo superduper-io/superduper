@@ -1,0 +1,30 @@
+superduperdb.datalayer package
+==============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   superduperdb.datalayer.base
+   superduperdb.datalayer.mongodb
+
+Submodules
+----------
+
+superduperdb.datalayer.query\_dataset module
+--------------------------------------------
+
+.. automodule:: superduperdb.datalayer.query_dataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.datalayer
+   :members:
+   :undoc-members:
+   :show-inheritance:

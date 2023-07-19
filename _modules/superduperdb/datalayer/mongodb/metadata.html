@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>superduperdb.datalayer.mongodb.metadata &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">superduperdb.datalayer.mongodb.metadata</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for superduperdb.datalayer.mongodb.metadata</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb.core.component</span> <span class="kn">import</span> <span class="n">Component</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.metadata</span> <span class="kn">import</span> <span class="n">MetaDataStore</span>
+
+
+<div class="viewcode-block" id="MongoMetaDataStore"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore">[docs]</a><span class="k">class</span> <span class="nc">MongoMetaDataStore</span><span class="p">(</span><span class="n">MetaDataStore</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">conn</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">conn</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_collection</span> <span class="o">=</span> <span class="n">db</span><span class="p">[</span><span class="s1">&#39;_meta&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span> <span class="o">=</span> <span class="n">db</span><span class="p">[</span><span class="s1">&#39;_objects&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_collection</span> <span class="o">=</span> <span class="n">db</span><span class="p">[</span><span class="s1">&#39;_jobs&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_child_mappings</span> <span class="o">=</span> <span class="n">db</span><span class="p">[</span><span class="s1">&#39;_parent_child_mappings&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MongoMetaDataStore.create_parent_child"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.create_parent_child">[docs]</a>    <span class="k">def</span> <span class="nf">create_parent_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_child_mappings</span><span class="o">.</span><span class="n">insert_one</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">parent</span><span class="p">,</span>
+                <span class="s1">&#39;child&#39;</span><span class="p">:</span> <span class="n">child</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.create_component"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.create_component">[docs]</a>    <span class="k">def</span> <span class="nf">create_component</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;hidden&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+            <span class="n">info</span><span class="p">[</span><span class="s1">&#39;hidden&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">insert_one</span><span class="p">(</span><span class="n">info</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.create_job"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.create_job">[docs]</a>    <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_collection</span><span class="o">.</span><span class="n">insert_one</span><span class="p">(</span><span class="n">info</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.get_parent_child_relations"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.get_parent_child_relations">[docs]</a>    <span class="k">def</span> <span class="nf">get_parent_child_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_child_mappings</span><span class="o">.</span><span class="n">find</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;parent&#39;</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;child&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">c</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.get_component_version_children"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.get_component_version_children">[docs]</a>    <span class="k">def</span> <span class="nf">get_component_version_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_child_mappings</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s1">&#39;child&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">unique_id</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.get_job"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.get_job">[docs]</a>    <span class="k">def</span> <span class="nf">get_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.get_metadata"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.get_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta_collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="n">key</span><span class="p">})[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.get_latest_version"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.get_latest_version">[docs]</a>    <span class="k">def</span> <span class="nf">get_latest_version</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">allow_hidden</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">allow_hidden</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span>
+                        <span class="s1">&#39;version&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span> <span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">}</span>
+                    <span class="p">)</span>
+                <span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span>
+                        <span class="s1">&#39;version&#39;</span><span class="p">,</span>
+                        <span class="p">{</span>
+                            <span class="s1">&#39;$or&#39;</span><span class="p">:</span> <span class="p">[</span>
+                                <span class="p">{</span>
+                                    <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span>
+                                    <span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span>
+                                    <span class="s1">&#39;hidden&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                                <span class="p">},</span>
+                                <span class="p">{</span>
+                                    <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span>
+                                    <span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span>
+                                    <span class="s1">&#39;hidden&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$exists&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                                <span class="p">},</span>
+                            <span class="p">]</span>
+                        <span class="p">},</span>
+                    <span class="p">)</span>
+                <span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Can</span><span class="se">\&#39;</span><span class="s1">t find </span><span class="si">{</span><span class="n">variety</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">identifier</span><span class="si">}</span><span class="s1"> in metadata&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.update_job"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.update_job">[docs]</a>    <span class="k">def</span> <span class="nf">update_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_collection</span><span class="o">.</span><span class="n">update_one</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;$set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">}}</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.show_components"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.show_components">[docs]</a>    <span class="k">def</span> <span class="nf">show_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span>
+            <span class="s1">&#39;identifier&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.show_component_versions"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.show_component_versions">[docs]</a>    <span class="k">def</span> <span class="nf">show_component_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span>
+            <span class="s1">&#39;version&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span> <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">}</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.list_components_in_scope"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.list_components_in_scope">[docs]</a>    <span class="k">def</span> <span class="nf">list_components_in_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">scope</span><span class="p">}):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;variety&#39;</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;identifier&#39;</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.show_jobs"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.show_jobs">[docs]</a>    <span class="k">def</span> <span class="nf">show_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">status</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">status</span><span class="p">}</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">job_collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
+                <span class="n">status</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_component_used</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">count_documents</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s1">&#39;members&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$regex&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;^</span><span class="si">{</span><span class="n">identifier</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">variety</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">}}</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">count_documents</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s1">&#39;members&#39;</span><span class="p">:</span> <span class="n">Component</span><span class="o">.</span><span class="n">make_unique_id</span><span class="p">(</span><span class="n">variety</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">version</span><span class="p">)}</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="MongoMetaDataStore.component_has_parents"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.component_has_parents">[docs]</a>    <span class="k">def</span> <span class="nf">component_has_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent_child_mappings</span><span class="o">.</span><span class="n">count_documents</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;child&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$regex&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;^</span><span class="si">{</span><span class="n">variety</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">identifier</span><span class="si">}</span><span class="s1">/&#39;</span><span class="p">}}</span>
+            <span class="p">)</span>
+            <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.component_version_has_parents"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.component_version_has_parents">[docs]</a>    <span class="k">def</span> <span class="nf">component_version_has_parents</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent_child_mappings</span><span class="o">.</span><span class="n">count_documents</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;child&#39;</span><span class="p">:</span> <span class="n">Component</span><span class="o">.</span><span class="n">make_unique_id</span><span class="p">(</span><span class="n">variety</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">version</span><span class="p">)}</span>
+            <span class="p">)</span>
+            <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.delete_component_version"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.delete_component_version">[docs]</a>    <span class="k">def</span> <span class="nf">delete_component_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_component_used</span><span class="p">(</span><span class="n">variety</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Component version already in use in other components!&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_child_mappings</span><span class="o">.</span><span class="n">delete_many</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;parent&#39;</span><span class="p">:</span> <span class="n">Component</span><span class="o">.</span><span class="n">make_unique_id</span><span class="p">(</span><span class="n">variety</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">version</span><span class="p">)}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">delete_many</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span>
+                <span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span>
+                <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_component</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">version</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">allow_hidden</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_hidden</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s1">&#39;$or&#39;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">{</span>
+                            <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span>
+                            <span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span>
+                            <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span>
+                            <span class="s1">&#39;hidden&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                        <span class="p">},</span>
+                        <span class="p">{</span>
+                            <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span>
+                            <span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span>
+                            <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span>
+                            <span class="s1">&#39;hidden&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$exists&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                        <span class="p">},</span>
+                    <span class="p">]</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span>
+                    <span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span>
+                    <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+<div class="viewcode-block" id="MongoMetaDataStore.get_component_version_parents"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.get_component_version_parents">[docs]</a>    <span class="k">def</span> <span class="nf">get_component_version_parents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">r</span><span class="p">[</span><span class="s1">&#39;parent&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_child_mappings</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;child&#39;</span><span class="p">:</span> <span class="n">unique_id</span><span class="p">})</span>
+        <span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_replace_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">variety</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">replace_one</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span> <span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span> <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">},</span>
+            <span class="n">info</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_object</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">version</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">update_one</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span> <span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span> <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">},</span>
+            <span class="p">{</span><span class="s1">&#39;$set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">}},</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="MongoMetaDataStore.write_output_to_job"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.write_output_to_job">[docs]</a>    <span class="k">def</span> <span class="nf">write_output_to_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">stream</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">stream</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="s1">&#39;stderr&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;stream is &quot;</span><span class="si">{</span><span class="n">stream</span><span class="si">}</span><span class="s1">&quot;, should be stdout or stderr&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_collection</span><span class="o">.</span><span class="n">update_one</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;$push&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">stream</span><span class="p">:</span> <span class="n">msg</span><span class="p">}}</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoMetaDataStore.hide_component_version"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.metadata.MongoMetaDataStore.hide_component_version">[docs]</a>    <span class="k">def</span> <span class="nf">hide_component_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variety</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_collection</span><span class="o">.</span><span class="n">update_one</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;variety&#39;</span><span class="p">:</span> <span class="n">variety</span><span class="p">,</span> <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span> <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">},</span>
+            <span class="p">{</span><span class="s1">&#39;$set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;hidden&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}},</span>
+        <span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

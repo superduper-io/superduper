@@ -1,0 +1,77 @@
+tests.unittests.misc package
+============================
+
+Submodules
+----------
+
+tests.unittests.misc.test\_config module
+----------------------------------------
+
+.. automodule:: tests.unittests.misc.test_config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.misc.test\_dataclasses module
+---------------------------------------------
+
+.. automodule:: tests.unittests.misc.test_dataclasses
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.misc.test\_dicts module
+---------------------------------------
+
+.. automodule:: tests.unittests.misc.test_dicts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.misc.test\_for\_each module
+-------------------------------------------
+
+.. automodule:: tests.unittests.misc.test_for_each
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.misc.test\_git module
+-------------------------------------
+
+.. automodule:: tests.unittests.misc.test_git
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.misc.test\_key\_cache module
+--------------------------------------------
+
+.. automodule:: tests.unittests.misc.test_key_cache
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.misc.test\_typed\_cache module
+----------------------------------------------
+
+.. automodule:: tests.unittests.misc.test_typed_cache
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.misc.test\_uri\_cache module
+--------------------------------------------
+
+.. automodule:: tests.unittests.misc.test_uri_cache
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: tests.unittests.misc
+   :members:
+   :undoc-members:
+   :show-inheritance:

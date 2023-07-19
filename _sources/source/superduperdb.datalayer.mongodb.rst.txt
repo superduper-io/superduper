@@ -1,0 +1,61 @@
+superduperdb.datalayer.mongodb package
+======================================
+
+Submodules
+----------
+
+superduperdb.datalayer.mongodb.artifacts module
+-----------------------------------------------
+
+.. automodule:: superduperdb.datalayer.mongodb.artifacts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.mongodb.cdc module
+-----------------------------------------
+
+.. automodule:: superduperdb.datalayer.mongodb.cdc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.mongodb.data\_backend module
+---------------------------------------------------
+
+.. automodule:: superduperdb.datalayer.mongodb.data_backend
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.mongodb.loading module
+---------------------------------------------
+
+.. automodule:: superduperdb.datalayer.mongodb.loading
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.mongodb.metadata module
+----------------------------------------------
+
+.. automodule:: superduperdb.datalayer.mongodb.metadata
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.mongodb.query module
+-------------------------------------------
+
+.. automodule:: superduperdb.datalayer.mongodb.query
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.datalayer.mongodb
+   :members:
+   :undoc-members:
+   :show-inheritance:

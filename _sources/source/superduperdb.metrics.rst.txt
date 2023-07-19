@@ -1,0 +1,29 @@
+superduperdb.metrics package
+============================
+
+Submodules
+----------
+
+superduperdb.metrics.classification module
+------------------------------------------
+
+.. automodule:: superduperdb.metrics.classification
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.metrics.vector\_search module
+------------------------------------------
+
+.. automodule:: superduperdb.metrics.vector_search
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.metrics
+   :members:
+   :undoc-members:
+   :show-inheritance:

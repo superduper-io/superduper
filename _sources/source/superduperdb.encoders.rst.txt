@@ -1,0 +1,32 @@
+superduperdb.encoders package
+=============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   superduperdb.encoders.numpy
+   superduperdb.encoders.pillow
+   superduperdb.encoders.torch
+   superduperdb.encoders.vectors
+
+Submodules
+----------
+
+superduperdb.encoders.utils module
+----------------------------------
+
+.. automodule:: superduperdb.encoders.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.encoders
+   :members:
+   :undoc-members:
+   :show-inheritance:

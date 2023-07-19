@@ -1,0 +1,125 @@
+superduperdb.core package
+=========================
+
+Submodules
+----------
+
+superduperdb.core.artifact module
+---------------------------------
+
+.. automodule:: superduperdb.core.artifact
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.component module
+----------------------------------
+
+.. automodule:: superduperdb.core.component
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.dataset module
+--------------------------------
+
+.. automodule:: superduperdb.core.dataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.documents module
+----------------------------------
+
+.. automodule:: superduperdb.core.documents
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.encoder module
+--------------------------------
+
+.. automodule:: superduperdb.core.encoder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.exceptions module
+-----------------------------------
+
+.. automodule:: superduperdb.core.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.job module
+----------------------------
+
+.. automodule:: superduperdb.core.job
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.metric module
+-------------------------------
+
+.. automodule:: superduperdb.core.metric
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.model module
+------------------------------
+
+.. automodule:: superduperdb.core.model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.serializable module
+-------------------------------------
+
+.. automodule:: superduperdb.core.serializable
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.task\_workflow module
+---------------------------------------
+
+.. automodule:: superduperdb.core.task_workflow
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.tasks module
+------------------------------
+
+.. automodule:: superduperdb.core.tasks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.vector\_index module
+--------------------------------------
+
+.. automodule:: superduperdb.core.vector_index
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.core.watcher module
+--------------------------------
+
+.. automodule:: superduperdb.core.watcher
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.core
+   :members:
+   :undoc-members:
+   :show-inheritance:

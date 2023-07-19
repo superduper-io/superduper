@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>superduperdb.core.tasks &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">superduperdb.core.tasks</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for superduperdb.core.tasks</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+
+<div class="viewcode-block" id="method_job"><a class="viewcode-back" href="../../../source/superduperdb.core.html#superduperdb.core.tasks.method_job">[docs]</a><span class="k">def</span> <span class="nf">method_job</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">variety</span><span class="p">,</span>
+    <span class="n">identifier</span><span class="p">,</span>
+    <span class="n">method_name</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">,</span>
+    <span class="n">kwargs</span><span class="p">,</span>
+    <span class="n">job_id</span><span class="p">,</span>
+    <span class="n">dependencies</span><span class="o">=</span><span class="p">(),</span>
+<span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.build</span> <span class="kn">import</span> <span class="n">build_datalayer</span>
+
+    <span class="n">db</span> <span class="o">=</span> <span class="n">build_datalayer</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">component</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">variety</span><span class="p">,</span> <span class="n">identifier</span><span class="p">)</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">method_name</span><span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;running&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">handle_function_output</span><span class="p">(</span>
+            <span class="n">method</span><span class="p">,</span>
+            <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+            <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;failed&#39;</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="s1">&#39;msg&#39;</span><span class="p">,</span> <span class="n">tb</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">e</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;success&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Logger"><a class="viewcode-back" href="../../../source/superduperdb.core.html#superduperdb.core.tasks.Logger">[docs]</a><span class="k">class</span> <span class="nc">Logger</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">,</span> <span class="n">id_</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="s1">&#39;stdout&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id_</span> <span class="o">=</span> <span class="n">id_</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">stream</span>
+
+<div class="viewcode-block" id="Logger.write"><a class="viewcode-back" href="../../../source/superduperdb.core.html#superduperdb.core.tasks.Logger.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">write_output_to_job</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stream</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Logger.flush"><a class="viewcode-back" href="../../../source/superduperdb.core.html#superduperdb.core.tasks.Logger.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="handle_function_output"><a class="viewcode-back" href="../../../source/superduperdb.core.html#superduperdb.core.tasks.handle_function_output">[docs]</a><span class="k">def</span> <span class="nf">handle_function_output</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">redirect_stdout</span><span class="p">(</span><span class="n">Logger</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">job_id</span><span class="p">)):</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">redirect_stderr</span><span class="p">(</span><span class="n">Logger</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="s1">&#39;stderr&#39;</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">function</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="callable_job"><a class="viewcode-back" href="../../../source/superduperdb.core.html#superduperdb.core.tasks.callable_job">[docs]</a><span class="k">def</span> <span class="nf">callable_job</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">function_to_call</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">,</span>
+    <span class="n">kwargs</span><span class="p">,</span>
+    <span class="n">job_id</span><span class="p">,</span>
+    <span class="n">dependencies</span><span class="o">=</span><span class="p">(),</span>
+<span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.build</span> <span class="kn">import</span> <span class="n">build_datalayer</span>
+
+    <span class="n">db</span> <span class="o">=</span> <span class="n">build_datalayer</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;running&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">handle_function_output</span><span class="p">(</span>
+            <span class="n">function_to_call</span><span class="p">,</span>
+            <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+            <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;failed&#39;</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="s1">&#39;msg&#39;</span><span class="p">,</span> <span class="n">tb</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">e</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;success&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

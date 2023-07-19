@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests package &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tests.integration package" href="tests.integration.html" />
+    <link rel="prev" title="superduperdb.vector_search package" href="superduperdb.vector_search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">superduperdb-stealth</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="superduperdb.html">superduperdb package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">tests package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.integration.html">tests.integration package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html">tests.material package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html">tests.unittests package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">superduperdb-stealth</a></li>
+      <li class="breadcrumb-item active">tests package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/source/tests.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tests-package">
+<h1>tests package<a class="headerlink" href="#tests-package" title="Permalink to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tests.integration.html">tests.integration package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tests.integration.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.integration.html#module-tests.integration.conftest">tests.integration.conftest module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.create_mongodb_client_clean_and_close"><code class="docutils literal notranslate"><span class="pre">create_mongodb_client_clean_and_close()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.database_with_default_encoders_and_model"><code class="docutils literal notranslate"><span class="pre">database_with_default_encoders_and_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.fake_inserts"><code class="docutils literal notranslate"><span class="pre">fake_inserts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.fake_tensor_data"><code class="docutils literal notranslate"><span class="pre">fake_tensor_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.fake_updates"><code class="docutils literal notranslate"><span class="pre">fake_updates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.fresh_client"><code class="docutils literal notranslate"><span class="pre">fresh_client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.fresh_database"><code class="docutils literal notranslate"><span class="pre">fresh_database()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.local_dask_client"><code class="docutils literal notranslate"><span class="pre">local_dask_client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.patch_superduper_config"><code class="docutils literal notranslate"><span class="pre">patch_superduper_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.conftest.test_server"><code class="docutils literal notranslate"><span class="pre">test_server()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.integration.html#module-tests.integration.test_cdc">tests.integration.test_cdc module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.add_and_cleanup_watchers"><code class="docutils literal notranslate"><span class="pre">add_and_cleanup_watchers()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.retry_state_check"><code class="docutils literal notranslate"><span class="pre">retry_state_check()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.test_cdc_stop"><code class="docutils literal notranslate"><span class="pre">test_cdc_stop()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.test_insert_without_cdc_handler"><code class="docutils literal notranslate"><span class="pre">test_insert_without_cdc_handler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.test_many_insert"><code class="docutils literal notranslate"><span class="pre">test_many_insert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.test_many_update"><code class="docutils literal notranslate"><span class="pre">test_many_update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.test_single_insert"><code class="docutils literal notranslate"><span class="pre">test_single_insert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.test_single_update"><code class="docutils literal notranslate"><span class="pre">test_single_update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.test_smoke"><code class="docutils literal notranslate"><span class="pre">test_smoke()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.test_task_workflow_on_insert"><code class="docutils literal notranslate"><span class="pre">test_task_workflow_on_insert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.watcher_and_collection_name"><code class="docutils literal notranslate"><span class="pre">watcher_and_collection_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_cdc.watcher_without_cdc_handler_and_collection_name"><code class="docutils literal notranslate"><span class="pre">watcher_without_cdc_handler_and_collection_name()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.integration.html#module-tests.integration.test_dask">tests.integration.test_dask module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_dask.add_and_cleanup_watcher"><code class="docutils literal notranslate"><span class="pre">add_and_cleanup_watcher()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_dask.test_insert_with_dask"><code class="docutils literal notranslate"><span class="pre">test_insert_with_dask()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_dask.test_taskgraph_futures_with_dask"><code class="docutils literal notranslate"><span class="pre">test_taskgraph_futures_with_dask()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.integration.html#module-tests.integration.test_server">tests.integration.test_server module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_server.client"><code class="docutils literal notranslate"><span class="pre">client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_server.test_add_load"><code class="docutils literal notranslate"><span class="pre">test_add_load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_server.test_collection"><code class="docutils literal notranslate"><span class="pre">test_collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_server.test_insert"><code class="docutils literal notranslate"><span class="pre">test_insert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_server.test_remove"><code class="docutils literal notranslate"><span class="pre">test_remove()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_server.test_select_one"><code class="docutils literal notranslate"><span class="pre">test_select_one()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_server.test_show"><code class="docutils literal notranslate"><span class="pre">test_show()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html#tests.integration.test_server.test_update"><code class="docutils literal notranslate"><span class="pre">test_update()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.integration.html#module-tests.integration">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tests.material.html">tests.material package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tests.material.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.material.html#module-tests.material.losses">tests.material.losses module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.losses.ranking_loss"><code class="docutils literal notranslate"><span class="pre">ranking_loss()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.material.html#module-tests.material.measures">tests.material.measures module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.measures.css"><code class="docutils literal notranslate"><span class="pre">css()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.measures.dot"><code class="docutils literal notranslate"><span class="pre">dot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.material.html#module-tests.material.metrics">tests.material.metrics module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.metrics.PatK"><code class="docutils literal notranslate"><span class="pre">PatK</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.metrics.accuracy"><code class="docutils literal notranslate"><span class="pre">accuracy()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.material.html#module-tests.material.models">tests.material.models module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.models.BinaryClassifier"><code class="docutils literal notranslate"><span class="pre">BinaryClassifier</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#tests.material.models.BinaryClassifier.forward"><code class="docutils literal notranslate"><span class="pre">BinaryClassifier.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#tests.material.models.BinaryClassifier.postprocess"><code class="docutils literal notranslate"><span class="pre">BinaryClassifier.postprocess()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#tests.material.models.BinaryClassifier.training"><code class="docutils literal notranslate"><span class="pre">BinaryClassifier.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.models.BinaryTarget"><code class="docutils literal notranslate"><span class="pre">BinaryTarget</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#tests.material.models.BinaryTarget.forward"><code class="docutils literal notranslate"><span class="pre">BinaryTarget.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#tests.material.models.BinaryTarget.training"><code class="docutils literal notranslate"><span class="pre">BinaryTarget.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.models.ModelAttributes"><code class="docutils literal notranslate"><span class="pre">ModelAttributes</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#tests.material.models.ModelAttributes.training"><code class="docutils literal notranslate"><span class="pre">ModelAttributes.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.models.NoForward"><code class="docutils literal notranslate"><span class="pre">NoForward</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#tests.material.models.NoForward.preprocess"><code class="docutils literal notranslate"><span class="pre">NoForward.preprocess()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.material.html#module-tests.material.splitters">tests.material.splitters module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html#tests.material.splitters.trivial_splitter"><code class="docutils literal notranslate"><span class="pre">trivial_splitter()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.material.html#module-tests.material">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tests.unittests.html">tests.unittests package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tests.unittests.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.core.html">tests.unittests.core package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.core.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.core.html#module-tests.unittests.core.test_documents">tests.unittests.core.test_documents module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.core.html#module-tests.unittests.core.test_model">tests.unittests.core.test_model module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.core.html#module-tests.unittests.core.test_serialization">tests.unittests.core.test_serialization module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.core.html#module-tests.unittests.core">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.datalayer.html">tests.unittests.datalayer package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.datalayer.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.datalayer.html#module-tests.unittests.datalayer">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.fetchers.html">tests.unittests.fetchers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.fetchers.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.fetchers.html#module-tests.unittests.fetchers.test_downloaders">tests.unittests.fetchers.test_downloaders module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.fetchers.html#module-tests.unittests.fetchers">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.misc.html">tests.unittests.misc package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#module-tests.unittests.misc.test_config">tests.unittests.misc.test_config module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#module-tests.unittests.misc.test_dataclasses">tests.unittests.misc.test_dataclasses module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#module-tests.unittests.misc.test_dicts">tests.unittests.misc.test_dicts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#module-tests.unittests.misc.test_for_each">tests.unittests.misc.test_for_each module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#module-tests.unittests.misc.test_git">tests.unittests.misc.test_git module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#module-tests.unittests.misc.test_key_cache">tests.unittests.misc.test_key_cache module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#module-tests.unittests.misc.test_typed_cache">tests.unittests.misc.test_typed_cache module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#module-tests.unittests.misc.test_uri_cache">tests.unittests.misc.test_uri_cache module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.misc.html#module-tests.unittests.misc">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.models.html">tests.unittests.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.models.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.models.html#module-tests.unittests.models.test_langchain">tests.unittests.models.test_langchain module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.models.html#module-tests.unittests.models.test_sklearn">tests.unittests.models.test_sklearn module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.models.html#module-tests.unittests.models.test_torch">tests.unittests.models.test_torch module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.models.html#module-tests.unittests.models">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.queries.html">tests.unittests.queries package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.queries.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.queries.html#module-tests.unittests.queries">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.vector_search.html">tests.unittests.vector_search package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.vector_search.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.vector_search.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.vector_search.html#module-tests.unittests.vector_search.test_in_memory">tests.unittests.vector_search.test_in_memory module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.vector_search.html#module-tests.unittests.vector_search">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.unittests.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.unittests.html#module-tests.unittests.conftest">tests.unittests.conftest module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.TestMongoDBConfig"><code class="docutils literal notranslate"><span class="pre">TestMongoDBConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.TestMongoDBConfig.host"><code class="docutils literal notranslate"><span class="pre">TestMongoDBConfig.host</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.TestMongoDBConfig.password"><code class="docutils literal notranslate"><span class="pre">TestMongoDBConfig.password</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.TestMongoDBConfig.port"><code class="docutils literal notranslate"><span class="pre">TestMongoDBConfig.port</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.TestMongoDBConfig.serverSelectionTimeoutMS"><code class="docutils literal notranslate"><span class="pre">TestMongoDBConfig.serverSelectionTimeoutMS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.TestMongoDBConfig.username"><code class="docutils literal notranslate"><span class="pre">TestMongoDBConfig.username</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.a_classifier"><code class="docutils literal notranslate"><span class="pre">a_classifier()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.a_model"><code class="docutils literal notranslate"><span class="pre">a_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.a_model_base"><code class="docutils literal notranslate"><span class="pre">a_model_base()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.a_single_insert"><code class="docutils literal notranslate"><span class="pre">a_single_insert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.a_watcher"><code class="docutils literal notranslate"><span class="pre">a_watcher()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.a_watcher_base"><code class="docutils literal notranslate"><span class="pre">a_watcher_base()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.an_insert"><code class="docutils literal notranslate"><span class="pre">an_insert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.an_update"><code class="docutils literal notranslate"><span class="pre">an_update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.arrays"><code class="docutils literal notranslate"><span class="pre">arrays()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.b_model"><code class="docutils literal notranslate"><span class="pre">b_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.c_model"><code class="docutils literal notranslate"><span class="pre">c_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.cleanup_mongodb"><code class="docutils literal notranslate"><span class="pre">cleanup_mongodb()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.config"><code class="docutils literal notranslate"><span class="pre">config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.create_datalayer"><code class="docutils literal notranslate"><span class="pre">create_datalayer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.create_mongodb_client"><code class="docutils literal notranslate"><span class="pre">create_mongodb_client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.empty"><code class="docutils literal notranslate"><span class="pre">empty()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.float_tensors_16"><code class="docutils literal notranslate"><span class="pre">float_tensors_16()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.float_tensors_32"><code class="docutils literal notranslate"><span class="pre">float_tensors_32()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.float_tensors_8"><code class="docutils literal notranslate"><span class="pre">float_tensors_8()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.image_type"><code class="docutils literal notranslate"><span class="pre">image_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.metric"><code class="docutils literal notranslate"><span class="pre">metric()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.mongodb_client"><code class="docutils literal notranslate"><span class="pre">mongodb_client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.mongodb_config"><code class="docutils literal notranslate"><span class="pre">mongodb_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.mongodb_server"><code class="docutils literal notranslate"><span class="pre">mongodb_server()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.nursery_rhymes"><code class="docutils literal notranslate"><span class="pre">nursery_rhymes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.random_arrays"><code class="docutils literal notranslate"><span class="pre">random_arrays()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.random_data"><code class="docutils literal notranslate"><span class="pre">random_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.random_data_factory"><code class="docutils literal notranslate"><span class="pre">random_data_factory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.sentences"><code class="docutils literal notranslate"><span class="pre">sentences()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.si_validation"><code class="docutils literal notranslate"><span class="pre">si_validation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.test_db"><code class="docutils literal notranslate"><span class="pre">test_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.vector_index_factory"><code class="docutils literal notranslate"><span class="pre">vector_index_factory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.wait_for_mongodb"><code class="docutils literal notranslate"><span class="pre">wait_for_mongodb()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.conftest.with_vector_index"><code class="docutils literal notranslate"><span class="pre">with_vector_index()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.unittests.html#module-tests.unittests.test_impall">tests.unittests.test_impall module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html#tests.unittests.test_impall.ImpAllTest"><code class="docutils literal notranslate"><span class="pre">ImpAllTest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#tests.unittests.test_impall.ImpAllTest.CLEAR_SYS_MODULES"><code class="docutils literal notranslate"><span class="pre">ImpAllTest.CLEAR_SYS_MODULES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#tests.unittests.test_impall.ImpAllTest.WARNINGS_ACTION"><code class="docutils literal notranslate"><span class="pre">ImpAllTest.WARNINGS_ACTION</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.unittests.html#module-tests.unittests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-tests">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-tests" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="superduperdb.vector_search.html" class="btn btn-neutral float-left" title="superduperdb.vector_search package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tests.integration.html" class="btn btn-neutral float-right" title="tests.integration package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

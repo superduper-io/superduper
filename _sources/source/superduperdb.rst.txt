@@ -1,0 +1,27 @@
+superduperdb package
+====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   superduperdb.cli
+   superduperdb.cluster
+   superduperdb.core
+   superduperdb.datalayer
+   superduperdb.encoders
+   superduperdb.metrics
+   superduperdb.misc
+   superduperdb.models
+   superduperdb.serve
+   superduperdb.vector_search
+
+Module contents
+---------------
+
+.. automodule:: superduperdb
+   :members:
+   :undoc-members:
+   :show-inheritance:

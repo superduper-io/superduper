@@ -1,0 +1,21 @@
+tests.unittests.vector\_search.faiss package
+============================================
+
+Submodules
+----------
+
+tests.unittests.vector\_search.faiss.test\_hashes module
+--------------------------------------------------------
+
+.. automodule:: tests.unittests.vector_search.faiss.test_hashes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: tests.unittests.vector_search.faiss
+   :members:
+   :undoc-members:
+   :show-inheritance:

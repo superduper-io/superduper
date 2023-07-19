@@ -1,1 +1,327 @@
-first commit
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SuperDuperDB documentation &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quick start" href="getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">SuperDuperDB documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="superduperdb-documentation">
+<h1>SuperDuperDB documentation<a class="headerlink" href="#superduperdb-documentation" title="Permalink to this heading"></a></h1>
+<p>🚀 Welcome to SuperDuperDB! 🚀</p>
+<section id="what-is-superduperdb">
+<h2>What is SuperDuperDB?<a class="headerlink" href="#what-is-superduperdb" title="Permalink to this heading"></a></h2>
+<p>SuperDuperDB is a Python package providing tools for developers to apply AI and machine learning
+in their already deployed datalayer, and simulatenously to set-up a scalable, open-source and auditable environment to do this.</p>
+<p><img alt="" src="_images/overview.png" /></p>
+</section>
+<section id="mission">
+<h2>Mission<a class="headerlink" href="#mission" title="Permalink to this heading"></a></h2>
+<p>At SuperDuperDB, our goal is to massively smoothen and accelerate the developer journey between data and AI models. We aim to:</p>
+<ul class="simple">
+<li><p>Create an <strong>easy-to-use</strong>, <strong>extensible</strong> and <strong>comprehensive</strong> Python framework for integrating AI and
+ML directly to the datalayer: to databases, object-storage, data-lakes and data-warehouses.</p></li>
+<li><p>Empower developers, data scientists and architects to leverage the vast <strong>PyData</strong>, AI
+<strong>open-source ecosystem</strong> in their datalayer deployments.</p></li>
+<li><p>Enable ways-of-working with AI and data which <strong>enable scalability</strong> and industrial scale deployment,
+as well as providing easy-to-use tools for the <strong>individual developer</strong>.</p></li>
+<li><p>Make possible continued use of <strong>already existing or deployed databases</strong>, in combination with AI and ML;
+<strong>no migration of data</strong> to a fancy, new fangled vector-database required.</p></li>
+<li><p>Follow a <strong>fully open-source approach</strong>, in particular prioritizing open-source integrations
+in our roadmap going forward</p></li>
+<li><p>Enable individuals and organizations to <strong>circumvent vendor lock-in strategies</strong> now ubiquitous
+in the AI and ML landscapes, by providing a clear toolset to flexibly deploy AI at the
+datalayer <strong>without necessitating subscriptions</strong>, cloud installations, gated-model-API functionality.</p></li>
+</ul>
+</section>
+<section id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this heading"></a></h2>
+<p>SuperDuperDB is the result of years of experience in research, development and production for
+AI and data. We have come to believe that AI development with data does not need to be as hard as it
+currently is. (Read “<a class="reference internal" href="common_issues.html"><span class="doc">Common issues in AI-data development</span></a>”
+for more context.) By moving to a closer symbiosis of AI and datalayer/ database, we believe
+many pain-points in AI development become non-issues. With SuperDuperDB:</p>
+<ul class="simple">
+<li><p>Model predictions may be evaluated and inserted back into the database, without ever needing
+to load data from the database to the client-side.</p></li>
+<li><p>Training may be deployed in one line, without having to munge, preprocess or fetch data;
+simply point to the data with a data-base query.</p></li>
+<li><p>Models may be configured to <a class="reference internal" href="#continuous-model-processing-on-incoming-data"><span class="std std-ref">watch for incoming data</span></a>, maintaining a catalogue of up-to-date
+predictions and features.</p></li>
+<li><p>Working <a class="reference internal" href="#support-for-tricky-datatypes"><span class="std std-ref">with difficult data types</span></a>, (images, audio, etc.) requires no additional effort in comparison
+to working with “standard data” (numbers, text, etc.)</p></li>
+<li><p>Outputs of configured AI models may be used to “navigate” the database, including <a class="reference internal" href="#use-your-classical-database-as-a-vector-database"><span class="std std-ref">configuring
+and using vector-search</span></a>
+with just a few lines of Python code.</p></li>
+</ul>
+</section>
+<section id="high-level-features">
+<h2>High-Level Features<a class="headerlink" href="#high-level-features" title="Permalink to this heading"></a></h2>
+<p>In the initial <a class="reference internal" href="#"><span class="xref myst">v0.1 release</span></a> we have built the following features on top of MongoDB, with a view to greatly expanding our breadth to a range of datalayer implementations, especially implementations which use SQL-dialects  as the query-language. You can follow the high-level roadmap <a class="reference internal" href="#"><span class="xref myst">here</span></a>.</p>
+<section id="model-frameworks-directly-integrated-with-the-datalayer">
+<h3>Model frameworks directly integrated with the datalayer<a class="headerlink" href="#model-frameworks-directly-integrated-with-the-datalayer" title="Permalink to this heading"></a></h3>
+<p>SuperDuperDB includes wrappers for treating models from diverse AI frameworks across the open-source Python ecosystem uniformly in combination with the datalayer, using a scikit-learn-like
+<code class="docutils literal notranslate"><span class="pre">.fit</span></code> and <code class="docutils literal notranslate"><span class="pre">.predict</span></code> API.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># [ Code snippets assume access to a running MongoDB instance read/write ]</span>
+<span class="kn">from</span> <span class="nn">sklearn.svm</span> <span class="kn">import</span> <span class="n">SVC</span>
+<span class="kn">import</span> <span class="nn">pymongo</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb</span> <span class="kn">import</span> <span class="n">Collection</span>
+<span class="kn">from</span> <span class="nn">superduperdb</span> <span class="kn">import</span> <span class="n">superduper</span>
+
+<span class="c1"># Models and database clients can be converted to SuperDuperDB objects with a simple wrapper.</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">superduper</span><span class="p">(</span><span class="n">SVC</span><span class="p">())</span>
+
+<span class="c1"># SuperDuperDB uses MongoDB by default. SQL integrations are on the way.</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">superduper</span><span class="p">(</span><span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()</span><span class="o">.</span><span class="n">my_db</span><span class="p">)</span>
+
+<span class="c1"># Once wrapped, we can fit and predict &quot;in&quot; the database, simply</span>
+<span class="c1"># specifying the data to be processed with a query.</span>
+<span class="n">coll</span> <span class="o">=</span> <span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;my_collection&#39;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="s1">&#39;input_col&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;predict_col&#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">coll</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;train&#39;</span><span class="p">}))</span>
+
+<span class="c1"># Predictions are saved in the database alongside the inputs.</span>
+<span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="s1">&#39;input_col&#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">coll</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;valid&#39;</span><span class="p">}))</span>
+</pre></div>
+</div>
+</section>
+<section id="continuous-model-processing-on-incoming-data">
+<h3>Continuous model processing on incoming data<a class="headerlink" href="#continuous-model-processing-on-incoming-data" title="Permalink to this heading"></a></h3>
+<p>SuperDuperDB contains components allowing developers to configure models to continuously infer outputs on specified data, and save the outputs back to the database.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Watch the database for incoming data, and process this with a model</span>
+<span class="c1"># Model outputs are continuously stored in the input records</span>
+<span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="s1">&#39;input_col&#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">coll</span><span class="o">.</span><span class="n">find</span><span class="p">(),</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="support-for-tricky-datatypes">
+<h3>Support for “tricky” datatypes<a class="headerlink" href="#support-for-tricky-datatypes" title="Permalink to this heading"></a></h3>
+<p>SuperDuperDB includes tools for working in the database with the complex data types necessary for AI, such as vectors, tensors, images, audio etc. Native python types may be flexibly saved to the DB, to ease use in tricky AI use-cases, such as computer vision.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.encoders.pillow</span> <span class="kn">import</span> <span class="n">pil_image</span> <span class="k">as</span> <span class="n">i</span>
+
+<span class="c1"># Encoders are first class SuperDuperDB objects which deal with serializing</span>
+<span class="c1"># &quot;non-standard&quot; data to the database</span>
+<span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="n">coll</span><span class="o">.</span><span class="n">insert_many</span><span class="p">([</span>
+        <span class="p">{</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">(</span><span class="n">PIL</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">))}</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">images</span>
+    <span class="p">])</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Data may be reloaded using standard database queries, and conveniently reused in downstream applications, or consumed as direct inputs to AI models. The data loaded are instances of the same Python classes as inserted.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">coll</span><span class="o">.</span><span class="n">find_one</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+<span class="go">&lt;PIL.PngImagePlugin.PngImageFile image mode=RGBA size=1164x860&gt;</span>
+</pre></div>
+</div>
+</section>
+<section id="use-your-classical-database-as-a-vector-database">
+<h3>Use your classical database as a vector database<a class="headerlink" href="#use-your-classical-database-as-a-vector-database" title="Permalink to this heading"></a></h3>
+<p>SuperDuperDB contains functionality allowing users to treat their standard database as a vector-search database, integrating your primary database with key-players in the open-source vector-search space.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># First a &quot;Watcher&quot; makes sure vectors stay up-to-date</span>
+<span class="n">indexing_watcher</span> <span class="o">=</span> <span class="n">Watcher</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">OpenAIEmbedding</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">())</span>
+
+<span class="c1"># This &quot;Watcher&quot; is linked with a &quot;VectorIndex&quot;</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">VectorIndex</span><span class="p">(</span><span class="s1">&#39;my-index&#39;</span><span class="p">,</span> <span class="n">indexing_watcher</span><span class="o">=</span><span class="n">indexing_watcher</span><span class="p">))</span>
+
+<span class="c1"># The &quot;VectorIndex&quot; may be used to search data. Items to be searched against are passed</span>
+<span class="c1"># to the registered model and vectorized. No additional app layer is required.</span>
+<span class="c1"># By default, SuperDuperDB uses LanceDB for vector comparison operations</span>
+<span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">collection</span><span class="o">.</span><span class="n">like</span><span class="p">({</span><span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;clothing item&#39;</span><span class="p">},</span> <span class="s1">&#39;my-index&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;brand&#39;</span><span class="p">:</span> <span class="s1">&#39;Nike&#39;</span><span class="p">}))</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#command-line-interface">Command line interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#minimum-working-example">Minimum working example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#cluster-setup">Cluster Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Important Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#encoders">Encoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#models">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#watchers">Watchers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#vector-indexes">Vector-Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#jobs">Jobs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="encoders.html">Encoders</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="encoders.html#user-defined-types-for-serializing-arbitrary-data">User defined types for serializing arbitrary data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="models.html#an-extension-of-standard-ai-and-ml-models">An extension of standard AI and ML models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html#cnn-example">CNN example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="watchers.html#model-callbacks-for-continuously-populating-model-outputs">Model callbacks for continuously populating model outputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="watchers.html#how-watchers-work-under-the-hood">How watchers work under the hood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="watchers.html#chaining-watchers-by-using-features">Chaining watchers by using features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="watchers.html#cnn-watcher">CNN watcher</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vector_index.html">Vector Index</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vector_index.html#flexible-search-using-models-with-tensor-outputs">Flexible search using models with tensor outputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vector_index.html#defining-a-vector-index">Defining a vector-index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vector_index.html#using-a-semantic-index">Using a semantic index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vector_index.html#creating-a-neighbourhood">Creating a neighbourhood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vector_index.html#training-a-semantic-index-by-fine-tuning-models">Training a semantic index by fine-tuning models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="jobs.html#scheduling-of-training-and-model-outputs">Scheduling of training and model outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cluster.html">Cluster</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cluster.html#components">Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cluster.html#basic-local-cluster-setup">Basic local cluster setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.datalayer.base.database.BaseDatabase"><code class="docutils literal notranslate"><span class="pre">BaseDatabase</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.core.component.Component"><code class="docutils literal notranslate"><span class="pre">Component</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.core.model.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.core.job.Job"><code class="docutils literal notranslate"><span class="pre">Job</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.core.job.FunctionJob"><code class="docutils literal notranslate"><span class="pre">FunctionJob</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.core.job.ComponentJob"><code class="docutils literal notranslate"><span class="pre">ComponentJob</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.core.metric.Metric"><code class="docutils literal notranslate"><span class="pre">Metric</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.core.encoder.Encoder"><code class="docutils literal notranslate"><span class="pre">Encoder</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.core.watcher.Watcher"><code class="docutils literal notranslate"><span class="pre">Watcher</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="full_usage.html#superduperdb.core.vector_index.VectorIndex"><code class="docutils literal notranslate"><span class="pre">VectorIndex</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Example notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples/index.html#contents">Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="source/modules.html">superduperdb-stealth</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="source/superduperdb.html">superduperdb package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source/tests.html">tests package</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started.html" class="btn btn-neutral float-right" title="Quick start" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

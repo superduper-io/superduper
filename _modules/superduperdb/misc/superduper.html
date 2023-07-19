@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>superduperdb.misc.superduper &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">superduperdb.misc.superduper</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for superduperdb.misc.superduper</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb.data_backend</span> <span class="kn">import</span> <span class="n">MongoDataBackend</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.build</span> <span class="kn">import</span> <span class="n">build_vector_database</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb</span> <span class="kn">import</span> <span class="n">CFG</span>
+
+
+<div class="viewcode-block" id="duck_type_mongodb"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.superduper.duck_type_mongodb">[docs]</a><span class="k">def</span> <span class="nf">duck_type_mongodb</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;list_collection_names&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="duck_type_sklearn"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.superduper.duck_type_sklearn">[docs]</a><span class="k">def</span> <span class="nf">duck_type_sklearn</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+    <span class="n">tests</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;_predict&#39;</span><span class="p">),</span>
+        <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;fit&#39;</span><span class="p">),</span>
+        <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;transform&#39;</span><span class="p">),</span>
+        <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">tests</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="duck_type_torch"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.superduper.duck_type_torch">[docs]</a><span class="k">def</span> <span class="nf">duck_type_torch</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+    <span class="n">tests</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;forward&#39;</span><span class="p">),</span>
+        <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;state_dict&#39;</span><span class="p">),</span>
+        <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="s1">&#39;parameters&#39;</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">tests</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span></div>
+
+
+<div class="viewcode-block" id="auto_identify"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.superduper.auto_identify">[docs]</a><span class="k">def</span> <span class="nf">auto_identify</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">instance</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="superduper"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.superduper.superduper">[docs]</a><span class="k">def</span> <span class="nf">superduper</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">duck_type_mongodb</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">pymongo.database</span> <span class="kn">import</span> <span class="n">Database</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">Database</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected Database but got {type(item)}&#39;</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.database</span> <span class="kn">import</span> <span class="n">BaseDatabase</span>
+        <span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb.metadata</span> <span class="kn">import</span> <span class="n">MongoMetaDataStore</span>
+        <span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb.artifacts</span> <span class="kn">import</span> <span class="n">MongoArtifactStore</span>
+
+        <span class="k">return</span> <span class="n">BaseDatabase</span><span class="p">(</span>
+            <span class="n">databackend</span><span class="o">=</span><span class="n">MongoDataBackend</span><span class="p">(</span><span class="n">conn</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">MongoMetaDataStore</span><span class="p">(</span><span class="n">conn</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+            <span class="n">artifact_store</span><span class="o">=</span><span class="n">MongoArtifactStore</span><span class="p">(</span>
+                <span class="n">conn</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;_filesystem:</span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">),</span>
+            <span class="n">vector_database</span><span class="o">=</span><span class="n">build_vector_database</span><span class="p">(</span><span class="n">CFG</span><span class="o">.</span><span class="n">vector_search</span><span class="o">.</span><span class="n">type</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">duck_type_sklearn</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span> <span class="k">as</span> <span class="n">BasePipeline</span>
+        <span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="kn">import</span> <span class="n">BaseEstimator</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">BaseEstimator</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected BaseEstimator but got {type(item)}&#39;</span><span class="p">)</span>
+
+        <span class="n">identifier</span> <span class="o">=</span> <span class="n">auto_identify</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">BasePipeline</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">superduperdb.models.sklearn.wrapper</span> <span class="kn">import</span> <span class="n">Pipeline</span>
+
+            <span class="k">return</span> <span class="n">Pipeline</span><span class="p">(</span>
+                <span class="n">identifier</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">steps</span><span class="p">,</span> <span class="n">memory</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">memory</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">superduperdb.models.sklearn.wrapper</span> <span class="kn">import</span> <span class="n">Estimator</span>
+
+        <span class="k">return</span> <span class="n">Estimator</span><span class="p">(</span><span class="n">estimator</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">identifier</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">duck_type_torch</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">jit</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">jit</span><span class="o">.</span><span class="n">ScriptModule</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected a Module but got {type(item)}&#39;</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">superduperdb.models.torch.wrapper</span> <span class="kn">import</span> <span class="n">TorchModel</span>
+
+        <span class="n">identifier</span> <span class="o">=</span> <span class="n">auto_identify</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TorchModel</span><span class="p">(</span><span class="n">identifier</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span> <span class="nb">object</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Couldn</span><span class="se">\&#39;</span><span class="s1">t auto-identify </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s1">, please wrap explicitly using &#39;</span>
+            <span class="s1">&#39;``superduperdb.core.*``&#39;</span>
+        <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

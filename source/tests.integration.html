@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.integration package &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tests.material package" href="tests.material.html" />
+    <link rel="prev" title="tests package" href="tests.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">superduperdb-stealth</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="superduperdb.html">superduperdb package</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="tests.html">tests package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="tests.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">tests.integration package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html">tests.material package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html">tests.unittests package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#module-tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">superduperdb-stealth</a></li>
+          <li class="breadcrumb-item"><a href="tests.html">tests package</a></li>
+      <li class="breadcrumb-item active">tests.integration package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/source/tests.integration.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tests-integration-package">
+<h1>tests.integration package<a class="headerlink" href="#tests-integration-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-tests.integration.conftest">
+<span id="tests-integration-conftest-module"></span><h2>tests.integration.conftest module<a class="headerlink" href="#module-tests.integration.conftest" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.create_mongodb_client_clean_and_close">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">create_mongodb_client_clean_and_close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#create_mongodb_client_clean_and_close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.create_mongodb_client_clean_and_close" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.database_with_default_encoders_and_model">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">database_with_default_encoders_and_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">create_mongodb_client_clean_and_close</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#database_with_default_encoders_and_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.database_with_default_encoders_and_model" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.fake_inserts">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">fake_inserts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#fake_inserts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.fake_inserts" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.fake_tensor_data">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">fake_tensor_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">encoder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#fake_tensor_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.fake_tensor_data" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.fake_updates">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">fake_updates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#fake_updates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.fake_updates" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.fresh_client">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">fresh_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#fresh_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.fresh_client" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.fresh_database">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">fresh_database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fresh_client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#fresh_database"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.fresh_database" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.local_dask_client">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">local_dask_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#local_dask_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.local_dask_client" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.patch_superduper_config">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">patch_superduper_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#patch_superduper_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.patch_superduper_config" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.conftest.test_server">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.conftest.</span></span><span class="sig-name descname"><span class="pre">test_server</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/conftest.html#test_server"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.conftest.test_server" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-tests.integration.test_cdc">
+<span id="tests-integration-test-cdc-module"></span><h2>tests.integration.test_cdc module<a class="headerlink" href="#module-tests.integration.test_cdc" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.add_and_cleanup_watchers">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">add_and_cleanup_watchers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collection_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#add_and_cleanup_watchers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.add_and_cleanup_watchers" title="Permalink to this definition"></a></dt>
+<dd><p>Add watchers to the database and remove them after the test</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.retry_state_check">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">retry_state_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_check</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#retry_state_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.retry_state_check" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.test_cdc_stop">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">test_cdc_stop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">watcher_and_collection_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#test_cdc_stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.test_cdc_stop" title="Permalink to this definition"></a></dt>
+<dd><p>Test that CDC watch service stopped properly</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.test_insert_without_cdc_handler">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">test_insert_without_cdc_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">watcher_without_cdc_handler_and_collection_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_inserts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#test_insert_without_cdc_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.test_insert_without_cdc_handler" title="Permalink to this definition"></a></dt>
+<dd><p>Test that <cite>insert</cite> without CDC handler does not execute task graph</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.test_many_insert">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">test_many_insert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">watcher_without_cdc_handler_and_collection_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_inserts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#test_many_insert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.test_many_insert" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.test_many_update">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">test_many_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">watcher_without_cdc_handler_and_collection_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_updates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#test_many_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.test_many_update" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.test_single_insert">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">test_single_insert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">watcher_without_cdc_handler_and_collection_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_inserts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#test_single_insert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.test_single_insert" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.test_single_update">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">test_single_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">watcher_without_cdc_handler_and_collection_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_updates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#test_single_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.test_single_update" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.test_smoke">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">test_smoke</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">watcher_without_cdc_handler_and_collection_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#test_smoke"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.test_smoke" title="Permalink to this definition"></a></dt>
+<dd><p>Health-check before we test stateful database changes</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.test_task_workflow_on_insert">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">test_task_workflow_on_insert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">watcher_and_collection_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_inserts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#test_task_workflow_on_insert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.test_task_workflow_on_insert" title="Permalink to this definition"></a></dt>
+<dd><p>Test that task graph executed on <cite>insert</cite></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.watcher_and_collection_name">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">watcher_and_collection_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#watcher_and_collection_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.watcher_and_collection_name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_cdc.watcher_without_cdc_handler_and_collection_name">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_cdc.</span></span><span class="sig-name descname"><span class="pre">watcher_without_cdc_handler_and_collection_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_cdc.html#watcher_without_cdc_handler_and_collection_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_cdc.watcher_without_cdc_handler_and_collection_name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-tests.integration.test_dask">
+<span id="tests-integration-test-dask-module"></span><h2>tests.integration.test_dask module<a class="headerlink" href="#module-tests.integration.test_dask" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_dask.add_and_cleanup_watcher">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_dask.</span></span><span class="sig-name descname"><span class="pre">add_and_cleanup_watcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collection_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_dask.html#add_and_cleanup_watcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_dask.add_and_cleanup_watcher" title="Permalink to this definition"></a></dt>
+<dd><p>Add watcher to the database and remove it after the test</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_dask.test_insert_with_dask">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_dask.</span></span><span class="sig-name descname"><span class="pre">test_insert_with_dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_dask_client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_updates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_dask.html#test_insert_with_dask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_dask.test_insert_with_dask" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_dask.test_taskgraph_futures_with_dask">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_dask.</span></span><span class="sig-name descname"><span class="pre">test_taskgraph_futures_with_dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_dask_client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_updates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_dask.html#test_taskgraph_futures_with_dask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_dask.test_taskgraph_futures_with_dask" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-tests.integration.test_server">
+<span id="tests-integration-test-server-module"></span><h2>tests.integration.test_server module<a class="headerlink" href="#module-tests.integration.test_server" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_server.client">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_server.</span></span><span class="sig-name descname"><span class="pre">client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">test_server</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_server.html#client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_server.client" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_server.test_add_load">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_server.</span></span><span class="sig-name descname"><span class="pre">test_add_load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh_database</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_collection</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_server.html#test_add_load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_server.test_add_load" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_server.test_collection">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_server.</span></span><span class="sig-name descname"><span class="pre">test_collection</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_server.html#test_collection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_server.test_collection" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_server.test_insert">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_server.</span></span><span class="sig-name descname"><span class="pre">test_insert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_inserts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_server.html#test_insert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_server.test_insert" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_server.test_remove">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_server.</span></span><span class="sig-name descname"><span class="pre">test_remove</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_server.html#test_remove"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_server.test_remove" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_server.test_select_one">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_server.</span></span><span class="sig-name descname"><span class="pre">test_select_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_inserts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_server.html#test_select_one"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_server.test_select_one" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_server.test_show">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_server.</span></span><span class="sig-name descname"><span class="pre">test_show</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_server.html#test_show"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_server.test_show" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tests.integration.test_server.test_update">
+<span class="sig-prename descclassname"><span class="pre">tests.integration.test_server.</span></span><span class="sig-name descname"><span class="pre">test_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database_with_default_encoders_and_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_inserts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tests/integration/test_server.html#test_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.integration.test_server.test_update" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-tests.integration">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-tests.integration" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tests.html" class="btn btn-neutral float-left" title="tests package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tests.material.html" class="btn btn-neutral float-right" title="tests.material package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

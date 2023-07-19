@@ -1,0 +1,21 @@
+superduperdb.models.pytorch\_lightning package
+==============================================
+
+Submodules
+----------
+
+superduperdb.models.pytorch\_lightning.trainer module
+-----------------------------------------------------
+
+.. automodule:: superduperdb.models.pytorch_lightning.trainer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.models.pytorch_lightning
+   :members:
+   :undoc-members:
+   :show-inheritance:

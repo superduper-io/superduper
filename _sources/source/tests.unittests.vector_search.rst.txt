@@ -1,0 +1,29 @@
+tests.unittests.vector\_search package
+======================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.unittests.vector_search.faiss
+
+Submodules
+----------
+
+tests.unittests.vector\_search.test\_in\_memory module
+------------------------------------------------------
+
+.. automodule:: tests.unittests.vector_search.test_in_memory
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: tests.unittests.vector_search
+   :members:
+   :undoc-members:
+   :show-inheritance:

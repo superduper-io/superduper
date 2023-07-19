@@ -1,0 +1,21 @@
+superduperdb.cluster.dask package
+=================================
+
+Submodules
+----------
+
+superduperdb.cluster.dask.dask\_client module
+---------------------------------------------
+
+.. automodule:: superduperdb.cluster.dask.dask_client
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.cluster.dask
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,18 @@
+tests.unittests.queries package
+===============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.unittests.queries.mongodb
+
+Module contents
+---------------
+
+.. automodule:: tests.unittests.queries
+   :members:
+   :undoc-members:
+   :show-inheritance:

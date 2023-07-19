@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>superduperdb.misc.config &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">superduperdb.misc.config</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for superduperdb.misc.config</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The classes in this file define the configuration variables for SuperDuperDB,</span>
+<span class="sd">which means that this file gets imported before alost anything else, and</span>
+<span class="sd">canot contain any other imports from this project.</span>
+
+<span class="sd">There is a file in the root directory named `default-config.json`</span>
+<span class="sd">which has the default values for every configuration variable, serialized into JSON.</span>
+
+<span class="sd">If you change a class below, you must regenerate `default-config.json with</span>
+
+<span class="sd">    $ python -m tests.unittests.misc.test_config</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">typing</span> <span class="k">as</span> <span class="nn">t</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">root_validator</span>
+
+<span class="kn">from</span> <span class="nn">.jsonable</span> <span class="kn">import</span> <span class="n">Factory</span><span class="p">,</span> <span class="n">JSONable</span>
+
+<span class="n">_BAD_KEY</span> <span class="o">=</span> <span class="s1">&#39;...bad.key...&#39;</span>
+<span class="n">REST_API_VERSION</span> <span class="o">=</span> <span class="s1">&#39;0.1.0&#39;</span>
+
+
+<div class="viewcode-block" id="HasPort"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.HasPort">[docs]</a><span class="k">class</span> <span class="nc">HasPort</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></div>
+
+
+<div class="viewcode-block" id="HostPort"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.HostPort">[docs]</a><span class="k">class</span> <span class="nc">HostPort</span><span class="p">(</span><span class="n">HasPort</span><span class="p">):</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span></div>
+
+
+<div class="viewcode-block" id="IpPort"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.IpPort">[docs]</a><span class="k">class</span> <span class="nc">IpPort</span><span class="p">(</span><span class="n">HasPort</span><span class="p">):</span>
+    <span class="n">ip</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span></div>
+
+
+<div class="viewcode-block" id="Api"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Api">[docs]</a><span class="k">class</span> <span class="nc">Api</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">_BAD_KEY</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Retry"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Retry">[docs]</a><span class="k">class</span> <span class="nc">Retry</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">wait_multiplier</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">wait_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span>
+    <span class="n">wait_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span>
+
+    <span class="n">stop_after_attempt</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="Apis"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Apis">[docs]</a><span class="k">class</span> <span class="nc">Apis</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">providers</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Api</span><span class="p">]</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">retry</span><span class="p">:</span> <span class="n">Retry</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">Retry</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Dask"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Dask">[docs]</a><span class="k">class</span> <span class="nc">Dask</span><span class="p">(</span><span class="n">IpPort</span><span class="p">):</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8786</span>
+
+    <span class="n">serializers</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">deserializers</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Deployment"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Deployment">[docs]</a><span class="k">class</span> <span class="nc">Deployment</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">database</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span></div>
+
+
+<div class="viewcode-block" id="LogLevel"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.LogLevel">[docs]</a><span class="k">class</span> <span class="nc">LogLevel</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">DEBUG</span> <span class="o">=</span> <span class="s1">&#39;DEBUG&#39;</span>
+    <span class="n">INFO</span> <span class="o">=</span> <span class="s1">&#39;INFO&#39;</span>
+    <span class="n">WARN</span> <span class="o">=</span> <span class="s1">&#39;WARN&#39;</span></div>
+
+
+<div class="viewcode-block" id="LogType"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.LogType">[docs]</a><span class="k">class</span> <span class="nc">LogType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">STDERR</span> <span class="o">=</span> <span class="s1">&#39;STDERR&#39;</span>
+    <span class="n">LOGGING</span> <span class="o">=</span> <span class="s1">&#39;LOGGING&#39;</span></div>
+
+
+<div class="viewcode-block" id="Logging"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Logging">[docs]</a><span class="k">class</span> <span class="nc">Logging</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">LogLevel</span><span class="o">.</span><span class="n">INFO</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">LogType</span><span class="o">.</span><span class="n">STDERR</span>
+    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ModelServer"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.ModelServer">[docs]</a><span class="k">class</span> <span class="nc">ModelServer</span><span class="p">(</span><span class="n">HostPort</span><span class="p">):</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;127.0.0.1&#39;</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5001</span></div>
+
+
+<div class="viewcode-block" id="MongoDB"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.MongoDB">[docs]</a><span class="k">class</span> <span class="nc">MongoDB</span><span class="p">(</span><span class="n">HostPort</span><span class="p">):</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">27018</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;testmongodbuser&quot;</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;testmongodbpassword&quot;</span></div>
+
+
+<div class="viewcode-block" id="DataLayer"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.DataLayer">[docs]</a><span class="k">class</span> <span class="nc">DataLayer</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="bp">cls</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mongodb&#39;</span>
+    <span class="n">connection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;pymongo&#39;</span>
+    <span class="n">kwargs</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">MongoDB</span><span class="p">()</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;test_db&#39;</span></div>
+
+
+<div class="viewcode-block" id="DataLayers"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.DataLayers">[docs]</a><span class="k">class</span> <span class="nc">DataLayers</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">artifact</span><span class="p">:</span> <span class="n">DataLayer</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">DataLayer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;_filesystem:test_db&#39;</span><span class="p">))</span>
+    <span class="n">data_backend</span><span class="p">:</span> <span class="n">DataLayer</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">DataLayer</span><span class="p">)</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">DataLayer</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">DataLayer</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Notebook"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Notebook">[docs]</a><span class="k">class</span> <span class="nc">Notebook</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">ip</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;0.0.0.0&#39;</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8888</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+<div class="viewcode-block" id="Notebook.check_one_or_none"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Notebook.check_one_or_none">[docs]</a>    <span class="nd">@root_validator</span>
+    <span class="k">def</span> <span class="nf">check_one_or_none</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;token&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;At most one of password and token may be set&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span></div></div>
+
+
+<div class="viewcode-block" id="Ray"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Ray">[docs]</a><span class="k">class</span> <span class="nc">Ray</span><span class="p">(</span><span class="n">HostPort</span><span class="p">):</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;127.0.0.1&#39;</span>
+
+    <span class="n">deployments</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="n">Deployment</span><span class="p">]</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Server"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Server">[docs]</a><span class="k">class</span> <span class="nc">Server</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;127.0.0.1&#39;</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3223</span>
+    <span class="n">protocol</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;http&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">uri</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="si">}</span><span class="s1">://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="LanceDB"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.LanceDB">[docs]</a><span class="k">class</span> <span class="nc">LanceDB</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">lancedb</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;./.lancedb&#39;</span>
+    <span class="n">backfill_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span></div>
+
+
+<div class="viewcode-block" id="InMemory"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.InMemory">[docs]</a><span class="k">class</span> <span class="nc">InMemory</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">inmemory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">backfill_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span></div>
+
+
+<div class="viewcode-block" id="VectorSearch"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.VectorSearch">[docs]</a><span class="k">class</span> <span class="nc">VectorSearch</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">LanceDB</span><span class="p">,</span> <span class="n">InMemory</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">InMemory</span><span class="p">)</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">19530</span></div>
+
+
+<div class="viewcode-block" id="Config"><a class="viewcode-back" href="../../../source/superduperdb.misc.html#superduperdb.misc.config.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">(</span><span class="n">JSONable</span><span class="p">):</span>
+    <span class="n">apis</span><span class="p">:</span> <span class="n">Apis</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">Apis</span><span class="p">)</span>
+    <span class="n">dask</span><span class="p">:</span> <span class="n">Dask</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">Dask</span><span class="p">)</span>
+    <span class="n">logging</span><span class="p">:</span> <span class="n">Logging</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">Logging</span><span class="p">)</span>
+    <span class="n">model_server</span><span class="p">:</span> <span class="n">ModelServer</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">ModelServer</span><span class="p">)</span>
+    <span class="n">data_layers</span><span class="p">:</span> <span class="n">DataLayers</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">DataLayers</span><span class="p">)</span>
+    <span class="n">notebook</span><span class="p">:</span> <span class="n">Notebook</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">Notebook</span><span class="p">)</span>
+    <span class="n">ray</span><span class="p">:</span> <span class="n">Ray</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">Ray</span><span class="p">)</span>
+    <span class="n">distributed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">cdc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">server</span><span class="p">:</span> <span class="n">Server</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">Server</span><span class="p">)</span>
+    <span class="n">vector_search</span><span class="p">:</span> <span class="n">VectorSearch</span> <span class="o">=</span> <span class="n">Factory</span><span class="p">(</span><span class="n">VectorSearch</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

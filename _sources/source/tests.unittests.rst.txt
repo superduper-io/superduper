@@ -1,0 +1,43 @@
+tests.unittests package
+=======================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tests.unittests.core
+   tests.unittests.datalayer
+   tests.unittests.fetchers
+   tests.unittests.misc
+   tests.unittests.models
+   tests.unittests.queries
+   tests.unittests.vector_search
+
+Submodules
+----------
+
+tests.unittests.conftest module
+-------------------------------
+
+.. automodule:: tests.unittests.conftest
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tests.unittests.test\_impall module
+-----------------------------------
+
+.. automodule:: tests.unittests.test_impall
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: tests.unittests
+   :members:
+   :undoc-members:
+   :show-inheritance:

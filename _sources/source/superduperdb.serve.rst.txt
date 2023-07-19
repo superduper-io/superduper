@@ -1,0 +1,29 @@
+superduperdb.serve package
+==========================
+
+Submodules
+----------
+
+superduperdb.serve.client module
+--------------------------------
+
+.. automodule:: superduperdb.serve.client
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.serve.server module
+--------------------------------
+
+.. automodule:: superduperdb.serve.server
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.serve
+   :members:
+   :undoc-members:
+   :show-inheritance:

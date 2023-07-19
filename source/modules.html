@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>superduperdb-stealth &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="superduperdb package" href="superduperdb.html" />
+    <link rel="prev" title="Example notebooks" href="../examples/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">superduperdb-stealth</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="superduperdb.html">superduperdb package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">superduperdb-stealth</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/source/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="superduperdb-stealth">
+<h1>superduperdb-stealth<a class="headerlink" href="#superduperdb-stealth" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="superduperdb.html">superduperdb package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="superduperdb.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.cli.html">superduperdb.cli package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cli.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cli.html#module-superduperdb.cli.config">superduperdb.cli.config module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cli.html#module-superduperdb.cli.docs">superduperdb.cli.docs module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cli.html#module-superduperdb.cli.info">superduperdb.cli.info module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cli.html#module-superduperdb.cli.serve">superduperdb.cli.serve module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cli.html#module-superduperdb.cli">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.cluster.html">superduperdb.cluster package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cluster.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cluster.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cluster.html#module-superduperdb.cluster.login">superduperdb.cluster.login module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cluster.html#module-superduperdb.cluster.model_server">superduperdb.cluster.model_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cluster.html#module-superduperdb.cluster.vector_search">superduperdb.cluster.vector_search module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.cluster.html#module-superduperdb.cluster">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.core.html">superduperdb.core package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.artifact">superduperdb.core.artifact module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.component">superduperdb.core.component module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.dataset">superduperdb.core.dataset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.documents">superduperdb.core.documents module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.encoder">superduperdb.core.encoder module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.exceptions">superduperdb.core.exceptions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.job">superduperdb.core.job module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.metric">superduperdb.core.metric module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.model">superduperdb.core.model module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.serializable">superduperdb.core.serializable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.task_workflow">superduperdb.core.task_workflow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.tasks">superduperdb.core.tasks module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.vector_index">superduperdb.core.vector_index module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core.watcher">superduperdb.core.watcher module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.core.html#module-superduperdb.core">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.datalayer.html">superduperdb.datalayer package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.datalayer.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.datalayer.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.datalayer.html#module-superduperdb.datalayer.query_dataset">superduperdb.datalayer.query_dataset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.datalayer.html#module-superduperdb.datalayer">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.encoders.html">superduperdb.encoders package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.encoders.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.encoders.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.encoders.html#module-superduperdb.encoders.utils">superduperdb.encoders.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.encoders.html#module-superduperdb.encoders">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.metrics.html">superduperdb.metrics package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.metrics.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.metrics.html#module-superduperdb.metrics.classification">superduperdb.metrics.classification module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.metrics.html#module-superduperdb.metrics.vector_search">superduperdb.metrics.vector_search module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.metrics.html#module-superduperdb.metrics">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.misc.html">superduperdb.misc package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.compat">superduperdb.misc.compat module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.config">superduperdb.misc.config module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.configs">superduperdb.misc.configs module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.dataclasses">superduperdb.misc.dataclasses module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.dicts">superduperdb.misc.dicts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.downloads">superduperdb.misc.downloads module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.for_each">superduperdb.misc.for_each module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.git">superduperdb.misc.git module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.jsonable">superduperdb.misc.jsonable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.key_cache">superduperdb.misc.key_cache module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.logger">superduperdb.misc.logger module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.retry">superduperdb.misc.retry module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.run">superduperdb.misc.run module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.serialization">superduperdb.misc.serialization module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.special_dicts">superduperdb.misc.special_dicts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.superduper">superduperdb.misc.superduper module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.task_queue">superduperdb.misc.task_queue module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.typed_cache">superduperdb.misc.typed_cache module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc.uri_cache">superduperdb.misc.uri_cache module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.misc.html#module-superduperdb.misc">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.models.html">superduperdb.models package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.models.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.models.html#module-superduperdb.models">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.serve.html">superduperdb.serve package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.serve.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.serve.html#module-superduperdb.serve.client">superduperdb.serve.client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.serve.html#module-superduperdb.serve.server">superduperdb.serve.server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.serve.html#module-superduperdb.serve">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.vector_search.html">superduperdb.vector_search package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.vector_search.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.vector_search.html#module-superduperdb.vector_search.base">superduperdb.vector_search.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.vector_search.html#module-superduperdb.vector_search.faiss_index">superduperdb.vector_search.faiss_index module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.vector_search.html#module-superduperdb.vector_search.inmemory">superduperdb.vector_search.inmemory module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.vector_search.html#module-superduperdb.vector_search.lancedb_client">superduperdb.vector_search.lancedb_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.vector_search.html#module-superduperdb.vector_search.table_scan">superduperdb.vector_search.table_scan module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.vector_search.html#module-superduperdb.vector_search">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="superduperdb.html#module-superduperdb">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="superduperdb.html#superduperdb.JSONable"><code class="docutils literal notranslate"><span class="pre">JSONable</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.html#superduperdb.JSONable.Config"><code class="docutils literal notranslate"><span class="pre">JSONable.Config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.html#superduperdb.JSONable.SUBCLASSES"><code class="docutils literal notranslate"><span class="pre">JSONable.SUBCLASSES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.html#superduperdb.JSONable.TYPE_ID_TO_CLASS"><code class="docutils literal notranslate"><span class="pre">JSONable.TYPE_ID_TO_CLASS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.html#superduperdb.JSONable.deepcopy"><code class="docutils literal notranslate"><span class="pre">JSONable.deepcopy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="superduperdb.html#superduperdb.JSONable.dict"><code class="docutils literal notranslate"><span class="pre">JSONable.dict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tests.html">tests package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.integration.html">tests.integration package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.integration.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.integration.html#module-tests.integration.conftest">tests.integration.conftest module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.integration.html#module-tests.integration.test_cdc">tests.integration.test_cdc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.integration.html#module-tests.integration.test_dask">tests.integration.test_dask module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.integration.html#module-tests.integration.test_server">tests.integration.test_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.integration.html#module-tests.integration">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.material.html">tests.material package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#module-tests.material.losses">tests.material.losses module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#module-tests.material.measures">tests.material.measures module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#module-tests.material.metrics">tests.material.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#module-tests.material.models">tests.material.models module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#module-tests.material.splitters">tests.material.splitters module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.material.html#module-tests.material">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.unittests.html">tests.unittests package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#module-tests.unittests.conftest">tests.unittests.conftest module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#module-tests.unittests.test_impall">tests.unittests.test_impall module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.unittests.html#module-tests.unittests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../examples/index.html" class="btn btn-neutral float-left" title="Example notebooks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="superduperdb.html" class="btn btn-neutral float-right" title="superduperdb package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

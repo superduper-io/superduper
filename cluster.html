@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cluster &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Common issues in AI-data development" href="common_issues.html" />
+    <link rel="prev" title="Jobs" href="jobs.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Cluster</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#components">Components</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#client">Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mongodb">MongoDB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#linear-algebra">Linear algebra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model-server">Model-server</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#worker">Worker</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-local-cluster-setup">Basic local cluster setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Cluster</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cluster.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cluster">
+<h1>Cluster<a class="headerlink" href="#cluster" title="Permalink to this heading"></a></h1>
+<p>There are 3 features of a SuperDuperDB cluster:</p>
+<ol class="arabic simple">
+<li><p>When users access SuperDuperDB, they invoke the SuperDuperDB <strong>client</strong> which manages communication
+with the various components of the SuperDuperDB cluster.</p></li>
+<li><p>Data storage: occurs in <strong>MongoDB</strong>, where the raw data,
+[models](Models - an extension of PyTorch models) and model outputs are stored.</p></li>
+<li><p>Job management: whenever SuperDuperDB creates a [job](Jobs - scheduling of training and model outputs)
+(i.e. during data inserts, updates, downloads, and model training), a job is queued and
+then executed by a pool of <strong>workers</strong>.</p></li>
+<li><p>Querying SuperDuperDB: when using queries which use tensor similarity, the SuperDuperDB client
+combines calls to MongoDB with calls to the <strong>linear-algebra</strong> component.</p></li>
+<li><p>SuperDuperDB includes a <strong>model-server</strong>, which may be used to serve the models which have
+been uploaded to SuperDuperDB.</p></li>
+</ol>
+<p>The exact setup of your SuperDuperDB cluster will depend on the use-cases you
+plan to execute with the cluster. Factors to consider will be:</p>
+<ul class="simple">
+<li><p>Latency</p></li>
+<li><p>Where the MongoDB deployment is located</p></li>
+<li><p>Whether you want to scale the cluster according to demand</p></li>
+<li><p>What hardware you’d like to run</p></li>
+<li><p>And more…</p></li>
+</ul>
+<section id="components">
+<h2>Components<a class="headerlink" href="#components" title="Permalink to this heading"></a></h2>
+<p>The basic topology of a SuperDuperDB cluster is given in the graphic below:</p>
+<p><img alt="SuperDuperDB cluster topology" src="_images/architecture_now.png" /></p>
+<section id="client">
+<h3>Client<a class="headerlink" href="#client" title="Permalink to this heading"></a></h3>
+<p>The client is analagous to the client used in MongoDB. This is the programmer’s interface to
+the SuperDuperDB cluster and provides a unified user-experience very similar to the MongoDB
+user experience.</p>
+</section>
+<section id="mongodb">
+<h3>MongoDB<a class="headerlink" href="#mongodb" title="Permalink to this heading"></a></h3>
+<p>This is a standard MongoDB deployment. The deployment can either sit in the same infrastructure
+as the remainder of the SuperDuperDB cluster, or it can be situated remotely. Performance and latency
+concerns here will play a role in which version works best and is most convenient.</p>
+</section>
+<section id="linear-algebra">
+<h3>Linear algebra<a class="headerlink" href="#linear-algebra" title="Permalink to this heading"></a></h3>
+<p>This node returns real time semantic index search outputs to the client. The node loads
+model outputs which are of vector or tensor type, and creates an in-memory search index over
+them.</p>
+</section>
+<section id="model-server">
+<h3>Model-server<a class="headerlink" href="#model-server" title="Permalink to this heading"></a></h3>
+<p>SuperDuperDB contains a component which serves models which has been created.</p>
+</section>
+<section id="worker">
+<h3>Worker<a class="headerlink" href="#worker" title="Permalink to this heading"></a></h3>
+<p>These nodes perform the long computations necessary to update model outputs when new data
+come in, and also perform model training for models which are set up to be trained on creation.</p>
+</section>
+</section>
+<section id="basic-local-cluster-setup">
+<h2>Basic local cluster setup<a class="headerlink" href="#basic-local-cluster-setup" title="Permalink to this heading"></a></h2>
+<p>The following <code class="docutils literal notranslate"><span class="pre">config.json</span></code> and <code class="docutils literal notranslate"><span class="pre">supervisord.conf</span></code> configuration runs a test cluster
+on the <code class="docutils literal notranslate"><span class="pre">localhost</span></code>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;remote&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;linear_algebra&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5001</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;model_server&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5003</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;jobs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5002</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;redis&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">6379</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;mongodb&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">27017</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="jobs.html" class="btn btn-neutral float-left" title="Jobs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="common_issues.html" class="btn btn-neutral float-right" title="Common issues in AI-data development" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

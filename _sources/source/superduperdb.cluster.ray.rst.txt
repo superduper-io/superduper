@@ -1,0 +1,21 @@
+superduperdb.cluster.ray package
+================================
+
+Submodules
+----------
+
+superduperdb.cluster.ray.predict module
+---------------------------------------
+
+.. automodule:: superduperdb.cluster.ray.predict
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.cluster.ray
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,21 @@
+superduperdb.encoders.torch package
+===================================
+
+Submodules
+----------
+
+superduperdb.encoders.torch.tensor module
+-----------------------------------------
+
+.. automodule:: superduperdb.encoders.torch.tensor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.encoders.torch
+   :members:
+   :undoc-members:
+   :show-inheritance:

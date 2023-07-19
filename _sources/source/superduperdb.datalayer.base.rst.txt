@@ -1,0 +1,93 @@
+superduperdb.datalayer.base package
+===================================
+
+Submodules
+----------
+
+superduperdb.datalayer.base.artifacts module
+--------------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.artifacts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.base.backends module
+-------------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.backends
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.base.build module
+----------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.build
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.base.cdc module
+--------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.cdc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.base.cursor module
+-----------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.cursor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.base.data\_backend module
+------------------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.data_backend
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.base.database module
+-------------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.database
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.base.download\_content module
+----------------------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.download_content
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.base.metadata module
+-------------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.metadata
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+superduperdb.datalayer.base.query module
+----------------------------------------
+
+.. automodule:: superduperdb.datalayer.base.query
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.datalayer.base
+   :members:
+   :undoc-members:
+   :show-inheritance:

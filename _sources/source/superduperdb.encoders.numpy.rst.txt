@@ -1,0 +1,21 @@
+superduperdb.encoders.numpy package
+===================================
+
+Submodules
+----------
+
+superduperdb.encoders.numpy.array module
+----------------------------------------
+
+.. automodule:: superduperdb.encoders.numpy.array
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.encoders.numpy
+   :members:
+   :undoc-members:
+   :show-inheritance:

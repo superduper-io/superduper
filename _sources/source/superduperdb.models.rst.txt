@@ -1,0 +1,25 @@
+superduperdb.models package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   superduperdb.models.langchain
+   superduperdb.models.openai
+   superduperdb.models.pytorch_lightning
+   superduperdb.models.sentence_transformers
+   superduperdb.models.sklearn
+   superduperdb.models.torch
+   superduperdb.models.transformers
+   superduperdb.models.vanilla
+
+Module contents
+---------------
+
+.. automodule:: superduperdb.models
+   :members:
+   :undoc-members:
+   :show-inheritance:

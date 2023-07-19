@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>superduperdb.datalayer.base.cdc &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">superduperdb.datalayer.base.cdc</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for superduperdb.datalayer.base.cdc</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">typing</span> <span class="k">as</span> <span class="nn">t</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb.query</span> <span class="kn">import</span> <span class="n">Collection</span>
+<span class="kn">from</span> <span class="nn">superduperdb.misc.logger</span> <span class="kn">import</span> <span class="n">logging</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.database</span> <span class="kn">import</span> <span class="n">BaseDatabase</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb</span> <span class="kn">import</span> <span class="n">cdc</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.base</span> <span class="kn">import</span> <span class="n">backends</span>
+
+
+<span class="n">DBWatcherType</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;DBWatcherType&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_DatabaseWatcherThreadScheduler</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">watcher</span><span class="p">:</span> <span class="n">cdc</span><span class="o">.</span><span class="n">BaseDatabaseWatcher</span><span class="p">,</span> <span class="n">stop_event</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_event</span> <span class="o">=</span> <span class="n">stop_event</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">watcher</span> <span class="o">=</span> <span class="n">watcher</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Database watch service started at </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cdc_stream</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">setup_cdc</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">next_cdc</span><span class="p">(</span><span class="n">cdc_stream</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DatabaseWatcherFactory"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.base.html#superduperdb.datalayer.base.cdc.DatabaseWatcherFactory">[docs]</a><span class="k">class</span> <span class="nc">DatabaseWatcherFactory</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">Generic</span><span class="p">[</span><span class="n">DBWatcherType</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;DatabaseWatcherFactory.</span>
+<span class="sd">    A Factory class to create instance of DatabaseWatcher corresponding to the</span>
+<span class="sd">    `db_type`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SUPPORTED_WATCHERS</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;mongodb&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;mongodb&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">db_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUPPORTED_WATCHERS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">db_type</span><span class="si">}</span><span class="s1"> is not supported yet for CDC.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">watcher</span> <span class="o">=</span> <span class="n">db_type</span>
+
+<div class="viewcode-block" id="DatabaseWatcherFactory.create"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.base.html#superduperdb.datalayer.base.cdc.DatabaseWatcherFactory.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">DBWatcherType</span><span class="p">]:</span>
+        <span class="n">stop_event</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">watcher</span> <span class="o">==</span> <span class="s1">&#39;mongodb&#39;</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;stop_event&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stop_event</span>
+            <span class="n">watcher</span> <span class="o">=</span> <span class="n">cdc</span><span class="o">.</span><span class="n">MongoDatabaseWatcher</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">scheduler</span> <span class="o">=</span> <span class="n">_DatabaseWatcherThreadScheduler</span><span class="p">(</span><span class="n">watcher</span><span class="p">,</span> <span class="n">stop_event</span><span class="o">=</span><span class="n">stop_event</span><span class="p">)</span>
+            <span class="n">watcher</span><span class="o">.</span><span class="n">attach_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">DBWatcherType</span><span class="p">,</span> <span class="n">watcher</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+
+
+<div class="viewcode-block" id="DatabaseWatcher"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.base.html#superduperdb.datalayer.base.cdc.DatabaseWatcher">[docs]</a><span class="k">class</span> <span class="nc">DatabaseWatcher</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Change Data Capture (CDC) is a mechanism used in database systems to track</span>
+<span class="sd">    and capture changes made to a table or collection in real-time.</span>
+<span class="sd">    It allows applications to stay up-to-date with the latest changes in the database</span>
+<span class="sd">    and perform various tasks, such as data synchronization, auditing,</span>
+<span class="sd">    or data integration. The ChangeDataCapture class is designed to</span>
+<span class="sd">    handle CDC tasksfor a specified table/collection in a database.</span>
+
+<span class="sd">    Change streams allow applications to access real-time data changes</span>
+<span class="sd">    without the complexity and risk of tailing the oplog.</span>
+<span class="sd">    Applications can use change streams to subscribe to all data</span>
+<span class="sd">    changes on a single collection,a database, or an entire deployment,</span>
+<span class="sd">    and immediately react to them.</span>
+<span class="sd">    Because change streams use the aggregation framework, applications</span>
+<span class="sd">    can also filter for specific changes or transform the notifications at will.</span>
+
+<span class="sd">    ref: https://www.mongodb.com/docs/manual/changeStreams/</span>
+
+<span class="sd">    Use this module like this::</span>
+<span class="sd">        db = any_arbitary_database.connect(...)</span>
+<span class="sd">        db = superduper(db)</span>
+<span class="sd">        watcher = DatabaseWatcher(db=db, on=Collection(&#39;test_collection&#39;))</span>
+<span class="sd">        watcher.watch()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">identity_sep</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span>
+
+<div class="viewcode-block" id="DatabaseWatcher.__new__"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.base.html#superduperdb.datalayer.base.cdc.DatabaseWatcher.__new__">[docs]</a>    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">db</span><span class="p">:</span> <span class="s1">&#39;BaseDatabase&#39;</span><span class="p">,</span>
+        <span class="n">on</span><span class="p">:</span> <span class="n">Collection</span><span class="p">,</span>
+        <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">cdc</span><span class="o">.</span><span class="n">BaseDatabaseWatcher</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;__new__.</span>
+<span class="sd">        A method which creates instance of `BaseDatabaseWatcher` corresponding to the</span>
+<span class="sd">        `db`.</span>
+
+<span class="sd">        This returns a instance of subclass of `BaseDatabaseWatcher`</span>
+
+<span class="sd">        :param db: A superduperdb instance.</span>
+<span class="sd">        :type db: &#39;BaseDatabase&#39;</span>
+<span class="sd">        :param on: It defines on which collection/table</span>
+<span class="sd">        watcher service should be invoke.</span>
+<span class="sd">        :type on: Collection</span>
+<span class="sd">        :param identifier: A identity given to the watcher service.</span>
+<span class="sd">        :type identifier: str</span>
+<span class="sd">        :param args:</span>
+<span class="sd">        :param kwargs:</span>
+<span class="sd">        :rtype: BaseDatabaseWatcher</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="n">backends</span><span class="o">.</span><span class="n">data_backends</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">types</span> <span class="o">:=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">it</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">databackend</span><span class="p">,</span> <span class="n">v</span><span class="p">)]:</span>
+            <span class="n">db_type</span> <span class="o">=</span> <span class="n">types</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No backends found&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">db_type</span> <span class="o">!=</span> <span class="s1">&#39;mongodb&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Database </span><span class="si">{</span><span class="n">db_type</span><span class="si">}</span><span class="s1"> not supported yet!&#39;</span><span class="p">)</span>
+
+        <span class="n">factory_factory</span> <span class="o">=</span> <span class="n">DatabaseWatcherFactory</span><span class="p">[</span><span class="n">cdc</span><span class="o">.</span><span class="n">MongoDatabaseWatcher</span><span class="p">]</span>
+        <span class="n">db_factory</span> <span class="o">=</span> <span class="n">factory_factory</span><span class="p">(</span><span class="n">db_type</span><span class="o">=</span><span class="n">db_type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">db_factory</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">on</span><span class="p">,</span> <span class="n">identifier</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

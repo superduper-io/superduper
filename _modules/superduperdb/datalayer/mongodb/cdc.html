@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>superduperdb.datalayer.mongodb.cdc &mdash; SuperDuperDB  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            SuperDuperDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Quick  start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../concepts.html">Important Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../encoders.html">Encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../data_references.html">Using external data references</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../prediction_and_training.html">Deploying predictions and training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../watchers.html">Watchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../vector_index.html">Vector Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cluster.html">Cluster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../common_issues.html">Common issues in AI-data development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../full_usage.html">Full Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/index.html">Example notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/modules.html">superduperdb-stealth</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SuperDuperDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">superduperdb.datalayer.mongodb.cdc</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for superduperdb.datalayer.mongodb.cdc</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">queue</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">import</span> <span class="nn">typing</span> <span class="k">as</span> <span class="nn">t</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">from</span> <span class="nn">bson.objectid</span> <span class="kn">import</span> <span class="n">ObjectId</span> <span class="k">as</span> <span class="n">BsonObjectId</span>
+<span class="kn">from</span> <span class="nn">pymongo.change_stream</span> <span class="kn">import</span> <span class="n">CollectionChangeStream</span>
+
+<span class="kn">import</span> <span class="nn">superduperdb</span> <span class="k">as</span> <span class="nn">s</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.serializable</span> <span class="kn">import</span> <span class="n">Serializable</span>
+<span class="kn">from</span> <span class="nn">superduperdb.misc.logger</span> <span class="kn">import</span> <span class="n">logging</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb</span> <span class="kn">import</span> <span class="n">query</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.base.database</span> <span class="kn">import</span> <span class="n">BaseDatabase</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.task_workflow</span> <span class="kn">import</span> <span class="n">TaskWorkflow</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.job</span> <span class="kn">import</span> <span class="n">FunctionJob</span>
+<span class="kn">from</span> <span class="nn">superduperdb.misc.task_queue</span> <span class="kn">import</span> <span class="n">cdc_queue</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.vector_index</span> <span class="kn">import</span> <span class="n">VectorIndex</span>
+
+<span class="n">MongoChangePipelines</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;generic&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+
+
+<div class="viewcode-block" id="DBEvent"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.DBEvent">[docs]</a><span class="k">class</span> <span class="nc">DBEvent</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;`DBEvent` simple enum to hold mongo basic events.&quot;&quot;&quot;</span>
+
+    <span class="n">delete</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;delete&#39;</span>
+    <span class="n">insert</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;insert&#39;</span>
+    <span class="n">update</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;update&#39;</span>
+
+<div class="viewcode-block" id="DBEvent.has_value"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.DBEvent.has_value">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">has_value</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_value2member_map_</span></div></div>
+
+
+<div class="viewcode-block" id="ObjectId"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.ObjectId">[docs]</a><span class="k">class</span> <span class="nc">ObjectId</span><span class="p">(</span><span class="n">BsonObjectId</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__get_validators__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="bp">cls</span><span class="o">.</span><span class="n">validate</span>
+
+<div class="viewcode-block" id="ObjectId.validate"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.ObjectId.validate">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">BsonObjectId</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Id is required.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="BasePacket"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.BasePacket">[docs]</a><span class="k">class</span> <span class="nc">BasePacket</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A base packet to represent message in task queue.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">event_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DBEvent</span><span class="o">.</span><span class="n">insert</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">ids</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">ObjectId</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span></div>
+
+
+<div class="viewcode-block" id="ChangePacket"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.ChangePacket">[docs]</a><span class="k">class</span> <span class="nc">ChangePacket</span><span class="p">(</span><span class="n">BasePacket</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A single packet representation of message in task queue.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">query</span><span class="p">:</span> <span class="n">Serializable</span></div>
+
+
+<div class="viewcode-block" id="BatchPacket"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.BatchPacket">[docs]</a><span class="k">class</span> <span class="nc">BatchPacket</span><span class="p">(</span><span class="n">ChangePacket</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A batch of packets to be transfered to task queue.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MongoChangePipeline"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoChangePipeline">[docs]</a><span class="k">class</span> <span class="nc">MongoChangePipeline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;`MongoChangePipeline` is a class to represent watch pipeline</span>
+<span class="sd">    in mongodb watch api.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MongoChangePipeline.validate"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoChangePipeline.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="MongoChangePipeline.build_matching"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoChangePipeline.build_matching">[docs]</a>    <span class="k">def</span> <span class="nf">build_matching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matching_operations</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span> <span class="o">=</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A helper fxn to build a watch pipeline for mongo watch api.</span>
+
+<span class="sd">        :param matching_operations: A list of operations to watch.</span>
+<span class="sd">        :type matching_operations: t.List</span>
+<span class="sd">        :rtype: t.Dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">bad</span> <span class="o">:=</span> <span class="p">[</span><span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">matching_operations</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">DBEvent</span><span class="o">.</span><span class="n">has_value</span><span class="p">(</span><span class="n">op</span><span class="p">)]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown operations: </span><span class="si">{</span><span class="n">bad</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;$match&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;operationType&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$in&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">*</span><span class="n">matching_operations</span><span class="p">]}}}</span></div></div>
+
+
+<div class="viewcode-block" id="ResumeToken"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.ResumeToken">[docs]</a><span class="k">class</span> <span class="nc">ResumeToken</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class to represent resume tokens for `MongoDatabaseWatcher`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ResumeToken.__init__"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.ResumeToken.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;__init__.</span>
+
+<span class="sd">        :param token: a resume toke use to resume change stream in mongo</span>
+<span class="sd">        :type token: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="n">token</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token</span>
+
+<div class="viewcode-block" id="ResumeToken.get_latest"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.ResumeToken.get_latest">[docs]</a>    <span class="k">def</span> <span class="nf">get_latest</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;.cdc.tokens&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ResumeToken</span><span class="p">(</span><span class="n">token</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="PickledTokens"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.PickledTokens">[docs]</a><span class="k">class</span> <span class="nc">PickledTokens</span><span class="p">:</span>
+    <span class="n">token_path</span> <span class="o">=</span> <span class="s1">&#39;.cdc.tokens&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_tokens</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="PickledTokens.save"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.PickledTokens.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">PickledTokens</span><span class="o">.</span><span class="n">token_path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tokens</span><span class="p">:</span>
+                <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_tokens</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PickledTokens.load"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.PickledTokens.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">PickledTokens</span><span class="o">.</span><span class="n">token_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_tokens</span> <span class="o">=</span> <span class="n">tokens</span>
+        <span class="k">return</span> <span class="n">tokens</span></div></div>
+
+
+<div class="viewcode-block" id="BaseDatabaseWatcher"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.BaseDatabaseWatcher">[docs]</a><span class="k">class</span> <span class="nc">BaseDatabaseWatcher</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Base class which defines basic functions to implement.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BaseDatabaseWatcher.watch"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.BaseDatabaseWatcher.watch">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">watch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="BaseDatabaseWatcher.stop"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.BaseDatabaseWatcher.stop">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+
+
+<div class="viewcode-block" id="copy_vectors"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.copy_vectors">[docs]</a><span class="k">def</span> <span class="nf">copy_vectors</span><span class="p">(</span>
+    <span class="n">db</span><span class="p">,</span>
+    <span class="n">indexing_watcher_identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">cdc_query</span><span class="p">:</span> <span class="n">Serializable</span><span class="p">,</span>
+    <span class="n">ids</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A helper fxn to copy vectors of a `indexing_watcher` component/model of</span>
+<span class="sd">    a `vector_index` watcher.</span>
+
+<span class="sd">    This function will be added as node to the taskworkflow after every</span>
+<span class="sd">    `indexing_watcher` in the defined watchers in db.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Serializable</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">cdc_query</span><span class="p">)</span>
+        <span class="n">select</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">select_using_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+        <span class="n">docs</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">select</span><span class="p">)</span>
+        <span class="n">docs</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">unpack</span><span class="p">()</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">]</span>
+        <span class="n">model</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">indexing_watcher_identifier</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="n">vectors</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;vector&#39;</span><span class="p">:</span> <span class="n">doc</span><span class="p">[</span><span class="s1">&#39;_outputs&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">][</span><span class="n">model</span><span class="p">]</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">}]</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">vector_database</span><span class="o">.</span><span class="n">get_table</span><span class="p">(</span><span class="n">indexing_watcher_identifier</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">vectors</span><span class="p">,</span> <span class="n">upsert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Error in copying_vectors for vector_index: </span><span class="si">{</span><span class="n">indexing_watcher_identifier</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="CDCHandler"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCHandler">[docs]</a><span class="k">class</span> <span class="nc">CDCHandler</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class is responsible for handling the change by executing the taskflow.</span>
+<span class="sd">    This class also extends the task graph by adding funcation job node which</span>
+<span class="sd">    does post model executiong jobs, i.e `copy_vectors`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_QUEUE_BATCH_SIZE</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">_QUEUE_TIMEOUT</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
+
+<div class="viewcode-block" id="CDCHandler.__init__"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCHandler.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">BaseDatabase</span><span class="p">,</span> <span class="n">stop_event</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;__init__.</span>
+
+<span class="sd">        :param db: a superduperdb instance.</span>
+<span class="sd">        :type db: BaseDatabase</span>
+<span class="sd">        :param stop_event: A threading event flag to notify for stoppage.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="n">db</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span> <span class="o">=</span> <span class="n">stop_event</span>
+
+        <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CDCHandler.submit_task_workflow"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCHandler.submit_task_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">submit_task_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cdc_query</span><span class="p">:</span> <span class="n">Serializable</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;submit_task_workflow.</span>
+<span class="sd">        A fxn to build a taskflow and execute it with changed ids.</span>
+<span class="sd">        This also extends the task workflow graph with a node.</span>
+<span class="sd">        This node is responsible for applying a vector indexing watcher,</span>
+<span class="sd">        and copying the vectors into a vector search database.</span>
+
+<span class="sd">        :param cdc_query: A query which will be used by `db._build_task_workflow` method</span>
+<span class="sd">        to extract the desired data.</span>
+<span class="sd">        :type cdc_query: Serializable</span>
+<span class="sd">        :param ids: List of ids which were observed as changed document.</span>
+<span class="sd">        :type ids: t.List</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">task_graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">_build_task_workflow</span><span class="p">(</span><span class="n">cdc_query</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">task_graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_vector_watcher_task</span><span class="p">(</span>
+            <span class="n">task_graph</span><span class="p">,</span> <span class="n">cdc_query</span><span class="o">=</span><span class="n">cdc_query</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span>
+        <span class="p">)</span>
+        <span class="n">task_graph</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CDCHandler.create_vector_watcher_task"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCHandler.create_vector_watcher_task">[docs]</a>    <span class="k">def</span> <span class="nf">create_vector_watcher_task</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task_graph</span><span class="p">:</span> <span class="n">TaskWorkflow</span><span class="p">,</span>
+        <span class="n">cdc_query</span><span class="p">:</span> <span class="n">Serializable</span><span class="p">,</span>
+        <span class="n">ids</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TaskWorkflow</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;create_vector_watcher_task.</span>
+<span class="sd">        A helper function to define a node in taskflow graph which is responsible for</span>
+<span class="sd">        copying vectors to a vector db.</span>
+
+<span class="sd">        :param task_graph: A DiGraph task flow which defines task on a di graph.</span>
+<span class="sd">        :type task_graph: TaskWorkflow</span>
+<span class="sd">        :param db: A superduperdb instance.</span>
+<span class="sd">        :type db: &#39;BaseDatabase&#39;</span>
+<span class="sd">        :param cdc_query: A basic find query to get cursor on collection.</span>
+<span class="sd">        :type cdc_query: Serializable</span>
+
+<span class="sd">        :param ids: A list of ids observed during the change</span>
+<span class="sd">        :type ids: t.List[str]</span>
+<span class="sd">        :rtype: TaskWorkflow</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="s1">&#39;vector_index&#39;</span><span class="p">):</span>
+            <span class="n">vector_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">identifier</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span> <span class="n">variety</span><span class="o">=</span><span class="s1">&#39;vector_index&#39;</span><span class="p">)</span>
+            <span class="n">vector_index</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">VectorIndex</span><span class="p">,</span> <span class="n">vector_index</span><span class="p">)</span>
+            <span class="n">indexing_watcher_identifier</span> <span class="o">=</span> <span class="n">vector_index</span><span class="o">.</span><span class="n">indexing_watcher</span><span class="o">.</span><span class="n">identifier</span>
+            <span class="n">task_graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;copy_vectors(</span><span class="si">{</span><span class="n">indexing_watcher_identifier</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">,</span>
+                <span class="n">FunctionJob</span><span class="p">(</span>
+                    <span class="nb">callable</span><span class="o">=</span><span class="n">copy_vectors</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="n">indexing_watcher_identifier</span><span class="p">,</span> <span class="n">ids</span><span class="p">,</span> <span class="n">cdc_query</span><span class="o">.</span><span class="n">serialize</span><span class="p">()],</span>
+                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{},</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">model</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">indexing_watcher_identifier</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+            <span class="n">task_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s1">.predict(</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s1">&#39;copy_vectors(</span><span class="si">{</span><span class="n">indexing_watcher_identifier</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">task_graph</span></div>
+
+<div class="viewcode-block" id="CDCHandler.on_create"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCHandler.on_create">[docs]</a>    <span class="k">def</span> <span class="nf">on_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">:</span> <span class="n">ChangePacket</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">packet</span><span class="o">.</span><span class="n">ids</span>
+        <span class="n">cdc_query</span> <span class="o">=</span> <span class="n">packet</span><span class="o">.</span><span class="n">query</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">submit_task_workflow</span><span class="p">(</span><span class="n">cdc_query</span><span class="o">=</span><span class="n">cdc_query</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CDCHandler.on_update"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCHandler.on_update">[docs]</a>    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">:</span> <span class="n">ChangePacket</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># TODO: for now we treat updates as inserts.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_create</span><span class="p">(</span><span class="n">packet</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">:</span> <span class="n">ChangePacket</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="n">DBEvent</span><span class="o">.</span><span class="n">insert</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_create</span><span class="p">(</span><span class="n">packet</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">packet</span><span class="o">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="n">DBEvent</span><span class="o">.</span><span class="n">update</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_update</span><span class="p">(</span><span class="n">packet</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CDCHandler._collate_packets"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCHandler._collate_packets">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_collate_packets</span><span class="p">(</span><span class="n">packets</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="n">ChangePacket</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">BatchPacket</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A helper function to coallate batch of packets into one</span>
+<span class="sd">        `BatchPacket`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">packet</span><span class="o">.</span><span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">packet</span> <span class="ow">in</span> <span class="n">packets</span><span class="p">]</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">packets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">query</span>
+
+        <span class="c1"># TODO: cluster BatchPacket for each event.</span>
+        <span class="n">event_type</span> <span class="o">=</span> <span class="n">packets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">event_type</span>
+        <span class="k">return</span> <span class="n">BatchPacket</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="n">event_type</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CDCHandler.get_batch_from_queue"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCHandler.get_batch_from_queue">[docs]</a>    <span class="k">def</span> <span class="nf">get_batch_from_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A method to get a batch of packets from task queue, with a timeout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">packets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_QUEUE_BATCH_SIZE</span><span class="p">):</span>
+                <span class="n">packets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cdc_queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_QUEUE_TIMEOUT</span><span class="p">))</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">except</span> <span class="n">queue</span><span class="o">.</span><span class="n">Empty</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">packets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">CDCHandler</span><span class="o">.</span><span class="n">_collate_packets</span><span class="p">(</span><span class="n">packets</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CDCHandler.run"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCHandler.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">packets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_from_queue</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">packets</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">(</span><span class="n">packets</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error while handling cdc batches :: reason </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MongoEventMixin"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoEventMixin">[docs]</a><span class="k">class</span> <span class="nc">MongoEventMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A Mixin class which defines helper fxns for `MongoDatabaseWatcher`</span>
+<span class="sd">    It define basic events handling methods like</span>
+<span class="sd">    `on_create`, `on_update`, etc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">DEFAULT_ID</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;_id&#39;</span>
+    <span class="n">EXCLUSION_KEYS</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">DEFAULT_ID</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MongoEventMixin.on_create"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoEventMixin.on_create">[docs]</a>    <span class="k">def</span> <span class="nf">on_create</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="s1">&#39;BaseDatabase&#39;</span><span class="p">,</span> <span class="n">collection</span><span class="p">:</span> <span class="n">query</span><span class="o">.</span><span class="n">Collection</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;on_create.</span>
+<span class="sd">        A helper on create event handler which handles inserted document in the</span>
+<span class="sd">        change stream.</span>
+<span class="sd">        It basically extracts the change document and build the taskflow graph to</span>
+<span class="sd">        execute.</span>
+
+<span class="sd">        :param change: The changed document.</span>
+<span class="sd">        :type change: t.Dict</span>
+<span class="sd">        :param db: a superduperdb instance.</span>
+<span class="sd">        :type db: &#39;BaseDatabase&#39;</span>
+<span class="sd">        :param collection: The collection on which change was observed.</span>
+<span class="sd">        :type collection: query.Collection</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Triggered `on_create` handler.&#39;</span><span class="p">)</span>
+        <span class="c1"># new document added!</span>
+        <span class="n">document</span> <span class="o">=</span> <span class="n">change</span><span class="p">[</span><span class="n">CDCKeys</span><span class="o">.</span><span class="n">document_data_key</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">document</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_ID</span><span class="p">]]</span>
+        <span class="n">cdc_query</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">()</span>
+        <span class="n">packet</span> <span class="o">=</span> <span class="n">ChangePacket</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="n">DBEvent</span><span class="o">.</span><span class="n">insert</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">cdc_query</span><span class="p">)</span>
+        <span class="n">cdc_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">packet</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoEventMixin.on_update"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoEventMixin.on_update">[docs]</a>    <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="s1">&#39;BaseDatabase&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;on_update.</span>
+
+<span class="sd">        :param change:</span>
+<span class="sd">        :type change: t.Dict</span>
+<span class="sd">        :param db:</span>
+<span class="sd">        :type db: &#39;BaseDatabase&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1">#  prepare updated document</span>
+        <span class="n">change</span><span class="p">[</span><span class="n">CDCKeys</span><span class="o">.</span><span class="n">update_descriptions_key</span><span class="o">.</span><span class="n">value</span><span class="p">][</span><span class="s1">&#39;updatedFields&#39;</span><span class="p">]</span>
+        <span class="n">change</span><span class="p">[</span><span class="n">CDCKeys</span><span class="o">.</span><span class="n">update_descriptions_key</span><span class="o">.</span><span class="n">value</span><span class="p">][</span><span class="s1">&#39;removedFields&#39;</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="CDCKeys"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.CDCKeys">[docs]</a><span class="k">class</span> <span class="nc">CDCKeys</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A enum to represent mongo change document keys.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">operation_type</span> <span class="o">=</span> <span class="s1">&#39;operationType&#39;</span>
+    <span class="n">document_key</span> <span class="o">=</span> <span class="s1">&#39;documentKey&#39;</span>
+    <span class="n">update_descriptions_key</span> <span class="o">=</span> <span class="s1">&#39;updateDescription&#39;</span>
+    <span class="n">update_field_key</span> <span class="o">=</span> <span class="s1">&#39;updatedFields&#39;</span>
+    <span class="n">document_data_key</span> <span class="o">=</span> <span class="s1">&#39;fullDocument&#39;</span></div>
+
+
+<div class="viewcode-block" id="MongoDatabaseWatcher"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher">[docs]</a><span class="k">class</span> <span class="nc">MongoDatabaseWatcher</span><span class="p">(</span><span class="n">BaseDatabaseWatcher</span><span class="p">,</span> <span class="n">MongoEventMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    It is a class which helps capture data from mongodb database and handle it</span>
+<span class="sd">    accordingly.</span>
+
+<span class="sd">    This class accepts options and db instance from user and starts a scheduler</span>
+<span class="sd">    which could schedule a watching service to watch change stream.</span>
+
+<span class="sd">    This class builds a workflow graph on each change observed.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">IDENTITY_SEP</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.__init__"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">db</span><span class="p">:</span> <span class="s1">&#39;BaseDatabase&#39;</span><span class="p">,</span>
+        <span class="n">on</span><span class="p">:</span> <span class="n">query</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span>
+        <span class="n">stop_event</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">,</span>
+        <span class="n">identifier</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">resume_token</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">ResumeToken</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;__init__.</span>
+
+<span class="sd">        :param db: It is a superduperdb instance.</span>
+<span class="sd">        :type db: &#39;BaseDatabase&#39;</span>
+<span class="sd">        :param on: It is used to define a Collection on which CDC would be performed.</span>
+<span class="sd">        :type on: query.Collection</span>
+<span class="sd">        :param stop_event: A threading event flag to notify for stoppage.</span>
+<span class="sd">        :type identifier: &#39;threading.Event&#39;</span>
+<span class="sd">        :param identifier: A identifier to represent the watcher service.</span>
+<span class="sd">        :type identifier: &#39;str&#39;</span>
+<span class="sd">        :param resume_token: A resume token is a token used to resume</span>
+<span class="sd">        the change stream in mongo.</span>
+<span class="sd">        :type resume_token: t.Optional[ResumeToken]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="n">db</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_on_component</span> <span class="o">=</span> <span class="n">on</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_identifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_identifier</span><span class="p">([</span><span class="n">identifier</span><span class="p">,</span> <span class="n">on</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">PickledTokens</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_change_counters</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">inserts</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">updates</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">resume_token</span> <span class="o">=</span> <span class="n">resume_token</span><span class="o">.</span><span class="n">token</span> <span class="k">if</span> <span class="n">resume_token</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cdc_change_handler</span> <span class="o">=</span> <span class="n">CDCHandler</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">stop_event</span><span class="o">=</span><span class="n">stop_event</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span> <span class="o">=</span> <span class="n">stop_event</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">identity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identifier</span>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher._build_identifier"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher._build_identifier">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_build_identifier</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">identifiers</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;_build_identifier.</span>
+
+<span class="sd">        :param identifiers: list of identifiers.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">IDENTITY_SEP</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">identifiers</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher._get_stream_pipeline"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher._get_stream_pipeline">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_stream_pipeline</span><span class="p">(</span>
+        <span class="n">change</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;_get_stream_pipeline.</span>
+
+<span class="sd">        :param change: change can be a prebuilt watch pipeline like</span>
+<span class="sd">        &#39;generic&#39; or user Defined watch pipeline.</span>
+<span class="sd">        :type change: t.Optional[t.Union[str, t.Dict]]</span>
+<span class="sd">        :rtype: t.Optional[t.Dict]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">change</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">MongoChangePipelines</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;generic&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher._get_reference_id"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher._get_reference_id">[docs]</a>    <span class="k">def</span> <span class="nf">_get_reference_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;_get_reference_id.</span>
+
+<span class="sd">        :param document:</span>
+<span class="sd">        :type document: t.Dict</span>
+<span class="sd">        :rtype: t.Optional[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">document_key</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="n">CDCKeys</span><span class="o">.</span><span class="n">document_key</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+            <span class="n">reference_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">document_key</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">reference_id</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.event_handler"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.event_handler">[docs]</a>    <span class="k">def</span> <span class="nf">event_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;event_handler.</span>
+<span class="sd">        A helper fxn to handle incoming changes from change stream on a collection.</span>
+
+<span class="sd">        :param change: The change (document) observed during the change stream.</span>
+<span class="sd">        :type change: t.Dict</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">change</span><span class="p">[</span><span class="n">CDCKeys</span><span class="o">.</span><span class="n">operation_type</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+        <span class="n">reference_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_reference_id</span><span class="p">(</span><span class="n">change</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">reference_id</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Document change not handled due to no document key&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">event</span> <span class="o">==</span> <span class="n">DBEvent</span><span class="o">.</span><span class="n">insert</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_change_counters</span><span class="p">[</span><span class="s1">&#39;inserts&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_create</span><span class="p">(</span><span class="n">change</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_component</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">event</span> <span class="o">==</span> <span class="n">DBEvent</span><span class="o">.</span><span class="n">update</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_change_counters</span><span class="p">[</span><span class="s1">&#39;updates&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_update</span><span class="p">(</span><span class="n">change</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.dump_token"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.dump_token">[docs]</a>    <span class="k">def</span> <span class="nf">dump_token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;dump_token.</span>
+<span class="sd">        A helper utility to dump resume token from the changed document.</span>
+
+<span class="sd">        :param change:</span>
+<span class="sd">        :type change: t.Dict</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="n">change</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_ID</span><span class="p">][</span><span class="s1">&#39;_data&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">save</span><span class="p">([</span><span class="n">token</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.check_if_taskgraph_change"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.check_if_taskgraph_change">[docs]</a>    <span class="k">def</span> <span class="nf">check_if_taskgraph_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A helper method to check if the cdc change is done</span>
+<span class="sd">        by taskgraph nodes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">change</span><span class="p">[</span><span class="n">CDCKeys</span><span class="o">.</span><span class="n">operation_type</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="o">==</span> <span class="n">DBEvent</span><span class="o">.</span><span class="n">update</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="n">updates</span> <span class="o">=</span> <span class="n">change</span><span class="p">[</span><span class="n">CDCKeys</span><span class="o">.</span><span class="n">update_descriptions_key</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+            <span class="n">updated_fields</span> <span class="o">=</span> <span class="n">updates</span><span class="p">[</span><span class="n">CDCKeys</span><span class="o">.</span><span class="n">update_field_key</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="p">[</span><span class="kc">True</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">updated_fields</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_outputs&#39;</span><span class="p">)]</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.setup_cdc"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.setup_cdc">[docs]</a>    <span class="k">def</span> <span class="nf">setup_cdc</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">change_pipeline</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CollectionChangeStream</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A method to setup cdc change stream from user provided</span>
+<span class="sd">        optional `change_pipeline`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_stream_pipeline</span><span class="p">(</span><span class="n">change_pipeline</span><span class="p">)</span>
+
+            <span class="n">stream</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_component</span><span class="o">.</span><span class="n">change_stream</span><span class="p">(</span>
+                <span class="n">pipeline</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span> <span class="n">resume_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resume_token</span>
+            <span class="p">)</span>
+
+            <span class="n">stream_iterator</span> <span class="o">=</span> <span class="n">stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Started listening database with identity </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="si">}</span><span class="s1">...&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error while setting up cdc stream.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="k">return</span> <span class="n">stream_iterator</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.next_cdc"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.next_cdc">[docs]</a>    <span class="k">def</span> <span class="nf">next_cdc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="n">CollectionChangeStream</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A method to get the next stream of change observed on the given `Collection`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">change</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">try_next</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">change</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Database change encountered at </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_taskgraph_change</span><span class="p">(</span><span class="n">change</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">event_handler</span><span class="p">(</span><span class="n">change</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dump_token</span><span class="p">(</span><span class="n">change</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Change stream is close or empty!, stopping cdc!&#39;</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Error occured during cdc!, stopping cdc!&#39;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.attach_scheduler"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.attach_scheduler">[docs]</a>    <span class="k">def</span> <span class="nf">attach_scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span> <span class="o">=</span> <span class="n">scheduler</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.info"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A method to get info on the current state of watcher.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s1">&#39;inserts&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_change_counters</span><span class="p">[</span><span class="s1">&#39;inserts&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;updates&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_change_counters</span><span class="p">[</span><span class="s1">&#39;updates&#39;</span><span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">info</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.watch"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.watch">[docs]</a>    <span class="k">def</span> <span class="nf">watch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change_pipeline</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">Dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Primary fxn to initiate watching of a database on the collection</span>
+<span class="sd">        with defined `change_pipeline` by the user.</span>
+
+<span class="sd">        :param change_pipeline: A mongo watch pipeline defined by the user</span>
+<span class="sd">        for more fine grained watching.</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">CFG</span><span class="o">.</span><span class="n">cdc</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cdc_change_handler</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Watching service stopped!&#39;</span><span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">CFG</span><span class="o">.</span><span class="n">cdc</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.stop"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A method to stop watching cdc changes.</span>
+<span class="sd">        This stops the corresponding services as well.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">CFG</span><span class="o">.</span><span class="n">cdc</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.is_available"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.is_available">[docs]</a>    <span class="k">def</span> <span class="nf">is_available</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A method to get the status of watcher.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MongoDatabaseWatcher.close"><a class="viewcode-back" href="../../../../source/superduperdb.datalayer.mongodb.html#superduperdb.datalayer.mongodb.cdc.MongoDatabaseWatcher.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

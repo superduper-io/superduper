@@ -171,8 +171,11 @@ sphinx==6.2.1
     #   -r requirements-docs.in
     #   myst-parser
     #   nbsphinx
+    #   sphinx-autodoc-typehints
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
+sphinx-autodoc-typehints==1.23.0
+    # via -r requirements-docs.in
 sphinx-rtd-theme==1.2.2
     # via -r requirements-docs.in
 sphinxcontrib-applehelp==1.0.4

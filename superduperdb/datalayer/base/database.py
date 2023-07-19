@@ -36,8 +36,8 @@ from superduperdb.vector_search.base import VectorDatabase
 # to the rest of the code.
 # It should be moved to the Server's initialization code where it can be available to
 # all threads.
-from ...core.artifact import (
-    Artifact,
+from superduperdb.core.artifact import Artifact
+from superduperdb.core.artifact_tree import (
     get_artifacts,
     infer_artifacts,
     put_artifacts_back,

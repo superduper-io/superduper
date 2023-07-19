@@ -5,7 +5,7 @@ import uuid
 
 import click
 import requests
-from superduperdb.core.artifact import (
+from superduperdb.core.artifact_tree import (
     get_artifacts,
     replace_artifacts_with_dict,
     load_artifacts,

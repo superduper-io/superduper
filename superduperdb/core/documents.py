@@ -11,7 +11,7 @@ class Document:
     that resource to a mix of jsonable content or `bytes`
     """
 
-    _DEFAULT_ID_KEY = '_id'
+    _DEFAULT_ID_KEY: str = '_id'
 
     def __init__(self, content: t.Dict):
         self.content = content

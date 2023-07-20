@@ -31,13 +31,13 @@ def TransformersTrainerConfiguration(identifier: str, *args, **kwargs):
 class Pipeline(Model):
     tokenizer: t.Optional[t.Callable] = None
 
-    def __post_init__(self, db):
+    def __post_init__(self):
         if not self.device:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.object.to(self.device)
         if not isinstance(self.tokenizer, Artifact):
-            self.tokenizer = Artifact(_artifact=self.tokenizer)
-        super().__post_init__(db)
+            self.tokenizer = Artifact(artifact=self.tokenizer)
+        super().__post_init__()
 
     @property
     def pipeline(self):
@@ -57,7 +57,7 @@ class Pipeline(Model):
         **tokenizer_kwargs,
     ):
         tokenizing_function = TokenizingFunction(
-            self.tokenizer.a, key=X_key, **tokenizer_kwargs
+            self.tokenizer.artifact, key=X_key, **tokenizer_kwargs
         )
         train_data = query_dataset_factory(
             select=self.training_select,
@@ -104,7 +104,7 @@ class Pipeline(Model):
         prefetch_size: int = _DEFAULT_PREFETCH_SIZE,
         tokenizer_kwargs: t.Dict[str, t.Any] = {},
         **kwargs,
-    ):
+    ) -> t.Optional[t.Dict[str, t.Any]]:
         if configuration is not None:
             self.configuration = configuration
         if select is not None:
@@ -113,6 +113,8 @@ class Pipeline(Model):
             self.validation_sets = validation_sets
         if metrics is not None:
             self.metrics = metrics
+
+        evaluate = kwargs.pop('evaluate', True)
 
         if isinstance(X, str):
             train_data, valid_data = self._get_data(
@@ -131,18 +133,21 @@ class Pipeline(Model):
             eval_dataset=valid_data,
             **kwargs,
         )
+        evaluation = None
 
         try:
             trainer.train()
-            evaluation = trainer.evaluate()
+            if evaluate:
+                evaluation = trainer.evaluate()
         except Exception as exc:
-            log.error(f"Training could not finish :: {exc}")
-
-        return evaluation
+            log.exception(f"Training could not finish :: {exc}")
+            raise
+        else:
+            return evaluation
 
     def _predict_one(self, input: str, **kwargs):
         tokenized_input = self.tokenizer.a(input, return_tensors='pt').to(self.device)
-        return self.object.a(**tokenized_input, **kwargs)
+        return self.object.artifact(**tokenized_input, **kwargs)
 
     def _predict(self, input: str, **kwargs):
         if not isinstance(input, list):

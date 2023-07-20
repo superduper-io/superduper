@@ -38,11 +38,11 @@ def superduper(item, **kwargs):
         if not isinstance(item, Database):
             raise TypeError('Expected Database but got {type(item)}')
 
-        from superduperdb.datalayer.base.database import BaseDatabase
+        from superduperdb.datalayer.base.datalayer import Datalayer
         from superduperdb.datalayer.mongodb.metadata import MongoMetaDataStore
         from superduperdb.datalayer.mongodb.artifacts import MongoArtifactStore
 
-        return BaseDatabase(
+        return Datalayer(
             databackend=MongoDataBackend(conn=item.client, name=item.name),
             metadata=MongoMetaDataStore(conn=item.client, name=item.name),
             artifact_store=MongoArtifactStore(

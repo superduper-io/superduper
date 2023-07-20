@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-import superduperdb as s
 import typing as t
 
 import numpy
@@ -91,8 +90,7 @@ class InMemoryVectorCollection(VectorCollection):
 
 
 class InMemoryVectorDatabase(VectorDatabase):
-    def __init__(self, config: s.config.VectorSearch) -> None:
-        self._config = config
+    def __init__(self) -> None:
         self._collections: t.Dict[VectorCollectionId, VectorCollection] = {}
 
     def get_table(self, config: VectorCollectionConfig) -> VectorCollection:

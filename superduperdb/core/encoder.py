@@ -25,7 +25,7 @@ def _pickle_encoder(x: t.Any) -> bytes:
 class Encoder(Component):
     """
     Storeable ``Component`` allowing byte encoding of primary data,
-    i.e. data inserted using ``datalayer.base.BaseDatabase.insert``
+    i.e. data inserted using ``datalayer.base.datalayer.Datalayer.insert``
 
     :param identifier: unique identifier
     :param encoder: callable converting an ``Encodable`` of this ``Encoder`` to

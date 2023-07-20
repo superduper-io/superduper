@@ -1,9 +1,14 @@
-from .cli import app, config, docs, info, serve  # noqa: F401, E402
+from .cli import app, config, docs, info  # noqa: F401, E402
+from .cli.serve import local_cluster, serve  # noqa: F401, E402
 import click
 import sys
 
 
 def run():
+    """
+    Entrypoint for the CLI. This is the function that is called when the
+    user runs `python -m superduperdb`.
+    """
     try:
         app(standalone_mode=False)
     except click.ClickException as e:

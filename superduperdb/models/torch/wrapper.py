@@ -16,7 +16,7 @@ from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encodable
 from superduperdb.core.model import Model, ModelEnsemble, _TrainingConfiguration
 from superduperdb.core.serializable import Serializable
-from superduperdb.datalayer.base.database import BaseDatabase
+from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.logger import logging
 from superduperdb.models.torch.utils import device_of, to_device, eval
@@ -120,7 +120,7 @@ class Base:
         self,
         X: Union[List[str], str],
         y: Optional[Union[List, Any]] = None,
-        db: Optional[BaseDatabase] = None,
+        db: Optional[Datalayer] = None,
         select: Optional[Union[Select, Dict]] = None,
         configuration: Optional[TorchTrainerConfiguration] = None,
         validation_sets: Optional[List[str]] = None,
@@ -219,7 +219,7 @@ class Base:
         self,
         train_dataloader: DataLoader,
         valid_dataloader: DataLoader,
-        db: BaseDatabase,  # type: ignore[arg-type]
+        db: Datalayer,  # type: ignore[arg-type]
         validation_sets: List[str],
     ):
         self.train()
@@ -285,7 +285,7 @@ class Base:
                 preprocessors[k] = preprocessors[k].artifact
         return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
 
-    def _get_data(self, db: Optional[BaseDatabase]):
+    def _get_data(self, db: Optional[Datalayer]):
         train_data = QueryDataset(
             select=self.training_select,  # type: ignore[arg-type]
             keys=self.training_keys,
@@ -334,7 +334,7 @@ class TorchModel(Base, Model):
     def optimizers(self):
         return [self.optimizer]
 
-    def save(self, database: BaseDatabase):
+    def save(self, database: Datalayer):
         self.optimizer_state = Artifact(self.optimizer.state_dict(), serializer='torch')
         database.replace(
             object=self,
@@ -531,7 +531,7 @@ class TorchModelEnsemble(Base, ModelEnsemble):
             for m in self.models
         ]
 
-    def save(self, database: BaseDatabase):
+    def save(self, database: Datalayer):
         states = []
         for o in self.optimizers:
             states.append(Artifact(o.state_dict(), serializer='torch'))

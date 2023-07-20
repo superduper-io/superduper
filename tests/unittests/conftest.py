@@ -19,7 +19,7 @@ from superduperdb.core.document import Document
 from superduperdb.core.metric import Metric
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.core.watcher import Watcher
-from superduperdb.datalayer.base.database import BaseDatabase
+from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.encoders.numpy.array import array
 from superduperdb.encoders.pillow.image import pil_image
@@ -102,7 +102,7 @@ def mongodb_client(mongodb_server: TestMongoDBConfig) -> Iterator[pymongo.MongoC
 
 
 @contextmanager
-def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[BaseDatabase]:
+def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[Datalayer]:
     from superduperdb.datalayer.base.build import build_datalayer
 
     mongo_client = MongoClient(
@@ -119,7 +119,7 @@ def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[BaseDatabase]
 
 
 @pytest.fixture
-def test_db(mongodb_server: MongoDBConfig) -> Iterator[BaseDatabase]:
+def test_db(mongodb_server: MongoDBConfig) -> Iterator[Datalayer]:
     with create_datalayer(mongodb_config=mongodb_server) as db:
         yield db
 
@@ -138,7 +138,7 @@ def config(mongodb_server: MongoDBConfig) -> Iterator[None]:
 
 
 @pytest.fixture()
-def empty(test_db: BaseDatabase):
+def empty(test_db: Datalayer):
     yield test_db
 
 

@@ -9,6 +9,7 @@ import shutil
 DOCS = 'docs'
 DOCS_ROOT = ROOT / DOCS
 SOURCE_ROOT = DOCS_ROOT / 'source'
+CODE_ROOT = ROOT / 'superduperdb'
 GH_PAGES = ROOT / '.cache/gh-pages'
 UPSTREAM = 'git@github.com:SuperDuperDB/superduperdb-stealth.git'
 
@@ -39,6 +40,7 @@ def docs(
         git_gh('pull')
 
     _clean()
+    run_gh(('sphinx-apidoc', '-f', '-o', str(SOURCE_ROOT), str(CODE_ROOT)))
     run_gh(('sphinx-build', '-a', str(DOCS_ROOT), '.'))
 
     if commit_message:

@@ -48,6 +48,7 @@ backoff==2.2.1
     # via lightning
 beautifulsoup4==4.12.2
     # via
+    #   furo
     #   lightning
     #   nbconvert
 black==23.7.0
@@ -127,7 +128,6 @@ docutils==0.18.1
     #   myst-parser
     #   nbsphinx
     #   sphinx
-    #   sphinx-rtd-theme
 environs==9.5.0
     # via pymilvus
 exceptiongroup==1.1.2
@@ -173,6 +173,8 @@ fsspec[http]==2023.6.0
     #   huggingface-hub
     #   lightning
     #   pytorch-lightning
+furo==2023.5.20
+    # via -r requirements-docs.in
 grpcio==1.49.1
     # via
     #   pymilvus
@@ -435,6 +437,7 @@ pydantic==1.10.11
     #   openapi-schema-pydantic
 pygments==2.15.1
     # via
+    #   furo
     #   ipython
     #   nbconvert
     #   rich
@@ -562,23 +565,21 @@ soupsieve==2.4.1
 sphinx==6.2.1
     # via
     #   -r requirements-docs.in
+    #   furo
     #   myst-parser
     #   nbsphinx
     #   sphinx-autodoc-typehints
-    #   sphinx-rtd-theme
-    #   sphinxcontrib-jquery
+    #   sphinx-basic-ng
 sphinx-autodoc-typehints==1.23.0
     # via -r requirements-docs.in
-sphinx-rtd-theme==1.2.2
-    # via -r requirements-docs.in
+sphinx-basic-ng==1.0.0b2
+    # via furo
 sphinxcontrib-applehelp==1.0.4
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
     # via sphinx
 sphinxcontrib-htmlhelp==2.0.1
     # via sphinx
-sphinxcontrib-jquery==4.1
-    # via sphinx-rtd-theme
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-qthelp==1.0.3

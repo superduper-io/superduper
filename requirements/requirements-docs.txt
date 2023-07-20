@@ -19,7 +19,9 @@ babel==2.12.1
 backcall==0.2.0
     # via ipython
 beautifulsoup4==4.12.2
-    # via nbconvert
+    # via
+    #   furo
+    #   nbconvert
 bleach==6.0.0
     # via nbconvert
 certifi==2023.5.7
@@ -35,11 +37,12 @@ docutils==0.18.1
     #   myst-parser
     #   nbsphinx
     #   sphinx
-    #   sphinx-rtd-theme
 executing==1.2.0
     # via stack-data
 fastjsonschema==2.17.1
     # via nbformat
+furo==2023.5.20
+    # via -r requirements-docs.in
 idna==3.4
     # via requests
 imagesize==1.4.1
@@ -136,6 +139,7 @@ pure-eval==0.2.2
     # via stack-data
 pygments==2.15.1
     # via
+    #   furo
     #   ipython
     #   nbconvert
     #   sphinx
@@ -169,23 +173,21 @@ soupsieve==2.4.1
 sphinx==6.2.1
     # via
     #   -r requirements-docs.in
+    #   furo
     #   myst-parser
     #   nbsphinx
     #   sphinx-autodoc-typehints
-    #   sphinx-rtd-theme
-    #   sphinxcontrib-jquery
+    #   sphinx-basic-ng
 sphinx-autodoc-typehints==1.23.0
     # via -r requirements-docs.in
-sphinx-rtd-theme==1.2.2
-    # via -r requirements-docs.in
+sphinx-basic-ng==1.0.0b2
+    # via furo
 sphinxcontrib-applehelp==1.0.4
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
     # via sphinx
 sphinxcontrib-htmlhelp==2.0.1
     # via sphinx
-sphinxcontrib-jquery==4.1
-    # via sphinx-rtd-theme
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-qthelp==1.0.3

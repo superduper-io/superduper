@@ -7,6 +7,7 @@ import pytest
 from unittest.mock import MagicMock
 import pyarrow as pa
 
+from superduperdb.vector_search.base import VectorCollectionConfig
 from superduperdb import CFG
 from superduperdb.vector_search.base import VectorCollectionItem
 from superduperdb.misc.config import LanceDB
@@ -72,7 +73,6 @@ def test_create_table_new(lance_client):
     assert table.measure == measure
 
 
-@pytest.mark.skip(reason="`tantivy` package needs to be installed")
 def test_add(lance_table):
     data = [
         {"id": "1", "vector": [2, 3]},
@@ -81,10 +81,11 @@ def test_add(lance_table):
     ]
     data = [VectorCollectionItem(**d) for d in data]
     lance_table.add(data)
-    assert lance_table.get("1") == data[0]
+    data = lance_table.find_nearest_from_array([2, 3])
+    assert data[0].id == 1
 
 
-@pytest.mark.skip(reason="`tantivy` package needs to be installed")
+@pytest.mark.skip(reason="Not implemented")
 def test_find_nearest_from_id(lance_table):
     identifier = "1"
     limit = 100
@@ -114,7 +115,8 @@ def test_find_nearest_from_array(lance_table):
     assert result[0].id == 1
 
 
-def test_create_schema():
+@pytest.mark.parametrize("measure", ["cosine", "euclidean"])
+def test_create_schema(measure):
     dimensions = 3
     expected_schema = pa.schema(
         [
@@ -122,6 +124,17 @@ def test_create_schema():
             pa.field("id", pa.string()),
         ]
     )
-    vector_index = LanceVectorIndex(config=CFG.vector_search.type)
+    vector_index = LanceVectorIndex(config=CFG.vector_search.type, measure=measure)
     schema = vector_index._create_schema(dimensions)
     assert schema.equals(expected_schema)
+
+
+def test_vector_index_get_table():
+    vector_index = LanceVectorIndex(config=CFG.vector_search.type)
+    table = vector_index.get_table(
+        VectorCollectionConfig(
+            id="1",
+            dimensions=3,
+        )
+    )
+    assert isinstance(table, LanceTable)

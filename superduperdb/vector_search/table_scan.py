@@ -15,7 +15,7 @@ class VanillaVectorIndex(BaseVectorIndex):
 
     name = 'vanilla'
 
-    def __init__(self, h, index, measure='css'):
+    def __init__(self, h, index, measure='cosine'):
         if isinstance(measure, str):
             measure = measures[measure]
         super().__init__(h, index, measure)
@@ -49,4 +49,4 @@ def cosine(x, y):
     return dot(x, y)
 
 
-measures = {'css': cosine, 'dot': dot, 'l2': l2}
+measures = {'cosine': cosine, 'dot': dot, 'l2': l2}

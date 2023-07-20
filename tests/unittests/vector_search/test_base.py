@@ -32,7 +32,7 @@ class TestBaseVectorIndex:
         _id = 'a'
         n = 100
         with pytest.raises(NotImplementedError):
-            result = base_vector_index.find_nearest_from_id(_id, n)
+            base_vector_index.find_nearest_from_id(_id, n)
 
     @mock.patch('superduperdb.vector_search.base.to_numpy')
     def test_find_nearest_from_ids(self, mock_to_numpy, base_vector_index):
@@ -42,7 +42,7 @@ class TestBaseVectorIndex:
         _ids = ['a', 'b']
         n = 100
         with pytest.raises(NotImplementedError):
-            result = base_vector_index.find_nearest_from_ids(_ids, n)
+            base_vector_index.find_nearest_from_ids(_ids, n)
 
     @mock.patch('superduperdb.vector_search.base.to_numpy')
     def test_find_nearest_from_array(self, mock_to_numpy, base_vector_index):
@@ -52,7 +52,7 @@ class TestBaseVectorIndex:
         h = np.random.rand(1, 3)  # Sample array
         n = 100
         with pytest.raises(NotImplementedError):
-            result = base_vector_index.find_nearest_from_array(h, n)
+            base_vector_index.find_nearest_from_array(h, n)
 
     @mock.patch('superduperdb.vector_search.base.to_numpy')
     def test_find_nearest_from_arrays(self, mock_to_numpy, base_vector_index):

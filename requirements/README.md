@@ -4,7 +4,7 @@
 
 0. Are you **really sure** that you need to do this? :innocent:
 1. Make sure you have read step 0. :smiling_imp: 
-2. Activate your developer environment (see [this](#installing-a-developer-environment-💻) section if you are unsure how to do this).
+2. Activate your developer environment.
 3. Add the dependency to the relevant *.in* file(s). For example, a core dependency belongs in `requirements.in`, a test dependency belongs in `requirements-test.in`. Please try to provide as wide a range of compatible dependency versions as possible.
 4. Update the pinned dependencies (the *.txt* files required for our CI) by running `./update-pinned-deps.sh`
 

@@ -1,8 +1,9 @@
 import typing as t
+import typing_extensions as te
 import uuid
 
 from superduperdb.datalayer.base.artifacts import ArtifactStore
-from superduperdb.misc.serialization import serializers
+from superduperdb.misc.serialization import Info, serializers
 
 ArtifactCache = t.Dict[int, t.Any]
 
@@ -19,7 +20,7 @@ class Artifact:
     file_id: t.Optional[str] = None
 
     #: The ``info`` dictionary is passed into ``ArtifactStore.create_artifact()``
-    info: t.Optional[t.Dict] = None
+    info: Info = None
 
     #: The Python ``id()`` of the artifact
     object_id: int = 0
@@ -50,15 +51,13 @@ class Artifact:
         self.sha1 = sha1
 
     def __hash__(self):
-        try:
+        if isinstance(self.artifact, list):
+            # TODO: BROKEN! we should hash the whole artifact and cache it
+            return hash(str(self.artifact[:100]))
+        if isinstance(self.artifact, dict):
+            return hash(str(self.artifact))
+        else:
             return hash(self.artifact)
-        except TypeError as e:
-            if isinstance(self.artifact, list):
-                return hash(str(self.artifact[:100]))
-            elif isinstance(self.artifact, dict):
-                return hash(str(self.artifact))
-            else:
-                raise e
 
     def __eq__(self, other):
         return self.artifact == other.artifact
@@ -66,36 +65,54 @@ class Artifact:
     def __repr__(self):
         return f'<Artifact artifact={str(self.artifact)} serializer={self.serializer}>'
 
-    def serialize(self):
+    def serialize(self) -> bytes:
+        """Serialize this artifact into bytes"""
         serializer = serializers[self.serializer]
-        if self.info is not None:
-            bytes = serializer.encode(self.artifact, self.info)
-        else:
-            bytes = serializer.encode(self.artifact)
-        return bytes
+        return serializer.encode(self.artifact, self.info)
 
-    def save(
-        self,
-        artifact_store: ArtifactStore,
-    ):
-        bytes = self.serialize()
-        file_id, sha1 = artifact_store.create_artifact(bytes=bytes)
+    def save(self, artifact_store: ArtifactStore) -> t.Dict[str, t.Any]:
+        """Store this artifact, and return a dictionary of the results
+
+        :param artifact_store: the store to save the Artifact in
+        """
+        b = self.serialize()
+        file_id, sha1 = artifact_store.create_artifact(bytes=b)
         return {'file_id': file_id, 'sha1': sha1, 'serializer': self.serializer}
 
-    @staticmethod
-    def load(r, artifact_store: ArtifactStore, cache):
-        if r['file_id'] in cache:
-            return cache[r['file_id']]
-        artifact = artifact_store.load_artifact(
-            r['file_id'], r['serializer'], info=r['info']
-        )
-        a = Artifact(
-            artifact=artifact,
-            serializer=r['serializer'],
-            info=r['info'],
-        )
-        cache[r['file_id']] = a.artifact
-        return a
+
+class ArtifactDesc(te.TypedDict):
+    #: A string identifying the artifact in the artifact store
+    file_id: str
+
+    #: An optional dictionary used to create the artifact
+    info: Info
+
+    #: The name of the serializer used for the artifact store
+    serializer: str
+
+
+# TODO: this no longer appears to be called anywhere
+def load_artifact(
+    desc: ArtifactDesc,
+    artifact_store: ArtifactStore,
+    cache: t.Dict[str, Artifact],
+) -> Artifact:
+    """Load an Artifact from the store
+
+    :param desc:  Describe the artifact to be loaded
+    :param artifact_store:  The store holding the artifact
+    :param cache:  A cache dictionary mapping `file_id` to artifacts
+
+    """
+    file_id, info, serializer = desc['file_id'], desc['info'], desc['serializer']
+    if file_id in cache:
+        return cache[file_id]
+
+    artifact = artifact_store.load_artifact(file_id, serializer, info)
+    a = Artifact(artifact=artifact, info=info, serializer=serializer)
+
+    cache[file_id] = a.artifact
+    return a
 
 
 class InMemoryArtifacts:

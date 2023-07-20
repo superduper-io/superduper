@@ -31,8 +31,7 @@ exclude_patterns = ['_build']
 
 html_css_files = ['custom.css']
 html_static_path = ['_static']
-html_theme = 'sphinx_rtd_theme'
-
+html_theme = 'furo'
 master_doc = 'index'
 
 napoleon_google_docstring = True

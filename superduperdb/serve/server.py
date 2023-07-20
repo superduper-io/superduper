@@ -103,7 +103,7 @@ def make_endpoints(app, db):
             version = int(version)
         m = db.load(variety=d['variety'], identifier=d['identifier'], version=version)
         to_send = m.serialize()
-        artifacts = get_artifacts(to_send)
+        artifacts = list(get_artifacts(to_send))
         lookup = {a: str(uuid.uuid4()) for a in artifacts}
         s_lookup = {lookup[a]: a.serializer for a in artifacts}
         to_send = replace_artifacts_with_dict(to_send, lookup)

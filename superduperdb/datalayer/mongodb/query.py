@@ -498,7 +498,6 @@ class InsertMany(Insert):
     verbose: bool = True
     args: t.List = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
-    valid_prob: float = 0.05
     encoders: t.List = dc.field(default_factory=list)
 
     type_id: t.Literal['mongodb.InsertMany'] = 'mongodb.InsertMany'
@@ -515,11 +514,12 @@ class InsertMany(Insert):
         return Find(collection=self.collection, args=[{'_id': {'$in': ids}}])
 
     def __call__(self, db):
+        valid_prob = self.kwargs.get('valid_prob', 0.5)
         for e in self.encoders:
             db.add(e)
         documents = [r.encode() for r in self.documents]
         for r in documents:
-            if random.random() < self.valid_prob:
+            if random.random() < valid_prob:
                 r['_fold'] = 'valid'
             else:
                 r['_fold'] = 'train'

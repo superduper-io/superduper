@@ -252,7 +252,7 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
+        db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
         configuration: t.Optional[_TrainingConfiguration] = None,
@@ -266,7 +266,7 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
+        db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
         distributed: bool = False,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]
@@ -356,7 +356,7 @@ class ModelEnsemble(Component):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional['BaseDatabase'] = None,  # type: ignore[name-defined]
+        db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
         distributed: bool = False,
         dependencies: t.List[Job] = (),  # type: ignore[assignment]

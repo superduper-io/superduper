@@ -31,9 +31,14 @@ class Collection(Serializable):
     ):
         return PreLike(collection=self, r=r, vector_index=vector_index, n=n)
 
-    def insert_one(self, *args, **kwargs):
+    def insert_one(self, *args, refresh=True, encoders=(), **kwargs):
         return InsertMany(
-            collection=self, documents=[args[0]], args=list(args[1:]), kwargs=kwargs
+            collection=self,
+            documents=[args[0]],
+            args=list(args[1:]),
+            kwargs=kwargs,
+            refresh=refresh,
+            encoders=encoders,
         )
 
     def insert_many(self, *args, refresh=True, encoders=(), **kwargs):

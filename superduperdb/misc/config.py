@@ -134,7 +134,6 @@ class LanceDB(JSONable):
 class InMemory(JSONable):
     backfill_batch_size: int = 100
     inmemory: bool = True
-    uri: str = ''
 
 
 class VectorSearch(JSONable):

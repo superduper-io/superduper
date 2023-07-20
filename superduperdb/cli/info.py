@@ -41,13 +41,6 @@ def _cfg():
         return '(CFG not yet commited)'
 
 
-def _gethostname():
-    try:
-        return socket.gethostname()
-    except Exception as e:
-        return f'socket.gethostname() failed with {e}'
-
-
 def _git():
     def run_out(key, *cmd):
         try:

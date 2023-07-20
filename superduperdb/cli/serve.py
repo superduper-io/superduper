@@ -1,18 +1,29 @@
 from . import command
-import superduperdb as s
-import time
-import webbrowser
+import typing as t
+
+from superduperdb.datalayer.base.build import build_datalayer
+from superduperdb.datalayer.base.cdc import DatabaseWatcher
+from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.serve.server import serve as _serve
+from superduperdb.cluster.dask.dask_client import dask_client
+from superduperdb import CFG
 
 
 @command(help='Start server')
 def serve():
-    from superduperdb.serve.server import serve
+    db = build_datalayer()
+    _serve(db)
 
-    serve()
 
-
-def _open_page(open_delay):
-    time.sleep(open_delay)
-    cfg = s.CFG.server.web_server
-    url = f'http://{cfg.host}:{cfg.port}'
-    webbrowser.open(url, new=1, autoraise=True)
+@command(help='Start local cluster: server, dask and change data capture')
+def local_cluster(on: t.List[str]):
+    db = build_datalayer()
+    _serve(db)
+    dask_client(CFG.dask, local=True)
+    for collection in on:
+        w = DatabaseWatcher(
+            db=db,
+            on=Collection(name=collection),
+        )
+        w.watch()
+    _serve(db)

@@ -5,7 +5,7 @@ import datetime
 
 from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.misc.logger import logging
-from superduperdb.datalayer.base.database import BaseDatabase
+from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.mongodb import cdc
 from superduperdb.datalayer.base import backends
 
@@ -83,7 +83,7 @@ class DatabaseWatcher:
 
     def __new__(  # type: ignore
         cls,
-        db: 'BaseDatabase',
+        db: 'Datalayer',
         on: Collection,
         identifier: str = '',
         *args,

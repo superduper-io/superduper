@@ -80,6 +80,8 @@ class Artifact:
 
 
 class ArtifactDesc(te.TypedDict):
+    """A description of an artifact in an artifact store"""
+
     #: A string identifying the artifact in the artifact store
     file_id: str
 

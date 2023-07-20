@@ -27,13 +27,13 @@ class FaissVectorIndex(BaseVectorIndex):
         super().__init__(h, index, measure)
         self.h = self.h.astype('float32')
         if faiss_index is None:
-            if measure == 'css':
+            if measure == 'cosine':
                 self.h = self.h / (numpy.linalg.norm(self.h, axis=1)[:, None])
             if measure == 'l2':
                 faiss_index = faiss.index_factory(
                     self.h.shape[1], 'Flat', faiss.METRIC_L2
                 )
-            elif measure in {'css', 'dot'}:
+            elif measure in {'cosine', 'dot'}:
                 faiss_index = faiss.index_factory(
                     self.h.shape[1], 'Flat', faiss.METRIC_INNER_PRODUCT
                 )
@@ -46,6 +46,7 @@ class FaissVectorIndex(BaseVectorIndex):
 
     def find_nearest_from_arrays(self, h, n=100):
         import torch
+
         if isinstance(h, list):
             h = numpy.array(h).astype('float32')
         if isinstance(h, torch.Tensor):

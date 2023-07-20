@@ -1,4 +1,5 @@
 import random
+import numpy as np
 import time
 from threading import Thread
 from unittest import mock
@@ -31,6 +32,11 @@ Fixtures included here can create:
 When adding new fixtures, please try to avoid building on top of other fixtures
 as much as possible. This will make it easier to understand the test suite.
 '''
+
+# Set the seeds
+random.seed(42)
+torch.manual_seed(42)
+np.random.seed(42)
 
 
 mongodb_test_config = {

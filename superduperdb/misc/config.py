@@ -2,20 +2,11 @@
 The classes in this file define the configuration variables for SuperDuperDB,
 which means that this file gets imported before alost anything else, and
 canot contain any other imports from this project.
-
-There is a file in the root directory named `default-config.json`
-which has the default values for every configuration variable, serialized into JSON.
-
-If you change a class below, you must regenerate `default-config.json with
-
-    $ python -m tests.unittests.misc.test_config
 """
 
 import typing as t
 from enum import Enum
-
 from pydantic import Field, root_validator
-
 from .jsonable import Factory, JSONable
 
 _BAD_KEY = '...bad.key...'
@@ -23,8 +14,8 @@ REST_API_VERSION = '0.1.0'
 
 
 class HasPort(JSONable):
-    port: int = 0
     password: str = ''
+    port: int = 0
     username: str = ''
 
 
@@ -41,11 +32,10 @@ class Api(JSONable):
 
 
 class Retry(JSONable):
-    wait_multiplier: float = 1.0
-    wait_min: float = 4.0
-    wait_max: float = 10.0
-
     stop_after_attempt: int = 2
+    wait_max: float = 10.0
+    wait_min: float = 4.0
+    wait_multiplier: float = 1.0
 
 
 class Apis(JSONable):
@@ -54,10 +44,9 @@ class Apis(JSONable):
 
 
 class Dask(IpPort):
-    port: int = 8786
-
-    serializers: t.List[str] = Factory(list)
     deserializers: t.List[str] = Factory(list)
+    port: int = 8786
+    serializers: t.List[str] = Factory(list)
 
 
 class Deployment(JSONable):
@@ -88,10 +77,10 @@ class ModelServer(HostPort):
 
 
 class MongoDB(HostPort):
-    host: str = "localhost"
+    host: str = 'localhost'
+    password: str = 'testmongodbpassword'
     port: int = 27018
-    username: str = "testmongodbuser"
-    password: str = "testmongodbpassword"
+    username: str = 'testmongodbuser'
 
 
 class DataLayer(JSONable):
@@ -109,8 +98,8 @@ class DataLayers(JSONable):
 
 class Notebook(JSONable):
     ip: str = '0.0.0.0'
-    port: int = 8888
     password: str = ''
+    port: int = 8888
     token: str = ''
 
     @root_validator
@@ -137,34 +126,34 @@ class Server(JSONable):
 
 
 class LanceDB(JSONable):
+    backfill_batch_size: int = 100
     lancedb: bool = True
     uri: str = './.lancedb'
-    backfill_batch_size: int = 100
 
 
 class InMemory(JSONable):
+    backfill_batch_size: int = 100
     inmemory: bool = True
     uri: str = ''
-    backfill_batch_size: int = 100
 
 
 class VectorSearch(JSONable):
+    host: str = 'localhost'
+    password: str = Field(default='', repr=False)
+    port: int = 19530
     type: t.Union[LanceDB, InMemory] = Field(default_factory=InMemory)
     username: str = Field(default='', repr=False)
-    password: str = Field(default='', repr=False)
-    host: str = 'localhost'
-    port: int = 19530
 
 
 class Config(JSONable):
     apis: Apis = Factory(Apis)
+    cdc: bool = False
     dask: Dask = Factory(Dask)
+    data_layers: DataLayers = Factory(DataLayers)
+    distributed: bool = False
     logging: Logging = Factory(Logging)
     model_server: ModelServer = Factory(ModelServer)
-    data_layers: DataLayers = Factory(DataLayers)
     notebook: Notebook = Factory(Notebook)
     ray: Ray = Factory(Ray)
-    distributed: bool = False
-    cdc: bool = False
     server: Server = Factory(Server)
     vector_search: VectorSearch = Factory(VectorSearch)

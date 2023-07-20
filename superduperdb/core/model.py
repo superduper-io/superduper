@@ -1,4 +1,5 @@
 from dask.distributed import Future
+import inspect
 import dataclasses as dc
 import typing as t
 
@@ -141,7 +142,10 @@ class PredictMixin:
                 return
 
             else:
-                return self._predict(X, **kwargs)
+                if 'one' in inspect.signature(self._predict).parameters:
+                    return self._predict(X, one=one, **kwargs)
+                else:
+                    return self._predict(X, **kwargs)
 
 
 @dc.dataclass

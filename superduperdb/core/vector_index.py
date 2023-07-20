@@ -130,7 +130,6 @@ class VectorIndex(Component):
         models, keys = self.models_keys
         if len(models) != len(keys):
             raise ValueError(f'len(models={models}) != len(keys={keys})')
-
         within_ids = ids or ()
 
         if db.db.id_field in like.content:  # type: ignore

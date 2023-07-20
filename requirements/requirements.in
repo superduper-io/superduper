@@ -26,3 +26,4 @@ ray>=2.4.0
 scikit-learn>=1.1.3
 torch>=2.0.0,!=2.0.1
 transformers>=4.29.1
+accelerate>=0.20.1

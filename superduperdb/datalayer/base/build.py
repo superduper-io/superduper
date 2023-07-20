@@ -1,3 +1,4 @@
+import inspect
 from superduperdb.datalayer.base.backends import (
     data_backends,
     metadata_stores,
@@ -5,16 +6,18 @@ from superduperdb.datalayer.base.backends import (
     vector_database_stores,
     connections as default_connections,
 )
-from superduperdb.datalayer.base.database import BaseDatabase
+from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.cluster.dask.dask_client import dask_client
 
 
 def build_vector_database(cfg):
     cls = vector_database_stores[cfg.__class__]
-    return cls(cfg)
+    sig = inspect.signature(cls.__init__)
+    kwargs = {k: v for k, v in cfg.dict().items() if k in sig.parameters}
+    return cls(**kwargs)
 
 
-def build_datalayer(cfg=None, **connections) -> BaseDatabase:
+def build_datalayer(cfg=None, **connections) -> Datalayer:
     """
     Build datalayer as per ``db = superduper(db)`` from configuration.
 
@@ -40,7 +43,7 @@ def build_datalayer(cfg=None, **connections) -> BaseDatabase:
 
         return cls(name=cfg.name, conn=connection)
 
-    return BaseDatabase(
+    return Datalayer(
         artifact_store=build(CFG.data_layers.artifact, artifact_stores),
         databackend=build(CFG.data_layers.data_backend, data_backends),
         metadata=build(CFG.data_layers.metadata, metadata_stores),

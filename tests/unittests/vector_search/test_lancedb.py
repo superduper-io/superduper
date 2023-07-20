@@ -1,14 +1,11 @@
 import os
 import tempfile
-import pandas as pd
 import numpy as np
 
 import pytest
-from unittest.mock import MagicMock
 import pyarrow as pa
 
 from superduperdb.vector_search.base import VectorCollectionConfig
-from superduperdb import CFG
 from superduperdb.vector_search.base import VectorCollectionItem
 from superduperdb.misc.config import LanceDB
 from superduperdb.vector_search.lancedb_client import (
@@ -23,7 +20,7 @@ def lance_client():
     with tempfile.TemporaryDirectory() as tmpdirname:
         path = os.path.join(tmpdirname, '.test_db')
         config = LanceDB(uri=path)
-        client = LanceDBClient(config)
+        client = LanceDBClient(uri=config.uri)
         table = client.create_table(
             "test_table", data=[{'vector': [1.0, 1.0], 'id': 1}], schema=None
         )
@@ -85,26 +82,6 @@ def test_add(lance_table):
     assert data[0].id == 1
 
 
-@pytest.mark.skip(reason="Not implemented")
-def test_find_nearest_from_id(lance_table):
-    identifier = "1"
-    limit = 100
-    measure = "cosine"
-    vector = pd.DataFrame({"vector": [[1, 2]]})
-    expected_result = []
-
-    lance_table.where = MagicMock(return_value=vector)
-    lance_table.find_nearest_from_array = MagicMock(return_value=expected_result)
-
-    result = lance_table.find_nearest_from_id(identifier, limit, measure)
-
-    assert result == expected_result
-    lance_table.where.assert_called_once_with(f"id = '{identifier}'")
-    lance_table.find_nearest_from_array.assert_called_once_with(
-        vector, limit=limit, measure=measure
-    )
-
-
 def test_find_nearest_from_array(lance_table):
     array = [1, 2]
     limit = 100
@@ -124,13 +101,13 @@ def test_create_schema(measure):
             pa.field("id", pa.string()),
         ]
     )
-    vector_index = LanceVectorIndex(config=CFG.vector_search.type, measure=measure)
+    vector_index = LanceVectorIndex(uri='./.lancedb', measure=measure)
     schema = vector_index._create_schema(dimensions)
     assert schema.equals(expected_schema)
 
 
 def test_vector_index_get_table():
-    vector_index = LanceVectorIndex(config=CFG.vector_search.type)
+    vector_index = LanceVectorIndex(uri='./.lancedb')
     table = vector_index.get_table(
         VectorCollectionConfig(
             id="1",

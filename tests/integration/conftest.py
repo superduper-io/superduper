@@ -105,7 +105,6 @@ def database_with_default_encoders_and_model(create_mongodb_client_clean_and_clo
             encoder='torch.float32[16]',
         )
     )
-
     yield database
 
     database.remove('model', 'model_linear_a', force=True)

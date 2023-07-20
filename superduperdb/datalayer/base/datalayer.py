@@ -61,7 +61,7 @@ ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'select_one', 'update'
 
 
-class BaseDatabase:
+class Datalayer:
     """
     Base database connector for SuperDuperDB
     """
@@ -86,8 +86,7 @@ class BaseDatabase:
         vector_database: t.Optional[VectorDatabase] = None,
         distributed_client=None,
     ):
-        """__init__.
-
+        """
         :param databackend:
         :param metadata:
         :param artifact_store:
@@ -888,7 +887,7 @@ class BaseDatabase:
 
 @dc.dataclass
 class LoadDict(dict):
-    database: BaseDatabase
+    database: Datalayer
     field: str
 
     def __missing__(self, key: str):

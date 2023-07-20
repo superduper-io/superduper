@@ -1,7 +1,6 @@
 import pytest
 import numpy
 
-import superduperdb as s
 from typing import Iterator
 
 from superduperdb.vector_search.base import (
@@ -16,7 +15,7 @@ from superduperdb.vector_search.inmemory import InMemoryVectorDatabase
 class TestInMemoryVectorCollection:
     @pytest.fixture
     def manager(self) -> Iterator[VectorDatabase]:
-        manager = InMemoryVectorDatabase(config=s.config.VectorSearch())
+        manager = InMemoryVectorDatabase()
         yield manager
 
     def test_find_nearest_from_array(self, manager: VectorDatabase) -> None:

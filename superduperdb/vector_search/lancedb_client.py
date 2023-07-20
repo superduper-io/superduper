@@ -6,7 +6,6 @@ import lancedb
 import pandas as pd
 import pyarrow as pa
 
-import superduperdb as s
 from superduperdb.misc.logger import logging
 from superduperdb.vector_search.base import BaseVectorIndex
 from .base import to_numpy
@@ -21,14 +20,14 @@ SEED_KEY: str = '__SEEDKEY__'
 
 
 class LanceDBClient:
-    def __init__(self, config: s.config.LanceDB) -> None:
+    def __init__(self, uri: str) -> None:
         """
         Initialize the ``LanceDBClient``.
 
         :param config: Configuration object for vector search.
         """
-        self.client = lancedb.connect(config.uri)
-        self.config = config
+        self.client = lancedb.connect(uri)
+        self.uri = uri
 
     def get_table(self, table_name: str, measure: str = 'cosine') -> 'LanceTable':
         """
@@ -55,7 +54,7 @@ class LanceDBClient:
         :param schema: Schema of the table. Defaults to ``None``.
         :param measure: Distance measure for vector search. Defaults to 'cosine'.
         """
-        if os.path.exists(os.path.join(self.config.uri, f'{table_name}.lance')):
+        if os.path.exists(os.path.join(self.uri, f'{table_name}.lance')):
             logging.debug(f'Table {table_name} already exists')
             table = self.client.open_table(table_name)
         else:
@@ -152,14 +151,14 @@ class LanceVectorIndex(BaseVectorIndex):
     name: str = "lancedb"
     _ID: str = 'id'
 
-    def __init__(self, config: s.config.LanceDB, measure: str = "cosine") -> None:
+    def __init__(self, uri, measure: str = "cosine") -> None:
         """
         Initialize the ``LanceVectorIndex``.
 
         :param config: Configuration object for vector search.
         :param measure: Distance measure for vector search. Defaults to 'cosine'.
         """
-        self.client = LanceDBClient(config)
+        self.client = LanceDBClient(uri=uri)
         super().__init__(None, None, measure)
 
     def _create_schema(self, dimensions: int) -> pa.Schema:

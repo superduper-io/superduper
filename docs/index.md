@@ -136,20 +136,13 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 ## Contents
 
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 3
 
-getting_started
-concepts
-encoders
-data_references
-models
-prediction_and_training
-watchers
-vector_index
-jobs
-cluster
+getting_started/index
+background/index
+usage/index
+infrastructure/index
 common_issues
-full_usage
 examples/index
 source/modules
 ```

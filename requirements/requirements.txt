@@ -4,6 +4,8 @@
 #
 #    pip-compile requirements.in
 #
+accelerate==0.21.0
+    # via -r requirements.in
 aiohttp==3.8.4
     # via
     #   fsspec
@@ -127,6 +129,8 @@ fsspec[http]==2023.6.0
     #   huggingface-hub
     #   lightning
     #   pytorch-lightning
+greenlet==2.0.2
+    # via sqlalchemy
 grpcio==1.49.1
     # via
     #   pymilvus
@@ -226,6 +230,7 @@ numexpr==2.8.4
 numpy==1.24.4
     # via
     #   -r requirements.in
+    #   accelerate
     #   langchain
     #   lightning
     #   numexpr
@@ -247,6 +252,7 @@ ordered-set==4.1.0
     # via deepdiff
 packaging==23.1
     # via
+    #   accelerate
     #   dask
     #   distributed
     #   huggingface-hub
@@ -274,6 +280,7 @@ protobuf==4.23.4
     #   ray
 psutil==5.9.5
     # via
+    #   accelerate
     #   distributed
     #   lightning
 py==1.11.0
@@ -321,6 +328,7 @@ pytz==2023.3
     #   pandas
 pyyaml==6.0.1
     # via
+    #   accelerate
     #   dask
     #   distributed
     #   huggingface-hub
@@ -417,6 +425,7 @@ toolz==0.12.0
 torch==2.0.0
     # via
     #   -r requirements.in
+    #   accelerate
     #   lightning
     #   pytorch-lightning
     #   torchmetrics

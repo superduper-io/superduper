@@ -1,8 +1,10 @@
 from superduperdb.misc.git import git
 import os
+import pytest
 
 IN_CI = 'CI' in os.environ
 PUNCTUATION = '.,-_'
+TEST_COMMITS = os.environ.get('TEST_SUPERDUPERDB_COMMITS', 't').lower().startswith('t')
 
 
 def _errors(msg):
@@ -36,8 +38,13 @@ def test_commit_errors():
     assert actual == expected
 
 
+@pytest.mark.skipif(not TEST_COMMITS, reason='Not testing commit names')
 def test_last_commit_names():
-    # If you get here, it's because one of your last commit messages was suboptimal
+    # If this test fails, it's because one of your last commit messages was suboptimal!
+    #
+    # If you want to skip this test, set an environment variable:
+    #
+    #   TEST_SUPERDUPERDB_COMMITS=false
 
     commits = git.commits('-10')
     if IN_CI:
@@ -48,8 +55,8 @@ def test_last_commit_names():
     for commit in commits:
         commit_id, date, msg = commit.split('|')
         if errors := ', '.join(_errors(msg)):
-            bad_commits.append(f'{commit_id}: "{msg}":\n    {errors}')
+            bad_commits.append(f'{commit_id}: {msg}:\n    {errors}')
 
     if bad_commits:
-        print(*bad_commits, sep='\n')
+        print('Bad commits:', *bad_commits, sep='\n')
         assert not bad_commits

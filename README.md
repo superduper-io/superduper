@@ -46,7 +46,7 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 
 ---------------
 
-What is SuperDuperDB?
+**What is SuperDuperDB?**
 
   <ul>
   <li>🔄 an end-to-end live AI deployment which includes a model repository, model training and computation of outputs</li>
@@ -55,33 +55,29 @@ What is SuperDuperDB?
   <li>📈 a model performance monitor enabling model quality and degradation to be monitored as new data is inserted</li>
   </ul>
 
-<details>
-  <summary>Who is SuperDuperDB for?</summary>
+**Who is SuperDuperDB for?**
+
   <ul>
   <li>👨‍💻 <strong>Python developers</strong> using MongoDB who want to apply AI with simple commands.</li>
   <li>🧑‍🔬 <strong>Data scientists & ML engineers</strong> who want to develop AI models using their favourite tools, with minimum infrastructural overhead.</li>
   <li>👷 <strong>Infrastructure engineers</strong> who want a single scalable setup that supports both in-house and cloud deployment.</li>
   </ul>
-</details>
 
-<details>
-  <summary>What can you do with SuperDuperDB?</summary>
+**What can you do with SuperDuperDB?**
+
   <ul>
   <li>🚀 Deploy all your AI models to automatically compute outputs in the database in a single environment with simple Python commands.</li>
   <li>🏋️ Train models on the data in your database without additional ingestion and pre-processing simply by querying.</li>
   <li>🌐 Integrate APIs such as OpenAI to work together with other models on your data effortlessly.</li>
   </ul>
-</details>
 
-<details>
-  <summary>Why choose SuperDuperDB?</summary>
+**Why choose SuperDuperDB?**
+
   <ul>
   <li>🪠 Avoid duplicate data, pipelines and infrastructure with a single scalable deployment</li>
   <li>📅 Deployment automatically kept up-to-date as new data is handled automatically and immediately</li>
   <li>🤸 Single developer setup for lightweight use-cases</li>
   </ul>
-</details>
-
 
 <p align="center">
   <br>

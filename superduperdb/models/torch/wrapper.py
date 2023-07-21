@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from superduperdb.core.artifact import Artifact
 from superduperdb.core.metric import Metric
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encodable
 from superduperdb.core.model import Model, ModelEnsemble, _TrainingConfiguration
 from superduperdb.core.serializable import Serializable

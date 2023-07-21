@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import typing as t
 
 from superduperdb.core.model import Model
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.datalayer.base.query import Select
 
 

@@ -11,7 +11,7 @@ from tenacity import RetryError, Retrying, stop_after_delay
 
 from superduperdb import CFG
 from superduperdb.cluster.dask.dask_client import dask_client
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.datalayer.base.build import build_datalayer
 from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.misc.config import DataLayer, DataLayers

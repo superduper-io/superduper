@@ -5,7 +5,7 @@ import numpy
 
 from superduperdb.core.artifact import Artifact
 from superduperdb.core.component import Component
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.datalayer.mongodb.query import Find
 import dataclasses as dc
 

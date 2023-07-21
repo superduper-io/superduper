@@ -12,7 +12,7 @@ from superduperdb.core.artifact_tree import (
 from superduperdb import CFG
 from superduperdb.misc.serialization import serializers
 
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.build import build_datalayer
 

@@ -5,7 +5,7 @@ import torch
 
 from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb import CFG
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.serve.client import Client

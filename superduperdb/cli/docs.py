@@ -68,8 +68,7 @@ def _make_gh_pages():
 
     git_gh('remote', 'add', 'upstream', UPSTREAM)
     git_gh('fetch', 'upstream')
-    git_gh('switch', 'gh-pages')
-    git_gh('reset', '--hard', 'upstream/gh-pages')
+    git_gh('switch', '-C', 'gh-pages', 'upstream/gh-pages')
     git_gh('push', '--force-with-lease', '--set-upstream', 'origin')
 
 

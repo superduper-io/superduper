@@ -1,9 +1,19 @@
 <p align="center">
    <a href="https://www.superduperdb.com">
       <picture>
-         <img src=".github/logos/SuperDuperDB_logo_color.svg?raw=true" width="70%" alt="superduperdb" />
+         <img src=".github/logos/SuperDuperDB_logo_color.svg?raw=true" width="50%" alt="superduperdb" />
       </picture>
    </a>
+</p>
+
+<h2 align="center">Bring AI to your   <a href="https://www.mongodb.com/" target="_blank">MongoDB database!  
+</a>
+</h2>
+
+<p align="center">
+  <img width="120" src=".github/logos/mongodb_logo.svg">  
+  <img width="120" src=".github/logos/mongodb_logo.svg">  
+  <img width="120" src=".github/logos/mongodb_logo.svg">  
 </p>
 
 <p align="center">
@@ -24,16 +34,7 @@
 </a>
 </p>
 
-<h3 align="center">Bring AI to your MongoDB database</h3>
-
 <p align="center">
-  <a href="https://www.mongodb.com/" target="_blank">
-  <img width="250" src=".github/logos/mongodb_logo.svg">
-  </a>
-</p>
-
-<p align="center">
-Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
 </p>
 <p align="center">
 <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Try out SuperDuperDB</strong></a>
@@ -42,7 +43,9 @@ Easily integrate AI with your data: from LLMs and public AI APIs to bespoke mach
 
 ---------------
 
-SuperDuperDB is a Python-based open-source environment to deploy, train and operate AI models and APIs in MongoDB
+SuperDuperDB is a Python-based open-source environment to deploy, train and operate AI models and APIs in MongoDB.
+Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
+
 
 ---------------
 

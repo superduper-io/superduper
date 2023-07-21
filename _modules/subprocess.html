@@ -1,88 +1,269 @@
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>subprocess &mdash; SuperDuperDB  documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" />
+
+    <!-- Generated with Sphinx 6.2.1 and Furo 2023.05.20 -->
+        <title>subprocess - SuperDuperDB documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
   
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="../_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
-</head>
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
 
-          
-          
-          <a href="../index.html" class="icon icon-home">
-            SuperDuperDB
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Quick  start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Important Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../encoders.html">Encoders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../data_references.html">Using external data references</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../models.html">Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../prediction_and_training.html">Deploying predictions and training</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../watchers.html">Watchers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../vector_index.html">Vector Index</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../jobs.html">Jobs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../cluster.html">Cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../common_issues.html">Common issues in AI-data development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../full_usage.html">Full Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Example notebooks</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../source/modules.html">superduperdb-stealth</a></li>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">SuperDuperDB  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">SuperDuperDB  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting_started/index.html">Getting started</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Getting started</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/features.html">Supported Features</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../background/index.html">Background of SuperDuperDB</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Background of SuperDuperDB</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../background/common_issues.html">Common issues in AI-data development</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../usage/index.html">SuperDuperDB Usage</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of SuperDuperDB Usage</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage/datalayer.html">Datalayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/queries.html">Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/encoders.html">Encoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vector_search.html">Vector Search</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../infrastructure/index.html">Infrastructural support</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Infrastructural support</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/single_host_cluster.html">SuperDuperDB single host cluster deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/architecture.html">SuperDuperDB architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/change_data_capture.html">Change data capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/client_server.html">Client-server implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../examples/index.html">Example notebooks</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of Example notebooks</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples/mnist_clean.html">Training and maintaining MNIST predictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/openai.html">OpenAI vector search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/compare_vector_search_solutions.html">Compare vector search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/sentiment_analysis_use_case.html">Sentiment analysis with transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/voice_memos.html">Create a personal assistant for understanding your meetings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/mongo_cdc.html">Change data capture with MongoDB</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../source/modules.html">superduperdb</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of superduperdb</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../source/superduperdb.html">superduperdb package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of superduperdb package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.cli.html">superduperdb.cli package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.cluster.html">superduperdb.cluster package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of superduperdb.cluster package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.dask.html">superduperdb.cluster.dask package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.ray.html">superduperdb.cluster.ray package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.core.html">superduperdb.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.datalayer.html">superduperdb.datalayer package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of superduperdb.datalayer package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.base.html">superduperdb.datalayer.base package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.mongodb.html">superduperdb.datalayer.mongodb package</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.encoders.html">superduperdb.encoders package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of superduperdb.encoders package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.numpy.html">superduperdb.encoders.numpy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.pillow.html">superduperdb.encoders.pillow package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.torch.html">superduperdb.encoders.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.vectors.html">superduperdb.encoders.vectors package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.metrics.html">superduperdb.metrics package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.misc.html">superduperdb.misc package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.models.html">superduperdb.models package</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of superduperdb.models package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.langchain.html">superduperdb.models.langchain package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.openai.html">superduperdb.models.openai package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.pytorch_lightning.html">superduperdb.models.pytorch_lightning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sentence_transformers.html">superduperdb.models.sentence_transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sklearn.html">superduperdb.models.sklearn package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.torch.html">superduperdb.models.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.transformers.html">superduperdb.models.transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.vanilla.html">superduperdb.models.vanilla package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.serve.html">superduperdb.serve package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.vector_search.html">superduperdb.vector_search package</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">SuperDuperDB</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
-      <li class="breadcrumb-item active">subprocess</li>
-      <li class="wy-breadcrumbs-aside">
-      </li>
-  </ul>
-  <hr/>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
-  <h1>Source code for subprocess</h1><div class="highlight"><pre>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <h1>Source code for subprocess</h1><div class="highlight"><pre>
 <span></span><span class="c1"># subprocess - Subprocesses with accessible I/O streams</span>
 <span class="c1">#</span>
 <span class="c1"># For more information about this module, see PEP 324.</span>
@@ -90,7 +271,6 @@
 <span class="c1"># Copyright (c) 2003-2005 by Peter Astrand &lt;astrand@lysator.liu.se&gt;</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed to PSF under a Contributor Agreement.</span>
-<span class="c1"># See http://www.python.org/2.4/license for licensing details.</span>
 
 <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Subprocesses with accessible I/O streams</span>
 
@@ -129,6 +309,7 @@
 <span class="kn">import</span> <span class="nn">builtins</span>
 <span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">locale</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">signal</span>
@@ -137,6 +318,12 @@
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">contextlib</span>
 <span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">monotonic</span> <span class="k">as</span> <span class="n">_time</span>
+<span class="kn">import</span> <span class="nn">types</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">fcntl</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">fcntl</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Popen&quot;</span><span class="p">,</span> <span class="s2">&quot;PIPE&quot;</span><span class="p">,</span> <span class="s2">&quot;STDOUT&quot;</span><span class="p">,</span> <span class="s2">&quot;call&quot;</span><span class="p">,</span> <span class="s2">&quot;check_call&quot;</span><span class="p">,</span> <span class="s2">&quot;getstatusoutput&quot;</span><span class="p">,</span>
@@ -145,16 +332,19 @@
            <span class="c1"># NOTE: We intentionally exclude list2cmdline as it is</span>
            <span class="c1"># considered an internal implementation detail.  issue10838.</span>
 
+<span class="c1"># use presence of msvcrt to detect Windows-like platforms (see bpo-8110)</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">msvcrt</span>
-    <span class="kn">import</span> <span class="nn">_winapi</span>
-    <span class="n">_mswindows</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="n">_mswindows</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="kn">import</span> <span class="nn">_posixsubprocess</span>
-    <span class="kn">import</span> <span class="nn">select</span>
-    <span class="kn">import</span> <span class="nn">selectors</span>
 <span class="k">else</span><span class="p">:</span>
+    <span class="n">_mswindows</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># wasm32-emscripten and wasm32-wasi do not support processes</span>
+<span class="n">_can_fork_exec</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;emscripten&quot;</span><span class="p">,</span> <span class="s2">&quot;wasi&quot;</span><span class="p">}</span>
+
+<span class="k">if</span> <span class="n">_mswindows</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">_winapi</span>
     <span class="kn">from</span> <span class="nn">_winapi</span> <span class="kn">import</span> <span class="p">(</span><span class="n">CREATE_NEW_CONSOLE</span><span class="p">,</span> <span class="n">CREATE_NEW_PROCESS_GROUP</span><span class="p">,</span>
                          <span class="n">STD_INPUT_HANDLE</span><span class="p">,</span> <span class="n">STD_OUTPUT_HANDLE</span><span class="p">,</span>
                          <span class="n">STD_ERROR_HANDLE</span><span class="p">,</span> <span class="n">SW_HIDE</span><span class="p">,</span>
@@ -175,6 +365,24 @@
                     <span class="s2">&quot;NORMAL_PRIORITY_CLASS&quot;</span><span class="p">,</span> <span class="s2">&quot;REALTIME_PRIORITY_CLASS&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;CREATE_NO_WINDOW&quot;</span><span class="p">,</span> <span class="s2">&quot;DETACHED_PROCESS&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;CREATE_DEFAULT_ERROR_MODE&quot;</span><span class="p">,</span> <span class="s2">&quot;CREATE_BREAKAWAY_FROM_JOB&quot;</span><span class="p">])</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">_can_fork_exec</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">_posixsubprocess</span> <span class="kn">import</span> <span class="n">fork_exec</span> <span class="k">as</span> <span class="n">_fork_exec</span>
+        <span class="c1"># used in methods that are called by __del__</span>
+        <span class="n">_waitpid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">waitpid</span>
+        <span class="n">_waitstatus_to_exitcode</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">waitstatus_to_exitcode</span>
+        <span class="n">_WIFSTOPPED</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">WIFSTOPPED</span>
+        <span class="n">_WSTOPSIG</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">WSTOPSIG</span>
+        <span class="n">_WNOHANG</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">WNOHANG</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_fork_exec</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">_waitpid</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">_waitstatus_to_exitcode</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">_WIFSTOPPED</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">_WSTOPSIG</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">_WNOHANG</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="kn">import</span> <span class="nn">select</span>
+    <span class="kn">import</span> <span class="nn">selectors</span>
 
 
 <span class="c1"># Exception classes used by this module.</span>
@@ -382,12 +590,14 @@
             <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-E&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">no_user_site</span><span class="p">:</span>
             <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-s&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">safe_path</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-P&#39;</span><span class="p">)</span>
 
     <span class="c1"># -W options</span>
     <span class="n">warnopts</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">warnoptions</span><span class="p">[:]</span>
-    <span class="n">bytes_warning</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">bytes_warning</span>
     <span class="n">xoptions</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s1">&#39;_xoptions&#39;</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="n">dev_mode</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;dev&#39;</span> <span class="ow">in</span> <span class="n">xoptions</span><span class="p">)</span>
+    <span class="n">bytes_warning</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">bytes_warning</span>
+    <span class="n">dev_mode</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">dev_mode</span>
 
     <span class="k">if</span> <span class="n">bytes_warning</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">warnopts</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;error::BytesWarning&quot;</span><span class="p">)</span>
@@ -402,7 +612,7 @@
     <span class="k">if</span> <span class="n">dev_mode</span><span class="p">:</span>
         <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;-X&#39;</span><span class="p">,</span> <span class="s1">&#39;dev&#39;</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;faulthandler&#39;</span><span class="p">,</span> <span class="s1">&#39;tracemalloc&#39;</span><span class="p">,</span> <span class="s1">&#39;importtime&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;showalloccount&#39;</span><span class="p">,</span> <span class="s1">&#39;showrefcount&#39;</span><span class="p">,</span> <span class="s1">&#39;utf8&#39;</span><span class="p">):</span>
+                <span class="s1">&#39;showrefcount&#39;</span><span class="p">,</span> <span class="s1">&#39;utf8&#39;</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">xoptions</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">xoptions</span><span class="p">[</span><span class="n">opt</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
@@ -412,6 +622,26 @@
             <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;-X&#39;</span><span class="p">,</span> <span class="n">arg</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">args</span>
+
+
+<span class="k">def</span> <span class="nf">_text_encoding</span><span class="p">():</span>
+    <span class="c1"># Return default text encoding and emit EncodingWarning if</span>
+    <span class="c1"># sys.flags.warn_default_encoding is true.</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">warn_default_encoding</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">()</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span>
+        <span class="n">stacklevel</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">while</span> <span class="n">f</span> <span class="o">:=</span> <span class="n">f</span><span class="o">.</span><span class="n">f_back</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span> <span class="o">!=</span> <span class="n">filename</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">stacklevel</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;&#39;encoding&#39; argument not specified.&quot;</span><span class="p">,</span>
+                      <span class="ne">EncodingWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">utf8_mode</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;utf-8&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">locale</span><span class="o">.</span><span class="n">getencoding</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="o">*</span><span class="n">popenargs</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -485,13 +715,15 @@
 <span class="sd">    decoded according to locale encoding, or by &quot;encoding&quot; if set. Text mode</span>
 <span class="sd">    is triggered by setting any of text, encoding, errors or universal_newlines.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="s1">&#39;stdout&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;stdout argument not allowed, it will be overridden.&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="s1">&#39;check&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">kw</span><span class="si">}</span><span class="s1"> argument not allowed, it will be overridden.&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="s1">&#39;input&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># Explicitly passing input=None was previously equivalent to passing an</span>
         <span class="c1"># empty string. That is maintained here for backwards compatibility.</span>
-        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;universal_newlines&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;universal_newlines&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;encoding&#39;</span><span class="p">)</span> \
+                <span class="ow">or</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;errors&#39;</span><span class="p">):</span>
             <span class="n">empty</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">empty</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
@@ -527,6 +759,9 @@
             <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;stderr=</span><span class="si">{!r}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">))</span>
         <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
 
+    <span class="n">__class_getitem__</span> <span class="o">=</span> <span class="nb">classmethod</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">GenericAlias</span><span class="p">)</span>
+
+
     <span class="k">def</span> <span class="nf">check_returncode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise CalledProcessError if the exit code is non-zero.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">returncode</span><span class="p">:</span>
@@ -540,7 +775,8 @@
 
 <span class="sd">    The returned instance will have attributes args, returncode, stdout and</span>
 <span class="sd">    stderr. By default, stdout and stderr are not captured, and those attributes</span>
-<span class="sd">    will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them.</span>
+<span class="sd">    will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,</span>
+<span class="sd">    or pass capture_output=True to capture both.</span>
 
 <span class="sd">    If check is True and the exit code was non-zero, it raises a</span>
 <span class="sd">    CalledProcessError. The CalledProcessError object will have the return code</span>
@@ -676,7 +912,7 @@
 <span class="c1"># Various tools for executing commands and looking at their output and status.</span>
 <span class="c1">#</span>
 
-<span class="k">def</span> <span class="nf">getstatusoutput</span><span class="p">(</span><span class="n">cmd</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">getstatusoutput</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return (exitcode, output) of executing cmd in a shell.</span>
 
 <span class="sd">    Execute the string &#39;cmd&#39; in a shell with &#39;check_output&#39; and</span>
@@ -698,7 +934,8 @@
 <span class="sd">    (-15, &#39;&#39;)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">STDOUT</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">STDOUT</span><span class="p">,</span>
+                            <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span>
         <span class="n">exitcode</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">except</span> <span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">output</span>
@@ -707,7 +944,7 @@
         <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">exitcode</span><span class="p">,</span> <span class="n">data</span>
 
-<span class="k">def</span> <span class="nf">getoutput</span><span class="p">(</span><span class="n">cmd</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">getoutput</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return output (stdout or stderr) of executing cmd in a shell.</span>
 
 <span class="sd">    Like getstatusoutput(), except the exit status is ignored and the return</span>
@@ -717,7 +954,8 @@
 <span class="sd">    &gt;&gt;&gt; subprocess.getoutput(&#39;ls /bin/ls&#39;)</span>
 <span class="sd">    &#39;/bin/ls&#39;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">getstatusoutput</span><span class="p">(</span><span class="n">cmd</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">getstatusoutput</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
 
 
 <span class="k">def</span> <span class="nf">_use_posix_spawn</span><span class="p">():</span>
@@ -737,8 +975,9 @@
         <span class="c1"># os.posix_spawn() is not available</span>
         <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s1">&#39;darwin&#39;</span><span class="p">:</span>
-        <span class="c1"># posix_spawn() is a syscall on macOS and properly reports errors</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;darwin&#39;</span><span class="p">,</span> <span class="s1">&#39;sunos5&#39;</span><span class="p">):</span>
+        <span class="c1"># posix_spawn() is a syscall on both macOS and Solaris,</span>
+        <span class="c1"># and properly reports errors</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="c1"># Check libc name and runtime libc version</span>
@@ -767,10 +1006,13 @@
     <span class="k">return</span> <span class="kc">False</span>
 
 
+<span class="c1"># These are primarily fail-safe knobs for negatives. A True value does not</span>
+<span class="c1"># guarantee the given libc/syscall API will be used.</span>
 <span class="n">_USE_POSIX_SPAWN</span> <span class="o">=</span> <span class="n">_use_posix_spawn</span><span class="p">()</span>
+<span class="n">_USE_VFORK</span> <span class="o">=</span> <span class="kc">True</span>
 
 
-<span class="k">class</span> <span class="nc">Popen</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Popen</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Execute a child program in a new process.</span>
 
 <span class="sd">    For a complete description of the arguments see the Python documentation.</span>
@@ -808,6 +1050,16 @@
 
 <span class="sd">      start_new_session (POSIX only)</span>
 
+<span class="sd">      process_group (POSIX only)</span>
+
+<span class="sd">      group (POSIX only)</span>
+
+<span class="sd">      extra_groups (POSIX only)</span>
+
+<span class="sd">      user (POSIX only)</span>
+
+<span class="sd">      umask (POSIX only)</span>
+
 <span class="sd">      pass_fds (POSIX only)</span>
 
 <span class="sd">      encoding and errors: Text mode encoding and error handling to use for</span>
@@ -824,8 +1076,15 @@
                  <span class="n">shell</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">universal_newlines</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">startupinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">creationflags</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                  <span class="n">restore_signals</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">start_new_session</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">pass_fds</span><span class="o">=</span><span class="p">(),</span> <span class="o">*</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                 <span class="n">pass_fds</span><span class="o">=</span><span class="p">(),</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extra_groups</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">umask</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">pipesize</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">process_group</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create new Popen instance.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_can_fork_exec</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
+                <span class="n">errno</span><span class="o">.</span><span class="n">ENOTSUP</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="si">}</span><span class="s2"> does not support processes.&quot;</span>
+            <span class="p">)</span>
+
         <span class="n">_cleanup</span><span class="p">()</span>
         <span class="c1"># Held while anything is calling waitpid before returncode has been</span>
         <span class="c1"># updated to prevent clobbering returncode if wait() or poll() are</span>
@@ -840,6 +1099,11 @@
             <span class="n">bufsize</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1"># Restore default</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bufsize</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;bufsize must be an integer&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">pipesize</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pipesize</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1"># Restore default</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pipesize</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;pipesize must be an integer&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">_mswindows</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">preexec_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -865,6 +1129,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">returncode</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="n">encoding</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="n">errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pipesize</span> <span class="o">=</span> <span class="n">pipesize</span>
 
         <span class="c1"># Validate the combinations of text and universal_newlines</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">universal_newlines</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -905,6 +1170,8 @@
                 <span class="n">errread</span> <span class="o">=</span> <span class="n">msvcrt</span><span class="o">.</span><span class="n">open_osfhandle</span><span class="p">(</span><span class="n">errread</span><span class="o">.</span><span class="n">Detach</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">text_mode</span> <span class="o">=</span> <span class="n">encoding</span> <span class="ow">or</span> <span class="n">errors</span> <span class="ow">or</span> <span class="n">text</span> <span class="ow">or</span> <span class="n">universal_newlines</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_mode</span> <span class="ow">and</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">_text_encoding</span><span class="p">()</span>
 
         <span class="c1"># How long to resume waiting on a child after the first ^C.</span>
         <span class="c1"># There is no right value for this.  The purpose is to be polite</span>
@@ -921,6 +1188,86 @@
                 <span class="n">bufsize</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">line_buffering</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">process_group</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">process_group</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1"># The internal APIs are int-only</span>
+
+        <span class="n">gid</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">group</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">os</span><span class="p">,</span> <span class="s1">&#39;setregid&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The &#39;group&#39; parameter is not supported on the &quot;</span>
+                                 <span class="s2">&quot;current platform&quot;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="kn">import</span> <span class="nn">grp</span>
+                <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The group parameter cannot be a string &quot;</span>
+                                     <span class="s2">&quot;on systems without the grp module&quot;</span><span class="p">)</span>
+
+                <span class="n">gid</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">gid</span> <span class="o">=</span> <span class="n">group</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Group must be a string or an integer, not </span><span class="si">{}</span><span class="s2">&quot;</span>
+                                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">group</span><span class="p">)))</span>
+
+            <span class="k">if</span> <span class="n">gid</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Group ID cannot be negative, got </span><span class="si">{</span><span class="n">gid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">gids</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">extra_groups</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">os</span><span class="p">,</span> <span class="s1">&#39;setgroups&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The &#39;extra_groups&#39; parameter is not &quot;</span>
+                                 <span class="s2">&quot;supported on the current platform&quot;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">extra_groups</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Groups must be a list, not a string&quot;</span><span class="p">)</span>
+
+            <span class="n">gids</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">extra_group</span> <span class="ow">in</span> <span class="n">extra_groups</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">extra_group</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="kn">import</span> <span class="nn">grp</span>
+                    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Items in extra_groups cannot be &quot;</span>
+                                         <span class="s2">&quot;strings on systems without the &quot;</span>
+                                         <span class="s2">&quot;grp module&quot;</span><span class="p">)</span>
+
+                    <span class="n">gids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="n">extra_group</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">extra_group</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                    <span class="n">gids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">extra_group</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Items in extra_groups must be a string &quot;</span>
+                                    <span class="s2">&quot;or integer, not </span><span class="si">{}</span><span class="s2">&quot;</span>
+                                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">extra_group</span><span class="p">)))</span>
+
+            <span class="c1"># make sure that the gids are all positive here so we can do less</span>
+            <span class="c1"># checking in the C code</span>
+            <span class="k">for</span> <span class="n">gid_check</span> <span class="ow">in</span> <span class="n">gids</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">gid_check</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Group ID cannot be negative, got </span><span class="si">{</span><span class="n">gid_check</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">uid</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">os</span><span class="p">,</span> <span class="s1">&#39;setreuid&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The &#39;user&#39; parameter is not supported on &quot;</span>
+                                 <span class="s2">&quot;the current platform&quot;</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="kn">import</span> <span class="nn">pwd</span>
+                <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The user parameter cannot be a string &quot;</span>
+                                     <span class="s2">&quot;on systems without the pwd module&quot;</span><span class="p">)</span>
+                <span class="n">uid</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">user</span><span class="p">)</span><span class="o">.</span><span class="n">pw_uid</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">uid</span> <span class="o">=</span> <span class="n">user</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;User must be a string or an integer&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">uid</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User ID cannot be negative, got </span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">p2cwrite</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
@@ -946,7 +1293,9 @@
                                 <span class="n">p2cread</span><span class="p">,</span> <span class="n">p2cwrite</span><span class="p">,</span>
                                 <span class="n">c2pread</span><span class="p">,</span> <span class="n">c2pwrite</span><span class="p">,</span>
                                 <span class="n">errread</span><span class="p">,</span> <span class="n">errwrite</span><span class="p">,</span>
-                                <span class="n">restore_signals</span><span class="p">,</span> <span class="n">start_new_session</span><span class="p">)</span>
+                                <span class="n">restore_signals</span><span class="p">,</span>
+                                <span class="n">gid</span><span class="p">,</span> <span class="n">gids</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">umask</span><span class="p">,</span>
+                                <span class="n">start_new_session</span><span class="p">,</span> <span class="n">process_group</span><span class="p">)</span>
         <span class="k">except</span><span class="p">:</span>
             <span class="c1"># Cleanup if the child failed starting.</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stdin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">)):</span>
@@ -975,6 +1324,17 @@
                         <span class="k">pass</span>
 
             <span class="k">raise</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">obj_repr</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;returncode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2"> args: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="si">!r}</span><span class="s2">&gt;&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj_repr</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">80</span><span class="p">:</span>
+            <span class="n">obj_repr</span> <span class="o">=</span> <span class="n">obj_repr</span><span class="p">[:</span><span class="mi">76</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;...&gt;&quot;</span>
+        <span class="k">return</span> <span class="n">obj_repr</span>
+
+    <span class="n">__class_getitem__</span> <span class="o">=</span> <span class="nb">classmethod</span><span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">GenericAlias</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">universal_newlines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1316,7 +1676,10 @@
                            <span class="n">p2cread</span><span class="p">,</span> <span class="n">p2cwrite</span><span class="p">,</span>
                            <span class="n">c2pread</span><span class="p">,</span> <span class="n">c2pwrite</span><span class="p">,</span>
                            <span class="n">errread</span><span class="p">,</span> <span class="n">errwrite</span><span class="p">,</span>
-                           <span class="n">unused_restore_signals</span><span class="p">,</span> <span class="n">unused_start_new_session</span><span class="p">):</span>
+                           <span class="n">unused_restore_signals</span><span class="p">,</span>
+                           <span class="n">unused_gid</span><span class="p">,</span> <span class="n">unused_gids</span><span class="p">,</span> <span class="n">unused_uid</span><span class="p">,</span>
+                           <span class="n">unused_umask</span><span class="p">,</span>
+                           <span class="n">unused_start_new_session</span><span class="p">,</span> <span class="n">unused_process_group</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Execute program (MS Windows version)&quot;&quot;&quot;</span>
 
             <span class="k">assert</span> <span class="ow">not</span> <span class="n">pass_fds</span><span class="p">,</span> <span class="s2">&quot;pass_fds not supported on Windows.&quot;</span>
@@ -1383,7 +1746,23 @@
             <span class="k">if</span> <span class="n">shell</span><span class="p">:</span>
                 <span class="n">startupinfo</span><span class="o">.</span><span class="n">dwFlags</span> <span class="o">|=</span> <span class="n">_winapi</span><span class="o">.</span><span class="n">STARTF_USESHOWWINDOW</span>
                 <span class="n">startupinfo</span><span class="o">.</span><span class="n">wShowWindow</span> <span class="o">=</span> <span class="n">_winapi</span><span class="o">.</span><span class="n">SW_HIDE</span>
-                <span class="n">comspec</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;COMSPEC&quot;</span><span class="p">,</span> <span class="s2">&quot;cmd.exe&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">executable</span><span class="p">:</span>
+                    <span class="c1"># gh-101283: without a fully-qualified path, before Windows</span>
+                    <span class="c1"># checks the system directories, it first looks in the</span>
+                    <span class="c1"># application directory, and also the current directory if</span>
+                    <span class="c1"># NeedCurrentDirectoryForExePathW(ExeName) is true, so try</span>
+                    <span class="c1"># to avoid executing unqualified &quot;cmd.exe&quot;.</span>
+                    <span class="n">comspec</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ComSpec&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">comspec</span><span class="p">:</span>
+                        <span class="n">system_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SystemRoot&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+                        <span class="n">comspec</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">system_root</span><span class="p">,</span> <span class="s1">&#39;System32&#39;</span><span class="p">,</span> <span class="s1">&#39;cmd.exe&#39;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">comspec</span><span class="p">):</span>
+                            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s1">&#39;shell not found: neither %ComSpec% nor %SystemRoot</span><span class="si">% i</span><span class="s1">s set&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">comspec</span><span class="p">):</span>
+                        <span class="n">executable</span> <span class="o">=</span> <span class="n">comspec</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">comspec</span> <span class="o">=</span> <span class="n">executable</span>
+
                 <span class="n">args</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> /c &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span> <span class="p">(</span><span class="n">comspec</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">cwd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1553,6 +1932,8 @@
                 <span class="k">pass</span>
             <span class="k">elif</span> <span class="n">stdin</span> <span class="o">==</span> <span class="n">PIPE</span><span class="p">:</span>
                 <span class="n">p2cread</span><span class="p">,</span> <span class="n">p2cwrite</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">pipe</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipesize</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fcntl</span><span class="p">,</span> <span class="s2">&quot;F_SETPIPE_SZ&quot;</span><span class="p">):</span>
+                    <span class="n">fcntl</span><span class="o">.</span><span class="n">fcntl</span><span class="p">(</span><span class="n">p2cwrite</span><span class="p">,</span> <span class="n">fcntl</span><span class="o">.</span><span class="n">F_SETPIPE_SZ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipesize</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">stdin</span> <span class="o">==</span> <span class="n">DEVNULL</span><span class="p">:</span>
                 <span class="n">p2cread</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_devnull</span><span class="p">()</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stdin</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
@@ -1565,6 +1946,8 @@
                 <span class="k">pass</span>
             <span class="k">elif</span> <span class="n">stdout</span> <span class="o">==</span> <span class="n">PIPE</span><span class="p">:</span>
                 <span class="n">c2pread</span><span class="p">,</span> <span class="n">c2pwrite</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">pipe</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipesize</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fcntl</span><span class="p">,</span> <span class="s2">&quot;F_SETPIPE_SZ&quot;</span><span class="p">):</span>
+                    <span class="n">fcntl</span><span class="o">.</span><span class="n">fcntl</span><span class="p">(</span><span class="n">c2pwrite</span><span class="p">,</span> <span class="n">fcntl</span><span class="o">.</span><span class="n">F_SETPIPE_SZ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipesize</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">stdout</span> <span class="o">==</span> <span class="n">DEVNULL</span><span class="p">:</span>
                 <span class="n">c2pwrite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_devnull</span><span class="p">()</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stdout</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
@@ -1577,6 +1960,8 @@
                 <span class="k">pass</span>
             <span class="k">elif</span> <span class="n">stderr</span> <span class="o">==</span> <span class="n">PIPE</span><span class="p">:</span>
                 <span class="n">errread</span><span class="p">,</span> <span class="n">errwrite</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">pipe</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipesize</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fcntl</span><span class="p">,</span> <span class="s2">&quot;F_SETPIPE_SZ&quot;</span><span class="p">):</span>
+                    <span class="n">fcntl</span><span class="o">.</span><span class="n">fcntl</span><span class="p">(</span><span class="n">errwrite</span><span class="p">,</span> <span class="n">fcntl</span><span class="o">.</span><span class="n">F_SETPIPE_SZ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipesize</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">stderr</span> <span class="o">==</span> <span class="n">STDOUT</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">c2pwrite</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
                     <span class="n">errwrite</span> <span class="o">=</span> <span class="n">c2pwrite</span>
@@ -1640,7 +2025,9 @@
                            <span class="n">p2cread</span><span class="p">,</span> <span class="n">p2cwrite</span><span class="p">,</span>
                            <span class="n">c2pread</span><span class="p">,</span> <span class="n">c2pwrite</span><span class="p">,</span>
                            <span class="n">errread</span><span class="p">,</span> <span class="n">errwrite</span><span class="p">,</span>
-                           <span class="n">restore_signals</span><span class="p">,</span> <span class="n">start_new_session</span><span class="p">):</span>
+                           <span class="n">restore_signals</span><span class="p">,</span>
+                           <span class="n">gid</span><span class="p">,</span> <span class="n">gids</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">umask</span><span class="p">,</span>
+                           <span class="n">start_new_session</span><span class="p">,</span> <span class="n">process_group</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Execute program (POSIX version)&quot;&quot;&quot;</span>
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)):</span>
@@ -1675,7 +2062,12 @@
                     <span class="ow">and</span> <span class="p">(</span><span class="n">p2cread</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">p2cread</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">)</span>
                     <span class="ow">and</span> <span class="p">(</span><span class="n">c2pwrite</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">c2pwrite</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">)</span>
                     <span class="ow">and</span> <span class="p">(</span><span class="n">errwrite</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">errwrite</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">start_new_session</span><span class="p">):</span>
+                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">start_new_session</span>
+                    <span class="ow">and</span> <span class="n">process_group</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span>
+                    <span class="ow">and</span> <span class="n">gid</span> <span class="ow">is</span> <span class="kc">None</span>
+                    <span class="ow">and</span> <span class="n">gids</span> <span class="ow">is</span> <span class="kc">None</span>
+                    <span class="ow">and</span> <span class="n">uid</span> <span class="ow">is</span> <span class="kc">None</span>
+                    <span class="ow">and</span> <span class="n">umask</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_posix_spawn</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">executable</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">restore_signals</span><span class="p">,</span>
                                   <span class="n">p2cread</span><span class="p">,</span> <span class="n">p2cwrite</span><span class="p">,</span>
                                   <span class="n">c2pread</span><span class="p">,</span> <span class="n">c2pwrite</span><span class="p">,</span>
@@ -1721,14 +2113,16 @@
                             <span class="k">for</span> <span class="nb">dir</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">get_exec_path</span><span class="p">(</span><span class="n">env</span><span class="p">))</span>
                     <span class="n">fds_to_keep</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pass_fds</span><span class="p">)</span>
                     <span class="n">fds_to_keep</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">errpipe_write</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">_posixsubprocess</span><span class="o">.</span><span class="n">fork_exec</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">_fork_exec</span><span class="p">(</span>
                             <span class="n">args</span><span class="p">,</span> <span class="n">executable_list</span><span class="p">,</span>
                             <span class="n">close_fds</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">fds_to_keep</span><span class="p">))),</span>
                             <span class="n">cwd</span><span class="p">,</span> <span class="n">env_list</span><span class="p">,</span>
                             <span class="n">p2cread</span><span class="p">,</span> <span class="n">p2cwrite</span><span class="p">,</span> <span class="n">c2pread</span><span class="p">,</span> <span class="n">c2pwrite</span><span class="p">,</span>
                             <span class="n">errread</span><span class="p">,</span> <span class="n">errwrite</span><span class="p">,</span>
                             <span class="n">errpipe_read</span><span class="p">,</span> <span class="n">errpipe_write</span><span class="p">,</span>
-                            <span class="n">restore_signals</span><span class="p">,</span> <span class="n">start_new_session</span><span class="p">,</span> <span class="n">preexec_fn</span><span class="p">)</span>
+                            <span class="n">restore_signals</span><span class="p">,</span> <span class="n">start_new_session</span><span class="p">,</span>
+                            <span class="n">process_group</span><span class="p">,</span> <span class="n">gid</span><span class="p">,</span> <span class="n">gids</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">umask</span><span class="p">,</span>
+                            <span class="n">preexec_fn</span><span class="p">,</span> <span class="n">_USE_VFORK</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_child_created</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">finally</span><span class="p">:</span>
                     <span class="c1"># be sure the FD is closed no matter what</span>
@@ -1790,26 +2184,20 @@
                 <span class="k">raise</span> <span class="n">child_exception_type</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
 
 
-        <span class="k">def</span> <span class="nf">_handle_exitstatus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sts</span><span class="p">,</span> <span class="n">_WIFSIGNALED</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">WIFSIGNALED</span><span class="p">,</span>
-                <span class="n">_WTERMSIG</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">WTERMSIG</span><span class="p">,</span> <span class="n">_WIFEXITED</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">WIFEXITED</span><span class="p">,</span>
-                <span class="n">_WEXITSTATUS</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">WEXITSTATUS</span><span class="p">,</span> <span class="n">_WIFSTOPPED</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">WIFSTOPPED</span><span class="p">,</span>
-                <span class="n">_WSTOPSIG</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">WSTOPSIG</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_handle_exitstatus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sts</span><span class="p">,</span>
+                               <span class="n">_waitstatus_to_exitcode</span><span class="o">=</span><span class="n">_waitstatus_to_exitcode</span><span class="p">,</span>
+                               <span class="n">_WIFSTOPPED</span><span class="o">=</span><span class="n">_WIFSTOPPED</span><span class="p">,</span>
+                               <span class="n">_WSTOPSIG</span><span class="o">=</span><span class="n">_WSTOPSIG</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;All callers to this function MUST hold self._waitpid_lock.&quot;&quot;&quot;</span>
             <span class="c1"># This method is called (indirectly) by __del__, so it cannot</span>
             <span class="c1"># refer to anything outside of its local scope.</span>
-            <span class="k">if</span> <span class="n">_WIFSIGNALED</span><span class="p">(</span><span class="n">sts</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">returncode</span> <span class="o">=</span> <span class="o">-</span><span class="n">_WTERMSIG</span><span class="p">(</span><span class="n">sts</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">_WIFEXITED</span><span class="p">(</span><span class="n">sts</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">returncode</span> <span class="o">=</span> <span class="n">_WEXITSTATUS</span><span class="p">(</span><span class="n">sts</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">_WIFSTOPPED</span><span class="p">(</span><span class="n">sts</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">_WIFSTOPPED</span><span class="p">(</span><span class="n">sts</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">returncode</span> <span class="o">=</span> <span class="o">-</span><span class="n">_WSTOPSIG</span><span class="p">(</span><span class="n">sts</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Should never happen</span>
-                <span class="k">raise</span> <span class="n">SubprocessError</span><span class="p">(</span><span class="s2">&quot;Unknown child exit status!&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">returncode</span> <span class="o">=</span> <span class="n">_waitstatus_to_exitcode</span><span class="p">(</span><span class="n">sts</span><span class="p">)</span>
 
-
-        <span class="k">def</span> <span class="nf">_internal_poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_deadstate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_waitpid</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">waitpid</span><span class="p">,</span>
-                <span class="n">_WNOHANG</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">WNOHANG</span><span class="p">,</span> <span class="n">_ECHILD</span><span class="o">=</span><span class="n">errno</span><span class="o">.</span><span class="n">ECHILD</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_internal_poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_deadstate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_waitpid</span><span class="o">=</span><span class="n">_waitpid</span><span class="p">,</span>
+                <span class="n">_WNOHANG</span><span class="o">=</span><span class="n">_WNOHANG</span><span class="p">,</span> <span class="n">_ECHILD</span><span class="o">=</span><span class="n">errno</span><span class="o">.</span><span class="n">ECHILD</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Check if child process has terminated.  Returns returncode</span>
 <span class="sd">            attribute.</span>
 
@@ -2013,9 +2401,35 @@
 
         <span class="k">def</span> <span class="nf">send_signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sig</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Send a signal to the process.&quot;&quot;&quot;</span>
-            <span class="c1"># Skip signalling a process that we know has already died.</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">returncode</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># bpo-38630: Polling reduces the risk of sending a signal to the</span>
+            <span class="c1"># wrong process if the process completed, the Popen.returncode</span>
+            <span class="c1"># attribute is still None, and the pid has been reassigned</span>
+            <span class="c1"># (recycled) to a new different process. This race condition can</span>
+            <span class="c1"># happens in two cases.</span>
+            <span class="c1">#</span>
+            <span class="c1"># Case 1. Thread A calls Popen.poll(), thread B calls</span>
+            <span class="c1"># Popen.send_signal(). In thread A, waitpid() succeed and returns</span>
+            <span class="c1"># the exit status. Thread B calls kill() because poll() in thread A</span>
+            <span class="c1"># did not set returncode yet. Calling poll() in thread B prevents</span>
+            <span class="c1"># the race condition thanks to Popen._waitpid_lock.</span>
+            <span class="c1">#</span>
+            <span class="c1"># Case 2. waitpid(pid, 0) has been called directly, without</span>
+            <span class="c1"># using Popen methods: returncode is still None is this case.</span>
+            <span class="c1"># Calling Popen.poll() will set returncode to a default value,</span>
+            <span class="c1"># since waitpid() fails with ProcessLookupError.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">returncode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Skip signalling a process that we know has already died.</span>
+                <span class="k">return</span>
+
+            <span class="c1"># The race condition can still happen if the race condition</span>
+            <span class="c1"># described above happens between the returncode test</span>
+            <span class="c1"># and the kill() call.</span>
+            <span class="k">try</span><span class="p">:</span>
                 <span class="n">os</span><span class="o">.</span><span class="n">kill</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span> <span class="n">sig</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ProcessLookupError</span><span class="p">:</span>
+                <span class="c1"># Suppress the race condition error; bpo-40550.</span>
+                <span class="k">pass</span>
 
         <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Terminate the process with SIGTERM</span>
@@ -2027,32 +2441,48 @@
 <span class="sd">            &quot;&quot;&quot;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">send_signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGKILL</span><span class="p">)</span>
 </pre></div>
-
-           </div>
-          </div>
-          <footer>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
-        </div>
+        </article>
       </div>
-    </section>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; SuperDuperDB Inc., opensource@superduperdb.com
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+</div><script src="../_static/jquery.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="https://unpkg.com/mermaid@10.2.0/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    </body>
 </html>

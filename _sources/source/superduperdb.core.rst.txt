@@ -12,6 +12,14 @@ superduperdb.core.artifact module
    :undoc-members:
    :show-inheritance:
 
+superduperdb.core.artifact\_tree module
+---------------------------------------
+
+.. automodule:: superduperdb.core.artifact_tree
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 superduperdb.core.component module
 ----------------------------------
 
@@ -28,10 +36,10 @@ superduperdb.core.dataset module
    :undoc-members:
    :show-inheritance:
 
-superduperdb.core.documents module
-----------------------------------
+superduperdb.core.document module
+---------------------------------
 
-.. automodule:: superduperdb.core.documents
+.. automodule:: superduperdb.core.document
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,0 +1,844 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="OpenAI vector search" href="openai.html" /><link rel="prev" title="Example notebooks" href="index.html" />
+
+    <!-- Generated with Sphinx 6.2.1 and Furo 2023.05.20 -->
+        <title>Training and maintaining MNIST predictions - SuperDuperDB documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">SuperDuperDB  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">SuperDuperDB  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting_started/index.html">Getting started</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Getting started</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/features.html">Supported Features</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../background/index.html">Background of SuperDuperDB</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Background of SuperDuperDB</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../background/common_issues.html">Common issues in AI-data development</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../usage/index.html">SuperDuperDB Usage</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of SuperDuperDB Usage</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage/datalayer.html">Datalayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/queries.html">Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/encoders.html">Encoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vector_search.html">Vector Search</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../infrastructure/index.html">Infrastructural support</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Infrastructural support</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/single_host_cluster.html">SuperDuperDB single host cluster deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/architecture.html">SuperDuperDB architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/change_data_capture.html">Change data capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/client_server.html">Client-server implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Example notebooks</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of Example notebooks</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Training and maintaining MNIST predictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openai.html">OpenAI vector search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_vector_search_solutions.html">Compare vector search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sentiment_analysis_use_case.html">Sentiment analysis with transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="voice_memos.html">Create a personal assistant for understanding your meetings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mongo_cdc.html">Change data capture with MongoDB</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../source/modules.html">superduperdb</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of superduperdb</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../source/superduperdb.html">superduperdb package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of superduperdb package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.cli.html">superduperdb.cli package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.cluster.html">superduperdb.cluster package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of superduperdb.cluster package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.dask.html">superduperdb.cluster.dask package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.ray.html">superduperdb.cluster.ray package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.core.html">superduperdb.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.datalayer.html">superduperdb.datalayer package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of superduperdb.datalayer package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.base.html">superduperdb.datalayer.base package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.mongodb.html">superduperdb.datalayer.mongodb package</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.encoders.html">superduperdb.encoders package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of superduperdb.encoders package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.numpy.html">superduperdb.encoders.numpy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.pillow.html">superduperdb.encoders.pillow package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.torch.html">superduperdb.encoders.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.vectors.html">superduperdb.encoders.vectors package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.metrics.html">superduperdb.metrics package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.misc.html">superduperdb.misc package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.models.html">superduperdb.models package</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of superduperdb.models package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.langchain.html">superduperdb.models.langchain package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.openai.html">superduperdb.models.openai package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.pytorch_lightning.html">superduperdb.models.pytorch_lightning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sentence_transformers.html">superduperdb.models.sentence_transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sklearn.html">superduperdb.models.sklearn package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.torch.html">superduperdb.models.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.transformers.html">superduperdb.models.transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.vanilla.html">superduperdb.models.vanilla package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.serve.html">superduperdb.serve package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.vector_search.html">superduperdb.vector_search package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="Training-and-maintaining-MNIST-predictions">
+<h1>Training and maintaining MNIST predictions<a class="headerlink" href="#Training-and-maintaining-MNIST-predictions" title="Permalink to this heading"></a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pymongo</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torchvision</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb</span> <span class="kn">import</span> <span class="n">superduper</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">LeNet5</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="mi">16</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relu</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">84</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relu1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">84</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer2</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relu1</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Compose</span><span class="p">([</span>
+        <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">((</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">)),</span>
+        <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+        <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1307</span><span class="p">,),</span> <span class="n">std</span><span class="o">=</span><span class="p">(</span><span class="mf">0.3081</span><span class="p">,))]</span>
+    <span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">drop_database</span><span class="p">(</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span> <span class="o">=</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()</span><span class="o">.</span><span class="n">documents</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span> <span class="o">=</span> <span class="n">superduper</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.encoders.pillow.image</span> <span class="kn">import</span> <span class="n">pil_image</span> <span class="k">as</span> <span class="n">i</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.documents</span> <span class="kn">import</span> <span class="n">Document</span> <span class="k">as</span> <span class="n">D</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb.query</span> <span class="kn">import</span> <span class="n">Collection</span>
+
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="n">collection</span> <span class="o">=</span> <span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;mnist&#39;</span><span class="p">)</span>
+
+<span class="n">mnist_data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">torchvision</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s1">&#39;./data&#39;</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">D</span><span class="p">({</span><span class="s1">&#39;img&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]})</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mnist_data</span><span class="p">]</span>
+<span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="n">collection</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="mi">1000</span><span class="p">],</span> <span class="n">encoders</span><span class="o">=</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:root:Created encoder/pil_image/0
+INFO:root:found 0 uris
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(&lt;pymongo.results.InsertManyResult at 0x17d7beb50&gt;,
+ TaskWorkflow(database=&lt;superduperdb.datalayer.base.database.BaseDatabase object at 0x17db79700&gt;, G=&lt;networkx.classes.digraph.DiGraph object at 0x167808bb0&gt;))
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Document({&#39;_id&#39;: ObjectId(&#39;64b174e4d50ad8f852218d47&#39;), &#39;img&#39;: Encodable(x=&lt;PIL.PngImagePlugin.PngImageFile image mode=L size=28x28 at 0x17DB797F0&gt;, encoder=Encoder(identifier=&#39;pil_image&#39;, decoder=&lt;Artifact artifact=&lt;function decode_pil_image at 0x17dbb7ca0&gt; serializer=dill&gt;, encoder=&lt;Artifact artifact=&lt;function encode_pil_image at 0x17d809b80&gt; serializer=dill&gt;, shape=None, version=0)), &#39;class&#39;: 2, &#39;_fold&#39;: &#39;train&#39;})
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">superduper</span><span class="p">(</span><span class="n">LeNet5</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">preprocess</span><span class="o">=</span><span class="n">preprocess</span><span class="p">,</span> <span class="n">postprocess</span><span class="o">=</span><span class="n">postprocess</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[:</span><span class="mi">10</span><span class="p">]])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [00:00&lt;00:00, 455.96it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[5, 0, 0, 0, 0, 5, 0, 5, 0, 5]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">cross_entropy</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb.core.metric</span> <span class="kn">import</span> <span class="n">Metric</span>
+<span class="kn">from</span> <span class="nn">superduperdb.metrics.classification</span> <span class="kn">import</span> <span class="n">compute_classification_metrics</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">superduperdb.models.torch.wrapper</span> <span class="kn">import</span> <span class="n">TorchTrainerConfiguration</span>
+
+
+<span class="n">job</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">X</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;class&#39;</span><span class="p">,</span>
+    <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+    <span class="n">select</span><span class="o">=</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;mnist&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(),</span>
+    <span class="n">configuration</span><span class="o">=</span><span class="n">TorchTrainerConfiguration</span><span class="p">(</span>
+        <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;my_configuration&#39;</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">cross_entropy</span><span class="p">,</span>
+        <span class="n">loader_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+        <span class="n">max_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">validation_interval</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">compute_metrics</span><span class="o">=</span><span class="n">compute_classification_metrics</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">Metric</span><span class="p">(</span><span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;acc&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span><span class="p">)],</span>
+    <span class="n">validation_sets</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">Dataset</span><span class="p">(</span>
+            <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;my_valid&#39;</span><span class="p">,</span>
+            <span class="n">select</span><span class="o">=</span><span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;mnist&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;valid&#39;</span><span class="p">}),</span>
+            <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+    <span class="n">distributed</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:root:Created dataset/my_valid/0
+INFO:root:Created model/lenet5/0
+INFO:root:fold: TRAIN; iteration: 0; objective: 2.2636027336120605;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:01&lt;00:00, 1473.80it/s]
+INFO:root:fold: VALID; iteration: 0; my_valid/acc: 0.10558793280767913; objective: 2.3024406808696383;
+INFO:root:fold: TRAIN; iteration: 1; objective: 2.451305389404297;
+INFO:root:fold: TRAIN; iteration: 2; objective: 2.3206772804260254;
+INFO:root:fold: TRAIN; iteration: 3; objective: 2.3094427585601807;
+INFO:root:fold: TRAIN; iteration: 4; objective: 2.27115797996521;
+INFO:root:fold: TRAIN; iteration: 5; objective: 2.251753330230713;
+INFO:root:fold: TRAIN; iteration: 6; objective: 2.184605598449707;
+INFO:root:fold: TRAIN; iteration: 7; objective: 2.1559717655181885;
+INFO:root:fold: TRAIN; iteration: 8; objective: 2.1100094318389893;
+INFO:root:fold: TRAIN; iteration: 9; objective: 2.0685362815856934;
+INFO:root:fold: TRAIN; iteration: 10; objective: 2.1121528148651123;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:01&lt;00:00, 1464.42it/s]
+INFO:root:fold: VALID; iteration: 10; my_valid/acc: 0.3225917038052794; objective: 2.1036537154896617;
+INFO:root:fold: TRAIN; iteration: 11; objective: 2.029461622238159;
+INFO:root:fold: TRAIN; iteration: 12; objective: 2.2553775310516357;
+INFO:root:fold: TRAIN; iteration: 13; objective: 1.8924827575683594;
+INFO:root:fold: TRAIN; iteration: 14; objective: 1.9548372030258179;
+INFO:root:fold: TRAIN; iteration: 15; objective: 2.0213944911956787;
+INFO:root:fold: TRAIN; iteration: 16; objective: 2.0866830348968506;
+INFO:root:fold: TRAIN; iteration: 17; objective: 2.0644917488098145;
+INFO:root:fold: TRAIN; iteration: 18; objective: 1.9964416027069092;
+INFO:root:fold: TRAIN; iteration: 19; objective: 1.9441416263580322;
+INFO:root:fold: TRAIN; iteration: 20; objective: 2.0588316917419434;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:02&lt;00:00, 1428.87it/s]
+INFO:root:fold: VALID; iteration: 20; my_valid/acc: 0.38189921151868356; objective: 1.8714400391056114;
+INFO:root:fold: TRAIN; iteration: 21; objective: 1.9128974676132202;
+INFO:root:fold: TRAIN; iteration: 22; objective: 2.1311848163604736;
+INFO:root:fold: TRAIN; iteration: 23; objective: 1.6903291940689087;
+INFO:root:fold: TRAIN; iteration: 24; objective: 1.4871370792388916;
+INFO:root:fold: TRAIN; iteration: 25; objective: 1.6468786001205444;
+INFO:root:fold: TRAIN; iteration: 26; objective: 1.7011289596557617;
+INFO:root:fold: TRAIN; iteration: 27; objective: 1.765293836593628;
+INFO:root:fold: TRAIN; iteration: 28; objective: 1.8704679012298584;
+INFO:root:fold: TRAIN; iteration: 29; objective: 1.5048846006393433;
+INFO:root:fold: TRAIN; iteration: 30; objective: 1.9058284759521484;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:02&lt;00:00, 1457.82it/s]
+INFO:root:fold: VALID; iteration: 30; my_valid/acc: 0.6208433321906068; objective: 1.5691545797537452;
+INFO:root:fold: TRAIN; iteration: 31; objective: 1.7245668172836304;
+INFO:root:fold: TRAIN; iteration: 32; objective: 1.4949722290039062;
+INFO:root:fold: TRAIN; iteration: 33; objective: 1.6434568166732788;
+INFO:root:fold: TRAIN; iteration: 34; objective: 1.9197380542755127;
+INFO:root:fold: TRAIN; iteration: 35; objective: 1.1581300497055054;
+INFO:root:fold: TRAIN; iteration: 36; objective: 1.105804681777954;
+INFO:root:fold: TRAIN; iteration: 37; objective: 1.014953851699829;
+INFO:root:fold: TRAIN; iteration: 38; objective: 1.281571388244629;
+INFO:root:fold: TRAIN; iteration: 39; objective: 1.1979343891143799;
+INFO:root:fold: TRAIN; iteration: 40; objective: 1.1496556997299194;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:01&lt;00:00, 1462.75it/s]
+INFO:root:fold: VALID; iteration: 40; my_valid/acc: 0.624614329790881; objective: 1.3270199231497228;
+INFO:root:fold: TRAIN; iteration: 41; objective: 1.3481894731521606;
+INFO:root:fold: TRAIN; iteration: 42; objective: 1.5499541759490967;
+INFO:root:fold: TRAIN; iteration: 43; objective: 1.0678093433380127;
+INFO:root:fold: TRAIN; iteration: 44; objective: 1.4036829471588135;
+INFO:root:fold: TRAIN; iteration: 45; objective: 1.144822597503662;
+INFO:root:fold: TRAIN; iteration: 46; objective: 1.2246692180633545;
+INFO:root:fold: TRAIN; iteration: 47; objective: 1.2673747539520264;
+INFO:root:fold: TRAIN; iteration: 48; objective: 1.057615041732788;
+INFO:root:fold: TRAIN; iteration: 49; objective: 1.2163496017456055;
+INFO:root:fold: TRAIN; iteration: 50; objective: 1.530818223953247;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:01&lt;00:00, 1468.03it/s]
+INFO:root:fold: VALID; iteration: 50; my_valid/acc: 0.655810764484059; objective: 1.0999873921479264;
+INFO:root:fold: TRAIN; iteration: 51; objective: 0.9093157052993774;
+INFO:root:fold: TRAIN; iteration: 52; objective: 0.8649141192436218;
+INFO:root:fold: TRAIN; iteration: 53; objective: 0.6769917011260986;
+INFO:root:fold: TRAIN; iteration: 54; objective: 0.8237091302871704;
+INFO:root:fold: TRAIN; iteration: 55; objective: 0.9051357507705688;
+INFO:root:fold: TRAIN; iteration: 56; objective: 1.1652888059616089;
+INFO:root:fold: TRAIN; iteration: 57; objective: 0.9721485376358032;
+INFO:root:fold: TRAIN; iteration: 58; objective: 0.7873251438140869;
+INFO:root:fold: TRAIN; iteration: 59; objective: 0.5108793377876282;
+INFO:root:fold: TRAIN; iteration: 60; objective: 0.9073575139045715;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:02&lt;00:00, 1453.45it/s]
+INFO:root:fold: VALID; iteration: 60; my_valid/acc: 0.7871100445663353; objective: 0.8137197722106764;
+INFO:root:fold: TRAIN; iteration: 61; objective: 0.955818772315979;
+INFO:root:fold: TRAIN; iteration: 62; objective: 0.5989598035812378;
+INFO:root:fold: TRAIN; iteration: 63; objective: 0.6877775192260742;
+INFO:root:fold: TRAIN; iteration: 64; objective: 0.6506100296974182;
+INFO:root:fold: TRAIN; iteration: 65; objective: 0.44473332166671753;
+INFO:root:fold: TRAIN; iteration: 66; objective: 0.6296674013137817;
+INFO:root:fold: TRAIN; iteration: 67; objective: 0.9905365705490112;
+INFO:root:fold: TRAIN; iteration: 68; objective: 1.3020446300506592;
+INFO:root:fold: TRAIN; iteration: 69; objective: 0.6622214913368225;
+INFO:root:fold: TRAIN; iteration: 70; objective: 0.9807332754135132;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:02&lt;00:00, 1447.80it/s]
+INFO:root:fold: VALID; iteration: 70; my_valid/acc: 0.8097360301679808; objective: 0.6732703569306903;
+INFO:root:fold: TRAIN; iteration: 71; objective: 0.5036309957504272;
+INFO:root:fold: TRAIN; iteration: 72; objective: 0.5353643298149109;
+INFO:root:fold: TRAIN; iteration: 73; objective: 0.4259582459926605;
+INFO:root:fold: TRAIN; iteration: 74; objective: 0.7156941890716553;
+INFO:root:fold: TRAIN; iteration: 75; objective: 1.0036942958831787;
+INFO:root:fold: TRAIN; iteration: 76; objective: 0.38229840993881226;
+INFO:root:fold: TRAIN; iteration: 77; objective: 0.6550864577293396;
+INFO:root:fold: TRAIN; iteration: 78; objective: 0.750899076461792;
+INFO:root:fold: TRAIN; iteration: 79; objective: 0.41404104232788086;
+INFO:root:fold: TRAIN; iteration: 80; objective: 0.4526310861110687;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:01&lt;00:00, 1475.50it/s]
+INFO:root:fold: VALID; iteration: 80; my_valid/acc: 0.8663009941720946; objective: 0.5408257470045188;
+INFO:root:fold: TRAIN; iteration: 81; objective: 0.5113770365715027;
+INFO:root:fold: TRAIN; iteration: 82; objective: 0.5134092569351196;
+INFO:root:fold: TRAIN; iteration: 83; objective: 0.5849499702453613;
+INFO:root:fold: TRAIN; iteration: 84; objective: 0.6738963723182678;
+INFO:root:fold: TRAIN; iteration: 85; objective: 0.2836281657218933;
+INFO:root:fold: TRAIN; iteration: 86; objective: 0.2135278731584549;
+INFO:root:fold: TRAIN; iteration: 87; objective: 0.6622745990753174;
+INFO:root:fold: TRAIN; iteration: 88; objective: 0.4997749924659729;
+INFO:root:fold: TRAIN; iteration: 89; objective: 0.5573866963386536;
+INFO:root:fold: TRAIN; iteration: 90; objective: 0.24344868957996368;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:01&lt;00:00, 1463.02it/s]
+INFO:root:fold: VALID; iteration: 90; my_valid/acc: 0.8549880013712718; objective: 0.5347362626599123;
+INFO:root:fold: TRAIN; iteration: 91; objective: 0.8370794057846069;
+INFO:root:fold: TRAIN; iteration: 92; objective: 0.353643000125885;
+INFO:root:fold: TRAIN; iteration: 93; objective: 0.48435693979263306;
+INFO:root:fold: TRAIN; iteration: 94; objective: 1.3528252840042114;
+INFO:root:fold: TRAIN; iteration: 95; objective: 0.3474675118923187;
+INFO:root:fold: TRAIN; iteration: 96; objective: 0.44265326857566833;
+INFO:root:fold: TRAIN; iteration: 97; objective: 0.38781458139419556;
+INFO:root:fold: TRAIN; iteration: 98; objective: 1.1820679903030396;
+INFO:root:fold: TRAIN; iteration: 99; objective: 0.32649117708206177;
+INFO:root:fold: TRAIN; iteration: 100; objective: 0.6596584916114807;
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2917/2917 [00:01&lt;00:00, 1479.94it/s]
+INFO:root:fold: VALID; iteration: 100; my_valid/acc: 0.8615015426808365; objective: 0.523688334257227;
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">show_jobs</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[{&#39;identifier&#39;: &#39;c8b53e5e-7ce6-4694-88b9-5c2960341923&#39;,
+  &#39;time&#39;: datetime.datetime(2023, 7, 14, 12, 16, 36, 917000),
+  &#39;status&#39;: &#39;success&#39;}]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+TorchModel(identifier=&#39;lenet5&#39;, object=&lt;Artifact artifact=LeNet5(
+  (layer1): Sequential(
+    (0): Conv2d(1, 6, kernel_size=(5, 5), stride=(1, 1))
+    (1): BatchNorm2d(6, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (2): ReLU()
+    (3): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  )
+  (layer2): Sequential(
+    (0): Conv2d(6, 16, kernel_size=(5, 5), stride=(1, 1))
+    (1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (2): ReLU()
+    (3): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  )
+  (fc): Linear(in_features=400, out_features=120, bias=True)
+  (relu): ReLU()
+  (fc1): Linear(in_features=120, out_features=84, bias=True)
+  (relu1): ReLU()
+  (fc2): Linear(in_features=84, out_features=10, bias=True)
+) serializer=torch&gt;, encoder=None, train_X=&#39;img&#39;, train_y=&#39;class&#39;, training_select=Find(collection=Collection(name=&#39;mnist&#39;), like_parent=None, args=[], kwargs={}, type_id=&#39;mongodb.Find&#39;), metrics=[Metric(identifier=&#39;acc&#39;, object=&lt;Artifact artifact=&lt;function &lt;lambda&gt; at 0x185df8430&gt; serializer=dill&gt;, version=None)], training_configuration=TorchTrainerConfiguration(identifier=&#39;my_configuration&#39;, kwargs=None, objective=&lt;Artifact artifact=&lt;function cross_entropy at 0x161652310&gt; serializer=dill&gt;, loader_kwargs={&#39;batch_size&#39;: 10}, max_iterations=100, no_improve_then_stop=5, splitter=None, download=False, validation_interval=10, watch=&#39;objective&#39;, optimizer_cls=&lt;Artifact artifact=&lt;class &#39;torch.optim.adam.Adam&#39;&gt; serializer=pickle&gt;, optimizer_kwargs={}, target_preprocessors=None, compute_metrics=&lt;Artifact artifact=&lt;function compute_classification_metrics at 0x17f69bca0&gt; serializer=dill&gt;), version=0, metric_values={&#39;my_valid/acc&#39;: [0.10558793280767913, 0.3225917038052794, 0.38189921151868356, 0.6208433321906068, 0.624614329790881, 0.655810764484059, 0.7871100445663353, 0.8097360301679808, 0.8663009941720946, 0.8549880013712718, 0.8615015426808365], &#39;objective&#39;: [2.3024406808696383, 2.1036537154896617, 1.8714400391056114, 1.5691545797537452, 1.3270199231497228, 1.0999873921479264, 0.8137197722106764, 0.6732703569306903, 0.5408257470045188, 0.5347362626599123, 0.523688334257227]}, future=None, collate_fn=None, is_batch=None, num_directions=2, preprocess=&lt;Artifact artifact=&lt;function preprocess at 0x186616040&gt; serializer=dill&gt;, postprocess=&lt;Artifact artifact=&lt;function postprocess at 0x1866160d0&gt; serializer=dill&gt;, optimizer_state=None)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">identifier</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">metric_values</span><span class="p">[</span><span class="s1">&#39;my_valid/acc&#39;</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/examples_mnist_clean_13_0.png" src="../_images/examples_mnist_clean_13_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.core.watcher</span> <span class="kn">import</span> <span class="n">Watcher</span>
+
+<span class="n">jobs</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+    <span class="n">Watcher</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">key</span><span class="o">=</span><span class="s1">&#39;img&#39;</span><span class="p">,</span>
+        <span class="n">select</span><span class="o">=</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(),</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:root:Created watcher/lenet5/img/0
+WARNING:root:model/lenet5/0 already exists - doing nothing
+WARNING:root:model/lenet5/0 already exists - doing nothing
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1363.75it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1386.82it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1392.90it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1385.85it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1391.88it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1391.55it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1393.28it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1370.13it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1382.76it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1393.79it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:03&lt;00:00, 1388.31it/s]
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4000/4000 [00:02&lt;00:00, 1388.48it/s]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:]:</span>
+    <span class="n">r</span><span class="p">[</span><span class="s1">&#39;update&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">Collection</span><span class="p">(</span><span class="s1">&#39;docs&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">:]))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:root:found 0 uris
+WARNING:root:model/lenet5/0 already exists - doing nothing
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:00&lt;00:00, 1381.18it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(&lt;pymongo.results.InsertManyResult at 0x184090a60&gt;,
+ TaskWorkflow(database=&lt;superduperdb.datalayer.base.database.BaseDatabase object at 0x17db79700&gt;, G=&lt;networkx.classes.digraph.DiGraph object at 0x184090ee0&gt;))
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">Collection</span><span class="p">(</span><span class="s1">&#39;docs&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s1">&#39;update&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}))</span>
+</pre></div>
+</div>
+</div>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="openai.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">OpenAI vector search</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Example notebooks</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; SuperDuperDB Inc., opensource@superduperdb.com
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/jquery.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

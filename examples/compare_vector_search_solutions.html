@@ -1,0 +1,1020 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Sentiment analysis with transformers" href="sentiment_analysis_use_case.html" /><link rel="prev" title="OpenAI vector search" href="openai.html" />
+
+    <!-- Generated with Sphinx 6.2.1 and Furo 2023.05.20 -->
+        <title>Compare vector search - SuperDuperDB documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">SuperDuperDB  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">SuperDuperDB  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting_started/index.html">Getting started</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Getting started</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/features.html">Supported Features</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../background/index.html">Background of SuperDuperDB</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Background of SuperDuperDB</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../background/common_issues.html">Common issues in AI-data development</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../usage/index.html">SuperDuperDB Usage</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of SuperDuperDB Usage</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage/datalayer.html">Datalayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/queries.html">Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/encoders.html">Encoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vector_search.html">Vector Search</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../infrastructure/index.html">Infrastructural support</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Infrastructural support</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/single_host_cluster.html">SuperDuperDB single host cluster deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/architecture.html">SuperDuperDB architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/change_data_capture.html">Change data capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/client_server.html">Client-server implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Example notebooks</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of Example notebooks</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mnist_clean.html">Training and maintaining MNIST predictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openai.html">OpenAI vector search</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Compare vector search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sentiment_analysis_use_case.html">Sentiment analysis with transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="voice_memos.html">Create a personal assistant for understanding your meetings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mongo_cdc.html">Change data capture with MongoDB</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../source/modules.html">superduperdb</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of superduperdb</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../source/superduperdb.html">superduperdb package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of superduperdb package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.cli.html">superduperdb.cli package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.cluster.html">superduperdb.cluster package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of superduperdb.cluster package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.dask.html">superduperdb.cluster.dask package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.ray.html">superduperdb.cluster.ray package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.core.html">superduperdb.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.datalayer.html">superduperdb.datalayer package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of superduperdb.datalayer package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.base.html">superduperdb.datalayer.base package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.mongodb.html">superduperdb.datalayer.mongodb package</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.encoders.html">superduperdb.encoders package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of superduperdb.encoders package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.numpy.html">superduperdb.encoders.numpy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.pillow.html">superduperdb.encoders.pillow package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.torch.html">superduperdb.encoders.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.vectors.html">superduperdb.encoders.vectors package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.metrics.html">superduperdb.metrics package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.misc.html">superduperdb.misc package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.models.html">superduperdb.models package</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of superduperdb.models package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.langchain.html">superduperdb.models.langchain package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.openai.html">superduperdb.models.openai package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.pytorch_lightning.html">superduperdb.models.pytorch_lightning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sentence_transformers.html">superduperdb.models.sentence_transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sklearn.html">superduperdb.models.sklearn package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.torch.html">superduperdb.models.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.transformers.html">superduperdb.models.transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.vanilla.html">superduperdb.models.vanilla package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.serve.html">superduperdb.serve package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.vector_search.html">superduperdb.vector_search package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="Compare-vector-search">
+<h1>Compare vector search<a class="headerlink" href="#Compare-vector-search" title="Permalink to this heading"></a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>sentence-transformers
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sentence_transformers</span>
+<span class="kn">import</span> <span class="nn">pymongo</span>
+
+<span class="kn">from</span> <span class="nn">superduperdb.models.openai.wrapper</span> <span class="kn">import</span> <span class="n">OpenAIEmbedding</span>
+<span class="kn">from</span> <span class="nn">superduperdb.models.sentence_transformers.wrapper</span> <span class="kn">import</span> <span class="n">SentenceTransformer</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb.query</span> <span class="kn">import</span> <span class="n">Collection</span>
+<span class="kn">from</span> <span class="nn">superduperdb.misc.superduper</span> <span class="kn">import</span> <span class="n">superduper</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.watcher</span> <span class="kn">import</span> <span class="n">Watcher</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.vector_index</span> <span class="kn">import</span> <span class="n">VectorIndex</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.metric</span> <span class="kn">import</span> <span class="n">Metric</span>
+<span class="kn">from</span> <span class="nn">superduperdb.metrics.vector_search</span> <span class="kn">import</span> <span class="n">PatK</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:faiss.loader:Loading faiss.
+INFO:faiss.loader:Successfully loaded faiss.
+INFO:numexpr.utils:NumExpr defaulting to 8 threads.
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span> <span class="o">=</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()</span><span class="o">.</span><span class="n">drop_database</span><span class="p">(</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()</span><span class="o">.</span><span class="n">drop_database</span><span class="p">(</span><span class="s1">&#39;_filesystem:documents&#39;</span><span class="p">)</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()</span><span class="o">.</span><span class="n">documents</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">superduper</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+
+<span class="n">collection</span> <span class="o">=</span> <span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;wikipedia&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Anarchism&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Anarchism is a political philosophy and movement that is skeptical of all justifications for authority and seeks to abolish the institutions they claim maintain unnecessary coercion and hierarchy, typically including, though not necessarily limited to, the state and capitalism. Anarchism advocates for the replacement of the state with stateless societies or other forms of free associations.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Albedo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Albedo (; ) is the measure of the diffuse reflection of solar radiation out of the total solar radiation and measured on a scale from 0, corresponding to a black body that absorbs all incident radiation, to 1, corresponding to a body that reflects all incident radiation.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Achilles&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;In Greek mythology, Achilles ( ) or Achilleus ( Accessed 5 May 2017. the latter being the dative of the former. The name grew more popular, even becoming common soon after the seventh century BCEpigraphical database gives 476 matches for Ἀχιλ-.The earliest ones: Corinth 7th c. BC, Delphi 530 BC, Attica and Elis 5th c. BC. and was also turned into the female form Ἀχιλλεία (Achilleía), attested in Attica in the fourth century BC (IG II² 1617) and, in the form Achillia, on a stele in Halicarnassus as the name of a female gladiator fighting an </span><span class="se">\&quot;</span><span class="s2">Amazon</span><span class="se">\&quot;</span><span class="s2">.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;An American in Paris&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An American in Paris is a jazz-influenced orchestral piece by American composer George Gershwin first performed in 1928. It was inspired by the time that Gershwin had spent in Paris and evokes the sights and energy of the French capital during the Années folles.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Academy Award for Best Production Design&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The Academy Award for Best Production Design recognizes achievement for art direction in film. The category&#39;s original name was Best Art Direction, but was changed to its current name in 2012 for the 85th Academy Awards.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Animalia (book)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Animalia is an illustrated children&#39;s book by Graeme Base. It was originally published in 1986, followed by a tenth anniversary edition in 1996, and a 25th anniversary edition in 2012.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;International Atomic Time&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;International Atomic Time (abbreviated TAI, from its French name Temps atomique 1975) is a high-precision atomic coordinate time standard based on the notional passage of proper time on Earth&#39;s geoid. It is a continuous scale of time, without leap seconds, and it is the principal realisation of Terrestrial Time (with a fixed offset of epoch).&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Altruism&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Altruism is the principle and moral practice of concern for happiness of other human beings or other animals, resulting in a quality of life both material and spiritual. It is a traditional virtue in many cultures and a core aspect of various religious and secular worldviews.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Anthropology&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Anthropology is the scientific study of humanity, concerned with human behavior, human biology, cultures, societies, and linguistics, in both the present and past, including past human species. Social anthropology studies patterns of behaviour, while cultural anthropology studies cultural meaning, including norms and values.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Agricultural science&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Agricultural science (or agriscience for short Meaning &amp;amp; Definition for UK English |encyclopedia=Oxford Dictionary of English |url=https://www.lexico.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Alchemy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Alchemy (from Arabic: al-kīmiyā; from Ancient Greek: khumeía);  Definition of alchemy in English by Oxford Dictionaries|website=Oxford Dictionaries  English|access-date=30 September 2018}} is an ancient branch of natural philosophy, a philosophical and protoscientific tradition that was historically practiced in China, India, the Muslim world, and Europe. In its Western form, alchemy is first attested in a number of pseudepigraphical texts written in Greco-Roman Egypt during the first few centuries AD.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Astronomer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An astronomer is a scientist in the field of astronomy who focuses their studies on a specific question or field outside the scope of Earth. They observe astronomical objects such as stars, planets, moons, comets and galaxies – in either observational (by analyzing the data) or theoretical astronomy.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Animation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Animation is a method in which figures are manipulated to appear as moving images. In traditional animation, images are drawn or painted by hand on transparent celluloid sheets to be photographed and exhibited on film.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Austroasiatic languages&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The Austroasiatic languages , , also known as Mon–KhmerBradley (2012) notes, MK in the wider sense including the Munda languages of eastern South Asia is also known as Austroasiatic. , are a large language family in  Mainland Southeast Asia and South Asia.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Arithmetic mean&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;In mathematics and statistics, the arithmetic mean ( ) or arithmetic average, or just the mean or the average (when the context is clear), is the sum of a collection of numbers divided by the count of numbers in the collection. The collection is often a set of results of an experiment or an observational study, or frequently a set of results from a survey.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;American Football Conference&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The American Football Conference (AFC) is one of the two conferences of the National Football League (NFL), the highest professional level of American football in the United States. This conference currently contains 16 teams organized into 4 divisions, as does its counterpart, the National Football Conference (NFC).&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Animal Farm&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Animal Farm is a beast fable, in form of satirical allegorical novella, by George Orwell, first published in England on 17 August 1945. It tells the story of a group of farm animals who rebel against their human farmer, hoping to create a society where the animals can be equal, free, and happy.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Agriculture&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Agriculture or farming is the practice of cultivating plants and livestock. |year=1999 |publisher=International Labour Organization |isbn=978-92-2-111517-5 |page=77 |access-date=13 September 2010 |url-status=live |archive-url=https://web.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Analysis of variance&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Analysis of variance (ANOVA) is a collection of statistical models and their associated estimation procedures (such as the </span><span class="se">\&quot;</span><span class="s2">variation</span><span class="se">\&quot;</span><span class="s2"> among and between groups) used to analyze the differences among means. ANOVA was developed by the statistician Ronald Fisher.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Appellate procedure in the United States&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;United States appellate procedure involves the rules and regulations for filing appeals in state courts and federal courts. The nature of an appeal can vary greatly depending on the type of case and the rules of the court in the jurisdiction where the case was prosecuted.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Answer (law)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;In law, an answer was originally a solemn assertion in opposition to someone or something, and thus generally any counter-statement or defense, a reply to a question or response, or objection, or a correct solution of a problem.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Arraignment&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Arraignment is a formal reading of a criminal charging document in the presence of the defendant, to inform them of the charges against them. In response to arraignment, the accused is expected to enter a plea.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;America the Beautiful&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">America the Beautiful</span><span class="se">\&quot;</span><span class="s2"> is a patriotic American song. Its lyrics were written by Katharine Lee Bates and its music was composed by church organist and choirmaster Samuel A.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Asphalt&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Asphalt, also known as bitumen (, ), is a sticky, black, highly viscous liquid or semi-solid form of petroleum. It may be found in natural deposits or may be a refined product, and is classed as a pitch.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Argument (disambiguation)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;In logic and philosophy, an argument is an attempt to persuade someone of something, or give evidence or reasons for accepting a particular conclusion.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Astronaut&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An astronaut (from the Ancient Greek  (), meaning &#39;star&#39;, and  (), meaning &#39;sailor&#39;) is a person trained, equipped, and deployed by a human spaceflight program to serve as a commander or crew member aboard a spacecraft. Although generally reserved for professional space travelers, the term is sometimes applied to anyone who travels into space, including scientists, politicians, journalists, and tourists.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;A Modest Proposal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;A Modest Proposal For preventing the Children of Poor People From being a Burthen to Their Parents or Country, and For making them Beneficial to the Publick, commonly referred to as A Modest Proposal, is a Juvenalian satirical essay written and published anonymously by Jonathan Swift in 1729. The essay suggests that the impoverished Irish might ease their economic troubles by selling their children as food to rich gentlemen and ladies.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Alkali metal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The alkali metals consist of the chemical elements lithium (Li), sodium (Na), potassium (K),The symbols Na and K for sodium and potassium are derived from their Latin names, natrium and kalium; these are still the origins of the names for the elements in some languages, such as German and Russian. rubidium (Rb), caesium (Cs),.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Alphabet&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An alphabet is a standardized set of basic written symbols or graphemes (called letters) that represent the phonemes of certain spoken languages. Not all writing systems represent language in this way; in a syllabary, each character represents a syllable, for instance, and logographic systems use characters to represent words, morphemes, or other semantic units.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Atomic number&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;thumb|right|300px|The Rutherford–Bohr model of the [[hydrogen atom ( 1}}) or a hydrogen-like ion (). In this model it is an essential feature that the photon energy (or frequency) of the electromagnetic radiation emitted (shown) when an electron jumps from one orbital to another be proportional to the mathematical square of atomic charge ().&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Affirming the consequent&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Affirming the consequent, sometimes called converse error, fallacy of the converse, or confusion of necessity and sufficiency, is a formal fallacy of taking a true conditional statement (e.g.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Ambiguity&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Ambiguity is a type of meaning in which a phrase, statement or resolution is not explicitly defined, making several interpretations [A common aspect of ambiguity is uncertainty]. It is thus an attribute of any idea or statement whose [[intention|intended meaning cannot be definitively resolved according to a rule or process with a finite number of steps.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Abel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Abel;  Héḇel, in pausa  Hā́ḇel;  Hábel; }} is a Biblical figure in the Book of Genesis within Abrahamic religions. He was the younger brother of Cain, and the younger son of Adam and Eve, the first couple in Biblical history.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Adobe&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Adobe ( ; ) is a building material made from earth and organic materials,  is Spanish for mudbrick. In some English-speaking regions of Spanish heritage, such as the Southwestern United States, the term is used to refer to any kind of earthen construction, or various architectural styles like Pueblo Revival or Territorial Revival.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Adventure&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An adventure is an exciting experience or undertaking that is typically bold, sometimes risky. Adventures may be activities with danger such as traveling, exploring, skydiving, mountain climbing, scuba diving, river rafting, or other extreme sports.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Articles of Confederation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The Articles of Confederation and Perpetual Union was an agreement among the 13 original states of the United States of America that served as its first frame of government. It was approved after much debate (between July 1776 and November 1777) by the Second Continental Congress on November 15, 1777, and sent to the states for ratification.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Asia Minor (disambiguation)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Asia Minor is an alternative name for Anatolia, the westernmost protrusion of Asia, comprising the majority of the Republic of Turkey.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Demographics of Angola&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;This article is about the demographic features of the population of Angola, including population density, ethnicity, education level, health of the populace, economic status, religious affiliations and other aspects of the population.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Politics of Angola&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The Angolan government is composed of three branches of government: executive, legislative and judicial. For decades, political power has been concentrated in the presidency with the People&#39;s Movement for the Liberation of Angola.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Algorithms (journal)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Algorithms is a monthly peer-reviewed open-access scientific journal of mathematics, covering design, analysis, and experiments on algorithms. The journal is published by MDPI and was established in 2008.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Amateur astronomy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;thumb|right|250px|Amateur astronomers watch the night sky during the [[Perseids|Perseid meteor shower.]]&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Art&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Art is a diverse range of human activity, and resulting product, that involves creative or imaginative talent expressive of technical proficiency, beauty, emotional power, or conceptual ideas. Definition of Conceptual Art by Oxford Dictionary on Lexico.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Abstract (law)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;In law, an abstract is a brief statement that contains the most important points of a long legal document or of several related legal papers.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Ampere&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The ampere (, ; symbol: A), often shortened to amp,SI supports only the use of symbols and deprecates the use of abbreviations for units. is the SI base unit of electric current.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Algorithm&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;thumb|right| [[Flowchart of an algorithm (Euclid&#39;s algorithm) for calculating the greatest common divisor (g.c.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Anthophyta&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The anthophytes are a grouping of plant taxa bearing flower-like reproductive structures. They were formerly thought  to be a clade comprising plants bearing flower-like structures.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Mouthwash&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Mouthwash, mouth rinse, oral rinse, or mouth bath is a liquid which is held in the mouth passively or swilled around the mouth by contraction of the perioral muscles and/or movement of the head, and may be gargled, where the head is tilted back and the liquid bubbled at the back of the mouth.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Asteroid&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An asteroid is a minor planet of the inner Solar System. Sizes and shapes of asteroids vary significantly, ranging from 1-meter rocks to dwarf planets almost 1000 km in diameter; they are metallic or rocky bodies with no atmosphere.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Allocution&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An allocution, or allocutus, is a formal statement made to the court by the defendant who has been found guilty prior to being sentenced. It is part of the criminal procedure in some jurisdictions using common law.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Affidavit&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An  ( ; Medieval Latin for </span><span class="se">\&quot;</span><span class="s2">he has declared under oath</span><span class="se">\&quot;</span><span class="s2">) is a written statement voluntarily made by an affiant or deponent under an oath or affirmation which is administered by a person who is authorized to do so by law. Such a statement is witnessed as to the authenticity of the affiant&#39;s signature by a taker of oaths, such as a notary public or commissioner of oaths.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Anime&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;|lead=yes}} is a Japanese term for  animation. Outside of Japan and in English, anime refers specifically to animation produced in Japan.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Axiom of choice&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;In mathematics, the axiom of choice, or AC, is an axiom of set theory equivalent to the statement that a Cartesian product of a collection of non-empty sets is non-empty. Informally put, the axiom of choice says that given any collection of bins, each containing at least one object, it is possible to construct a set by arbitrarily choosing one object from each bin, even if the collection is infinite.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;A Clockwork Orange (novel)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;A Clockwork Orange is a dystopian satirical black comedy novel by English writer Anthony Burgess, published in 1962. It is set in a near-future society that has a youth subculture of extreme violence.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Amsterdam&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;| image_caption            = From top down, left to right: Keizersgracht, canal in the Centrum borough, the Royal Concertgebouw and Rijksmuseum&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Museum of Work&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The Museum of Work (Arbetets museum) is a museum located in Norrköping, Sweden. The museum is located in the Strykjärn (Clothes iron), a former weaving mill in the old industrial area on the Motala ström river in the city centre of Norrköping.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Aircraft&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An aircraft is a vehicle or machine that is able to fly by gaining support from the air. It counters the force of gravity by using either static lift or by using the dynamic lift of an airfoil, or in a few cases the downward thrust from jet engines.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Motor neuron disease&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Motor neuron diseases or motor neurone diseases (MNDs) are a group of rare neurodegenerative disorders that selectively affect motor neurons, the cells which control voluntary muscles of the body. They include amyotrophic lateral sclerosis (ALS), progressive bulbar palsy (PBP), pseudobulbar palsy, progressive muscular atrophy (PMA), primary lateral sclerosis (PLS), spinal muscular atrophy (SMA) and monomelic amyotrophy (MMA), as well as some rarer variants resembling ALS.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Abjad&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An abjad (, ; also abgad) is a writing system in which only consonants are represented, leaving vowel sounds to be inferred by the reader. This contrasts with other alphabets, which provide graphemes for both consonants and vowels.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Abugida&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;thumb|300px|Comparison of various abugidas descended from [[Brahmi script. Meaning: May Śiva protect those who take delight in the language of the gods.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Agnosticism&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Agnosticism is the view or belief that the existence of God, of the divine or the supernatural is unknown or unknowable. (page 56 in 1967 edition) Another definition provided is the view that </span><span class="se">\&quot;</span><span class="s2">human reason is incapable of providing sufficient rational grounds to justify either the belief that God exists or the belief that God does not exist.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Argon&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Argon is a chemical element with the symbol Ar and atomic number 18. It is in group 18 of the periodic table and is a noble gas.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Arsenic&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Arsenic is a chemical element with the symbol As and atomic number 33. Arsenic occurs in many minerals, usually in combination with sulfur and metals, but also as a pure elemental crystal.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Actinium&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Actinium is a chemical element with the symbol Ac and atomic number 89. It was first isolated by Friedrich Oskar Giesel in 1902, who gave it the name emanium; the element got its name by being wrongly identified with a substance André-Louis Debierne found in 1899 and called actinium.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Americium&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Americium is a synthetic radioactive chemical element with the symbol Am and atomic number 95. It is a transuranic member of the actinide series, in the periodic table located under the lanthanide element europium, and thus by analogy was named after the Americas.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Astatine&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Astatine is a chemical element with the symbol At and atomic number 85. It is the rarest naturally occurring element in the Earth&#39;s crust, occurring only as the decay product of various heavier elements.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Atom&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An atom is the smallest unit of ordinary matter that forms a chemical element.McSween Jr, Harry, and Gary Huss.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Aluminium&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Aluminium (aluminum in American and Canadian English) is a chemical element with the symbol Al and atomic number 13. Aluminium has a density lower than those of other common metals, at approximately one third that of steel.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Advanced Chemistry&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Advanced Chemistry is a German hip hop group from Heidelberg, a scenic city in Baden-Württemberg, South Germany. Advanced Chemistry was founded in 1987 by Toni L, Linguist, Gee-One, DJ Mike MD (Mike Dippon) and MC Torch.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Archipelago&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An archipelago ( ), sometimes called an island group or island chain, is a chain, cluster, or collection of islands, or sometimes a sea containing a small number of scattered islands.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Angst&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Angst is fear or anxiety (anguish is its Latinate equivalent, and the words anxious and anxiety are of similar origin). The dictionary definition for angst is a feeling of anxiety, apprehension, or insecurity.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Anxiety&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Anxiety is an emotion which is characterized by an unpleasant state of inner [and it includes subjectively unpleasant feelings of dread over anticipated] events. It is often accompanied by nervous behavior such as pacing back and forth, [[Somatic anxiety|somatic complaints, and rumination.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Axiom&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An axiom, postulate, or assumption is a statement that is taken to be true, to serve as a premise or starting point for further reasoning and arguments. The word comes from the Ancient Greek word  (), meaning &#39;that which is thought worthy or fit&#39; or &#39;that which commends itself as evident&#39;.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Alpha&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Alpha  (uppercase , lowercase ; , álpha, or ) is the first letter of the Greek alphabet. In the system of Greek numerals, it has a value of one.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Apiaceae&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Apiaceae or Umbelliferae is a family of mostly aromatic flowering plants named after the type genus Apium and commonly known as the celery, carrot or parsley family, or simply as umbellifers. It is the 16th-largest family of flowering plants, with more than 3,700 species in 434 generaStevens, P.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Axon&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An axon (from Greek ἄξων áxōn, axis), or nerve fiber (or nerve fibre: see spelling differences), is a long, slender projection of a nerve cell, or neuron, in vertebrates, that typically conducts electrical impulses known as action potentials away from the nerve cell body. The function of the axon is to transmit information to different neurons, muscles, and glands.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;American shot&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">American shot</span><span class="se">\&quot;</span><span class="s2"> or </span><span class="se">\&quot;</span><span class="s2">cowboy shot</span><span class="se">\&quot;</span><span class="s2"> is a translation of a phrase from French film criticism, plan américain, and refers to a medium-long (</span><span class="se">\&quot;</span><span class="s2">knee</span><span class="se">\&quot;</span><span class="s2">) film shot of a group of characters, who are arranged so that all are visible to the camera. The usual arrangement is for the actors to stand in an irregular line from one side of the screen to the other, with the actors at the end coming forward a little and standing more in profile than the others.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Acute disseminated encephalomyelitis&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Acute disseminated encephalomyelitis (ADEM), or acute demyelinating encephalomyelitis, is a rare autoimmune disease marked by a sudden, widespread attack of inflammation in the brain and spinal cord. As well as causing the brain and spinal cord to become inflamed, ADEM also attacks the nerves of the central nervous system and damages their myelin insulation, which, as a result, destroys the white matter.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Ataxia&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Ataxia is a neurological sign consisting of lack of voluntary coordination of muscle movements that can include gait abnormality, speech changes, and abnormalities in eye movements. Ataxia is a clinical manifestation indicating dysfunction of the parts of the nervous system that coordinate movement, such as the cerebellum.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Applied ethics&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Applied ethics refers to the practical application of moral considerations. It is ethics with respect to real-world actions and their moral considerations in the areas of private and public life, the professions, health, technology, law, and leadership.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Miss Marple&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Miss Marple is a fictional character in Agatha Christie&#39;s crime novels and short stories. Jane Marple lives in the village of St.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Aaron&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;According to the Abrahamic religions, Aaron ′aharon, , Greek (Septuagint): [often called Aaron the priest ().|group=</span><span class="se">\&quot;</span><span class="s2">note</span><span class="se">\&quot;</span><span class="s2">}} ( or ;  ’Ahărōn) was a prophet], [[high priest, and the elder brother of Moses.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Alcohol (chemistry)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;In chemistry, an alcohol is a type of organic compound that carries at least one hydroxyl functional group (−OH) bound to a saturated carbon atom. The term alcohol originally referred to the primary alcohol ethanol (ethyl alcohol), which is used as a drug and is the main alcohol present in alcoholic drinks. An important class of alcohols, of which methanol and ethanol are the simplest examples, includes all compounds which conform to the general formula . Simple monoalcohols that are the subject of this article include primary (), secondary () and tertiary () alcohols.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Algebraically closed field&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;In mathematics, a field  is algebraically closed if every non-constant polynomial in  (the univariate polynomial ring with coefficients in ) has a root in .&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Aspect ratio&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The aspect ratio of a geometric shape is the ratio of its sizes in different dimensions. For example, the aspect ratio of a rectangle is the ratio of its longer side to its shorter side—the ratio of width to height, when the rectangle is oriented as a </span><span class="se">\&quot;</span><span class="s2">landscape</span><span class="se">\&quot;</span><span class="s2">.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Auto racing&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Auto racing (also known as car racing, motor racing, or automobile racing) is a motorsport involving the racing of automobiles for competition.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Anarcho-capitalism&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Anarcho-capitalism (or, colloquially, ancap) Definition of ANCAP by Oxford Dictionary on Lexico.com also meaning of ANCAP |url=https://www.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Aristophanes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;| footnotes        = † Although many artists&#39; renderings of Aristophanes portray him with flowing curly hair, several jests in his plays indicate that he may have been prematurely bald.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Austrian School&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The Austrian School is a heterodox school of economic thought that advocates strict adherence to methodological individualism, the concept that social phenomena result exclusively from the motivations and actions of individuals. Austrians school theorists hold that economic theory should be exclusively derived from basic principles of human action.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Abatement&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Abatement refers generally to a lessening, diminution, reduction, or moderation; specifically, it may refer to:&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Amateur&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;An amateur (; ; ) is generally considered a person who pursues an avocation independent from their source of income. Amateurs and their pursuits are also described as popular, informal, self-taught, user-generated, DIY, and hobbyist.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;All Souls&#39; Day&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;|litcolor = Black, where it is traditionGeneral Instruction of the Roman Missal, 346 (otherwise violet or purple)General Instruction of the Roman Missal, 346&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Algorithms for calculating variance&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Algorithms for calculating variance play a major role in computational statistics. A key difficulty in the design of good algorithms for this problem is that formulas for the variance may involve sums of squares, which can lead to numerical instability as well as to arithmetic overflow when dealing with large values.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Politics of Antigua and Barbuda&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The politics of Antigua and Barbuda takes place in a framework of a unitary parliamentary representative democratic monarchy, wherein the Sovereign of Antigua and Barbuda is the head of state, appointing a Governor-General to act as vice-regal representative in the nation. A Prime Minister is appointed by the Governor-General as the head of government, and of a multi-party system; the Prime Minister advises the Governor-General on the appointment of a Council of Ministers.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Telecommunications in Antigua and Barbuda&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Telecommunications in Antigua and Barbuda are via media in the telecommunications industry. This article is about communications systems in Antigua and Barbuda.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Antisemitism&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Antisemitism (also spelled anti-semitism or anti-Semitism) is hostility to, prejudice towards, or discrimination against Jews.See, for example:&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Foreign relations of Azerbaijan&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The Republic of Azerbaijan is a member of the United Nations, the Non-Aligned Movement, the Organization for Security and Cooperation in Europe, NATO&#39;s Partnership for Peace, the Euro-Atlantic Partnership Council, the World Health Organization, the European Bank for Reconstruction and Development; the Council of Europe, CFE Treaty, the Community of Democracies; the International Monetary Fund; and the World Bank.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Politics of Armenia&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;The politics of Armenia take place in the framework of the parliamentary representative democratic republic of Armenia, whereby the President of Armenia is the head of state and the Prime Minister of Armenia the head of government, and of a multi-party system. Executive power is exercised by the President and the Government.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Foreign relations of Armenia&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Since its independence, Armenia has maintained a policy of complementarism by trying to have positive and friendly relations with Iran, Russia, and the West, including the United States and the European Union.– </span><span class="se">\&quot;</span><span class="s2">Armenian Foreign Policy Between Russia, Iran And U.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Demographics of American Samoa&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;This article is about the demographics of American Samoa, including population density, ethnicity, education level, health of the populace, economic status, religious affiliations and other aspects of the population. American Samoa is an unincorporated territory of the United States located in the South Pacific Ocean.&quot;</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Analysis&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;abstract&quot;</span><span class="p">:</span> <span class="s2">&quot;Analysis is the process of breaking a complex topic or substance into smaller parts in order to gain a better understanding of it. The technique has been applied in the study of mathematics and logic since before Aristotle (384–322 B.&quot;</span>
+  <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
+
+<span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">collection</span><span class="o">.</span><span class="n">insert_many</span><span class="p">([</span><span class="n">Document</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:root:found 0 uris
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(&lt;pymongo.results.InsertManyResult at 0x10ca0bd90&gt;,
+ TaskWorkflow(database=&lt;superduperdb.datalayer.base.database.BaseDatabase object at 0x19c3c0390&gt;, G=&lt;networkx.classes.digraph.DiGraph object at 0x194315410&gt;))
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Document({&#39;_id&#39;: ObjectId(&#39;64b2a19acab8d203c9052dbc&#39;), &#39;title&#39;: &#39;Anarchism&#39;, &#39;abstract&#39;: &#39;Anarchism is a political philosophy and movement that is skeptical of all justifications for authority and seeks to abolish the institutions they claim maintain unnecessary coercion and hierarchy, typically including, though not necessarily limited to, the state and capitalism. Anarchism advocates for the replacement of the state with stateless societies or other forms of free associations.&#39;, &#39;_fold&#39;: &#39;train&#39;})
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">configure_text_search</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">index_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">VectorIndex</span><span class="p">(</span>
+        <span class="n">identifier</span><span class="o">=</span><span class="n">index_id</span><span class="p">,</span>
+        <span class="n">indexing_watcher</span><span class="o">=</span><span class="n">Watcher</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">key</span><span class="o">=</span><span class="s1">&#39;abstract&#39;</span><span class="p">,</span>
+            <span class="n">select</span><span class="o">=</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(),</span>
+        <span class="p">),</span>
+        <span class="n">compatible_watcher</span><span class="o">=</span><span class="n">Watcher</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">key</span><span class="o">=</span><span class="s1">&#39;title&#39;</span><span class="p">,</span>
+            <span class="n">select</span><span class="o">=</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(),</span>
+            <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">Metric</span><span class="p">(</span><span class="s1">&#39;p@1&#39;</span><span class="p">,</span> <span class="n">PatK</span><span class="p">(</span><span class="mi">1</span><span class="p">))],</span>
+        <span class="n">validation_set</span><span class="o">=</span><span class="n">Dataset</span><span class="p">(</span><span class="s1">&#39;my-valid&#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span> <span class="n">select</span><span class="o">=</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;_fold&#39;</span><span class="p">:</span> <span class="s1">&#39;valid&#39;</span><span class="p">})),</span>
+        <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sentence_transformers</span> <span class="kn">import</span> <span class="n">SentenceTransformer</span> <span class="k">as</span> <span class="n">st</span>
+<span class="kn">from</span> <span class="nn">superduperdb.encoders.numpy.array</span> <span class="kn">import</span> <span class="n">array</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">SentenceTransformer</span><span class="p">(</span>
+    <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;all-MiniLM-L6-v2&#39;</span><span class="p">,</span>
+    <span class="nb">object</span><span class="o">=</span><span class="n">st</span><span class="p">(</span><span class="s1">&#39;all-MiniLM-L6-v2&#39;</span><span class="p">),</span>
+    <span class="n">encoder</span><span class="o">=</span><span class="n">array</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">384</span><span class="p">,))</span>
+<span class="p">)</span>
+
+<span class="n">configure_text_search</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s1">&#39;my-index-st&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+INFO:sentence_transformers.SentenceTransformer:Use pytorch device: cpu
+INFO:root:Checking upstream-component watcher/all-MiniLM-L6-v2/abstract
+INFO:root:Created watcher/all-MiniLM-L6-v2/abstract/0
+INFO:root:Checking upstream-component encoder/numpy.float32[384]
+INFO:root:Created encoder/numpy.float32[384]/0
+INFO:root:Created model/all-MiniLM-L6-v2/0
+WARNING:root:model/all-MiniLM-L6-v2/0 already exists - doing nothing
+WARNING:root:model/all-MiniLM-L6-v2/0 already exists - doing nothing
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "102fb58bf46049a1807508cd36964403", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:root:Checking upstream-component watcher/all-MiniLM-L6-v2/title
+INFO:root:Created watcher/all-MiniLM-L6-v2/title/0
+INFO:root:Created vector_index/my-index-st/0
+INFO:root:Created dataset/my-valid/0
+INFO:root:Created metric/p@1/0
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "b7eeb807be1245da93ad25b3f75e56dc", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "72378835f2544aec9858f1fe16142a03", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+VectorIndex(identifier=&#39;my-index-st&#39;, indexing_watcher=Watcher(key=&#39;abstract&#39;, model=SentenceTransformer(identifier=&#39;all-MiniLM-L6-v2&#39;, object=&lt;Artifact artifact=SentenceTransformer(
+  (0): Transformer({&#39;max_seq_length&#39;: 256, &#39;do_lower_case&#39;: False}) with Transformer model: BertModel
+  (1): Pooling({&#39;word_embedding_dimension&#39;: 384, &#39;pooling_mode_cls_token&#39;: False, &#39;pooling_mode_mean_tokens&#39;: True, &#39;pooling_mode_max_tokens&#39;: False, &#39;pooling_mode_mean_sqrt_len_tokens&#39;: False})
+  (2): Normalize()
+) serializer=dill&gt;, encoder=Encoder(identifier=&#39;numpy.float32[384]&#39;, decoder=&lt;Artifact artifact=&lt;superduperdb.encoders.numpy.array.DecodeArray object at 0x19c80dbd0&gt; serializer=dill&gt;, encoder=&lt;Artifact artifact=&lt;superduperdb.encoders.numpy.array.EncodeArray object at 0x19c80f590&gt; serializer=dill&gt;, shape=(384,), version=0), train_X=None, train_y=None, training_select=None, metrics=None, training_configuration=None, version=0, metric_values={}, future=None), select=Find(collection=Collection(name=&#39;wikipedia&#39;), like_parent=None, args=[], kwargs={}, type_id=&#39;mongodb.Find&#39;), features=None, max_chunk_size=5000, active=True, version=0, identifier=&#39;all-MiniLM-L6-v2/abstract&#39;), compatible_watchers=[Watcher(key=&#39;title&#39;, model=SentenceTransformer(identifier=&#39;all-MiniLM-L6-v2&#39;, object=&lt;Artifact artifact=SentenceTransformer(
+  (0): Transformer({&#39;max_seq_length&#39;: 256, &#39;do_lower_case&#39;: False}) with Transformer model: BertModel
+  (1): Pooling({&#39;word_embedding_dimension&#39;: 384, &#39;pooling_mode_cls_token&#39;: False, &#39;pooling_mode_mean_tokens&#39;: True, &#39;pooling_mode_max_tokens&#39;: False, &#39;pooling_mode_mean_sqrt_len_tokens&#39;: False})
+  (2): Normalize()
+) serializer=dill&gt;, encoder=Encoder(identifier=&#39;numpy.float32[384]&#39;, decoder=&lt;Artifact artifact=&lt;superduperdb.encoders.numpy.array.DecodeArray object at 0x19c80dbd0&gt; serializer=dill&gt;, encoder=&lt;Artifact artifact=&lt;superduperdb.encoders.numpy.array.EncodeArray object at 0x19c80f590&gt; serializer=dill&gt;, shape=(384,), version=0), train_X=None, train_y=None, training_select=None, metrics=None, training_configuration=None, version=0, metric_values={}, future=None), select=Find(collection=Collection(name=&#39;wikipedia&#39;), like_parent=None, args=[], kwargs={}, type_id=&#39;mongodb.Find&#39;), features=None, max_chunk_size=5000, active=False, version=0, identifier=&#39;all-MiniLM-L6-v2/title&#39;)], measure=&#39;cosine&#39;, version=0, metric_values={&#39;my-valid&#39;: defaultdict(&lt;function VectorSearchPerformance.__call__.&lt;locals&gt;.&lt;lambda&gt; at 0x19c414400&gt;, {&#39;p@1&#39;: 1.0})})
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;vector_index&#39;</span><span class="p">,</span> <span class="s1">&#39;my-index-st&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">metric_values</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:root:loading hashes: &#39;my-index-st&#39;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;my-valid&#39;: {&#39;p@1&#39;: 1.0}}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s1">&#39;all-MiniLM-L6-v2&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+SentenceTransformer(identifier=&#39;all-MiniLM-L6-v2&#39;, object=&lt;Artifact artifact=SentenceTransformer(
+  (0): Transformer({&#39;max_seq_length&#39;: 256, &#39;do_lower_case&#39;: False}) with Transformer model: BertModel
+  (1): Pooling({&#39;word_embedding_dimension&#39;: 384, &#39;pooling_mode_cls_token&#39;: False, &#39;pooling_mode_mean_tokens&#39;: True, &#39;pooling_mode_max_tokens&#39;: False, &#39;pooling_mode_mean_sqrt_len_tokens&#39;: False})
+  (2): Normalize()
+) serializer=dill&gt;, encoder=Encoder(identifier=&#39;numpy.float32[384]&#39;, decoder=&lt;Artifact artifact=&lt;superduperdb.encoders.numpy.array.DecodeArray object at 0x19cc7f3d0&gt; serializer=dill&gt;, encoder=&lt;Artifact artifact=&lt;superduperdb.encoders.numpy.array.EncodeArray object at 0x19cc7c790&gt; serializer=dill&gt;, shape=[384], version=0), train_X=None, train_y=None, training_select=None, metrics=None, training_configuration=None, version=0, metric_values={}, future=None)
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cur</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">like</span><span class="p">({</span><span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;this is a test&#39;</span><span class="p">},</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">vector_index</span><span class="o">=</span><span class="s1">&#39;my_index&#39;</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cur</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">like</span><span class="p">({</span><span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;this is a test&#39;</span><span class="p">},</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">vector_index</span><span class="o">=</span><span class="s1">&#39;my-index&#39;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">find</span><span class="p">({</span><span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;$regex&#39;</span><span class="p">:</span> <span class="s1">&#39;^startswith...&#39;</span><span class="p">}})</span>
+<span class="p">)</span>
+
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sentiment_analysis_use_case.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Sentiment analysis with transformers</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="openai.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">OpenAI vector search</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; SuperDuperDB Inc., opensource@superduperdb.com
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/jquery.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

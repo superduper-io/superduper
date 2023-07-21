@@ -1,3 +1,0 @@
-# Deploying predictions and training
-
-...

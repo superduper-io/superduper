@@ -52,10 +52,10 @@ superduperdb.datalayer.base.data\_backend module
    :undoc-members:
    :show-inheritance:
 
-superduperdb.datalayer.base.database module
--------------------------------------------
+superduperdb.datalayer.base.datalayer module
+--------------------------------------------
 
-.. automodule:: superduperdb.datalayer.base.database
+.. automodule:: superduperdb.datalayer.base.datalayer
    :members:
    :undoc-members:
    :show-inheritance:

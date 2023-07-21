@@ -1,88 +1,269 @@
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dataclasses &mdash; SuperDuperDB  documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" />
+
+    <!-- Generated with Sphinx 6.2.1 and Furo 2023.05.20 -->
+        <title>dataclasses - SuperDuperDB documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
   
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="../_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
-</head>
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
 
-          
-          
-          <a href="../index.html" class="icon icon-home">
-            SuperDuperDB
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Quick  start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Important Concepts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../encoders.html">Encoders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../data_references.html">Using external data references</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../models.html">Models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../prediction_and_training.html">Deploying predictions and training</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../watchers.html">Watchers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../vector_index.html">Vector Index</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../jobs.html">Jobs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../cluster.html">Cluster</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../common_issues.html">Common issues in AI-data development</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../full_usage.html">Full Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Example notebooks</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../source/modules.html">superduperdb-stealth</a></li>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">SuperDuperDB  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">SuperDuperDB  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting_started/index.html">Getting started</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Getting started</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/features.html">Supported Features</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../background/index.html">Background of SuperDuperDB</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Background of SuperDuperDB</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../background/common_issues.html">Common issues in AI-data development</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../usage/index.html">SuperDuperDB Usage</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of SuperDuperDB Usage</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage/datalayer.html">Datalayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/queries.html">Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/encoders.html">Encoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vector_search.html">Vector Search</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../infrastructure/index.html">Infrastructural support</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Infrastructural support</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/single_host_cluster.html">SuperDuperDB single host cluster deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/architecture.html">SuperDuperDB architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/change_data_capture.html">Change data capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/client_server.html">Client-server implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../examples/index.html">Example notebooks</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of Example notebooks</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples/mnist_clean.html">Training and maintaining MNIST predictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/openai.html">OpenAI vector search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/compare_vector_search_solutions.html">Compare vector search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/sentiment_analysis_use_case.html">Sentiment analysis with transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/voice_memos.html">Create a personal assistant for understanding your meetings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/mongo_cdc.html">Change data capture with MongoDB</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../source/modules.html">superduperdb</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of superduperdb</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../source/superduperdb.html">superduperdb package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of superduperdb package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.cli.html">superduperdb.cli package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.cluster.html">superduperdb.cluster package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of superduperdb.cluster package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.dask.html">superduperdb.cluster.dask package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.ray.html">superduperdb.cluster.ray package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.core.html">superduperdb.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.datalayer.html">superduperdb.datalayer package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of superduperdb.datalayer package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.base.html">superduperdb.datalayer.base package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.mongodb.html">superduperdb.datalayer.mongodb package</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.encoders.html">superduperdb.encoders package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of superduperdb.encoders package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.numpy.html">superduperdb.encoders.numpy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.pillow.html">superduperdb.encoders.pillow package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.torch.html">superduperdb.encoders.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.vectors.html">superduperdb.encoders.vectors package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.metrics.html">superduperdb.metrics package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.misc.html">superduperdb.misc package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.models.html">superduperdb.models package</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of superduperdb.models package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.langchain.html">superduperdb.models.langchain package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.openai.html">superduperdb.models.openai package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.pytorch_lightning.html">superduperdb.models.pytorch_lightning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sentence_transformers.html">superduperdb.models.sentence_transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sklearn.html">superduperdb.models.sklearn package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.torch.html">superduperdb.models.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.transformers.html">superduperdb.models.transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.vanilla.html">superduperdb.models.vanilla package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.serve.html">superduperdb.serve package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.vector_search.html">superduperdb.vector_search package</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">SuperDuperDB</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
-      <li class="breadcrumb-item active">dataclasses</li>
-      <li class="wy-breadcrumbs-aside">
-      </li>
-  </ul>
-  <hr/>
 </div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
-  <h1>Source code for dataclasses</h1><div class="highlight"><pre>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <h1>Source code for dataclasses</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">copy</span>
@@ -91,7 +272,10 @@
 <span class="kn">import</span> <span class="nn">keyword</span>
 <span class="kn">import</span> <span class="nn">builtins</span>
 <span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">abc</span>
 <span class="kn">import</span> <span class="nn">_thread</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span><span class="p">,</span> <span class="n">GenericAlias</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;dataclass&#39;</span><span class="p">,</span>
@@ -99,6 +283,7 @@
            <span class="s1">&#39;Field&#39;</span><span class="p">,</span>
            <span class="s1">&#39;FrozenInstanceError&#39;</span><span class="p">,</span>
            <span class="s1">&#39;InitVar&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;KW_ONLY&#39;</span><span class="p">,</span>
            <span class="s1">&#39;MISSING&#39;</span><span class="p">,</span>
 
            <span class="c1"># Helper functions.</span>
@@ -235,6 +420,20 @@
 <span class="c1">#</span>
 <span class="c1"># See _hash_action (below) for a coded version of this table.</span>
 
+<span class="c1"># __match_args__</span>
+<span class="c1">#</span>
+<span class="c1">#    +--- match_args= parameter</span>
+<span class="c1">#    |</span>
+<span class="c1">#    v    |       |       |</span>
+<span class="c1">#         |  no   |  yes  |  &lt;--- class has __match_args__ in __dict__?</span>
+<span class="c1"># +=======+=======+=======+</span>
+<span class="c1"># | False |       |       |</span>
+<span class="c1"># +-------+-------+-------+</span>
+<span class="c1"># | True  | add   |       |  &lt;- the default</span>
+<span class="c1"># +=======+=======+=======+</span>
+<span class="c1"># __match_args__ is always added unless the class already defines it. It is a</span>
+<span class="c1"># tuple of __init__ parameter names; non-init fields must be matched by keyword.</span>
+
 
 <span class="c1"># Raised when an attempt is made to modify a frozen class.</span>
 <span class="k">class</span> <span class="nc">FrozenInstanceError</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">):</span> <span class="k">pass</span>
@@ -252,6 +451,12 @@
 <span class="k">class</span> <span class="nc">_MISSING_TYPE</span><span class="p">:</span>
     <span class="k">pass</span>
 <span class="n">MISSING</span> <span class="o">=</span> <span class="n">_MISSING_TYPE</span><span class="p">()</span>
+
+<span class="c1"># A sentinel object to indicate that following fields are keyword-only by</span>
+<span class="c1"># default.  Use a class to give it a better repr.</span>
+<span class="k">class</span> <span class="nc">_KW_ONLY_TYPE</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="n">KW_ONLY</span> <span class="o">=</span> <span class="n">_KW_ONLY_TYPE</span><span class="p">()</span>
 
 <span class="c1"># Since most per-field metadata will be unused, create an empty</span>
 <span class="c1"># read-only proxy that can be shared among all fields.</span>
@@ -284,11 +489,27 @@
 <span class="c1"># https://bugs.python.org/issue33453 for details.</span>
 <span class="n">_MODULE_IDENTIFIER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^(?:\s*(\w+)\s*\.)?\s*(\w+)&#39;</span><span class="p">)</span>
 
-<span class="k">class</span> <span class="nc">_InitVarMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">InitVar</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<span class="c1"># This function&#39;s logic is copied from &quot;recursive_repr&quot; function in</span>
+<span class="c1"># reprlib module to avoid dependency.</span>
+<span class="k">def</span> <span class="nf">_recursive_repr</span><span class="p">(</span><span class="n">user_function</span><span class="p">):</span>
+    <span class="c1"># Decorator to make a repr function return &quot;...&quot; for a recursive</span>
+    <span class="c1"># call.</span>
+    <span class="n">repr_running</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
-<div class="viewcode-block" id="InitVar"><a class="viewcode-back" href="../source/superduperdb.misc.html#superduperdb.misc.dataclasses.InitVar">[docs]</a><span class="k">class</span> <span class="nc">InitVar</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">_InitVarMeta</span><span class="p">):</span>
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">user_function</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">_thread</span><span class="o">.</span><span class="n">get_ident</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">repr_running</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;...&#39;</span>
+        <span class="n">repr_running</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">user_function</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">repr_running</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+<div class="viewcode-block" id="InitVar"><a class="viewcode-back" href="../source/superduperdb.misc.html#superduperdb.misc.dataclasses.InitVar">[docs]</a><span class="k">class</span> <span class="nc">InitVar</span><span class="p">:</span>
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
@@ -300,8 +521,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># typing objects, e.g. List[int]</span>
             <span class="n">type_name</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;dataclasses.InitVar[</span><span class="si">{</span><span class="n">type_name</span><span class="si">}</span><span class="s1">]&#39;</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;dataclasses.InitVar[</span><span class="si">{</span><span class="n">type_name</span><span class="si">}</span><span class="s1">]&#39;</span>
 
+    <span class="k">def</span> <span class="nf">__class_getitem__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">InitVar</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span></div>
 
 <span class="c1"># Instances of Field are only ever created from within this module,</span>
 <span class="c1"># and only from the field() function, although Field instances are</span>
@@ -323,11 +546,12 @@
                  <span class="s1">&#39;init&#39;</span><span class="p">,</span>
                  <span class="s1">&#39;compare&#39;</span><span class="p">,</span>
                  <span class="s1">&#39;metadata&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;kw_only&#39;</span><span class="p">,</span>
                  <span class="s1">&#39;_field_type&#39;</span><span class="p">,</span>  <span class="c1"># Private: not to be used by user code.</span>
                  <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">default_factory</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="nb">repr</span><span class="p">,</span> <span class="nb">hash</span><span class="p">,</span> <span class="n">compare</span><span class="p">,</span>
-                 <span class="n">metadata</span><span class="p">):</span>
+                 <span class="n">metadata</span><span class="p">,</span> <span class="n">kw_only</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">default</span>
@@ -339,8 +563,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="p">(</span><span class="n">_EMPTY_METADATA</span>
                          <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span>
                          <span class="n">types</span><span class="o">.</span><span class="n">MappingProxyType</span><span class="p">(</span><span class="n">metadata</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kw_only</span> <span class="o">=</span> <span class="n">kw_only</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_type</span> <span class="o">=</span> <span class="kc">None</span>
 
+    <span class="nd">@_recursive_repr</span>
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;Field(&#39;</span>
                 <span class="sa">f</span><span class="s1">&#39;name=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s1">,&#39;</span>
@@ -352,13 +578,14 @@
                 <span class="sa">f</span><span class="s1">&#39;hash=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hash</span><span class="si">!r}</span><span class="s1">,&#39;</span>
                 <span class="sa">f</span><span class="s1">&#39;compare=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">compare</span><span class="si">!r}</span><span class="s1">,&#39;</span>
                 <span class="sa">f</span><span class="s1">&#39;metadata=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="si">!r}</span><span class="s1">,&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;kw_only=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kw_only</span><span class="si">!r}</span><span class="s1">,&#39;</span>
                 <span class="sa">f</span><span class="s1">&#39;_field_type=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_type</span><span class="si">}</span><span class="s1">&#39;</span>
                 <span class="s1">&#39;)&#39;</span><span class="p">)</span>
 
     <span class="c1"># This is used to support the PEP 487 __set_name__ protocol in the</span>
     <span class="c1"># case where we&#39;re using a field that contains a descriptor as a</span>
     <span class="c1"># default value.  For details on __set_name__, see</span>
-    <span class="c1"># https://www.python.org/dev/peps/pep-0487/#implementation-details.</span>
+    <span class="c1"># https://peps.python.org/pep-0487/#implementation-details.</span>
     <span class="c1">#</span>
     <span class="c1"># Note that in _process_class, this Field object is overwritten</span>
     <span class="c1"># with the default value, so the end result is a descriptor that</span>
@@ -369,6 +596,8 @@
             <span class="c1"># There is a __set_name__ method on the descriptor, call</span>
             <span class="c1"># it.</span>
             <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="n">__class_getitem__</span> <span class="o">=</span> <span class="nb">classmethod</span><span class="p">(</span><span class="n">GenericAlias</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">_DataclassParams</span><span class="p">:</span>
@@ -403,17 +632,19 @@
 <span class="c1"># so that a type checker can be told (via overloads) that this is a</span>
 <span class="c1"># function whose type depends on its parameters.</span>
 <div class="viewcode-block" id="field"><a class="viewcode-back" href="../source/superduperdb.misc.html#superduperdb.misc.dataclasses.field">[docs]</a><span class="k">def</span> <span class="nf">field</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">MISSING</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="n">MISSING</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-          <span class="nb">hash</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+          <span class="nb">hash</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compare</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="n">MISSING</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an object to identify dataclass fields.</span>
 
 <span class="sd">    default is the default value of the field.  default_factory is a</span>
 <span class="sd">    0-argument function called to initialize a field&#39;s value.  If init</span>
-<span class="sd">    is True, the field will be a parameter to the class&#39;s __init__()</span>
-<span class="sd">    function.  If repr is True, the field will be included in the</span>
-<span class="sd">    object&#39;s repr().  If hash is True, the field will be included in</span>
-<span class="sd">    the object&#39;s hash().  If compare is True, the field will be used</span>
-<span class="sd">    in comparison functions.  metadata, if specified, must be a</span>
-<span class="sd">    mapping which is stored but not otherwise examined by dataclass.</span>
+<span class="sd">    is true, the field will be a parameter to the class&#39;s __init__()</span>
+<span class="sd">    function.  If repr is true, the field will be included in the</span>
+<span class="sd">    object&#39;s repr().  If hash is true, the field will be included in the</span>
+<span class="sd">    object&#39;s hash().  If compare is true, the field will be used in</span>
+<span class="sd">    comparison functions.  metadata, if specified, must be a mapping</span>
+<span class="sd">    which is stored but not otherwise examined by dataclass.  If kw_only</span>
+<span class="sd">    is true, the field will become a keyword-only parameter to</span>
+<span class="sd">    __init__().</span>
 
 <span class="sd">    It is an error to specify both default and default_factory.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -421,7 +652,16 @@
     <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MISSING</span> <span class="ow">and</span> <span class="n">default_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MISSING</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;cannot specify both default and default_factory&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="n">default_factory</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="nb">repr</span><span class="p">,</span> <span class="nb">hash</span><span class="p">,</span> <span class="n">compare</span><span class="p">,</span>
-                 <span class="n">metadata</span><span class="p">)</span></div>
+                 <span class="n">metadata</span><span class="p">,</span> <span class="n">kw_only</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_fields_in_init_order</span><span class="p">(</span><span class="n">fields</span><span class="p">):</span>
+    <span class="c1"># Returns the fields as __init__ will output them.  It returns 2 tuples:</span>
+    <span class="c1"># the first for normal args, and the second for keyword args.</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">kw_only</span><span class="p">),</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">kw_only</span><span class="p">)</span>
+            <span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_tuple_str</span><span class="p">(</span><span class="n">obj_name</span><span class="p">,</span> <span class="n">fields</span><span class="p">):</span>
@@ -436,36 +676,13 @@
     <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">obj_name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">fields</span><span class="p">])</span><span class="si">}</span><span class="s1">,)&#39;</span>
 
 
-<span class="c1"># This function&#39;s logic is copied from &quot;recursive_repr&quot; function in</span>
-<span class="c1"># reprlib module to avoid dependency.</span>
-<span class="k">def</span> <span class="nf">_recursive_repr</span><span class="p">(</span><span class="n">user_function</span><span class="p">):</span>
-    <span class="c1"># Decorator to make a repr function return &quot;...&quot; for a recursive</span>
-    <span class="c1"># call.</span>
-    <span class="n">repr_running</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-
-    <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">user_function</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">_thread</span><span class="o">.</span><span class="n">get_ident</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">repr_running</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s1">&#39;...&#39;</span>
-        <span class="n">repr_running</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">user_function</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="n">repr_running</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">result</span>
-    <span class="k">return</span> <span class="n">wrapper</span>
-
-
 <span class="k">def</span> <span class="nf">_create_fn</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="nb">globals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">locals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                <span class="n">return_type</span><span class="o">=</span><span class="n">MISSING</span><span class="p">):</span>
-    <span class="c1"># Note that we mutate locals when exec() is called.  Caller</span>
-    <span class="c1"># beware!  The only callers are internal to this module, so no</span>
+    <span class="c1"># Note that we may mutate locals. Callers beware!</span>
+    <span class="c1"># The only callers are internal to this module, so no</span>
     <span class="c1"># worries about external callers.</span>
     <span class="k">if</span> <span class="nb">locals</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">locals</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">if</span> <span class="s1">&#39;BUILTINS&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">:</span>
-        <span class="nb">locals</span><span class="p">[</span><span class="s1">&#39;BUILTINS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">builtins</span>
     <span class="n">return_annotation</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
     <span class="k">if</span> <span class="n">return_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MISSING</span><span class="p">:</span>
         <span class="nb">locals</span><span class="p">[</span><span class="s1">&#39;_return_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">return_type</span>
@@ -478,7 +695,6 @@
 
     <span class="n">local_vars</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">locals</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
     <span class="n">txt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;def __create_fn__(</span><span class="si">{</span><span class="n">local_vars</span><span class="si">}</span><span class="s2">):</span><span class="se">\n</span><span class="si">{</span><span class="n">txt</span><span class="si">}</span><span class="se">\n</span><span class="s2"> return </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
-
     <span class="n">ns</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">exec</span><span class="p">(</span><span class="n">txt</span><span class="p">,</span> <span class="nb">globals</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ns</span><span class="p">[</span><span class="s1">&#39;__create_fn__&#39;</span><span class="p">](</span><span class="o">**</span><span class="nb">locals</span><span class="p">)</span>
@@ -492,11 +708,11 @@
     <span class="c1"># self_name is what &quot;self&quot; is called in this function: don&#39;t</span>
     <span class="c1"># hard-code &quot;self&quot;, since that might be a field name.</span>
     <span class="k">if</span> <span class="n">frozen</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;BUILTINS.object.__setattr__(</span><span class="si">{</span><span class="n">self_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s1">,</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">)&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;__dataclass_builtins_object__.__setattr__(</span><span class="si">{</span><span class="n">self_name</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s1">,</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">)&#39;</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">self_name</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span>
 
 
-<span class="k">def</span> <span class="nf">_field_init</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">frozen</span><span class="p">,</span> <span class="nb">globals</span><span class="p">,</span> <span class="n">self_name</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_field_init</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">frozen</span><span class="p">,</span> <span class="nb">globals</span><span class="p">,</span> <span class="n">self_name</span><span class="p">,</span> <span class="n">slots</span><span class="p">):</span>
     <span class="c1"># Return the text of the line in the body of __init__ that will</span>
     <span class="c1"># initialize this field.</span>
 
@@ -536,9 +752,15 @@
                 <span class="nb">globals</span><span class="p">[</span><span class="n">default_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">default</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># This field does not need initialization.  Signify that</span>
-            <span class="c1"># to the caller by returning None.</span>
-            <span class="k">return</span> <span class="kc">None</span>
+            <span class="c1"># If the class has slots, then initialize this field.</span>
+            <span class="k">if</span> <span class="n">slots</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MISSING</span><span class="p">:</span>
+                <span class="nb">globals</span><span class="p">[</span><span class="n">default_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">default</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">default_name</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># This field does not need initialization: reading from it will</span>
+                <span class="c1"># just use the class attribute that contains the default.</span>
+                <span class="c1"># Signify that to the caller by returning None.</span>
+                <span class="k">return</span> <span class="kc">None</span>
 
     <span class="c1"># Only test this now, so that we can create variables for the</span>
     <span class="c1"># default.  However, return None to signify that we&#39;re not going</span>
@@ -569,7 +791,8 @@
     <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">:_type_</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}{</span><span class="n">default</span><span class="si">}</span><span class="s1">&#39;</span>
 
 
-<span class="k">def</span> <span class="nf">_init_fn</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">frozen</span><span class="p">,</span> <span class="n">has_post_init</span><span class="p">,</span> <span class="n">self_name</span><span class="p">,</span> <span class="nb">globals</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_init_fn</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">std_fields</span><span class="p">,</span> <span class="n">kw_only_fields</span><span class="p">,</span> <span class="n">frozen</span><span class="p">,</span> <span class="n">has_post_init</span><span class="p">,</span>
+             <span class="n">self_name</span><span class="p">,</span> <span class="nb">globals</span><span class="p">,</span> <span class="n">slots</span><span class="p">):</span>
     <span class="c1"># fields contains both real fields and InitVar pseudo-fields.</span>
 
     <span class="c1"># Make sure we don&#39;t have fields without defaults following fields</span>
@@ -577,9 +800,10 @@
     <span class="c1"># function source code, but catching it here gives a better error</span>
     <span class="c1"># message, and future-proofs us in case we build up the function</span>
     <span class="c1"># using ast.</span>
+
     <span class="n">seen_default</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
-        <span class="c1"># Only consider fields in the __init__ call.</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">std_fields</span><span class="p">:</span>
+        <span class="c1"># Only consider the non-kw-only fields in the __init__ call.</span>
         <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="n">MISSING</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">default_factory</span> <span class="ow">is</span> <span class="n">MISSING</span><span class="p">):</span>
                 <span class="n">seen_default</span> <span class="o">=</span> <span class="kc">True</span>
@@ -591,11 +815,12 @@
     <span class="nb">locals</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
         <span class="s1">&#39;MISSING&#39;</span><span class="p">:</span> <span class="n">MISSING</span><span class="p">,</span>
         <span class="s1">&#39;_HAS_DEFAULT_FACTORY&#39;</span><span class="p">:</span> <span class="n">_HAS_DEFAULT_FACTORY</span><span class="p">,</span>
+        <span class="s1">&#39;__dataclass_builtins_object__&#39;</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
     <span class="p">})</span>
 
     <span class="n">body_lines</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
-        <span class="n">line</span> <span class="o">=</span> <span class="n">_field_init</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">frozen</span><span class="p">,</span> <span class="nb">locals</span><span class="p">,</span> <span class="n">self_name</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">_field_init</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">frozen</span><span class="p">,</span> <span class="nb">locals</span><span class="p">,</span> <span class="n">self_name</span><span class="p">,</span> <span class="n">slots</span><span class="p">)</span>
         <span class="c1"># line is None means that this field doesn&#39;t require</span>
         <span class="c1"># initialization (it&#39;s a pseudo-field).  Just skip it.</span>
         <span class="k">if</span> <span class="n">line</span><span class="p">:</span>
@@ -611,8 +836,15 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">body_lines</span><span class="p">:</span>
         <span class="n">body_lines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;pass&#39;</span><span class="p">]</span>
 
+    <span class="n">_init_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">_init_param</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">std_fields</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">kw_only_fields</span><span class="p">:</span>
+        <span class="c1"># Add the keyword-only args.  Because the * can only be added if</span>
+        <span class="c1"># there&#39;s at least one keyword-only arg, there needs to be a test here</span>
+        <span class="c1"># (instead of just concatenting the lists together).</span>
+        <span class="n">_init_params</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;*&#39;</span><span class="p">]</span>
+        <span class="n">_init_params</span> <span class="o">+=</span> <span class="p">[</span><span class="n">_init_param</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">kw_only_fields</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">_create_fn</span><span class="p">(</span><span class="s1">&#39;__init__&#39;</span><span class="p">,</span>
-                      <span class="p">[</span><span class="n">self_name</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">_init_param</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">],</span>
+                      <span class="p">[</span><span class="n">self_name</span><span class="p">]</span> <span class="o">+</span> <span class="n">_init_params</span><span class="p">,</span>
                       <span class="n">body_lines</span><span class="p">,</span>
                       <span class="nb">locals</span><span class="o">=</span><span class="nb">locals</span><span class="p">,</span>
                       <span class="nb">globals</span><span class="o">=</span><span class="nb">globals</span><span class="p">,</span>
@@ -691,6 +923,9 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">a_type</span> <span class="ow">is</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">InitVar</span>
             <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a_type</span><span class="p">)</span> <span class="ow">is</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">InitVar</span><span class="p">)</span>
 
+<span class="k">def</span> <span class="nf">_is_kw_only</span><span class="p">(</span><span class="n">a_type</span><span class="p">,</span> <span class="n">dataclasses</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">a_type</span> <span class="ow">is</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">KW_ONLY</span>
+
 
 <span class="k">def</span> <span class="nf">_is_type</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="bp">cls</span><span class="p">,</span> <span class="n">a_module</span><span class="p">,</span> <span class="n">a_type</span><span class="p">,</span> <span class="n">is_type_predicate</span><span class="p">):</span>
     <span class="c1"># Given a type annotation string, does it refer to a_type in</span>
@@ -751,10 +986,11 @@
     <span class="k">return</span> <span class="kc">False</span>
 
 
-<span class="k">def</span> <span class="nf">_get_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">a_name</span><span class="p">,</span> <span class="n">a_type</span><span class="p">):</span>
-    <span class="c1"># Return a Field object for this field name and type.  ClassVars</span>
-    <span class="c1"># and InitVars are also returned, but marked as such (see</span>
-    <span class="c1"># f._field_type).</span>
+<span class="k">def</span> <span class="nf">_get_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">a_name</span><span class="p">,</span> <span class="n">a_type</span><span class="p">,</span> <span class="n">default_kw_only</span><span class="p">):</span>
+    <span class="c1"># Return a Field object for this field name and type.  ClassVars and</span>
+    <span class="c1"># InitVars are also returned, but marked as such (see f._field_type).</span>
+    <span class="c1"># default_kw_only is the value of kw_only to use if there isn&#39;t a field()</span>
+    <span class="c1"># that defines it.</span>
 
     <span class="c1"># If the default value isn&#39;t derived from Field, then it&#39;s only a</span>
     <span class="c1"># normal default value.  Convert it to a Field().</span>
@@ -825,19 +1061,41 @@
         <span class="c1"># init=&lt;not-the-default-init-value&gt;)?  It makes no sense for</span>
         <span class="c1"># ClassVar and InitVar to specify init=&lt;anything&gt;.</span>
 
-    <span class="c1"># For real fields, disallow mutable defaults for known types.</span>
-    <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_field_type</span> <span class="ow">is</span> <span class="n">_FIELD</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="nb">set</span><span class="p">)):</span>
+    <span class="c1"># kw_only validation and assignment.</span>
+    <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_field_type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_FIELD</span><span class="p">,</span> <span class="n">_FIELD_INITVAR</span><span class="p">):</span>
+        <span class="c1"># For real and InitVar fields, if kw_only wasn&#39;t specified use the</span>
+        <span class="c1"># default value.</span>
+        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">kw_only</span> <span class="ow">is</span> <span class="n">MISSING</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">kw_only</span> <span class="o">=</span> <span class="n">default_kw_only</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Make sure kw_only isn&#39;t set for ClassVars</span>
+        <span class="k">assert</span> <span class="n">f</span><span class="o">.</span><span class="n">_field_type</span> <span class="ow">is</span> <span class="n">_FIELD_CLASSVAR</span>
+        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">kw_only</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MISSING</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;field </span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1"> is a ClassVar but specifies &#39;</span>
+                            <span class="s1">&#39;kw_only&#39;</span><span class="p">)</span>
+
+    <span class="c1"># For real fields, disallow mutable defaults.  Use unhashable as a proxy</span>
+    <span class="c1"># indicator for mutability.  Read the __hash__ attribute from the class,</span>
+    <span class="c1"># not the instance.</span>
+    <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_field_type</span> <span class="ow">is</span> <span class="n">_FIELD</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="fm">__hash__</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;mutable default </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">default</span><span class="p">)</span><span class="si">}</span><span class="s1"> for field &#39;</span>
                          <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1"> is not allowed: use default_factory&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">f</span>
 
+<span class="k">def</span> <span class="nf">_set_qualname</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="c1"># Ensure that the functions returned from _create_fn uses the proper</span>
+    <span class="c1"># __qualname__ (the class they belong to).</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">FunctionType</span><span class="p">):</span>
+        <span class="n">value</span><span class="o">.</span><span class="vm">__qualname__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="n">value</span>
 
 <span class="k">def</span> <span class="nf">_set_new_attribute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
     <span class="c1"># Never overwrites an existing attribute.  Returns True if the</span>
     <span class="c1"># attribute already exists.</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
+    <span class="n">_set_qualname</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
     <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">False</span>
 
@@ -852,7 +1110,7 @@
 
 <span class="k">def</span> <span class="nf">_hash_add</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="nb">globals</span><span class="p">):</span>
     <span class="n">flds</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">compare</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">hash</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">f</span><span class="o">.</span><span class="n">hash</span><span class="p">)]</span>
-    <span class="k">return</span> <span class="n">_hash_fn</span><span class="p">(</span><span class="n">flds</span><span class="p">,</span> <span class="nb">globals</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_set_qualname</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">_hash_fn</span><span class="p">(</span><span class="n">flds</span><span class="p">,</span> <span class="nb">globals</span><span class="p">))</span>
 
 <span class="k">def</span> <span class="nf">_hash_exception</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="nb">globals</span><span class="p">):</span>
     <span class="c1"># Raise an exception.</span>
@@ -889,7 +1147,8 @@
 <span class="c1"># version of this table.</span>
 
 
-<span class="k">def</span> <span class="nf">_process_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="nb">repr</span><span class="p">,</span> <span class="n">eq</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">unsafe_hash</span><span class="p">,</span> <span class="n">frozen</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_process_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="nb">repr</span><span class="p">,</span> <span class="n">eq</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">unsafe_hash</span><span class="p">,</span> <span class="n">frozen</span><span class="p">,</span>
+                   <span class="n">match_args</span><span class="p">,</span> <span class="n">kw_only</span><span class="p">,</span> <span class="n">slots</span><span class="p">,</span> <span class="n">weakref_slot</span><span class="p">):</span>
     <span class="c1"># Now that dicts retain insertion order, there&#39;s no reason to use</span>
     <span class="c1"># an ordered dict.  I am leveraging that ordering here, because</span>
     <span class="c1"># derived class fields overwrite base class fields, but the order</span>
@@ -943,8 +1202,27 @@
     <span class="c1"># Now find fields in our class.  While doing so, validate some</span>
     <span class="c1"># things, and set the default values (as class attributes) where</span>
     <span class="c1"># we can.</span>
-    <span class="n">cls_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">_get_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
-                  <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span> <span class="ow">in</span> <span class="n">cls_annotations</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+    <span class="n">cls_fields</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Get a reference to this module for the _is_kw_only() test.</span>
+    <span class="n">KW_ONLY_seen</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">dataclasses</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="vm">__name__</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span> <span class="ow">in</span> <span class="n">cls_annotations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># See if this is a marker to change the value of kw_only.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_is_kw_only</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">dataclasses</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">_is_type</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="bp">cls</span><span class="p">,</span> <span class="n">dataclasses</span><span class="p">,</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">KW_ONLY</span><span class="p">,</span>
+                             <span class="n">_is_kw_only</span><span class="p">))):</span>
+            <span class="c1"># Switch the default to kw_only=True, and ignore this</span>
+            <span class="c1"># annotation: it&#39;s not a real field.</span>
+            <span class="k">if</span> <span class="n">KW_ONLY_seen</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s1"> is KW_ONLY, but KW_ONLY &#39;</span>
+                                <span class="s1">&#39;has already been specified&#39;</span><span class="p">)</span>
+            <span class="n">KW_ONLY_seen</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">kw_only</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Otherwise it&#39;s a field of some type.</span>
+            <span class="n">cls_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_get_field</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">kw_only</span><span class="p">))</span>
+
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">cls_fields</span><span class="p">:</span>
         <span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
 
@@ -999,15 +1277,22 @@
     <span class="k">if</span> <span class="n">order</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">eq</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;eq must be true if order is true&#39;</span><span class="p">)</span>
 
+    <span class="c1"># Include InitVars and regular fields (so, not ClassVars).  This is</span>
+    <span class="c1"># initialized here, outside of the &quot;if init:&quot; test, because std_init_fields</span>
+    <span class="c1"># is used with match_args, below.</span>
+    <span class="n">all_init_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                       <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_field_type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_FIELD</span><span class="p">,</span> <span class="n">_FIELD_INITVAR</span><span class="p">)]</span>
+    <span class="p">(</span><span class="n">std_init_fields</span><span class="p">,</span>
+     <span class="n">kw_only_init_fields</span><span class="p">)</span> <span class="o">=</span> <span class="n">_fields_in_init_order</span><span class="p">(</span><span class="n">all_init_fields</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="n">init</span><span class="p">:</span>
         <span class="c1"># Does this class have a post-init function?</span>
         <span class="n">has_post_init</span> <span class="o">=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">_POST_INIT_NAME</span><span class="p">)</span>
 
-        <span class="c1"># Include InitVars and regular fields (so, not ClassVars).</span>
-        <span class="n">flds</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_field_type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_FIELD</span><span class="p">,</span> <span class="n">_FIELD_INITVAR</span><span class="p">)]</span>
         <span class="n">_set_new_attribute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;__init__&#39;</span><span class="p">,</span>
-                           <span class="n">_init_fn</span><span class="p">(</span><span class="n">flds</span><span class="p">,</span>
+                           <span class="n">_init_fn</span><span class="p">(</span><span class="n">all_init_fields</span><span class="p">,</span>
+                                    <span class="n">std_init_fields</span><span class="p">,</span>
+                                    <span class="n">kw_only_init_fields</span><span class="p">,</span>
                                     <span class="n">frozen</span><span class="p">,</span>
                                     <span class="n">has_post_init</span><span class="p">,</span>
                                     <span class="c1"># The name to use for the &quot;self&quot;</span>
@@ -1016,6 +1301,7 @@
                                     <span class="s1">&#39;__dataclass_self__&#39;</span> <span class="k">if</span> <span class="s1">&#39;self&#39;</span> <span class="ow">in</span> <span class="n">fields</span>
                                             <span class="k">else</span> <span class="s1">&#39;self&#39;</span><span class="p">,</span>
                                     <span class="nb">globals</span><span class="p">,</span>
+                                    <span class="n">slots</span><span class="p">,</span>
                           <span class="p">))</span>
 
     <span class="c1"># Get the fields as a list, and include only real fields.  This is</span>
@@ -1027,7 +1313,7 @@
         <span class="n">_set_new_attribute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;__repr__&#39;</span><span class="p">,</span> <span class="n">_repr_fn</span><span class="p">(</span><span class="n">flds</span><span class="p">,</span> <span class="nb">globals</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">eq</span><span class="p">:</span>
-        <span class="c1"># Create _eq__ method.  There&#39;s no need for a __ne__ method,</span>
+        <span class="c1"># Create __eq__ method.  There&#39;s no need for a __ne__ method,</span>
         <span class="c1"># since python will call __eq__ and negate it.</span>
         <span class="n">flds</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">field_list</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">compare</span><span class="p">]</span>
         <span class="n">self_tuple</span> <span class="o">=</span> <span class="n">_tuple_str</span><span class="p">(</span><span class="s1">&#39;self&#39;</span><span class="p">,</span> <span class="n">flds</span><span class="p">)</span>
@@ -1075,25 +1361,124 @@
         <span class="bp">cls</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span>
                        <span class="nb">str</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; -&gt; None&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
 
+    <span class="k">if</span> <span class="n">match_args</span><span class="p">:</span>
+        <span class="c1"># I could probably compute this once</span>
+        <span class="n">_set_new_attribute</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;__match_args__&#39;</span><span class="p">,</span>
+                           <span class="nb">tuple</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">std_init_fields</span><span class="p">))</span>
+
+    <span class="c1"># It&#39;s an error to specify weakref_slot if slots is False.</span>
+    <span class="k">if</span> <span class="n">weakref_slot</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">slots</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;weakref_slot is True but slots is False&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">slots</span><span class="p">:</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">_add_slots</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">frozen</span><span class="p">,</span> <span class="n">weakref_slot</span><span class="p">)</span>
+
+    <span class="n">abc</span><span class="o">.</span><span class="n">update_abstractmethods</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="bp">cls</span>
+
+
+<span class="c1"># _dataclass_getstate and _dataclass_setstate are needed for pickling frozen</span>
+<span class="c1"># classes with slots.  These could be slightly more performant if we generated</span>
+<span class="c1"># the code instead of iterating over fields.  But that can be a project for</span>
+<span class="c1"># another day, if performance becomes an issue.</span>
+<span class="k">def</span> <span class="nf">_dataclass_getstate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+
+
+<span class="k">def</span> <span class="nf">_dataclass_setstate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fields</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">state</span><span class="p">):</span>
+        <span class="c1"># use setattr because dataclass may be frozen</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_slots</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">match</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__slots__&#39;</span><span class="p">):</span>
+        <span class="n">case</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">case</span> <span class="nb">str</span><span class="p">(</span><span class="n">slot</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">slot</span>
+        <span class="c1"># Slots may be any iterable, but we cannot handle an iterator</span>
+        <span class="c1"># because it will already be (partially) consumed.</span>
+        <span class="k">case</span> <span class="n">iterable</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="s1">&#39;__next__&#39;</span><span class="p">):</span>
+            <span class="k">yield from</span> <span class="n">iterable</span>
+        <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Slots of &#39;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; cannot be determined&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_add_slots</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">is_frozen</span><span class="p">,</span> <span class="n">weakref_slot</span><span class="p">):</span>
+    <span class="c1"># Need to create a new class, since we can&#39;t set __slots__</span>
+    <span class="c1">#  after a class has been created.</span>
+
+    <span class="c1"># Make sure __slots__ isn&#39;t already set.</span>
+    <span class="k">if</span> <span class="s1">&#39;__slots__&#39;</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> already specifies __slots__&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Create a new dict for our new class.</span>
+    <span class="n">cls_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+    <span class="n">field_names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
+    <span class="c1"># Make sure slots don&#39;t overlap with those in base classes.</span>
+    <span class="n">inherited_slots</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+        <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">_get_slots</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="p">)</span>
+    <span class="c1"># The slots for our class.  Remove slots from our base classes.  Add</span>
+    <span class="c1"># &#39;__weakref__&#39; if weakref_slot was given, unless it is already present.</span>
+    <span class="n">cls_dict</span><span class="p">[</span><span class="s2">&quot;__slots__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="n">itertools</span><span class="o">.</span><span class="n">filterfalse</span><span class="p">(</span>
+            <span class="n">inherited_slots</span><span class="o">.</span><span class="fm">__contains__</span><span class="p">,</span>
+            <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span>
+                <span class="c1"># gh-93521: &#39;__weakref__&#39; also needs to be filtered out if</span>
+                <span class="c1"># already present in inherited_slots</span>
+                <span class="n">field_names</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;__weakref__&#39;</span><span class="p">,)</span> <span class="k">if</span> <span class="n">weakref_slot</span> <span class="k">else</span> <span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">field_names</span><span class="p">:</span>
+        <span class="c1"># Remove our attributes, if present. They&#39;ll still be</span>
+        <span class="c1">#  available in _MARKER.</span>
+        <span class="n">cls_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="c1"># Remove __dict__ itself.</span>
+    <span class="n">cls_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;__dict__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="c1"># Clear existing `__weakref__` descriptor, it belongs to a previous type:</span>
+    <span class="n">cls_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;__weakref__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># gh-102069</span>
+
+    <span class="c1"># And finally create the class.</span>
+    <span class="n">qualname</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;__qualname__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">cls</span><span class="p">)(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">,</span> <span class="n">cls_dict</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">qualname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span> <span class="o">=</span> <span class="n">qualname</span>
+
+    <span class="k">if</span> <span class="n">is_frozen</span><span class="p">:</span>
+        <span class="c1"># Need this for pickling frozen classes with slots.</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">__getstate__</span> <span class="o">=</span> <span class="n">_dataclass_getstate</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">__setstate__</span> <span class="o">=</span> <span class="n">_dataclass_setstate</span>
+
     <span class="k">return</span> <span class="bp">cls</span>
 
 
 <span class="k">def</span> <span class="nf">dataclass</span><span class="p">(</span><span class="bp">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-              <span class="n">unsafe_hash</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the same class as was passed in, with dunder methods</span>
-<span class="sd">    added based on the fields defined in the class.</span>
+              <span class="n">unsafe_hash</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">match_args</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">kw_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">weakref_slot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add dunder methods based on the fields defined in the class.</span>
 
 <span class="sd">    Examines PEP 526 __annotations__ to determine fields.</span>
 
-<span class="sd">    If init is true, an __init__() method is added to the class. If</span>
-<span class="sd">    repr is true, a __repr__() method is added. If order is true, rich</span>
+<span class="sd">    If init is true, an __init__() method is added to the class. If repr</span>
+<span class="sd">    is true, a __repr__() method is added. If order is true, rich</span>
 <span class="sd">    comparison dunder methods are added. If unsafe_hash is true, a</span>
-<span class="sd">    __hash__() method function is added. If frozen is true, fields may</span>
-<span class="sd">    not be assigned to after instance creation.</span>
+<span class="sd">    __hash__() method is added. If frozen is true, fields may not be</span>
+<span class="sd">    assigned to after instance creation. If match_args is true, the</span>
+<span class="sd">    __match_args__ tuple is added. If kw_only is true, then by default</span>
+<span class="sd">    all fields are keyword-only. If slots is true, a new class with a</span>
+<span class="sd">    __slots__ attribute is returned.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">wrap</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">_process_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="nb">repr</span><span class="p">,</span> <span class="n">eq</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">unsafe_hash</span><span class="p">,</span> <span class="n">frozen</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_process_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="nb">repr</span><span class="p">,</span> <span class="n">eq</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">unsafe_hash</span><span class="p">,</span>
+                              <span class="n">frozen</span><span class="p">,</span> <span class="n">match_args</span><span class="p">,</span> <span class="n">kw_only</span><span class="p">,</span> <span class="n">slots</span><span class="p">,</span>
+                              <span class="n">weakref_slot</span><span class="p">)</span>
 
     <span class="c1"># See if we&#39;re being called as @dataclass or @dataclass().</span>
     <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1115,7 +1500,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">class_or_instance</span><span class="p">,</span> <span class="n">_FIELDS</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;must be called with a dataclass type or instance&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;must be called with a dataclass type or instance&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="kc">None</span>
 
     <span class="c1"># Exclude pseudo-fields.  Note that fields is sorted by insertion</span>
     <span class="c1"># order, so the order of the tuple is as the fields were defined.</span>
@@ -1138,7 +1523,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the fields of a dataclass instance as a new dictionary mapping</span>
 <span class="sd">    field names to field values.</span>
 
-<span class="sd">    Example usage:</span>
+<span class="sd">    Example usage::</span>
 
 <span class="sd">      @dataclass</span>
 <span class="sd">      class C:</span>
@@ -1209,8 +1594,8 @@
 <span class="sd">          x: int</span>
 <span class="sd">          y: int</span>
 
-<span class="sd">    c = C(1, 2)</span>
-<span class="sd">    assert astuple(c) == (1, 2)</span>
+<span class="sd">      c = C(1, 2)</span>
+<span class="sd">      assert astuple(c) == (1, 2)</span>
 
 <span class="sd">    If given, &#39;tuple_factory&#39; will be used instead of built-in tuple.</span>
 <span class="sd">    The function applies recursively to field values that are</span>
@@ -1252,17 +1637,18 @@
 
 <span class="k">def</span> <span class="nf">make_dataclass</span><span class="p">(</span><span class="n">cls_name</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">bases</span><span class="o">=</span><span class="p">(),</span> <span class="n">namespace</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                    <span class="nb">repr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">unsafe_hash</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                   <span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                   <span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">match_args</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">weakref_slot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new dynamically created dataclass.</span>
 
 <span class="sd">    The dataclass name will be &#39;cls_name&#39;.  &#39;fields&#39; is an iterable</span>
 <span class="sd">    of either (name), (name, type) or (name, type, Field) objects. If type is</span>
 <span class="sd">    omitted, use the string &#39;typing.Any&#39;.  Field objects are created by</span>
-<span class="sd">    the equivalent of calling &#39;field(name, type [, Field-info])&#39;.</span>
+<span class="sd">    the equivalent of calling &#39;field(name, type [, Field-info])&#39;.::</span>
 
 <span class="sd">      C = make_dataclass(&#39;C&#39;, [&#39;x&#39;, (&#39;y&#39;, int), (&#39;z&#39;, int, field(init=False))], bases=(Base,))</span>
 
-<span class="sd">    is equivalent to:</span>
+<span class="sd">    is equivalent to::</span>
 
 <span class="sd">      @dataclass</span>
 <span class="sd">      class C(Base):</span>
@@ -1278,14 +1664,12 @@
 
     <span class="k">if</span> <span class="n">namespace</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">namespace</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># Copy namespace since we&#39;re going to mutate it.</span>
-        <span class="n">namespace</span> <span class="o">=</span> <span class="n">namespace</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
     <span class="c1"># While we&#39;re looking through the field names, validate that they</span>
     <span class="c1"># are identifiers, are not keywords, and not duplicates.</span>
     <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="n">anns</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">annotations</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">item</span>
@@ -1294,7 +1678,7 @@
             <span class="n">name</span><span class="p">,</span> <span class="n">tp</span><span class="p">,</span> <span class="o">=</span> <span class="n">item</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="n">name</span><span class="p">,</span> <span class="n">tp</span><span class="p">,</span> <span class="n">spec</span> <span class="o">=</span> <span class="n">item</span>
-            <span class="n">namespace</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">spec</span>
+            <span class="n">defaults</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">spec</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid field: </span><span class="si">{</span><span class="n">item</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
 
@@ -1306,20 +1690,29 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Field name duplicated: </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
 
         <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">anns</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">tp</span>
+        <span class="n">annotations</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">tp</span>
 
-    <span class="n">namespace</span><span class="p">[</span><span class="s1">&#39;__annotations__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">anns</span>
+    <span class="c1"># Update &#39;ns&#39; with the user-supplied namespace plus our calculated values.</span>
+    <span class="k">def</span> <span class="nf">exec_body_callback</span><span class="p">(</span><span class="n">ns</span><span class="p">):</span>
+        <span class="n">ns</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">namespace</span><span class="p">)</span>
+        <span class="n">ns</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span>
+        <span class="n">ns</span><span class="p">[</span><span class="s1">&#39;__annotations__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">annotations</span>
+
     <span class="c1"># We use `types.new_class()` instead of simply `type()` to allow dynamic creation</span>
-    <span class="c1"># of generic dataclassses.</span>
-    <span class="bp">cls</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">new_class</span><span class="p">(</span><span class="n">cls_name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="p">{},</span> <span class="k">lambda</span> <span class="n">ns</span><span class="p">:</span> <span class="n">ns</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">namespace</span><span class="p">))</span>
+    <span class="c1"># of generic dataclasses.</span>
+    <span class="bp">cls</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">new_class</span><span class="p">(</span><span class="n">cls_name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="p">{},</span> <span class="n">exec_body_callback</span><span class="p">)</span>
+
+    <span class="c1"># Apply the normal decorator.</span>
     <span class="k">return</span> <span class="n">dataclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="nb">repr</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
-                     <span class="n">unsafe_hash</span><span class="o">=</span><span class="n">unsafe_hash</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="n">frozen</span><span class="p">)</span>
+                     <span class="n">unsafe_hash</span><span class="o">=</span><span class="n">unsafe_hash</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="n">frozen</span><span class="p">,</span>
+                     <span class="n">match_args</span><span class="o">=</span><span class="n">match_args</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="n">kw_only</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="n">slots</span><span class="p">,</span>
+                     <span class="n">weakref_slot</span><span class="o">=</span><span class="n">weakref_slot</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="replace"><a class="viewcode-back" href="../source/superduperdb.misc.html#superduperdb.misc.dataclasses.replace">[docs]</a><span class="k">def</span> <span class="nf">replace</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">changes</span><span class="p">):</span>
+<div class="viewcode-block" id="replace"><a class="viewcode-back" href="../source/superduperdb.misc.html#superduperdb.misc.dataclasses.replace">[docs]</a><span class="k">def</span> <span class="nf">replace</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">**</span><span class="n">changes</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a new object replacing specified fields with new values.</span>
 
-<span class="sd">    This is especially useful for frozen classes.  Example usage:</span>
+<span class="sd">    This is especially useful for frozen classes.  Example usage::</span>
 
 <span class="sd">      @dataclass(frozen=True)</span>
 <span class="sd">      class C:</span>
@@ -1329,18 +1722,7 @@
 <span class="sd">      c = C(1, 2)</span>
 <span class="sd">      c1 = replace(c, x=3)</span>
 <span class="sd">      assert c1.x == 3 and c1.y == 2</span>
-<span class="sd">      &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;replace() takes 1 positional argument but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s1"> were given&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
-        <span class="n">obj</span><span class="p">,</span> <span class="o">=</span> <span class="n">args</span>
-    <span class="k">elif</span> <span class="s1">&#39;obj&#39;</span> <span class="ow">in</span> <span class="n">changes</span><span class="p">:</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">changes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;obj&#39;</span><span class="p">)</span>
-        <span class="kn">import</span> <span class="nn">warnings</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Passing &#39;obj&#39; as keyword argument is deprecated&quot;</span><span class="p">,</span>
-                      <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;replace() missing 1 required positional argument: &#39;obj&#39;&quot;</span><span class="p">)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># We&#39;re going to mutate &#39;changes&#39;, but that&#39;s okay because it&#39;s a</span>
     <span class="c1"># new dict, even if called with &#39;replace(obj, **my_changes)&#39;.</span>
@@ -1376,34 +1758,49 @@
     <span class="c1"># changes that aren&#39;t fields, this will correctly raise a</span>
     <span class="c1"># TypeError.</span>
     <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="o">**</span><span class="n">changes</span><span class="p">)</span></div>
-<span class="n">replace</span><span class="o">.</span><span class="n">__text_signature__</span> <span class="o">=</span> <span class="s1">&#39;(obj, /, **kwargs)&#39;</span>
 </pre></div>
-
-           </div>
-          </div>
-          <footer>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright SuperDuperDB Inc., opensource@superduperdb.com.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
-        </div>
+        </article>
       </div>
-    </section>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; SuperDuperDB Inc., opensource@superduperdb.com
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+</div><script src="../_static/jquery.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="https://unpkg.com/mermaid@10.2.0/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    </body>
 </html>

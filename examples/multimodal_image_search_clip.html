@@ -1,0 +1,726 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" />
+
+    <!-- Generated with Sphinx 6.2.1 and Furo 2023.05.20 -->
+        <title>Multimodal search with CLIP - SuperDuperDB documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=e6660623a769aa55fea372102b9bf3151b292993" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">SuperDuperDB  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">SuperDuperDB  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting_started/index.html">Getting started</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Getting started</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/minimum_working_example.html">Minimum working example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started/features.html">Supported Features</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../background/index.html">Background of SuperDuperDB</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Background of SuperDuperDB</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../background/common_issues.html">Common issues in AI-data development</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../usage/index.html">SuperDuperDB Usage</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of SuperDuperDB Usage</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage/datalayer.html">Datalayer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/queries.html">Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/encoders.html">Encoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage/vector_search.html">Vector Search</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../infrastructure/index.html">Infrastructural support</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Infrastructural support</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/single_host_cluster.html">SuperDuperDB single host cluster deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/architecture.html">SuperDuperDB architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/change_data_capture.html">Change data capture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure/client_server.html">Client-server implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="index.html">Example notebooks</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of Example notebooks</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="mnist_clean.html">Training and maintaining MNIST predictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openai.html">OpenAI vector search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compare_vector_search_solutions.html">Compare vector search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sentiment_analysis_use_case.html">Sentiment analysis with transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="voice_memos.html">Create a personal assistant for understanding your meetings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mongo_cdc.html">Change data capture with MongoDB</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../source/modules.html">superduperdb</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of superduperdb</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../source/superduperdb.html">superduperdb package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of superduperdb package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.cli.html">superduperdb.cli package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.cluster.html">superduperdb.cluster package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of superduperdb.cluster package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.dask.html">superduperdb.cluster.dask package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.cluster.ray.html">superduperdb.cluster.ray package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.core.html">superduperdb.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.datalayer.html">superduperdb.datalayer package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of superduperdb.datalayer package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.base.html">superduperdb.datalayer.base package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.datalayer.mongodb.html">superduperdb.datalayer.mongodb package</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.encoders.html">superduperdb.encoders package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of superduperdb.encoders package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.numpy.html">superduperdb.encoders.numpy package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.pillow.html">superduperdb.encoders.pillow package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.torch.html">superduperdb.encoders.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.encoders.vectors.html">superduperdb.encoders.vectors package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.metrics.html">superduperdb.metrics package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.misc.html">superduperdb.misc package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../source/superduperdb.models.html">superduperdb.models package</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of superduperdb.models package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.langchain.html">superduperdb.models.langchain package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.openai.html">superduperdb.models.openai package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.pytorch_lightning.html">superduperdb.models.pytorch_lightning package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sentence_transformers.html">superduperdb.models.sentence_transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.sklearn.html">superduperdb.models.sklearn package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.torch.html">superduperdb.models.torch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.transformers.html">superduperdb.models.transformers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../source/superduperdb.models.vanilla.html">superduperdb.models.vanilla package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.serve.html">superduperdb.serve package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../source/superduperdb.vector_search.html">superduperdb.vector_search package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="Multimodal-search-with-CLIP">
+<h1>Multimodal search with CLIP<a class="headerlink" href="#Multimodal-search-with-CLIP" title="Permalink to this heading"></a></h1>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">clip</span>
+<span class="kn">import</span> <span class="nn">pymongo</span>
+<span class="kn">from</span> <span class="nn">superduperdb.misc.superduper</span> <span class="kn">import</span> <span class="n">superduper</span>
+<span class="kn">from</span> <span class="nn">superduperdb.models.torch.wrapper</span> <span class="kn">import</span> <span class="n">TorchModel</span>
+<span class="kn">from</span> <span class="nn">superduperdb.datalayer.mongodb.query</span> <span class="kn">import</span> <span class="n">Collection</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.documents</span> <span class="kn">import</span> <span class="n">Document</span> <span class="k">as</span> <span class="n">D</span>
+<span class="kn">from</span> <span class="nn">superduperdb.encoders.pillow.image</span> <span class="kn">import</span> <span class="n">pil_image</span> <span class="k">as</span> <span class="n">i</span>
+
+<span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()</span><span class="o">.</span><span class="n">drop_database</span><span class="p">(</span><span class="s1">&#39;documents&#39;</span><span class="p">)</span>
+<span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()</span><span class="o">.</span><span class="n">drop_database</span><span class="p">(</span><span class="s1">&#39;_filesystem:documents&#39;</span><span class="p">)</span>
+
+<span class="n">db</span> <span class="o">=</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()</span><span class="o">.</span><span class="n">documents</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">superduper</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+
+<span class="n">collection</span> <span class="o">=</span> <span class="n">Collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;tiny-imagenet&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+INFO:numexpr.utils:NumExpr defaulting to 8 threads.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ModuleNotFoundError</span>                       Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[1], line 6</span>
+<span class="ansi-green-intense-fg ansi-bold">      4</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">superduperdb</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">models</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">torch</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">wrapper</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> TorchModel
+<span class="ansi-green-intense-fg ansi-bold">      5</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">superduperdb</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">datalayer</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">mongodb</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">query</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> Collection
+<span class="ansi-green-fg">----&gt; 6</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">superduperdb</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">core</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">documents</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> Document <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> D
+<span class="ansi-green-intense-fg ansi-bold">      7</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">superduperdb</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">encoders</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">pillow</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">image</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> pil_image <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> i
+<span class="ansi-green-intense-fg ansi-bold">      9</span> pymongo<span style="color: rgb(98,98,98)">.</span>MongoClient()<span style="color: rgb(98,98,98)">.</span>drop_database(<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">documents</span><span style="color: rgb(175,0,0)">&#39;</span>)
+
+<span class="ansi-red-fg">ModuleNotFoundError</span>: No module named &#39;superduperdb.core.documents&#39;
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.core.documents</span> <span class="kn">import</span> <span class="n">Document</span> <span class="k">as</span> <span class="n">D</span>
+<span class="kn">from</span> <span class="nn">superduperdb.encoders.pillow.image</span> <span class="kn">import</span> <span class="n">pil_image</span> <span class="k">as</span> <span class="n">i</span>
+<span class="kn">from</span> <span class="nn">datasets</span> <span class="kn">import</span> <span class="n">load_dataset</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="s2">&quot;zh-plus/tiny-imagenet&quot;</span><span class="p">)[</span><span class="s1">&#39;valid&#39;</span><span class="p">]</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="p">[</span><span class="n">D</span><span class="p">({</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">])})</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">]</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ModuleNotFoundError</span>                       Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[2], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">superduperdb</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">core</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">documents</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> Document <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> D
+<span class="ansi-green-intense-fg ansi-bold">      2</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">superduperdb</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">encoders</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">pillow</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">image</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> pil_image <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> i
+<span class="ansi-green-intense-fg ansi-bold">      3</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">datasets</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> load_dataset
+
+<span class="ansi-red-fg">ModuleNotFoundError</span>: No module named &#39;superduperdb.core.documents&#39;
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">collection</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">encoders</span><span class="o">=</span><span class="p">(</span><span class="n">i</span><span class="p">,)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[3], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-yellow-bg">db</span><span style="color: rgb(98,98,98)">.</span>execute(collection<span style="color: rgb(98,98,98)">.</span>insert_many(dataset, encoders<span style="color: rgb(98,98,98)">=</span>(i,)))
+
+<span class="ansi-red-fg">NameError</span>: name &#39;db&#39; is not defined
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">())[</span><span class="s1">&#39;image&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[4], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> x <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">db</span><span style="color: rgb(98,98,98)">.</span>execute(collection<span style="color: rgb(98,98,98)">.</span>find_one())[<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">image</span><span style="color: rgb(175,0,0)">&#39;</span>]<span style="color: rgb(98,98,98)">.</span>x
+
+<span class="ansi-red-fg">NameError</span>: name &#39;db&#39; is not defined
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="p">,</span> <span class="n">preprocess</span> <span class="o">=</span> <span class="n">clip</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;ViT-B/32&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.encoders.torch.tensor</span> <span class="kn">import</span> <span class="n">tensor</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">tensor</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">512</span><span class="p">,))</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">text_model</span> <span class="o">=</span> <span class="n">TorchModel</span><span class="p">(</span>
+    <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;clip_text&#39;</span><span class="p">,</span>
+    <span class="nb">object</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">preprocess</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">clip</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">forward_method</span><span class="o">=</span><span class="s1">&#39;encode_text&#39;</span><span class="p">,</span>
+    <span class="n">encoder</span><span class="o">=</span><span class="n">t</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">text_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="s1">&#39;this is a test&#39;</span><span class="p">,</span> <span class="n">one</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+tensor([ 1.5430e-01,  8.3419e-02, -8.6218e-02, -2.4812e-01, -9.0193e-02,
+        -1.7874e-01,  7.9648e-02, -1.4377e+00,  9.5243e-02,  2.9510e-01,
+         4.2066e-03,  2.5638e-01, -2.1601e-02,  1.5735e-02,  1.9318e-01,
+        -1.6119e-01,  3.6999e-01,  2.2594e-02, -5.7204e-02, -1.9817e-01,
+        -7.5301e-03, -3.2254e-01,  2.7348e-01, -3.5396e-01, -1.9037e-01,
+         1.0515e-01, -2.4183e-02,  1.0074e-01, -8.8070e-02,  2.6366e-02,
+        -2.7968e-01, -2.9460e-01,  2.1931e-02,  1.1822e-01,  8.7239e-02,
+         1.1945e-01, -6.0540e-04, -1.0101e-01, -1.0430e-01, -2.0626e-01,
+        -1.3790e-01, -3.9173e-02,  7.5546e-03,  1.3866e-01, -1.1169e-01,
+         1.1691e-01, -1.8521e-01,  2.9997e-02,  1.0280e-01,  1.1497e-01,
+        -1.0389e-01,  5.0075e-02,  3.1277e-01, -1.7357e-01,  4.6908e-02,
+        -9.6962e-02,  7.7737e-02,  4.9121e-03, -2.9044e-01, -3.6215e-02,
+         3.3161e-01,  4.0403e-02, -3.6717e-02,  3.3114e-02,  1.3841e-01,
+         1.1665e-01, -1.8533e-01,  1.4537e-01,  1.7915e-01,  6.0204e-02,
+         1.8797e-01, -4.3545e-02, -2.5759e-01,  2.5922e-01, -3.2504e-01,
+        -7.3698e-02, -1.3032e-01, -2.1270e-02, -9.7008e-02, -1.5535e-01,
+        -1.8003e-01, -2.3091e-01, -7.8064e-02,  2.2982e-01,  3.5198e-02,
+         2.6405e-01,  1.8695e-01, -2.9914e-01,  4.2318e-01, -2.0545e-03,
+         1.1283e-01, -1.5321e-02, -2.2041e+00,  3.1780e-01,  1.7714e-01,
+         1.4387e-01, -2.9230e-01,  7.1942e-02,  1.3914e-01, -2.8608e-01,
+         1.8457e-01, -1.0049e-01,  9.6526e-02,  2.8571e-01,  6.4735e-02,
+         2.3305e-02, -3.9703e-02, -7.9729e-02, -8.2035e-02,  2.5785e-02,
+         1.9965e-02,  4.4991e-01,  2.9948e-02, -1.7797e-02, -1.7955e-02,
+        -6.9631e-02,  2.1176e-01, -2.4720e-01, -2.2326e-01,  1.1205e-03,
+         1.1491e-01,  2.9441e-02, -1.3374e-01, -1.6872e-01,  1.1021e-01,
+        -1.3817e-01,  1.2030e-01,  3.4527e-01,  8.1909e-02,  2.3871e-01,
+         2.2229e-01, -1.8966e-01, -2.3539e-01,  8.6902e+00,  1.9549e-01,
+         2.1512e-01, -4.9882e-02, -1.1429e-01, -2.2483e-01,  9.4593e-02,
+        -7.6711e-02, -9.9087e-02, -6.9110e-02, -1.3233e-01, -3.2581e-01,
+         2.7050e-02, -2.4327e-01,  1.1758e-01, -1.4014e-01,  1.9817e-01,
+         8.2303e-02, -1.7757e-01, -3.3040e-02, -9.2580e-02,  2.0600e-01,
+        -1.3096e-01, -1.4063e-01,  8.7542e-02, -3.2586e-01,  1.9357e-01,
+        -2.0348e-01, -3.4610e-01, -7.7105e-02, -4.6517e-02, -2.5897e-01,
+         4.9247e-02,  2.1851e-01, -1.3462e-01,  8.5325e-02,  1.0842e-01,
+         1.2020e-01, -4.1831e-02,  9.5542e-02,  2.7893e-01, -2.4965e-01,
+         9.1718e-02, -1.4164e-01,  3.3395e-01,  1.2548e-01,  4.3229e-02,
+        -7.5975e-02,  1.6848e-01, -6.9536e-02,  1.2126e-01, -1.4141e-01,
+         1.1193e-01,  1.5343e-01, -9.1195e-03, -3.5644e-01, -4.9832e-02,
+         2.1788e-02, -2.5872e-01,  1.0919e-01,  2.7183e-03,  1.9120e-01,
+        -1.4926e-01,  3.6027e-02, -1.0323e-01, -2.1820e-01,  6.5567e-02,
+         3.0641e-02, -3.5111e-01, -1.7972e-01,  1.1709e-01, -1.1321e-01,
+        -1.9422e-01, -1.3823e-02, -1.1502e-01,  1.2422e-01,  2.2445e-02,
+         1.4535e-01,  1.8312e-01, -8.5592e-02, -2.4161e-01, -2.3021e-01,
+         9.0205e-02, -3.6267e-01, -7.6290e-02,  2.8521e-01,  6.8043e-02,
+        -1.6620e-02, -1.3670e-01, -5.1179e-02,  7.4036e-02, -9.4656e-02,
+        -2.9560e-03,  7.2101e-02, -1.3797e-02, -7.3376e-02,  1.3650e-03,
+         2.2423e-01,  2.5347e-01, -2.9496e-01,  1.7042e-02,  1.9483e-01,
+         4.0727e-02, -1.8151e-01,  6.8319e-02, -1.1627e-01,  1.3987e-01,
+        -1.2464e-01,  1.6415e-01,  1.1659e-01, -2.9262e-01, -1.3138e-01,
+         2.8386e-01,  1.3536e-02,  1.7893e-02,  1.2224e-01, -8.3474e-02,
+        -1.8547e-01,  1.3922e-01, -6.6026e-02,  1.8780e-01,  9.8017e-02,
+         2.2783e-01,  1.8879e-01, -1.1789e-01,  8.7848e-02,  9.5320e-02,
+        -1.3631e-01, -1.2319e-01, -5.0855e-02,  1.7521e-01, -8.8600e-03,
+        -2.1211e-01, -1.6603e-01, -9.1632e-02, -1.8940e-01,  1.2483e-01,
+        -3.4137e-01,  1.7253e-01, -4.0481e-03, -2.5831e-01,  3.4354e-01,
+         7.2386e-02,  6.4229e-02, -1.0345e-01,  8.1469e-02,  1.2823e-01,
+         3.0450e-01,  1.2546e-02,  9.2171e-02,  7.6265e-02,  1.9233e-01,
+         2.5052e-02,  1.6779e-01, -1.1386e-01, -1.2343e-01,  2.1583e-01,
+         5.1995e-02, -1.1094e-01, -1.3655e-01, -2.2207e-02, -4.0817e-02,
+        -1.5961e-01, -2.5930e-01, -3.9237e-02,  1.4823e-01,  1.7264e-01,
+        -1.0340e-01, -7.3079e-02,  5.3891e-03,  4.6488e-02, -5.2854e-02,
+         2.3029e-01,  1.3836e-01, -2.3104e-01,  5.1622e-02, -2.5691e-02,
+        -7.3428e-02, -2.0090e-01,  8.6826e+00, -1.3597e-02, -1.5189e-01,
+        -2.2824e-02,  1.5231e-01, -1.7320e-01, -6.9214e-02,  1.3925e-02,
+         3.7048e-01,  6.3549e-01, -1.1657e-01,  2.5321e-01, -3.9477e-01,
+         2.1688e-02,  4.9023e-02, -1.9004e-01,  1.0255e-01, -3.4117e+00,
+        -1.6342e-02,  1.7833e-01, -2.9475e-03,  2.0511e-01,  2.2709e-02,
+        -1.5878e-01,  4.0416e-01,  2.8988e-01,  1.8286e-01, -8.9414e-02,
+         1.9508e-01, -2.8454e-01, -3.6217e-01, -2.0818e-01,  1.3445e-01,
+         1.0488e-01,  1.0607e-01, -4.8979e-02,  3.1894e-01,  4.3417e-02,
+        -9.3009e-02, -1.1065e-01,  6.5195e-02,  1.7126e-01,  6.9774e-03,
+         4.1325e-01,  2.0223e-01,  1.0159e-01, -2.1640e-03,  1.3869e-01,
+        -2.3206e-01,  1.6523e-02,  4.7522e-01,  3.5994e-01, -4.1203e-01,
+        -3.4080e-02, -1.8557e-01,  2.1812e-01, -1.1671e-01, -1.9644e-01,
+         3.0313e-02,  7.6663e-02, -1.4767e-01,  3.0242e-01, -3.8838e-01,
+         1.2630e-01,  8.6431e-04, -2.1858e-01, -3.0865e-01, -8.5571e-02,
+         4.7795e-03, -1.4999e-01,  1.9752e-02,  1.9733e-01,  8.4233e-02,
+        -1.1645e-01, -1.5909e-01, -4.3137e-02, -1.8891e-03, -1.1042e-01,
+        -8.6980e-02, -2.1983e-01, -2.5741e-02,  6.9247e-02, -1.7009e-01,
+         2.6890e-01, -3.8613e-01, -2.2737e-01,  7.8148e-02, -4.8904e-02,
+        -1.5376e-01, -1.6890e-01,  9.6796e-02, -9.0670e-02, -1.9516e-02,
+         1.0524e-01,  1.8782e-01,  3.2854e-02,  1.2531e-01, -1.3895e-02,
+        -1.0850e-02,  7.8530e-02,  1.2075e-01,  1.0289e-01,  9.0531e-02,
+        -1.0503e-01, -1.5543e-02, -1.0592e-01, -5.9506e-02,  4.2483e-01,
+        -3.3485e-01, -1.1832e-01, -1.0529e-01,  1.4116e-01,  7.1301e-02,
+         2.0267e-01,  1.3006e-01, -4.7153e-02, -1.9340e-01,  9.9480e-02,
+         3.2894e-01, -1.5424e-01, -2.4012e-01, -1.7370e-01,  1.0893e-02,
+         3.6016e-03, -1.7056e-01, -4.7541e-02,  9.2827e-02, -1.1986e-01,
+         9.8331e-03,  1.3779e-02, -1.0578e-01, -1.5484e-04, -1.4863e-02,
+         8.7218e-02, -1.3129e-01, -1.6176e-01,  1.8377e-01, -3.2393e-01,
+        -6.3812e-02,  1.1426e-01, -3.7811e-01,  1.4901e-01,  1.6303e-01,
+        -8.0644e-02, -2.5431e-02,  1.3871e-01, -2.2643e-01, -9.5727e-02,
+        -3.8660e-02, -1.0742e-01, -2.5748e-01,  3.4330e-03,  1.8189e-01,
+        -4.2146e-02,  9.7470e-03,  4.0985e-02, -1.6121e-01,  1.8116e-01,
+         9.7044e-02,  1.7077e-01,  4.1108e-01, -3.9961e-01,  3.8703e-02,
+         8.6714e-02,  2.4180e-01,  1.3050e-01, -2.0577e-01,  2.3869e-01,
+         7.2552e-02, -9.9135e-01, -2.5906e-02,  3.1244e-01, -9.2438e-02,
+        -3.2326e-02,  2.2206e-01,  3.5055e-01,  2.9333e-01, -5.4146e-02,
+        -1.0362e-01,  2.1373e-02,  5.3769e-02, -1.9133e-01,  3.8762e-02,
+        -1.2608e-01,  2.3885e-01, -2.3160e-01,  3.1447e-01,  2.7911e-01,
+        -3.7622e-02, -2.3407e-01,  4.1729e-02,  5.6719e-02, -1.3126e-02,
+         1.8311e-01,  6.9699e-03,  1.2088e-01, -2.6926e-01, -4.1645e-02,
+         6.8667e-02,  3.4110e-01])
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">visual_model</span> <span class="o">=</span> <span class="n">TorchModel</span><span class="p">(</span>
+    <span class="n">identifier</span><span class="o">=</span><span class="s1">&#39;clip_image&#39;</span><span class="p">,</span>
+    <span class="n">preprocess</span><span class="o">=</span><span class="n">preprocess</span><span class="p">,</span>
+    <span class="nb">object</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">visual</span><span class="p">,</span>
+    <span class="n">encoder</span><span class="o">=</span><span class="n">t</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">visual_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">one</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[10], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> visual_model<span style="color: rgb(98,98,98)">.</span>predict(<span class="ansi-yellow-bg">x</span>, one<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
+
+<span class="ansi-red-fg">NameError</span>: name &#39;x&#39; is not defined
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">superduperdb.core.vector_index</span> <span class="kn">import</span> <span class="n">VectorIndex</span>
+<span class="kn">from</span> <span class="nn">superduperdb.core.watcher</span> <span class="kn">import</span> <span class="n">Watcher</span>
+
+<span class="n">db</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+    <span class="n">VectorIndex</span><span class="p">(</span>
+        <span class="s1">&#39;my-index&#39;</span><span class="p">,</span>
+        <span class="n">indexing_watcher</span><span class="o">=</span><span class="n">Watcher</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">visual_model</span><span class="p">,</span>
+            <span class="n">key</span><span class="o">=</span><span class="s1">&#39;image&#39;</span><span class="p">,</span>
+            <span class="n">select</span><span class="o">=</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(),</span>
+        <span class="p">),</span>
+        <span class="n">compatible_watcher</span><span class="o">=</span><span class="n">Watcher</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">text_model</span><span class="p">,</span>
+            <span class="n">key</span><span class="o">=</span><span class="s1">&#39;text&#39;</span><span class="p">,</span>
+            <span class="n">active</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[11], line 4</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">superduperdb</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">core</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">vector_index</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> VectorIndex
+<span class="ansi-green-intense-fg ansi-bold">      2</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">superduperdb</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">core</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">watcher</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> Watcher
+<span class="ansi-green-fg">----&gt; 4</span> <span class="ansi-yellow-bg">db</span><span style="color: rgb(98,98,98)">.</span>add(
+<span class="ansi-green-intense-fg ansi-bold">      5</span>     VectorIndex(
+<span class="ansi-green-intense-fg ansi-bold">      6</span>         <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">my-index</span><span style="color: rgb(175,0,0)">&#39;</span>,
+<span class="ansi-green-intense-fg ansi-bold">      7</span>         indexing_watcher<span style="color: rgb(98,98,98)">=</span>Watcher(
+<span class="ansi-green-intense-fg ansi-bold">      8</span>             model<span style="color: rgb(98,98,98)">=</span>visual_model,
+<span class="ansi-green-intense-fg ansi-bold">      9</span>             key<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">image</span><span style="color: rgb(175,0,0)">&#39;</span>,
+<span class="ansi-green-intense-fg ansi-bold">     10</span>             select<span style="color: rgb(98,98,98)">=</span>collection<span style="color: rgb(98,98,98)">.</span>find(),
+<span class="ansi-green-intense-fg ansi-bold">     11</span>         ),
+<span class="ansi-green-intense-fg ansi-bold">     12</span>         compatible_watcher<span style="color: rgb(98,98,98)">=</span>Watcher(
+<span class="ansi-green-intense-fg ansi-bold">     13</span>             model<span style="color: rgb(98,98,98)">=</span>text_model,
+<span class="ansi-green-intense-fg ansi-bold">     14</span>             key<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">text</span><span style="color: rgb(175,0,0)">&#39;</span>,
+<span class="ansi-green-intense-fg ansi-bold">     15</span>             active<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">False</span>,
+<span class="ansi-green-intense-fg ansi-bold">     16</span>         )
+<span class="ansi-green-intense-fg ansi-bold">     17</span>     )
+<span class="ansi-green-intense-fg ansi-bold">     18</span> )
+
+<span class="ansi-red-fg">NameError</span>: name &#39;db&#39; is not defined
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+    <span class="n">collection</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="n">D</span><span class="p">({</span><span class="s1">&#39;text&#39;</span><span class="p">:</span> <span class="s1">&#39;mushroom&#39;</span><span class="p">}),</span> <span class="n">vector_index</span><span class="o">=</span><span class="s1">&#39;my-index&#39;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">({})</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[12], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> out <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">db</span><span style="color: rgb(98,98,98)">.</span>execute(
+<span class="ansi-green-intense-fg ansi-bold">      2</span>     collection<span style="color: rgb(98,98,98)">.</span>like(D({<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">text</span><span style="color: rgb(175,0,0)">&#39;</span>: <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">mushroom</span><span style="color: rgb(175,0,0)">&#39;</span>}), vector_index<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">my-index</span><span style="color: rgb(175,0,0)">&#39;</span>, n<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">3</span>)<span style="color: rgb(98,98,98)">.</span>find({})
+<span class="ansi-green-intense-fg ansi-bold">      3</span> )
+
+<span class="ansi-red-fg">NameError</span>: name &#39;db&#39; is not defined
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[13], line 2</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> <span class="ansi-bold" style="color: rgb(0,0,255)">IPython</span><span class="ansi-bold" style="color: rgb(0,0,255)">.</span><span class="ansi-bold" style="color: rgb(0,0,255)">display</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> display
+<span class="ansi-green-fg">----&gt; 2</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> r <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span class="ansi-yellow-bg">out</span>:
+<span class="ansi-green-intense-fg ansi-bold">      3</span>     display(r[<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">image</span><span style="color: rgb(175,0,0)">&#39;</span>]<span style="color: rgb(98,98,98)">.</span>x)
+
+<span class="ansi-red-fg">NameError</span>: name &#39;out&#39; is not defined
+</pre></div></div>
+</div>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; SuperDuperDB Inc., opensource@superduperdb.com
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/jquery.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

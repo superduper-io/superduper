@@ -1,8 +1,7 @@
-superduperdb-stealth
-====================
+superduperdb
+============
 
 .. toctree::
    :maxdepth: 4
 
    superduperdb
-   tests

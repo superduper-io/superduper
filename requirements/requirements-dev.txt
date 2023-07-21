@@ -578,10 +578,13 @@ sphinx==6.2.1
     #   nbsphinx
     #   sphinx-autodoc-typehints
     #   sphinx-basic-ng
+    #   sphinx-copybutton
 sphinx-autodoc-typehints==1.23.0
     # via -r requirements-docs.in
 sphinx-basic-ng==1.0.0b2
     # via furo
+sphinx-copybutton==0.5.2
+    # via -r requirements-docs.in
 sphinxcontrib-applehelp==1.0.4
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
@@ -590,6 +593,8 @@ sphinxcontrib-htmlhelp==2.0.1
     # via sphinx
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
+sphinxcontrib-mermaid==0.9.2
+    # via -r requirements-docs.in
 sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5

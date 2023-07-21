@@ -5,3 +5,5 @@ nbsphinx
 pandoc
 sphinx
 sphinx-autodoc-typehints
+sphinx_copybutton
+sphinxcontrib-mermaid

@@ -92,14 +92,12 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 pip install superduperdb
 ```
 
-2. <details>
-    <summary>MongoDB</summary>
+2. MongoDB
     <ul>
     <li>🔥 You already have MongoDB installed? Let's go!</li>
     <li>🍃 You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>. (<em>~10-15 minutes</em>)</li>
     </ul>
-</details>
-
+    
 3. <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Try out SuperDuperDB</a>
 </p>
 

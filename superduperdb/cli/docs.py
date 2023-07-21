@@ -5,6 +5,7 @@ from superduperdb.misc.git import Git, git
 from typer import Argument, Option
 import functools
 import shutil
+import sys
 
 DOCS = 'docs'
 DOCS_ROOT = ROOT / DOCS
@@ -33,7 +34,18 @@ def docs(
         '--open',
         help='If true, open the index.html of the generated pages on completion',
     ),
+    push_local_to_upstream: bool = Option(
+        False, help='If True, DO NOT BUILD, just push to upstream'
+    ),
+    remote: str = Option('origin', help='The remote to push to'),
 ):
+    if push_local_to_upstream:
+        if git_gh.is_dirty():
+            sys.exit('You did not commit your work in gh-pages')
+        else:
+            git_gh('push', 'upstream', 'gh-pages')
+        return
+
     if not GH_PAGES.exists():
         _make_gh_pages()
     else:
@@ -46,7 +58,7 @@ def docs(
     if commit_message:
         git_gh('add', '.')
         git_gh('commit', '-m', commit_message)
-        git_gh('push')
+        git_gh('push', remote, 'gh-pages')
 
     if _open:
         run_gh(('open', 'index.html'))

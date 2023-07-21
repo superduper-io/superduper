@@ -45,6 +45,7 @@ napoleon_use_param = True
 napoleon_use_rtype = True
 
 nbsphinx_allow_errors = True
+nbsphinx_execute = 'never'
 
 project = 'SuperDuperDB'
 pygments_style = 'sphinx'

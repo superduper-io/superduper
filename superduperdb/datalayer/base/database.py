@@ -12,7 +12,7 @@ import networkx
 from superduperdb import CFG
 from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.component import Component
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.datalayer.base.data_backend import BaseDataBackend

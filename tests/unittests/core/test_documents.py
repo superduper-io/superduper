@@ -1,5 +1,5 @@
 from superduperdb.encoders.torch.tensor import tensor
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 import torch
 
 

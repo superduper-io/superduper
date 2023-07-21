@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 import torch
 
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.base.cdc import DatabaseWatcher
 from superduperdb.datalayer.mongodb.query import Collection

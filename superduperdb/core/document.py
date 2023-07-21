@@ -8,16 +8,13 @@ ContentType = t.Union[t.Dict, Encodable]
 class Document:
     """
     A wrapper around an instance of dict or a Encodable which may be used to dump
-    that resource to a mix of jsonable content or `bytes`
+    that resource to a mix of JSONable and `bytes`
     """
 
     _DEFAULT_ID_KEY: str = '_id'
 
     def __init__(self, content: t.Dict):
         self.content = content
-
-    def __hash__(self):
-        return super().__hash__()
 
     def dump_bson(self):
         return bson.encode(self.encode())
@@ -47,9 +44,7 @@ class Document:
         return self._encode(self.content)
 
     @property
-    def id(
-        self,
-    ):
+    def id(self) -> t.Any:
         return self.content[self._DEFAULT_ID_KEY]
 
     @classmethod

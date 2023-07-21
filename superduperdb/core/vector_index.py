@@ -6,7 +6,7 @@ import dataclasses as dc
 import superduperdb as s
 from superduperdb.core.component import Component
 from superduperdb.core.dataset import Dataset
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encodable
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import ModelEnsemble

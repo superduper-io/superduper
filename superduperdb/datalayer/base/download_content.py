@@ -1,7 +1,7 @@
 # type: ignore
 import typing as t
 
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.query import Insert, Select
 from superduperdb.misc.downloads import Downloader

@@ -1,4 +1,5 @@
 import pytest
+import tdir
 
 from superduperdb.core.documents import Document as D
 from superduperdb.datalayer.mongodb.query import Collection
@@ -41,6 +42,7 @@ def test_transformer(trainer):
     pass
 
 
+@tdir
 def test_tranformers_trainer(trainer, random_data):
     trainer, tokenizer = trainer
 

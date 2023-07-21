@@ -2,6 +2,7 @@ import typing as t
 
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.misc.serialization import serializers
+from superduperdb.misc.tree import tree_find
 from .artifact import Artifact
 
 """
@@ -58,17 +59,16 @@ def put_artifacts_back(
     return put_back(tree)
 
 
-def get_artifacts(tree: t.Any) -> t.Iterator['Artifact']:
+def get_artifacts(tree: t.Any) -> t.Iterator[Artifact]:
     """Yield all Artifacts in a tree
 
     :param tree: A tree made up of dicts and lists, and leaves of any type
     """
-    if isinstance(tree, Artifact):
-        yield tree
-    elif isinstance(tree, dict):
-        yield from (a for i in tree.values() for a in get_artifacts(i))
-    elif isinstance(tree, list):
-        yield from (a for i in tree for a in get_artifacts(i))
+
+    def accept(t):
+        return isinstance(t, Artifact)
+
+    yield from tree_find(tree, accept)
 
 
 def infer_artifacts(tree: t.Any) -> t.Iterator:
@@ -76,12 +76,11 @@ def infer_artifacts(tree: t.Any) -> t.Iterator:
 
     :param tree: A tree made up of dicts and lists, and leaves of any type
     """
-    if isinstance(tree, dict) and 'file_id' in tree:
-        yield tree['file_id']
-    elif isinstance(tree, dict):
-        yield from (a for i in tree.values() for a in infer_artifacts(i))
-    elif isinstance(tree, list):
-        yield from (a for i in tree for a in infer_artifacts(i))
+
+    def accept(t):
+        return isinstance(t, dict) and 'file_id' in t
+
+    return (t['file_id'] for t in tree_find(tree, accept))
 
 
 def replace_artifacts_with_dict(tree: t.Any, info: t.Dict[Artifact, str]) -> t.Any:

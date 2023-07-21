@@ -87,6 +87,10 @@ decorator==5.1.1
     # via retry
 deepdiff==6.3.1
     # via lightning
+dek==1.2.0
+    # via
+    #   tdir
+    #   xmod
 dill==0.3.6
     # via -r requirements.in
 distributed==2023.5.0
@@ -435,6 +439,8 @@ sympy==1.12
     # via torch
 tblib==2.0.0
     # via distributed
+tdir==1.6.0
+    # via -r requirements-test.in
 tenacity==8.2.2
     # via
     #   -r requirements-test.in
@@ -526,6 +532,10 @@ werkzeug==2.3.6
     # via
     #   -r requirements.in
     #   flask
+xmod==1.5.0
+    # via
+    #   dek
+    #   tdir
 yarl==1.9.2
     # via aiohttp
 zict==3.0.0

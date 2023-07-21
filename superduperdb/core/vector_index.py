@@ -68,7 +68,8 @@ class VectorIndex(Component):
                 id=self.identifier,
                 dimensions=self._dimensions,
                 measure=self.measure,
-            )
+            ),
+            create=True,
         )
 
         if not s.CFG.cdc:

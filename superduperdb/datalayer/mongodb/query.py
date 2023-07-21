@@ -717,19 +717,8 @@ class ChangeStream:
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __call__(self, db):
-        resume_token = self.kwargs.get("resume_token")
-        # TODO (high): need to pass change pipeline into watch
-        self.kwargs.get("change")
-
         collection = db.db[self.collection.name]
-        options = {}
-        if resume_token:
-            options['resumeAfter'] = resume_token
-        if options:
-            change_stream_iterator = collection.watch()
-        else:
-            change_stream_iterator = collection.watch()
-        return change_stream_iterator
+        return collection.watch(**self.kwargs)
 
     @property
     def select_ids(self) -> 'Select':

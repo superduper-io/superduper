@@ -151,14 +151,23 @@ class LanceVectorIndex(BaseVectorIndex):
     name: str = "lancedb"
     _ID: str = 'id'
 
-    def __init__(self, uri, measure: str = "cosine") -> None:
+    def __init__(
+        self,
+        uri: str,
+        measure: str = "cosine",
+        client: t.Optional[LanceDBClient] = None,
+    ) -> None:
         """
         Initialize the ``LanceVectorIndex``.
 
-        :param config: Configuration object for vector search.
+        :param uri: URI of the LanceDB database.
         :param measure: Distance measure for vector search. Defaults to 'cosine'.
         """
-        self.client = LanceDBClient(uri=uri)
+        if client:
+            self.client = client
+        else:
+            self.client = LanceDBClient(uri=uri)
+        self.measure = measure
         super().__init__(None, None, measure)
 
     def _create_schema(self, dimensions: int) -> pa.Schema:
@@ -172,9 +181,23 @@ class LanceVectorIndex(BaseVectorIndex):
             [pa.field(VECTOR_FIELD_NAME, vector_type), pa.field(self._ID, pa.string())]
         )
 
-    def get_table(self, config: VectorCollectionConfig) -> 'LanceTable':
+    def get_table(self, config: VectorCollectionConfig, create=False) -> 'LanceTable':
         """
         Get the ``LanceTable`` based on the ``VectorCollectionConfig``.
+
+        :param identifier: Identifier of the vector table.
+        :param create: create the table if it does not exist. Defaults to ``False``.
+        """
+        try:
+            return self.client.get_table(table_name=config.id)
+        except FileNotFoundError:
+            if create:
+                return self.create_table(config=config)
+            raise
+
+    def create_table(self, config: VectorCollectionConfig) -> 'LanceTable':
+        """
+        Create the ``LanceTable`` based on the ``VectorCollectionConfig``.
 
         :param config: Configuration object for vector collection.
         """

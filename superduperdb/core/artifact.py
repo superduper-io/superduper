@@ -51,7 +51,7 @@ class Artifact:
 
     def __hash__(self):
         if isinstance(self.artifact, list):
-            # TODO: BROKEN! we should hash the whole artifact and cache it
+            # BROKEN: we should hash the whole artifact and cache it
             return hash(str(self.artifact[:100]))
         if isinstance(self.artifact, dict):
             return hash(str(self.artifact))
@@ -92,7 +92,7 @@ class ArtifactDesc(te.TypedDict):
     serializer: str
 
 
-# TODO: this no longer appears to be called anywhere
+# BROKEN: this no longer appears to be called anywhere
 def load_artifact(
     desc: ArtifactDesc,
     artifact_store: ArtifactStore,

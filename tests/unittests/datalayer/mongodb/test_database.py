@@ -2,7 +2,7 @@ import PIL.PngImagePlugin
 import pytest
 import torch
 from superduperdb.core.dataset import Dataset
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encoder
 from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
 from superduperdb.core.watcher import Watcher

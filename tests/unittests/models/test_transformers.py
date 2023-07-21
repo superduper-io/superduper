@@ -1,7 +1,7 @@
 import pytest
 import tdir
 
-from superduperdb.core.documents import Document as D
+from superduperdb.core.document import Document as D
 from superduperdb.datalayer.mongodb.query import Collection
 
 from superduperdb.models.transformers.wrapper import (

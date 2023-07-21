@@ -5,7 +5,7 @@ import typing as t
 import dataclasses as dc
 
 import superduperdb as s
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.cursor import SuperDuperCursor
 from superduperdb.datalayer.base.query import Select, SelectOne, Insert, Delete, Update

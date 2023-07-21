@@ -4,7 +4,7 @@ from ray import serve as _serve
 from starlette.requests import Request
 
 from superduperdb.datalayer.base.build import build_datalayer
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 
 
 def create_server(model: str, num_replicas):

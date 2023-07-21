@@ -11,7 +11,7 @@ from superduperdb.core.artifact_tree import (
     load_artifacts,
 )
 from superduperdb.core.component import Component
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.database import ExecuteQuery
 from superduperdb.datalayer.base.query import (

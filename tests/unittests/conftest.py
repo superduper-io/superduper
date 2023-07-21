@@ -15,7 +15,7 @@ from pymongo import MongoClient
 from tenacity import RetryError, Retrying, stop_after_delay
 
 from superduperdb.core.dataset import Dataset
-from superduperdb.core.documents import Document
+from superduperdb.core.document import Document
 from superduperdb.core.metric import Metric
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.core.watcher import Watcher

@@ -93,7 +93,7 @@ class InMemoryVectorDatabase(VectorDatabase):
     def __init__(self) -> None:
         self._collections: t.Dict[VectorCollectionId, VectorCollection] = {}
 
-    def get_table(self, config: VectorCollectionConfig) -> VectorCollection:
+    def get_table(self, config: VectorCollectionConfig, **kwargs) -> VectorCollection:
         collection = self._collections.get(config.id)
         if not collection:
             collection = self._collections[config.id] = InMemoryVectorCollection(

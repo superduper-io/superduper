@@ -64,13 +64,13 @@ def _make_gh_pages():
     if exists:
         git_gh('clone', origin, '-b', 'gh-pages', '.')
     else:
-        git_gh('clone', origin)
+        git_gh('clone', origin, '.')
 
     git_gh('remote', 'add', 'upstream', UPSTREAM)
     git_gh('fetch', 'upstream')
     git_gh('switch', 'gh-pages')
     git_gh('reset', '--hard', 'upstream/gh-pages')
-    git_gh('push', '--force-with-lease', '--set-upstream', 'origin', 'testing')
+    git_gh('push', '--force-with-lease', '--set-upstream', 'origin')
 
 
 def _clean():

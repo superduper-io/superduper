@@ -46,15 +46,14 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 
 ---------------
 
-<details>
-  <summary>What is SuperDuperDB?</summary>
+What is SuperDuperDB?
+
   <ul>
   <li>🔄 an end-to-end live AI deployment which includes a model repository, model training and computation of outputs</li>
   <li>📦 a feature store where the model outputs are stored alongside the inputs in desired formats and types</li>
   <li>🔢 a fully functional vector database to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search</li>
   <li>📈 a model performance monitor enabling model quality and degradation to be monitored as new data is inserted</li>
   </ul>
-</details>
 
 <details>
   <summary>Who is SuperDuperDB for?</summary>

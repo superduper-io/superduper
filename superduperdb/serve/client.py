@@ -11,7 +11,7 @@ from superduperdb.core.artifact_tree import (
     load_artifacts,
 )
 from superduperdb.core.component import Component
-from superduperdb.core.document import Document
+from superduperdb.core.document import Document, dump_bsons, load_bson, load_bsons
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.datalayer import ExecuteQuery
 from superduperdb.datalayer.base.query import (
@@ -77,11 +77,11 @@ class Client:
             },
         ).json()
         result = self._get(request_id=request_id, file_id=response['file_id'])
-        documents = Document.load_bsons(result, encoders=self.encoders)
+        documents = load_bsons(result, encoders=self.encoders)
         return documents
 
     def insert(self, query: Insert):
-        documents = Document.dump_bsons(query.documents)
+        documents = dump_bsons(query.documents)
         query.documents = None
         serialized = query.serialize()
         file_id = str(uuid.uuid4())
@@ -199,7 +199,7 @@ class Client:
         )
         return Serializable.deserialize(d)
 
-    def select_one(self, query: SelectOne) -> t.Dict:
+    def select_one(self, query: SelectOne) -> Document:
         request_id = str(uuid.uuid4())
         response = self._make_get_request(
             'select_one',
@@ -209,10 +209,10 @@ class Client:
             },
         ).json()
         result = self._get(request_id=request_id, file_id=response['file_id'])
-        return Document.load_bson(result, encoders=self.encoders)
+        return load_bson(result, encoders=self.encoders)
 
     def like(self, query: Like):
-        like = Document.dump_bson(query.like)
+        like = query.like.dump_bson()
         query.like = None
         serialized = query.serialize()
         file_id = str(uuid.uuid4())
@@ -227,10 +227,10 @@ class Client:
             },
         ).json
         results = self._get(request_id=request_id, file_id=out['file_id'])
-        return Document.load_bsons(results, encoders=self.encoders)
+        return load_bsons(results, encoders=self.encoders)
 
     def update(self, query: Update):
-        update = Document.dump_bson(query.update)
+        update = query.update.dump_bson()
         file_id = str(uuid.uuid4())
         request_id = str(uuid.uuid4())
         self._put(request_id=request_id, file_id=file_id, data=update)

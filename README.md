@@ -1,22 +1,4 @@
 <p align="center">
-   <a href="https://www.superduperdb.com">
-      <picture>
-         <img src=".github/logos/SuperDuperDB_logo_color.svg?raw=true" width="50%" alt="superduperdb" />
-      </picture>
-   </a>
-</p>
-
-<h2 align="center">Bring AI to your   <a href="https://www.mongodb.com/" target="_blank">MongoDB database!  
-</a>
-</h2>
-
-<p align="center">
-  <img width="120" src=".github/logos/mongodb_logo.svg">  
-  <img width="120" src=".github/logos/mongodb_logo.svg">  
-  <img width="120" src=".github/logos/mongodb_logo.svg">  
-</p>
-
-<p align="center">
 <a href="https://github.com/SuperDuperDB/superduperdb-stealth/actions?query=workflow%3Aci+event%3Apush+branch%3Amain" target="_blank">
     <img src="https://github.com/SuperDuperDB/superduperdb-stealth/workflows/CI/badge.svg?event=push&branch=main" alt="CI">
 </a>
@@ -35,30 +17,29 @@
 </p>
 
 <p align="center">
+   <a href="https://www.superduperdb.com">
+         <img src=".github/logos/SuperDuperDB_logo_color.svg?raw=true" width="50%" alt="superduperdb" />
+   </a>
 </p>
-<p align="center">
-<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Try out SuperDuperDB</strong></a>
-</p>
 
+<h1 align="center">Bring AI to your   <a href="https://www.mongodb.com/" target="_blank">MongoDB</a>!
+</h1>
 
----------------
+<h4>An open-source environment to deploy, train and operate AI models and APIs in MongoDB with Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>. Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
+</h4>
+    <hr>
 
-SuperDuperDB is a Python-based open-source environment to deploy, train and operate AI models and APIs in MongoDB.
-Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
+- <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Exlore the docs!</strong></a><br>
+- <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Check out example use cases!</strong></a><br>
+- <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Get Started!</strong></a><br>
 
-
----------------
-
-<details>
-  <summary>What is SuperDuperDB?</summary>
-  <ul>
-  <li>🔄 an end-to-end live AI deployment which includes a model repository, model training and computation of outputs</li>
-  <li>📦 a feature store where the model outputs are stored alongside the inputs in desired formats and types</li>
-  <li>🔢 a fully functional vector database to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search</li>
-  <li>📈 a model performance monitor enabling model quality and degradation to be monitored as new data is inserted</li>
-  </ul>
-</details>
-
+<hr>
+  <h4>What is SuperDuperDB?</h4>
+- 🔄 an end-to-end live AI deployment which includes a model repository, model training and computation of outputs<br>
+- 📦 a feature store where the model outputs are stored alongside the inputs in desired formats and types<br>
+- 🔢 a fully functional vector database to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search<br>
+📈 a model performance monitor enabling model quality and degradation to be monitored as new data is inserted<br>
+<br><br><br>
 <details>
   <summary>Who is SuperDuperDB for?</summary>
   <ul>

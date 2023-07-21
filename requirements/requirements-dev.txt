@@ -69,6 +69,8 @@ botocore==1.31.5
     #   s3transfer
 botocore-stubs==1.31.5
     # via boto3-stubs
+build==0.10.0
+    # via pip-tools
 certifi==2023.5.7
     # via
     #   httpcore
@@ -86,6 +88,7 @@ click==8.1.6
     #   flask
     #   lightning
     #   lightning-cloud
+    #   pip-tools
     #   ray
     #   typer
     #   uvicorn
@@ -362,6 +365,7 @@ packaging==23.1
     # via
     #   accelerate
     #   black
+    #   build
     #   dask
     #   distributed
     #   huggingface-hub
@@ -396,6 +400,8 @@ pickleshare==0.7.5
     # via ipython
 pillow==10.0.0
     # via -r requirements.in
+pip-tools==7.1.0
+    # via -r requirements-dev.in
 pkgutil-resolve-name==1.3.10
     # via jsonschema
 platformdirs==3.9.1
@@ -450,6 +456,8 @@ pymilvus==2.2.13
     # via -r requirements.in
 pymongo==4.4.1
     # via -r requirements.in
+pyproject-hooks==1.0.0
+    # via build
 pytest==7.4.0
     # via
     #   -r requirements-test.in
@@ -616,8 +624,11 @@ tokenizers==0.13.3
 tomli==2.0.1
     # via
     #   black
+    #   build
     #   coverage
     #   mypy
+    #   pip-tools
+    #   pyproject-hooks
     #   pytest
 toolz==0.12.0
     # via
@@ -734,6 +745,8 @@ werkzeug==2.3.6
     # via
     #   -r requirements.in
     #   flask
+wheel==0.40.0
+    # via pip-tools
 xmod==1.5.0
     # via
     #   dek
@@ -748,4 +761,5 @@ zipp==3.16.2
     #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
+# pip
 # setuptools

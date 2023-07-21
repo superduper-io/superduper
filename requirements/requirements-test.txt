@@ -134,8 +134,6 @@ fsspec[http]==2023.6.0
     #   huggingface-hub
     #   lightning
     #   pytorch-lightning
-greenlet==2.0.2
-    # via sqlalchemy
 grpcio==1.49.1
     # via
     #   pymilvus

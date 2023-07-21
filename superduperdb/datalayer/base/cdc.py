@@ -1,32 +1,13 @@
 import threading
-import time
 import typing as t
-import datetime
 
 from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.misc.logger import logging
 from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.mongodb import cdc
 from superduperdb.datalayer.base import backends
 
 
 DBWatcherType = t.TypeVar('DBWatcherType')
-
-
-class _DatabaseWatcherThreadScheduler(threading.Thread):
-    def __init__(
-        self, watcher: cdc.BaseDatabaseWatcher, stop_event: threading.Event
-    ) -> None:
-        threading.Thread.__init__(self, daemon=False)
-        self.stop_event = stop_event
-        self.watcher = watcher
-        logging.info(f'Database watch service started at {datetime.datetime.now()}')
-
-    def run(self) -> None:
-        cdc_stream = self.watcher.setup_cdc()  # type: ignore
-        while not self.stop_event.is_set():
-            self.watcher.next_cdc(cdc_stream)  # type: ignore
-            time.sleep(0.1)
 
 
 class DatabaseWatcherFactory(t.Generic[DBWatcherType]):
@@ -47,8 +28,6 @@ class DatabaseWatcherFactory(t.Generic[DBWatcherType]):
         if self.watcher == 'mongodb':
             kwargs['stop_event'] = stop_event
             watcher = cdc.MongoDatabaseWatcher(*args, **kwargs)
-            scheduler = _DatabaseWatcherThreadScheduler(watcher, stop_event=stop_event)
-            watcher.attach_scheduler(scheduler)
             return t.cast(DBWatcherType, watcher)
         raise NotImplementedError
 

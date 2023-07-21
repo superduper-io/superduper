@@ -86,7 +86,7 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 
 <p align="center">
   <br>
-  <img width="650" src=".github/logos/SuperDuperDB.png">
+  <img width="650" src="docs/img/overview.png">
 </p>
 
 ## :electric_plug: Quickstart

@@ -1,7 +1,6 @@
 import time
 import uuid
 from contextlib import contextmanager
-from unittest.mock import MagicMock
 
 import pytest
 import torch
@@ -33,7 +32,7 @@ def watcher_and_collection_name(database_with_default_encoders_and_model):
     watcher = DatabaseWatcher(
         db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
     )
-    watcher._cdc_change_handler._QUEUE_TIMEOUT = 0
+    watcher._cdc_change_handler._QUEUE_TIMEOUT = 1
     watcher._cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
     yield watcher, collection_name
@@ -49,10 +48,7 @@ def watcher_without_cdc_handler_and_collection_name(
     watcher = DatabaseWatcher(
         db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
     )
-    watcher._cdc_change_handler = MagicMock()
-
     yield watcher, collection_name
-
     watcher.stop()
 
 
@@ -75,6 +71,44 @@ def test_smoke(watcher_without_cdc_handler_and_collection_name):
     watcher, name = watcher_without_cdc_handler_and_collection_name
     watcher.watch()
     assert isinstance(name, str)
+
+
+def test_task_workflow_on_insert(
+    watcher_and_collection_name, database_with_default_encoders_and_model, fake_inserts
+):
+    """Test that task graph executed on `insert`"""
+
+    watcher, name = watcher_and_collection_name
+    watcher.watch()
+
+    with add_and_cleanup_watchers(
+        database_with_default_encoders_and_model, name
+    ) as database_with_watchers:
+        # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
+        output_id, _ = database_with_watchers.execute(
+            Collection(name=name).insert_many([fake_inserts[0]], refresh=False)
+        )
+
+        def state_check():
+            doc = database_with_watchers.db[name].find_one(
+                {'_id': output_id.inserted_ids[0]}
+            )
+            assert '_outputs' in list(doc.keys())
+
+        retry_state_check(state_check)
+
+        # state_check_2 can't be merged with state_check because the
+        # '_outputs' key needs to be present in 'doc'
+        def state_check_2():
+            doc = database_with_watchers.db[name].find_one(
+                {'_id': output_id.inserted_ids[0]}
+            )
+            state = []
+            state.append('model_linear_a' in doc['_outputs']['x'].keys())
+            state.append('model_linear_a' in doc['_outputs']['z'].keys())
+            assert all(state)
+
+        retry_state_check(state_check_2)
 
 
 def test_single_insert(
@@ -212,41 +246,3 @@ def add_and_cleanup_watchers(database, collection_name):
     finally:
         database.remove('watcher', 'model_linear_a/x', force=True)
         database.remove('watcher', 'model_linear_a/z', force=True)
-
-
-def test_task_workflow_on_insert(
-    watcher_and_collection_name, database_with_default_encoders_and_model, fake_inserts
-):
-    """Test that task graph executed on `insert`"""
-
-    watcher, name = watcher_and_collection_name
-    watcher.watch()
-
-    with add_and_cleanup_watchers(
-        database_with_default_encoders_and_model, name
-    ) as database_with_watchers:
-        # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
-        output_id, _ = database_with_watchers.execute(
-            Collection(name=name).insert_many([fake_inserts[0]], refresh=False)
-        )
-
-        def state_check():
-            doc = database_with_watchers.db[name].find_one(
-                {'_id': output_id.inserted_ids[0]}
-            )
-            assert '_outputs' in doc.keys()
-
-        retry_state_check(state_check)
-
-        # state_check_2 can't be merged with state_check because the
-        # '_outputs' key needs to be present in 'doc'
-        def state_check_2():
-            doc = database_with_watchers.db[name].find_one(
-                {'_id': output_id.inserted_ids[0]}
-            )
-            state = []
-            state.append('model_linear_a' in doc['_outputs']['x'].keys())
-            state.append('model_linear_a' in doc['_outputs']['z'].keys())
-            assert all(state)
-
-        retry_state_check(state_check_2)

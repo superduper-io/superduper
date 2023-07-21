@@ -317,7 +317,7 @@ class CDCHandler(threading.Thread):
             for _ in range(self._QUEUE_BATCH_SIZE):
                 packets.append(cdc_queue.get(block=True, timeout=self._QUEUE_TIMEOUT))
                 if self._stop_event.is_set():
-                    return None
+                    return 0
 
         except queue.Empty:
             if len(packets) == 0:
@@ -330,6 +330,8 @@ class CDCHandler(threading.Thread):
                 packets = self.get_batch_from_queue()
                 if packets:
                     self._handle(packets)
+                if packets == 0:
+                    break
             except Exception as exc:
                 logging.debug(f"Error while handling cdc batches :: reason {exc}")
 
@@ -396,18 +398,23 @@ class CDCKeys(Enum):
 
 class _DatabaseWatcherThreadScheduler(threading.Thread):
     def __init__(
-        self, watcher: BaseDatabaseWatcher, stop_event: threading.Event
+        self,
+        watcher: BaseDatabaseWatcher,
+        stop_event: threading.Event,
+        start_event: threading.Event,
     ) -> None:
-        threading.Thread.__init__(self, daemon=False)
+        threading.Thread.__init__(self, daemon=True)
         self.stop_event = stop_event
+        self.start_event = start_event
         self.watcher = watcher
-        logging.info(f'Database watch service started at {datetime.datetime.now()}')
 
     def run(self) -> None:
         cdc_stream = self.watcher.setup_cdc()  # type: ignore
+        self.start_event.set()
+        logging.info(f'Database watch service started at {datetime.datetime.now()}')
         while not self.stop_event.is_set():
             self.watcher.next_cdc(cdc_stream)  # type: ignore
-            time.sleep(0.1)
+            time.sleep(0.01)
 
 
 class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
@@ -455,6 +462,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         self.resume_token = resume_token.token if resume_token else None
         self._change_pipeline = None
         self._stop_event = stop_event
+        self._startup_event = threading.Event()
         self._scheduler = None
         self.start_handler()
 
@@ -666,11 +674,14 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
                 self.start_handler()
 
             scheduler = _DatabaseWatcherThreadScheduler(
-                self, stop_event=self._stop_event
+                self, stop_event=self._stop_event, start_event=self._startup_event
             )
             self.attach_scheduler(scheduler)
             self.set_change_pipeline(change_pipeline)
             self._scheduler.start()
+
+            while not self._startup_event.is_set():
+                time.sleep(0.1)
         except Exception:
             logging.exception('Watching service stopped!')
             s.CFG.cdc = False
@@ -696,6 +707,9 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         """
         s.CFG.cdc = False
         self._stop_event.set()
+        self._cdc_change_handler.join()
+        if self._scheduler:
+            self._scheduler.join()
 
     def is_available(self):
         """

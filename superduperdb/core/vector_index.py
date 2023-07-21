@@ -133,7 +133,7 @@ class VectorIndex(Component):
             raise ValueError(f'len(models={models}) != len(keys={keys})')
         within_ids = ids or ()
 
-        if db.db.id_field in like.content:
+        if isinstance(like.content, dict) and db.db.id_field in like.content:
             nearest = self.vector_table.find_nearest_from_id(
                 str(like[db.db.id_field]), within_ids=within_ids, limit=n
             )

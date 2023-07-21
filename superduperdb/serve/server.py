@@ -12,7 +12,7 @@ from superduperdb.core.artifact_tree import (
 from superduperdb import CFG
 from superduperdb.misc.serialization import serializers
 
-from superduperdb.core.document import Document
+from superduperdb.core.document import load_bson, load_bsons
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.build import build_datalayer
 
@@ -26,7 +26,7 @@ def make_endpoints(app, db):
         query = Serializable.deserialize(d['query'])
         output = list(db.execute(query))  # TODO - support cursor with flask streaming
         file_id = str(uuid.uuid4())
-        cache[d['request_id']][file_id] = Document.dump_bson(output)
+        cache[d['request_id']][file_id] = output.dump_bson()
         return jsonify({'file_id': file_id})
 
     @app.route('/select_one', methods=['GET'])
@@ -35,7 +35,7 @@ def make_endpoints(app, db):
         query = Serializable.deserialize(d['query'])
         output = db.execute(query)
         file_id = str(uuid.uuid4())
-        cache[d['request_id']][file_id] = Document.dump_bson(output)
+        cache[d['request_id']][file_id] = output.dump_bson()
         return jsonify({'file_id': file_id})
 
     @app.route('/insert', methods=['POST'])
@@ -43,7 +43,7 @@ def make_endpoints(app, db):
         d = request.get_json()
         binary = cache[d['request_id']][d['documents']]
         del cache[d['request_id']]
-        documents = Document.load_bsons(binary, encoders=db.encoders)
+        documents = load_bsons(binary, encoders=db.encoders)
         query = Serializable.deserialize(d['query'])
         query.documents = documents
         db.execute(query)
@@ -54,7 +54,7 @@ def make_endpoints(app, db):
         d = request.get_json()
         binary = cache[d['request_id']][d['update']]
         del cache[d['request_id']]
-        update = Document.load_bson(binary, encoders=db.encoders)
+        update = load_bson(binary, encoders=db.encoders)
         query = Serializable.deserialize(d['query'])
         query.update = update
         db.execute(query)

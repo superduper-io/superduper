@@ -1,6 +1,5 @@
 import typing as t
 import typing_extensions as te
-import uuid
 
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.misc.serialization import Info, serializers
@@ -113,19 +112,6 @@ def load_artifact(
 
     cache[file_id] = a.artifact
     return a
-
-
-class InMemoryArtifacts:
-    def __init__(self):
-        self.cache = {}
-
-    def create_artifact(self, bytes):
-        file_id = str(uuid.uuid4())
-        self.cache[file_id] = bytes
-        return file_id, ''
-
-    def delete_artifact(self, file_id):
-        del self.cache[file_id]
 
 
 class ArtifactSavingError(Exception):

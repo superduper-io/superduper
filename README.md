@@ -37,30 +37,35 @@
 
 
 <h4>SuperDuperDB transforms our MongoDB into:</h4>
+
   
-  - <ins>**an end-to-end live AI deployment**</ins> which includes a model repository, model training and computation of outputs 🔄
-  - <ins>**a feature store**</ins> where the model outputs are stored alongside the inputs in desired formats and types 📦
-  - <ins>**a fully functional vector database**</ins> to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search 🔢
-  - <ins>**a model performance monitor**</ins> enabling model quality and degradation to be monitored as new data is inserted 📈 *(coming soon)*
+  - **An end-to-end live AI deployment** which includes <ins>a model repository</ins>, <ins>model training</ins> and <ins>computation of outputs</ins> 🔄 
+  - **A feature store** where the model outputs are stored alongside the inputs in desired formats and types 📦
+  - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search 🔢
+  - **A model performance monitor** enabling model quality and degradation to be monitored as new data is inserted 📈 *(coming soon)*
 
 <br>
 <br>
 <br>
-
 <h4>SuperDuperDB transforms our MongoDB into:</h4>
+
   
-  - **an end-to-end live AI deployment** which includes <ins>a model repository</ins>, <ins>model training</ins> and <ins>computation of outputs</ins> 🔄 
-  - **a feature store** where the model outputs are stored alongside the inputs in desired formats and types 📦
-  - **a fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search 🔢
-  - **a model performance monitor** enabling model quality and degradation to be monitored as new data is inserted 📈 *(coming soon)*
+  - **An end-to-end live AI deployment** which includes:
+      - <ins>a model repository</ins> 🛒📦
+      - <ins>model training</ins>🏋
+      - <ins>computation of outputs</ins> 🔄
+  - **A feature store** where the model outputs are stored alongside the inputs in desired formats and types 📦
+  - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search 🔢
+  - **A model performance monitor** enabling model quality and degradation to be monitored as new data is inserted 📈 *(coming soon)*
 
 <br>
 <br>
 <br>
+<h4>Who is SuperDuperDB for?</h4>
 
-  <li>👨‍💻 <strong>Python developers</strong> using MongoDB who want to apply AI with simple commands.</li>
-  <li>🧑‍🔬 <strong>Data scientists & ML engineers</strong> who want to develop AI models using their favourite tools, with minimum infrastructural overhead.</li>
-  <li>👷 <strong>Infrastructure engineers</strong> who want a single scalable setup that supports both in-house and cloud deployment.</li>
+  - 👨‍💻 <strong>Python developers</strong> using MongoDB who want to apply AI with simple commands.</li>
+  - 🧑‍🔬 <strong>Data scientists & ML engineers</strong> who want to develop AI models using their favourite tools, with minimum infrastructural overhead.</li>
+  - 👷 <strong>Infrastructure engineers</strong> who want a single scalable setup that supports both in-house and cloud deployment.</li>
   </ul>
 </details>
 

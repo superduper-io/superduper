@@ -1,4 +1,4 @@
-import pickle
+import time
 import threading
 import json
 import queue
@@ -7,12 +7,14 @@ from collections import Counter
 from enum import Enum
 import typing as t
 from abc import ABC, abstractmethod
+import dataclasses as dc
 
 from pydantic import BaseModel
 from bson.objectid import ObjectId as BsonObjectId
 from pymongo.change_stream import CollectionChangeStream
 
 import superduperdb as s
+from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 from superduperdb.core.serializable import Serializable
 from superduperdb.misc.logger import logging
 from superduperdb.datalayer.mongodb import query
@@ -22,7 +24,10 @@ from superduperdb.core.job import FunctionJob
 from superduperdb.misc.task_queue import cdc_queue
 from superduperdb.core.vector_index import VectorIndex
 
-MongoChangePipelines: t.Dict[str, t.Dict] = {'generic': {}}
+MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
+
+
+TokenType = t.Dict[str, str]
 
 
 class DBEvent(Enum):
@@ -74,25 +79,26 @@ class BatchPacket(ChangePacket):
     pass
 
 
+@dc.dataclass
 class MongoChangePipeline:
     """`MongoChangePipeline` is a class to represent watch pipeline
     in mongodb watch api.
     """
 
+    matching_operations: t.List[str] = dc.field(default_factory=list)
+
     def validate(self):
         raise NotImplementedError
 
-    def build_matching(self, matching_operations: t.List = []) -> t.Dict:
+    def build_matching(self) -> t.Sequence[t.Dict]:
         """A helper fxn to build a watch pipeline for mongo watch api.
 
         :param matching_operations: A list of operations to watch.
-        :type matching_operations: t.List
-        :rtype: t.Dict
         """
-        if bad := [op for op in matching_operations if not DBEvent.has_value(op)]:
+        if bad := [op for op in self.matching_operations if not DBEvent.has_value(op)]:
             raise ValueError(f'Unknown operations: {bad}')
 
-        return {'$match': {'operationType': {'$in': [*matching_operations]}}}
+        return [{'$match': {'operationType': {'$in': [*self.matching_operations]}}}]
 
 
 class ResumeToken:
@@ -100,42 +106,42 @@ class ResumeToken:
     A class to represent resume tokens for `MongoDatabaseWatcher`.
     """
 
-    def __init__(self, token: str = ''):
+    def __init__(self, token: TokenType) -> None:
         """__init__.
 
         :param token: a resume toke use to resume change stream in mongo
-        :type token: str
+        :type token: `TokenType`
         """
         self._token = token
 
     @property
-    def token(self) -> str:
+    def token(self) -> TokenType:
         return self._token
 
-    def get_latest(self):
-        with open('.cdc.tokens', 'rb') as fp:
-            token = pickle.load(fp)
-            return ResumeToken(token[0])
 
-
-class PickledTokens:
+class CachedTokens:
     token_path = '.cdc.tokens'
+    seperate = '\n'
 
     def __init__(self):
         self._current_tokens = []
 
-    def save(self, tokens: t.List[str]) -> None:
-        with open(PickledTokens.token_path, 'wb') as fp:
-            if tokens:
-                pickle.dump(tokens, fp)
-            else:
-                pickle.dump(self._current_tokens, fp)
+    def append(self, token: TokenType) -> None:
+        with open(CachedTokens.token_path, 'ab') as fp:
+            stoken = json.dumps(token)
+            stoken = stoken + self.seperate
+            stoken = stoken.encode('utf-8')
+            fp.write(stoken)  # type: ignore [arg-type]
 
-    def load(self) -> t.List[str]:
-        with open(PickledTokens.token_path, 'rb') as fp:
-            tokens = pickle.load(fp)
+    def load(self) -> t.List[ResumeToken]:
+        with open(CachedTokens.token_path, 'rb') as fp:
+            jtokens = fp.read()
+            tokens = jtokens.decode('utf-8')
+            tokens = tokens.split(self.seperate)[:-1]
+            tokens = list(map(lambda token: ResumeToken(json.loads(token)), tokens))
         self._current_tokens = tokens
-        return tokens
+        tokens = t.cast(t.List[ResumeToken], tokens)
+        return tokens  # type: ignore [return-value]
 
 
 class BaseDatabaseWatcher(ABC):
@@ -153,10 +159,10 @@ class BaseDatabaseWatcher(ABC):
 
 
 def copy_vectors(
-    db,
     indexing_watcher_identifier: str,
     cdc_query: Serializable,
     ids: t.List[str],
+    db=None,
 ):
     """
     A helper fxn to copy vectors of a `indexing_watcher` component/model of
@@ -171,8 +177,17 @@ def copy_vectors(
         docs = db.select(select)
         docs = [doc.unpack() for doc in docs]
         model, key = indexing_watcher_identifier.split('/')  # type: ignore
-        vectors = [{'vector': doc['_outputs'][key][model] for doc in docs}]
-        table = db.vector_database.get_table(indexing_watcher_identifier)
+        vectors = [
+            {'vector': doc['_outputs'][key][model], 'id': str(doc['_id'])}
+            for doc in docs
+        ]
+        dimensions = len(vectors[0]['vector'])
+        config = VectorCollectionConfig(
+            id=indexing_watcher_identifier, dimensions=dimensions
+        )
+        table = db.vector_database.get_table(config, create=True)
+
+        vectors = [VectorCollectionItem(**vector) for vector in vectors]
         table.add(vectors, upsert=True)
     except Exception:
         logging.exception(
@@ -253,7 +268,7 @@ class CDCHandler(threading.Thread):
                 f'copy_vectors({indexing_watcher_identifier})',
                 FunctionJob(
                     callable=copy_vectors,
-                    args=[indexing_watcher_identifier, ids, cdc_query.serialize()],
+                    args=[indexing_watcher_identifier, cdc_query.serialize(), ids],
                     kwargs={},
                 ),
             )
@@ -379,6 +394,22 @@ class CDCKeys(Enum):
     document_data_key = 'fullDocument'
 
 
+class _DatabaseWatcherThreadScheduler(threading.Thread):
+    def __init__(
+        self, watcher: BaseDatabaseWatcher, stop_event: threading.Event
+    ) -> None:
+        threading.Thread.__init__(self, daemon=False)
+        self.stop_event = stop_event
+        self.watcher = watcher
+        logging.info(f'Database watch service started at {datetime.datetime.now()}')
+
+    def run(self) -> None:
+        cdc_stream = self.watcher.setup_cdc()  # type: ignore
+        while not self.stop_event.is_set():
+            self.watcher.next_cdc(cdc_stream)  # type: ignore
+            time.sleep(0.1)
+
+
 class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
     """
     It is a class which helps capture data from mongodb database and handle it
@@ -418,18 +449,24 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         self.db = db
         self._on_component = on
         self._identifier = self._build_identifier([identifier, on.name])
-        self.tokens = PickledTokens()
+        self.tokens = CachedTokens()
         self._change_counters = Counter(inserts=0, updates=0)
 
         self.resume_token = resume_token.token if resume_token else None
-        self._cdc_change_handler = CDCHandler(db=db, stop_event=stop_event)
+        self._change_pipeline = None
         self._stop_event = stop_event
+        self._scheduler = None
+        self.start_handler()
 
         super().__init__()
 
     @property
     def identity(self) -> str:
         return self._identifier
+
+    def start_handler(self):
+        self._cdc_change_handler = CDCHandler(db=self.db, stop_event=self._stop_event)
+        self._cdc_change_handler.start()
 
     @classmethod
     def _build_identifier(cls, identifiers) -> str:
@@ -442,18 +479,14 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     @staticmethod
     def _get_stream_pipeline(
-        change: t.Optional[t.Union[str, t.Dict]]
-    ) -> t.Optional[t.Dict]:
+        change: str,
+    ) -> t.Optional[t.Sequence[t.Any]]:
         """_get_stream_pipeline.
 
         :param change: change can be a prebuilt watch pipeline like
         'generic' or user Defined watch pipeline.
-        :type change: t.Optional[t.Union[str, t.Dict]]
-        :rtype: t.Optional[t.Dict]
         """
-        if not change:
-            return MongoChangePipelines.get('generic')
-        return None
+        return MongoChangePipelines.get(change)
 
     def _get_reference_id(self, document: t.Dict) -> t.Optional[str]:
         """_get_reference_id.
@@ -500,8 +533,8 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         :type change: t.Dict
         :rtype: None
         """
-        token = change[self.DEFAULT_ID]['_data']
-        self.tokens.save([token])
+        token = change[self.DEFAULT_ID]
+        self.tokens.append(token)
 
     def check_if_taskgraph_change(self, change: t.Dict) -> bool:
         """
@@ -516,18 +549,25 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
             )
         return False
 
-    def setup_cdc(
-        self, change_pipeline: t.Optional[t.Union[str, t.Dict]] = None
-    ) -> CollectionChangeStream:
+    def setup_cdc(self) -> CollectionChangeStream:
         """
         A method to setup cdc change stream from user provided
-        optional `change_pipeline`.
         """
         try:
-            pipeline = self._get_stream_pipeline(change_pipeline)
+            if isinstance(self._change_pipeline, str):
+                pipeline = self._get_stream_pipeline(self._change_pipeline)
 
+            elif isinstance(self._change_pipeline, list):
+                pipeline = self._change_pipeline
+                if not pipeline:
+                    pipeline = None
+            else:
+                raise TypeError(
+                    'Change pipeline can be either a string or a dictionary, '
+                    f'provided {type(self._change_pipeline)}'
+                )
             stream = self._on_component.change_stream(
-                pipeline=pipeline, resume_token=self.resume_token
+                pipeline=pipeline, resume_after=self.resume_token
             )
 
             stream_iterator = stream(self.db)
@@ -578,22 +618,76 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         print(json.dumps(info, indent=2))
         return info
 
-    def watch(self, change_pipeline: t.Optional[t.Union[str, t.Dict]] = None) -> None:
+    def set_resume_token(self, token: TokenType) -> None:
+        """
+        A method to set the resume token for the watcher.
+        """
+        self.resume_token = token
+
+    def set_change_pipeline(
+        self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]]
+    ) -> None:
+        """
+        A method to set the change pipeline for the watcher.
+        """
+        if change_pipeline is None:
+            self._change_pipeline = MongoChangePipelines.get('generic')
+        else:
+            self._change_pipeline = change_pipeline
+
+    def resume(self, token: ResumeToken) -> None:
+        """
+        A method to resume the watcher from a given token.
+        """
+        self.set_resume_token(token.token)
+        self.watch()
+
+    def watch(
+        self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]] = None
+    ) -> None:
         """Primary fxn to initiate watching of a database on the collection
         with defined `change_pipeline` by the user.
 
         :param change_pipeline: A mongo watch pipeline defined by the user
         for more fine grained watching.
-        :rtype: None
         """
         try:
             s.CFG.cdc = True
-            self._cdc_change_handler.start()
+            self._stop_event.clear()
+            if self._scheduler:
+                if self._scheduler.is_alive():
+                    raise RuntimeError(
+                        'CDC Watcher thread is already running!,/'
+                        'Please stop the watcher first.'
+                    )
+
+            if not self._cdc_change_handler.is_alive():
+                del self._cdc_change_handler
+                self.start_handler()
+
+            scheduler = _DatabaseWatcherThreadScheduler(
+                self, stop_event=self._stop_event
+            )
+            self.attach_scheduler(scheduler)
+            self.set_change_pipeline(change_pipeline)
             self._scheduler.start()
         except Exception:
             logging.exception('Watching service stopped!')
             s.CFG.cdc = False
+            self.stop()
             raise
+
+    def last_resume_token(self) -> ResumeToken:
+        """
+        A method to get the last resume token from the change stream.
+        """
+        return self.tokens.load()[0]
+
+    def resume_tokens(self) -> t.List[ResumeToken]:
+        """
+        A method to get the resume tokens from the change stream.
+        """
+        return self.tokens.load()
 
     def stop(self) -> None:
         """

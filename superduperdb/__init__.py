@@ -3,8 +3,8 @@ from .misc.jsonable import JSONable
 
 __all__ = 'CFG', 'ICON', 'JSONable', 'ROOT', 'config', 'log', 'logging', 'superduper'
 
-CFG = configs.build_config()
 ICON = '🔮'
+CFG = configs.CFG
 ROOT = configs.ROOT
 
 from .misc import logger  # noqa: E402

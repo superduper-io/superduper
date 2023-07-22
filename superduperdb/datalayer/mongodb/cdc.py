@@ -53,7 +53,7 @@ class ObjectId(BsonObjectId):
         return str(v)
 
 
-class BasePacket(BaseModel):
+class Packet(BaseModel):
     """
     A base packet to represent message in task queue.
     """
@@ -61,21 +61,7 @@ class BasePacket(BaseModel):
     event_type: str = DBEvent.insert.value
     ids: t.Sequence[t.Union[ObjectId, str]]
 
-
-class ChangePacket(BasePacket):
-    """
-    A single packet representation of message in task queue.
-    """
-
     query: Serializable
-
-
-class BatchPacket(ChangePacket):
-    """
-    A batch of packets to be transfered to task queue.
-    """
-
-    pass
 
 
 @dc.dataclass
@@ -251,34 +237,34 @@ class CDCHandler(threading.Thread):
             )
         return task_graph
 
-    def on_create(self, packet: ChangePacket) -> None:
+    def on_create(self, packet: Packet) -> None:
         ids = packet.ids
         cdc_query = packet.query
         self.submit_task_workflow(cdc_query=cdc_query, ids=ids)
 
-    def on_update(self, packet: ChangePacket) -> None:
+    def on_update(self, packet: Packet) -> None:
         # TODO: for now we treat updates as inserts.
         self.on_create(packet)
 
-    def _handle(self, packet: ChangePacket) -> None:
+    def _handle(self, packet: Packet) -> None:
         if packet.event_type == DBEvent.insert.value:
             self.on_create(packet)
         elif packet.event_type == DBEvent.update.value:
             self.on_update(packet)
 
     @staticmethod
-    def _collate_packets(packets: t.Sequence[ChangePacket]) -> BatchPacket:
+    def _collate_packets(packets: t.Sequence[Packet]) -> Packet:
         """
         A helper function to coallate batch of packets into one
-        `BatchPacket`.
+        `Packet`.
         """
 
         ids = [packet.ids[0] for packet in packets]
         query = packets[0].query
 
-        # TODO: cluster BatchPacket for each event.
+        # TODO: cluster Packet for each event.
         event_type = packets[0].event_type
-        return BatchPacket(ids=ids, query=query, event_type=event_type)
+        return Packet(ids=ids, query=query, event_type=event_type)
 
     def get_batch_from_queue(self):
         """
@@ -335,7 +321,7 @@ class MongoEventMixin:
         document = change[CDCKeys.document_data_key.value]
         ids = [document[self.DEFAULT_ID]]
         cdc_query = collection.find()
-        packet = ChangePacket(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
+        packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
     def on_update(self, change: t.Dict, db: 'Datalayer'):

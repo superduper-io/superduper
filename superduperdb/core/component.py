@@ -5,6 +5,8 @@ from superduperdb.core.job import ComponentJob
 from superduperdb.core.serializable import Serializable
 import dataclasses as dc
 
+Datalayer = 'superduperdb.datalayer.base.datalayer.Datalayer'
+
 
 @dc.dataclass
 class Component(Serializable):
@@ -51,19 +53,17 @@ class Component(Serializable):
             },
         )
 
-    # ruff: noqa: E501
     def _validate(
         self,
-        db: 'superduperdb.datalayer.base.database.Database',  # type: ignore[name-defined]
+        db: Datalayer,  # type: ignore[name-defined, valid-type]
         validation_set: t.Union[str, 'Dataset'],  # type: ignore[name-defined]
         metrics: t.List[t.Union['Metric', str]],  # type: ignore[name-defined]
     ):
         raise NotImplementedError
 
-    # ruff: noqa: E501
     def validate(
         self,
-        db: 'superduperdb.datalayer.base.database.Database',  # type: ignore[name-defined]
+        db: Datalayer,  # type: ignore[name-defined, valid-type]
         validation_set: t.Union[str, 'Dataset'],  # type: ignore[name-defined]
         metrics: t.List[t.Union['Metric', str]],  # type: ignore[name-defined]
         distributed: bool = False,

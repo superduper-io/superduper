@@ -24,9 +24,8 @@ from superduperdb.core.job import FunctionJob
 from superduperdb.misc.task_queue import cdc_queue
 from superduperdb.core.vector_index import VectorIndex
 
+
 MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
-
-
 TokenType = t.Dict[str, str]
 
 
@@ -121,7 +120,7 @@ class ResumeToken:
 
 class CachedTokens:
     token_path = '.cdc.tokens'
-    seperate = '\n'
+    separate = '\n'
 
     def __init__(self):
         self._current_tokens = []
@@ -129,7 +128,7 @@ class CachedTokens:
     def append(self, token: TokenType) -> None:
         with open(CachedTokens.token_path, 'ab') as fp:
             stoken = json.dumps(token)
-            stoken = stoken + self.seperate
+            stoken = stoken + self.separate
             stoken = stoken.encode('utf-8')
             fp.write(stoken)  # type: ignore [arg-type]
 
@@ -137,7 +136,7 @@ class CachedTokens:
         with open(CachedTokens.token_path, 'rb') as fp:
             jtokens = fp.read()
             tokens = jtokens.decode('utf-8')
-            tokens = tokens.split(self.seperate)[:-1]
+            tokens = tokens.split(self.separate)[:-1]
             tokens = list(map(lambda token: ResumeToken(json.loads(token)), tokens))
         self._current_tokens = tokens
         tokens = t.cast(t.Sequence[ResumeToken], tokens)
@@ -176,7 +175,7 @@ def copy_vectors(
         select = query.select_using_ids(ids)
         docs = db.select(select)
         docs = [doc.unpack() for doc in docs]
-        model, key = indexing_watcher_identifier.split('/')  # type: ignore
+        model, key = indexing_watcher_identifier.split('/')
         vectors = [
             {'vector': doc['_outputs'][key][model], 'id': str(doc['_id'])}
             for doc in docs
@@ -409,11 +408,11 @@ class _DatabaseWatcherThreadScheduler(threading.Thread):
         self.watcher = watcher
 
     def run(self) -> None:
-        cdc_stream = self.watcher.setup_cdc()  # type: ignore
+        cdc_stream = self.watcher.setup_cdc()
         self.start_event.set()
         logging.info(f'Database watch service started at {datetime.datetime.now()}')
         while not self.stop_event.is_set():
-            self.watcher.next_cdc(cdc_stream)  # type: ignore
+            self.watcher.next_cdc(cdc_stream)
             time.sleep(0.01)
 
 

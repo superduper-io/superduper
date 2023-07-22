@@ -67,8 +67,9 @@ def callable_job(
 
     db = build_datalayer(cfg)
     db.metadata.update_job(job_id, 'status', 'running')
+    output = None
     try:
-        handle_function_output(
+        output = handle_function_output(
             function_to_call,
             db=db,
             job_id=job_id,
@@ -80,4 +81,6 @@ def callable_job(
         db.metadata.update_job(job_id, 'status', 'failed')
         db.metadata.update_job(job_id, 'msg', tb)
         raise e
-    db.metadata.update_job(job_id, 'status', 'success')
+    else:
+        db.metadata.update_job(job_id, 'status', 'success')
+    return output

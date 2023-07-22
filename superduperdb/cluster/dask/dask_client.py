@@ -18,6 +18,7 @@ class DaskClient:
         deserializers: t.Optional[t.Sequence[t.Callable]] = None,
         local: bool = False,
         envs: t.Dict[str, t.Any] = {},
+        **kwargs,
     ):
         """
         Initialize the DaskClient.
@@ -30,13 +31,14 @@ class DaskClient:
         self.futures_collection: t.Dict[str, distributed.Future] = {}
         if local:
             cluster = distributed.LocalCluster(env=envs)
-            self.client = distributed.Client(cluster)
+            self.client = distributed.Client(cluster, **kwargs)
         else:
             self.client = distributed.Client(
                 address=address,
                 serializers=serializers,
                 deserializers=deserializers,
                 env=envs,
+                **kwargs,
             )
 
     def submit(self, function: t.Callable, **kwargs) -> distributed.Future:
@@ -92,7 +94,9 @@ class DaskClient:
         return self.client.gather(future)
 
 
-def dask_client(cfg, local: bool = False, envs: t.Dict[str, t.Any] = {}) -> DaskClient:
+def dask_client(
+    cfg, local: bool = False, envs: t.Dict[str, t.Any] = {}, **kwargs
+) -> DaskClient:
     """
     Creates a DaskClient instance.
 
@@ -106,4 +110,5 @@ def dask_client(cfg, local: bool = False, envs: t.Dict[str, t.Any] = {}) -> Dask
         deserializers=cfg.deserializers,
         local=local,
         envs=envs,
+        **kwargs,
     )

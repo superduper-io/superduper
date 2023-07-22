@@ -451,10 +451,11 @@ class Datalayer:
                 args=[],
             ),
         )
-        if not self.show('watcher'):
+        watchers = self.show('watcher')
+        if not watchers:
             return G
 
-        for identifier in self.show('watcher'):
+        for identifier in watchers:
             info = self.metadata.get_component('watcher', identifier)
             query = info['dict']['select']
             model, key = identifier.split('/')
@@ -473,7 +474,7 @@ class Datalayer:
                 ),
             )
 
-        for identifier in self.show('watcher'):
+        for identifier in watchers:
             model, key = identifier.split('/')
             G.add_edge(
                 f'{download_content.__name__}()',

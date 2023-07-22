@@ -39,9 +39,5 @@ class MongoDataBackend(BaseDataBackend):
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
         doc = {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}
 
-        # doc = Document(doc)
-        # BROKEN: The above looks like it should be correct, and fixes the mypy error,
-        # but not passing in the dict breaks two unit tests!
-
-        update = select.update(doc)  # type: ignore
+        update = select.update(doc)
         return self.db[select.collection].update_many(update.filter, update.update)

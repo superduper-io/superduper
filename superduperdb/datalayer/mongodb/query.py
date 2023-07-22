@@ -165,8 +165,8 @@ class PreLike(Like):
 class Find(Select):
     collection: t.Optional[Collection] = None
     like_parent: t.Optional[PreLike] = None
-    args: t.Optional[t.List] = dc.field(default_factory=lambda: [])
-    kwargs: t.Optional[t.Dict] = dc.field(default_factory=lambda: {})
+    args: t.List = dc.field(default_factory=lambda: [])
+    kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
     type_id: t.Literal['mongodb.Find'] = 'mongodb.Find'
 
@@ -196,11 +196,11 @@ class Find(Select):
     def add_fold(self, fold: str) -> 'Find':
         args = []
         try:
-            args.append(self.args[0])  # type: ignore[index, var-annotated]
+            args.append(self.args[0])
         except IndexError:
             args.append({})
-        args = args + self.args[1:]  # type: ignore[index]
-        args[0]['_fold'] = fold  # type: ignore[index]
+        args = args + self.args[1:]
+        args[0]['_fold'] = fold
         return Find(
             like_parent=self.like_parent,
             collection=self.collection,
@@ -224,11 +224,7 @@ class Find(Select):
         )
 
     def select_using_ids(self, ids: t.List[str]) -> t.Any:
-        args = [{}, {}]  # type: ignore[var-annotated]
-        if self.args and len(self.args) >= 1:  # type: ignore[var-annotated]
-            args[0] = self.args[0]
-        if self.args and len(self.args) >= 2:
-            args[1] = self.args[1]
+        args = (self.args + [{}, {}])[:2]
         args[0] = {'_id': {'$in': [ObjectId(_id) for _id in ids]}, **args[0]}
 
         return Find(
@@ -242,9 +238,9 @@ class Find(Select):
         return Featurize(parent=self, features=features)
 
     def get_ids(self, db):
-        args = [{}, {}]  # type: ignore[var-annotated]
-        args[: len(self.args)] = self.args  # type: ignore[var-annotated,arg-type,assignment]
-        args[1] = {'_id': 1}  # type: ignore[arg-type,assigment]
+        args = [{}, {}]
+        args[: len(self.args)] = self.args
+        args[1] = {'_id': 1}
         cursor = Find(
             collection=self.collection,
             like_parent=self.like_parent,

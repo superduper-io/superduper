@@ -16,7 +16,6 @@ extensions =[
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
-    'sphinx_rtd_theme',
     'nbsphinx',
     'myst_parser',
     "sphinx_copybutton",

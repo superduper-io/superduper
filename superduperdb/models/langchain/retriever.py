@@ -35,6 +35,8 @@ class LangchainRetriever(BaseRetriever):
         self.db = db
 
     def get_relevant_documents(self, query: str) -> t.List[Document]:  # type: ignore
+        # NOTE: the above signature is correct.
+        # mypy somehow gets the signature of the method this is overriding wrong
         document_to_search = document.Document(content={self.key: query})
         ids, scores = self.vector_index.get_nearest(
             document_to_search,
@@ -46,7 +48,7 @@ class LangchainRetriever(BaseRetriever):
         out = [
             Document(
                 page_content=x[self.key],
-                metadata={'source': x[self.db.databackend.id_field]},  # type: ignore
+                metadata={'source': x[self.db.databackend.id_field]},
             )
             for x in out
         ]

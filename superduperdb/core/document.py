@@ -25,11 +25,6 @@ class Document:
         """Make a copy of the content with all the Encodables encoded"""
         return _encode(self.content)
 
-    @property
-    def id(self) -> t.Any:
-        # BROKEN: this is never called
-        return self.content[self._DEFAULT_ID_KEY]
-
     @staticmethod
     def decode(r: t.Dict, encoders: t.Dict) -> t.Any:
         if isinstance(r, Document):

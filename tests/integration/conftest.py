@@ -35,6 +35,7 @@ as much as possible. This will make it easier to understand the test suite.
 
 # Set the seeds
 random.seed(42)
+torch.manual_seed(42)
 np.random.seed(42)
 
 

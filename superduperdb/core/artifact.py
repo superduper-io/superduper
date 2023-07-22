@@ -51,7 +51,6 @@ class Artifact:
 
     def __hash__(self):
         if isinstance(self.artifact, list):
-            # BROKEN: we should hash the whole artifact and cache it
             return hash(str(self.artifact[:100]))
         if isinstance(self.artifact, dict):
             return hash(str(self.artifact))
@@ -90,30 +89,6 @@ class ArtifactDesc(te.TypedDict):
 
     #: The name of the serializer used for the artifact store
     serializer: str
-
-
-# BROKEN: this no longer appears to be called anywhere
-def load_artifact(
-    desc: ArtifactDesc,
-    artifact_store: ArtifactStore,
-    cache: t.Dict[str, Artifact],
-) -> Artifact:
-    """Load an Artifact from the store
-
-    :param desc:  Describe the artifact to be loaded
-    :param artifact_store:  The store holding the artifact
-    :param cache:  A cache dictionary mapping `file_id` to artifacts
-
-    """
-    file_id, info, serializer = desc['file_id'], desc['info'], desc['serializer']
-    if file_id in cache:
-        return cache[file_id]
-
-    artifact = artifact_store.load_artifact(file_id, serializer, info)
-    a = Artifact(artifact=artifact, info=info, serializer=serializer)
-
-    cache[file_id] = a.artifact
-    return a
 
 
 class ArtifactSavingError(Exception):

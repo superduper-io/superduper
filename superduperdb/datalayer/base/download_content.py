@@ -1,4 +1,3 @@
-# type: ignore
 import typing as t
 
 from superduperdb.core.document import Document
@@ -20,7 +19,7 @@ def download_content(
     headers: t.Optional[t.Dict] = None,
     download_update: t.Optional[t.Callable] = None,
     **kwargs,
-):
+) -> t.Optional[t.List[Document]]:
     """
     Download content contained in uploaded data. Items to be downloaded are identifier
     via the subdocuments in the form exemplified below. By default items are downloaded
@@ -74,16 +73,11 @@ def download_content(
         except TypeError:
             timeout = None
 
-    if download_update is None:
-
-        def download_update(key, id, bytes):
-            return query.download_update(db=db, key=key, id=id, bytes=bytes)
-
     downloader = Downloader(
         uris=uris,
         ids=place_ids,
         keys=keys,
-        update_one=download_update,
+        update_one=download_update or _download_update,
         n_workers=n_download_workers,
         timeout=timeout,
         headers=headers,
@@ -97,3 +91,7 @@ def download_content(
             documents[id_], key, downloader.results[id_]
         )
     return documents
+
+
+def _download_update(key, id, bytes):
+    return query.download_update(db=db, key=key, id=id, bytes=bytes)

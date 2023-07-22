@@ -55,3 +55,6 @@ class ConfigSettings:
 def build_config():
     CONFIG = ConfigSettings(config.Config, _ALL_CONFIGS, PREFIX)
     return CONFIG.config
+
+
+CFG = build_config()

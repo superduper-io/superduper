@@ -49,9 +49,8 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 **What is SuperDuperDB?**
 
   - 🔄 an **end-to-end live AI deployment** which includes a model repository, model training and computation of outputs.
-  - 📦 a feature store where the model outputs are stored alongside the inputs in desired formats and types.
-  - 🔢 a fully functional vector database to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search.
-  - 📈 a model performance monitor enabling model quality and degradation to be monitored as new data is inserted.
+  - 📦 a **model output store** where the model outputs are stored alongside the inputs in desired formats and types.
+  - 🔢 a **fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search.
 
 **Who is SuperDuperDB for?**
 
@@ -61,16 +60,17 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 
 **What can you do with SuperDuperDB?**
 
-  - 🚀 Deploy all your AI models to automatically compute outputs in the database in a single environment with simple Python commands.
-  - 🏋️ Train models on the data in your database without additional ingestion and pre-processing simply by querying.
-  - 🌐 Integrate APIs such as OpenAI to work together with other models on your data effortlessly.
+  - 🚀 **Deploy** all your AI models to automatically compute outputs in the database in a single environment with simple Python commands.
+  - 🏋️ **Train** models on the data in your database without additional ingestion and pre-processing simply by querying.
+  - 🌐 **Integrate** APIs such as OpenAI to work together with other models on your data effortlessly.
 
 **Why choose SuperDuperDB?**
 
-  - 🪠 Avoid duplicate data, pipelines and infrastructure with a single scalable deployment.
-  - 📅 Deployment automatically kept up-to-date as new data is handled automatically and immediately.
-  - 🤸 Single developer setup for lightweight use-cases.
-
+  - 🪠 **Avoid** duplicate data, pipelines and infrastructure with a single scalable deployment.
+  - 📅 Deployment automatically kept **up-to-date** as new data is handled automatically and immediately.
+  - 🤸 Single developer setup for **lightweight** use-cases.
+  - 📈 **Scalable** setup for enterprise use-cases.
+ 
 <p align="center">
   <br>
   <img width="650" src="docs/img/overview.png">

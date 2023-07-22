@@ -100,24 +100,6 @@ class MongoChangePipeline:
         return [{'$match': {'operationType': {'$in': [*self.matching_operations]}}}]
 
 
-class ResumeToken:
-    """
-    A class to represent resume tokens for `MongoDatabaseWatcher`.
-    """
-
-    def __init__(self, token: TokenType) -> None:
-        """__init__.
-
-        :param token: a resume toke use to resume change stream in mongo
-        :type token: `TokenType`
-        """
-        self._token = token
-
-    @property
-    def token(self) -> TokenType:
-        return self._token
-
-
 class CachedTokens:
     token_path = '.cdc.tokens'
     separate = '\n'
@@ -132,14 +114,14 @@ class CachedTokens:
             stoken = stoken.encode('utf-8')
             fp.write(stoken)  # type: ignore [arg-type]
 
-    def load(self) -> t.Sequence[ResumeToken]:
+    def load(self) -> t.Sequence[TokenType]:
         with open(CachedTokens.token_path, 'rb') as fp:
             jtokens = fp.read()
             tokens = jtokens.decode('utf-8')
             tokens = tokens.split(self.separate)[:-1]
-            tokens = list(map(lambda token: ResumeToken(json.loads(token)), tokens))
+            tokens = list(map(lambda token: TokenType(json.loads(token)), tokens))
         self._current_tokens = tokens
-        tokens = t.cast(t.Sequence[ResumeToken], tokens)
+        tokens = t.cast(t.Sequence[TokenType], tokens)
         return tokens  # type: ignore [return-value]
 
 
@@ -436,7 +418,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         on: query.Collection,
         stop_event: threading.Event,
         identifier: 'str' = '',
-        resume_token: t.Optional[ResumeToken] = None,
+        resume_token: t.Optional[TokenType] = None,
     ):
         """__init__.
 
@@ -450,7 +432,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         :type identifier: 'str'
         :param resume_token: A resume token is a token used to resume
         the change stream in mongo.
-        :type resume_token: t.Optional[ResumeToken]
+        :type resume_token: t.Optional[TokenType]
         """
         self.db = db
         self._on_component = on
@@ -642,7 +624,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         else:
             self._change_pipeline = change_pipeline
 
-    def resume(self, token: ResumeToken) -> None:
+    def resume(self, token: TokenType) -> None:
         """
         A method to resume the watcher from a given token.
         """
@@ -687,13 +669,13 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
             self.stop()
             raise
 
-    def last_resume_token(self) -> ResumeToken:
+    def last_resume_token(self) -> TokenType:
         """
         A method to get the last resume token from the change stream.
         """
         return self.tokens.load()[0]
 
-    def resume_tokens(self) -> t.Sequence[ResumeToken]:
+    def resume_tokens(self) -> t.Sequence[TokenType]:
         """
         A method to get the resume tokens from the change stream.
         """
@@ -710,7 +692,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         if self._scheduler:
             self._scheduler.join()
 
-    def is_available(self):
+    def is_available(self) -> bool:
         """
         A method to get the status of watcher.
         """

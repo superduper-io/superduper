@@ -48,37 +48,29 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 
 **What is SuperDuperDB?**
 
-  <ul>
-  <li>🔄 an end-to-end live AI deployment which includes a model repository, model training and computation of outputs</li>
-  <li>📦 a feature store where the model outputs are stored alongside the inputs in desired formats and types</li>
-  <li>🔢 a fully functional vector database to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search</li>
-  <li>📈 a model performance monitor enabling model quality and degradation to be monitored as new data is inserted</li>
-  </ul>
+  - 🔄 an **end-to-end live AI deployment** which includes a model repository, model training and computation of outputs.
+  - 📦 a **model output store** where the model outputs are stored alongside the inputs in desired formats and types.
+  - 🔢 a **fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search.
 
 **Who is SuperDuperDB for?**
 
-  <ul>
-  <li>👨‍💻 <strong>Python developers</strong> using MongoDB who want to apply AI with simple commands.</li>
-  <li>🧑‍🔬 <strong>Data scientists & ML engineers</strong> who want to develop AI models using their favourite tools, with minimum infrastructural overhead.</li>
-  <li>👷 <strong>Infrastructure engineers</strong> who want a single scalable setup that supports both in-house and cloud deployment.</li>
-  </ul>
+  - **Python developers** using MongoDB who want to apply AI with simple commands.
+  - **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
+  -👷 **Infrastructure engineers** who want a single scalable setup that supports both in-house and cloud deployment.
 
 **What can you do with SuperDuperDB?**
 
-  <ul>
-  <li>🚀 Deploy all your AI models to automatically compute outputs in the database in a single environment with simple Python commands.</li>
-  <li>🏋️ Train models on the data in your database without additional ingestion and pre-processing simply by querying.</li>
-  <li>🌐 Integrate APIs such as OpenAI to work together with other models on your data effortlessly.</li>
-  </ul>
+  - 🚀 **Deploy** all your AI models to automatically compute outputs in the database in a single environment with simple Python commands.
+  - 🏋️ **Train** models on the data in your database without additional ingestion and pre-processing simply by querying.
+  - 🌐 **Integrate** APIs such as OpenAI to work together with other models on your data effortlessly.
 
 **Why choose SuperDuperDB?**
 
-  <ul>
-  <li>🪠 Avoid duplicate data, pipelines and infrastructure with a single scalable deployment</li>
-  <li>📅 Deployment automatically kept up-to-date as new data is handled automatically and immediately</li>
-  <li>🤸 Single developer setup for lightweight use-cases</li>
-  </ul>
-
+  - 🪠 **Avoid** duplicate data, pipelines and infrastructure with a single scalable deployment.
+  - 📅 Deployment automatically kept **up-to-date** as new data is handled automatically and immediately.
+  - 🤸 Single developer setup for **lightweight** use-cases.
+  - 📈 **Scalable** setup for enterprise use-cases.
+ 
 <p align="center">
   <br>
   <img width="650" src="docs/img/overview.png">
@@ -86,20 +78,17 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 
 ## :electric_plug: Quickstart
 
-1. Install SuperDuperDB via `pip (*~1 minute*): 
+1. Install SuperDuperDB via `pip` (*~1 minute*): 
 
 ```
 pip install superduperdb
 ```
 
 2. MongoDB
-    <ul>
-    <li>🔥 You already have MongoDB installed? Let's go!</li>
-    <li>🍃 You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>. (<em>~10-15 minutes</em>)</li>
-    </ul>
+    - 🔥 You already have MongoDB installed? Let's go!</li>
+    - 🍃 You need to install MongoDB? See the docs [here](https://www.mongodb.com/docs/manual/installation/). (*~10-15 minutes*)
     
-3. <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Try out SuperDuperDB</a>
-</p>
+3. [Try out SuperDuperDB]()
 
 ### Warning
 

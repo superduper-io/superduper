@@ -207,10 +207,13 @@ class Base:
             return sum(objective_values) / len(objective_values)
 
     def compute_metrics(self, validation_set, database):
-        validation_set = database.load('dataset', validation_set)
-        validation_set = [r.unpack() for r in validation_set.data]
+        if validation_set not in self._validation_set_cache:
+            self._validation_set_cache[validation_set] = database.load(
+                'dataset', validation_set
+            )
+        data = [r.unpack() for r in self._validation_set_cache[validation_set].data]
         return self.training_configuration.compute_metrics.artifact(
-            validation_set,
+            data,
             metrics=self.metrics,
             model=self,
         )
@@ -322,6 +325,8 @@ class TorchModel(Base, Model):
             self.preprocess = Artifact(artifact=self.preprocess, serializer='dill')
         if self.postprocess and not isinstance(self.postprocess, Artifact):
             self.postprocess = Artifact(artifact=self.postprocess, serializer='dill')
+
+        self._validation_set_cache = {}
 
     @cached_property
     def optimizer(self):
@@ -515,11 +520,11 @@ class TorchModelEnsemble(Base, ModelEnsemble):
     training_configuration: t.Optional[TorchTrainerConfiguration] = None
     optimizer_states: t.Optional[t.List[Artifact]] = None
 
-    def __post_init__(self, db):
+    def __post_init__(self):
         if self.optimizer_states is not None:
             for i in range(len(self.models)):
                 self.optimizers[i].load_state_dict(self.optimizer_states[i].artifact)
-        return super().__post_init__(db)
+        self._validation_set_cache = {}
 
     @cached_property
     def optimizers(self):

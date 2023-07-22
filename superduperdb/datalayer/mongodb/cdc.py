@@ -105,6 +105,7 @@ class CachedTokens:
     separate = '\n'
 
     def __init__(self):
+        # BROKEN: self._current_tokens is never read from
         self._current_tokens = []
 
     def append(self, token: TokenType) -> None:
@@ -191,7 +192,6 @@ class CDCHandler(threading.Thread):
         """__init__.
 
         :param db: a superduperdb instance.
-        :type db: BaseDatabase
         :param stop_event: A threading event flag to notify for stoppage.
         """
         self.db = db
@@ -208,10 +208,7 @@ class CDCHandler(threading.Thread):
 
         :param cdc_query: A query which will be used by `db._build_task_workflow` method
         to extract the desired data.
-        :type cdc_query: Serializable
         :param ids: List of ids which were observed as changed document.
-        :type ids: t.List
-        :rtype: None
         """
 
         task_graph = self.db._build_task_workflow(cdc_query, ids=ids, verbose=False)
@@ -231,15 +228,9 @@ class CDCHandler(threading.Thread):
         copying vectors to a vector db.
 
         :param task_graph: A DiGraph task flow which defines task on a di graph.
-        :type task_graph: TaskWorkflow
         :param db: A superduperdb instance.
-        :type db: 'BaseDatabase'
         :param cdc_query: A basic find query to get cursor on collection.
-        :type cdc_query: Serializable
-
         :param ids: A list of ids observed during the change
-        :type ids: t.List[str]
-        :rtype: TaskWorkflow
         """
         for identifier in self.db.show('vector_index'):
             vector_index = self.db.load(identifier=identifier, variety='vector_index')
@@ -291,7 +282,7 @@ class CDCHandler(threading.Thread):
 
     def get_batch_from_queue(self):
         """
-        A method to get a batch of packets from task queue, with a timeout.
+        Get a batch of packets from task queue, with a timeout.
         """
         packets = []
         try:
@@ -336,12 +327,8 @@ class MongoEventMixin:
         execute.
 
         :param change: The changed document.
-        :type change: t.Dict
         :param db: a superduperdb instance.
-        :type db: 'BaseDatabase'
         :param collection: The collection on which change was observed.
-        :type collection: query.Collection
-        :rtype: None
         """
         logging.debug('Triggered `on_create` handler.')
         # new document added!
@@ -355,9 +342,7 @@ class MongoEventMixin:
         """on_update.
 
         :param change:
-        :type change: t.Dict
         :param db:
-        :type db: 'BaseDatabase'
         """
 
         #  prepare updated document
@@ -423,16 +408,11 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         """__init__.
 
         :param db: It is a superduperdb instance.
-        :type db: 'BaseDatabase'
         :param on: It is used to define a Collection on which CDC would be performed.
-        :type on: query.Collection
         :param stop_event: A threading event flag to notify for stoppage.
-        :type identifier: 'threading.Event'
         :param identifier: A identifier to represent the watcher service.
-        :type identifier: 'str'
         :param resume_token: A resume token is a token used to resume
         the change stream in mongo.
-        :type resume_token: t.Optional[TokenType]
         """
         self.db = db
         self._on_component = on
@@ -481,8 +461,6 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         """_get_reference_id.
 
         :param document:
-        :type document: t.Dict
-        :rtype: t.Optional[str]
         """
         try:
             document_key = document[CDCKeys.document_key.value]
@@ -496,8 +474,6 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         A helper fxn to handle incoming changes from change stream on a collection.
 
         :param change: The change (document) observed during the change stream.
-        :type change: t.Dict
-        :rtype: None
         """
         event = change[CDCKeys.operation_type.value]
         reference_id = self._get_reference_id(change)
@@ -519,8 +495,6 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         A helper utility to dump resume token from the changed document.
 
         :param change:
-        :type change: t.Dict
-        :rtype: None
         """
         token = change[self.DEFAULT_ID]
         self.tokens.append(token)
@@ -540,7 +514,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def setup_cdc(self) -> CollectionChangeStream:
         """
-        A method to setup cdc change stream from user provided
+        Setup cdc change stream from user provided
         """
         try:
             if isinstance(self._change_pipeline, str):
@@ -568,7 +542,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def next_cdc(self, stream: CollectionChangeStream) -> None:
         """
-        A method to get the next stream of change observed on the given `Collection`.
+        Get the next stream of change observed on the given `Collection`.
         """
 
         try:
@@ -591,11 +565,9 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
     def attach_scheduler(self, scheduler: threading.Thread) -> None:
         self._scheduler = scheduler
 
-    def info(
-        self,
-    ) -> t.Dict:
+    def info(self) -> t.Dict:
         """
-        A method to get info on the current state of watcher.
+        Get info on the current state of watcher.
         """
         info = {}
         info.update(
@@ -609,7 +581,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def set_resume_token(self, token: TokenType) -> None:
         """
-        A method to set the resume token for the watcher.
+        Set the resume token for the watcher.
         """
         self.resume_token = token
 
@@ -617,7 +589,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]]
     ) -> None:
         """
-        A method to set the change pipeline for the watcher.
+        Set the change pipeline for the watcher.
         """
         if change_pipeline is None:
             self._change_pipeline = MongoChangePipelines.get('generic')
@@ -626,7 +598,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def resume(self, token: TokenType) -> None:
         """
-        A method to resume the watcher from a given token.
+        Resume the watcher from a given token.
         """
         self.set_resume_token(token.token)
         self.watch()
@@ -671,19 +643,19 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def last_resume_token(self) -> TokenType:
         """
-        A method to get the last resume token from the change stream.
+        Get the last resume token from the change stream.
         """
         return self.tokens.load()[0]
 
     def resume_tokens(self) -> t.Sequence[TokenType]:
         """
-        A method to get the resume tokens from the change stream.
+        Get the resume tokens from the change stream.
         """
         return self.tokens.load()
 
     def stop(self) -> None:
         """
-        A method to stop watching cdc changes.
+        Stop watching cdc changes.
         This stops the corresponding services as well.
         """
         s.CFG.cdc = False
@@ -694,7 +666,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def is_available(self) -> bool:
         """
-        A method to get the status of watcher.
+        Get the status of watcher.
         """
         return not self._stop_event.is_set()
 

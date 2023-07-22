@@ -319,10 +319,10 @@ class ModelEnsemble(Component):
     variety: t.ClassVar[str] = 'model'
 
     identifier: str
-    models: t.List[t.Union[str, Model]]
+    models: t.Sequence[t.Union[str, Model]]
     version: t.Optional[int] = None
     train_X: t.Optional[t.List[str]] = None
-    train_y: t.Optional[t.Union[t.List[str], str]] = None
+    train_y: t.Optional[t.Union[t.Sequence[str], str]] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
     @property

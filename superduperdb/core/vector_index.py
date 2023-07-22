@@ -10,6 +10,7 @@ from superduperdb.core.encoder import Encodable
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import ModelEnsemble
 from superduperdb.core.watcher import Watcher
+from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.metrics.vector_search import VectorSearchPerformance
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -84,15 +85,15 @@ class VectorIndex(Component):
     def _initialize_vector_database(self, db):
         logging.info(f'loading hashes: {self.identifier!r}')
         for record_batch in ibatch(
-            db.execute(self.indexing_watcher.select),  # type: ignore
+            db.execute(self.indexing_watcher.select),
             _BACKFILL_BATCH_SIZE,
         ):
             items = []
             for record in record_batch:
                 h, id = db.databackend.get_output_from_document(
                     record,
-                    self.indexing_watcher.key,  # type: ignore
-                    self.indexing_watcher.model.identifier,  # type: ignore
+                    self.indexing_watcher.key,
+                    self.indexing_watcher.model.identifier,
                 )
                 if isinstance(h, Encodable):
                     h = h.x
@@ -109,7 +110,7 @@ class VectorIndex(Component):
             )
         model_encoder = self.indexing_watcher.model.encoder
         try:
-            dimensions = int(model_encoder.shape[-1])  # type: ignore
+            dimensions = int(model_encoder.shape[-1])
         except Exception:
             dimensions = None
         if not dimensions:
@@ -132,7 +133,7 @@ class VectorIndex(Component):
             raise ValueError(f'len(models={models}) != len(keys={keys})')
         within_ids = ids or ()
 
-        if db.db.id_field in like.content:  # type: ignore
+        if db.db.id_field in like.content:
             nearest = self.vector_table.find_nearest_from_id(
                 str(like[db.db.id_field]), within_ids=within_ids, limit=n
             )
@@ -148,7 +149,7 @@ class VectorIndex(Component):
             if '_outputs' not in document:
                 document['_outputs'] = {}
             document['_outputs'].update(outputs)
-            features = self.indexing_watcher.features or ()  # type: ignore
+            features = self.indexing_watcher.features or ()
             for subkey in features:
                 subout = document['_outputs'].setdefault(subkey, {})
                 f_subkey = features[subkey]
@@ -168,7 +169,7 @@ class VectorIndex(Component):
         model_input = document[key] if key != '_base' else document
 
         model = db.models[model]
-        h = model.predict(model_input, one=True)  # type: ignore[attr-defined]
+        h = model.predict(model_input, one=True)
         nearest = self.vector_table.find_nearest_from_array(
             h, within_ids=within_ids, limit=n
         )
@@ -187,37 +188,34 @@ class VectorIndex(Component):
         keys = [w.key for w in watchers]
         return models, keys
 
-    # ruff: noqa: F821, E501
     def _validate(
         self,
-        db: 'superduperdb.datalayer.base.database.Database',  # type: ignore[name-defined]
+        db: Datalayer,
         validation_set: t.Union[str, Dataset],
         metrics: t.List[t.Union[Metric, str]],
     ) -> t.Dict[str, t.List]:
         models, keys = self.models_keys
-        models = [db.models[m] for m in models]  # type: ignore[arg-type]
+        models = [db.models[m] for m in models]
         if isinstance(validation_set, str):
             validation_data = db.load('dataset', validation_set)
 
-        metrics = list(metrics)  # in case someone passes a tuple by mistake
-        for i, m in enumerate(metrics):
-            if isinstance(m, str):
-                metrics[i] = db.load('metric', m)
+        def to_metric(m):
+            return m if isinstance(m, Metric) else db.load('metric', m)
 
-        unpacked = [r.unpack() for r in validation_data.data]  # type: ignore[union-attr]
-        model_ensemble = ModelEnsemble(
-            identifier='tmp', models=models  # type: ignore[arg-type]
-        )
+        metric_list = [to_metric(m) for m in metrics]
+
+        unpacked = [r.unpack() for r in validation_data.data]
+        model_ensemble = ModelEnsemble(identifier='tmp', models=models)
         if len(keys) < 2:
             msg = 'Can only evaluate VectorSearch with compatible watchers...'
             raise ValueError(msg)
 
         return VectorSearchPerformance(
             measure=self.measure,
-            index_key=self.indexing_watcher.key,  # type: ignore[union-attr]
-            compatible_keys=[self.compatible_watcher.key],  # type: ignore[union-attr]
+            index_key=self.indexing_watcher.key,
+            compatible_keys=[self.compatible_watcher.key],
         )(
             validation_data=unpacked,
             model=model_ensemble,
-            metrics=metrics,  # type: ignore[arg-type]
+            metrics=metric_list,
         )

@@ -10,6 +10,7 @@ from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.cluster.dask.dask_client import dask_client
 import superduperdb as s
 
+
 def build_vector_database(cfg):
     cls = vector_database_stores[cfg.__class__]
     sig = inspect.signature(cls.__init__)

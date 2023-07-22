@@ -24,7 +24,7 @@ class VectorSearchPerformance:
         index_key: str,
         measure: t.Union[str, t.Callable],
         splitter: t.Optional[t.Callable] = None,
-        hash_set_cls: BaseVectorIndex = VanillaVectorIndex,
+        hash_set_cls: t.Type[BaseVectorIndex] = VanillaVectorIndex,
         predict_kwargs: t.Optional[t.Dict] = None,
         compatible_keys: t.Optional[t.List] = None,
         vector_collection: t.Optional[VectorCollection] = None,
@@ -43,6 +43,9 @@ class VectorSearchPerformance:
         model: t.Union[Model, ModelEnsemble],
         metrics: t.List[Metric],
     ) -> t.Dict[str, t.List]:
+        if self.vector_collection is not None:
+            raise NotImplementedError  # TODO
+
         if hasattr(model, 'train_X') and model.train_X is not None:
             keys = model.train_X
         else:
@@ -85,18 +88,17 @@ class VectorSearchPerformance:
 
         random_order = numpy.random.permutation(len(inputs[0]))
         inputs = [[x[i] for i in random_order] for x in inputs]
-        if self.vector_collection is None:
-            predictions = [
-                model.predict(inputs[i], **(self.predict_kwargs or {}))
-                for i, model in enumerate(models)
-            ]
-            vi = self.hash_set_cls(  # type: ignore[operator]
-                predictions[ix_index],
-                list(range(len(predictions[0]))),
-                self.measure,
-            )
-        else:
-            raise NotImplementedError  # TODO
+
+        predictions = [
+            model.predict(inputs[i], **(self.predict_kwargs or {}))
+            for i, model in enumerate(models)
+        ]
+        vi = self.hash_set_cls(
+            predictions[ix_index],
+            list(range(len(predictions[0]))),
+            self.measure,
+        )
+
         metric_values = defaultdict(lambda: [])
         for i in range(len(predictions[ix_compatible])):
             ix, _ = vi.find_nearest_from_array(predictions[ix_compatible][i], n=100)

@@ -4,7 +4,6 @@ import math
 import typing as t
 import warnings
 from collections import defaultdict
-from typing import Union, Optional, List, Tuple
 
 import click
 import networkx
@@ -25,7 +24,7 @@ from superduperdb.datalayer.base.query import (
     SelectOne,
     Like,
 )
-from .download_content import download_content  # type: ignore[attr-defined]
+from .download_content import download_content
 from superduperdb.misc.downloads import Downloader
 from superduperdb.misc.downloads import gather_uris
 from superduperdb.misc.logger import logging
@@ -113,7 +112,7 @@ class Datalayer:
         identifier: str,
         variety: str,
         validation_set: str,
-        metrics: List[str],
+        metrics: t.List[str],
     ):
         """
         Evaluate quality of component, using `Component.validate`, if implemented.
@@ -124,14 +123,14 @@ class Datalayer:
         :param metrics: metric functions to compute
         """
         component = self.load(variety, identifier)
-        metrics = [self.load('metric', m) for m in metrics]  # type: ignore[misc]
-        return component.validate(self, validation_set, metrics)  # type: ignore[attr-defined]
+        metrics = [self.load('metric', m) for m in metrics]
+        return component.validate(self, validation_set, metrics)
 
     def show(
         self,
         variety: str,
-        identifier: Optional[str] = None,
-        version: Optional[int] = None,
+        identifier: t.Optional[str] = None,
+        version: t.Optional[int] = None,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -166,7 +165,7 @@ class Datalayer:
         model_identifier: str,
         input: Document,
         one: bool = False,
-    ) -> Union[List[Document], Document]:
+    ) -> t.Union[t.List[Document], Document]:
         """
         Apply model to input.
 
@@ -180,11 +179,11 @@ class Datalayer:
         out = model.predict(input.unpack(), **opts.get('predict_kwargs', {}), one=one)
         if one:
             if model.encoder is not None:
-                out = model.encoder(out)  # type: ignore
+                out = model.encoder(out)
             return Document(out)
         else:
             if model.encoder is not None:
-                out = [model.encoder(x) for x in out]  # type: ignore
+                out = [model.encoder(x) for x in out]
             return [Document(x) for x in out]
 
     def execute(self, query: ExecuteQuery) -> ExecuteResult:
@@ -207,7 +206,7 @@ class Datalayer:
             return self.update(query)
         raise TypeError(
             f'Wrong type of {query}; '
-            f'Expected object of type {Union[Select, Delete, Update, Insert]}; '
+            f'Expected object of type {t.Union[Select, Delete, Update, Insert]}; '
             f'Got {type(query)};'
         )
 
@@ -234,10 +233,11 @@ class Datalayer:
         distributed: t.Optional[bool] = None,
     ):
         """
-        Run job. See ``core.job.Job``, ``core.job.FunctionJob``, ``core.job.ComponentJob``.
+        Run job. See ``core.job.Job``, ``core.job.FunctionJob``,
+        ``core.job.ComponentJob``.
 
         :param job:
-        :param depends_on: List of dependencies
+        :param depends_on: t.List of dependencies
         """
         if distributed is None:
             distributed = CFG.distributed
@@ -268,7 +268,7 @@ class Datalayer:
         return select_one(self)
 
     def refresh_after_update_or_insert(
-        self, query: Union[Select, Update], ids: List[str], verbose=False
+        self, query: t.Union[Select, Update], ids: t.List[str], verbose=False
     ):
         """
         Trigger computation jobs after data insertion.
@@ -296,7 +296,7 @@ class Datalayer:
     def add(
         self,
         object: Component,
-        dependencies: t.Sequence[Union[Job, str]] = (),
+        dependencies: t.Sequence[t.Union[Job, str]] = (),
     ):
         """
         Add functionality in the form of components. Components are stored in the
@@ -304,7 +304,7 @@ class Datalayer:
         the metadata.
 
         :param object: Object to be stored
-        :param dependencies: list of jobs which should execute before component init begins
+        :param dependencies: list of jobs tp execute before component init begins
         """
         return self._add(
             object=object,
@@ -315,7 +315,7 @@ class Datalayer:
         self,
         variety: str,
         identifier: str,
-        version: Optional[int] = None,
+        version: t.Optional[int] = None,
         force=False,
     ):
         """
@@ -371,7 +371,7 @@ class Datalayer:
         self,
         variety: str,
         identifier: str,
-        version: Optional[int] = None,
+        version: t.Optional[int] = None,
         allow_hidden: bool = False,
         info_only: bool = False,
     ) -> Component:
@@ -522,7 +522,7 @@ class Datalayer:
     def _add(
         self,
         object: Component,
-        dependencies: t.Sequence[Union[Job, str]] = (),
+        dependencies: t.Sequence[t.Union[Job, str]] = (),
         serialized: t.Optional[t.Dict] = None,
         parent: t.Optional[str] = None,
     ):
@@ -656,7 +656,7 @@ class Datalayer:
 
     def _download_content(
         self,
-        query: t.Optional[Union[Select, Insert]] = None,
+        query: t.Optional[t.Union[Select, Insert]] = None,
         ids=None,
         documents=None,
         timeout=None,
@@ -675,7 +675,7 @@ class Datalayer:
                 documents = list(self.select(query))
             else:
                 select = query.select_using_ids(ids)
-                cursor = self.select(select).raw_cursor  # type: ignore[attr-defined]
+                cursor = self.select(select).raw_cursor
                 documents = [Document(x) for x in cursor]
         elif isinstance(query, Insert):
             documents = query.documents
@@ -732,7 +732,7 @@ class Datalayer:
 
     def _get_content_for_filter(self, filter) -> Document:
         if isinstance(filter, dict):
-            filter = Document(content=filter)  # type: ignore[arg-type]
+            filter = Document(content=filter)
         if '_id' not in filter.content:
             filter['_id'] = 0
         uris = gather_uris([filter.content])[0]
@@ -766,7 +766,7 @@ class Datalayer:
     def _apply_watcher(  # noqa: F811
         self,
         identifier,
-        ids: Optional[List[str]] = None,
+        ids: t.Optional[t.List[str]] = None,
         verbose=False,
         max_chunk_size=5000,
         model=None,
@@ -783,7 +783,7 @@ class Datalayer:
         else:
             ids = select.select_using_ids(ids=ids).get_ids(self)
 
-        ids = [str(id) for id in ids]  # type: ignore[union-attr]
+        ids = [str(id) for id in ids]
 
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
@@ -888,12 +888,12 @@ class Datalayer:
         self,
         like: Document,
         vector_index: str,
-        ids: Optional[List[str]] = None,
-        outputs: Optional[Document] = None,
+        ids: t.Optional[t.List[str]] = None,
+        outputs: t.Optional[Document] = None,
         n: int = 100,
-    ) -> Tuple[List[str], List[float]]:
-        like = self._get_content_for_filter(like)  # type: ignore[assignment]
-        vector_index = self.vector_indices[vector_index]  # type: ignore[no-redef]
+    ) -> t.Tuple[t.List[str], t.List[float]]:
+        like = self._get_content_for_filter(like)
+        vector_index = self.vector_indices[vector_index]
 
         if outputs is None:
             outs = {}
@@ -901,8 +901,7 @@ class Datalayer:
             outs = outputs.encode()
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
-        # ruff: noqa: E501
-        return vector_index.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)  # type: ignore[attr-defined]
+        return vector_index.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
 
 
 @dc.dataclass

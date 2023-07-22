@@ -304,7 +304,8 @@ class Datalayer:
         the metadata.
 
         :param object: Object to be stored
-        :param dependencies: list of jobs tp execute before component init begins
+        :param dependencies: list of jobs which should execute before component
+        init begins
         """
         return self._add(
             object=object,

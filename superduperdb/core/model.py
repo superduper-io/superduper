@@ -321,15 +321,16 @@ class ModelEnsemble(Component):
     identifier: str
     models: t.List[t.Union[str, Model]]
     version: t.Optional[int] = None
-    db: dc.InitVar[t.Any] = None
     train_X: t.Optional[t.List[str]] = None
     train_y: t.Optional[t.Union[t.List[str], str]] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
-    def __post_init__(self, db):
-        for i, m in enumerate(self.models):
-            if isinstance(m, str):
-                self.models[i] = db.load('model', m)
+    @property
+    def child_components(self):
+        out = []
+        for i in range(len(self.models)):
+            out.append((('models', i), 'model'))
+        return out
 
     def __getitem__(self, submodel: t.Union[int, str]):
         if isinstance(submodel, int):

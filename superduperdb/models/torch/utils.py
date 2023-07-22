@@ -15,6 +15,11 @@ def device_of(model):
 
 @contextmanager
 def eval(model):
+    """
+    Temporarily set a model to evaluation mode.
+
+    :param model: PyTorch model
+    """
     was_training = model.training
     try:
         model.eval()

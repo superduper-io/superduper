@@ -519,7 +519,7 @@ class InsertMany(Insert):
         return Find(collection=self.collection, args=[{'_id': {'$in': ids}}])
 
     def __call__(self, db):
-        valid_prob = self.kwargs.get('valid_prob', 0.5)
+        valid_prob = self.kwargs.get('valid_prob', 0.05)
         for e in self.encoders:
             db.add(e)
         documents = [r.encode() for r in self.documents]

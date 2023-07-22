@@ -139,10 +139,9 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 :maxdepth: 3
 
 getting_started/index
-background/index
 usage/index
 infrastructure/index
-common_issues
+background/index
 examples/index
 source/modules
 ```

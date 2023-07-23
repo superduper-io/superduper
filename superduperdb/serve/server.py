@@ -6,7 +6,7 @@ from flask import Flask, jsonify, make_response, request
 
 from superduperdb.core.artifact_tree import (
     get_artifacts,
-    put_artifacts_back,
+    load_artifacts_from_store,
     replace_artifacts_with_dict,
 )
 from superduperdb import CFG
@@ -75,7 +75,7 @@ def make_endpoints(app, db):
             artifact_cache[a] = serializers[d['serializers'][a]].decode(
                 artifact_cache[a]
             )
-        d = put_artifacts_back(d, artifact_cache)
+        d = load_artifacts_from_store(d, cache=artifact_cache)
         object = Serializable.deserialize(d['component'])
         db.add(object)
         del cache[d['request_id']]

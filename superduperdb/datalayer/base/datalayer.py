@@ -421,7 +421,7 @@ class Datalayer:
             return r
 
         info = replace_children(info)
-        info = put_artifacts_back(info, lookup={}, artifact_store=self.artifact_store)
+        info = put_artifacts_back(info, cache={}, artifact_store=self.artifact_store)
 
         m = Component.deserialize(info)
         m._on_load(self)
@@ -544,7 +544,7 @@ class Datalayer:
             artifact_info = {}
             for a in artifacts:
                 artifact_info[hash(a)] = a.save(self.artifact_store)
-            replace_artifacts(serialized, artifact_info)
+            serialized = replace_artifacts(serialized, artifact_info)
 
         else:
             serialized['version'] = object.version
@@ -860,22 +860,7 @@ class Datalayer:
         for oa in old_artifacts:
             self.artifact_store.delete_artifact(oa)
 
-        def replace_artifacts(new_info):
-            if isinstance(new_info, dict):
-                for k, v in new_info.items():
-                    if isinstance(v, Artifact):
-                        new_info[k] = artifact_details[hash(v)]
-                    else:
-                        new_info[k] = replace_artifacts(new_info[k])
-            elif isinstance(new_info, list):
-                for i, x in enumerate(new_info):
-                    if isinstance(x, Artifact):
-                        new_info[i] = artifact_details[hash(x)]
-                    else:
-                        new_info[i] = replace_artifacts(x)
-            return new_info
-
-        new_info = replace_artifacts(new_info)
+        new_info = replace_artifacts(new_info, artifact_details)
 
         self.metadata.replace_object(
             new_info,

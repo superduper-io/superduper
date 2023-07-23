@@ -195,7 +195,7 @@ class Client:
             },
         ).json()
         d = load_artifacts(
-            d, getter=lambda x: self._get(request_id=request_id, file_id=x), cache={}
+            d, cache={}, getter=lambda x: self._get(request_id=request_id, file_id=x)
         )
         return Serializable.deserialize(d)
 

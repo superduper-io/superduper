@@ -2,7 +2,7 @@ import typing as t
 
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.misc.serialization import serializers
-from superduperdb.misc.tree import tree_find
+from superduperdb.misc.tree import tree_find, tree_rewrite
 from .artifact import Artifact
 
 """
@@ -15,92 +15,65 @@ Info = t.Dict[int, t.Dict[str, t.Any]]
 
 def put_artifacts_back(
     tree: t.Any,
-    lookup: t.Dict[str, Artifact],
+    cache: t.Optional[t.Dict[str, Artifact]],
     artifact_store: t.Optional[ArtifactStore] = None,
 ):
     """
     Recursively search through a tree for ArtifactDescs by an Artifact with
     that `file_id`.
 
-    :param tree: A tree made up of dicts and lists, and leaves of any type
-    :param lookup: A cache dictionary of Artifacts, keyed by file_id
+    :param tree: A tree made up of dicts and lists
+    :param cache: A cache dictionary of Artifacts, keyed by file_id
     :param artifact_store: A store which permanently keeps the artifacts somewhere
     """
 
-    def to_artifact(v):
-        try:
-            file_id = v['file_id']
-        except (KeyError, TypeError):
-            return put_back(v)
+    def rewrite(t):
+        file_id, serializer = t['file_id'], t['serializer']
 
         try:
-            return lookup[file_id]
+            return cache[file_id]
         except KeyError:
             pass
 
         artifact = Artifact(
-            artifact_store.load_artifact(
-                file_id=v['file_id'],
-                serializer=v['serializer'],
-            ),
-            serializer=v['serializer'],
-            info=v.get('info'),
+            artifact_store.load_artifact(file_id=file_id, serializer=serializer),
+            serializer=serializer,
+            info=t.get('info'),
         )
-        lookup[file_id] = artifact
+        cache[file_id] = artifact
         return artifact
 
-    def put_back(d):
-        if isinstance(d, list):
-            return [put_back(i) for i in d]
-        if isinstance(d, dict):
-            return {k: to_artifact(v) for k, v in d.items()}
-        return d
-
-    return put_back(tree)
+    return tree_rewrite(tree, _has_file_id, rewrite)
 
 
 def get_artifacts(tree: t.Any) -> t.Iterator[Artifact]:
     """Yield all Artifacts in a tree
 
-    :param tree: A tree made up of dicts and lists, and leaves of any type
+    :param tree: A tree made up of dicts and lists
     """
-
-    def accept(t):
-        return isinstance(t, Artifact)
-
-    yield from tree_find(tree, accept)
+    yield from tree_find(tree, _is_artifact)
 
 
 def infer_artifacts(tree: t.Any) -> t.Iterator:
     """Yield all entries keyed with 'file_id' in a tree
 
-    :param tree: A tree made up of dicts and lists, and leaves of any type
+    :param tree: A tree made up of dicts and lists
     """
 
-    def accept(t):
-        return isinstance(t, dict) and 'file_id' in t
-
-    return (t['file_id'] for t in tree_find(tree, accept))
+    return (t['file_id'] for t in tree_find(tree, _has_file_id))
 
 
 def replace_artifacts_with_dict(tree: t.Any, info: t.Dict[Artifact, str]) -> t.Any:
     """Replace every Artifact in a tree with an ArtifactDesc
 
-    :param tree: A tree made up of dicts and lists, and leaves of any type
+    :param tree: A tree made up of dicts and lists
     :param info: A dictionary mapping artifacts to file_ids
     """
-    if isinstance(tree, dict):
-        items = tree.items() if isinstance(tree, dict) else enumerate(tree)
-        for k, v in items:
-            if isinstance(v, Artifact):
-                tree[k] = {
-                    'file_id': info[v],
-                    'sha1': v.sha1,
-                    'serializer': v.serializer,
-                }
-            elif isinstance(v, dict) or isinstance(v, list):
-                tree[k] = replace_artifacts_with_dict(v, info)
-    return tree
+
+    def rewrite(t):
+        return {'file_id': info[t], 'sha1': t.sha1, 'serializer': t.serializer}
+
+    return tree_rewrite(tree, _is_artifact, rewrite)
 
 
 def replace_artifacts(tree: t.Any, info: Info) -> None:
@@ -108,20 +81,13 @@ def replace_artifacts(tree: t.Any, info: Info) -> None:
 
     Better explanation TBD
 
-    :param tree: A tree made up of dicts and lists, and leaves of any type
+    :param tree: A tree made up of dicts and lists
     :param info: A dictionary mapping hashes to [TBD]
     """
-    if isinstance(tree, dict):
-        for k, v in tree.items():
-            if isinstance(v, Artifact):
-                tree[k] = info[hash(v)]
-            elif isinstance(v, dict):
-                replace_artifacts(v, info)
-            elif isinstance(v, list):
-                replace_artifacts(v, info)
-    elif isinstance(tree, list):
-        for x in tree:
-            replace_artifacts(x, info)
+    def rewrite(t):
+        return info[hash(t)]
+
+    return tree_rewrite(tree, _is_artifact, rewrite)
 
 
 def load_artifacts(
@@ -133,21 +99,32 @@ def load_artifacts(
 
     Differs from `put_artifacts_back` TBD
 
-    :param tree: A tree made up of dicts and lists, and leaves of any type
+    :param tree: A tree made up of dicts and lists
     :param getter: A function that returns `bytes` given a file_id
     :param cache: A dictionary caching artifacts by file_id
     """
-    if isinstance(tree, dict) or isinstance(tree, list):
-        items = tree.items() if isinstance(tree, dict) else enumerate(tree)
-        for k, v in items:
-            if isinstance(v, dict) and 'file_id' in v:
-                if v['file_id'] not in cache:
-                    bytes_ = getter(v['file_id'])
-                    cache[v['file_id']] = Artifact(
-                        artifact=serializers[v['serializer']].decode(bytes_),
-                        serializer=v['serializer'],
-                    )
-                tree[k] = cache[v['file_id']]
-            elif isinstance(v, dict) or isinstance(v, list):
-                tree[k] = load_artifacts(v, getter, cache)
-    return tree
+    def rewrite(t):
+        file_id, serializer = t['file_id'], t['serializer']
+        try:
+            result = cache[file_id]
+        except KeyError:
+            pass
+        else:
+            if result.serializer == serializer:
+                return result
+            raise ValueError(f'Wrong serializer: {result.serializer} != {serializer}')
+
+        bytes_ = getter(file_id)
+        artifact = serializers[serializer].decode(bytes_)
+        cache[file_id] = Artifact(artifact=artifact, serializer=serializer)
+        return cache[file_id]
+
+    return tree_rewrite(tree, _has_file_id, rewrite)
+
+
+def _is_artifact(t: t.Any) -> bool:
+    return isinstance(t, Artifact)
+
+
+def _has_file_id(t: t.Any) -> bool:
+    return isinstance(t, dict) and 'file_id' in t

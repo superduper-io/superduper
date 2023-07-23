@@ -30,11 +30,10 @@ from superduperdb.misc.downloads import gather_uris
 from superduperdb.misc.logger import logging
 from superduperdb.vector_search.base import VectorDatabase
 
-from superduperdb.core.artifact import Artifact
 from superduperdb.core.artifact_tree import (
     get_artifacts,
     infer_artifacts,
-    put_artifacts_back,
+    load_artifacts_from_store,
     replace_artifacts,
 )
 from ...core.job import FunctionJob, ComponentJob, Job
@@ -421,7 +420,9 @@ class Datalayer:
             return r
 
         info = replace_children(info)
-        info = put_artifacts_back(info, cache={}, artifact_store=self.artifact_store)
+        info = load_artifacts_from_store(
+            info, cache={}, artifact_store=self.artifact_store
+        )
 
         m = Component.deserialize(info)
         m._on_load(self)
@@ -544,7 +545,7 @@ class Datalayer:
             artifact_info = {}
             for a in artifacts:
                 artifact_info[hash(a)] = a.save(self.artifact_store)
-            serialized = replace_artifacts(serialized, artifact_info)
+            serialized = t.cast(t.Dict, replace_artifacts(serialized, artifact_info))
 
         else:
             serialized['version'] = object.version

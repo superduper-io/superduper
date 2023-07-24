@@ -80,15 +80,7 @@ class SklearnTyper(DuckTyper):
 
 
 class TorchTyper(DuckTyper):
-    attrs = 'forward', 'parameters', 'state_dict'
-    count = 3
-
-    @classmethod
-    def accept(cls, item: t.Any) -> bool:
-        count = cls.count or len(cls.attrs)
-        test_one = sum(hasattr(item, a) for a in cls.attrs) == count
-        test_two = item.__class__.__name__ != 'Database'
-        return test_one and test_two
+    attrs = 'forward', 'parameters', 'state_dict', '_load_from_state_dict'
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:

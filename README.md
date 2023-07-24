@@ -101,10 +101,11 @@ a new one</a>.
 
 # Contributing :seedling: 
 
-There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
+#### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 - bug reports
 - documentation improvements
-- feaenhancement suggestions
-- expanding the tutorials and examples
-- share use cases
-This project is intended to be a community effort, and it won't be possible without your support and enthusiasm.We of course welcome any contribution. Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+- enhancement suggestions
+- feature requests
+- expanding the tutorials and use case examples
+
+SuperDuperDB is open-source and intended to be a community effort, and it won't be possible without your support and enthusiasm. Please see our [Contributing Guide](CONTRIBUTING.md) for details.

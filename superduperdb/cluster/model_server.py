@@ -1,4 +1,5 @@
 import flask
+import typing as t
 from bson import BSON
 from flask_cors import CORS
 from flask import request, Flask
@@ -13,12 +14,11 @@ app = Flask(__name__)
 CORS(app)
 auth = HTTPBasicAuth()
 
+users: t.Optional[t.Dict[str, t.Any]] = None
+
 if CFG.model_server.username:
     password_hash = generate_password_hash(CFG.model_server.password)
     users = {CFG.model_server.username: password_hash}
-else:
-    users = None
-
 
 database = build_datalayer()
 

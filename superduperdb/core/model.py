@@ -211,7 +211,7 @@ class Model(Component, PredictMixin):
     preprocess: t.Union[t.Callable, Artifact, None] = None
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
-    metrics: t.Sequence[t.Union[str, Metric, None]] = None
+    metrics: t.Sequence[t.Union[str, Metric, None]] = ()
     # Need also historical metric values
     predict_method: t.Optional[str] = None
     batch_predict: bool = False

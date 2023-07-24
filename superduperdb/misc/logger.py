@@ -29,7 +29,7 @@ if CFG.logging.type == 'stdout':
         logging.info = dont_print
 
 else:
-    import logging
+    import logging  # type: ignore[assignment]
 
     level = getattr(logging, CFG.logging.level.name)
     logging.basicConfig(level=level, **CFG.logging.kwargs)

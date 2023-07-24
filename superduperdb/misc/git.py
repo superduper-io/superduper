@@ -21,11 +21,11 @@ class Git:
         if not (files and self.is_dirty(**kwargs)):
             return
 
-        files = [Path(f) for f in files]
-        if exist := [f for f in files if f.exists()]:
+        paths = [Path(f) for f in files]
+        if exist := [f for f in paths if f.exists()]:
             self('add', *exist, **kwargs)
 
-        self('commit', '-m', msg, *files, **kwargs)
+        self('commit', '-m', msg, *paths, **kwargs)
         self('push', **kwargs)
 
     def commit_all(self, msg: str, **kwargs) -> None:
@@ -49,9 +49,9 @@ class Git:
         if globals:
             args = ('--global',)
         elif globals is False:
-            args = '--local'
+            args = ('--local',)
         else:
-            args = ()
+            args = t.cast(t.Tuple[str], ())
         configs = self('config', '--list', *args, **kwargs)
         return dict(c.partition('=')[::2] for c in configs)
 

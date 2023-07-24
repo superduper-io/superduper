@@ -122,8 +122,8 @@ class Datalayer:
         :param metrics: metric functions to compute
         """
         component = self.load(variety, identifier)
-        metrics = [self.load('metric', m) for m in metrics]
-        return component.validate(self, validation_set, metrics)
+        metric_list = [self.load('metric', m) for m in metrics]
+        return component.validate(self, validation_set, metric_list)
 
     def show(
         self,

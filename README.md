@@ -35,7 +35,7 @@
 
 <hr>
 
-## Introduction 🔰 
+# Introduction 🔰 
 
 <h4>What can you do with SuperDuperDB?</h4>
 
@@ -72,7 +72,7 @@
   <img width="650" src="docs/img/overview.png">
 </p>
 
-## Quickstart :electric_plug:
+# Quickstart :electric_plug:
 #### 1. Install SuperDuperDB via `pip (*~1 minute*): 
 ```
 pip install superduperdb
@@ -84,15 +84,15 @@ pip install superduperdb
 ```
 go superduperdb
 ```
-#### 4. <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Try one of our example use cases</a>
+#### 4. Try one of our example use cases <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">found here!</a>
 
 ⚠️ Disclaimer: SuperDuperDB is currently in *alpha*. Please expect :zap: breaking changes, :rock: rough edges and :runner: fast pace of new feature development 
 
-## Developer Environment :mushroom: 
+# Developer Environment :mushroom: 
 
 Please see our [INSERT LINK](./) for details.
 
-## Getting Help 🙋
+# Getting Help 🙋
 
 <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
     <img src="https://img.shields.io/badge/Slack-superduperdb-8A2BE2?logo=slack" alt="Slack">
@@ -109,6 +109,6 @@ Please see our [INSERT LINK](./) for details.
 
 If you have any problems please contact a maintainer or community volunteer. The GitHub issues or the Slack channel are a great place to start. We look forward to seeing you there! :purple_heart:
 
-## Contributing :seedling: 
+# Contributing :seedling: 
 
 Please see our [Contributing Guide](CONTRIBUTING.md) for details.

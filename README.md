@@ -29,6 +29,8 @@
 #### An open-source environment to deploy, train and operate AI models and APIs in MongoDB with Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>. 
 #### Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
 
+#### No pipelines, no data duplication, just Python. 
+
 <hr>
 
 
@@ -48,9 +50,9 @@
 
  ### Why choose SuperDuperDB?
 
-- 🧹 Avoid duplicate data, pipelines and infrastructure with a single scalable deployment
+- 🧹 Avoid duplicate data, duplicate pipelines and duplicate infrastructure with a single scalable deployment
 - 📅 Deployment automatically kept up-to-date as new data is handled automatically and immediately
-- 🤸 Single developer setup for lightweight use-cases
+- 🤸 Python only: Single developer setup for lightweight use-cases
 
 ### Who is SuperDuperDB for?
 

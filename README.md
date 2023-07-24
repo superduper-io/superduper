@@ -46,6 +46,40 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 
 ---------------
 
+
+```python
+
+# Models and database clients can be converted to SuperDuperDB objects with a simple wrapper.
+svm = superduper(SVM())
+
+  
+
+# SuperDuperDB uses MongoDB by default. SQL integrations are on the way.
+db = superduper(pymongo.MongoClient().my_db)
+
+
+# Once wrapped, we can fit and predict "in" the database, simply
+# specifying the data to be processed with a query.
+
+coll = Collection(name='my_collection')
+svm.fit(X='input_col', y='predict_col', db=db, select=coll.find({'_fold': 'train'}))
+
+# Predictions are saved in the database alongside the inputs.
+svm.predict(X='input_col', db=db, select=coll.find({'_fold': 'valid'}))
+
+db.execute(coll.find_one())
+# Document({
+# "_id": ObjectId('64b6ba93f8af205501ca7748'),
+# 'input_col': Encodable(x=torch.tensor([...])),
+# 'output_col': {},
+# '_outputs': {'input_col': {'svm': 1}}
+# })
+
+```
+
+
+---------------
+
 **What is SuperDuperDB?**
 
   - 🔄 an **end-to-end live AI deployment** which includes a model repository, model training and computation of outputs.
@@ -56,20 +90,20 @@ SuperDuperDB is a Python-based open-source environment to deploy, train and oper
 
   - **Python developers** using MongoDB who want to apply AI with simple commands.
   - **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
-  -👷 **Infrastructure engineers** who want a single scalable setup that supports both in-house and cloud deployment.
+  -👷 **Infrastructure engineers** who want a single scalable setup that supports local, on-prem and cloud deployment.
 
 **What can you do with SuperDuperDB?**
 
   - 🚀 **Deploy** all your AI models to automatically compute outputs in the database in a single environment with simple Python commands.
-  - 🏋️ **Train** models on the data in your database without additional ingestion and pre-processing simply by querying.
+  - 🏋️ **Train** models on the data in your database without additional ingestion and pre-processing, simply by querying.
   - 🌐 **Integrate** APIs such as OpenAI to work together with other models on your data effortlessly.
 
 **Why choose SuperDuperDB?**
 
   - 🪠 **Avoid** duplicate data, pipelines and infrastructure with a single scalable deployment.
-  - 📅 Deployment automatically kept **up-to-date** as new data is handled automatically and immediately.
-  - 🤸 Single developer setup for **lightweight** use-cases.
-  - 📈 **Scalable** setup for enterprise use-cases.
+  - 📅 Keep AI models **up-to-date** by processing new data immediately and automatically.
+  - 🤸 Easy single node setup for **lightweight** use-cases.
+  - 📈 **Scalable** multi-host setup for enterprise use-cases via Dask or Ray.
  
 <p align="center">
   <br>

@@ -5,6 +5,7 @@ import pytest
 IN_CI = 'CI' in os.environ
 PUNCTUATION = '.,-_'
 TEST_COMMITS = os.environ.get('TEST_SUPERDUPERDB_COMMITS', 't').lower().startswith('t')
+COMMIT_MESSAGES_TO_TEST = 10
 
 
 def _errors(msg):
@@ -39,16 +40,15 @@ def test_commit_errors():
 
 
 @pytest.mark.skipif(not TEST_COMMITS, reason='Not testing commit names')
-def test_last_commit_names():
+def test_last_commit_messages():
     # If this test fails, it's because one of your last commit messages was suboptimal!
     #
     # If you want to skip this test, set an environment variable:
     #
     #   TEST_SUPERDUPERDB_COMMITS=false
 
-    commits = git.commits('-10')
-    if IN_CI:
-        commits.pop(0)
+    commits = git.commits(F'-{COMMIT_MESSAGES_TO_TEST + 1}')
+    commits.pop(0 if IN_CI else -1)
 
     bad_commits = []
 

@@ -55,10 +55,7 @@ class Select(ABC, Serializable):
         pass
 
     @abstractmethod
-    def select_using_ids(
-        self,
-        ids: t.List[str],
-    ) -> t.Any:
+    def select_using_ids(self, ids: t.Sequence[str]) -> t.Any:
         """
         Create a select using the same Serializable, subset to the specified ids
 

@@ -10,8 +10,8 @@ import typing as t
 
 class BaseVectorIndex:
     name: t.Optional[str] = None
-    h: t.Union[torch.Tensor, numpy.ndarray, t.List]
-    index: t.List[str]
+    h: t.Union[torch.Tensor, numpy.ndarray, t.Sequence]
+    index: t.Sequence[str]
     lookup: t.Dict[str, t.Union[t.Iterator[int], int]]
     measure: str
 

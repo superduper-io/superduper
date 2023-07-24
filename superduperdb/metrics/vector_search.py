@@ -26,7 +26,7 @@ class VectorSearchPerformance:
         splitter: t.Optional[t.Callable] = None,
         hash_set_cls: t.Type[BaseVectorIndex] = VanillaVectorIndex,
         predict_kwargs: t.Optional[t.Dict] = None,
-        compatible_keys: t.Optional[t.List] = None,
+        compatible_keys: t.Optional[t.Sequence] = None,
         vector_collection: t.Optional[VectorCollection] = None,
     ):
         self.measure = measure
@@ -39,9 +39,9 @@ class VectorSearchPerformance:
 
     def __call__(
         self,
-        validation_data: t.Union[QueryDataset, t.List],
+        validation_data: t.Union[QueryDataset, t.Sequence],
         model: Model,
-        metrics: t.List[Metric],
+        metrics: t.Sequence[Metric],
     ) -> t.Dict[str, t.List]:
         if self.vector_collection is not None:
             raise NotImplementedError  # TODO

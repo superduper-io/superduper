@@ -111,7 +111,7 @@ class Datalayer:
         identifier: str,
         variety: str,
         validation_set: str,
-        metrics: t.List[str],
+        metrics: t.Sequence[str],
     ):
         """
         Evaluate quality of component, using `Component.validate`, if implemented.
@@ -229,7 +229,7 @@ class Datalayer:
     def run(
         self,
         job,
-        depends_on: t.Optional[t.List[Future]] = None,
+        depends_on: t.Optional[t.Sequence[Future]] = None,
         distributed: t.Optional[bool] = None,
     ):
         """
@@ -237,7 +237,7 @@ class Datalayer:
         ``core.job.ComponentJob``.
 
         :param job:
-        :param depends_on: t.List of dependencies
+        :param depends_on: t.Sequence of dependencies
         """
         if distributed is None:
             distributed = CFG.distributed
@@ -268,7 +268,7 @@ class Datalayer:
         return select_one(self)
 
     def refresh_after_update_or_insert(
-        self, query: t.Union[Select, Update], ids: t.List[str], verbose=False
+        self, query: t.Union[Select, Update], ids: t.Sequence[str], verbose=False
     ):
         """
         Trigger computation jobs after data insertion.
@@ -769,7 +769,7 @@ class Datalayer:
     def _apply_watcher(  # noqa: F811
         self,
         identifier,
-        ids: t.Optional[t.List[str]] = None,
+        ids: t.Optional[t.Sequence[str]] = None,
         verbose=False,
         max_chunk_size=5000,
         model=None,
@@ -875,7 +875,7 @@ class Datalayer:
         self,
         like: Document,
         vector_index: str,
-        ids: t.Optional[t.List[str]] = None,
+        ids: t.Optional[t.Sequence[str]] = None,
         outputs: t.Optional[Document] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:

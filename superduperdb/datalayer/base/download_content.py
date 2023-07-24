@@ -11,15 +11,15 @@ from superduperdb.misc.logger import logging
 def download_content(
     db,
     query: t.Union[Select, Insert, t.Dict],
-    ids: t.Optional[t.List[str]] = None,
-    documents: t.Optional[t.List[Document]] = None,
+    ids: t.Optional[t.Sequence[str]] = None,
+    documents: t.Optional[t.Sequence[Document]] = None,
     timeout: t.Optional[int] = None,
     raises: bool = True,
     n_download_workers: t.Optional[int] = None,
     headers: t.Optional[t.Dict] = None,
     download_update: t.Optional[t.Callable] = None,
     **kwargs,
-) -> t.Optional[t.List[Document]]:
+) -> t.Optional[t.Sequence[Document]]:
     """
     Download content contained in uploaded data. Items to be downloaded are identifier
     via the subdocuments in the form exemplified below. By default items are downloaded

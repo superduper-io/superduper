@@ -36,7 +36,7 @@ class Encoder(Component):
     """
 
     variety: t.ClassVar[str] = 'encoder'  # This cannot yet be changed
-    artifacts: t.ClassVar[t.List[str]] = ['decoder', 'encoder']
+    artifacts: t.ClassVar[t.Sequence[str]] = ['decoder', 'encoder']
 
     identifier: str
     decoder: t.Union[t.Callable, Artifact] = dc.field(

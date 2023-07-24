@@ -13,7 +13,7 @@ Thank you for considering contributing to `superduperdb`. There are many ways to
 This project is intended to be a community effort, and it won't be possible without your support and enthusiasm.
 
 ## Where to Start? :boom:
-If you're new to open-source development, we recommend going through the GitHub “issues” tab to find items that interest you. Once you’ve found something interesting, the next step is to create your development environment.
+If you're new to open-source development, we recommend going through the GitHub “issues” tab to find items that interest you. We welcome newcomers, so we have labelled some issues "good first issue" - we think they are of the right level of difficulty to provide a smooth onboarding to new contributors. You don't have to limit yourself to only "good first issues" - look for something that you would like to see in the project!  Once you’ve found something interesting, the next step is to create your development environment.
 
 We follow something called a "fork and pull request" workflow for collaborating on our project. See [here](https://gist.github.com/Chaser324/ce0505fbed06b947d962) for a great overview on what some of these mysterious terms mean! 
 
@@ -37,7 +37,20 @@ python3 -m pip install -r requirements/requirements-dev.in  # install the Python
 python3 -m pip install -e .  # Install the superduperdb project in editable mode
 ```
 
-The final steps to creating a development environment involve installing [MongoDB](https://www.mongodb.com/docs/manual/installation/) and [Docker](https://docs.docker.com/engine/install/). Once you get this far, you are all set to start contributing - ship it! :shipit:
+The final steps to creating a development environment involve installing [MongoDB](https://www.mongodb.com/docs/manual/installation/) and [Docker](https://docs.docker.com/engine/install/). 
+
+To start-up the containers needed for testing:
+
+```
+make fix-and-test
+```
+
+To run tests
+```
+make test
+```
+
+Once you get this far, you are all set to start contributing - ship it! :shipit:
 
 ## Getting Help 🙋
 

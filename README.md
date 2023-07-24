@@ -90,7 +90,8 @@ import superduperdb
 ```
 
 # Installation :electric_plug:
-#### 1. Install SuperDuperDB via `pip *(~1 minute)*: 
+
+**1. Install SuperDuperDB via `pip *(~1 minute)*:**
 ```
 pip install superduperdb
 ```

@@ -58,9 +58,8 @@ svm = superduper(SVM())
 db = superduper(pymongo.MongoClient().my_db)
 
 
-# Once wrapped, we can fit and predict "in" the database, simply
-# specifying the data to be processed with a query.
-
+# Once wrapped, we can fit and predict, simply specifying the data to be processed with a query.
+# The model training is scheduled either on a Dask cluster or locally
 coll = Collection(name='my_collection')
 svm.fit(X='input_col', y='predict_col', db=db, select=coll.find({'_fold': 'train'}))
 

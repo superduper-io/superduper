@@ -92,13 +92,13 @@ pip install superduperdb
 
 # Quickstart ▶️
 
-#### Try SuperDuperDB in Google Colab <a href="404">here</a>!
+Try SuperDuperDB in Google Colab <a href="404">here</a>!
 
 <br>
 
 # Community & Getting Help 🙋
 
-#### If you have any problems or questions:
+If you have any problems or questions:
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">our Slack</a> (we look forward to seeing you there 💜).
 - Search through <a href="404" target="_blank">our GitHub Discussions</a>, or <a href="404" target="_blank">add a new question</a>.
 - Comment <a href="404" target="_blank">an existing issue</a> or create <a href="404" target="_blank">
@@ -109,11 +109,16 @@ a new one</a>.
 
 # Contributing :seedling: 
 
-#### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
+There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 - Bug reports
 - Documentation improvements
 - Enhancement suggestions
 - Feature requests
 - Expanding the tutorials and use case examples
 
-SuperDuperDB is open-source and intended to be a community effort, and it won't be possible without your support and enthusiasm. Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+
+# License 📜 
+
+SuperDuperDB is open-source and intended to be a community effort, and it won't be possible without your support and enthusiasm. It is distributed under the terms of the Apache License Version 2.0. Any contribution made to this project will be licensed under the Apache License Version 2.0.

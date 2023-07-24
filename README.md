@@ -56,7 +56,7 @@
 
 ### Who is SuperDuperDB for?
 
-  - 👨‍💻 **Python developers** using MongoDB who want to apply AI with simple commands.
+  - 👨‍💻 **Python developers** using MongoDB who want to build AI into their applications easily.
   - 🧑‍🔬 **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
   - 👷 **Infrastructure engineers** who want a single scalable setup that supports both in-house and cloud deployment.
 

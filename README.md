@@ -41,26 +41,26 @@
 
 - 🚀 **Deploy** all your AI models to automatically **compute outputs** in the database in a single environment with simple Python commands.  
 - 🏋️ **Train** models on the data in yor database without additional ingestion and pre-processing simply by querying.  
-- 🌐 Integrate APIs such as OpenAI to work together with other models on your data effortlessly. 
+- 🌐 **Integrate** APIs such as OpenAI to work together with other models on your data effortlessly. 
 
- <h4>Why choose SuperDuperDB?</h4>
+ ### Why choose SuperDuperDB?
 
 - 🪠 Avoid duplicate data, pipelines and infrastructure with a single scalable deployment
 - 📅 Deployment automatically kept up-to-date as new data is handled automatically and immediately
 - 🤸 Single developer setup for lightweight use-cases
 
-<h4>Who is SuperDuperDB for?</h4>
+### Who is SuperDuperDB for?
 
-  - 👨‍💻 Python developers using MongoDB who want to apply AI with simple commands.
-  - 🧑‍🔬 Data scientists & ML engineers who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
-  - 👷 Infrastructure engineers who want a single scalable setup that supports both in-house and cloud deployment.
+  - 👨‍💻 **Python developers** using MongoDB who want to apply AI with simple commands.
+  - 🧑‍🔬 **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
+  - 👷 **Infrastructure engineers** who want a single scalable setup that supports both in-house and cloud deployment.
 
-<h4>SuperDuperDB transforms our MongoDB into:</h4>
+### SuperDuperDB transforms our MongoDB into:
 
-  - 🔄 An end-to-end live AI deployment which includes a model repository and registry, model training and computation of outputs/ inference 
-  - 📦 A feature store where the model outputs are stored alongside the inputs in desired formats and types 
-  - 🔢 A fully functional vector database to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search 
-  - 📈 *(Coming soon)* A model performance monitor enabling model quality and degradation to be monitored as new data is inserted  
+  - 🔄 **An end-to-end live AI deployment** which includes a **model repository and registry**, **model training** and **computation of outputs/ inference** 
+  - 📦 **A feature store** where the model outputs are stored alongside the inputs in desired formats and types 
+  - 🔢 **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search 
+  - 📈 *(Coming soon)* **A model performance monitor** enabling model quality and degradation to be monitored as new data is inserted  
 
 
 
@@ -101,4 +101,10 @@ a new one</a>.
 
 # Contributing :seedling: 
 
-We of course welcome any contribution. Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
+- bug reports
+- documentation improvements
+- feaenhancement suggestions
+- expanding the tutorials and examples
+- share use cases
+This project is intended to be a community effort, and it won't be possible without your support and enthusiasm.We of course welcome any contribution. Please see our [Contributing Guide](CONTRIBUTING.md) for details.

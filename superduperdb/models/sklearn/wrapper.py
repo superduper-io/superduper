@@ -87,8 +87,8 @@ class Estimator(Model):
         select: t.Optional[Select] = None,
         db: t.Optional[Datalayer] = None,
         configuration: t.Optional[SklearnTrainingConfiguration] = None,
-        validation_sets: t.Optional[t.List[str]] = None,
-        metrics: t.Optional[t.List[Metric]] = None,
+        validation_sets: t.Optional[t.Sequence[str]] = None,
+        metrics: t.Optional[t.Sequence[Metric]] = None,
         data_prefetch: bool = False,
     ):
         if configuration is not None:

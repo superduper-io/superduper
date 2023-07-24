@@ -39,7 +39,7 @@ class Component(Serializable):
     def create_validation_job(
         self,
         validation_set: t.Union[str, 'Dataset'],  # type: ignore[name-defined]
-        metrics: t.List[str],
+        metrics: t.Sequence[str],
     ):
         return ComponentJob(
             component_identifier=self.identifier,

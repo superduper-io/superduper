@@ -71,7 +71,7 @@ class VectorIndex(Component):
             self._initialize_vector_database(db)
 
     @property
-    def child_components(self) -> t.List[t.Tuple[str, str]]:
+    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
         out = [('indexing_watcher', 'watcher')]
         if self.compatible_watcher is not None:
             out.append(('compatible_watcher', 'watcher'))
@@ -120,7 +120,7 @@ class VectorIndex(Component):
         db: t.Any = None,
         outputs: t.Optional[t.Dict] = None,
         featurize: bool = True,
-        ids: t.Optional[t.List[str]] = None,
+        ids: t.Optional[t.Sequence[str]] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
         models, keys = self.models_keys
@@ -174,7 +174,7 @@ class VectorIndex(Component):
         )
 
     @property
-    def models_keys(self) -> t.Tuple[t.List[str], t.List[str]]:
+    def models_keys(self) -> t.Tuple[t.Sequence[str], t.Sequence[str]]:
         if self.compatible_watcher:
             watchers = [self.indexing_watcher, self.compatible_watcher]
         else:

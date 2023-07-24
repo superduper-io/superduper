@@ -63,7 +63,7 @@ class VectorSearchPerformance:
         for i in range(len(validation_data)):
             r = validation_data[i]
             if single_model:
-                all_r = self.splitter(r)
+                all_r = self.splitter and self.splitter(r)
             else:
                 all_r = [r for _ in models]
 

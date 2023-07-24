@@ -307,7 +307,7 @@ class Base:
 
 
 @dc.dataclass
-class TorchModel(Base, Model):
+class TorchModel(Base, Model):  # type: ignore[misc]
     optimizer_state: t.Optional[Artifact] = None
     forward_method: str = '__call__'
     train_forward_method: str = '__call__'

@@ -1,35 +1,28 @@
+from collections import defaultdict
 from dask.distributed import Future
+import click
 import dataclasses as dc
 import math
+import networkx
+import superduperdb as s
 import typing as t
 import warnings
-from collections import defaultdict
 
-import click
-import networkx
-
-from superduperdb import CFG
-from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.component import Component
 from superduperdb.core.document import Document
-from superduperdb.core.exceptions import ComponentInUseError, ComponentInUseWarning
-from superduperdb.datalayer.base.artifacts import ArtifactStore
-from superduperdb.datalayer.base.data_backend import BaseDataBackend
-from superduperdb.datalayer.base.metadata import MetaDataStore
-from superduperdb.datalayer.base.query import (
-    Insert,
-    Select,
-    Delete,
-    Update,
-    SelectOne,
-    Like,
-)
+from superduperdb.core.job import FunctionJob, ComponentJob, Job
+from superduperdb.core.serializable import Serializable
+from superduperdb.core.task_workflow import TaskWorkflow
+from superduperdb.misc.downloads import Downloader, gather_uris
 from superduperdb.misc.special_dicts import MongoStyleDict
-from .download_content import download_content
-from superduperdb.misc.downloads import Downloader
-from superduperdb.misc.downloads import gather_uris
-from superduperdb.misc.logger import logging
 from superduperdb.vector_search.base import VectorDatabase
+
+from .artifacts import ArtifactStore
+from .data_backend import BaseDataBackend
+from .download_content import download_content
+from .exceptions import ComponentInUseError, ComponentInUseWarning
+from .metadata import MetaDataStore
+from .query import Delete, Insert, Like, Select, SelectOne, Update
 
 from superduperdb.core.artifact_tree import (
     get_artifacts,
@@ -37,9 +30,6 @@ from superduperdb.core.artifact_tree import (
     load_artifacts_from_store,
     replace_artifacts,
 )
-from ...core.job import FunctionJob, ComponentJob, Job
-from ...core.serializable import Serializable
-
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -92,7 +82,7 @@ class Datalayer:
         self.encoders = LoadDict(self, 'encoder')
         self.vector_indices = LoadDict(self, 'vector_index')
 
-        self.distributed = CFG.distributed
+        self.distributed = s.CFG.distributed
         self.metadata = metadata
         self.artifact_store = artifact_store
         self.databackend = databackend
@@ -254,7 +244,7 @@ class Datalayer:
         :param depends_on: t.Sequence of dependencies
         """
         if distributed is None:
-            distributed = CFG.distributed
+            distributed = s.CFG.distributed
         return job(db=self, dependencies=depends_on, distributed=distributed)
 
     def select(self, select: Select) -> SelectResult:
@@ -518,13 +508,13 @@ class Datalayer:
         model=None,
         predict_kwargs=None,
     ):
-        logging.info('finding documents under filter')
+        s.log.info('finding documents under filter')
         features = features or {}
         model_identifier = model_info['identifier']
         if features is None:
             features = {}  # pragma: no cover
         documents = list(self.execute(select.select_using_ids(_ids)))
-        logging.info('done.')
+        s.log.info('done.')
         documents = [x.unpack() for x in documents]
         if key != '_base' or '_base' in features:
             passed_docs = [r[key] for r in documents]
@@ -548,7 +538,7 @@ class Datalayer:
 
         existing_versions = self.show(object.variety, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
-            logging.warn(f'{object.unique_id} already exists - doing nothing')
+            s.log.warn(f'{object.unique_id} already exists - doing nothing')
             return
 
         if existing_versions:
@@ -702,7 +692,7 @@ class Datalayer:
 
         documents = [x.content for x in documents]
         uris, keys, place_ids = gather_uris(documents)
-        logging.info(f'found {len(uris)} uris')
+        s.log.info(f'found {len(uris)} uris')
         if not uris:
             return
 
@@ -805,7 +795,7 @@ class Datalayer:
 
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                logging.info(
+                s.log.info(
                     'computing chunk '
                     f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
                 )

@@ -41,12 +41,11 @@ target-version = ["py38"]
 [tool.mypy]
 ignore_missing_imports = true
 disable_error_code = [
-    "call-arg",
+    "assignment",
     "attr-defined",
-    "union-attr",
+    "call-arg",
     "index",
-    "misc",
-    "assignment"
+    "union-attr",
     ]
 
 [tool.pytest.ini_options]

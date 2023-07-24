@@ -155,8 +155,8 @@ def copy_vectors(
         )
         table = db.vector_database.get_table(config, create=True)
 
-        vectors = [VectorCollectionItem(**vector) for vector in vectors]
-        table.add(vectors, upsert=True)
+        vector_list = [VectorCollectionItem(**vector) for vector in vectors]
+        table.add(vector_list, upsert=True)
     except Exception:
         logging.exception(
             f"Error in copying_vectors for vector_index: {indexing_watcher_identifier}"

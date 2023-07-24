@@ -4,14 +4,9 @@ import dataclasses as dc
 
 import superduperdb as s
 from superduperdb.core.component import Component
-from superduperdb.core.dataset import Dataset
 from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encodable
-from superduperdb.core.metric import Metric
-from superduperdb.core.model import ModelEnsemble
 from superduperdb.core.watcher import Watcher
-from superduperdb.datalayer.base.datalayer import Datalayer
-from superduperdb.metrics.vector_search import VectorSearchPerformance
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
@@ -187,35 +182,3 @@ class VectorIndex(Component):
         models = [w.model.identifier for w in watchers]
         keys = [w.key for w in watchers]
         return models, keys
-
-    def _validate(
-        self,
-        db: Datalayer,
-        validation_set: t.Union[str, Dataset],
-        metrics: t.List[t.Union[Metric, str]],
-    ) -> t.Dict[str, t.List]:
-        models, keys = self.models_keys
-        models = [db.models[m] for m in models]
-        if isinstance(validation_set, str):
-            validation_data = db.load('dataset', validation_set)
-
-        def to_metric(m):
-            return m if isinstance(m, Metric) else db.load('metric', m)
-
-        metric_list = [to_metric(m) for m in metrics]
-
-        unpacked = [r.unpack() for r in validation_data.data]
-        model_ensemble = ModelEnsemble(identifier='tmp', models=models)
-        if len(keys) < 2:
-            msg = 'Can only evaluate VectorSearch with compatible watchers...'
-            raise ValueError(msg)
-
-        return VectorSearchPerformance(
-            measure=self.measure,
-            index_key=self.indexing_watcher.key,
-            compatible_keys=[self.compatible_watcher.key],
-        )(
-            validation_data=unpacked,
-            model=model_ensemble,
-            metrics=metric_list,
-        )

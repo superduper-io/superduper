@@ -1,7 +1,6 @@
 import numpy
 import typing as t
 
-from pydantic import Field
 from tqdm import tqdm
 
 from superduperdb.core.artifact import Artifact
@@ -16,12 +15,26 @@ import dataclasses as dc
 def get_data_from_query(
     select: Select,
     X: str,
+    db: Datalayer,
     y: t.Optional[str] = None,
     y_preprocess: t.Optional[t.Callable] = None,
+    preprocess: t.Optional[t.Callable] = None,
 ):
+    def transform(r):
+        out = {}
+        if X == '_base':
+            out.update(**preprocess(r))
+        else:
+            out[X] = preprocess(r[X])
+        if y is not None:
+            out[y] = y_preprocess(r[y]) if y_preprocess else r[y]
+        return out
+
     data = QueryDataset(
         select=select,
         keys=[X] if y is None else [X, y],
+        transform=transform,
+        db=db,
     )
     documents = []
     for i in tqdm(range(len(data))):
@@ -41,19 +54,18 @@ def get_data_from_query(
 
 @dc.dataclass
 class SklearnTrainingConfiguration(_TrainingConfiguration):
-    fit_params: t.Dict = Field(default_factory=dict)
-    predict_params: t.Dict = Field(default_factory=dict)
+    fit_params: t.Dict = dc.field(default_factory=dict)
+    predict_params: t.Dict = dc.field(default_factory=dict)
     y_preprocess: t.Optional[Artifact] = None
 
 
 @dc.dataclass
 class Estimator(Model):
-    postprocess: t.Union[Artifact, t.Callable, None] = None
-
     def __post_init__(self):
+        if self.predict_method is not None:
+            assert self.predict_method == 'predict'
+        self.predict_method = 'predict'
         super().__post_init__()
-        if self.postprocess and not isinstance(self.postprocess, Artifact):
-            self.postprocess = Artifact(artifact=self.postprocess)
 
     @property
     def estimator(self):
@@ -65,11 +77,8 @@ class Estimator(Model):
         else:
             return super().__getattribute__(item)
 
-    def _predict(self, X, **predict_params):
-        out = self.estimator.predict(X, **predict_params).tolist()
-        if self.postprocess:
-            out = self.postprocess(out)
-        return out
+    def _forward(self, X, **kwargs):
+        return self.estimator.predict(X, **kwargs)
 
     def _fit(  # type: ignore[override]
         self,
@@ -97,13 +106,33 @@ class Estimator(Model):
                     y_preprocess = y_preprocess.artifact
             # ruff: noqa: E501
             X, y = get_data_from_query(
-                select=select, X=X, y=y, y_preprocess=y_preprocess  # type: ignore[arg-type]
+                select=select,  # type: ignore[arg-type]
+                db=db,  # type: ignore[arg-type]
+                X=X,
+                y=y,
+                y_preprocess=y_preprocess,  # type: ignore[arg-type]
+                preprocess=self.preprocess.artifact if self.preprocess else lambda x: x,  # type: ignore[arg-type]
             )
         if self.training_configuration is not None:
-            return self.estimator.fit(
+            to_return = self.estimator.fit(
                 X=X,
                 y=y,
                 **self.training_configuration.get('fit_params', {}),
             )
         else:
-            return self.estimator.fit(X, y)
+            to_return = self.estimator.fit(X, y)
+
+        if validation_sets is not None:
+            results = {}
+            for validation_set in validation_sets:
+                results.update(
+                    self._validate(
+                        db=db,
+                        validation_set=validation_set,  # type: ignore[arg-type]
+                        metrics=metrics,  # type: ignore[arg-type]
+                    )
+                )
+            self.append_metrics(results)
+        if db is not None:
+            db.replace(self, upsert=True)
+        return to_return

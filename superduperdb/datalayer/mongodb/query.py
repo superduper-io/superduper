@@ -389,7 +389,11 @@ class Aggregate(Select):
         raise NotImplementedError
 
     def __call__(self, db):
-        return db.db[self.collection.name].aggregate(*self.args, **self.kwargs)
+        return SuperDuperCursor(
+            id_field='_id',
+            raw_cursor=db.db[self.collection.name].aggregate(*self.args, **self.kwargs),
+            encoders=db.encoders,
+        )
 
 
 @dc.dataclass
@@ -520,6 +524,8 @@ class InsertMany(Insert):
             db.add(e)
         documents = [r.encode() for r in self.documents]
         for r in documents:
+            if '_fold' in r:
+                continue
             if random.random() < valid_prob:
                 r['_fold'] = 'valid'
             else:

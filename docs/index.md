@@ -7,6 +7,8 @@
 SuperDuperDB is a Python package providing tools for developers to apply AI and machine learning
 in their already deployed datalayer, and simulatenously to set-up a scalable, open-source and auditable environment to do this.
 
+SuperDuperDB application makes sure that the database, embeddings and models stay in sync. The execution is either local or in a Dask cluster.
+
 ![](img/overview.png)
 
 ## Mission
@@ -77,19 +79,20 @@ db = superduper(pymongo.MongoClient().my_db)
 
 # Once wrapped, we can fit and predict "in" the database, simply
 # specifying the data to be processed with a query.
+# The model training doesn't happen in the database, but is scheduled either on a Dask cluster or locally
 coll = Collection(name='my_collection')
 model.fit(X='input_col', y='predict_col', db=db, select=coll.find({'_fold': 'train'}))
 
-# Predictions are saved in the database alongside the inputs.
+# Predictions are saved in versioned fields in the database alongside the inputs.
 model.predict(X='input_col', db=db, select=coll.find({'_fold': 'valid'}))
 ```
 
 ### Continuous model processing on incoming data
-SuperDuperDB contains components allowing developers to configure models to continuously infer outputs on specified data, and save the outputs back to the database.
+SuperDuperDB contains components allowing developers to configure models to [continuously infer](./infrastructure/change_data_capture.md) outputs on specified data, and save the outputs back to the database.
 
 ```python
 # Watch the database for incoming data, and process this with a model
-# Model outputs are continuously stored in the input records
+# Model output is continuously stored in a versioned field in each input record
 model.predict(X='input_col', db=db, select=coll.find(), watch=True)
 ```
 

@@ -85,7 +85,7 @@ import superduperdb
 ```python
 import superduperdb
 ```
-- **Integrate externally hosted models gated via an API (such as ChatGPT) <a href="404" target="_blank">(read more in the docs here)</a>:**
+- **Integrate externally hosted models gated via an API (such as OpenAI) <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
 import superduperdb
 ```

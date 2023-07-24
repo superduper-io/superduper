@@ -76,11 +76,11 @@
 # How to ⁉️ 🤷
 #### The following are three examples of how you use SuperDuperDB in Python (find all how-tos <a href="404" target="_blank">in the docs here</a>): 
 
-- **Deploy/ Install a Pytorch, skLearn or HuggingFace model <a href="404" target="_blank">(read more in the docs here)</a>:**
+- **Deploy/ Install a Pytorch, sklearn or HuggingFace model <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
 import superduperdb
 ```
-- **Train a model <a href="404" target="_blank">(read more in the docs here)</a>:**
+- **Train/ fine-tune a model <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
 import superduperdb
 ```

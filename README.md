@@ -73,23 +73,21 @@
 </p>
 
 ## :electric_plug: Quickstart
-
-1. Install SuperDuperDB via `pip (*~1 minute*): 
-
+#### 1. Install SuperDuperDB via `pip (*~1 minute*): 
 ```
 pip install superduperdb
 ```
-
-2. Install MongoDB:
+#### 2. Install MongoDB:
    - 🔥 You already have MongoDB installed? Let's go!
    - 🍃 You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>. (<em>~10-15 minutes</em>)
+#### 3. Take a guided tour by running:
+```
+go superduperdb
+```
+#### 4. <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Try one of our example use cases</a>
 
-4. <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Try out SuperDuperDB</a>
-</p>
-
-### Warning
-
-SuperDuperDB is currently in *alpha*. Please expect:
+## ⚠️ Disclaimer
+#### SuperDuperDB is currently in *alpha*. Please expect:
 
 - :zap: breaking changes 
 - :rock: rough edges 

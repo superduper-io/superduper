@@ -45,8 +45,8 @@
 ### What can you do with SuperDuperDB?
 
 - 🔮 **Deploy** all your AI models to automatically **compute outputs (inference)** in the database in a single environment with simple Python commands.  
-- 🏋️ **Train** models on the data in yor database without additional ingestion and pre-processing simply by querying.  
-- 🌐 **Integrate** APIs such as OpenAI to work together with other models on your data effortlessly. 
+- 🏋️ **Train** models on your data in your database simply by querying without additional ingestion and pre-processing.  
+- 🌐 **Integrate** AI APIs (such as OpenAI) to work together with other models on your data effortlessly. 
 
  ### Why choose SuperDuperDB?
 

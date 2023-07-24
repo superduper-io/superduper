@@ -2,7 +2,7 @@ from . import config
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from superduperdb.misc import dicts
+from superduperdb.misc import config_dicts
 import typing as t
 import os
 
@@ -46,10 +46,10 @@ class ConfigSettings:
         if isinstance(files, str):
             files = files.split(FILE_SEP)
 
-        data = dicts.read_all(files)
+        data = config_dicts.read_all(files)
         parent = self.cls().dict()
-        environ_dict = dicts.environ_to_config_dict(self.prefix, parent, environ)
-        return self.cls(**dicts.combine((*data, environ_dict)))
+        environ_dict = config_dicts.environ_to_config_dict(self.prefix, parent, environ)
+        return self.cls(**config_dicts.combine((*data, environ_dict)))
 
 
 def build_config():

@@ -1,3 +1,8 @@
+"""
+Operations on dictionaries used to fill and combine config files
+and environment variables
+"""
+
 from pathlib import Path
 import typing as t
 import fil

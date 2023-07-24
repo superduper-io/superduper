@@ -1,10 +1,10 @@
-from superduperdb.misc import dicts
+from superduperdb.misc import config_dicts
 import io
 import pytest
 
 
-def test_combine_dicts():
-    actual = dicts.combine(
+def test_combine_config_dicts():
+    actual = config_dicts.combine(
         (
             {'one': {'two': ['three', 'four', 'five']}},
             {'one': {'three': 3}},
@@ -27,7 +27,7 @@ def test_combine_dicts():
 
 
 def test_environ_dict_():
-    actual = dicts.environ_dict(
+    actual = config_dicts.environ_dict(
         'TEST_',
         {
             'TOAST_ONE': 'one',
@@ -63,7 +63,7 @@ PARENT = {
     ),
 )
 def test_split_address(key, expected):
-    actual = [list(i) for i in dicts.split_address(key, PARENT)]
+    actual = [list(i) for i in config_dicts.split_address(key, PARENT)]
     assert actual == expected
 
 
@@ -76,7 +76,7 @@ def test_environ_to_config_dict_many():
         'TEST_PURPLE': 'purple',
     }
     err = io.StringIO()
-    actual = dicts.environ_to_config_dict('TEST_', PARENT, environ, err)
+    actual = config_dicts.environ_to_config_dict('TEST_', PARENT, environ, err)
     expected = {'blue': {'green': {'orange': 'bge'}}, 'red': 'red'}
 
     assert actual == expected
@@ -94,7 +94,7 @@ def test_environ_to_config_dict_single():
         'TEST_BLUE_GREEN_ORANGE': 'bge',
     }
     err = io.StringIO()
-    actual = dicts.environ_to_config_dict('TEST_', PARENT, environ, err)
+    actual = config_dicts.environ_to_config_dict('TEST_', PARENT, environ, err)
 
     expected = {'blue': {'green': {'orange': 'bge'}}}
     assert actual == expected

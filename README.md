@@ -72,21 +72,23 @@
   <img width="650" src="docs/img/overview.png">
 </p>
 
-# Quickstart :electric_plug:
+# Installation & Quickstart :electric_plug:
 #### 1. Install SuperDuperDB via `pip (*~1 minute*): 
 ```
 pip install superduperdb
 ```
 #### 2. Install MongoDB:
-   - 🔥 You already have MongoDB installed? Let's go!
-   - 🍃 You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>. (<em>~10-15 minutes</em>)
+   - You already have MongoDB installed? Let's go!
+   - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>. (<em>~10-15 minutes</em>)
+
 #### 3. Take a guided tour by running:
 ```
 go superduperdb
 ```
 #### 4. Try one of our example use cases <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">found here!</a>
+<br>
 
-⚠️ Disclaimer: SuperDuperDB is currently in *alpha*. Please expect :zap: breaking changes, :rock: rough edges and :runner: fast pace of new feature development 
+*⚠️ Disclaimer: SuperDuperDB is currently in *alpha*. Please expect breaking changes, rough edges and fast pace of new feature development*
 
 # Developer Environment :mushroom: 
 
@@ -94,20 +96,11 @@ Please see our [INSERT LINK](./) for details.
 
 # Getting Help 🙋
 
-<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
-    <img src="https://img.shields.io/badge/Slack-superduperdb-8A2BE2?logo=slack" alt="Slack">
-</a>
-
-<a href="https://github.com/SuperDuperDB/superduperdb-stealth/issues" target="_blank">
-    <img src="https://img.shields.io/badge/Issues-superduperdb-8A2BE2?logo=github" alt="Issues">
-</a>
-
-<a href="https://github.com/SuperDuperDB/superduperdb-stealth/wiki" target="_blank">
-    <img src="https://img.shields.io/badge/Project%20Wiki-superduperdb-8A2BE2?logo=github" alt="Wiki">
-</a>
-
-
-If you have any problems please contact a maintainer or community volunteer. The GitHub issues or the Slack channel are a great place to start. We look forward to seeing you there! :purple_heart:
+If you have any problems or questions <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
+our Slack group</a> is a great place to start (We look forward to seeing you there! :purple_heart:). You can also comment <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
+an existing issue</a> or create <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
+a new one</a>. 
+Pleasef also feel free to contact a maintainer or community volunteer directly! 
 
 # Contributing :seedling: 
 

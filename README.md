@@ -88,13 +88,11 @@ pip install superduperdb
 
 *⚠️ Disclaimer: SuperDuperDB is currently in *alpha*. Please expect breaking changes, rough edges and fast pace of new feature development*
 
-<br>
 
 # Quickstart ▶️
 
 Try SuperDuperDB in Google Colab <a href="404">here</a>!
 
-<br>
 
 # Community & Getting Help 🙋
 
@@ -105,7 +103,6 @@ If you have any problems or questions:
 a new one</a>.
 - Feel free to contact a maintainer or community volunteer directly! 
 
-<br>
 
 # Contributing :seedling: 
 

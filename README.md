@@ -91,7 +91,7 @@ pip install superduperdb
     - 🔥 You already have MongoDB installed? Let's go!</li>
     - 🍃 You need to install MongoDB? See the docs [here](https://www.mongodb.com/docs/manual/installation/). (*~10-15 minutes*)
     
-3. [Try out SuperDuperDB]()
+3. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/11SJunSZc52jUuYrmNi5GziombcQ_sdhJ#scrollTo=XwWu32JBovja)
 
 ### Warning
 

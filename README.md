@@ -35,7 +35,7 @@
 
 <hr>
 
-## 🔰 Introduction
+## Introduction 🔰 
 
 <h4>What can you do with SuperDuperDB?</h4>
 
@@ -72,7 +72,7 @@
   <img width="650" src="docs/img/overview.png">
 </p>
 
-## :electric_plug: Quickstart
+## Quickstart :electric_plug:
 #### 1. Install SuperDuperDB via `pip (*~1 minute*): 
 ```
 pip install superduperdb
@@ -86,17 +86,29 @@ go superduperdb
 ```
 #### 4. <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Try one of our example use cases</a>
 
-## ⚠️ Disclaimer
-#### SuperDuperDB is currently in *alpha*. Please expect:
+⚠️ Disclaimer: SuperDuperDB is currently in *alpha*. Please expect :zap: breaking changes, :rock: rough edges and :runner: fast pace of new feature development 
 
-- :zap: breaking changes 
-- :rock: rough edges 
-- :runner: fast pace of new feature development 
-
-## :mushroom: Developer Environment
+## Developer Environment :mushroom: 
 
 Please see our [INSERT LINK](./) for details.
 
-## :seedling: Contributing
+## Getting Help 🙋
+
+<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
+    <img src="https://img.shields.io/badge/Slack-superduperdb-8A2BE2?logo=slack" alt="Slack">
+</a>
+
+<a href="https://github.com/SuperDuperDB/superduperdb-stealth/issues" target="_blank">
+    <img src="https://img.shields.io/badge/Issues-superduperdb-8A2BE2?logo=github" alt="Issues">
+</a>
+
+<a href="https://github.com/SuperDuperDB/superduperdb-stealth/wiki" target="_blank">
+    <img src="https://img.shields.io/badge/Project%20Wiki-superduperdb-8A2BE2?logo=github" alt="Wiki">
+</a>
+
+
+If you have any problems please contact a maintainer or community volunteer. The GitHub issues or the Slack channel are a great place to start. We look forward to seeing you there! :purple_heart:
+
+## Contributing :seedling: 
 
 Please see our [Contributing Guide](CONTRIBUTING.md) for details.

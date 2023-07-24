@@ -75,13 +75,13 @@
 - **Integrate externally hosted models gated via an API (such as ChatGPT):**
 
 # Installation :electric_plug:
-#### 1. Install SuperDuperDB via `pip (*~1 minute*): 
+#### 1. Install SuperDuperDB via `pip *(~1 minute)*: 
 ```
 pip install superduperdb
 ```
-#### 2. Install MongoDB:
+#### 2. Install MongoDB *(~10-15 minute)*:
    - You already have MongoDB installed? Let's go!
-   - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>. (<em>~10-15 minutes</em>)
+   - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>.
 
 #### 3. Try one of our example use cases/ notebooks <a href="404">found here!</a>
 <br>
@@ -96,7 +96,7 @@ Try SuperDuperDB in Google Colab <a href="404">here</a>!
 
 # Community & Getting Help 🙋
 
-If you have any problems or questions:
+If you have any problems, questions, commets or ideas:
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">our Slack</a> (we look forward to seeing you there 💜).
 - Search through <a href="404" target="_blank">our GitHub Discussions</a>, or <a href="404" target="_blank">add a new question</a>.
 - Comment <a href="404" target="_blank">an existing issue</a> or create <a href="404" target="_blank">

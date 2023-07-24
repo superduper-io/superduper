@@ -37,7 +37,7 @@ class VectorIndex(Component):
 
     :param identifier: Unique ID of index
     :param indexing_watcher: watcher which is applied to create vectors
-    :param compatible_watchers: list of additional watchers which can
+    :param compatible_watcher: list of additional watchers which can
                                 "talk" to the index (e.g. multi-modal)
     :param measure: Measure which is used to compare vectors in index
     """
@@ -46,7 +46,7 @@ class VectorIndex(Component):
 
     identifier: str
     indexing_watcher: t.Union[Watcher, str]
-    compatible_watcher: t.Union[Watcher, str] = dc.field(default_factory=list)
+    compatible_watcher: t.Optional[t.Union[Watcher, str]] = None
     measure: str = 'cosine'
     version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)

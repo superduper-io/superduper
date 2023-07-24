@@ -302,8 +302,8 @@ class Find(Select):
 class CountDocuments(Find):
     collection: t.Optional[Collection] = None
     like_parent: t.Optional[PreLike] = None
-    args: t.Optional[t.Sequence] = dc.field(default_factory=lambda: [])
-    kwargs: t.Optional[t.Dict] = dc.field(default_factory=lambda: {})
+    args: t.Sequence = dc.field(default_factory=lambda: [])
+    kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
     def __call__(self, db):
         return db.db[self.collection.name].count_documents(*self.args, **self.kwargs)

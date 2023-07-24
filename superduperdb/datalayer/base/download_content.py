@@ -65,13 +65,13 @@ def download_content(
         try:
             headers = db.metadata.get_metadata(key='headers')
         except TypeError:
-            headers = 0
+            pass
 
     if timeout is None:
         try:
             timeout = db.metadata.get_metadata(key='download_timeout')
         except TypeError:
-            timeout = None
+            pass
 
     def _download_update(key, id, bytes):
         return query.download_update(db=db, key=key, id=id, bytes=bytes)

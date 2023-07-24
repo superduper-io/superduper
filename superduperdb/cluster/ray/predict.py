@@ -18,8 +18,9 @@ def create_server(model: str, num_replicas):
 
         async def __call__(self, http_request: Request) -> bytes:
             data = await http_request.body()
+            # BROKEN
             data = bson.decode(data)
-            data = [Document.decode(r, encoders=self.db.encoders) for r in data]
+            [Document.decode(r, encoders=self.db.encoders) for r in data]
             X = Document.decode(data['X'], encoders=self.db.encoders)
             try:
                 X = X.unpack()

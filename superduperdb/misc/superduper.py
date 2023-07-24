@@ -6,11 +6,10 @@ __all__ = ('superduper',)
 class DuckTyper:
     attrs: t.Sequence[str]
     count: int = 0
-    DUCK_TYPES: t.Tuple[str] = ()
 
     @classmethod
     def run(cls, item: t.Any, **kwargs):
-        dts = [dt for dt in cls.DUCK_TYPES if dt.accept(item)]
+        dts = [dt for dt in _DUCK_TYPES if dt.accept(item)]
         if len(dts) == 1:
             return dts[0].create(item, **kwargs)
         raise NotImplementedError(
@@ -97,5 +96,5 @@ def auto_identify(instance):
     return instance.__class__.__name__.lower()
 
 
-DuckTyper.DUCK_TYPES = MongoDbTyper, SklearnTyper, TorchTyper
+_DUCK_TYPES = MongoDbTyper, SklearnTyper, TorchTyper
 superduper = DuckTyper.run

@@ -33,6 +33,9 @@ class Artifact:
     #: The sha1 hash of the artifact
     sha1: str = ''
 
+    # In case the object isn't hashable (deduplication not possible)
+    hash: t.Optional[int] = None
+
     def __init__(
         self,
         artifact: t.Any = None,
@@ -41,6 +44,7 @@ class Artifact:
         object_id: int = 0,
         serializer: str = 'dill',
         sha1: str = '',
+        hash: t.Optional[int] = None,
     ):
         self.artifact = artifact
         self.file_id = file_id
@@ -48,8 +52,11 @@ class Artifact:
         self.object_id = object_id
         self.serializer = serializer
         self.sha1 = sha1
+        self.hash = hash
 
     def __hash__(self):
+        if self.hash is not None:
+            return self.hash
         if isinstance(self.artifact, list):
             return hash(str(self.artifact[:100]))
         if isinstance(self.artifact, dict):

@@ -22,17 +22,17 @@ class QueryDataset(Dataset):
         suppress=(),
         transform=None,
         features=None,
-        database=None,
+        db=None,
         **kwargs,
     ):
         super().__init__()
 
-        self._database = database
+        self._database = db
         self.keys = keys
 
         self.transform = transform if transform else lambda x: x
-        self._documents = list(self.database.execute(select))
         self.select = select.add_fold(fold)
+        self._documents = list(self.database.execute(self.select))
         self.suppress = suppress
         self.features = features or {}
 

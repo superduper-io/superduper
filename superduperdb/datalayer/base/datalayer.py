@@ -164,6 +164,7 @@ class Datalayer:
         model_identifier: str,
         input: Document,
         one: bool = False,
+        select: t.Optional[Select] = None,
     ) -> t.Union[t.List[Document], Document]:
         """
         Apply model to input.
@@ -830,7 +831,6 @@ class Datalayer:
         )
         return outputs
 
-    # TODO generalize to components
     def replace(
         self,
         object: t.Any,

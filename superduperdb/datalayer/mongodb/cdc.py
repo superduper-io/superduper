@@ -95,21 +95,16 @@ class CachedTokens:
         self._current_tokens = []
 
     def append(self, token: TokenType) -> None:
-        with open(CachedTokens.token_path, 'ab') as fp:
+        with open(CachedTokens.token_path, 'a') as fp:
             stoken = json.dumps(token)
             stoken = stoken + self.separate
-            stoken = stoken.encode('utf-8')
-            fp.write(stoken)  # type: ignore [arg-type]
+            fp.write(stoken)
 
     def load(self) -> t.Sequence[TokenType]:
-        with open(CachedTokens.token_path, 'rb') as fp:
-            jtokens = fp.read()
-            tokens = jtokens.decode('utf-8')
-            tokens = tokens.split(self.separate)[:-1]
-            tokens = list(map(lambda token: TokenType(json.loads(token)), tokens))
-        self._current_tokens = tokens
-        tokens = t.cast(t.Sequence[TokenType], tokens)
-        return tokens  # type: ignore [return-value]
+        with open(CachedTokens.token_path) as fp:
+            tokens = fp.read().split(self.separate)[:-1]
+            self._current_tokens = [TokenType(json.loads(t)) for t in tokens]
+        return self._current_tokens
 
 
 class BaseDatabaseWatcher(ABC):
@@ -382,6 +377,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
     """
 
     IDENTITY_SEP: str = '/'
+    _scheduler: t.Optional[threading.Thread]
 
     def __init__(
         self,
@@ -578,9 +574,9 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         Set the change pipeline for the watcher.
         """
         if change_pipeline is None:
-            self._change_pipeline = MongoChangePipelines.get('generic')
-        else:
-            self._change_pipeline = change_pipeline
+            change_pipeline = MongoChangePipelines.get('generic')
+
+        self._change_pipeline = change_pipeline  # type: ignore [assignment]
 
     def resume(self, token: TokenType) -> None:
         """

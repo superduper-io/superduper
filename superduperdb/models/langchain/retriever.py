@@ -86,9 +86,9 @@ class DBQAWithSourcesChain(Model):
     :param n: Number of documents to retrieve as seed for chain
     """
 
-    vector_index: t.Union[VectorIndex, str] = None
-    chain_type: str = ('stuff',)
-    n: int = (5,)
+    vector_index: t.Union[VectorIndex, str] = ''
+    chain_type: str = 'stuff'
+    n: int = 5
 
     def _on_load(self, db):
         if isinstance(self.vector_index, str):

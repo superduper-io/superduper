@@ -42,7 +42,7 @@ class InMemoryVectorCollection(VectorCollection):
     def _add(self, item: VectorCollectionItem) -> None:
         ix = self._index.lookup.get(item.id)
         if ix is not None:
-            self._index.h[ix] = item.vector
+            self._index.h[ix] = item.vector  # type: ignore[assignment]
         else:
             self._index.index.append(item.id)
             self._index.lookup[item.id] = len(self._index.lookup)

@@ -82,7 +82,7 @@ class Client:
 
     def insert(self, query: Insert):
         documents = dump_bsons(query.documents)
-        query.documents = None
+        query.documents = []
         serialized = query.serialize()
         file_id = str(uuid.uuid4())
         request_id = str(uuid.uuid4())

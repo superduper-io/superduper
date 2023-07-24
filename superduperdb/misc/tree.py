@@ -9,7 +9,7 @@ Accept = t.Callable[[t.Any], bool]
 Rewrite = t.Callable[[t.Any], t.Any]
 
 
-def tree_find(tree: t.Any, accept: Accept) -> t.Iterator[t.Any]:
+def tree_find(tree: t.Any, accept: Accept) -> t.Iterator:
     """Iterates recursively through lists and dicts, yielding all leaves `x`
        where `accept(x)` is True.
 
@@ -21,9 +21,9 @@ def tree_find(tree: t.Any, accept: Accept) -> t.Iterator[t.Any]:
         return
 
     if isinstance(tree, dict):
-        it = tree.values()
+        it = iter(tree.values())
     elif isinstance(tree, list):
-        it = tree
+        it = iter(tree)
     else:
         return
 

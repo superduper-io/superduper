@@ -52,7 +52,8 @@
 
 - 🧹 Avoid duplicate data, duplicate pipelines and duplicate infrastructure with a single scalable deployment
 - 📅 Deployment automatically kept up-to-date as new data is handled automatically and immediately
-- 🤸 Python only: Single developer setup for lightweight use-cases
+- 🤸 Python only: Empowering solo developers to implement robust AI use-cases, standing the test of time.
+
 
 ### Who is SuperDuperDB for?
 

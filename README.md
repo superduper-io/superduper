@@ -72,6 +72,7 @@
   <img width="650" src="docs/img/overview.png">
 </p>
 
+
 # Installation :electric_plug:
 #### 1. Install SuperDuperDB via `pip (*~1 minute*): 
 ```
@@ -86,11 +87,15 @@ pip install superduperdb
 
 *⚠️ Disclaimer: SuperDuperDB is currently in *alpha*. Please expect breaking changes, rough edges and fast pace of new feature development*
 
+<br>
+
 # Quickstart ▶️
 
 #### Try SuperDuperDB in Google Colab <a href="404">here</a>!
 
-# Getting Help 🙋
+<br>
+
+# Community & Getting Help 🙋
 
 #### If you have any problems or questions:
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">our Slack</a> (we look forward to seeing you there 💜).
@@ -98,6 +103,8 @@ pip install superduperdb
 - Comment <a href="404" target="_blank">an existing issue</a> or create <a href="404" target="_blank">
 a new one</a>.
 - Feel free to contact a maintainer or community volunteer directly! 
+
+<br>
 
 # Contributing :seedling: 
 

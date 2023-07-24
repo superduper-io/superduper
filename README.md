@@ -96,12 +96,13 @@ Please see our [INSERT LINK](./) for details.
 
 # Getting Help 🙋
 
-If you have any problems or questions <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
-our Slack group</a> is a great place to start (We look forward to seeing you there! :purple_heart:). You can also comment <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
-an existing issue</a> or create <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">
-a new one</a>. 
-Pleasef also feel free to contact a maintainer or community volunteer directly! 
+If you have any problems or questions:
+- Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">our Slack</a>.
+- Search through <a href="404" target="_blank">our GitHub Discussions</a>, or <a href="404" target="_blank">add a new question</a>.
+- Comment <a href="404" target="_blank">an existing issue</a> or create <a href="404" target="_blank">
+a new one</a>.
+- Feel free to contact a maintainer or community volunteer directly! 
 
 # Contributing :seedling: 
 
-Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We of course welcome any contribution. Please see our [Contributing Guide](CONTRIBUTING.md) for details.

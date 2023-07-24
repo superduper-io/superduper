@@ -25,9 +25,10 @@
 <h1 align="center">Bring AI to your   <a href="https://www.mongodb.com/" target="_blank">MongoDB</a>!
 </h1>
 
-<h4>An open-source environment to deploy, train and operate AI models and APIs in MongoDB with Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>. Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
-</h4>
-    <hr>
+#### An open-source environment to deploy, train and operate AI models and APIs in MongoDB with Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>. Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
+
+<hr>
+
 
 - <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Exlore the docs!</strong></a><br>
 - <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Check out example use cases!</strong></a><br>
@@ -63,15 +64,15 @@
   - 📈 *(Coming soon)* **A model performance monitor** enabling model quality and degradation to be monitored as new data is inserted  
 
 
-
-
-
-
 <p align="center">
   <br>
   <img width="650" src="docs/img/overview.png">
 </p>
 
+# How to ⁉️ 🤷
+- **Deploy/ Install a model:**
+- **Train a model:**
+- **Integrate externally hosted models gated via an API (such as ChatGPT):**
 
 # Installation :electric_plug:
 #### 1. Install SuperDuperDB via `pip (*~1 minute*): 
@@ -109,10 +110,10 @@ a new one</a>.
 # Contributing :seedling: 
 
 #### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
-- bug reports
-- documentation improvements
-- enhancement suggestions
-- feature requests
-- expanding the tutorials and use case examples
+- Bug reports
+- Documentation improvements
+- Enhancement suggestions
+- Feature requests
+- Expanding the tutorials and use case examples
 
 SuperDuperDB is open-source and intended to be a community effort, and it won't be possible without your support and enthusiasm. Please see our [Contributing Guide](CONTRIBUTING.md) for details.

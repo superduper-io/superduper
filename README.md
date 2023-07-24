@@ -25,7 +25,8 @@
 <h1 align="center">Bring AI to your   <a href="https://www.mongodb.com/" target="_blank">MongoDB</a>!
 </h1>
 
-#### An open-source environment to deploy, train and operate AI models and APIs in MongoDB with Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>. Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
+#### An open-source environment to deploy, train and operate AI models and APIs in MongoDB with Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>. 
+#### Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
 
 <hr>
 
@@ -40,13 +41,13 @@
 
 ### What can you do with SuperDuperDB?
 
-- 🚀 **Deploy** all your AI models to automatically **compute outputs** in the database in a single environment with simple Python commands.  
+- 🔮 **Deploy** all your AI models to automatically **compute outputs** in the database in a single environment with simple Python commands.  
 - 🏋️ **Train** models on the data in yor database without additional ingestion and pre-processing simply by querying.  
 - 🌐 **Integrate** APIs such as OpenAI to work together with other models on your data effortlessly. 
 
  ### Why choose SuperDuperDB?
 
-- 🪠 Avoid duplicate data, pipelines and infrastructure with a single scalable deployment
+- 🧹 Avoid duplicate data, pipelines and infrastructure with a single scalable deployment
 - 📅 Deployment automatically kept up-to-date as new data is handled automatically and immediately
 - 🤸 Single developer setup for lightweight use-cases
 
@@ -70,9 +71,20 @@
 </p>
 
 # How to ⁉️ 🤷
-- **Deploy/ Install a model:**
-- **Train a model:**
-- **Integrate externally hosted models gated via an API (such as ChatGPT):**
+#### The following are three examples of how you use SuperDuperDB in Python (find all how-tos <a href="404" target="_blank">in the docs here</a>): 
+
+- **Deploy/ Install a model <a href="404" target="_blank">(read more in the docs here)</a>:**
+```python
+import superduperdb
+```
+- **Train a model <a href="404" target="_blank">(read more in the docs here)</a>:**
+```python
+import superduperdb
+```
+- **Integrate externally hosted models gated via an API (such as ChatGPT) <a href="404" target="_blank">(read more in the docs here)</a>:**
+```python
+import superduperdb
+```
 
 # Installation :electric_plug:
 #### 1. Install SuperDuperDB via `pip *(~1 minute)*: 

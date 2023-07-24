@@ -37,10 +37,10 @@
 
 # Introduction 🔰 
 
-<h4>What can you do with SuperDuperDB?</h4>
+### What can you do with SuperDuperDB?
 
-- 🚀 Deploy all your AI models to automatically compute outputs in the database in a single environment with simple Python commands.  
-- 🏋️ Train models on the data in yor database without additional ingestion and pre-processing simply by querying.  
+- 🚀 **Deploy** all your AI models to automatically **compute outputs** in the database in a single environment with simple Python commands.  
+- 🏋️ **Train** models on the data in yor database without additional ingestion and pre-processing simply by querying.  
 - 🌐 Integrate APIs such as OpenAI to work together with other models on your data effortlessly. 
 
  <h4>Why choose SuperDuperDB?</h4>
@@ -58,7 +58,7 @@
 <h4>SuperDuperDB transforms our MongoDB into:</h4>
 
   - 🔄 An end-to-end live AI deployment which includes a model repository and registry, model training and computation of outputs/ inference 
-  - 📦A feature store where the model outputs are stored alongside the inputs in desired formats and types 
+  - 📦 A feature store where the model outputs are stored alongside the inputs in desired formats and types 
   - 🔢 A fully functional vector database to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search 
   - 📈 *(Coming soon)* A model performance monitor enabling model quality and degradation to be monitored as new data is inserted  
 
@@ -72,7 +72,7 @@
   <img width="650" src="docs/img/overview.png">
 </p>
 
-# Installation & Quickstart :electric_plug:
+# Installation :electric_plug:
 #### 1. Install SuperDuperDB via `pip (*~1 minute*): 
 ```
 pip install superduperdb
@@ -81,23 +81,19 @@ pip install superduperdb
    - You already have MongoDB installed? Let's go!
    - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>. (<em>~10-15 minutes</em>)
 
-#### 3. Take a guided tour by running:
-```
-go superduperdb
-```
-#### 4. Try one of our example use cases <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">found here!</a>
+#### 3. Try one of our example use cases/ notebooks <a href="404">found here!</a>
 <br>
 
 *⚠️ Disclaimer: SuperDuperDB is currently in *alpha*. Please expect breaking changes, rough edges and fast pace of new feature development*
 
-# Developer Environment :mushroom: 
+# Quickstart ▶️
 
-Please see our [INSERT LINK](./) for details.
+#### Try SuperDuperDB in Google Colab <a href="404">here</a>!
 
 # Getting Help 🙋
 
-If you have any problems or questions:
-- Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">our Slack</a>.
+#### If you have any problems or questions:
+- Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA" target="_blank">our Slack</a> (we look forward to seeing you there 💜).
 - Search through <a href="404" target="_blank">our GitHub Discussions</a>, or <a href="404" target="_blank">add a new question</a>.
 - Comment <a href="404" target="_blank">an existing issue</a> or create <a href="404" target="_blank">
 a new one</a>.

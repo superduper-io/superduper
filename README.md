@@ -18,7 +18,7 @@
 
 <p align="center">
    <a href="https://www.superduperdb.com">
-         <img src="docs/img/1680x420_Header_Logo.png?raw=true" width="100%" alt="superduperdb" />
+         <img src="docs/img/1680x420_Header_Logo.png?raw=true" width="100%" alt="SuperDuperDB" />
    </a>
 
 </p>

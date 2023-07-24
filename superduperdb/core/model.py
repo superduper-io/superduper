@@ -1,3 +1,4 @@
+import multiprocessing
 from dask.distributed import Future
 import inspect
 import dataclasses as dc
@@ -12,6 +13,7 @@ from superduperdb.core.encoder import Encoder
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
+
 
 EncoderArg = t.Union[Encoder, str, None]
 ObjectsArg = t.List[t.Union[t.Any, Artifact]]
@@ -51,6 +53,43 @@ class _TrainingConfiguration(Component):
 
 class PredictMixin:
     # ruff: noqa: F821
+
+    def _predict_one(self, X, **kwargs):
+        if self.preprocess is not None:
+            X = self.preprocess.artifact(X)
+        output = self.to_call(X, **kwargs)
+        if self.postprocess is not None:
+            output = self.postprocess.artifact(output)
+        return output
+
+    def _forward(self, X, num_workers=0):
+        if self.batch_predict:
+            return self.to_call(X)
+
+        outputs = []
+        if num_workers:
+            pool = multiprocessing.Pool(processes=num_workers)
+            for r in pool.map(self.to_call, X):
+                outputs.append(r)
+            pool.close()
+            pool.join()
+        else:
+            for r in X:
+                outputs.append(self.to_call(r))
+        return outputs
+
+    def _predict(self, X, one: bool = False, **predict_kwargs):
+        if one:
+            return self._predict_one(X)
+        if self.preprocess is not None:
+            X = list(map(self.preprocess.artifact, X))
+        if self.collate_fn is not None:
+            X = self.collate_fn(X)
+        outputs = self._forward(X, **predict_kwargs)
+        if self.postprocess is not None:
+            outputs = list(map(self.postprocess.artifact, outputs))
+        return outputs
+
     def predict(
         self,
         X: t.Any,
@@ -64,6 +103,8 @@ class PredictMixin:
         one: bool = False,
         **kwargs,
     ):
+        # TODO this should be separated into sub-procedures
+
         if isinstance(select, dict):
             select = Serializable.deserialize(select)
 
@@ -129,7 +170,9 @@ class PredictMixin:
 
             elif select is not None and ids is not None and max_chunk_size is not None:
                 assert not one
+                it = 0
                 for i in range(0, len(ids), max_chunk_size):
+                    print(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
                     self.predict(
                         X=X,
                         db=db,
@@ -139,6 +182,7 @@ class PredictMixin:
                         one=False,
                         **kwargs,
                     )
+                    it += 1
                 return
 
             else:
@@ -164,19 +208,38 @@ class Model(Component, PredictMixin):
     identifier: str
     object: t.Union[Artifact, t.Any]
     encoder: EncoderArg = None
-    train_X: DataArg = None
+    preprocess: t.Union[t.Callable, Artifact, None] = None
+    postprocess: t.Union[t.Callable, Artifact, None] = None
+    collate_fn: t.Union[t.Callable, Artifact, None] = None
+    metrics: t.List[
+        t.Union[str, Metric, None]
+    ] = None  # Need also historical metric values
+    predict_method: t.Optional[str] = None
+    batch_predict: bool = False
+
+    train_X: DataArg = None  # TODO add to FitMixin
     train_y: DataArg = None
     training_select: t.Union[Select, None] = None
-    metrics: t.List[t.Union[str, Metric, None]] = None
+    metric_values: t.Optional[t.Dict] = dc.field(
+        default_factory=dict
+    )  # TODO should be training_metric_values
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
+
     version: t.Optional[int] = None
-    metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    future: t.Optional[Future] = None
+    future: t.Optional[Future] = None  # TODO what's this?
     device: str = "cpu"
 
     def __post_init__(self):
         if not isinstance(self.object, Artifact):
             self.object = Artifact(artifact=self.object)
+        if self.preprocess and not isinstance(self.preprocess, Artifact):
+            self.preprocess = Artifact(artifact=self.preprocess)
+        if self.postprocess and not isinstance(self.postprocess, Artifact):
+            self.postprocess = Artifact(artifact=self.postprocess)
+        if self.predict_method is None:
+            self.to_call = self.object.artifact
+        else:
+            self.to_call = getattr(self.object.artifact, self.predict_method)
 
     @property
     def child_components(self) -> t.List[t.Tuple[str, str]]:
@@ -189,14 +252,8 @@ class Model(Component, PredictMixin):
 
     @property
     def training_keys(self):
-        out = []
-        if isinstance(self.train_X, list):
-            out.extend(self.train_X)
-        elif isinstance(self.train_X, str):
-            out.append(self.train_X)
-        if isinstance(self.train_y, list):
-            out.extend(self.train_y)
-        elif isinstance(self.train_y, str):
+        out = [self.train_X]
+        if self.train_y is not None:
             out.append(self.train_y)
         return out
 
@@ -227,6 +284,33 @@ class Model(Component, PredictMixin):
                 **kwargs,
             },
         )
+
+    def validate(self, db, validation_set: Dataset, metrics: Metric):
+        db.add(self)
+        out = self._validate(db, validation_set, metrics)
+        self.metrics_values.update(out)
+        db.metadata.update_object(
+            variety='model',
+            identifier=self.identifier,
+            version=self.version,
+            key='dict.metric_values',
+            value=self.metric_values,
+        )
+
+    def _validate(self, db, validation_set: Dataset, metrics: Metric):
+        if isinstance(validation_set, str):
+            validation_set = db.load('dataset', validation_set)
+        prediction = self._predict(
+            [MongoStyleDict(r.unpack())[self.train_X] for r in validation_set.data]
+        )
+        results = {}
+        for m in metrics:
+            out = m(
+                prediction,
+                [MongoStyleDict(r.unpack())[self.train_y] for r in validation_set.data],
+            )
+            results[f'{validation_set.identifier}/{m.identifier}'] = out
+        return results
 
     def create_fit_job(
         self,
@@ -308,98 +392,3 @@ class Model(Component, PredictMixin):
                 data_prefetch=data_prefetch,
                 **kwargs,
             )
-
-
-class ModelEnsemblePredictionError(Exception):
-    pass
-
-
-@dc.dataclass
-class ModelEnsemble(Component):
-    variety: t.ClassVar[str] = 'model'
-
-    identifier: str
-    models: t.Sequence[t.Union[str, Model]]
-    version: t.Optional[int] = None
-    train_X: t.Optional[t.List[str]] = None
-    train_y: t.Optional[t.Union[t.Sequence[str], str]] = None
-    metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-
-    @property
-    def child_components(self):
-        out = []
-        for i in range(len(self.models)):
-            out.append((('models', i), 'model'))
-        return out
-
-    def __getitem__(self, submodel: t.Union[int, str]):
-        if isinstance(submodel, int):
-            submodel = next(m for i, m in enumerate(self._model_ids) if i == submodel)
-        else:
-            submodel = getattr(self, submodel)
-
-        if isinstance(submodel, Model):
-            return submodel
-        raise ValueError(f'Expected a Model but got {type(submodel)}: {submodel}')
-
-    @property
-    def training_keys(self):
-        out = []
-        out.extend(self.train_X)
-        if isinstance(self.train_y, list):
-            out.extend(self.train_y)
-        elif isinstance(self.train_y, str):
-            out.append(self.train_y)
-        return out
-
-    # ruff: noqa: F821
-    def fit(
-        self,
-        X: t.Any,
-        y: t.Any = None,
-        db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
-        select: t.Optional[Select] = None,
-        distributed: bool = False,
-        dependencies: t.List[Job] = (),  # type: ignore[assignment]
-        configuration: t.Optional[_TrainingConfiguration] = None,
-        validation_sets: t.Optional[t.List[t.Union[str, Dataset]]] = None,
-        metrics: t.Optional[t.List[Metric]] = None,
-        **kwargs,
-    ):
-        if isinstance(select, dict):
-            select = Serializable.deserialize(select)
-
-        if validation_sets:
-            validation_sets = list(validation_sets)  # type: ignore[arg-type]
-            for i, vs in enumerate(validation_sets):
-                if isinstance(vs, Dataset):
-                    db.add(vs)  # type: ignore[union-attr]
-                    validation_sets[i] = vs.identifier
-
-        if db is not None:
-            db.add(self)
-
-        if distributed:
-            return self.create_fit_job(
-                X,
-                select=select,
-                y=y,
-                **kwargs,
-            )(db=db, distributed=True, dependencies=dependencies)
-        else:
-            return self._fit(
-                X,
-                y=y,
-                db=db,
-                validation_sets=validation_sets,
-                metrics=metrics,
-                configuration=configuration,
-                select=select,
-                **kwargs,
-            )
-
-    def append_metrics(self, d):
-        for k in d:
-            if k not in self.metric_values:
-                self.metric_values[k] = []
-            self.metric_values[k].append(d[k])

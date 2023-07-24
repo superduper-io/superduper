@@ -2,7 +2,7 @@ import dataclasses as dc
 from functools import cached_property
 import io
 from contextlib import contextmanager
-from typing import Optional, Callable, Union, Dict, List, Any
+from typing import Optional, Union, Dict, List, Any
 import typing as t
 
 import torch
@@ -14,7 +14,7 @@ from superduperdb.core.artifact import Artifact
 from superduperdb.core.metric import Metric
 from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encodable
-from superduperdb.core.model import Model, ModelEnsemble, _TrainingConfiguration
+from superduperdb.core.model import Model, _TrainingConfiguration
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.base.query import Select
@@ -294,22 +294,20 @@ class Base:
             keys=self.training_keys,
             fold='train',
             transform=self.train_preprocess(),
-            database=db,
+            db=db,
         )
         valid_data = QueryDataset(
             select=self.training_select,  # type: ignore[arg-type]
             keys=self.training_keys,
             fold='valid',
             transform=self.train_preprocess(),
-            database=db,
+            db=db,
         )
         return train_data, valid_data
 
 
 @dc.dataclass
 class TorchModel(Base, Model):
-    preprocess: t.Union[Callable, Artifact, None] = None
-    postprocess: t.Union[Callable, Artifact, None] = None
     optimizer_state: t.Optional[Artifact] = None
     forward_method: str = '__call__'
     train_forward_method: str = '__call__'
@@ -321,10 +319,6 @@ class TorchModel(Base, Model):
 
         if self.optimizer_state is not None:
             self.optimizer.load_state_dict(self.optimizer_state.artifact)
-        if self.preprocess and not isinstance(self.preprocess, Artifact):
-            self.preprocess = Artifact(artifact=self.preprocess, serializer='dill')
-        if self.postprocess and not isinstance(self.postprocess, Artifact):
-            self.postprocess = Artifact(artifact=self.postprocess, serializer='dill')
 
         self._validation_set_cache = {}
 
@@ -407,13 +401,15 @@ class TorchModel(Base, Model):
                 args = self.object.artifact.postprocess(args)
             return args
 
-    def _predict(self, x, one: bool = False, **kwargs):
+    def _predict(self, x, one: bool = False, **kwargs):  # type: ignore[override]
         with torch.no_grad(), eval(self.object.artifact):
             if one:
                 return self._predict_one(x)
             inputs = BasicDataset(
                 x,
-                self.preprocess.artifact if self.preprocess else lambda x: x,
+                self.preprocess.artifact
+                if self.preprocess is not None
+                else lambda x: x,
             )
             loader = torch.utils.data.DataLoader(inputs, **kwargs)
             out = []
@@ -513,59 +509,3 @@ def create_batch(args):
     raise TypeError(
         'only tensors and tuples of tensors recursively supported...'
     )  # pragma: no cover
-
-
-@dc.dataclass
-class TorchModelEnsemble(Base, ModelEnsemble):
-    training_configuration: t.Optional[TorchTrainerConfiguration] = None
-    optimizer_states: t.Optional[t.List[Artifact]] = None
-
-    def __post_init__(self):
-        if self.optimizer_states is not None:
-            for i in range(len(self.models)):
-                self.optimizers[i].load_state_dict(self.optimizer_states[i].artifact)
-        self._validation_set_cache = {}
-
-    @cached_property
-    def optimizers(self):
-        return [
-            self.training_configuration.optimizer_cls.artifact(
-                m.object.artifact.parameters(),
-                **self.training_configuration.optimizer_kwargs,
-            )
-            for m in self.models
-        ]
-
-    def save(self, database: Datalayer):
-        states = []
-        for o in self.optimizers:
-            states.append(Artifact(o.state_dict(), serializer='torch'))
-        self.optimizer_states = states
-        database.replace(object=self, upsert=True)
-
-    @contextmanager
-    def evaluating(self):
-        was_training = self.models[0].object.artifact.training
-        try:
-            for m in self.models:
-                m.eval()
-            yield
-        finally:
-            if was_training:
-                for m in self.models:
-                    m.train()
-
-    def train(self):
-        for m in self.models:
-            m.train()
-
-    def train_forward(self, X, y=None):
-        out = []
-        for i, k in enumerate(self.train_X):
-            submodel = self.models[i]
-            method = getattr(submodel.object.artifact, submodel.train_forward_method)
-            out.append(method(X[i]))
-        if y is not None:
-            return out, y
-        else:
-            return out

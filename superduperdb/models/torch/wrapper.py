@@ -81,7 +81,7 @@ class Base:
     collate_fn: t.Optional[t.Union[Artifact, t.Callable]] = None
     is_batch: t.Optional[t.Union[Artifact, t.Callable]] = None
     num_directions: int = 2
-    metrics: t.Optional[t.List[t.Union[str, Metric]]] = None
+    metrics: t.Optional[t.Sequence[t.Union[str, Metric]]] = None
     training_select: t.Optional[Select] = None
 
     @contextmanager

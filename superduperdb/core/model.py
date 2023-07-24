@@ -16,8 +16,8 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 
 
 EncoderArg = t.Union[Encoder, str, None]
-ObjectsArg = t.List[t.Union[t.Any, Artifact]]
-DataArg = t.Optional[t.Union[str, t.List[str]]]
+ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
+DataArg = t.Optional[t.Union[str, t.Sequence[str]]]
 
 
 def TrainingConfiguration(
@@ -96,9 +96,9 @@ class PredictMixin:
         db: 'BaseDatabase' = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
         distributed: bool = False,
-        ids: t.Optional[t.List[str]] = None,
+        ids: t.Optional[t.Sequence[str]] = None,
         max_chunk_size: t.Optional[int] = None,
-        dependencies: t.List[Job] = (),  # type: ignore[assignment]
+        dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
         watch: bool = False,
         one: bool = False,
         **kwargs,
@@ -203,7 +203,7 @@ class Model(Component, PredictMixin):
     """
 
     variety: t.ClassVar[str] = 'model'
-    artifacts: t.ClassVar[t.List[str]] = ['object']
+    artifacts: t.ClassVar[t.Sequence[str]] = ['object']
 
     identifier: str
     object: t.Union[Artifact, t.Any]
@@ -211,18 +211,16 @@ class Model(Component, PredictMixin):
     preprocess: t.Union[t.Callable, Artifact, None] = None
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
-    metrics: t.List[
-        t.Union[str, Metric, None]
-    ] = None  # Need also historical metric values
+    metrics: t.Sequence[t.Union[str, Metric, None]] = None
+    # Need also historical metric values
     predict_method: t.Optional[str] = None
     batch_predict: bool = False
 
     train_X: DataArg = None  # TODO add to FitMixin
     train_y: DataArg = None
     training_select: t.Union[Select, None] = None
-    metric_values: t.Optional[t.Dict] = dc.field(
-        default_factory=dict
-    )  # TODO should be training_metric_values
+    metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    # TODO should be training_metric_values
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
 
     version: t.Optional[int] = None
@@ -267,7 +265,7 @@ class Model(Component, PredictMixin):
         self,
         X: str,
         select: t.Optional[Select] = None,
-        ids: t.Optional[t.List[str]] = None,
+        ids: t.Optional[t.Sequence[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         **kwargs,
     ):
@@ -314,7 +312,7 @@ class Model(Component, PredictMixin):
 
     def create_fit_job(
         self,
-        X: t.Union[str, t.List[str]],
+        X: t.Union[str, t.Sequence[str]],
         select: t.Optional[Select] = None,
         y: t.Optional[str] = None,
         **kwargs,
@@ -338,10 +336,10 @@ class Model(Component, PredictMixin):
         y: t.Any = None,
         db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
-        dependencies: t.List[Job] = (),  # type: ignore[assignment]
+        dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
         configuration: t.Optional[_TrainingConfiguration] = None,
-        validation_sets: t.Optional[t.List[t.Union[str, Dataset]]] = None,
-        metrics: t.Optional[t.List[Metric]] = None,
+        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
+        metrics: t.Optional[t.Sequence[Metric]] = None,
     ):
         raise NotImplementedError
 
@@ -353,10 +351,10 @@ class Model(Component, PredictMixin):
         db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
         distributed: bool = False,
-        dependencies: t.List[Job] = (),  # type: ignore[assignment]
+        dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
         configuration: t.Optional[_TrainingConfiguration] = None,
-        validation_sets: t.Optional[t.List[t.Union[str, Dataset]]] = None,
-        metrics: t.Optional[t.List[Metric]] = None,
+        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
+        metrics: t.Optional[t.Sequence[Metric]] = None,
         data_prefetch: bool = False,
         **kwargs,
     ):

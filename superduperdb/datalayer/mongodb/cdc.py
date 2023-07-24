@@ -60,7 +60,7 @@ class BasePacket(BaseModel):
     """
 
     event_type: str = DBEvent.insert.value
-    ids: t.List[t.Union[ObjectId, str]]
+    ids: t.Sequence[t.Union[ObjectId, str]]
 
 
 class ChangePacket(BasePacket):
@@ -85,7 +85,7 @@ class MongoChangePipeline:
     in mongodb watch api.
     """
 
-    matching_operations: t.List[str] = dc.field(default_factory=list)
+    matching_operations: t.Sequence[str] = dc.field(default_factory=list)
 
     def validate(self):
         raise NotImplementedError
@@ -133,14 +133,14 @@ class CachedTokens:
             stoken = stoken.encode('utf-8')
             fp.write(stoken)  # type: ignore [arg-type]
 
-    def load(self) -> t.List[ResumeToken]:
+    def load(self) -> t.Sequence[ResumeToken]:
         with open(CachedTokens.token_path, 'rb') as fp:
             jtokens = fp.read()
             tokens = jtokens.decode('utf-8')
             tokens = tokens.split(self.seperate)[:-1]
             tokens = list(map(lambda token: ResumeToken(json.loads(token)), tokens))
         self._current_tokens = tokens
-        tokens = t.cast(t.List[ResumeToken], tokens)
+        tokens = t.cast(t.Sequence[ResumeToken], tokens)
         return tokens  # type: ignore [return-value]
 
 
@@ -161,7 +161,7 @@ class BaseDatabaseWatcher(ABC):
 def copy_vectors(
     indexing_watcher_identifier: str,
     cdc_query: Serializable,
-    ids: t.List[str],
+    ids: t.Sequence[str],
     db=None,
 ):
     """
@@ -218,7 +218,7 @@ class CDCHandler(threading.Thread):
 
         threading.Thread.__init__(self, daemon=False)
 
-    def submit_task_workflow(self, cdc_query: Serializable, ids: t.List) -> None:
+    def submit_task_workflow(self, cdc_query: Serializable, ids: t.Sequence) -> None:
         """submit_task_workflow.
         A fxn to build a taskflow and execute it with changed ids.
         This also extends the task workflow graph with a node.
@@ -243,7 +243,7 @@ class CDCHandler(threading.Thread):
         self,
         task_graph: TaskWorkflow,
         cdc_query: Serializable,
-        ids: t.List[str],
+        ids: t.Sequence[str],
     ) -> TaskWorkflow:
         """create_vector_watcher_task.
         A helper function to define a node in taskflow graph which is responsible for
@@ -295,7 +295,7 @@ class CDCHandler(threading.Thread):
             self.on_update(packet)
 
     @staticmethod
-    def _collate_packets(packets: t.List[ChangePacket]) -> BatchPacket:
+    def _collate_packets(packets: t.Sequence[ChangePacket]) -> BatchPacket:
         """
         A helper function to coallate batch of packets into one
         `BatchPacket`.
@@ -343,7 +343,7 @@ class MongoEventMixin:
     """
 
     DEFAULT_ID: str = '_id'
-    EXCLUSION_KEYS: t.List[str] = [DEFAULT_ID]
+    EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
 
     def on_create(
         self, change: t.Dict, db: 'Datalayer', collection: query.Collection
@@ -694,7 +694,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         """
         return self.tokens.load()[0]
 
-    def resume_tokens(self) -> t.List[ResumeToken]:
+    def resume_tokens(self) -> t.Sequence[ResumeToken]:
         """
         A method to get the resume tokens from the change stream.
         """

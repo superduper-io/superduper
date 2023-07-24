@@ -18,8 +18,9 @@
 
 <p align="center">
    <a href="https://www.superduperdb.com">
-         <img src=".github/logos/SuperDuperDB_logo_color.svg?raw=true" width="50%" alt="superduperdb" />
+         <img src="docs/img/1680x420_Header_Logo.png?raw=true" width="100%" alt="superduperdb" />
    </a>
+
 </p>
 
 <h1 align="center">Bring AI to your   <a href="https://www.mongodb.com/" target="_blank">MongoDB</a>!

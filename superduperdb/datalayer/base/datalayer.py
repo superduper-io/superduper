@@ -431,7 +431,7 @@ class Datalayer:
         )
 
         m = Component.deserialize(info)
-        m._on_load(self)
+        m.on_load(self)
 
         if cm := self.variety_to_cache_mapping.get(variety):
             getattr(self, cm)[m.identifier] = m
@@ -534,7 +534,7 @@ class Datalayer:
         serialized: t.Optional[t.Dict] = None,
         parent: t.Optional[str] = None,
     ):
-        object._on_create(self)
+        object.on_create(self)
 
         existing_versions = self.show(object.variety, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
@@ -563,7 +563,7 @@ class Datalayer:
         self.metadata.create_component(serialized)
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)
-        object._on_load(self)
+        object.on_load(self)
         return object.schedule_jobs(self, dependencies=dependencies)
 
     def _create_children(self, object: Component, serialized: t.Dict):

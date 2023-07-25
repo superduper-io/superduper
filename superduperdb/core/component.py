@@ -6,7 +6,7 @@ from superduperdb.core.serializable import Serializable
 import dataclasses as dc
 
 if t.TYPE_CHECKING:
-    pass
+    from superduperdb.datalayer.base.datalayer import Datalayer
 
 
 @dc.dataclass
@@ -19,10 +19,18 @@ class Component(Serializable):
 
     variety: t.ClassVar[str]
 
-    def _on_load(self, db):
+    def on_create(self, db: Datalayer) -> None:
+        """Called the first time this component is created
+
+        :param db: the datalayer that created the component
+        """
         pass
 
-    def _on_create(self, db):
+    def on_load(self, db: Datalayer) -> None:
+        """Called when this component is loaded from the data store
+
+        :param db: the datalayer that loaded the component
+        """
         pass
 
     @property

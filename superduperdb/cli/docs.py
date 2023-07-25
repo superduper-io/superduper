@@ -16,7 +16,7 @@ UPSTREAM = 'git@github.com:SuperDuperDB/superduperdb-stealth.git'
 
 run_gh = functools.partial(run.run, cwd=GH_PAGES)
 out_gh = functools.partial(run.out, cwd=GH_PAGES)
-git_gh = Git(out=run_gh)
+git_gh = Git(out=run_gh)  # type: ignore[call-arg]
 
 
 @command(help='Build documentation, optionally committing and pushing got ')

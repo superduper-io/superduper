@@ -42,7 +42,6 @@ target-version = ["py38"]
 ignore_missing_imports = true
 disable_error_code = [
     "attr-defined",
-    "call-arg",
     "index",
     "union-attr",
     ]

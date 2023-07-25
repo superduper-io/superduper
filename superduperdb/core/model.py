@@ -340,6 +340,7 @@ class Model(Component, PredictMixin):
         configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,
+        data_prefetch: bool = False,
     ):
         raise NotImplementedError
 

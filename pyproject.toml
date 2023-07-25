@@ -48,3 +48,23 @@ disable_error_code = [
 
 [tool.pytest.ini_options]
 addopts = "-W ignore"
+
+[tool.interrogate]
+# Uncomment these next lines to generate a badge
+#
+# badge-format = "svg"
+# generate-badge = "docs"
+
+color = true
+exclude = []
+fail-under = 20.9
+ignore-nested-classes = false
+ignore-nested-functions = true
+ignore-private = true
+ignore-property-decorators = true
+ignore-regex = []
+ignore-semiprivate = true
+omit-covered-files = true
+quiet = false
+verbose = 0
+whitelist-regex = []

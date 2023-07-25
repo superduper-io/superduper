@@ -2,6 +2,7 @@
 <a href="https://github.com/SuperDuperDB/superduperdb-stealth/actions?query=workflow%3Aci+event%3Apush+branch%3Amain" target="_blank">
     <img src="https://github.com/SuperDuperDB/superduperdb-stealth/workflows/CI/badge.svg?event=push&branch=main" alt="CI">
 </a>
+ 
 <a href="https://codecov.io/gh/SuperDuperDB/superduperdb-stealth/branch/main" target="_blank">
     <img src="https://codecov.io/gh/SuperDuperDB/superduperdb-stealth/branch/main/graph/badge.svg" alt="Coverage">
 </a>
@@ -14,6 +15,9 @@
 <a href="https://pypi.org/project/superduperdb" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
 </a>
+<a href="https://colab.research.google.com/drive/11SJunSZc52jUuYrmNi5GziombcQ_sdhJ#scrollTo=XwWu32JBovja">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
+</a>  
 </p>
 
 <p align="center">
@@ -108,7 +112,11 @@ pip install superduperdb
 
 # Quickstart ▶️
 
-Try SuperDuperDB in Google Colab <a href="404">here</a>!
+Try SuperDuperDB in Google Colab 🚀
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/11SJunSZc52jUuYrmNi5GziombcQ_sdhJ#scrollTo=XwWu32JBovja)
+
+🎉 This will set up a playground SuperDuperDB environment with your own database instance to play with. Enjoy and have fun with it! 🎊
+
 
 
 # Community & Getting Help 🙋

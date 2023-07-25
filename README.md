@@ -80,41 +80,119 @@
 # How to 🤷
 #### The following are three examples of how you use SuperDuperDB in Python (find all how-tos <a href="404" target="_blank">in the docs here</a>): 
 
-- **Deploy/ Install a Pytorch, sklearn or HuggingFace model <a href="404" target="_blank">(read more in the docs here)</a>:**
+- **Add a ML/DL model into your database <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
-import superduperdb
-```
-- **Train/ fine-tune a model <a href="404" target="_blank">(read more in the docs here)</a>:**
-```python
-import superduperdb
-```
+import pymongo
+from sklearn.svm import SVC
 
-- **Create downstream classifier model <a href="404" target="_blank">(read more in the docs here)</a>:**
+from superduperdb import superduper
+
+# Make your db superduper!
+db = superduper(pymongo.MongoClient().my_db)
+
+# Models client can be converted to SuperDuperDB objects with a simple wrapper.
+model = superduper(SVC())
+
+# Add the model into the database
+db.add(model)
+
+# Predict on the selected data.
+model.predict(X='input_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
+```
+- **Train/Fine-tune a model <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
-install llama2
+import pymongo
+from sklearn.svm import SVC
+
+from superduperdb import superduper
+
+# Make your db superduper!
+db = superduper(pymongo.MongoClient().my_db)
+
+# Models client can be converted to SuperDuperDB objects with a simple wrapper.
+model = superduper(SVC())
+
+# Predict on the selected data.
+model.predict(X='input_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
 ```
 
 - **Use MongoDB as your vector search database <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
-install llama2
+# First a "Watcher" makes sure vectors stay up-to-date
+indexing_watcher = Watcher(model=OpenAIEmbedding(), key='text', select=collection.find())
+
+# This "Watcher" is linked with a "VectorIndex"
+db.add(VectorIndex('my-index', indexing_watcher=indexing_watcher))
+
+# The "VectorIndex" may be used to search data. Items to be searched against are passed
+# to the registered model and vectorized. No additional app layer is required.
+# By default, SuperDuperDB uses LanceDB for vector comparison operations
+db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
 ```
 
-- **Integrate externally hosted models gated via an API (such as OpenAI) <a href="404" target="_blank">(read more in the docs here)</a>:**
+- **Use OpenAI as embedding model for vector search <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
-import superduperdb
+# Create a ``VectorIndex`` instance with indexing watcher as OpenAIEmbedding and add it to the database.
+db.add(
+    VectorIndex(
+        identifier='my-index',
+        indexing_watcher=Watcher(
+            model=OpenAIEmbedding(identifier='text-embedding-ada-002'),
+            key='abstract',
+            select=Collection(name='wikipedia').find(),
+        ),
+    )
+)
+# The above also executes the embedding model (openai) with the select query on the key.
+
+# Now we can use the vector-index to search via meaning through the wikipedia abstracts
+cur = db.execute(
+    Collection(name='wikipedia')
+        .like({'abstract': 'philosophers'}, n=10, vector_index='my-index')
+)
 ```
 - **Integrate LangChain <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
 install llama2
 ```
-- **Integrate Llama 2 as a HuggingFace transformer <a href="404" target="_blank">(read more in the docs here)</a>:**
+- **Add Llama 2 model directly into your database! <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
-install llama2
+model = "meta-llama/Llama-2-7b-chat-hf"
+tokenizer = AutoTokenizer.from_pretrained(model)
+pipeline = transformers.pipeline(
+    "text-generation",
+    model=model,
+    torch_dtype=torch.float16,
+    device_map="auto",
+)
+
+model = Pipeline(
+    identifier='my-sentiment-analysis',
+    task='text-generation',
+    preprocess=tokenizer,
+    object=pipeline,
+    torch_dtype=torch.float16,
+    device_map="auto",
+)
+# Now you can add the Llama2 into your database.
+
+db.add(model) # Note: db instance refers to superduperdb, check above examples!
+
+# You can easily predict on your collection documents.
+model.predict(
+    X=Collection(name='test_documents').find(),
+    db=db,
+    do_sample=True,
+    top_k=10,
+    num_return_sequences=1,
+    eos_token_id=tokenizer.eos_token_id,
+    max_length=200
+)
 ```
 
 - **Create downstream classifier model <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
-install llama2
+
 ```
 
 # Installation :electric_plug:

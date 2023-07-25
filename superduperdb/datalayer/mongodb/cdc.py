@@ -299,7 +299,7 @@ class MongoEventMixin:
     EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
 
     def on_create(
-        self, change: t.Dict, db: 'Datalayer', collection: query.Collection
+        self, change: t.Dict, db: Datalayer, collection: query.Collection
     ) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
@@ -319,7 +319,7 @@ class MongoEventMixin:
         packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
-    def on_update(self, change: t.Dict, db: 'Datalayer'):
+    def on_update(self, change: t.Dict, db: Datalayer):
         """on_update.
 
         :param change:
@@ -381,7 +381,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def __init__(
         self,
-        db: 'Datalayer',
+        db: Datalayer,
         on: query.Collection,
         stop_event: threading.Event,
         identifier: 'str' = '',

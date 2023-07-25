@@ -1,10 +1,12 @@
 # ruff: noqa: F821
+from __future__ import annotations
 import typing as t
 from superduperdb.core.job import ComponentJob
 from superduperdb.core.serializable import Serializable
 import dataclasses as dc
 
-Datalayer = 'superduperdb.datalayer.base.datalayer.Datalayer'
+if t.TYPE_CHECKING:
+    pass
 
 
 @dc.dataclass

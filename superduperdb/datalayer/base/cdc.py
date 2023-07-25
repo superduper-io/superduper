@@ -55,7 +55,7 @@ class DatabaseWatcherFactory(t.Generic[DBWatcherType]):
 
 
 def DatabaseWatcher(
-    db: 'Datalayer',
+    db: Datalayer,
     on: Collection,
     identifier: str = '',
     *args,

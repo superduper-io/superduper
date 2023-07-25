@@ -14,6 +14,7 @@ lint-and-type-check:
 	black --check superduperdb tests
 	ruff check superduperdb tests
 	mypy superduperdb
+	interrogate superduperdb
 
 .PHONY: test
 test: test-containers
@@ -25,6 +26,7 @@ fix-and-test: test-containers
 	ruff check --fix superduperdb tests
 	mypy superduperdb
 	pytest $(PYTEST_ARGUMENTS)
+	interrogate superduperdb
 
 .PHONY: clean-test
 clean-test: clean-test-containers

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import itertools
 import typing as t
 import dataclasses as dc
@@ -10,6 +11,9 @@ from superduperdb.core.watcher import Watcher
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
+
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.datalayer import Datalayer
 
 T = t.TypeVar('T')
 
@@ -51,18 +55,30 @@ class VectorIndex(Component):
     version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
-    def _on_create(self, db):
-        if isinstance(self.indexing_watcher, str):
-            self.indexing_watcher = db.load('watcher', self.indexing_watcher)
-        if isinstance(self.compatible_watcher, str):
-            self.compatible_watcher = db.load('watcher', self.compatible_watcher)
+    def on_create(self, db: Datalayer) -> None:
+        """Called the first time this component is created
 
-    def _on_load(self, db):
-        self.vector_table = db.vector_database.get_table(
+        :param db: the datalayer that created the component
+        """
+        if isinstance(self.indexing_watcher, str):
+            self.indexing_watcher = db.load(
+                'watcher', self.indexing_watcher
+            )  # type: ignore[assignment]
+        if isinstance(self.compatible_watcher, str):
+            self.compatible_watcher = db.load(
+                'watcher', self.compatible_watcher
+            )  # type: ignore[assignment]
+
+    def on_load(self, db: Datalayer) -> None:
+        """Called when this component is loaded from the data store
+
+        :param db: the datalayer that loaded the component
+        """
+        self.vector_table = db.vector_database.get_table(  # type: ignore[call-arg]
             VectorCollectionConfig(
                 id=self.identifier,
                 dimensions=self._dimensions,
-                measure=self.measure,
+                measure=self.measure,  # type: ignore[arg-type]
             ),
             create=True,
         )

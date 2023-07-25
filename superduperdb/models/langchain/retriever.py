@@ -90,7 +90,7 @@ class DBQAWithSourcesChain(Model):
     chain_type: str = 'stuff'
     n: int = 5
 
-    def _on_load(self, db):
+    def on_load(self, db):
         if isinstance(self.vector_index, str):
             self.vector_index = db.load('vector_index', self.vector_index)
         self.db = db

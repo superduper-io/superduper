@@ -1,3 +1,4 @@
+from __future__ import annotations
 import multiprocessing
 from dask.distributed import Future
 import inspect
@@ -15,6 +16,8 @@ from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.configs import CFG
 from superduperdb.misc.special_dicts import MongoStyleDict
 
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.datalayer import Datalayer
 
 EncoderArg = t.Union[Encoder, str, None]
 ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
@@ -342,7 +345,7 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
+        db: t.Optional[Datalayer] = None,
         select: t.Optional[Select] = None,
         dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
         configuration: t.Optional[_TrainingConfiguration] = None,
@@ -357,7 +360,7 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
+        db: t.Optional[Datalayer] = None,
         select: t.Optional[Select] = None,
         distributed: t.Optional[bool] = None,
         dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]

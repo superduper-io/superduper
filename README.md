@@ -2,6 +2,8 @@
 <a href="https://github.com/SuperDuperDB/superduperdb-stealth/actions?query=workflow%3Aci+event%3Apush+branch%3Amain" target="_blank">
     <img src="https://github.com/SuperDuperDB/superduperdb-stealth/workflows/CI/badge.svg?event=push&branch=main" alt="CI">
 </a>
+    <a>[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/11SJunSZc52jUuYrmNi5GziombcQ_sdhJ#scrollTo=XwWu32JBovja)
+    </a>
 <a href="https://codecov.io/gh/SuperDuperDB/superduperdb-stealth/branch/main" target="_blank">
     <img src="https://codecov.io/gh/SuperDuperDB/superduperdb-stealth/branch/main/graph/badge.svg" alt="Coverage">
 </a>
@@ -96,7 +98,7 @@ import superduperdb
 ```
 pip install superduperdb
 ```
-#### 2. Install MongoDB *(~10-15 minute)*:
+#### 2. MongoDB Installation *(~10-15 minute)*:
    - You already have MongoDB installed? Let's go!
    - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>.
 
@@ -108,7 +110,7 @@ pip install superduperdb
 
 # Quickstart ▶️
 
-Try SuperDuperDB in Google Colab <a href="404">here</a>!
+Try SuperDuperDB in Google Colab <a href="404">here</a>! [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/11SJunSZc52jUuYrmNi5GziombcQ_sdhJ#scrollTo=XwWu32JBovja) The colab notebook will create a SuperDuperDB playground by 1. installing SuperDuperDB, 2. installing MongoDB, 3. uploading a dataset 4. installing xx models.
 
 
 # Community & Getting Help 🙋

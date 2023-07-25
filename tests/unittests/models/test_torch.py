@@ -58,7 +58,7 @@ def test_fit(random_data, si_validation):
         postprocess=lambda x: int(torch.sigmoid(x).item() > 0.5),
     )
     m.fit(
-        'x',
+        X='x',
         y='y',
         db=random_data,
         select=Collection(name='documents').find(),

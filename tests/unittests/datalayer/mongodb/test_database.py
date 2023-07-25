@@ -190,7 +190,7 @@ def test_watcher(random_data, a_model, b_model):
 
 def test_predict(a_model, float_tensors_32, float_tensors_16):
     t = float_tensors_32.encoders['torch.float32[32]']
-    a_model.predict('linear_a', Document(t(torch.randn(32))), one=True)
+    a_model.predict('linear_a', Document(t(torch.randn(32))))
 
 
 def test_delete(random_data):

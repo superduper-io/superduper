@@ -46,7 +46,7 @@ class VectorIndex(Component):
 
     identifier: str
     indexing_watcher: t.Union[Watcher, str]
-    compatible_watcher: t.Optional[t.Union[Watcher, str]] = None
+    compatible_watcher: t.Union[Watcher, str, None] = None
     measure: str = 'cosine'
     version: t.Optional[int] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)

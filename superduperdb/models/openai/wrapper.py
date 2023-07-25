@@ -1,3 +1,4 @@
+import dataclasses as dc
 import os
 import typing as t
 
@@ -11,9 +12,9 @@ from openai.error import Timeout, RateLimitError, TryAgain, ServiceUnavailableEr
 
 import superduperdb as s
 from superduperdb.core.component import Component
+from superduperdb.core.encoder import Encoder
 from superduperdb.core.model import PredictMixin
 from superduperdb.misc.retry import Retry
-from superduperdb.misc import dataclasses as dc
 from superduperdb.misc.compat import cache
 from superduperdb.encoders.vectors.vector import vector
 
@@ -36,13 +37,25 @@ def _available_models():
 @dc.dataclass
 class OpenAI(Component, PredictMixin):
     variety: t.ClassVar[str] = 'model'
-    identifier: str
+    model: str
+    identifier: t.Optional[str] = None
     version: t.Optional[int] = None
+    takes_context: bool = False
+    encoder: t.Union[Encoder, str, None] = None
+
+    @property
+    def child_components(self):
+        if self.encoder is not None:
+            return [('encoder', 'encoder')]
+        return []
 
     def __post_init__(self):
-        if self.identifier not in (mo := _available_models()):
-            msg = f'model {self.identifier} not in OpenAI available models, {mo}'
+        if self.model not in (mo := _available_models()):
+            msg = f'model {self.model} not in OpenAI available models, {mo}'
             raise ValueError(msg)
+
+        if self.identifier is None:
+            self.identifier = self.model
 
         if 'OPENAI_API_KEY' not in os.environ:
             raise ValueError('OPENAI_API_KEY not set')
@@ -78,14 +91,28 @@ class OpenAIEmbedding(OpenAI):
         return out
 
 
+@dc.dataclass
 class OpenAIChatCompletion(OpenAI):
+    takes_context: bool = True
+    prompt: t.Optional[str] = None
+
     @retry
-    def predict_one(self, message, **kwargs):
+    def _predict_one(self, X, context: t.Optional[t.List[str]], **kwargs):
+        if context is not None:
+            prompt = self.prompt.format(context='\n'.join(context))
+            X = prompt + X
         return ChatCompletion.create(
-            messages=[{'role': 'user', 'content': message}],
+            messages=[{'role': 'user', 'content': X}],
             model=self.identifier,
             **kwargs,
         )['choices'][0]['message']['content']
 
-    def predict(self, messages, **kwargs):
-        return [self.predict_one(msg) for msg in messages]  # use asyncio
+    def _predict(
+        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        if context:
+            assert one, 'context only works with one=True'
+        if one:
+            return self._predict_one(X, context=context, **kwargs)
+
+        return [self.predict_one(msg) for msg in X]  # use asyncio

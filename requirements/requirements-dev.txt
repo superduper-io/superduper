@@ -37,6 +37,7 @@ attr==0.3.2
 attrs==23.1.0
     # via
     #   aiohttp
+   #   interrogate
     #   jsonschema
     #   ray
     #   referencing
@@ -86,6 +87,7 @@ click==8.1.6
     #   dask
     #   distributed
     #   flask
+    #   interrogate
     #   lightning
     #   lightning-cloud
     #   pip-tools
@@ -96,6 +98,8 @@ cloudpickle==2.2.1
     # via
     #   dask
     #   distributed
+colorama==0.4.6
+    # via interrogate
 coverage[toml]==7.2.7
     # via pytest-cov
 croniter==1.4.1
@@ -219,6 +223,8 @@ iniconfig==2.0.0
     # via pytest
 inquirer==3.1.3
     # via lightning
+interrogate==1.5.0
+    # via -r requirements-lint.in
 ipython==8.12.2
     # via -r requirements-docs.in
 itsdangerous==2.1.2
@@ -430,7 +436,9 @@ ptyprocess==0.7.0
 pure-eval==0.2.2
     # via stack-data
 py==1.11.0
-    # via retry
+    # via
+    #   interrogate
+    #   retry
 pyarrow==12.0.1
     # via pylance
 pydantic==1.10.11
@@ -612,6 +620,8 @@ starsessions==1.3.0
     # via lightning
 sympy==1.12
     # via torch
+tabulate==0.9.0
+    # via interrogate
 tblib==2.0.0
     # via distributed
 tdir==1.6.0
@@ -626,6 +636,8 @@ tinycss2==1.2.1
     # via nbconvert
 tokenizers==0.13.3
     # via transformers
+toml==0.10.2
+    # via interrogate
 tomli==2.0.1
     # via
     #   black

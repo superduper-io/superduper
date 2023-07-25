@@ -101,6 +101,7 @@ class PredictMixin:
         dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
         watch: bool = False,
         one: bool = False,
+        context: t.Optional[t.Dict] = None,
         **kwargs,
     ):
         # TODO this should be separated into sub-procedures
@@ -186,6 +187,8 @@ class PredictMixin:
                 return
 
             else:
+                if self.takes_context:
+                    kwargs['context'] = context
                 if 'one' in inspect.signature(self._predict).parameters:
                     return self._predict(X, one=one, **kwargs)
                 else:
@@ -215,6 +218,7 @@ class Model(Component, PredictMixin):
     # Need also historical metric values
     predict_method: t.Optional[str] = None
     batch_predict: bool = False
+    takes_context: bool = False
 
     train_X: DataArg = None  # TODO add to FitMixin
     train_y: DataArg = None

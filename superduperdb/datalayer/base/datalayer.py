@@ -24,6 +24,7 @@ from superduperdb.datalayer.base.query import (
     SelectOne,
     Like,
 )
+from superduperdb.misc.special_dicts import MongoStyleDict
 from .download_content import download_content
 from superduperdb.misc.downloads import Downloader
 from superduperdb.misc.downloads import gather_uris
@@ -161,11 +162,12 @@ class Datalayer:
 
     def predict(
         self,
-        model_identifier: str,
-        input: Document,
-        one: bool = False,
-        select: t.Optional[Select] = None,
-    ) -> t.Union[t.List[Document], Document]:
+        model: str,
+        input: t.Union[Document, t.Any],
+        context_select: t.Optional[Select] = None,
+        context_key: t.Optional[str] = None,
+        **kwargs,
+    ) -> t.Tuple[Document, t.List[Document]]:
         """
         Apply model to input.
 
@@ -173,18 +175,30 @@ class Datalayer:
         :param input: input to be passed to the model.
                       Must be possible to encode with registered encoders
         :param one: if True passed a single document else passed multiple documents
+        :param select: select query object to provide context
         """
-        model = self.models[model_identifier]
-        opts = self.metadata.get_component('model', model_identifier)
-        out = model.predict(input.unpack(), **opts.get('predict_kwargs', {}), one=one)
-        if one:
-            if model.encoder is not None:
-                out = model.encoder(out)
-            return Document(out)
-        else:
-            if model.encoder is not None:
-                out = [model.encoder(x) for x in out]
-            return [Document(x) for x in out]
+        model = self.models[model]
+        context = None
+
+        if context_select is not None:
+            assert model.takes_context, 'model does not take context'
+            context = list(self.execute(context_select))
+            context = [x.unpack() for x in context]
+            if context_key is not None:
+                context = [MongoStyleDict(x)[context_key] for x in context]
+
+        out = model.predict(
+            input.unpack() if isinstance(input, Document) else input,
+            one=True,
+            context=context,
+            **kwargs,
+        )
+        if model.encoder is not None:
+            out = model.encoder(out)
+
+        if context is not None:
+            return Document(out), [Document(x) for x in context]
+        return Document(out), []
 
     def execute(self, query: ExecuteQuery) -> ExecuteResult:
         """

@@ -104,7 +104,7 @@ class ReplaceOne(Update):
     update: Document
     refresh: bool = True
     verbose: bool = True
-    args: t.List = dc.field(default_factory=list)
+    args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.ReplaceOne'] = 'mongodb.ReplaceOne'
@@ -165,7 +165,7 @@ class PreLike(Like):
 class Find(Select):
     collection: t.Optional[Collection] = None
     like_parent: t.Optional[PreLike] = None
-    args: t.List = dc.field(default_factory=lambda: [])
+    args: t.Sequence = dc.field(default_factory=lambda: [])
     kwargs: t.Dict = dc.field(default_factory=lambda: {})
 
     type_id: t.Literal['mongodb.Find'] = 'mongodb.Find'
@@ -199,7 +199,7 @@ class Find(Select):
             args.append(self.args[0])
         except IndexError:
             args.append({})
-        args = args + self.args[1:]
+        args.extend(self.args[1:])
         args[0]['_fold'] = fold
         return Find(
             like_parent=self.like_parent,
@@ -223,8 +223,8 @@ class Find(Select):
             args=[filter, {'_id': 1}],
         )
 
-    def select_using_ids(self, ids: t.List[str]) -> t.Any:
-        args = (self.args + [{}, {}])[:2]
+    def select_using_ids(self, ids: t.Sequence[str]) -> t.Any:
+        args = [*self.args, {}, {}][:2]
         args[0] = {'_id': {'$in': [ObjectId(_id) for _id in ids]}, **args[0]}
 
         return Find(
@@ -302,7 +302,7 @@ class Find(Select):
 class CountDocuments(Find):
     collection: t.Optional[Collection] = None
     like_parent: t.Optional[PreLike] = None
-    args: t.Optional[t.List] = dc.field(default_factory=lambda: [])
+    args: t.Optional[t.Sequence] = dc.field(default_factory=lambda: [])
     kwargs: t.Optional[t.Dict] = dc.field(default_factory=lambda: {})
 
     def __call__(self, db):
@@ -325,7 +325,7 @@ class FeaturizeOne(SelectOne):
 
 @dc.dataclass
 class FindOne(SelectOne):
-    args: t.Optional[t.List] = dc.field(default_factory=list)
+    args: t.Optional[t.Sequence] = dc.field(default_factory=list)
     kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     like_parent: t.Optional[PreLike] = None
     collection: t.Optional[Collection] = None
@@ -360,7 +360,7 @@ class FindOne(SelectOne):
 @dc.dataclass
 class Aggregate(Select):
     collection: Collection
-    args: t.List = dc.field(default_factory=list)
+    args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.Aggregate'] = 'mongodb.Aggregate'
@@ -384,18 +384,22 @@ class Aggregate(Select):
 
     def select_using_ids(
         self,
-        ids: t.List[str],
+        ids: t.Sequence[str],
     ) -> t.Any:
         raise NotImplementedError
 
     def __call__(self, db):
-        return db.db[self.collection.name].aggregate(*self.args, **self.kwargs)
+        return SuperDuperCursor(
+            id_field='_id',
+            raw_cursor=db.db[self.collection.name].aggregate(*self.args, **self.kwargs),
+            encoders=db.encoders,
+        )
 
 
 @dc.dataclass
 class DeleteOne(Delete):
     collection: Collection
-    args: t.List = dc.field(default_factory=list)
+    args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.DeleteOne'] = 'mongodb.DeleteOne'
@@ -407,7 +411,7 @@ class DeleteOne(Delete):
 @dc.dataclass
 class DeleteMany(Delete):
     collection: Collection
-    args: t.List = dc.field(default_factory=list)
+    args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.DeleteMany'] = 'mongodb.DeleteMany'
@@ -423,7 +427,7 @@ class UpdateOne(Update):
     filter: t.Dict
     refresh: bool = True
     verbose: bool = True
-    args: t.List = dc.field(default_factory=list)
+    args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.UpdateOne'] = 'mongodb.UpdateOne'
@@ -456,7 +460,7 @@ class UpdateMany(Update):
     update: Document
     refresh: bool = True
     verbose: bool = True
-    args: t.List = dc.field(default_factory=list)
+    args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.UpdateMany'] = 'mongodb.UpdateMany'
@@ -497,9 +501,9 @@ class InsertMany(Insert):
     collection: Collection
     refresh: bool = True
     verbose: bool = True
-    args: t.List = dc.field(default_factory=list)
+    args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
-    encoders: t.List = dc.field(default_factory=list)
+    encoders: t.Sequence = dc.field(default_factory=list)
 
     type_id: t.Literal['mongodb.InsertMany'] = 'mongodb.InsertMany'
 
@@ -520,6 +524,8 @@ class InsertMany(Insert):
             db.add(e)
         documents = [r.encode() for r in self.documents]
         for r in documents:
+            if '_fold' in r:
+                continue
             if random.random() < valid_prob:
                 r['_fold'] = 'valid'
             else:
@@ -588,7 +594,7 @@ class PostLike(Select):
 
     def select_using_ids(
         self,
-        ids: t.List[str],
+        ids: t.Sequence[str],
     ) -> t.Any:
         raise NotImplementedError
 
@@ -618,7 +624,7 @@ class Featurize(Select):
         return self.parent.add_fold(fold).featurize(self.features)  # type: ignore[union-attr]
 
     # ruff: noqa: E501
-    def select_using_ids(self, ids: t.List[str]) -> t.Any:
+    def select_using_ids(self, ids: t.Sequence[str]) -> t.Any:
         return self.parent.select_using_ids(ids=ids).featurize(features=self.features)  # type: ignore[union-attr]
 
     def model_update(self, *args, **kwargs):
@@ -643,7 +649,7 @@ class Featurize(Select):
 class Count(SelectOne):
     parent: t.Union[Find, PostLike, PreLike, Featurize]
     type_id: t.Literal['mongodb.Count'] = 'mongodb.Count'
-    args: t.List = dc.field(default_factory=list)
+    args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __call__(self, db):
@@ -657,7 +663,7 @@ class Count(SelectOne):
 
     def select_using_ids(
         self,
-        ids: t.List[str],
+        ids: t.Sequence[str],
     ) -> t.Any:
         raise NotImplementedError
 
@@ -690,7 +696,7 @@ class Limit(Select):
 
     def select_using_ids(
         self,
-        ids: t.List[str],
+        ids: t.Sequence[str],
     ) -> t.Any:
         raise NotImplementedError
 
@@ -709,7 +715,7 @@ class Limit(Select):
 @dc.dataclass
 class ChangeStream:
     collection: Collection
-    args: t.List = dc.field(default_factory=list)
+    args: t.Sequence = dc.field(default_factory=list)
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __call__(self, db):
@@ -729,7 +735,7 @@ class ChangeStream:
 
     def select_using_ids(
         self,
-        ids: t.List[str],
+        ids: t.Sequence[str],
     ) -> t.Any:
         raise NotImplementedError
 

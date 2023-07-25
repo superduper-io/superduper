@@ -12,7 +12,7 @@ class DuckTyper:
     def run(cls, item: t.Any, **kwargs):
         dts = [dt for dt in cls.DUCK_TYPES if dt.accept(item)]
         if len(dts) == 1:
-            return cls.create(item, **kwargs)
+            return dts[0].create(item, **kwargs)
         raise NotImplementedError(
             f'Couldn\'t auto-identify {item}, please wrap explicitly using '
             '``superduperdb.core.*``'
@@ -30,6 +30,13 @@ class DuckTyper:
 
 class MongoDbTyper(DuckTyper):
     attrs = ('list_collection_names',)
+
+    @classmethod
+    def accept(cls, item: t.Any) -> bool:
+        count = cls.count or len(cls.attrs)
+        test_one = sum(hasattr(item, a) for a in cls.attrs) == count
+        test_two = item.__class__.__name__ == 'Database'
+        return test_one and test_two
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
@@ -63,21 +70,17 @@ class SklearnTyper(DuckTyper):
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
         from sklearn.base import BaseEstimator
-        from sklearn.pipeline import Pipeline as BasePipeline
-        from superduperdb.models.sklearn.wrapper import Estimator, Pipeline
+        from superduperdb.models.sklearn.wrapper import Estimator
 
         if not isinstance(item, BaseEstimator):
             raise TypeError('Expected BaseEstimator but got {type(item)}')
 
         kwargs['identifier'] = auto_identify(item)
-        if isinstance(item, BasePipeline):
-            return Pipeline(steps=item.steps, memory=item.memory, **kwargs)
-        else:
-            return Estimator(estimator=item, **kwargs)
+        return Estimator(object=item, **kwargs)
 
 
 class TorchTyper(DuckTyper):
-    attrs = 'forward', 'parameters', 'state_dict'
+    attrs = 'forward', 'parameters', 'state_dict', '_load_from_state_dict'
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:

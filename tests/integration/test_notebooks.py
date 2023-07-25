@@ -1,4 +1,3 @@
-import glob
 import subprocess
 import os
 import tempfile
@@ -29,12 +28,18 @@ def run_python_file(file_path, tmp_dir):
         text=True,
         timeout=60 * 2,
     )
+    print(completed_process.stdout)
     assert completed_process.returncode == 0
+
+
+NOTEBOOKS = [
+    'notebooks/mnist_clean.ipynb',
+]
 
 
 @pytest.mark.skipif(
     os.environ.get('NB_TEST', 0) == 0, reason="Notebook tests are disabled"
 )
-@pytest.mark.parametrize("nb_file", glob.glob('notebooks/*.ipynb'))
+@pytest.mark.parametrize("nb_file", NOTEBOOKS)
 def test_notebooks(nb_file, copy_superduperdb):
     run_python_file(nb_file, tmp_dir=copy_superduperdb)

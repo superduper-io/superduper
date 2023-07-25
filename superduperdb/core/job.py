@@ -11,7 +11,7 @@ def job(f):
         *args,
         distributed=False,
         db: t.Any = None,
-        dependencies: t.List[Job] = (),  # type: ignore[assignment]
+        dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
         **kwargs,
     ):
         j = FunctionJob(callable=f, args=args, kwargs=kwargs)  # type: ignore[arg-type]
@@ -23,7 +23,7 @@ def job(f):
 class Job:
     def __init__(
         self,
-        args: t.Optional[t.List] = None,
+        args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
     ):
         self.args = args
@@ -67,7 +67,7 @@ class FunctionJob(Job):
     def __init__(
         self,
         callable: t.Callable,
-        args: t.Optional[t.List] = None,
+        args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
     ):
         super().__init__(args=args, kwargs=kwargs)
@@ -113,7 +113,7 @@ class ComponentJob(Job):
         component_identifier: str,
         variety: str,
         method_name: str,
-        args: t.Optional[t.List] = None,
+        args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
     ):
         super().__init__(args=args, kwargs=kwargs)

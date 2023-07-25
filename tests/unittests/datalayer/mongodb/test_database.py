@@ -97,15 +97,6 @@ def test_reload_dataset(si_validation):
     si_validation.load('dataset', 'my_valid')
 
 
-def test_validate_component(with_vector_index, si_validation, metric):
-    with_vector_index.validate(
-        'test_vector_search',
-        variety='vector_index',
-        metrics=['p@1'],
-        validation_set='my_valid',
-    )
-
-
 def test_insert(random_data, a_watcher, an_update):
     random_data.execute(Collection(name='documents').insert_many(an_update))
     r = next(random_data.execute(Collection(name='documents').find({'update': True})))

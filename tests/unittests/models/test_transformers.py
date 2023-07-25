@@ -2,6 +2,7 @@ import pytest
 import tdir
 
 from superduperdb.core.document import Document as D
+from superduperdb.core.dataset import Dataset
 from superduperdb.datalayer.mongodb.query import Collection
 
 from superduperdb.models.transformers.wrapper import (
@@ -11,7 +12,7 @@ from superduperdb.models.transformers.wrapper import (
 
 
 @pytest.fixture(scope="function")
-def trainer(random_data):
+def transformers_model(random_data):
     from transformers import AutoModelForSequenceClassification
     from transformers import AutoTokenizer
 
@@ -27,29 +28,24 @@ def trainer(random_data):
         "distilbert-base-uncased", num_labels=2
     )
 
-    trainer = Pipeline(
+    model = Pipeline(
         identifier='my-sentiment-analysis',
-        tokenizer=tokenizer,
+        preprocess=tokenizer,
         object=model,
-        train_X='text',
-        train_y='label',
         device='cpu',
     )
-    yield trainer, tokenizer
+    yield model
 
 
-def test_transformer(trainer):
-    pass
+def test_transformer_predict(transformers_model):
+    one_prediction = transformers_model.predict('this is a test', one=True)
+    assert isinstance(one_prediction, int)
+    predictions = transformers_model.predict(['this is a test', 'this is another'])
+    assert isinstance(predictions, list)
 
 
 @tdir
-def test_tranformers_trainer(trainer, random_data):
-    trainer, tokenizer = trainer
-
-    from transformers import DataCollatorWithPadding
-    from superduperdb.core.dataset import Dataset
-
-    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+def test_tranformers_fit(transformers_model, random_data):
     repo_name = "test-superduperdb-sentiment-analysis"
     training_args = TransformersTrainerConfiguration(
         identifier=repo_name,
@@ -62,7 +58,7 @@ def test_tranformers_trainer(trainer, random_data):
         save_strategy="epoch",
         use_mps_device=False,
     )
-    trainer.fit(
+    transformers_model.fit(
         X='text',
         y='label',
         db=random_data,
@@ -74,8 +70,5 @@ def test_tranformers_trainer(trainer, random_data):
                 select=Collection(name='train_documents').find({'_fold': 'valid'}),
             )
         ],
-        data_collator=data_collator,
         data_prefetch=False,
-        tokenizer_kwargs={'truncation': True},
-        evaluate=False,
     )

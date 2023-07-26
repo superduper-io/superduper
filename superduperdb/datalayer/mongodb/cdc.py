@@ -1,5 +1,6 @@
 import time
 import threading
+import traceback
 import json
 import queue
 import datetime
@@ -286,7 +287,8 @@ class CDCHandler(threading.Thread):
                 if packets == 0:
                     break
             except Exception as exc:
-                logging.debug(f"Error while handling cdc batches :: reason {exc}")
+                traceback.print_exc()
+                logging.info(f'Error while handling cdc batches :: reason {exc}')
 
 
 class MongoEventMixin:

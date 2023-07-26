@@ -7,7 +7,7 @@ from superduperdb.datalayer.base.backends import (
     connections as default_connections,
 )
 from superduperdb.datalayer.base.datalayer import Datalayer
-from superduperdb.cluster.dask.dask_client import dask_client
+from superduperdb.cluster.dask_client import dask_client
 import superduperdb as s
 
 

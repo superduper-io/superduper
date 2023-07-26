@@ -354,7 +354,7 @@ class FindOne(SelectOne):
             return Document(Document.decode(r, encoders=db.encoders))
 
     def featurize(self, features):
-        return FeaturizeOne(parent=self, features=features)
+        return FeaturizeOne(parent_find_one=self, features=features)
 
 
 @dc.dataclass

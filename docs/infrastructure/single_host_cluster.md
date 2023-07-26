@@ -1,3 +1,4 @@
+(singlehost)=
 # SuperDuperDB single host cluster deployment
 
 The simplest way to create a SuperDuperDB deployment, is to use the CLI 

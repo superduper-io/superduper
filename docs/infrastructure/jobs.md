@@ -3,37 +3,31 @@
 ## Scheduling of training and model outputs
 
 In order to most efficiently marshall computational resources,
-SuperDuperDB may be configured to run in asynchronous mode `{"remote": True}`.
+SuperDuperDB may be configured to run in asynchronous mode `{"distributed": True}`.
+The simplesst way to set a distributed SuperDuperDB deployment is using a [single-host cluster](singlehost). See [the section on configuration](configuration) for details in setting up SuperDuperDB.
 
-See the section here for an overview
-of what this means from an infrastructural point of view.
-
-There are several key functionalities in SuperDuperDB which cause asynchronous jobs to be
-spawned in the SuperDuperDB cluster's worker pool:
+There are several key functionalities in SuperDuperDB which trigger asynchronous jobs to be
+spawned in the configured Dask worker pool.
 
 - Inserting data
 - Updating data
 - Creating watchers
-- Training semantic indexes and imputations
+- Apply models to data `model.predict`
+- Training models `model.fit`
 
-When a command is executed which creates jobs, its output will contain the job ids of the jobs
-created. For example when inserting data, we get as many jobs as there are models in the database.
-Each of these jobs will compute outputs on those data for a single model. The order of the jobs
-is determined by which features are necessary for a given model. Those models with no necessary
-input features which result from another model go first.
+See [the Dask documentation](https://docs.dask.org/en/stable/) for more information about setting up and managing Dask deployments. The dask deployment may be configured using 
+the [configuration stystem](configuration).
+
+The stdout and status of the job may be monitored using the returned `Job` object:
 
 ```python
->>> job_ids = docs.insert_many(data)[1]
->>> print(job_ids)
-{'resnet': ['5ebf5272-95ac-11ed-9436-1e00f226d551'],
- 'visual_classifier': ['69d283c8-95ac-11ed-9436-1e00f226d551']}
->>>
+>>> job = model.predict(X='my-key', db=db, select=collection.find())
+>>> job.watch()
+# ... lots of lines of stdout
 ```
 
-The standard output of these asynchronous jobs is logged to MongoDB. One may watch this
-output using:
+Jobs may be viewed using `db.show`:
 
 ```python
->>> docs.watch_job(job_ids['resnet'])
-# ... lots of lines of stdout/ stderr
+>>> db.show('job')
 ```

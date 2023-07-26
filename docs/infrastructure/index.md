@@ -17,8 +17,8 @@ leading to smoother and more robust productionization:
 
 single_host_cluster
 architecture
+jobs
 change_data_capture
 client_server
 distributed_cluster
-deep_dive_on_jobs
 ```

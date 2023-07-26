@@ -151,10 +151,7 @@ cur = db.execute(
         .like({'abstract': 'philosophers'}, n=10, vector_index='my-index')
 )
 ```
-- **Integrate LangChain <a href="404" target="_blank">(read more in the docs here)</a>:**
-```python
-install llama2
-```
+
 - **Add Llama 2 model directly into your database! <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
 model = "meta-llama/Llama-2-7b-chat-hf"

@@ -7,6 +7,7 @@ import dataclasses as dc
 
 if t.TYPE_CHECKING:
     from superduperdb.datalayer.base.datalayer import Datalayer
+    from superduperdb.datalayer.base.dataset import Dataset
 
 
 @dc.dataclass
@@ -34,23 +35,23 @@ class Component(Serializable):
         pass
 
     @property
-    def child_components(self):
+    def child_components(self) -> t.Sequence[t.Any]:
         return []
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         if self.version is None:
             raise Exception('Version not yet set for component uniqueness')
         return f'{self.variety}/{self.identifier}/{self.version}'
 
-    def dict(self):
+    def dict(self) -> t.Dict[str, t.Any]:
         return dc.asdict(self)
 
     def create_validation_job(
         self,
-        validation_set: t.Union[str, 'Dataset'],  # type: ignore[name-defined]
+        validation_set: t.Union[str, Dataset],
         metrics: t.Sequence[str],
-    ):
+    ) -> ComponentJob:
         return ComponentJob(
             component_identifier=self.identifier,
             method_name='predict',
@@ -62,9 +63,11 @@ class Component(Serializable):
             },
         )
 
-    def schedule_jobs(self, database, dependencies=()):
+    def schedule_jobs(
+        self, database: Datalayer, dependencies: t.Sequence[()] = ()
+    ) -> t.Sequence[t.Any]:
         return []
 
     @classmethod
-    def make_unique_id(cls, variety, identifier, version):
+    def make_unique_id(cls, variety: str, identifier: str, version: int) -> str:
         return f'{variety}/{identifier}/{version}'

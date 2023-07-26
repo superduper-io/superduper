@@ -23,5 +23,5 @@ class Metric(Component):
         if self.object and not isinstance(self.object, Artifact):
             self.object = Artifact(artifact=self.object)
 
-    def __call__(self, x, y):
+    def __call__(self, x: int, y: int) -> bool:
         return self.object.artifact(x, y)

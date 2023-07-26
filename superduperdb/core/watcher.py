@@ -30,6 +30,12 @@ class Watcher(Component):
     identifier: t.Optional[str] = None
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
+    def __post_init__(self):
+        if hasattr(self, 'features'):
+            self.features = self.select.features
+        else:
+            self.features = {}
+
     @property
     def child_components(self):
         return [('model', 'model')]

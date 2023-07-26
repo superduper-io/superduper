@@ -120,9 +120,9 @@ class PredictMixin:
 
             return db.add(
                 Watcher(
+                    key=X,
                     model=self,  # type: ignore[arg-type]
                     select=select,  # type: ignore[arg-type]
-                    key=X,
                 ),
                 dependencies=dependencies,
             )

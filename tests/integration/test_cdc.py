@@ -228,15 +228,15 @@ def test_cdc_stop(watcher_and_collection_name):
 def add_and_cleanup_watchers(database, collection_name):
     """Add watchers to the database and remove them after the test"""
     watcher_x = Watcher(
+        key='x',
         model='model_linear_a',
         select=Collection(name=collection_name).find(),
-        key='x',
     )
 
     watcher_z = Watcher(
+        key='z',
         model='model_linear_a',
         select=Collection(name=collection_name).find(),
-        key='z',
     )
 
     database.add(watcher_x)

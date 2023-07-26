@@ -2,7 +2,6 @@ import dataclasses as dc
 from functools import cached_property
 import io
 from contextlib import contextmanager
-from typing import Optional, Union, Dict, List, Any
 import typing as t
 
 import torch
@@ -118,13 +117,13 @@ class Base:
 
     def _fit(  # type: ignore[override]
         self,
-        X: Union[List[str], str],
-        y: Optional[Union[List, Any]] = None,
-        db: Optional[Datalayer] = None,
-        select: Optional[Union[Select, Dict]] = None,
-        configuration: Optional[TorchTrainerConfiguration] = None,
-        validation_sets: Optional[List[str]] = None,
-        metrics: Optional[List[Metric]] = None,
+        X: t.Union[t.List[str], str],
+        y: t.Optional[t.Union[t.List, t.Any]] = None,
+        db: t.Optional[Datalayer] = None,
+        select: t.Optional[t.Union[Select, t.Dict]] = None,
+        configuration: t.Optional[TorchTrainerConfiguration] = None,
+        validation_sets: t.Optional[t.List[str]] = None,
+        metrics: t.Optional[t.List[Metric]] = None,
         data_prefetch: bool = False,
     ):
         if configuration is not None:
@@ -170,7 +169,7 @@ class Base:
     def forward(self, X):
         return self.object.artifact(X)
 
-    def extract_batch_key(self, batch, key: Union[List[str], str]):
+    def extract_batch_key(self, batch, key: t.Union[t.List[str], str]):
         if isinstance(key, str):
             return batch[key]
         return [batch[k] for k in key]
@@ -223,7 +222,7 @@ class Base:
         train_dataloader: DataLoader,
         valid_dataloader: DataLoader,
         db: Datalayer,  # type: ignore[arg-type]
-        validation_sets: List[str],
+        validation_sets: t.List[str],
     ):
         self.train()
         iteration = 0
@@ -288,7 +287,7 @@ class Base:
                 preprocessors[k] = preprocessors[k].artifact
         return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
 
-    def _get_data(self, db: Optional[Datalayer]):
+    def _get_data(self, db: t.Optional[Datalayer]):
         train_data = QueryDataset(
             select=self.training_select,  # type: ignore[arg-type]
             keys=self.training_keys,

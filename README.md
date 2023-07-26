@@ -171,9 +171,6 @@ model = Pipeline(
     torch_dtype=torch.float16,
     device_map="auto",
 )
-# Now you can add the Llama2 into your database.
-
-db.add(model) # Note: db instance refers to superduperdb, check above examples!
 
 # You can easily predict on your collection documents.
 model.predict(

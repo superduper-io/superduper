@@ -1,4 +1,5 @@
 import contextlib
+import inspect
 import traceback
 
 
@@ -14,10 +15,14 @@ def method_job(
 ):
     from superduperdb.datalayer.base.build import build_datalayer
 
+    cfg.distributed = False
     db = build_datalayer(cfg)
     component = db.load(variety, identifier)
     method = getattr(component, method_name)
     db.metadata.update_job(job_id, 'status', 'running')
+
+    if 'distributed' in inspect.signature(method).parameters:
+        kwargs['distributed'] = False
     try:
         handle_function_output(
             method,
@@ -65,9 +70,12 @@ def callable_job(
 ):
     from superduperdb.datalayer.base.build import build_datalayer
 
+    cfg.distributed = False
     db = build_datalayer(cfg)
     db.metadata.update_job(job_id, 'status', 'running')
     output = None
+    if 'distributed' in inspect.signature(function_to_call).parameters:
+        kwargs['distributed'] = False
     try:
         output = handle_function_output(
             function_to_call,

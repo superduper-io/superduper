@@ -3,6 +3,8 @@ import typing as t
 
 import networkx
 
+from superduperdb.misc.configs import CFG
+
 from .job import Job
 
 
@@ -20,7 +22,15 @@ class TaskWorkflow:
     def dependencies(self, node):
         return [self.G.nodes[a]['job'].future for a in self.G.predecessors(node)]
 
-    def __call__(self, db=None, distributed: bool = False):
+    def watch(self):
+        for node in list(networkx.topological_sort(self.G)):
+            job: Job = self.G.nodes[node]['job']
+            job.watch()
+
+    def __call__(self, db=None, distributed: t.Optional[bool] = None):
+        if distributed is None:
+            distributed = CFG.distributed
+
         current_group = [n for n in self.G.nodes if not networkx.ancestors(self.G, n)]
         done = []
         while current_group:
@@ -30,7 +40,6 @@ class TaskWorkflow:
                     db=db, dependencies=self.dependencies(node), distributed=distributed
                 )
                 done.append(node)
-
             current_group = [
                 n
                 for n in self.G.nodes

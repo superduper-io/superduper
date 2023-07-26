@@ -1,14 +1,13 @@
-from typing import Dict, Any, Optional
-
 from superduperdb.core.component import Component
 from superduperdb.datalayer.base.metadata import MetaDataStore
+import typing as t
 
 
 class MongoMetaDataStore(MetaDataStore):
     def __init__(
         self,
-        conn: Any,
-        name: Optional[str] = None,
+        conn: t.Any,
+        name: t.Optional[str] = None,
     ):
         self.name = name
         db = conn[name]
@@ -25,12 +24,12 @@ class MongoMetaDataStore(MetaDataStore):
             }
         )
 
-    def create_component(self, info: Dict):
+    def create_component(self, info: t.Dict):
         if 'hidden' not in info:
             info['hidden'] = False
         return self.object_collection.insert_one(info)
 
-    def create_job(self, info: Dict):
+    def create_job(self, info: t.Dict):
         return self.job_collection.insert_one(info)
 
     def get_parent_child_relations(self):
@@ -79,7 +78,7 @@ class MongoMetaDataStore(MetaDataStore):
         except IndexError:
             raise FileNotFoundError(f'Can\'t find {variety}: {identifier} in metadata')
 
-    def update_job(self, identifier: str, key: str, value: Any):
+    def update_job(self, identifier: str, key: str, value: t.Any):
         return self.job_collection.update_one(
             {'identifier': identifier}, {'$set': {key: value}}
         )
@@ -109,7 +108,7 @@ class MongoMetaDataStore(MetaDataStore):
         )
 
     def _component_used(
-        self, variety: str, identifier: str, version: Optional[int] = None
+        self, variety: str, identifier: str, version: t.Optional[int] = None
     ):
         if version is None:
             return bool(
@@ -210,7 +209,7 @@ class MongoMetaDataStore(MetaDataStore):
         identifier: str,
         variety: str,
         key: str,
-        value: Any,
+        value: t.Any,
         version: int,
     ):
         return self.object_collection.update_one(

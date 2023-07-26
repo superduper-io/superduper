@@ -6,6 +6,8 @@ import typing as t
 
 from superduperdb.core.artifact import Artifact
 from superduperdb.core.component import Component
+from PIL.PngImagePlugin import PngImageFile
+from torch import Tensor
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]
@@ -50,13 +52,13 @@ class Encoder(Component):
     version: t.Optional[int] = None
 
     def __post_init__(self):
-        if isinstance(self.decoder, t.Callable):
+        if isinstance(self.decoder, t.Callable):  # type: ignore[arg-type]
             self.decoder = Artifact(artifact=self.decoder)
-        if isinstance(self.encoder, t.Callable):
+        if isinstance(self.encoder, t.Callable):  # type: ignore[arg-type]
             self.encoder = Artifact(artifact=self.encoder)
 
-    def __call__(self, x):
-        return Encodable(x, self)
+    def __call__(self, x: t.Union[Tensor, PngImageFile]) -> 'Encodable':
+        return Encodable(x, self)  # type: ignore[call-arg]
 
     def decode(self, b: bytes) -> t.Any:
         return self(self.decoder.artifact(b))

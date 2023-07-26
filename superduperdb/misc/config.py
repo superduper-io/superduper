@@ -14,36 +14,50 @@ REST_API_VERSION = '0.1.0'
 
 
 class HasPort(JSONable):
+    """A base class for server connections"""
+
     password: str = ''
     port: int = 0
     username: str = ''
 
 
 class HostPort(HasPort):
+    """Configure server connections with a `host` property"""
+
     host: str = 'localhost'
 
 
 class IpPort(HasPort):
+    """Configure server connections with an `ip` property"""
+
     ip: str = 'localhost'
 
 
-class Api(JSONable):
-    api_key: str = Field(default=_BAD_KEY, repr=False)
-
-
 class Retry(JSONable):
+    """Describes how to retry using the `tenacity` library"""
+
     stop_after_attempt: int = 2
     wait_max: float = 10.0
     wait_min: float = 4.0
     wait_multiplier: float = 1.0
 
 
+class Api(JSONable):
+    """A base class for API connections"""
+
+    api_key: str = Field(default=_BAD_KEY, repr=False)
+
+
 class Apis(JSONable):
+    """A container for API connections"""
+
     providers: t.Dict[str, Api] = Factory(dict)
     retry: Retry = Factory(Retry)
 
 
 class Dask(IpPort):
+    """Describes a connection to Dask"""
+
     deserializers: t.List[str] = Factory(list)
     port: int = 8786
     serializers: t.List[str] = Factory(list)
@@ -51,33 +65,45 @@ class Dask(IpPort):
 
 
 class Deployment(JSONable):
+    """(unused)"""
+
     database: str = ''
     model: str = ''
 
 
 class LogLevel(str, Enum):
+    """Enumerate log severity level"""
+
     DEBUG = 'DEBUG'
     INFO = 'INFO'
     WARN = 'WARN'
 
 
 class LogType(str, Enum):
+    """Enumerate the standard logs"""
+
     STDERR = 'STDERR'
     LOGGING = 'LOGGING'
 
 
 class Logging(JSONable):
+    """Describe how we are going to log. This isn't yet used."""
+
     level = LogLevel.INFO
     type = LogType.STDERR
     kwargs: dict = Factory(dict)
 
 
 class ModelServer(HostPort):
+    """Configure the model server's port"""
+
     host: str = '127.0.0.1'
     port: int = 5001
 
 
 class MongoDB(HostPort):
+    """Configure MongoDB's port and credentials"""
+
     host: str = 'localhost'
     password: str = 'testmongodbpassword'
     port: int = 27018
@@ -85,6 +111,8 @@ class MongoDB(HostPort):
 
 
 class DataLayer(JSONable):
+    """Configure which datalayer or database is being used"""
+
     cls: str = 'mongodb'
     connection: str = 'pymongo'
     kwargs: t.Dict = Factory(lambda: MongoDB().dict())
@@ -92,12 +120,16 @@ class DataLayer(JSONable):
 
 
 class DataLayers(JSONable):
+    """TBD"""
+
     artifact: DataLayer = Factory(lambda: DataLayer(name='_filesystem:test_db'))
     data_backend: DataLayer = Factory(DataLayer)
     metadata: DataLayer = Factory(DataLayer)
 
 
 class Notebook(JSONable):
+    """Configure the notebook server connection information"""
+
     ip: str = '0.0.0.0'
     password: str = ''
     port: int = 8888
@@ -110,13 +142,9 @@ class Notebook(JSONable):
         return v
 
 
-class Ray(HostPort):
-    host: str = '127.0.0.1'
-
-    deployments: t.List[Deployment] = Factory(list)
-
-
 class Server(JSONable):
+    """Configure the SuperDuperDB server connection information"""
+
     host: str = '127.0.0.1'
     port: int = 3223
     protocol: str = 'http'
@@ -127,17 +155,23 @@ class Server(JSONable):
 
 
 class LanceDB(JSONable):
+    """Configure the Lance DB vector search connection information"""
+
     backfill_batch_size: int = 100
     lancedb: bool = True
     uri: str = './.lancedb'
 
 
 class InMemory(JSONable):
+    """Configure the in-memory vector search connection information"""
+
     backfill_batch_size: int = 100
     inmemory: bool = True
 
 
 class VectorSearch(JSONable):
+    """Configure the full vector search connection information"""
+
     host: str = 'localhost'
     password: str = Field(default='', repr=False)
     port: int = 19530
@@ -146,6 +180,8 @@ class VectorSearch(JSONable):
 
 
 class Config(JSONable):
+    """The data class containing all configurable superduperdb values"""
+
     apis: Apis = Factory(Apis)
     cdc: bool = False
     dask: Dask = Factory(Dask)
@@ -154,6 +190,5 @@ class Config(JSONable):
     logging: Logging = Factory(Logging)
     model_server: ModelServer = Factory(ModelServer)
     notebook: Notebook = Factory(Notebook)
-    ray: Ray = Factory(Ray)
     server: Server = Factory(Server)
     vector_search: VectorSearch = Factory(VectorSearch)

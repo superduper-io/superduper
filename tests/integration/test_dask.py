@@ -13,9 +13,9 @@ from superduperdb.datalayer.mongodb.query import Collection
 def add_and_cleanup_watcher(database, collection_name):
     """Add watcher to the database and remove it after the test"""
     watcher_x = Watcher(
+        key='x',
         model='model_linear_a',
         select=Collection(name=collection_name).find(),
-        key='x',
     )
 
     database.add(watcher_x)
@@ -103,7 +103,7 @@ def test_dependencies_with_dask(
 
     database.distributed = True
     database._distributed_client = local_dask_client
-    G(database, distributed=True)
+    G.run_jobs(distributed=True)
     local_dask_client.wait_all_pending_tasks()
     futures = list(local_dask_client.futures_collection.values())
     assert len(futures) == 2

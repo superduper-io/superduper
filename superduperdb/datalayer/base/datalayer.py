@@ -281,13 +281,13 @@ class Datalayer:
         :param ids: ids which reduce scopy of computations
         :param verbose: Toggle to ``True`` to get more output
         """
-        task_graph: TaskWorkflow = self._build_task_workflow(
+        task_workflow: TaskWorkflow = self._build_task_workflow(
             query.select_table,
             ids=ids,
             verbose=verbose,
         )
-        task_graph(db=self, distributed=self.distributed)
-        return task_graph
+        task_workflow.run_jobs(distributed=self.distributed)
+        return task_workflow
 
     def update(self, update: Update) -> UpdateResult:
         """
@@ -300,7 +300,7 @@ class Datalayer:
     def add(
         self,
         object: Component,
-        dependencies: t.Sequence[t.Union[Job, str]] = (),
+        dependencies: t.Sequence[Job] = (),
     ):
         """
         Add functionality in the form of components. Components are stored in the
@@ -467,7 +467,7 @@ class Datalayer:
             model, key = identifier.split('/')
             G.add_node(
                 f'{model}.predict({key})',
-                ComponentJob(
+                job=ComponentJob(
                     component_identifier=model,
                     args=[key],
                     kwargs={
@@ -530,7 +530,7 @@ class Datalayer:
     def _add(
         self,
         object: Component,
-        dependencies: t.Sequence[t.Union[Job, str]] = (),
+        dependencies: t.Sequence[Job] = (),
         serialized: t.Optional[t.Dict] = None,
         parent: t.Optional[str] = None,
     ):
@@ -617,7 +617,7 @@ class Datalayer:
     def _create_plan(self):
         G = networkx.DiGraph()
         for identifier in self.metadata.show_components('watcher', active=True):
-            G.add_node(('watcher', identifier))
+            G.add_node('watcher', job=identifier)
         for identifier in self.metadata.show_components('watcher'):
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:

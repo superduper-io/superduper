@@ -47,6 +47,7 @@ class Dask(IpPort):
     deserializers: t.List[str] = Factory(list)
     port: int = 8786
     serializers: t.List[str] = Factory(list)
+    local: bool = True
 
 
 class Deployment(JSONable):

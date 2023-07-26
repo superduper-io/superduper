@@ -782,6 +782,7 @@ class Datalayer:
         watcher_info=None,
         **kwargs,
     ) -> t.List:
+        # NOTE: this method is never called anywhere except for itself!
         if watcher_info is None:
             watcher_info = self.metadata.get_component('watcher', identifier)
 

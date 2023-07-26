@@ -192,7 +192,12 @@ model.predict(
 
 - **Create downstream classifier model <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
-
+model.fit(
+    X='text',
+    y='label',
+    db=db,
+    select=collection.find().featurize({'text': '<my-upstream-model>'}),
+)
 ```
 
 # Installation :electric_plug:

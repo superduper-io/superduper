@@ -12,6 +12,7 @@ from superduperdb.core.component import Component
 from superduperdb.core.encoder import Encoder
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.query import Select
+from superduperdb.misc.configs import CFG
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 
@@ -95,7 +96,7 @@ class PredictMixin:
         X: t.Any,
         db: 'BaseDatabase' = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
-        distributed: bool = False,
+        distributed: t.Optional[bool] = None,
         ids: t.Optional[t.Sequence[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
@@ -123,6 +124,9 @@ class PredictMixin:
 
         if db is not None:
             db.add(self)
+
+        if distributed is None:
+            distributed = CFG.distributed
 
         if distributed:
             assert not one
@@ -355,7 +359,7 @@ class Model(Component, PredictMixin):
         y: t.Any = None,
         db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
         select: t.Optional[Select] = None,
-        distributed: bool = False,
+        distributed: t.Optional[bool] = None,
         dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
         configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
@@ -375,6 +379,9 @@ class Model(Component, PredictMixin):
 
         if db is not None:
             db.add(self)
+
+        if distributed is None:
+            distributed = CFG.distributed
 
         if distributed:
             return self.create_fit_job(

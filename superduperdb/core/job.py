@@ -4,12 +4,13 @@ import uuid
 
 
 from superduperdb.core.tasks import method_job, callable_job
+from superduperdb.misc.configs import CFG
 
 
 def job(f):
     def wrapper(
         *args,
-        distributed=False,
+        distributed: t.Optional[bool] = None,
         db: t.Any = None,
         dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
         **kwargs,
@@ -59,7 +60,9 @@ class Job:
             'stderr': [],
         }
 
-    def __call__(self, db: t.Any = None, distributed=False, dependencies=()):
+    def __call__(
+        self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
+    ):
         raise NotImplementedError
 
 
@@ -94,11 +97,17 @@ class FunctionJob(Job):
         )
         return
 
-    def __call__(self, db: t.Any = None, distributed=False, dependencies=()):
+    def __call__(
+        self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
+    ):
         if db is None:
             from superduperdb.datalayer.base.build import build_datalayer
 
             db = build_datalayer()
+
+        if distributed is None:
+            distributed = CFG.distributed
+        self.db = db
         db.metadata.create_job(self.dict())  # type: ignore[has-type]
         if not distributed:
             self.run_locally(db)
@@ -150,11 +159,16 @@ class ComponentJob(Job):
         )
         return
 
-    def __call__(self, db: t.Any = None, distributed=False, dependencies=()):
+    def __call__(
+        self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
+    ):
+        if distributed is None:
+            distributed = CFG.distributed
         if db is None:
             from superduperdb.datalayer.base.build import build_datalayer
 
             db = build_datalayer()
+        self.db = db
         db.metadata.create_job(self.dict())  # type: ignore[has-type]
         if self.component is None:
             self.component = db.load(self.variety, self.component_identifier)

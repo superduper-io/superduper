@@ -37,7 +37,7 @@ attr==0.3.2
 attrs==23.1.0
     # via
     #   aiohttp
-   #   interrogate
+    #   interrogate
     #   jsonschema
     #   ray
     #   referencing
@@ -271,6 +271,8 @@ langchain==0.0.235
     # via -r requirements.in
 langsmith==0.0.7
     # via langchain
+libcst==1.0.1
+    # via monkeytype
 lightning==2.0.5
     # via -r requirements.in
 lightning-cloud==0.5.37
@@ -308,6 +310,8 @@ mdurl==0.1.2
     # via markdown-it-py
 mistune==3.0.1
     # via nbconvert
+monkeytype==23.3.0
+    # via -r requirements-lint.in
 mpmath==1.3.0
     # via sympy
 msgpack==1.0.5
@@ -323,6 +327,7 @@ mypy==1.4.1
 mypy-extensions==1.0.0
     # via
     #   black
+    #   monkeytype
     #   mypy
     #   typing-inspect
 myst-parser==2.0.0
@@ -504,6 +509,7 @@ pyyaml==6.0.1
     #   distributed
     #   huggingface-hub
     #   langchain
+    #   libcst
     #   lightning
     #   myst-parser
     #   pytorch-lightning
@@ -715,6 +721,7 @@ typing-extensions==4.7.1
     #   fastapi
     #   huggingface-hub
     #   ipython
+    #   libcst
     #   lightning
     #   lightning-utilities
     #   mypy
@@ -730,7 +737,9 @@ typing-extensions==4.7.1
     #   typing-inspect
     #   uvicorn
 typing-inspect==0.9.0
-    # via dataclasses-json
+    # via
+    #   dataclasses-json
+    #   libcst
 tzdata==2023.3
     # via pandas
 ujson==5.8.0

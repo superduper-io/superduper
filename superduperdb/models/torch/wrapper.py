@@ -312,6 +312,12 @@ class TorchModel(Base, Model):  # type: ignore[misc]
     forward_method: str = '__call__'
     train_forward_method: str = '__call__'
 
+    """
+    :param optimizer_state: optimizer state (optional), populated automatically on reload
+    :param forward_method: method to call for prediction, defaults to __call__
+    :param train_forward_method: method to call for training, defaults to __call__
+    """
+
     def __post_init__(self):
         super().__post_init__()
 

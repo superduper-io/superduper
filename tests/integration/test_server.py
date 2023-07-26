@@ -8,7 +8,7 @@ from superduperdb import CFG
 from superduperdb.core.document import Document
 from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.encoders.torch.tensor import tensor
-from superduperdb.serve.client import Client
+from superduperdb.cluster.client import Client
 
 
 @pytest.fixture(scope="module")

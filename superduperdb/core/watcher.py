@@ -24,7 +24,6 @@ class Watcher(Component):
     key: str
     model: t.Union[str, Model]
     select: t.Optional[Select] = None
-    features: t.Optional[t.Dict] = None
     max_chunk_size: int = 5000
     active: bool = True
     version: t.Optional[int] = None
@@ -45,6 +44,9 @@ class Watcher(Component):
                 self.identifier = f'{self.model}/{self.key}'
             else:
                 self.identifier = f'{self.model.identifier}/{self.key}'
+        self.features = {}
+        if hasattr(self.select, 'features'):
+            self.features = self.select.features
 
     def cleanup(self, database) -> None:
         self.select.model_cleanup(database, model=self.model.identifier, key=self.key)

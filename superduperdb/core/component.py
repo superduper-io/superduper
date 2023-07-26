@@ -1,7 +1,7 @@
 # ruff: noqa: F821
 from __future__ import annotations
 import typing as t
-from superduperdb.core.job import ComponentJob
+from superduperdb.core.job import ComponentJob, Job
 from superduperdb.core.serializable import Serializable
 import dataclasses as dc
 
@@ -64,8 +64,19 @@ class Component(Serializable):
         )
 
     def schedule_jobs(
-        self, database: Datalayer, dependencies: t.Sequence[()] = ()
+        self,
+        database: Datalayer,
+        dependencies: t.Sequence[Job] = (),
+        distributed: bool = False,
+        verbose: bool = False,
     ) -> t.Sequence[t.Any]:
+        """Run the job for this watcher
+
+        :param database: The datalayer to process
+        :param dependencies: A sequence of dependencies,
+        :param distributed: Is the computation distributed
+        :param verbose: If true, print more information
+        """
         return []
 
     @classmethod

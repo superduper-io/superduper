@@ -37,7 +37,6 @@ class DaskClient:
                 address=address,
                 serializers=serializers,
                 deserializers=deserializers,
-                env=envs,
                 **kwargs,
             )
 
@@ -95,7 +94,10 @@ class DaskClient:
 
 
 def dask_client(
-    cfg, local: bool = False, envs: t.Dict[str, t.Any] = {}, **kwargs
+    cfg,
+    envs: t.Dict[str, t.Any] = {},
+    local: t.Optional[bool] = None,
+    **kwargs,
 ) -> DaskClient:
     """
     Creates a DaskClient instance.
@@ -108,7 +110,7 @@ def dask_client(
         address=f'tcp://{cfg.ip}:{cfg.port}',
         serializers=cfg.serializers,
         deserializers=cfg.deserializers,
-        local=local,
         envs=envs,
+        local=local if local is not None else getattr(cfg, 'local', True),
         **kwargs,
     )

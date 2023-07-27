@@ -1,0 +1,54 @@
+name: Feature request
+description: Request a feature for addition to the roadmap
+title: '[FEATURE REQUEST]: '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in SuperDuperDB. We take all feature requests seriously and will endeavour to respond in a timely manner!
+
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: your-name@here.com
+    validations:
+      required: true
+
+  - type: textarea
+    id: feature
+    attributes:
+      label: Feature Description
+      description: Please describe the feature in detail?
+      placeholder: Description here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case Description
+      description: Please describe the real world issue which the implemented feature will solve
+      placeholder: 'Description here.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: org
+    attributes:
+      label: Organization
+      description: Please describe the context this would be used in, e.g. your company, app, experimentation?
+      placeholder: Description here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: stakeholders
+    attributes:
+      label: Who are the stake-holders?
+      description: Who are the major stake-holders in your use-case, who would be affected by the feature?
+      placeholder: Description here.
+    validations:
+      required: false

@@ -12,4 +12,5 @@ multimodel_image_search_clip
 sentiment_analysis_use_case
 voice_memos
 mongo_cdc
+parallelization_on_dask
 ```

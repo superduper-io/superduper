@@ -3,8 +3,11 @@ import importlib
 import inspect
 import typing as t
 
+if t.TYPE_CHECKING:
+    pass
 
-def _deserialize(r, db=None):
+
+def _deserialize(r: t.Any, db: None = None) -> t.Any:
     if isinstance(r, list):
         return [_deserialize(i, db=db) for i in r]
 
@@ -62,5 +65,5 @@ class Serializable:
     deserialize = staticmethod(_deserialize)
     serialize = _serialize
 
-    def dict(self):
+    def dict(self) -> t.Dict[str, t.Any]:
         return dc.asdict(self)

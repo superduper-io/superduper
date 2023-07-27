@@ -1,5 +1,6 @@
 import time
 import threading
+import traceback
 import json
 import queue
 import datetime
@@ -192,15 +193,15 @@ class CDCHandler(threading.Thread):
         :param ids: List of ids which were observed as changed document.
         """
 
-        task_graph = self.db._build_task_workflow(cdc_query, ids=ids, verbose=False)
-        task_graph = self.create_vector_watcher_task(
-            task_graph, cdc_query=cdc_query, ids=ids
+        task_workflow = self.db._build_task_workflow(cdc_query, ids=ids, verbose=False)
+        task_workflow = self.create_vector_watcher_task(
+            task_workflow, cdc_query=cdc_query, ids=ids
         )
-        task_graph(self.db)
+        task_workflow.run_jobs()
 
     def create_vector_watcher_task(
         self,
-        task_graph: TaskWorkflow,
+        task_workflow: TaskWorkflow,
         cdc_query: Serializable,
         ids: t.Sequence[str],
     ) -> TaskWorkflow:
@@ -208,7 +209,7 @@ class CDCHandler(threading.Thread):
         A helper function to define a node in taskflow graph which is responsible for
         copying vectors to a vector db.
 
-        :param task_graph: A DiGraph task flow which defines task on a di graph.
+        :param task_workflow: A DiGraph task flow which defines task on a di graph.
         :param db: A superduperdb instance.
         :param cdc_query: A basic find query to get cursor on collection.
         :param ids: A list of ids observed during the change
@@ -217,20 +218,20 @@ class CDCHandler(threading.Thread):
             vector_index = self.db.load(identifier=identifier, variety='vector_index')
             vector_index = t.cast(VectorIndex, vector_index)
             indexing_watcher_identifier = vector_index.indexing_watcher.identifier
-            task_graph.add_node(
+            task_workflow.add_node(
                 f'copy_vectors({indexing_watcher_identifier})',
-                FunctionJob(
+                job=FunctionJob(
                     callable=copy_vectors,
                     args=[indexing_watcher_identifier, cdc_query.serialize(), ids],
                     kwargs={},
                 ),
             )
             model, key = indexing_watcher_identifier.split('/')
-            task_graph.add_edge(
+            task_workflow.add_edge(
                 f'{model}.predict({key})',
                 f'copy_vectors({indexing_watcher_identifier})',
             )
-        return task_graph
+        return task_workflow
 
     def on_create(self, packet: Packet) -> None:
         ids = packet.ids
@@ -286,7 +287,8 @@ class CDCHandler(threading.Thread):
                 if packets == 0:
                     break
             except Exception as exc:
-                logging.debug(f"Error while handling cdc batches :: reason {exc}")
+                traceback.print_exc()
+                logging.info(f'Error while handling cdc batches :: reason {exc}')
 
 
 class MongoEventMixin:
@@ -299,7 +301,7 @@ class MongoEventMixin:
     EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
 
     def on_create(
-        self, change: t.Dict, db: 'Datalayer', collection: query.Collection
+        self, change: t.Dict, db: Datalayer, collection: query.Collection
     ) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
@@ -319,7 +321,7 @@ class MongoEventMixin:
         packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
-    def on_update(self, change: t.Dict, db: 'Datalayer'):
+    def on_update(self, change: t.Dict, db: Datalayer):
         """on_update.
 
         :param change:
@@ -381,7 +383,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def __init__(
         self,
-        db: 'Datalayer',
+        db: Datalayer,
         on: query.Collection,
         stop_event: threading.Event,
         identifier: 'str' = '',

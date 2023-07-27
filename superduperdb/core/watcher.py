@@ -1,7 +1,10 @@
 import typing as t
+from overrides import override
 
-from superduperdb.core.component import Component
-from superduperdb.core.model import Model
+from .component import Component
+from .job import Job
+from .model import Model
+from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.base.query import Select
 import dataclasses as dc
 
@@ -12,31 +15,41 @@ class Watcher(Component):
     Watcher object which is used to process a column/ key of a collection or table,
     and store the outputs.
 
-    :param select: Object for selecting which data is processed
-    :param model: Model for processing data
     :param key: Key to be bound to model
-    :param features: Dictionary of mappings from keys to models
-    :param active: Toggle to ``False`` to deactivate change data triggering
-    """
+    :param model: Model for processing data
 
-    variety: t.ClassVar[str] = 'watcher'
+    :param active: Toggle to ``False`` to deactivate change data triggering
+    :param features: Dictionary of mappings from keys to models
+    :param identifier: A string used to identify the model.
+    :param max_chunk_size: int = 5000
+
+    :param predict_kwargs: Keyword arguments to self.model.predict
+    :param select: Object for selecting which data is processed
+    :param version: Version number of the model(?)
+    """
 
     key: str
     model: t.Union[str, Model]
-    select: t.Optional[Select] = None
-    max_chunk_size: int = 5000
+
     active: bool = True
-    version: t.Optional[int] = None
+    features: t.Optional[t.Dict] = None
     identifier: t.Optional[str] = None
+    max_chunk_size: int = 5000
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    select: t.Optional[Select] = None
+    version: t.Optional[int] = None
+
+    variety: t.ClassVar[str] = 'watcher'
 
     @property
-    def child_components(self):
+    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
+        """Returns a list of child components as pairs TBD"""
         return [('model', 'model')]
 
-    def _on_create(self, db):
+    @override
+    def on_create(self, db: Datalayer) -> None:
         if isinstance(self.model, str):
-            self.model = db.load('model', self.model)
+            self.model = t.cast(Model, db.load('model', self.model))
 
     def __post_init__(self):
         if self.identifier is None and self.model is not None:
@@ -48,14 +61,16 @@ class Watcher(Component):
         if hasattr(self.select, 'features'):
             self.features = self.select.features
 
-    def cleanup(self, database) -> None:
-        self.select.model_cleanup(database, model=self.model.identifier, key=self.key)
-
+    @override
     def schedule_jobs(
-        self, database, verbose=False, dependencies=(), distributed=False
-    ):
+        self,
+        database: Datalayer,
+        dependencies: t.Sequence[Job] = (),
+        distributed: bool = False,
+        verbose: bool = False,
+    ) -> t.Sequence[t.Any]:
         if not self.active:
-            return
+            return ()
 
         return self.model.predict(
             X=self.key,
@@ -64,5 +79,13 @@ class Watcher(Component):
             distributed=distributed,
             max_chunk_size=self.max_chunk_size,
             dependencies=dependencies,
-            **self.predict_kwargs,
+            **(self.predict_kwargs or {}),
         )
+
+    def cleanup(self, database: Datalayer) -> None:
+        """Clean up when the watcher is done
+
+        :param database: The datalayer to process
+        """
+
+        self.select.model_cleanup(database, model=self.model.identifier, key=self.key)

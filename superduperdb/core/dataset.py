@@ -1,13 +1,17 @@
+from __future__ import annotations
+from overrides import override
 from functools import cached_property
-import typing as t
-
+import dataclasses as dc
 import numpy
+import typing as t
 
 from superduperdb.core.artifact import Artifact
 from superduperdb.core.component import Component
 from superduperdb.core.document import Document
 from superduperdb.datalayer.mongodb.query import Find
-import dataclasses as dc
+
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.datalayer import Datalayer
 
 
 @dc.dataclass
@@ -22,15 +26,17 @@ class Dataset(Component):
     raw_data: t.Optional[t.Union[Artifact, t.Any]] = None
     version: t.Optional[int] = None
 
-    def _on_create(self, db):
+    @override
+    def on_create(self, db: Datalayer) -> None:
         if self.raw_data is None:
-            data = list(db.execute(self.select))
+            data = list(db.execute(self.select))  # type: ignore[arg-type]
             if self.sample_size is not None and self.sample_size < len(data):
                 perm = self.random.permutation(len(data)).tolist()
                 data = [data[perm[i]] for i in range(self.sample_size)]
             self.raw_data = Artifact(artifact=[r.encode() for r in data])
 
-    def _on_load(self, db):
+    @override
+    def on_load(self, db: Datalayer) -> None:
         self.data = [
             Document(Document.decode(r.copy(), encoders=db.encoders))
             for r in self.raw_data.artifact

@@ -174,3 +174,4 @@ lightning_logs/
 # docs
 /docs/source/
 /docs/examples/*.zip
+monkeytype.sqlite3

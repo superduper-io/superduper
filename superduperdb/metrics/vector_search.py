@@ -92,7 +92,5 @@ class VectorSearchPerformance:
             for metric in metrics:
                 metric_values[metric.identifier].append(metric(ix, i))
 
-        for k in metric_values:
-            metric_values[k] = sum(metric_values[k]) / len(metric_values[k])
-
-        return metric_values
+        items = metric_values.items()
+        return {k: sum(v) / len(v) for k, v in items}  # type: ignore[misc]

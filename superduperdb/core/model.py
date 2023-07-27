@@ -1,30 +1,33 @@
-import multiprocessing
-from dask.distributed import Future
-import inspect
+from __future__ import annotations
 import dataclasses as dc
+import inspect
+import multiprocessing
 import typing as t
 
-from superduperdb.core.dataset import Dataset
-from superduperdb.core.job import Job, ComponentJob
-from superduperdb.core.metric import Metric
+from dask.distributed import Future
+from numpy import ndarray
+from sklearn.pipeline import Pipeline
+
 from superduperdb.core.artifact import Artifact
 from superduperdb.core.component import Component
+from superduperdb.core.dataset import Dataset
 from superduperdb.core.encoder import Encoder
+from superduperdb.core.job import Job, ComponentJob
+from superduperdb.core.metric import Metric
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.query import Select
 from superduperdb.misc.configs import CFG
 from superduperdb.misc.special_dicts import MongoStyleDict
 
+if t.TYPE_CHECKING:
+    from superduperdb.datalayer.base.datalayer import Datalayer
 
 EncoderArg = t.Union[Encoder, str, None]
 ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
 DataArg = t.Optional[t.Union[str, t.Sequence[str]]]
 
 
-def TrainingConfiguration(
-    identifier: str,
-    **kwargs,
-):
+def TrainingConfiguration(identifier: str, **kwargs):
     return _TrainingConfiguration(identifier=identifier, kwargs=kwargs)
 
 
@@ -55,7 +58,7 @@ class _TrainingConfiguration(Component):
 class PredictMixin:
     # ruff: noqa: F821
 
-    def _predict_one(self, X, **kwargs):
+    def _predict_one(self, X: int, **kwargs) -> int:
         if self.preprocess is not None:
             X = self.preprocess.artifact(X)
         output = self.to_call(X, **kwargs)
@@ -63,7 +66,7 @@ class PredictMixin:
             output = self.postprocess.artifact(output)
         return output
 
-    def _forward(self, X, num_workers=0):
+    def _forward(self, X: t.Sequence[int], num_workers: int = 0) -> t.Sequence[int]:
         if self.batch_predict:
             return self.to_call(X)
 
@@ -79,11 +82,13 @@ class PredictMixin:
                 outputs.append(self.to_call(r))
         return outputs
 
-    def _predict(self, X, one: bool = False, **predict_kwargs):
+    def _predict(
+        self, X: t.Any, one: bool = False, **predict_kwargs
+    ) -> t.Union[ndarray, int, t.Sequence[int]]:
         if one:
             return self._predict_one(X)
         if self.preprocess is not None:
-            X = list(map(self.preprocess.artifact, X))
+            X = [self.preprocess.artifact(i) for i in X]
         if self.collate_fn is not None:
             X = self.collate_fn(X)
         outputs = self._forward(X, **predict_kwargs)
@@ -94,17 +99,17 @@ class PredictMixin:
     def predict(
         self,
         X: t.Any,
-        db: 'BaseDatabase' = None,  # type: ignore[name-defined]
+        db: t.Optional[Datalayer] = None,
         select: t.Optional[Select] = None,
         distributed: t.Optional[bool] = None,
         ids: t.Optional[t.Sequence[str]] = None,
         max_chunk_size: t.Optional[int] = None,
-        dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
+        dependencies: t.Sequence[Job] = (),
         watch: bool = False,
         one: bool = False,
         context: t.Optional[t.Dict] = None,
         **kwargs,
-    ):
+    ) -> t.Any:
         # TODO this should be separated into sub-procedures
 
         if isinstance(select, dict):
@@ -115,15 +120,15 @@ class PredictMixin:
 
             return db.add(
                 Watcher(
+                    key=X,
                     model=self,  # type: ignore[arg-type]
                     select=select,  # type: ignore[arg-type]
-                    key=X,
                 ),
                 dependencies=dependencies,
             )
 
         if db is not None:
-            db.add(self)
+            db.add(self)  # type: ignore[arg-type]
 
         if distributed is None:
             distributed = CFG.distributed
@@ -248,7 +253,7 @@ class Model(Component, PredictMixin):
             self.to_call = getattr(self.object.artifact, self.predict_method)
 
     @property
-    def child_components(self) -> t.List[t.Tuple[str, str]]:
+    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
         out = []
         if self.encoder is not None:
             out.append(('encoder', 'encoder'))
@@ -257,16 +262,16 @@ class Model(Component, PredictMixin):
         return out
 
     @property
-    def training_keys(self):
+    def training_keys(self) -> t.Sequence[str]:
         out = [self.train_X]
         if self.train_y is not None:
             out.append(self.train_y)
-        return out
+        return out  # type: ignore[return-value]
 
-    def append_metrics(self, d):
+    def append_metrics(self, d: t.Dict[str, float]) -> None:
         for k in d:
-            if k not in self.metric_values:
-                self.metric_values[k] = []
+            if self.metric_values is not None:
+                self.metric_values.setdefault(k, [])
             self.metric_values[k].append(d[k])
 
     def create_predict_job(
@@ -342,7 +347,7 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
+        db: t.Optional[Datalayer] = None,
         select: t.Optional[Select] = None,
         dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
         configuration: t.Optional[_TrainingConfiguration] = None,
@@ -357,7 +362,7 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional['Datalayer'] = None,  # type: ignore[name-defined]
+        db: t.Optional[Datalayer] = None,
         select: t.Optional[Select] = None,
         distributed: t.Optional[bool] = None,
         dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
@@ -366,7 +371,7 @@ class Model(Component, PredictMixin):
         metrics: t.Optional[t.Sequence[Metric]] = None,
         data_prefetch: bool = False,
         **kwargs,
-    ):
+    ) -> t.Optional[Pipeline]:
         if isinstance(select, dict):
             select = Serializable.deserialize(select)
 

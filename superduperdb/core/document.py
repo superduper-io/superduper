@@ -2,8 +2,10 @@ from superduperdb.core.encoder import Encodable
 import bson
 import superduperdb as s
 import typing as t
+from bson.objectid import ObjectId
 
 ContentType = t.Union[t.Dict, Encodable]
+ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 
 
 class Document:
@@ -33,13 +35,13 @@ class Document:
             return _decode(r, encoders)
         raise NotImplementedError(f'type {type(r)} is not supported')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'Document({repr(self.content)})'
 
-    def __getitem__(self, item: str):
+    def __getitem__(self, item: str) -> ItemType:
         return self.content[item]
 
-    def __setitem__(self, key: str, value: t.Any):
+    def __setitem__(self, key: str, value: ItemType):
         self.content[key] = value
 
     def unpack(self) -> t.Any:
@@ -75,7 +77,7 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
     return [Document(Document.decode(r, encoders=encoders)) for r in documents]
 
 
-def _decode(r: t.Dict, encoders: t.Dict):
+def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
     if isinstance(r, dict) and '_content' in r:
         type = encoders[r['_content']['encoder']]
         try:
@@ -90,7 +92,7 @@ def _decode(r: t.Dict, encoders: t.Dict):
     return r
 
 
-def _encode(r: t.Any):
+def _encode(r: t.Any) -> t.Any:
     if isinstance(r, dict):
         return {k: _encode(v) for k, v in r.items()}
     if isinstance(r, Encodable):
@@ -101,7 +103,7 @@ def _encode(r: t.Any):
     return r
 
 
-def _unpack(item: t.Any):
+def _unpack(item: t.Any) -> t.Any:
     if isinstance(item, Encodable):
         return item.x
     elif isinstance(item, dict):

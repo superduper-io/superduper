@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Any, Optional
+import typing as t
 from abc import ABC, abstractmethod
 
 
@@ -13,18 +13,18 @@ class MetaDataStore(ABC):
 
     def __init__(
         self,
-        conn: Any,
-        name: Optional[str] = None,
+        conn: t.Any,
+        name: t.Optional[str] = None,
     ):
         self.name = name
         self.conn = conn
 
     @abstractmethod
-    def create_component(self, info: Dict):
+    def create_component(self, info: t.Dict):
         pass
 
     @abstractmethod
-    def create_job(self, info: Dict):
+    def create_job(self, info: t.Dict):
         pass
 
     @abstractmethod
@@ -36,7 +36,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def update_job(self, job_id: str, key: str, value: Any):
+    def update_job(self, job_id: str, key: str, value: t.Any):
         pass
 
     def watch_job(self, identifier: str):
@@ -114,7 +114,7 @@ class MetaDataStore(ABC):
         self,
         variety: str,
         identifier: str,
-        version: Optional[int] = None,
+        version: t.Optional[int] = None,
         allow_hidden: bool = False,
     ):
         if version is None:
@@ -137,7 +137,7 @@ class MetaDataStore(ABC):
         identifier: str,
         variety: str,
         key: str,
-        value: Any,
+        value: t.Any,
         version: int,
     ):
         pass

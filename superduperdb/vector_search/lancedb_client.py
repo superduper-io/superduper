@@ -86,7 +86,7 @@ class LanceTable:
         """
         Add vectors to the ``LanceTable``.
 
-        :param data: Sequence of ``VectorCollectionItem`` objects.
+        :param data: t.Sequence of ``VectorCollectionItem`` objects.
         :param upsert: Whether to perform an upsert operation. Defaults to ``False``.
         """
         dict_data = [d.to_dict() for d in data]
@@ -125,7 +125,7 @@ class LanceTable:
         :param array: Array representing the vector.
         :param limit: Maximum number of nearest vectors to return. Defaults to 100.
         :param measure: Distance measure for vector search. Defaults to ``None``.
-        :param within_ids: ``List`` of identifiers to search within. Defaults to ().
+        :param within_ids: ``t.List`` of identifiers to search within. Defaults to ().
         """
         if within_ids:
             raise NotImplementedError
@@ -182,7 +182,9 @@ class LanceVectorIndex(BaseVectorIndex):
             [pa.field(VECTOR_FIELD_NAME, vector_type), pa.field(self._ID, pa.string())]
         )
 
-    def get_table(self, config: VectorCollectionConfig, create=False) -> 'LanceTable':
+    def get_table(
+        self, config: VectorCollectionConfig, create: bool = False
+    ) -> 'LanceTable':
         """
         Get the ``LanceTable`` based on the ``VectorCollectionConfig``.
 

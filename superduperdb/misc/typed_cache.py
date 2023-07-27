@@ -61,7 +61,7 @@ class TypedCache:
         k, _, rest = key.partition(SEP)
         return rest in self._name_to_cache.get(k, {})
 
-    def __len__(self):
+    def __len__(self) -> int:
         with self._lock:
             return sum(len(i) for i in self._name_to_cache.values())
 

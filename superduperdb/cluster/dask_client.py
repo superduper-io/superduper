@@ -103,7 +103,7 @@ def dask_client(
     Creates a DaskClient instance.
 
     :param cfg: Configuration object containing Dask cluster details.
-    :param local: Set to True to create a local Dask cluster. (optional)
+    :param local: t.Set to True to create a local Dask cluster. (optional)
     :param envs: An environment dict for cluster.
     """
     return DaskClient(

@@ -6,7 +6,7 @@
 :maxdepth: 2
 
 installation
-configuration
 minimum_working_example
 features
+faq
 ```

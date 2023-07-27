@@ -1,3 +1,4 @@
+(clientserver)=
 # Client-server implementation
 
 So that users are able to access SuperDuperDB from remote servers/ client-side, 

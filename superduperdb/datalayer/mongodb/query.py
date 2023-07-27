@@ -27,7 +27,7 @@ class Collection(Serializable):
     def table(self):
         return self.name
 
-    def count_documents(self, *args, **kwargs):
+    def count_documents(self, *args, **kwargs) -> 'CountDocuments':
         return CountDocuments(collection=self, args=list(args), kwargs=kwargs)
 
     def like(
@@ -35,10 +35,10 @@ class Collection(Serializable):
         r: Document,
         vector_index: str,
         n: int = 100,
-    ):
+    ) -> 'PreLike':
         return PreLike(collection=self, r=r, vector_index=vector_index, n=n)
 
-    def insert_one(self, *args, refresh=True, encoders=(), **kwargs):
+    def insert_one(self, *args, refresh: bool = True, encoders=(), **kwargs):
         return InsertMany(
             collection=self,
             documents=[args[0]],
@@ -48,7 +48,7 @@ class Collection(Serializable):
             encoders=encoders,
         )
 
-    def insert_many(self, *args, refresh=True, encoders=(), **kwargs):
+    def insert_many(self, *args, refresh: bool = True, encoders=(), **kwargs):
         return InsertMany(
             collection=self,
             encoders=encoders,

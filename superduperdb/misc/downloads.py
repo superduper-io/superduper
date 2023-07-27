@@ -75,7 +75,9 @@ class Fetcher:
 
 
 class BaseDownloader:
-    def __init__(self, uris, n_workers=0, timeout=None, headers=None, raises=True):
+    def __init__(
+        self, uris, n_workers=0, timeout=None, headers=None, raises: bool = True
+    ):
         self.timeout = timeout
         self.n_workers = n_workers
         self.uris = uris
@@ -162,9 +164,9 @@ class Downloader(BaseDownloader):
         keys=None,
         n_workers=20,
         headers=None,
-        skip_existing=True,
+        skip_existing: bool = True,
         timeout=None,
-        raises=True,
+        raises: bool = True,
     ):
         super().__init__(
             uris, n_workers=n_workers, timeout=timeout, headers=headers, raises=raises
@@ -199,7 +201,7 @@ class InMemoryDownloader(BaseDownloader):
 
 
 def gather_uris(
-    documents: t.Sequence[t.Dict], gather_ids=True
+    documents: t.Sequence[t.Dict], gather_ids: bool = True
 ) -> t.Tuple[t.List[str], t.List[str], t.List[int]]:
     """
     Get the URLS out of all documents as denoted by ``{"_content": ...}``

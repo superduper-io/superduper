@@ -272,7 +272,10 @@ class Datalayer:
         return select_one(self)
 
     def refresh_after_update_or_insert(
-        self, query: t.Union[Select, Update], ids: t.Sequence[str], verbose=False
+        self,
+        query: t.Union[Select, Update],
+        ids: t.Sequence[str],
+        verbose: bool = False,
     ):
         """
         Trigger computation jobs after data insertion.
@@ -321,7 +324,7 @@ class Datalayer:
         variety: str,
         identifier: str,
         version: t.Optional[int] = None,
-        force=False,
+        force: bool = False,
     ):
         """
         Remove component (version: optional)
@@ -442,7 +445,7 @@ class Datalayer:
         query,
         ids=None,
         dependencies=(),
-        verbose=True,
+        verbose: bool = True,
     ) -> TaskWorkflow:
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
@@ -668,7 +671,7 @@ class Datalayer:
         ids=None,
         documents=None,
         timeout=None,
-        raises=True,
+        raises: bool = True,
         n_download_workers=None,
         headers=None,
         **kwargs,
@@ -777,10 +780,10 @@ class Datalayer:
         self,
         identifier,
         ids: t.Optional[t.Sequence[str]] = None,
-        verbose=False,
+        verbose: bool = False,
         max_chunk_size=5000,
         model=None,
-        recompute=False,
+        recompute: bool = False,
         watcher_info=None,
         **kwargs,
     ) -> t.List:

@@ -14,7 +14,9 @@ SEP = '_'
 _NONE = object()
 
 
-def read_all(files: t.Sequence[t.Union[Path, str]], fail=False) -> t.Sequence[t.Dict]:
+def read_all(
+    files: t.Sequence[t.Union[Path, str]], fail: bool = False
+) -> t.Sequence[t.Dict]:
     if fail:
         return [fil.read(f) for f in files]
     else:

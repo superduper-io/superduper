@@ -15,6 +15,7 @@ class Document:
     """
 
     _DEFAULT_ID_KEY: str = '_id'
+    _OUTPUTS_KEY: str = '_outputs'
 
     def __init__(self, content: ContentType):
         self.content = content
@@ -26,6 +27,20 @@ class Document:
     def encode(self) -> t.Any:
         """Make a copy of the content with all the Encodables encoded"""
         return _encode(self.content)
+
+    def outputs(self, key, model):
+        """Get document ouputs on ``key`` from ``model``"""
+        document = self.unpack()
+        try:
+            outputs = document[self._OUTPUTS_KEY]
+        except KeyError:
+            raise KeyError('Model outputs are not available yet.')
+        for k in [key, model]:
+            try:
+                outputs = outputs[k]
+            except KeyError:
+                raise KeyError(f'{k} not available yet.')
+        return outputs
 
     @staticmethod
     def decode(r: t.Dict, encoders: t.Dict) -> t.Any:

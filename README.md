@@ -36,8 +36,6 @@
 #### No data duplication, no pipelines, no duplicate infrastructure — just Python.<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>
 
 <hr>
-
-
 - <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Exlore the docs!</strong></a><br>
 - <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Check out example use cases!</strong></a><br>
 - <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Quickstart with Google Colab!</strong></a><br>

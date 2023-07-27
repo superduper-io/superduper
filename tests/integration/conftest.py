@@ -125,7 +125,7 @@ def fresh_database(fresh_client):
             database.remove('encoder', e, force=True)
 
 
-def fake_tensor_data(encoder, update=True):
+def fake_tensor_data(encoder, update: bool = True):
     data = []
     for i in range(10):
         x = torch.randn(32)

@@ -15,6 +15,7 @@ leading to smoother and more robust productionization:
 ```{toctree}
 :maxdepth: 2
 
+configuration
 single_host_cluster
 architecture
 jobs

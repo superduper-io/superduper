@@ -17,8 +17,9 @@ extensions =[
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
     'nbsphinx',
+    'nbsphinx_link',
     'myst_parser',
-    "sphinx_copybutton",
+    'sphinx_copybutton',
     'sphinxcontrib.mermaid'
 ]
 

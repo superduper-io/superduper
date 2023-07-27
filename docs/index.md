@@ -141,7 +141,8 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 getting_started/index
 usage/index
 infrastructure/index
-background/index
+how_to/index
 examples/index
+background/index
 source/modules
 ```

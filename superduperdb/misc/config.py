@@ -138,7 +138,9 @@ class Notebook(JSONable):
     token: str = ''
 
     @root_validator
-    def check_one_or_none(cls, v):
+    def check_one_or_none(
+        cls, v: t.Dict[str, t.Union[str, int]]
+    ) -> t.Dict[str, t.Union[str, int]]:
         if v['password'] and v['token']:
             raise ValueError('At most one of password and token may be set')
         return v

@@ -116,7 +116,7 @@ class MetaDataStore(ABC):
         identifier: str,
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
-    ):
+    ) -> t.Dict[str, t.Any]:
         if version is None:
             version = self.get_latest_version(
                 variety=variety, identifier=identifier, allow_hidden=allow_hidden
@@ -157,7 +157,13 @@ class MetaDataStore(ABC):
     def _replace_object(self, info, identifier, variety, version):
         pass
 
-    def replace_object(self, info, identifier, variety, version=None):
+    def replace_object(
+        self,
+        info: t.Dict[str, t.Any],
+        identifier: str,
+        variety: str,
+        version: t.Optional[int] = None,
+    ) -> None:
         if version is not None:
             version = self.get_latest_version(variety, identifier)
         return self._replace_object(

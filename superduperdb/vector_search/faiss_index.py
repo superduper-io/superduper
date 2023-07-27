@@ -1,6 +1,10 @@
 import os
+import typing as t
+from uuid import UUID
 
+import faiss
 import numpy
+import torch
 
 from superduperdb.vector_search.base import BaseVectorIndex
 
@@ -21,9 +25,13 @@ class FaissVectorIndex(BaseVectorIndex):
 
     name = 'faiss'
 
-    def __init__(self, h, index, measure='l2', faiss_index=None):
-        import faiss
-
+    def __init__(
+        self,
+        h: torch.Tensor,
+        index: t.List[UUID],
+        measure: str = 'l2',
+        faiss_index: None = None,
+    ) -> None:
         super().__init__(h, index, measure)
         self.h = self.h.astype('float32')
         if faiss_index is None:
@@ -44,7 +52,9 @@ class FaissVectorIndex(BaseVectorIndex):
             faiss_index.add(self.h)
         self.faiss_index = faiss_index
 
-    def find_nearest_from_arrays(self, h, n=100):
+    def find_nearest_from_arrays(
+        self, h: numpy.ndarray, n: int = 100
+    ) -> t.Tuple[t.List[t.List[UUID]], t.List[t.List[float]]]:
         import torch
 
         if isinstance(h, list):

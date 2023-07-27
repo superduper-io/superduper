@@ -4,10 +4,7 @@ import typing as t
 from abc import ABC
 
 import dill
-import torch
 import typing_extensions as te
-
-from superduperdb.models.torch.utils import device_of
 
 Info = t.Optional[t.Dict[str, t.Any]]
 
@@ -53,6 +50,10 @@ class DillSerializer(Serializer):
 class TorchSerializer(Serializer):
     @staticmethod
     def encode(object: t.Any, info: Info = None) -> bytes:
+        import torch
+
+        from superduperdb.models.torch.utils import device_of
+
         if not isinstance(object, dict):
             was_gpu = str(device_of(object)) == 'cuda'
             object.to('cpu')
@@ -67,6 +68,8 @@ class TorchSerializer(Serializer):
 
     @staticmethod
     def decode(b: bytes, info: Info = None) -> t.Any:
+        import torch
+
         return torch.load(io.BytesIO(b))
 
 

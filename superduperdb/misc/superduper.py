@@ -1,5 +1,8 @@
 import typing as t
 
+from sklearn.linear_model._base import LinearRegression
+from torch.nn.modules.linear import Linear
+
 __all__ = ('superduper',)
 
 
@@ -8,7 +11,7 @@ class DuckTyper:
     count: int = 0
 
     @classmethod
-    def run(cls, item: t.Any, **kwargs):
+    def run(cls, item: t.Any, **kwargs) -> t.Any:
         dts = [dt for dt in _DUCK_TYPES if dt.accept(item)]
         if len(dts) == 1:
             return dts[0].create(item, **kwargs)
@@ -95,7 +98,7 @@ class TorchTyper(DuckTyper):
         raise TypeError('Expected a Module but got {type(item)}')
 
 
-def auto_identify(instance):
+def auto_identify(instance: t.Union[Linear, LinearRegression]) -> str:
     return instance.__class__.__name__.lower()
 
 

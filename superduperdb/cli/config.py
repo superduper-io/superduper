@@ -12,4 +12,4 @@ def config(
     ),
 ):
     json = CFG.schema_json if schema else CFG.json
-    print(json(indent=2))
+    print(json(indent=2))  # type: ignore[operator]

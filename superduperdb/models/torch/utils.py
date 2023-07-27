@@ -1,7 +1,15 @@
+from __future__ import annotations
+
+import typing as t
 from contextlib import contextmanager
 
+if t.TYPE_CHECKING:
+    from torch import device as _device
 
-def device_of(model):
+    from superduperdb.core.model import Model
+
+
+def device_of(model: Model) -> t.Union[_device, str]:
     """
     Get device of a model.
 
@@ -14,7 +22,7 @@ def device_of(model):
 
 
 @contextmanager
-def eval(model):
+def eval(model: Model) -> t.Iterator[None]:
     """
     Temporarily set a model to evaluation mode.
 
@@ -30,7 +38,7 @@ def eval(model):
 
 
 @contextmanager
-def set_device(model, device):
+def set_device(model: Model, device: _device):
     """
     Temporarily set a device of a model.
 
@@ -45,7 +53,10 @@ def set_device(model, device):
         model.to(device_before)
 
 
-def to_device(item, device):
+def to_device(
+    item: t.Any,  # lists or dicts of Tensors
+    device: t.Union[str, _device],
+) -> t.Any:
     """
     Send tensor leaves of nested list/ dictionaries/ tensors to device.
 

@@ -24,7 +24,7 @@ class DecodeArray:
         return numpy.frombuffer(bytes, dtype=self.dtype)
 
 
-def array(dtype: str, shape: t.Tuple):
+def array(dtype: str, shape: t.Sequence):
     return Encoder(
         identifier=f'numpy.{dtype}[{str_shape(shape)}]',
         encoder=EncodeArray(dtype),

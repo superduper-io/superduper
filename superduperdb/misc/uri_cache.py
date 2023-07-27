@@ -38,7 +38,7 @@ class URICache(TypedCache):
     A typed cache for instances of `Cached`.
     """
 
-    def cache(self, entry):
+    def cache(self, entry: t.Any) -> None:
         """Add a uri to the content in an instance of Cached"""
         if isinstance(entry, Cached):
             entry.uri = self.put(entry.content)

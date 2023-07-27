@@ -1,4 +1,5 @@
 import functools
+import typing as t
 import warnings
 from dataclasses import (
     MISSING,
@@ -39,7 +40,7 @@ def dataclass(cls=None, **kwargs):
         return add_methods(pdc.dataclass(cls, **kwargs))
 
 
-def add_methods(dcls):
+def add_methods(dcls: t.Any) -> t.Any:
     """Adds dataclasses functions as methods to a dataclass.
 
     Adds four new instance methods, `asdict()`, `astuple()`, `dict()`, and `replace()`

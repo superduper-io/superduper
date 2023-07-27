@@ -19,7 +19,7 @@ class Metric(Component):
     object: t.Union[Artifact, t.Callable, None] = None
     version: t.Optional[int] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.object and not isinstance(self.object, Artifact):
             self.object = Artifact(artifact=self.object)
 

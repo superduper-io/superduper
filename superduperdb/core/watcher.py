@@ -54,7 +54,7 @@ class Watcher(Component):
             self.model = t.cast(Model, db.load('model', self.model))
 
     @property
-    def dependencies(self):
+    def dependencies(self) -> t.List[str]:
         out = []
         if self.features:
             for k in self.features:

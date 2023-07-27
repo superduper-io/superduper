@@ -5,8 +5,7 @@ from functools import cached_property
 from pathlib import Path
 
 from superduperdb.misc import config_dicts
-
-from . import config
+from superduperdb.misc.config import Config
 
 File = t.Union[Path, str]
 
@@ -54,8 +53,8 @@ class ConfigSettings:
         return self.cls(**config_dicts.combine((*data, environ_dict)))
 
 
-def build_config():
-    CONFIG = ConfigSettings(config.Config, _ALL_CONFIGS, PREFIX)
+def build_config() -> Config:
+    CONFIG = ConfigSettings(Config, _ALL_CONFIGS, PREFIX)
     return CONFIG.config
 
 

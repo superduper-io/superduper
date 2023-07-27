@@ -26,7 +26,7 @@ class DecodeTensor:
         return torch.from_numpy(array)
 
 
-def tensor(dtype, shape: t.Tuple):
+def tensor(dtype, shape: t.Sequence):
     return Encoder(
         identifier=f'{str(dtype)}[{str_shape(shape)}]',
         encoder=EncodeTensor(dtype),

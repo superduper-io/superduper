@@ -9,7 +9,7 @@ class MongoStyleDict(dict):
     >>> d['a.b']
     1
 
-    Set deep fields directly with string keys:
+    t.Set deep fields directly with string keys:
     >>> d['a.c'] = 2
     >>> d
     {'a': {'b': 1, 'c': 2}}

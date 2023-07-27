@@ -175,7 +175,7 @@ class VectorIndex(Component):
         keys = [w.key for w in watchers]
         return models, keys
 
-    def _initialize_vector_database(self, db: Datalayer):
+    def _initialize_vector_database(self, db: Datalayer) -> None:
         logging.info(f'loading hashes: {self.identifier!r}')
         for record_batch in ibatch(
             db.execute(self.indexing_watcher.select),  # type: ignore[arg-type]

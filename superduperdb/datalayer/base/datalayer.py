@@ -379,7 +379,7 @@ class Datalayer:
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
         info_only: bool = False,
-    ) -> Component:
+    ) -> t.Union[Component, t.Dict[str, t.Any]]:
         """
         Load component using uniquely identifying information.
 

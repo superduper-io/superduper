@@ -46,7 +46,7 @@ class Encoder(Component):
         default_factory=lambda: Artifact(artifact=_pickle_encoder)
     )
 
-    shape: t.Optional[t.Tuple] = None
+    shape: t.Optional[t.Sequence] = None
     version: t.Optional[int] = None
 
     def __post_init__(self):

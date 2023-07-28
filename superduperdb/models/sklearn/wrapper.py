@@ -104,14 +104,15 @@ class Estimator(Model):
                 y_preprocess = self.training_configuration.get('y_preprocess', None)
                 if isinstance(y_preprocess, Artifact):
                     y_preprocess = y_preprocess.artifact
-            # ruff: noqa: E501
+            if select is None or db is None:
+                raise ValueError('Neither select nor db can be None')
             X, y = get_data_from_query(
-                select=select,  # type: ignore[arg-type]
-                db=db,  # type: ignore[arg-type]
+                select=select,
+                db=db,
                 X=X,
                 y=y,
-                y_preprocess=y_preprocess,  # type: ignore[arg-type]
-                preprocess=self.preprocess.artifact if self.preprocess else lambda x: x,  # type: ignore[arg-type]
+                y_preprocess=y_preprocess,
+                preprocess=self.preprocess.artifact if self.preprocess else lambda x: x,
             )
         if self.training_configuration is not None:
             to_return = self.estimator.fit(

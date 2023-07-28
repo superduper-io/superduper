@@ -421,19 +421,17 @@ class Find(Select):
     @override
     def __call__(self, db: Datalayer) -> SuperDuperCursor:
         if isinstance(self.parent, Collection):
-            cursor = db.db[self.collection.name].find(  # type: ignore[union-attr]
-                *self.args, **self.kwargs
-            )  #  type: ignore[union-attr]
-        elif isinstance(self.parent, Like):  # type: ignore[union-attr]
+            cursor = db.db[self.collection.name].find(*self.args, **self.kwargs)
+        elif isinstance(self.parent, Like):
             intermediate = self.parent(db)
             ids = [ObjectId(r['_id']) for r in intermediate]
             try:
-                filter = self.args[0]  # type: ignore[index]
-            except IndexError:  # type: ignore[index]
+                filter = self.args[0]
+            except IndexError:
                 filter = {}
             filter = {'$and': [filter, {'_id': {'$in': ids}}]}
             cursor = db.db[self.like_parent.collection.name].find(
-                filter, *self.args[1:], **self.kwargs  # type: ignore[index]
+                filter, *self.args[1:], **self.kwargs
             )
         else:
             raise NotImplementedError
@@ -476,7 +474,7 @@ class FeaturizeOne(SelectOne):
 
     @override
     def __call__(self, db: Datalayer):
-        r = self.parent_find_one(db)  # type: ignore[misc]
+        r = self.parent_find_one(db)
         r = SuperDuperCursor.add_features(r.content, self.features)
         return Document(r)
 
@@ -510,13 +508,13 @@ class FindOne(SelectOne):
             )
         else:
             parent_cursor = self.like_parent(db)  # type: ignore[misc]
-            ids = [r['_id'] for r in parent_cursor]  # type: ignore[misc]
+            ids = [r['_id'] for r in parent_cursor]
             filter = self.args[0] if self.args else {}
             filter['_id'] = {'$in': ids}
             r = db.db[self.like_parent.collection.name].find_one(
-                filter,  # type: ignore[union-attr]
-                *self.args[1:],  # type: ignore[index]
-                **self.kwargs,  # type: ignore[index]
+                filter,
+                *self.args[1:],
+                **self.kwargs,
             )
             return Document(Document.decode(r, encoders=db.encoders))
 
@@ -788,7 +786,7 @@ class PostLike(Select):
     @override
     def __call__(self, db: Datalayer):
         cursor = self.find_parent.select_ids.limit(self.max_ids)(db)
-        ids = [r['_id'] for r in cursor]  # type: ignore[union-attr]
+        ids = [r['_id'] for r in cursor]
         ids, scores = db._select_nearest(
             like=self.r,
             vector_index=self.vector_index,

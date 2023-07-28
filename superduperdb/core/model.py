@@ -370,7 +370,7 @@ class Model(Component, PredictMixin):
         y: t.Any = None,
         db: t.Optional[Datalayer] = None,
         select: t.Optional[Select] = None,
-        dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
+        dependencies: t.Sequence[Job] = (),
         configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,
@@ -386,7 +386,7 @@ class Model(Component, PredictMixin):
         db: t.Optional[Datalayer] = None,
         select: t.Optional[Select] = None,
         distributed: t.Optional[bool] = None,
-        dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
+        dependencies: t.Sequence[Job] = (),
         configuration: t.Optional[_TrainingConfiguration] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,
@@ -397,10 +397,10 @@ class Model(Component, PredictMixin):
             select = Serializable.deserialize(select)
 
         if validation_sets:
-            validation_sets = list(validation_sets)  # type: ignore[arg-type]
+            validation_sets = list(validation_sets)
             for i, vs in enumerate(validation_sets):
                 if isinstance(vs, Dataset):
-                    db.add(vs)  # type: ignore[union-attr]
+                    db.add(vs)
                     validation_sets[i] = vs.identifier
 
         if db is not None:

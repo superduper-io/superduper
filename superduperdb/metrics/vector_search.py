@@ -77,7 +77,7 @@ class VectorSearchPerformance:
                 model.predict(inputs[i], **(self.predict_kwargs or {}))
                 for i, model in enumerate(models)
             ]
-            vi = self.hash_set_cls(  # type: ignore[operator]
+            vi = self.hash_set_cls(
                 predictions[ix_index],
                 list(range(len(predictions[0]))),
                 self.measure,

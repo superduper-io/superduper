@@ -58,14 +58,51 @@ class _TrainingConfiguration(Component):
 
 
 class PredictMixin:
-    # ruff: noqa: F821
+    identifier: str
+    encoder: EncoderArg
+    preprocess: t.Union[t.Callable, Artifact, None]
+    postprocess: t.Union[t.Callable, Artifact, None]
+    collate_fn: t.Union[t.Callable, Artifact, None]
+    batch_predict: bool
+    takes_context: bool
+
+    to_call: t.Callable
+
+    def create_predict_job(
+        self,
+        X: str,
+        select: t.Optional[Select] = None,
+        ids: t.Optional[t.Sequence[str]] = None,
+        max_chunk_size: t.Optional[int] = None,
+        **kwargs,
+    ):
+        return ComponentJob(
+            component_identifier=self.identifier,
+            method_name='predict',
+            variety='model',
+            args=[X],
+            kwargs={
+                'remote': False,
+                'select': select.serialize() if select else None,
+                'ids': ids,
+                'max_chunk_size': max_chunk_size,
+                **kwargs,
+            },
+        )
 
     def _predict_one(self, X: int, **kwargs) -> int:
-        if self.preprocess is not None:
+        if isinstance(self.preprocess, Artifact):
             X = self.preprocess.artifact(X)
+        elif self.preprocess is not None:
+            raise ValueError('Bad preprocess')
+
         output = self.to_call(X, **kwargs)
-        if self.postprocess is not None:
+
+        if isinstance(self.postprocess, Artifact):
             output = self.postprocess.artifact(output)
+        elif self.postprocess is not None:
+            raise ValueError('Bad postprocess')
+
         return output
 
     def _forward(self, X: t.Sequence[int], num_workers: int = 0) -> t.Sequence[int]:
@@ -89,13 +126,24 @@ class PredictMixin:
     ) -> t.Union[ndarray, int, t.Sequence[int]]:
         if one:
             return self._predict_one(X)
-        if self.preprocess is not None:
+
+        if isinstance(self.preprocess, Artifact):
             X = [self.preprocess.artifact(i) for i in X]
-        if self.collate_fn is not None:
+        elif self.preprocess is not None:
+            raise ValueError('Bad preprocess')
+
+        if isinstance(self.collate_fn, Artifact):
+            raise ValueError('Bad collate function')
+        elif self.collate_fn is not None:
             X = self.collate_fn(X)
+
         outputs = self._forward(X, **predict_kwargs)
-        if self.postprocess is not None:
-            outputs = list(map(self.postprocess.artifact, outputs))
+
+        if isinstance(self.postprocess, Artifact):
+            [self.postprocess.artifact(o) for o in outputs]
+        elif self.postprocess is not None:
+            raise ValueError('Bad postprocess')
+
         return outputs
 
     def predict(
@@ -198,9 +246,10 @@ class PredictMixin:
                     # ruff: noqa: E501
                     outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
 
+                # TODO: self.identifier is definitely not a model!
                 select.model_update(
                     db=db,  # type: ignore[arg-type]
-                    model=self.identifier,
+                    model=self.identifier,  # type: ignore[arg-type]
                     outputs=outputs,
                     key=X,
                     ids=ids,
@@ -304,32 +353,12 @@ class Model(Component, PredictMixin):
             for k, v in d.items():
                 self.metric_values.setdefault(k, []).append(v)
 
-    def create_predict_job(
-        self,
-        X: str,
-        select: t.Optional[Select] = None,
-        ids: t.Optional[t.Sequence[str]] = None,
-        max_chunk_size: t.Optional[int] = None,
-        **kwargs,
-    ):
-        return ComponentJob(
-            component_identifier=self.identifier,
-            method_name='predict',
-            variety='model',
-            args=[X],
-            kwargs={
-                'remote': False,
-                'select': select.serialize() if select else None,
-                'ids': ids,
-                'max_chunk_size': max_chunk_size,
-                **kwargs,
-            },
-        )
-
     def validate(self, db, validation_set: Dataset, metrics: Metric):
         db.add(self)
         out = self._validate(db, validation_set, metrics)
-        self.metrics_values.update(out)
+        if self.metric_values is None:
+            raise ValueError('self.metric_values cannot be None')
+        self.metric_values.update(out)
         db.metadata.update_object(
             variety='model',
             identifier=self.identifier,
@@ -348,7 +377,9 @@ class Model(Component, PredictMixin):
             ]
         )
         results = {}
-        for m in metrics:
+
+        # TODO: metrics is definitely not iterable
+        for m in metrics:  # type: ignore[attr-defined]
             out = m(
                 prediction,
                 [

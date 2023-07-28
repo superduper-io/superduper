@@ -213,8 +213,8 @@ class Client:
         return load_bson(result, encoders=self.encoders)
 
     def like(self, query: Like):
-        like = query.like.dump_bson()
-        query.like = None
+        like = query.like.dump_bson()  # type: ignore[attr-defined]
+        query.like = None  # type: ignore[attr-defined]
         serialized = query.serialize()
         file_id = str(uuid.uuid4())
         request_id = str(uuid.uuid4())
@@ -231,11 +231,11 @@ class Client:
         return load_bsons(results, encoders=self.encoders)
 
     def update(self, query: Update):
-        update = query.update.dump_bson()
+        update = query.update.dump_bson()  # type: ignore[attr-defined]
         file_id = str(uuid.uuid4())
         request_id = str(uuid.uuid4())
         self._put(request_id=request_id, file_id=file_id, data=update)
-        query.update = None
+        query.update = None  # type: ignore[attr-defined]
         query.serialize()
         return self._make_post_or_put_request(
             'update',

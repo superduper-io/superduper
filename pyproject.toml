@@ -40,9 +40,6 @@ target-version = ["py38"]
 
 [tool.mypy]
 ignore_missing_imports = true
-disable_error_code = [
-    "attr-defined",
-    ]
 
 [tool.pytest.ini_options]
 addopts = "-W ignore"

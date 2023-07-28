@@ -155,7 +155,7 @@ class VectorIndex(Component):
         model_input = document[key] if key != '_base' else document
 
         model = db.models[model]
-        h = model.predict(model_input, one=True)
+        h = model.predict(model_input, one=True)  # type: ignore[attr-defined]
         nearest = self.vector_table.find_nearest_from_array(
             h, within_ids=within_ids, limit=n
         )

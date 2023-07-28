@@ -153,7 +153,7 @@ def copy_vectors(
         vector_list = [VectorCollectionItem(**vector) for vector in vectors]
         table.add(vector_list, upsert=True)
     except Exception:
-        logging.exception(
+        logging.error(
             f"Error in copying_vectors for vector_index: {indexing_watcher_identifier}"
         )
         raise
@@ -361,11 +361,11 @@ class _DatabaseWatcherThreadScheduler(threading.Thread):
         self.watcher = watcher
 
     def run(self) -> None:
-        cdc_stream = self.watcher.setup_cdc()
+        cdc_stream = self.watcher.setup_cdc()  # type: ignore[attr-defined]
         self.start_event.set()
         logging.info(f'Database watch service started at {datetime.datetime.now()}')
         while not self.stop_event.is_set():
-            self.watcher.next_cdc(cdc_stream)
+            self.watcher.next_cdc(cdc_stream)  # type: ignore[attr-defined]
             time.sleep(0.01)
 
 
@@ -407,7 +407,9 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         self.tokens = CachedTokens()
         self._change_counters = Counter(inserts=0, updates=0)
 
-        self.resume_token = resume_token.token if resume_token else None
+        self.resume_token = (
+            resume_token.token if resume_token else None  # type: ignore[attr-defined]
+        )
         self._change_pipeline = None
         self._stop_event = stop_event
         self._startup_event = threading.Event()
@@ -466,7 +468,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         reference_id = self._get_reference_id(change)
 
         if not reference_id:
-            logging.warning('Document change not handled due to no document key')
+            logging.warn('Document change not handled due to no document key')
             return
 
         if event == DBEvent.insert.value:
@@ -523,7 +525,9 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
             stream_iterator = stream(self.db)
             logging.info(f'Started listening database with identity {self.identity}...')
         except Exception:
-            logging.exception("Error while setting up cdc stream.")
+            logging.exception(  # type: ignore[attr-defined]
+                "Error while setting up cdc stream."
+            )
             raise
         return stream_iterator
 
@@ -543,10 +547,14 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
                     self.event_handler(change)
                 self.dump_token(change)
         except StopIteration:
-            logging.exception('Change stream is close or empty!, stopping cdc!')
+            logging.exception(  # type: ignore[attr-defined]
+                'Change stream is close or empty!, stopping cdc!'
+            )
             raise
         except Exception:
-            logging.exception('Error occured during cdc!, stopping cdc!')
+            logging.exception(  # type: ignore[attr-defined]
+                'Error occured during cdc!, stopping cdc!'
+            )
             raise
 
     def attach_scheduler(self, scheduler: threading.Thread) -> None:
@@ -587,7 +595,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         """
         Resume the watcher from a given token.
         """
-        self.set_resume_token(token.token)
+        self.set_resume_token(token.token)  # type: ignore[attr-defined]
         self.watch()
 
     def watch(
@@ -623,7 +631,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
             while not self._startup_event.is_set():
                 time.sleep(0.1)
         except Exception:
-            logging.exception('Watching service stopped!')
+            logging.exception('Watching service stopped!')  # type: ignore[attr-defined]
             s.CFG.cdc = False
             self.stop()
             raise

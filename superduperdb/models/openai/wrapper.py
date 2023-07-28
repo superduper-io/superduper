@@ -34,7 +34,7 @@ def _available_models():
 class OpenAI(Component, PredictMixin):
     variety: t.ClassVar[str] = 'model'
     model: str
-    identifier: t.Optional[str] = None
+    identifier: str
     version: t.Optional[int] = None
     takes_context: bool = False
     encoder: t.Union[Encoder, str, None] = None
@@ -113,4 +113,5 @@ class OpenAIChatCompletion(OpenAI):
         if one:
             return self._predict_one(X, context=context, **kwargs)
 
-        return [self.predict_one(msg) for msg in X]  # use asyncio
+        # use asyncio
+        return [self.predict_one(msg) for msg in X]  # type: ignore[attr-defined]

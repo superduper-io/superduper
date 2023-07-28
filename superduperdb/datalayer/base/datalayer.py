@@ -173,20 +173,22 @@ class Datalayer:
         context = None
 
         if context_select is not None:
-            assert model.takes_context, 'model does not take context'
+            assert model.takes_context, (  # type: ignore[attr-defined]
+                'model does not take context'
+            )
             context = list(self.execute(context_select))
             context = [x.unpack() for x in context]
             if context_key is not None:
                 context = [MongoStyleDict(x)[context_key] for x in context]
 
-        out = model.predict(
+        out = model.predict(  # type: ignore[attr-defined]
             input.unpack() if isinstance(input, Document) else input,
             one=True,
             context=context,
             **kwargs,
         )
-        if model.encoder is not None:
-            out = model.encoder(out)
+        if model.encoder is not None:  # type: ignore[attr-defined]
+            out = model.encoder(out)  # type: ignore[attr-defined]
 
         if context is not None:
             return Document(out), [Document(x) for x in context]
@@ -541,15 +543,20 @@ class Datalayer:
     ):
         object.on_create(self)
 
-        existing_versions = self.show(object.variety, object.identifier)
-        if isinstance(object.version, int) and object.version in existing_versions:
+        existing_versions = self.show(
+            object.variety, object.identifier  # type: ignore[attr-defined]
+        )
+        if (
+            isinstance(object.version, int)  # type: ignore[attr-defined]
+            and object.version in existing_versions  # type: ignore[attr-defined]
+        ):
             s.log.warn(f'{object.unique_id} already exists - doing nothing')
             return
 
         if existing_versions:
-            object.version = max(existing_versions) + 1
+            object.version = max(existing_versions) + 1  # type: ignore[attr-defined]
         else:
-            object.version = 0
+            object.version = 0  # type: ignore[attr-defined]
 
         if serialized is None:
             serialized = object.serialize()
@@ -560,8 +567,8 @@ class Datalayer:
             serialized = t.cast(t.Dict, replace_artifacts(serialized, artifact_info))
 
         else:
-            serialized['version'] = object.version
-            serialized['dict']['version'] = object.version
+            serialized['version'] = object.version  # type: ignore[attr-defined]
+            serialized['dict']['version'] = object.version  # type: ignore[attr-defined]
 
         self._create_children(object, serialized)
 
@@ -688,7 +695,7 @@ class Datalayer:
                 documents = list(self.select(query))
             else:
                 select = query.select_using_ids(ids)
-                cursor = self.select(select).raw_cursor
+                cursor = self.select(select).raw_cursor  # type: ignore[attr-defined]
                 documents = [Document(x) for x in cursor]
         elif isinstance(query, Insert):
             documents = query.documents
@@ -901,7 +908,9 @@ class Datalayer:
             outs = outputs.encode()
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
-        return vector_index.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
+        return vector_index.get_nearest(  # type: ignore[attr-defined]
+            like, db=self, ids=ids, n=n, outputs=outs
+        )
 
 
 @dc.dataclass

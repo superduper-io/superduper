@@ -1,5 +1,10 @@
 # Encoders
 
+```{note}
+The `Encoder` allows SuperDuperDB store Python objects in the `Datalayer`,
+and to recall them in the same format in which they were stored.
+```
+
 SuperDuperDB supports insertion of any standard datatypes supported by the underlying database.
 However, in many AI use-cases, these data-types are not sufficient for the intended data.
 A typical example is computer-vision use-cases, utilizing `.jpg` or `.png` images,

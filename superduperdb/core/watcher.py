@@ -51,12 +51,29 @@ class Watcher(Component):
         if isinstance(self.model, str):
             self.model = t.cast(Model, db.load('model', self.model))
 
+    @property
+    def dependencies(self):
+        out = []
+        if self.features:
+            for k in self.features:
+                out.append(f'{self.features[k]}/{k}')
+        if self.key.startswith('_outputs.'):
+            _, key, model = self.key.split('.')
+            out.append(f'{model}/{key}')
+        return out
+
+    @property
+    def id_key(self) -> str:
+        if self.key.startswith('_outputs.'):
+            return self.key.split('.')[1]
+        return self.key
+
     def __post_init__(self):
         if self.identifier is None and self.model is not None:
             if isinstance(self.model, str):
-                self.identifier = f'{self.model}/{self.key}'
+                self.identifier = f'{self.model}/{self.id_key}'
             else:
-                self.identifier = f'{self.model.identifier}/{self.key}'
+                self.identifier = f'{self.model.identifier}/{self.id_key}'
         self.features = {}
         if hasattr(self.select, 'features'):
             self.features = self.select.features

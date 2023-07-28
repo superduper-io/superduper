@@ -1,5 +1,10 @@
 # Queries
 
+```{note}
+SuperDuperDB wraps the standard MongoDB query API. It augments
+these queries with support for vector-search and recall of complex data-types.
+```
+
 SuperDuperDB queries are based on the queries of the underlying datalayer, upon which the 
 Datalayer is based (see the [section on the `Datalayer`](datalayer)). 
 

@@ -47,27 +47,28 @@
 
 ### 🔮 What can you do with SuperDuperDB?
 
-- **Deploy** all your AI models to automatically **compute outputs (inference)** in the database in a single environment with simple Python commands.  
+- **Deploy** all your AI models to automatically **populate computed outputs (inference)** back into the database in a single environment with simple Python commands.  
 - **Train** models on your data in your database simply by querying without additional ingestion and pre-processing.  
 - **Integrate** AI APIs (such as OpenAI) to work together with other models on your data effortlessly. 
+- **Search** your data with vector-search, including model management and serving.
 
  ### ⁉️ Why choose SuperDuperDB?
 
 - Avoid data duplication, pipelines and duplicate infrastructure with a single **scalable** deployment.
 - **Deployment always up-to-date** as new data is handled automatically and immediately.
-- **Python only**: Empowering developers to implement robust AI use-cases, standing the test of time.
+- **Python only**: empowering developers to implement robust AI use-cases, standing the test of time.
 
 ### 👨‍💻🧑‍🔬👷 Who is SuperDuperDB for?
 
-  - **Python developers** using MongoDB who want to build AI into their applications easily.
+  - **Python developers** using MongoDB who want to use AI in their applications with ease.
   - **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
   - **Infrastructure engineers** who want a single scalable setup that supports both local, on-prem and cloud deployment.
 
-### 🪄 SuperDuperDB transforms our MongoDB into:
+### 🪄 SuperDuperDB transforms your MongoDB into:
 
   - **An end-to-end live AI deployment** which includes a **model repository and registry**, **model training** and **computation of outputs/ inference** 
-  - **A feature store** where the model outputs are stored alongside the inputs in desired formats and types 
-  - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB vector search 
+  - **A feature store** in which the model outputs are stored alongside the inputs in any data format. 
+  - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB or LanceDB vector search 
   - *(Coming soon)* **A model performance monitor** enabling model quality and degradation to be monitored as new data is inserted  
 
 
@@ -79,7 +80,7 @@
 # How to 🤷
 #### The following are three examples of how you use SuperDuperDB in Python (find all how-tos <a href="404" target="_blank">in the docs here</a>): 
 
-- **Add a ML/DL model into your database <a href="404" target="_blank">(read more in the docs here)</a>:**
+- **Add a ML/AI model into your database <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
 import pymongo
 from sklearn.svm import SVC
@@ -129,7 +130,7 @@ db.add(VectorIndex('my-index', indexing_watcher=indexing_watcher))
 db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
 ```
 
-- **Use OpenAI as embedding model for vector search <a href="404" target="_blank">(read more in the docs here)</a>:**
+- **Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
 # Create a ``VectorIndex`` instance with indexing watcher as OpenAIEmbedding and add it to the database.
 db.add(
@@ -153,11 +154,11 @@ cur = db.execute(
 
 - **Add Llama 2 model directly into your database! <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
-model = "meta-llama/Llama-2-7b-chat-hf"
-tokenizer = AutoTokenizer.from_pretrained(model)
+model_id = "meta-llama/Llama-2-7b-chat-hf"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
 pipeline = transformers.pipeline(
     "text-generation",
-    model=model,
+    model=model_id,
     torch_dtype=torch.float16,
     device_map="auto",
 )
@@ -183,13 +184,14 @@ model.predict(
 )
 ```
 
-- **Create downstream classifier model <a href="404" target="_blank">(read more in the docs here)</a>:**
+- **Use models outputs as inputs to downstream models <a href="404" target="_blank">(read more in the docs here)</a>:**
+
 ```python
-model.fit(
-    X='text',
-    y='label',
-    db=db,
-    select=collection.find().featurize({'text': '<my-upstream-model>'}),
+model.predict(
+		X='input_col',
+		db=db,
+		select=coll.find().featurize({'X': '<upstream-model-id>'}),  # already registered upstream model-id
+		watch=True,
 )
 ```
 

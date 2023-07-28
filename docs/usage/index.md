@@ -29,6 +29,7 @@ datalayer
 queries
 encoders
 models
+datasets
 vector_search
 jobs
 ```

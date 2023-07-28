@@ -209,7 +209,7 @@ class VectorIndex(Component):
             )
         model_encoder = self.indexing_watcher.model.encoder
         try:
-            dimensions = int(model_encoder.shape[-1])
+            dimensions = int(model_encoder.shape[-1])  # type: ignore[index]
         except Exception:
             dimensions = None
         if not dimensions:

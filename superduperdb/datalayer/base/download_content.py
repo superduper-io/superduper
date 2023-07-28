@@ -89,7 +89,7 @@ def download_content(
     if update_db:
         return None
     for id_, key in zip(place_ids, keys):
-        documents[id_] = db.db.set_content_bytes(
+        documents[id_] = db.db.set_content_bytes(  # type: ignore[index]
             documents[id_], key, downloader.results[id_]
         )
     return documents

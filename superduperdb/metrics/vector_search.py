@@ -68,7 +68,7 @@ class VectorSearchPerformance:
                 all_r = [r for _ in models]
 
             for j, m in enumerate(models):
-                inputs[j].append(all_r[j][keys[j]])
+                inputs[j].append(all_r[j][keys[j]])  # type: ignore[index]
 
         random_order = numpy.random.permutation(len(inputs[0]))
         inputs = [[x[i] for i in random_order] for x in inputs]

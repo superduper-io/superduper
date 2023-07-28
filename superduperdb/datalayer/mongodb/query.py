@@ -144,7 +144,7 @@ class PreLike(Like):
         return Find(like_parent=self, args=args, kwargs=kwargs)
 
     def find_one(self, *args, **kwargs):
-        return Find(like_parent=self, args=args, kwargs=kwargs)
+        return FindOne(like_parent=self, args=args, kwargs=kwargs)
 
     def __call__(self, db):
         ids, scores = db._select_nearest(
@@ -250,6 +250,9 @@ class Find(Select):
         return [r['_id'] for r in cursor]
 
     def model_update(self, db, model, key, outputs, ids):
+        if key.startswith('_outputs'):
+            key = key.split('.')[1]
+
         db.db[self.collection.name].bulk_write(
             [
                 _UpdateOne(

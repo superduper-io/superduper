@@ -1,3 +1,8 @@
+"""
+The component module provides the base class for all components in SuperDuperDB.
+"""
+
+
 # ruff: noqa: F821
 from __future__ import annotations
 import typing as t

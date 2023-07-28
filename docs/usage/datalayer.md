@@ -1,5 +1,10 @@
 # Datalayer
 
+
+```{note}
+The `Datalayer` is the primary interface from Python to your data+AI.
+```
+
 The central datalayer object in SuperDuperDB is the `Datalayer`.
 This is intended as an abstraction which comprises:
 

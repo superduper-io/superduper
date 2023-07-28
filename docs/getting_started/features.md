@@ -6,12 +6,13 @@ See [here](https://github.com/SuperDuperDB/superduperdb-stealth/wiki/Roadmap) fo
 
 ## Components
 
-- *Models*
-- *Encoders*
-- *Watchers*
-- *Metrics*
-- *Vector-Indexes*
-- *Datasets*
+- [Datalayer](datalayer)
+- [Models](models)
+- [Encoders](encoders)
+- [Watchers](watchers)
+- [Metrics](metrics)
+- [Vector-Indexes](vectorsearch)
+- [Datasets](datasets)
 
 ## AI Models
 
@@ -33,14 +34,12 @@ For `model.fit` and `model.predict`:
 2. The same workflow may be flagged to happen "in" the SuperDuperDB environment.
 3. Workflows may be configured to run in parallel on Dask workers
 
-### Supported and tested AI frameworks
+### Natively supported AI frameworks
 
 - **PyTorch**
 - **Sklearn**
-- Hugging Face's **Transformers**
-- **Sentence-Transformers**
+- **Transformers**
 - **OpenAI**
-- **LangChain**
 
 ### Versioning and storage
 

@@ -184,9 +184,12 @@ class VectorIndex(Component):
         ):
             items = []
             for record in record_batch:
+                key = self.indexing_watcher.key
+                if key.startswith('_outputs.'):
+                    key = key.split('.')[1]
                 h, id = db.databackend.get_output_from_document(
                     record,
-                    self.indexing_watcher.key,
+                    key,
                     self.indexing_watcher.model.identifier,
                 )
                 if isinstance(h, Encodable):

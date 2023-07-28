@@ -1,5 +1,7 @@
 # Getting started
 
+Read the following pages, if you're interested in getting started working with SuperDuperDB.
+
 ## Contents
 
 ```{toctree}

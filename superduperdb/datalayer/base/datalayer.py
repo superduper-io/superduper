@@ -756,11 +756,13 @@ class Datalayer:
         if info is None:
             return []
         watcher_features = info.get('features', {})
-        dependencies = []
-        if watcher_features:
-            for key, model in watcher_features.items():
-                dependencies.append(f'{model}/{key}')
-        return dependencies
+        out = []
+        for k in watcher_features:
+            out.append(f'{self.features[k]}/{k}')
+        if info['dict']['key'].startswith('_outputs.'):
+            _, key, model = info['key'].split('.')
+            out.append(f'{model}/{key}')
+        return out
 
     def _get_file_content(self, r):
         for k in r:

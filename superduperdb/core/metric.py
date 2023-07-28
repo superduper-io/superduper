@@ -24,4 +24,4 @@ class Metric(Component):
             self.object = Artifact(artifact=self.object)
 
     def __call__(self, x: int, y: int) -> bool:
-        return self.object.artifact(x, y)
+        return self.object.artifact(x, y)  # type: ignore[union-attr]

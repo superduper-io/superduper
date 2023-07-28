@@ -43,7 +43,7 @@ class Dataset(Component):
     def on_load(self, db: Datalayer) -> None:
         self.data = [
             Document(Document.decode(r.copy(), encoders=db.encoders))
-            for r in self.raw_data.artifact
+            for r in self.raw_data.artifact  # type: ignore[union-attr]
         ]
 
     @cached_property

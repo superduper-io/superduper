@@ -170,8 +170,10 @@ class Pipeline(Model):
             args=self.training_arguments,
             train_dataset=train_data,
             eval_dataset=valid_data,
-            data_collator=self.collate_fn.artifact,
-            custom_saver=lambda: db.replace(self, upsert=True),
+            data_collator=self.collate_fn.artifact,  # type: ignore[union-attr]
+            custom_saver=lambda: db.replace(  # type: ignore[union-attr]
+                self, upsert=True
+            ),
             compute_metrics=compute_metrics,
             **kwargs,
         )

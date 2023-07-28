@@ -216,7 +216,9 @@ class CDCHandler(threading.Thread):
         for identifier in self.db.show('vector_index'):
             vector_index = self.db.load(identifier=identifier, variety='vector_index')
             vector_index = t.cast(VectorIndex, vector_index)
-            indexing_watcher_identifier = vector_index.indexing_watcher.identifier
+            indexing_watcher_identifier = (
+                vector_index.indexing_watcher.identifier  # type: ignore[union-attr]
+            )
             task_workflow.add_node(
                 f'copy_vectors({indexing_watcher_identifier})',
                 job=FunctionJob(
@@ -225,7 +227,9 @@ class CDCHandler(threading.Thread):
                     kwargs={},
                 ),
             )
-            model, key = indexing_watcher_identifier.split('/')
+            model, key = indexing_watcher_identifier.split(  # type: ignore[union-attr]
+                '/'
+            )
             task_workflow.add_edge(
                 f'{model}.predict({key})',
                 f'copy_vectors({indexing_watcher_identifier})',
@@ -614,7 +618,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
             )
             self.attach_scheduler(scheduler)
             self.set_change_pipeline(change_pipeline)
-            self._scheduler.start()
+            self._scheduler.start()  # type: ignore[union-attr]
 
             while not self._startup_event.is_set():
                 time.sleep(0.1)

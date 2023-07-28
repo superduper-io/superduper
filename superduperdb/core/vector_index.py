@@ -74,13 +74,15 @@ class VectorIndex(Component):
 
     @override
     def on_load(self, db: Datalayer) -> None:
-        self.vector_table = db.vector_database.get_table(  # type: ignore[call-arg]
-            VectorCollectionConfig(
-                id=self.identifier,
-                dimensions=self._dimensions,
-                measure=self.measure,  # type: ignore[arg-type]
-            ),
-            create=True,
+        self.vector_table = (
+            db.vector_database.get_table(  # type: ignore[call-arg, union-attr]
+                VectorCollectionConfig(
+                    id=self.identifier,
+                    dimensions=self._dimensions,
+                    measure=self.measure,  # type: ignore[arg-type]
+                ),
+                create=True,
+            )
         )
 
         if not s.CFG.cdc:
@@ -133,7 +135,7 @@ class VectorIndex(Component):
             if '_outputs' not in document:
                 document['_outputs'] = {}
             document['_outputs'].update(outputs)
-            features = self.indexing_watcher.features or ()
+            features = self.indexing_watcher.features or ()  # type: ignore[union-attr]
             for subkey in features:
                 subout = document['_outputs'].setdefault(subkey, {})
                 f_subkey = features[subkey]
@@ -171,28 +173,28 @@ class VectorIndex(Component):
             watchers = [self.indexing_watcher, self.compatible_watcher]
         else:
             watchers = [self.indexing_watcher]
-        models = [w.model.identifier for w in watchers]
-        keys = [w.key for w in watchers]
+        models = [w.model.identifier for w in watchers]  # type: ignore[union-attr]
+        keys = [w.key for w in watchers]  # type: ignore[union-attr]
         return models, keys
 
     def _initialize_vector_database(self, db: Datalayer) -> None:
         logging.info(f'loading hashes: {self.identifier!r}')
-        if self.indexing_watcher.select is None:
+        if self.indexing_watcher.select is None:  # type: ignore[union-attr]
             raise ValueError('.select must be set')
 
         for record_batch in ibatch(
-            db.execute(self.indexing_watcher.select),
+            db.execute(self.indexing_watcher.select),  # type: ignore[union-attr]
             _BACKFILL_BATCH_SIZE,
         ):
             items = []
             for record in record_batch:
-                key = self.indexing_watcher.key
+                key = self.indexing_watcher.key  # type: ignore[union-attr]
                 if key.startswith('_outputs.'):
                     key = key.split('.')[1]
                 h, id = db.databackend.get_output_from_document(
                     record,
                     key,
-                    self.indexing_watcher.model.identifier,
+                    self.indexing_watcher.model.identifier,  # type: ignore[union-attr]
                 )
                 if isinstance(h, Encodable):
                     h = h.x
@@ -203,17 +205,21 @@ class VectorIndex(Component):
     def _dimensions(self) -> int:
         if not isinstance(self.indexing_watcher, Watcher):
             raise NotImplementedError
-        if not hasattr(self.indexing_watcher.model.encoder, 'shape'):
+        if not hasattr(
+            self.indexing_watcher.model.encoder, 'shape'  # type: ignore[union-attr]
+        ):
             raise NotImplementedError(
                 'Couldn\'t find shape of model outputs, based on model encoder.'
             )
-        model_encoder = self.indexing_watcher.model.encoder
+        model_encoder = self.indexing_watcher.model.encoder  # type: ignore[union-attr]
         try:
-            dimensions = int(model_encoder.shape[-1])  # type: ignore[index]
+            dimensions = int(model_encoder.shape[-1])  # type: ignore[index, union-attr]
         except Exception:
             dimensions = None
         if not dimensions:
             raise ValueError(
-                f"Model {self.indexing_watcher.model.identifier} has no shape"
+                'Model '  # type: ignore[union-attr]
+                f'{self.indexing_watcher.model.identifier} '
+                'has no shape'
             )
         return dimensions

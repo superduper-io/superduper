@@ -33,17 +33,19 @@ class FaissVectorIndex(BaseVectorIndex):
         faiss_index: None = None,
     ) -> None:
         super().__init__(h, index, measure)
-        self.h = self.h.astype('float32')
+        self.h = self.h.astype('float32')  # type: ignore[union-attr]
         if faiss_index is None:
             if measure == 'cosine':
                 self.h = self.h / (numpy.linalg.norm(self.h, axis=1)[:, None])
             if measure == 'l2':
                 faiss_index = faiss.index_factory(
-                    self.h.shape[1], 'Flat', faiss.METRIC_L2
+                    self.h.shape[1], 'Flat', faiss.METRIC_L2  # type: ignore[union-attr]
                 )
             elif measure in {'cosine', 'dot'}:
                 faiss_index = faiss.index_factory(
-                    self.h.shape[1], 'Flat', faiss.METRIC_INNER_PRODUCT
+                    self.h.shape[1],  # type: ignore[union-attr]
+                    'Flat',
+                    faiss.METRIC_INNER_PRODUCT,
                 )
             else:
                 raise NotImplementedError(

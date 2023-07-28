@@ -933,16 +933,20 @@ class ChangeStream:
 
 all_items = {
     'Aggregate': Aggregate,
-    'Collection': Collection,
+    'ChangeStream': ChangeStream,
+    'Count': Count,
+    'CountDocuments': CountDocuments,
     'DeleteMany': DeleteMany,
     'DeleteOne': DeleteOne,
     'Featurize': Featurize,
+    'FeaturizeOne': FeaturizeOne,
     'Find': Find,
     'FindOne': FindOne,
     'InsertMany': InsertMany,
-    'PreLike': PreLike,
-    'PostLike': PostLike,
     'Limit': Limit,
+    'PostLike': PostLike,
+    'PreLike': PreLike,
+    'ReplaceOne': ReplaceOne,
     'UpdateOne': UpdateOne,
     'UpdateMany': UpdateMany,
 }

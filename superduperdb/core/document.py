@@ -18,6 +18,8 @@ class Document:
 
     _DEFAULT_ID_KEY: str = '_id'
 
+    content: ContentType
+
     def __init__(self, content: ContentType):
         self.content = content
 
@@ -41,10 +43,10 @@ class Document:
         return f'Document({repr(self.content)})'
 
     def __getitem__(self, item: str) -> ItemType:
-        return self.content[item]
+        return self.content[item]  # type: ignore[index]
 
     def __setitem__(self, key: str, value: ItemType):
-        self.content[key] = value
+        self.content[key] = value  # type: ignore[index]
 
     def unpack(self) -> t.Any:
         """Returns the content, but with any encodables replacecs by their contents"""
@@ -75,7 +77,7 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
     :param content: the content to decode
     :param encoders: a dict of encoders
     """
-    documents = bson.decode(content)['docs']  #  type: ignore[arg-type]
+    documents = bson.decode(content)['docs']  #  type: ignore[arg-type, index]
     return [Document(Document.decode(r, encoders=encoders)) for r in documents]
 
 

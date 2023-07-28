@@ -290,10 +290,9 @@ class Model(Component, PredictMixin):
         return out  # type: ignore[return-value]
 
     def append_metrics(self, d: t.Dict[str, float]) -> None:
-        for k in d:
-            if self.metric_values is not None:
-                self.metric_values.setdefault(k, [])
-            self.metric_values[k].append(d[k])
+        if self.metric_values is not None:
+            for k, v in d.items():
+                self.metric_values.setdefault(k, []).append(v)
 
     def create_predict_job(
         self,
@@ -333,13 +332,19 @@ class Model(Component, PredictMixin):
         if isinstance(validation_set, str):
             validation_set = db.load('dataset', validation_set)
         prediction = self._predict(
-            [MongoStyleDict(r.unpack())[self.train_X] for r in validation_set.data]
+            [
+                MongoStyleDict(r.unpack())[self.train_X]  # type: ignore[index]
+                for r in validation_set.data
+            ]
         )
         results = {}
         for m in metrics:
             out = m(
                 prediction,
-                [MongoStyleDict(r.unpack())[self.train_y] for r in validation_set.data],
+                [
+                    MongoStyleDict(r.unpack())[self.train_y]  # type: ignore[index]
+                    for r in validation_set.data
+                ],
             )
             results[f'{validation_set.identifier}/{m.identifier}'] = out
         return results

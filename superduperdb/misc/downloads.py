@@ -1,15 +1,15 @@
-import typing as t
 import re
-
-import boto3
-from io import BytesIO
-from contextlib import contextmanager
-from multiprocessing.pool import ThreadPool
-from tqdm import tqdm
-import requests
 import signal
 import sys
+import typing as t
 import warnings
+from contextlib import contextmanager
+from io import BytesIO
+from multiprocessing.pool import ThreadPool
+
+import boto3
+import requests
+from tqdm import tqdm
 
 from superduperdb.misc.logger import logging
 

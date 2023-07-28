@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import dataclasses as dc
 import inspect
 import multiprocessing
@@ -12,7 +13,7 @@ from superduperdb.core.artifact import Artifact
 from superduperdb.core.component import Component
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.encoder import Encoder
-from superduperdb.core.job import Job, ComponentJob
+from superduperdb.core.job import ComponentJob, Job
 from superduperdb.core.metric import Metric
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.query import Select

@@ -1,12 +1,12 @@
 import pprint
 
-from superduperdb.core.artifact import Artifact
-from superduperdb.encoders.torch.tensor import tensor
-from superduperdb.core.model import Model
 import torch
-
-from superduperdb.models.sklearn.wrapper import Estimator
 from sklearn.svm import SVC
+
+from superduperdb.core.artifact import Artifact
+from superduperdb.core.model import Model
+from superduperdb.encoders.torch.tensor import tensor
+from superduperdb.models.sklearn.wrapper import Estimator
 
 
 def test_model():

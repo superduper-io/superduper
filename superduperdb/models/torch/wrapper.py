@@ -1,8 +1,8 @@
 import dataclasses as dc
-from functools import cached_property
 import io
-from contextlib import contextmanager
 import typing as t
+from contextlib import contextmanager
+from functools import cached_property
 
 import torch
 from torch.utils import data
@@ -10,16 +10,16 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from superduperdb.core.artifact import Artifact
-from superduperdb.core.metric import Metric
 from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encodable
+from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model, _TrainingConfiguration
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.base.query import Select
-from superduperdb.misc.logger import logging
-from superduperdb.models.torch.utils import device_of, to_device, eval
 from superduperdb.datalayer.query_dataset import QueryDataset
+from superduperdb.misc.logger import logging
+from superduperdb.models.torch.utils import device_of, eval, to_device
 
 
 class BasicDataset(data.Dataset):

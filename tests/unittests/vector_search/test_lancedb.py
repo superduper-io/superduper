@@ -1,13 +1,12 @@
 import os
 import tempfile
+
 import numpy as np
-
-import pytest
 import pyarrow as pa
+import pytest
 
-from superduperdb.vector_search.base import VectorCollectionConfig
-from superduperdb.vector_search.base import VectorCollectionItem
 from superduperdb.misc.config import LanceDB
+from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 from superduperdb.vector_search.lancedb_client import (
     LanceDBClient,
     LanceTable,

@@ -1,6 +1,7 @@
+import typing as t
+
 import numpy
 import torch
-import typing as t
 
 from superduperdb.core.encoder import Encoder
 from superduperdb.encoders.utils import str_shape

@@ -1,8 +1,8 @@
-from threading import Lock
 import abc
 import dataclasses as dc
 import time
 import typing as t
+from threading import Lock
 
 Entry = t.TypeVar('Entry')
 

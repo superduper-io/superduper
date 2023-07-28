@@ -1,8 +1,11 @@
-from .test_config_dicts import PARENT
 from collections import Counter
-from pydantic import ValidationError
-from superduperdb.misc.config import Config, Factory, JSONable, Notebook
+
 import pytest
+from pydantic import ValidationError
+
+from superduperdb.misc.config import Config, Factory, JSONable, Notebook
+
+from .test_config_dicts import PARENT
 
 TYPE_ERROR = """
 1 validation error for Config

@@ -3,6 +3,7 @@ import typing as t
 from superduperdb.datalayer.base.artifacts import ArtifactStore
 from superduperdb.misc.serialization import serializers
 from superduperdb.misc.tree import tree_find, tree_rewrite
+
 from .artifact import Artifact
 
 """

@@ -1,6 +1,7 @@
+import typing as t
+
 from superduperdb.core.component import Component
 from superduperdb.datalayer.base.metadata import MetaDataStore
-import typing as t
 
 
 class MongoMetaDataStore(MetaDataStore):

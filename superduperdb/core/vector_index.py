@@ -1,10 +1,10 @@
+import dataclasses as dc
 import itertools
 import typing as t
-import dataclasses as dc
-import superduperdb as s
 
 from overrides import override
 
+import superduperdb as s
 from superduperdb.core.component import Component
 from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encodable
@@ -13,7 +13,6 @@ from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.misc.logger import logging
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
-
 
 T = t.TypeVar('T')
 

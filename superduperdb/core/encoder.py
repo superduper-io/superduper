@@ -1,13 +1,14 @@
-from superduperdb.misc import dataclasses as dc
 import dataclasses
 import io
 import pickle
 import typing as t
 
-from superduperdb.core.artifact import Artifact
-from superduperdb.core.component import Component
 from PIL.PngImagePlugin import PngImageFile
 from torch import Tensor
+
+from superduperdb.core.artifact import Artifact
+from superduperdb.core.component import Component
+from superduperdb.misc import dataclasses as dc
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]

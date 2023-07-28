@@ -1,5 +1,6 @@
-import superduperdb as s
 import typing as t
+
+import superduperdb as s
 from superduperdb.misc import dataclasses as dc
 from superduperdb.misc import uri_cache
 

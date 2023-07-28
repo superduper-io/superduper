@@ -1,9 +1,10 @@
 import io
 import pickle
+import typing as t
 from abc import ABC
+
 import dill
 import torch
-import typing as t
 import typing_extensions as te
 
 from superduperdb.models.torch.utils import device_of

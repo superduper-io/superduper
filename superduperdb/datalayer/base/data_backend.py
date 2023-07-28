@@ -1,8 +1,8 @@
-from abc import ABC, abstractmethod
 import typing as t
+from abc import ABC, abstractmethod
 
-from superduperdb.core.model import Model
 from superduperdb.core.document import Document
+from superduperdb.core.model import Model
 from superduperdb.datalayer.base.query import Select
 
 

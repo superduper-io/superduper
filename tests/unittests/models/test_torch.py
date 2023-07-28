@@ -1,10 +1,9 @@
 import torch
 
 from superduperdb.core.metric import Metric
-from superduperdb.metrics.classification import compute_classification_metrics
-from superduperdb.models.torch.wrapper import TorchModel
-from superduperdb.models.torch.wrapper import TorchTrainerConfiguration
 from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.metrics.classification import compute_classification_metrics
+from superduperdb.models.torch.wrapper import TorchModel, TorchTrainerConfiguration
 
 
 class ToDict:

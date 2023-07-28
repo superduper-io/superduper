@@ -1,7 +1,7 @@
 import torch
 
-from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.models.torch.wrapper import TorchModel
 
 
 def test_predict(random_data, float_tensors_32):

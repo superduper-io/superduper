@@ -2,8 +2,7 @@ import datetime
 import typing as t
 import uuid
 
-
-from superduperdb.core.tasks import method_job, callable_job
+from superduperdb.core.tasks import callable_job, method_job
 from superduperdb.misc.configs import CFG
 
 

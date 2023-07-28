@@ -6,7 +6,9 @@ canot contain any other imports from this project.
 
 import typing as t
 from enum import Enum
+
 from pydantic import Field, root_validator
+
 from .jsonable import Factory, JSONable
 
 _BAD_KEY = '...bad.key...'

@@ -1,15 +1,22 @@
-from bson import ObjectId
-from pymongo import UpdateOne as _UpdateOne
+import dataclasses as dc
 import random
 import typing as t
-import dataclasses as dc
+
+from bson import ObjectId
+from pymongo import UpdateOne as _UpdateOne
 
 import superduperdb as s
 from superduperdb.core.document import Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.cursor import SuperDuperCursor
-from superduperdb.datalayer.base.query import Select, SelectOne, Insert, Delete, Update
-from superduperdb.datalayer.base.query import Like
+from superduperdb.datalayer.base.query import (
+    Delete,
+    Insert,
+    Like,
+    Select,
+    SelectOne,
+    Update,
+)
 
 
 @dc.dataclass

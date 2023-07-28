@@ -4,6 +4,7 @@ import logging
 import random
 import re
 import typing as t
+import warnings
 
 import torch
 from transformers import (
@@ -39,6 +40,8 @@ def TransformersTrainerConfiguration(identifier: str, *args, **kwargs):
 @dc.dataclass
 class Pipeline(Model):
     preprocess_type: str = 'tokenizer'
+    preprocess_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
+    postprocess_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
     task: str = 'text-classification'
 
     def __post_init__(self):
@@ -47,12 +50,10 @@ class Pipeline(Model):
             assert self.preprocess is None
             if self.preprocess_type == 'tokenizer':
                 self.preprocess = self.object.artifact.tokenizer
-            elif self.preprocess_type == 'feature_extractor':
-                raise NotImplementedError
-            elif self.preprocess_type == 'image_process':
-                raise NotImplementedError
             else:
-                raise NotImplementedError
+                raise NotImplementedError(
+                    'Only tokenizer is supported for now in pipeline mode'
+                )
             self.object = Artifact(artifact=self.object.artifact.model)
             self.task = self.object.artifact.task
         if (
@@ -75,12 +76,16 @@ class Pipeline(Model):
                 model=self.object.artifact,
                 tokenizer=self.preprocess.artifact,
             )
-        elif self.preprocess_type == 'feature_extractor':
-            raise NotImplementedError
-        elif self.preprocess_type == 'image_preprocessor':
-            raise NotImplementedError
         else:
-            raise NotImplementedError
+            warnings.warn('Only tokenizer is supported for now in pipeline mode')
+
+    def _predict_with_preprocess_object_post(self, X, **kwargs):
+        X = self.preprocess.artifact(X, **self.preprocess_kwargs)
+        X = getattr(self.object.artifact, self.predict_method)(**X, **kwargs)
+        X = getattr(self, 'postprocess', Artifact(lambda x: x)).artifact(
+            X, **self.postprocess_kwargs
+        )
+        return X
 
     @functools.cached_property
     def training_arguments(self):
@@ -96,10 +101,7 @@ class Pipeline(Model):
     ):
         def transform_function(r):
             text = r[X]
-            if self.preprocess_type == 'tokenizer':
-                r.update(**self.preprocess.artifact(text, truncation=True))
-            else:
-                raise NotImplementedError
+            r.update(**self.preprocess.artifact(text, **self.preprocess_kwargs))
             return r
 
         train_data = query_dataset_factory(
@@ -181,20 +183,16 @@ class Pipeline(Model):
         trainer.train()
 
     def _predict(self, X, one: bool = False, **kwargs):
-        if not one:
-            if self.preprocess_type == 'tokenizer':
-                out = self.pipeline(X, truncation=True, **kwargs)
-            else:
-                out = self.pipeline(X, **kwargs)
+        if self.pipeline is not None:
+            out = self.pipeline(X, **kwargs)
             out = [r['label'] for r in out]
             for i, p in enumerate(out):
                 if re.match(r'^LABEL_[0-9]+', p):
                     out[i] = int(p[6:])
         else:
-            out = self.pipeline(X, **kwargs)
-            out = out[0]['label']
-            if re.match(r'^LABEL_[0-9]+', out):
-                out = int(out[6:])
+            out = self._predict_with_preprocess_object_post(X, **kwargs)
+        if one:
+            return out[0]
         return out
 
 

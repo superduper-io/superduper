@@ -2,7 +2,7 @@
 
 ***Is SuperDuperDB a database?***
 
-No, SuperDuperDB is an environment to run alongside your database, which makes it 🚀 **SUPER-DUPER** 🚀, by adding comprehensive AI functionality. This fact explains our decorator:
+No, SuperDuperDB is an environment to run alongside your database, which makes it 🚀 **SUPER-DUPER** 🚀, by adding comprehensive AI functionality. This is embodied by our `superduper` decorator:
 
 ```python
 from superduperdb import superduper
@@ -37,21 +37,22 @@ We understand MLOps to mean DevOps for machine learning (ML) and AI.
 That means focus on delivering ML and AI in conjunction with continuous integration and deployment (CI / CD), deployments defined by infrastructure as code. 
 
 While SuperDuperDB can be used to great effect to reduce the complexity of MLOps, our starting point
-is a far simply problem setting:
+is a far simpler problem setting:
 
-> *Given I have AI models built as Python objects, how do I apply these to my data deployment with
-zero overhead and no detours through traditional DevOps pipelines?*
+```{important}
+Given I have AI models built as Python objects, how do I apply these to my data deployment with
+zero overhead and no detours through traditional DevOps pipelines?
+```
 
 From this point of view, SuperDuperDB is an effort to **avoid MLOps** per se. That results in 
-MLOps becoming significantly simpler, the moment it
+MLOps becoming significantly simpler, the moment it becomes absolutely necessary.
 
 ***How do I deploy SuperDuperDB alongside the FARM stack?***
 
 The [FARM stack](https://www.mongodb.com/developer/languages/python/farm-stack-fastapi-react-mongodb/)
 refers to application development using FastAPI, React and MongoDB. 
-In this triumvirate, MongoDB constitutes the datalayer, and the backend is deployed in Python
-via FastAPI, and as usual the frontend is built in React-Javascript. Due to this Python centricity and the developments in AI in Python in 2023, SuperDuperDB is an ideal candidate to integrate here: AI models are managed by SuperDuperDB, and predictions are stored in MongoDB.
+In this triumvirate, MongoDB constitutes the datalayer, the backend is deployed in Python
+via FastAPI, and the frontend is built in React-Javascript. Due to the Python backend and the developments in AI in Python in 2023, SuperDuperDB is an ideal candidate to integrate here: AI models are managed by SuperDuperDB, and predictions are stored in MongoDB.
 
-We are working on a [RESTful client-server](clientserver) implementation, allowing queries involving vector-search
-models to be dispatched directly from a React frontend. For applications which do not require
+We are working on a [RESTful client-server](clientserver) implementation, allowing queries involving vector-search models to be dispatched directly from a React frontend. For applications which do not require
 models at query-time, model outputs may be consumed directly via MongoDB, if [change-data-capture (CDC)](CDC) is activated. 

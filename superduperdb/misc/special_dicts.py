@@ -24,11 +24,15 @@ class MongoStyleDict(dict):
     def __getitem__(self, key: str) -> t.Any:
         if '.' not in key:
             return super().__getitem__(key)
-        parts = key.split('.')
-        parent = parts[0]
-        child = '.'.join(parts[1:])
-        sub = MongoStyleDict(self.__getitem__(parent))
-        return sub[child]
+        else:
+            try:
+                return super().__getitem__(key)
+            except KeyError:
+                parts = key.split('.')
+                parent = parts[0]
+                child = '.'.join(parts[1:])
+                sub = MongoStyleDict(self.__getitem__(parent))
+                return sub[child]
 
     def __setitem__(self, key: str, value: t.Any) -> None:
         if '.' not in key:

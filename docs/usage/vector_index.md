@@ -1,5 +1,10 @@
 (vectorsearch)=
-# Vector Search
+# Vector Indexes 
+
+```{note}
+SuperDuperDB provides first-class support for Vector-Search, including 
+encoding of inputs by arbitrary AI models.
+```
 
 SuperDuperDB has support for vector-search via LanceDB using vector-indexes.
 We are working on support for vector-search via MongoDB enterprise search in parallel.

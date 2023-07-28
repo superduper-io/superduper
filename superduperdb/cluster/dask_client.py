@@ -50,7 +50,7 @@ class DaskClient:
         future = self.client.submit(function, **kwargs)
         identifier = kwargs.get('identifier', None)
         if not identifier:
-            logging.warning(
+            logging.warn(
                 'Could not get an identifier from submitted function, creating one!'
             )
             identifier = str(uuid.uuid4())

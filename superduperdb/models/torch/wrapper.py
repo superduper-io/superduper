@@ -230,7 +230,9 @@ class Base:
         iteration = 0
         while True:
             for batch in train_dataloader:
-                train_objective = self.take_step(batch, self.optimizers)
+                train_objective = self.take_step(
+                    batch, self.optimizers  # type: ignore[attr-defined]
+                )
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
 
                 if iteration % self.training_configuration.validation_interval == 0:
@@ -241,10 +243,10 @@ class Base:
                         metrics = {f'{vs}/{k}': metrics[k] for k in metrics}
                         all_metrics.update(metrics)
                     all_metrics.update({'objective': valid_loss})
-                    self.append_metrics(all_metrics)
+                    self.append_metrics(all_metrics)  # type: ignore[attr-defined]
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion():
-                        self.save(db)
+                        self.save(db)  # type: ignore[attr-defined]
                     stop = self.stopping_criterion(iteration)
                     if stop:
                         return
@@ -294,14 +296,14 @@ class Base:
             raise ValueError('self.training_select cannot be None')
         train_data = QueryDataset(
             select=self.training_select,
-            keys=self.training_keys,
+            keys=self.training_keys,  # type: ignore[attr-defined]
             fold='train',
             transform=self.train_preprocess(),
             db=db,
         )
         valid_data = QueryDataset(
             select=self.training_select,
-            keys=self.training_keys,
+            keys=self.training_keys,  # type: ignore[attr-defined]
             fold='valid',
             transform=self.train_preprocess(),
             db=db,
@@ -416,7 +418,7 @@ class TorchModel(Base, Model):  # type: ignore[misc]
                 return self._predict_one(x)
             inputs = BasicDataset(
                 x,
-                self.preprocess.artifact
+                self.preprocess.artifact  # type: ignore[attr-defined]
                 if self.preprocess is not None
                 else lambda x: x,
             )

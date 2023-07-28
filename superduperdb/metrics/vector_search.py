@@ -53,7 +53,7 @@ class VectorSearchPerformance:
                 self.index_key,
                 *(self.compatible_keys if self.compatible_keys is not None else ()),
             )
-        models = model.models
+        models = model.models  # type: ignore[attr-defined]
 
         ix_index = next(i for i, k in enumerate(keys) if k == self.index_key)
         ix_compatible = next(i for i, k in enumerate(keys) if k != self.index_key)

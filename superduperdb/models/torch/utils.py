@@ -6,10 +6,10 @@ from contextlib import contextmanager
 if t.TYPE_CHECKING:
     from torch import device as _device
 
-    from superduperdb.core.model import Model
+    from .wrapper import TorchModel
 
 
-def device_of(model: Model) -> t.Union[_device, str]:
+def device_of(model: TorchModel) -> t.Union[_device, str]:
     """
     Get device of a model.
 
@@ -22,13 +22,13 @@ def device_of(model: Model) -> t.Union[_device, str]:
 
 
 @contextmanager
-def eval(model: Model) -> t.Iterator[None]:
+def eval(model: TorchModel) -> t.Iterator[None]:
     """
     Temporarily set a model to evaluation mode.
 
     :param model: PyTorch model
     """
-    was_training = model.training
+    was_training = model.training  # type: ignore[attr-defined]
     try:
         model.eval()
         yield
@@ -38,7 +38,7 @@ def eval(model: Model) -> t.Iterator[None]:
 
 
 @contextmanager
-def set_device(model: Model, device: _device):
+def set_device(model: TorchModel, device: _device):
     """
     Temporarily set a device of a model.
 
@@ -47,10 +47,10 @@ def set_device(model: Model, device: _device):
     """
     device_before = device_of(model)
     try:
-        model.to(device)
+        model.to(device)  # type: ignore[attr-defined]
         yield
     finally:
-        model.to(device_before)
+        model.to(device_before)  # type: ignore[attr-defined]
 
 
 def to_device(

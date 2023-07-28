@@ -101,7 +101,7 @@ class Encodable:
     uri: t.Optional[str] = None
 
     def encode(self) -> t.Dict[str, t.Any]:
-        return self.encoder.encode(x=self.x, uri=self.uri)
+        return self.encoder.encode(x=self.x, uri=self.uri)  # type: ignore[attr-defined]
 
 
 default_encoder = Encoder(identifier='_default')

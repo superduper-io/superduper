@@ -890,7 +890,7 @@ class Count(SelectOne):
 
     @override
     def __call__(self, db: Datalayer):
-        return db[self.parent.name].count_documents()
+        return db[self.parent.name].count_documents()  # type: ignore[index]
 
 
 @dc.dataclass

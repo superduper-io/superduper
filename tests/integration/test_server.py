@@ -3,12 +3,12 @@ import uuid
 import pytest
 import torch
 
-from superduperdb.models.torch.wrapper import TorchModel
 from superduperdb import CFG
+from superduperdb.cluster.client import Client
 from superduperdb.core.document import Document
 from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.encoders.torch.tensor import tensor
-from superduperdb.cluster.client import Client
+from superduperdb.models.torch.wrapper import TorchModel
 
 
 @pytest.fixture(scope="module")

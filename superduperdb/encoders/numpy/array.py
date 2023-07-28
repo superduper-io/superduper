@@ -1,5 +1,6 @@
-import numpy
 import typing as t
+
+import numpy
 
 from superduperdb.core.encoder import Encoder
 from superduperdb.encoders.utils import str_shape

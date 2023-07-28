@@ -1,30 +1,29 @@
-import time
-import threading
-import traceback
+import dataclasses as dc
+import datetime
 import json
 import queue
-import datetime
-from collections import Counter
-from enum import Enum
+import threading
+import time
+import traceback
 import typing as t
 from abc import ABC, abstractmethod
-import dataclasses as dc
+from collections import Counter
+from enum import Enum
 
-from pydantic import BaseModel
 from bson.objectid import ObjectId as BsonObjectId
+from pydantic import BaseModel
 from pymongo.change_stream import CollectionChangeStream
 
 import superduperdb as s
-from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
-from superduperdb.core.serializable import Serializable
-from superduperdb.misc.logger import logging
-from superduperdb.datalayer.mongodb import query
-from superduperdb.datalayer.base.datalayer import Datalayer
-from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.job import FunctionJob
-from superduperdb.misc.task_queue import cdc_queue
+from superduperdb.core.serializable import Serializable
+from superduperdb.core.task_workflow import TaskWorkflow
 from superduperdb.core.vector_index import VectorIndex
-
+from superduperdb.datalayer.base.datalayer import Datalayer
+from superduperdb.datalayer.mongodb import query
+from superduperdb.misc.logger import logging
+from superduperdb.misc.task_queue import cdc_queue
+from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 
 MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
 TokenType = t.Dict[str, str]

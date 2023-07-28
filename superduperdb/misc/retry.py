@@ -1,6 +1,8 @@
 import dataclasses as dc
-import tenacity
 import typing as t
+
+import tenacity
+
 import superduperdb as s
 
 ExceptionTypes = t.Union[t.Type[BaseException], t.Tuple[t.Type[BaseException], ...]]

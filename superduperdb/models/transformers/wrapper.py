@@ -7,23 +7,18 @@ import typing as t
 import warnings
 
 import torch
-from transformers import (
-    TrainingArguments,
-    Trainer,
-    pipeline as _pipeline,
-    Pipeline as BasePipeline,
-    DataCollatorWithPadding,
-)
+from transformers import DataCollatorWithPadding
+from transformers import Pipeline as BasePipeline
+from transformers import Trainer, TrainingArguments
+from transformers import pipeline as _pipeline
 
-from superduperdb.core.metric import Metric
-from superduperdb.core.model import Model
 from superduperdb.core.artifact import Artifact
+from superduperdb.core.metric import Metric
+from superduperdb.core.model import Model, _TrainingConfiguration
 from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.base.query import Select
-from superduperdb.core.model import _TrainingConfiguration
 from superduperdb.datalayer.query_dataset import query_dataset_factory
 from superduperdb.misc.special_dicts import MongoStyleDict
-
 
 _DEFAULT_PREFETCH_SIZE: int = 100
 

@@ -1,7 +1,7 @@
-import subprocess
 import os
-import tempfile
 import shutil
+import subprocess
+import tempfile
 
 import pytest
 

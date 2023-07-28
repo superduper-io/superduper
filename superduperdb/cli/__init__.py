@@ -1,5 +1,6 @@
-from .. import ICON
 from typer import Typer
+
+from .. import ICON
 
 __all__ = 'app', 'command'
 

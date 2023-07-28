@@ -1,4 +1,5 @@
 import typing as t
+
 import typing_extensions as te
 
 from superduperdb.datalayer.base.artifacts import ArtifactStore

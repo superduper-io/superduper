@@ -5,8 +5,8 @@ from pymongo import MongoClient
 from superduperdb.core.document import Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.data_backend import BaseDataBackend
-from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.misc.logger import logging
+from superduperdb.misc.special_dicts import MongoStyleDict
 
 
 class MongoDataBackend(BaseDataBackend):

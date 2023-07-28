@@ -1,5 +1,5 @@
-from superduperdb.datalayer.query_dataset import QueryDataset
 from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.datalayer.query_dataset import QueryDataset
 
 
 def test_query_dataset(random_data, a_watcher):

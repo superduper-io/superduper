@@ -3,8 +3,7 @@ import typing as t
 from superduperdb.core.document import Document
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.query import Insert, Select
-from superduperdb.misc.downloads import Downloader
-from superduperdb.misc.downloads import gather_uris
+from superduperdb.misc.downloads import Downloader, gather_uris
 from superduperdb.misc.logger import logging
 
 

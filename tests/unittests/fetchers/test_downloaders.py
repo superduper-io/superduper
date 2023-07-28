@@ -1,6 +1,6 @@
-from superduperdb.misc.downloads import Fetcher
 import os
 
+from superduperdb.misc.downloads import Fetcher
 
 remote = os.environ.get('SUPERDUPERDB_REMOTE_TEST', 'local')
 

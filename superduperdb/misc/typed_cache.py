@@ -1,7 +1,9 @@
-from .key_cache import KeyCache
-from threading import Lock
-from superduperdb.misc import dataclasses as dc
 import typing as t
+from threading import Lock
+
+from superduperdb.misc import dataclasses as dc
+
+from .key_cache import KeyCache
 
 SEP = '-'
 

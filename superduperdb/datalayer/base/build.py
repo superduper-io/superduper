@@ -1,14 +1,15 @@
 import inspect
+
+import superduperdb as s
+from superduperdb.cluster.dask_client import dask_client
+from superduperdb.datalayer.base.backends import artifact_stores
+from superduperdb.datalayer.base.backends import connections as default_connections
 from superduperdb.datalayer.base.backends import (
     data_backends,
     metadata_stores,
-    artifact_stores,
     vector_database_stores,
-    connections as default_connections,
 )
 from superduperdb.datalayer.base.datalayer import Datalayer
-from superduperdb.cluster.dask_client import dask_client
-import superduperdb as s
 
 
 def build_vector_database(cfg):

@@ -1,10 +1,12 @@
-from . import config
+import os
+import typing as t
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
+
 from superduperdb.misc import config_dicts
-import typing as t
-import os
+
+from . import config
 
 File = t.Union[Path, str]
 

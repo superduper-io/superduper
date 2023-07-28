@@ -1,8 +1,8 @@
-from abc import ABC, abstractmethod
 import hashlib
 import typing as t
+from abc import ABC, abstractmethod
 
-from superduperdb.misc.serialization import serializers, Info
+from superduperdb.misc.serialization import Info, serializers
 
 
 class ArtifactStore(ABC):

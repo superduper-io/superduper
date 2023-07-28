@@ -1,13 +1,13 @@
 import json
 import os
+
 import pytest
+
 from superduperdb.core.document import Document
 from superduperdb.core.vector_index import VectorIndex
 from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Collection
-
 from superduperdb.models.openai.wrapper import OpenAIChatCompletion, OpenAIEmbedding
-
 
 SKIP_PAID = os.environ.get('OPENAI_API_KEY') is None
 

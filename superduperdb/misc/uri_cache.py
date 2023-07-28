@@ -1,6 +1,7 @@
+import typing as t
+
 from .for_each import for_each
 from .typed_cache import TypedCache
-import typing as t
 
 if t.TYPE_CHECKING:
     import dataclasses as dc

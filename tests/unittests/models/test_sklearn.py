@@ -1,14 +1,14 @@
-import pytest
 import random
 
 import numpy
-from sklearn.svm import SVC
+import pytest
 from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 
 from superduperdb.core.document import Document
-from superduperdb.models.sklearn.wrapper import Estimator
 from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.models.sklearn.wrapper import Estimator
 
 
 class Lookup(TransformerMixin):

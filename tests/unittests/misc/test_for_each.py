@@ -1,7 +1,9 @@
-from pydantic import dataclasses as dc
-from superduperdb.misc.for_each import for_each
-import superduperdb as s
 import typing as t
+
+from pydantic import dataclasses as dc
+
+import superduperdb as s
+from superduperdb.misc.for_each import for_each
 
 
 @dc.dataclass

@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
 import functools
 import sys
 import typing as t
+
+from pydantic import BaseModel, Field
 
 __all__ = 'Factory', 'JSONable'
 

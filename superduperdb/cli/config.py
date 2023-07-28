@@ -1,6 +1,8 @@
-from . import command
-from superduperdb import CFG
 from typer import Option
+
+from superduperdb import CFG
+
+from . import command
 
 
 @command(help='Print all the SuperDuperDB configs as JSON')

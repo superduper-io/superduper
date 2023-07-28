@@ -1,22 +1,23 @@
-from contextlib import contextmanager
 import typing as t
+from contextlib import contextmanager
 
 import numpy
 from readerwriterlock import rwlock
 
 from superduperdb.vector_search.table_scan import VanillaVectorIndex
+
 from .base import (
     ArrayLike,
-    to_numpy,
     VectorCollection,
-    VectorCollectionResult,
+    VectorCollectionConfig,
     VectorCollectionId,
-    VectorDatabase,
     VectorCollectionItem,
     VectorCollectionItemId,
     VectorCollectionItemNotFound,
+    VectorCollectionResult,
+    VectorDatabase,
     VectorIndexMeasure,
-    VectorCollectionConfig,
+    to_numpy,
 )
 
 

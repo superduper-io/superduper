@@ -26,10 +26,10 @@ Use this module like this::
 import threading
 import typing as t
 
-from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.datalayer.base import backends
 from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.mongodb import cdc
-from superduperdb.datalayer.base import backends
+from superduperdb.datalayer.mongodb.query import Collection
 
 DBWatcherType = t.TypeVar('DBWatcherType')
 

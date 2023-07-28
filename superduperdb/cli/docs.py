@@ -1,9 +1,12 @@
-from . import command
+import functools
 import os
+
+from typer import Option
+
 from superduperdb import ROOT
 from superduperdb.misc import run
-from typer import Option
-import functools
+
+from . import command
 
 DOCS = 'docs'
 DOCS_ROOT = ROOT / DOCS

@@ -1,5 +1,6 @@
 import pytest
 import torch
+
 from superduperdb.models.torch.utils import device_of, eval, set_device, to_device
 
 

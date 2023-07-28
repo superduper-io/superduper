@@ -1,5 +1,6 @@
-from superduperdb.misc.key_cache import KeyCache
 from unittest import mock
+
+from superduperdb.misc.key_cache import KeyCache
 
 
 def test_simple_cache():

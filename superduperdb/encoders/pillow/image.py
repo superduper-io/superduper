@@ -1,7 +1,8 @@
+import io
+
 import PIL.Image
 import PIL.JpegImagePlugin
 import PIL.PngImagePlugin
-import io
 
 from superduperdb.core.encoder import Encoder
 

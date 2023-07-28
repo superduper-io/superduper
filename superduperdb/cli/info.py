@@ -1,13 +1,15 @@
-from . import command
-from pathlib import Path
-from superduperdb import ROOT
-from superduperdb.misc import run
 import datetime
 import json
 import os
 import platform
 import socket
 import sys
+from pathlib import Path
+
+from superduperdb import ROOT
+from superduperdb.misc import run
+
+from . import command
 
 PYPROJECT = ROOT / 'pyproject.toml'
 

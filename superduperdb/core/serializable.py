@@ -47,9 +47,9 @@ def _serialize(item: t.Any) -> t.Dict[str, t.Any]:
     to_add = {}
     if isinstance(item, Component):
         to_add = {
-            'variety': item.variety,
-            'identifier': item.identifier,
-            'version': getattr(item, 'version', None),
+            'variety': item.variety,  # type: ignore[attr-defined]
+            'identifier': item.identifier,  # type: ignore[attr-defined]
+            'version': getattr(item, 'version', None),  # type: ignore[attr-defined]
         }
 
     return {

@@ -45,7 +45,7 @@ class InMemoryVectorCollection(VectorCollection):
         if ix is not None:
             self._index.h[ix] = item.vector  # type: ignore[assignment, index]
         else:
-            self._index.index.append(item.id)
+            self._index.index.append(item.id)  # type: ignore[attr-defined]
             self._index.lookup[item.id] = len(self._index.lookup)
             self._index.h = numpy.append(self._index.h, [item.vector], axis=0)
 

@@ -51,7 +51,7 @@ class FaissVectorIndex(BaseVectorIndex):
                 raise NotImplementedError(
                     f'"{measure}" not a supported measure for faiss'
                 )
-            faiss_index.add(self.h)
+            faiss_index.add(self.h)  # type: ignore[attr-defined]
         self.faiss_index = faiss_index
 
     def find_nearest_from_arrays(
@@ -63,6 +63,6 @@ class FaissVectorIndex(BaseVectorIndex):
             h = numpy.array(h).astype('float32')
         if isinstance(h, torch.Tensor):
             h = h.numpy().astype('float32')
-        scores, ix = self.faiss_index.search(h, n)
+        scores, ix = self.faiss_index.search(h, n)  # type: ignore[attr-defined]
         _ids = [[self.index[i] for i in sub] for sub in ix]
         return _ids, scores.tolist()

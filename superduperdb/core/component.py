@@ -47,9 +47,13 @@ class Component(Serializable):
 
     @property
     def unique_id(self) -> str:
-        if self.version is None:
+        if getattr(self, 'version', None) is None:
             raise Exception('Version not yet set for component uniqueness')
-        return f'{self.variety}/{self.identifier}/{self.version}'
+        return (
+            f'{self.variety}/'  # type: ignore[attr-defined]
+            f'{self.identifier}/'
+            f'{self.version}'
+        )
 
     def dict(self) -> t.Dict[str, t.Any]:
         return dc.asdict(self)
@@ -60,7 +64,7 @@ class Component(Serializable):
         metrics: t.Sequence[str],
     ) -> ComponentJob:
         return ComponentJob(
-            component_identifier=self.identifier,
+            component_identifier=self.identifier,  # type: ignore[attr-defined]
             method_name='predict',
             variety='model',
             kwargs={

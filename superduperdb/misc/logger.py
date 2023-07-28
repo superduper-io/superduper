@@ -1,4 +1,4 @@
-from warnings import warn
+import warnings
 
 from superduperdb.misc.configs import CFG
 
@@ -7,30 +7,30 @@ __all__ = ('logging',)
 
 if CFG.logging.type == 'stdout':
 
-    def logging():
-        pass
+    class logging:
+        warn = staticmethod(warnings.warn)
+        error = staticmethod(warnings.warn)
+        debug = staticmethod(print)
+        info = staticmethod(print)
 
     def dont_print(*a, **ka):
         pass
 
-    logging.error = logging.warn = warn
     level = CFG.logging.level
 
     if level == level.DEBUG:
-        logging.debug = print
-        logging.info = print
+        pass
 
     elif level == level.INFO:
-        logging.debug = dont_print
-        logging.info = print
+        logging.debug = dont_print  # type: ignore[attr-defined, assignment]
 
     else:
-        logging.debug = dont_print
-        logging.info = dont_print
+        logging.debug = dont_print  # type: ignore[attr-defined, assignment]
+        logging.info = dont_print  # type: ignore[attr-defined, assignment]
 
 else:
     import logging  # type: ignore[assignment]
 
     level = getattr(logging, CFG.logging.level.name)
-    logging.basicConfig(level=level, **CFG.logging.kwargs)
-    logging.getLogger('distributed').propagate = True
+    logging.basicConfig(level=level, **CFG.logging.kwargs)  # type: ignore[attr-defined]
+    logging.getLogger('distributed').propagate = True  # type: ignore[attr-defined]

@@ -64,13 +64,13 @@ class VectorIndex(Component):
     @override
     def on_create(self, db: Datalayer) -> None:
         if isinstance(self.indexing_watcher, str):
-            self.indexing_watcher = db.load(
-                'watcher', self.indexing_watcher
-            )  # type: ignore[assignment]
+            self.indexing_watcher = t.cast(
+                Watcher, db.load('watcher', self.indexing_watcher)
+            )
         if isinstance(self.compatible_watcher, str):
-            self.compatible_watcher = db.load(
-                'watcher', self.compatible_watcher
-            )  # type: ignore[assignment]
+            self.compatible_watcher = t.cast(
+                Watcher, db.load('watcher', self.compatible_watcher)
+            )
 
     @override
     def on_load(self, db: Datalayer) -> None:
@@ -177,8 +177,11 @@ class VectorIndex(Component):
 
     def _initialize_vector_database(self, db: Datalayer) -> None:
         logging.info(f'loading hashes: {self.identifier!r}')
+        if self.indexing_watcher.select is None:
+            raise ValueError('.select must be set')
+
         for record_batch in ibatch(
-            db.execute(self.indexing_watcher.select),  # type: ignore[arg-type]
+            db.execute(self.indexing_watcher.select),
             _BACKFILL_BATCH_SIZE,
         ):
             items = []

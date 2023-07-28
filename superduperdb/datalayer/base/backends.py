@@ -14,8 +14,8 @@ artifact_stores = {'mongodb': MongoArtifactStore}
 metadata_stores = {'mongodb': MongoMetaDataStore}
 
 vector_database_stores = {
-    config.LanceDB: LanceVectorIndex,  # type: ignore [dict-item]
-    config.InMemory: InMemoryVectorDatabase,  # type: ignore [dict-item]
+    config.LanceDB: LanceVectorIndex,
+    config.InMemory: InMemoryVectorDatabase,
 }
 
 connections = {

@@ -31,7 +31,9 @@ class Dataset(Component):
     @override
     def on_create(self, db: Datalayer) -> None:
         if self.raw_data is None:
-            data = list(db.execute(self.select))  # type: ignore[arg-type]
+            if self.select is None:
+                raise ValueError('select cannot be None')
+            data = list(db.execute(self.select))
             if self.sample_size is not None and self.sample_size < len(data):
                 perm = self.random.permutation(len(data)).tolist()
                 data = [data[perm[i]] for i in range(self.sample_size)]

@@ -11,10 +11,10 @@ def job(f):
         *args,
         distributed: t.Optional[bool] = None,
         db: t.Any = None,
-        dependencies: t.Sequence[Job] = (),  # type: ignore[assignment]
+        dependencies: t.Sequence[Job] = (),
         **kwargs,
     ):
-        j = FunctionJob(callable=f, args=args, kwargs=kwargs)  # type: ignore[arg-type]
+        j = FunctionJob(callable=f, args=args, kwargs=kwargs)
         return j(db=db, distributed=distributed, dependencies=dependencies)
 
     return wrapper
@@ -107,7 +107,7 @@ class FunctionJob(Job):
         if distributed is None:
             distributed = CFG.distributed
         self.db = db
-        db.metadata.create_job(self.dict())  # type: ignore[has-type]
+        db.metadata.create_job(self.dict())
         if not distributed:
             self.run_locally(db)
         else:
@@ -168,7 +168,7 @@ class ComponentJob(Job):
 
             db = build_datalayer()
         self.db = db
-        db.metadata.create_job(self.dict())  # type: ignore[has-type]
+        db.metadata.create_job(self.dict())
         if self.component is None:
             self.component = db.load(self.variety, self.component_identifier)
         if not distributed:

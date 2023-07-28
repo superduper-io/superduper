@@ -13,10 +13,11 @@
 </a>
 <a href="https://pypi.org/project/superduperdb" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
-</a>
-<a href="https://colab.research.google.com/drive/11SJunSZc52jUuYrmNi5GziombcQ_sdhJ#scrollTo=XwWu32JBovja">
+</a>    
+<a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/notebooks/playground.ipynb">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
 </a>  
+
 </p>
 
 <p align="center">

@@ -1,6 +1,6 @@
-from subprocess import CalledProcessError, PIPE
-import typing as t
 import subprocess
+import typing as t
+from subprocess import PIPE, CalledProcessError
 
 __all__ = (
     'CalledProcessError',

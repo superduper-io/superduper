@@ -2,12 +2,12 @@ import typing as t
 from collections import defaultdict
 
 import numpy
+
 from superduperdb.core.metric import Metric
 from superduperdb.core.model import Model
 from superduperdb.datalayer.query_dataset import QueryDataset
-from superduperdb.vector_search.base import BaseVectorIndex, VectorCollection
-
 from superduperdb.vector_search import VanillaVectorIndex
+from superduperdb.vector_search.base import BaseVectorIndex, VectorCollection
 
 
 class PatK:

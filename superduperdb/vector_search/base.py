@@ -1,11 +1,14 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+
+import typing as t
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+
 import numpy
 import numpy.typing
 import torch
+
 import superduperdb as s
-import typing as t
 
 
 class BaseVectorIndex:

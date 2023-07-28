@@ -1,12 +1,12 @@
-import pytest
-import numpy
-
 from typing import Iterator
 
+import numpy
+import pytest
+
 from superduperdb.vector_search.base import (
+    VectorCollectionConfig,
     VectorCollectionItem,
     VectorCollectionItemNotFound,
-    VectorCollectionConfig,
     VectorDatabase,
 )
 from superduperdb.vector_search.inmemory import InMemoryVectorDatabase

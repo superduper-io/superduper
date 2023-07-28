@@ -1,5 +1,6 @@
-from superduperdb.misc.typed_cache import TypedCache
 from unittest import mock
+
+from superduperdb.misc.typed_cache import TypedCache
 
 
 def test_typed_cache():

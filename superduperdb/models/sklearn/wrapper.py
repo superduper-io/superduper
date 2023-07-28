@@ -1,15 +1,15 @@
-import numpy
+import dataclasses as dc
 import typing as t
 
+import numpy
 from tqdm import tqdm
 
 from superduperdb.core.artifact import Artifact
-from superduperdb.core.model import Model, _TrainingConfiguration
 from superduperdb.core.metric import Metric
+from superduperdb.core.model import Model, _TrainingConfiguration
 from superduperdb.datalayer.base.datalayer import Datalayer
 from superduperdb.datalayer.base.query import Select
 from superduperdb.datalayer.query_dataset import QueryDataset
-import dataclasses as dc
 
 
 def get_data_from_query(

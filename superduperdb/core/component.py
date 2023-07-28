@@ -5,10 +5,12 @@ The component module provides the base class for all components in SuperDuperDB.
 
 # ruff: noqa: F821
 from __future__ import annotations
+
+import dataclasses as dc
 import typing as t
+
 from superduperdb.core.job import ComponentJob, Job
 from superduperdb.core.serializable import Serializable
-import dataclasses as dc
 
 if t.TYPE_CHECKING:
     from superduperdb.datalayer.base.datalayer import Datalayer

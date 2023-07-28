@@ -1,7 +1,9 @@
 import dataclasses as dc
 import typing as t
 from functools import cached_property
+
 from pymongo.cursor import Cursor
+
 from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encoder
 from superduperdb.misc.special_dicts import MongoStyleDict

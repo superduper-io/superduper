@@ -5,10 +5,11 @@ import uuid
 
 import click
 import requests
+
 from superduperdb.core.artifact_tree import (
     get_artifacts,
-    replace_artifacts_with_dict,
     load_artifacts,
+    replace_artifacts_with_dict,
 )
 from superduperdb.core.component import Component
 from superduperdb.core.document import Document, dump_bsons, load_bson, load_bsons

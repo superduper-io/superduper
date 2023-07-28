@@ -10,7 +10,6 @@ import numpy
 import pymongo
 import pytest
 import torch
-
 from pymongo import MongoClient
 from tenacity import RetryError, Retrying, stop_after_delay
 
@@ -27,7 +26,6 @@ from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.misc.config import DataLayer, DataLayers
 from superduperdb.misc.config import MongoDB as MongoDBConfig
 from superduperdb.models.torch.wrapper import TorchModel
-
 from tests.material.metrics import PatK
 from tests.material.models import BinaryClassifier
 

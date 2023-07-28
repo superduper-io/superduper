@@ -1,10 +1,9 @@
 import uuid
 
-import pytest
 import numpy as np
+import pytest
 
-from superduperdb.vector_search.table_scan import VanillaVectorIndex
-from superduperdb.vector_search.table_scan import l2, dot, cosine
+from superduperdb.vector_search.table_scan import VanillaVectorIndex, cosine, dot, l2
 
 
 @pytest.mark.parametrize("measure", [l2, dot, cosine])

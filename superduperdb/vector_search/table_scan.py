@@ -1,7 +1,7 @@
 import numpy
 
-from superduperdb.vector_search.base import BaseVectorIndex
 from superduperdb.misc.logger import logging
+from superduperdb.vector_search.base import BaseVectorIndex
 
 
 class VanillaVectorIndex(BaseVectorIndex):

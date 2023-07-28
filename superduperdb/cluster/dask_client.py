@@ -1,5 +1,5 @@
-import uuid
 import typing as t
+import uuid
 
 from dask import distributed
 

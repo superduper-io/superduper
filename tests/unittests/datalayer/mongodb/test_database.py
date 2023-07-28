@@ -1,14 +1,15 @@
 import PIL.PngImagePlugin
 import pytest
 import torch
+
 from superduperdb.core.dataset import Dataset
 from superduperdb.core.document import Document
 from superduperdb.core.encoder import Encoder
+from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.base.exceptions import (
     ComponentInUseError,
     ComponentInUseWarning,
 )
-from superduperdb.core.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Collection
 from superduperdb.encoders.torch.tensor import tensor
 from superduperdb.models.torch.wrapper import TorchModel

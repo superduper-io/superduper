@@ -3,11 +3,12 @@ Operations on dictionaries used to fill and combine config files
 and environment variables
 """
 
-from pathlib import Path
-import typing as t
-import fil
 import os
 import sys
+import typing as t
+from pathlib import Path
+
+import fil
 
 SEP = '_'
 _NONE = object()

@@ -1,8 +1,10 @@
-from superduperdb.core.encoder import Encodable
-import bson
-import superduperdb as s
 import typing as t
+
+import bson
 from bson.objectid import ObjectId
+
+import superduperdb as s
+from superduperdb.core.encoder import Encodable
 
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]

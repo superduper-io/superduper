@@ -14,7 +14,7 @@
 <a href="https://pypi.org/project/superduperdb" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
 </a>    
-<a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/notebooks/playground.ipynb">
+<a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb-stealth/blob/main/notebooks/playground.ipynb">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
 </a>  
 

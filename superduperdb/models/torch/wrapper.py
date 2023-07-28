@@ -115,7 +115,7 @@ class Base:
             return True
         return False
 
-    def _fit(  # type: ignore[override]
+    def _fit(
         self,
         X: t.Union[t.List[str], str],
         y: t.Optional[t.Union[t.List, t.Any]] = None,
@@ -141,15 +141,17 @@ class Base:
         self.train_y = y
 
         train_data, valid_data = self._get_data(db=db)
-        # ruff: noqa: E501
-        loader_kwargs = self.training_configuration.loader_kwargs  # type: ignore[union-attr]
+
+        loader_kwargs = self.training_configuration.loader_kwargs
         train_dataloader = DataLoader(train_data, **loader_kwargs)
         valid_dataloader = DataLoader(valid_data, **loader_kwargs)
 
+        if db is None:
+            raise ValueError('db cannot be None')
         return self._fit_with_dataloaders(
             train_dataloader,
             valid_dataloader,
-            db=db,  # type: ignore[arg-type]
+            db=db,
             validation_sets=validation_sets or [],
         )
 
@@ -221,7 +223,7 @@ class Base:
         self,
         train_dataloader: DataLoader,
         valid_dataloader: DataLoader,
-        db: Datalayer,  # type: ignore[arg-type]
+        db: Datalayer,
         validation_sets: t.List[str],
     ):
         self.train()
@@ -230,8 +232,8 @@ class Base:
             for batch in train_dataloader:
                 train_objective = self.take_step(batch, self.optimizers)
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
-                # ruff: noqa: E501
-                if iteration % self.training_configuration.validation_interval == 0:  # type: ignore[union-attr]
+
+                if iteration % self.training_configuration.validation_interval == 0:
                     valid_loss = self.compute_validation_objective(valid_dataloader)
                     all_metrics = {}
                     for vs in validation_sets:
@@ -288,15 +290,17 @@ class Base:
         return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
 
     def _get_data(self, db: t.Optional[Datalayer]):
+        if self.training_select is None:
+            raise ValueError('self.training_select cannot be None')
         train_data = QueryDataset(
-            select=self.training_select,  # type: ignore[arg-type]
+            select=self.training_select,
             keys=self.training_keys,
             fold='train',
             transform=self.train_preprocess(),
             db=db,
         )
         valid_data = QueryDataset(
-            select=self.training_select,  # type: ignore[arg-type]
+            select=self.training_select,
             keys=self.training_keys,
             fold='valid',
             transform=self.train_preprocess(),
@@ -312,7 +316,8 @@ class TorchModel(Base, Model):  # type: ignore[misc]
     train_forward_method: str = '__call__'
 
     """
-    :param optimizer_state: optimizer state (optional), populated automatically on reload
+    :param optimizer_state: optimizer state (optional), populated automatically
+                            on reload
     :param forward_method: method to call for prediction, defaults to __call__
     :param train_forward_method: method to call for training, defaults to __call__
     """

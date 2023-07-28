@@ -163,13 +163,9 @@ class VectorDatabase(ABC):
         self._config = config
 
     @abstractmethod
-    def get_table(
-        self,
-        config: VectorCollectionConfig,
-    ) -> VectorCollection:
+    def get_table(self, config: VectorCollectionConfig) -> VectorCollection:
         """Get a vector collection by its identifier.
 
-        If the collection does not exist, it is created with the specified
-        dimensionality.
+        :param config: configuration for the vector database
+        :param create: create the table if it does not exist
         """
-        pass

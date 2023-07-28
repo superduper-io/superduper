@@ -17,7 +17,7 @@ def serve():
 
 
 @command(help='Start local cluster: server, dask and change data capture')
-def local_cluster(on: t.List[str] = ()):  # type: ignore[assignment]
+def local_cluster(on: t.Sequence[str] = []):
     db = build_datalayer()
     dask_client(CFG.dask, local=True)
     for collection in on:

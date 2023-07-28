@@ -68,3 +68,6 @@ omit-covered-files = true
 quiet = false
 verbose = 0
 whitelist-regex = []
+
+[tool.isort]
+profile = "black"

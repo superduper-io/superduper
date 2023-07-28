@@ -61,7 +61,7 @@ class Encoder(Component):
         return Encodable(self, x=x, uri=uri)  # type: ignore[call-arg]
 
     def decode(self, b: bytes) -> t.Any:
-        return self(self.decoder.artifact(b))
+        return self(self.decoder.artifact(b))  # type: ignore[union-attr]
 
     def encode(
         self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
@@ -70,7 +70,7 @@ class Encoder(Component):
             if x is not None:
                 return {
                     '_content': {
-                        'bytes': self.encoder.artifact(x),
+                        'bytes': self.encoder.artifact(x),  # type: ignore[union-attr]
                         'encoder': self.identifier,
                     }
                 }

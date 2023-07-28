@@ -99,6 +99,8 @@ class Estimator(Model):
             self.train_X = X
             self.train_y = y
         if isinstance(X, str):
+            if isinstance(self.training_configuration, str):
+                raise TypeError('self.training_configuration cannot be str')
             y_preprocess = None
             if self.training_configuration is not None:
                 y_preprocess = self.training_configuration.get('y_preprocess', None)
@@ -112,13 +114,19 @@ class Estimator(Model):
                 X=X,
                 y=y,
                 y_preprocess=y_preprocess,
-                preprocess=self.preprocess.artifact if self.preprocess else lambda x: x,
+                preprocess=(
+                    self.preprocess.artifact  # type: ignore[union-attr]
+                    if self.preprocess
+                    else lambda x: x
+                ),
             )
         if self.training_configuration is not None:
             to_return = self.estimator.fit(
                 X=X,
                 y=y,
-                **self.training_configuration.get('fit_params', {}),
+                **self.training_configuration.get(  # type: ignore[union-attr]
+                    'fit_params', {}
+                ),
             )
         else:
             to_return = self.estimator.fit(X, y)

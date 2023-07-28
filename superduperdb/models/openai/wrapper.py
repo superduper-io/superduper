@@ -95,7 +95,9 @@ class OpenAIChatCompletion(OpenAI):
     @retry
     def _predict_one(self, X, context: t.Optional[t.List[str]], **kwargs):
         if context is not None:
-            prompt = self.prompt.format(context='\n'.join(context))
+            prompt = self.prompt.format(  # type: ignore[union-attr]
+                context='\n'.join(context)
+            )
             X = prompt + X
         return ChatCompletion.create(
             messages=[{'role': 'user', 'content': X}],

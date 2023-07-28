@@ -121,6 +121,8 @@ class PredictMixin:
         if watch:
             from superduperdb.core.watcher import Watcher
 
+            if db is None:
+                raise ValueError('db cannot be None')
             return db.add(
                 Watcher(
                     key=X,
@@ -142,13 +144,17 @@ class PredictMixin:
             distributed = CFG.distributed
 
         if distributed:
-            assert not one
+            if one:
+                raise ValueError('one cannot be set')
             return self.create_predict_job(
                 X, select=select, ids=ids, max_chunk_size=max_chunk_size, **kwargs
             )(db=db, distributed=distributed, dependencies=dependencies)
         else:
             if select is not None and ids is None:
-                assert not one
+                if db is None:
+                    raise ValueError('db cannot be None')
+                if one:
+                    raise ValueError('one cannot be set')
                 ids = [
                     str(r[db.databackend.id_field])
                     for r in db.execute(select.select_ids)  # type: ignore[arg-type]
@@ -166,9 +172,12 @@ class PredictMixin:
                 )
 
             elif select is not None and ids is not None and max_chunk_size is None:
-                assert not one
+                if one:
+                    raise ValueError('one cannot be set')
 
                 if in_memory:
+                    if db is None:
+                        raise ValueError('db cannot be None')
                     docs = list(db.execute(select.select_using_ids(ids)))
                     if X != '_base':
                         X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
@@ -199,7 +208,8 @@ class PredictMixin:
                 return
 
             elif select is not None and ids is not None and max_chunk_size is not None:
-                assert not one
+                if one:
+                    raise ValueError('one cannot be set')
                 it = 0
                 for i in range(0, len(ids), max_chunk_size):
                     print(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
@@ -405,7 +415,7 @@ class Model(Component, PredictMixin):
             validation_sets = list(validation_sets)
             for i, vs in enumerate(validation_sets):
                 if isinstance(vs, Dataset):
-                    db.add(vs)
+                    db.add(vs)  # type: ignore[union-attr]
                     validation_sets[i] = vs.identifier
 
         if db is not None:

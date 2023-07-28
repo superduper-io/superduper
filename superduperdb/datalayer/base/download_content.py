@@ -47,7 +47,7 @@ def download_content(
             select = query.select_using_ids(ids)
             documents = list(db.select(select))
     else:
-        documents = query.documents
+        documents = query.documents  # type: ignore[union-attr]
 
     uris, keys, place_ids = gather_uris([d.encode() for d in documents])
     logging.info(f'found {len(uris)} uris')

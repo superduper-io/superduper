@@ -430,7 +430,10 @@ class TorchModel(Base, Model):  # type: ignore[misc]
                 tmp = to_device(tmp, 'cpu')
                 tmp = unpack_batch(tmp)
                 if self.postprocess is not None:
-                    tmp = list(map(self.postprocess.artifact, tmp))
+                    tmp = [
+                        self.postprocess.artifact(t)  # type: ignore[union-attr]
+                        for t in tmp
+                    ]
                 out.extend(tmp)
             return out
 

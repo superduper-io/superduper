@@ -370,7 +370,7 @@ class Find(Select):
     ) -> None:
         if key.startswith('_outputs'):
             key = key.split('.')[1]
-        db.db[self.collection.name].bulk_write(
+        db.db[self.collection.name].bulk_write(  # type: ignore[union-attr]
             [
                 _UpdateOne(
                     {'_id': ObjectId(id)},
@@ -387,7 +387,7 @@ class Find(Select):
         :param model: The model to clean
         :param key: The key to clean
         """
-        db.db[self.collection.name].update_many(
+        db.db[self.collection.name].update_many(  # type: ignore[union-attr]
             {}, {'$unset': {f'_outputs.{key}.{model}': 1}}
         )
 
@@ -421,7 +421,9 @@ class Find(Select):
     @override
     def __call__(self, db: Datalayer) -> SuperDuperCursor:
         if isinstance(self.parent, Collection):
-            cursor = db.db[self.collection.name].find(*self.args, **self.kwargs)
+            cursor = db.db[self.collection.name].find(  # type: ignore[union-attr]
+                *self.args, **self.kwargs
+            )
         elif isinstance(self.parent, Like):
             intermediate = self.parent(db)
             ids = [ObjectId(r['_id']) for r in intermediate]
@@ -430,9 +432,9 @@ class Find(Select):
             except IndexError:
                 filter = {}
             filter = {'$and': [filter, {'_id': {'$in': ids}}]}
-            cursor = db.db[self.like_parent.collection.name].find(
-                filter, *self.args[1:], **self.kwargs
-            )
+            cursor = db.db[
+                self.like_parent.collection.name  # type: ignore[union-attr]
+            ].find(filter, *self.args[1:], **self.kwargs)
         else:
             raise NotImplementedError
         return SuperDuperCursor(raw_cursor=cursor, id_field='_id', encoders=db.encoders)
@@ -459,7 +461,9 @@ class CountDocuments(Find):
 
     @override
     def __call__(self, db: Datalayer):
-        return db.db[self.collection.name].count_documents(*self.args, **self.kwargs)
+        return db.db[self.collection.name].count_documents(  # type: ignore[union-attr]
+            *self.args, **self.kwargs
+        )
 
 
 @dc.dataclass
@@ -511,7 +515,8 @@ class FindOne(SelectOne):
             ids = [r['_id'] for r in parent_cursor]
             filter = self.args[0] if self.args else {}
             filter['_id'] = {'$in': ids}
-            r = db.db[self.like_parent.collection.name].find_one(
+            col = db.db[self.like_parent.collection.name]  # type: ignore[union-attr]
+            r = col.find_one(
                 filter,
                 *self.args[1:],
                 **self.kwargs,
@@ -785,7 +790,9 @@ class PostLike(Select):
 
     @override
     def __call__(self, db: Datalayer):
-        cursor = self.find_parent.select_ids.limit(self.max_ids)(db)
+        cursor = self.find_parent.select_ids.limit(  # type: ignore[union-attr]
+            self.max_ids
+        )(db)
         ids = [r['_id'] for r in cursor]
         ids, scores = db._select_nearest(
             like=self.r,
@@ -795,7 +802,8 @@ class PostLike(Select):
         )
         ids = [ObjectId(_id) for _id in ids]
         return Find(
-            collection=self.find_parent.collection, args=[{'_id': {'$in': ids}}]
+            collection=self.find_parent.collection,  # type: ignore[union-attr]
+            args=[{'_id': {'$in': ids}}],
         )(db)
 
 
@@ -819,11 +827,11 @@ class Featurize(Select):
 
         :param db: The datalayer to query
         """
-        return self.parent.get_ids(db)
+        return self.parent.get_ids(db)  # type: ignore[union-attr]
 
     @override
     def is_trivial(self) -> bool:
-        return self.parent.is_trivial()
+        return self.parent.is_trivial()  # type: ignore[union-attr]
 
     @property
     # @override
@@ -840,11 +848,15 @@ class Featurize(Select):
 
         :param fold: possible values {'train', 'valid'}
         """
-        return self.parent.add_fold(fold).featurize(self.features)
+        return self.parent.add_fold(fold).featurize(  # type: ignore[union-attr]
+            self.features
+        )
 
     @override
     def select_using_ids(self, ids: t.Sequence[str]) -> t.Any:
-        return self.parent.select_using_ids(ids=ids).featurize(features=self.features)
+        return self.parent.select_using_ids(  # type: ignore[union-attr]
+            ids=ids
+        ).featurize(features=self.features)
 
     @override
     def model_update(
@@ -855,15 +867,13 @@ class Featurize(Select):
         model: Model,
         outputs: t.Sequence[t.Any],
     ) -> None:
-        self.parent.model_update(db=db, ids=ids, key=key, model=model, outputs=outputs)
+        self.parent.model_update(  # type: ignore[union-attr]
+            db=db, ids=ids, key=key, model=model, outputs=outputs
+        )
 
     @override
     def __call__(self, db: Datalayer):
-        if (
-            isinstance(self.parent, Find)
-            or isinstance(self.parent, Limit)
-            or isinstance(self.parent, Like)
-        ):
+        if isinstance(self.parent, (Find, Like, Limit)):
             out = self.parent(db)
             out.features = self.features
             return out
@@ -890,7 +900,9 @@ class Count(SelectOne):
 
     @override
     def __call__(self, db: Datalayer):
-        return db[self.parent.name].count_documents()  # type: ignore[index]
+        return db[
+            self.parent.name  # type: ignore[union-attr]
+        ].count_documents()  # type: ignore[index]
 
 
 @dc.dataclass

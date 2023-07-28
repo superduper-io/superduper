@@ -114,7 +114,9 @@ class Datalayer:
         """
         component = self.load(variety, identifier)
         metric_list = [self.load('metric', m) for m in metrics]
-        return component.validate(self, validation_set, metric_list)
+        return component.validate(  # type: ignore[union-attr]
+            self, validation_set, metric_list
+        )
 
     def show(
         self,
@@ -797,7 +799,7 @@ class Datalayer:
         else:
             ids = select.select_using_ids(ids=ids).get_ids(self)
 
-        ids = [str(id) for id in ids]
+        ids = [str(id) for id in ids]  # type: ignore[union-attr]
 
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):

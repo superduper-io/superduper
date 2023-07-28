@@ -78,7 +78,7 @@ class Watcher(Component):
                 self.identifier = f'{self.model.identifier}/{self.id_key}'
         self.features = {}
         if hasattr(self.select, 'features'):
-            self.features = self.select.features
+            self.features = self.select.features  # type: ignore[union-attr]
 
     @override
     def schedule_jobs(
@@ -91,7 +91,7 @@ class Watcher(Component):
         if not self.active:
             return ()
 
-        return self.model.predict(
+        return self.model.predict(  # type: ignore[union-attr]
             X=self.key,
             db=database,
             select=self.select,
@@ -107,4 +107,8 @@ class Watcher(Component):
         :param database: The datalayer to process
         """
 
-        self.select.model_cleanup(database, model=self.model.identifier, key=self.key)
+        self.select.model_cleanup(  # type: ignore[union-attr]
+            database,
+            model=self.model.identifier,  # type: ignore[union-attr]
+            key=self.key,
+        )

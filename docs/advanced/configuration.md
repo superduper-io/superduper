@@ -1,8 +1,8 @@
 # Configuration
 
 `superduperdb/misc/config.py` contains a complete definition using `pydantic` of the default
-configuration. This may be overridden using a `configs.json` file containing in the 
-working directory. 
+configuration. This may be overridden using a `configs.json` file containing in the
+working directory.
 
 There are three ways to set a config variable
 
@@ -95,4 +95,3 @@ Here is what the default config object looks like in `JSON` format:
     }
 }
 ```
-

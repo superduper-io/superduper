@@ -48,7 +48,7 @@ db = Datalayer(
 )
 ```
 
-Connecting these 4 elements in this way can be slightly tedious, so we provide a helper function to do this on 
+Connecting these 4 elements in this way can be slightly tedious, so we provide a helper function to do this on
 the basis of the current configuration (see [here]() for information about configuration).
 
 ```python

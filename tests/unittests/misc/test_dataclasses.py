@@ -10,11 +10,11 @@ class Un:
     # These two unfortunately get JSONized
     nine: str = Field(default='ERROR', exclude=True)
     ten: str = dc.field(default='ERROR', repr=False, compare=False)
-    eleven: dc.InitVar[str] = 'this goes up to'
+    eleven: dc.InitVar[str] = 'this goes up to'  # type: ignore
 
     def __post_init__(self, eleven: str):
         self.seven = self.un + '-sept'
-        self.eleven = eleven
+        self.eleven = eleven  # type: ignore
 
 
 UN = {

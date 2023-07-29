@@ -1,7 +1,7 @@
 ## How To Contribute :rocket:
 
 
-Hello! :wave: 
+Hello! :wave:
 
 Thank you for considering contributing to `superduperdb`. There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 
@@ -15,7 +15,7 @@ This project is intended to be a community effort, and it won't be possible with
 ## Where to Start? :boom:
 If you're new to open-source development, we recommend going through the GitHub “issues” tab to find items that interest you. Once you’ve found something interesting, the next step is to create your development environment.
 
-We follow something called a "fork and pull request" workflow for collaborating on our project. See [here](https://gist.github.com/Chaser324/ce0505fbed06b947d962) for a great overview on what some of these mysterious terms mean! 
+We follow something called a "fork and pull request" workflow for collaborating on our project. See [here](https://gist.github.com/Chaser324/ce0505fbed06b947d962) for a great overview on what some of these mysterious terms mean!
 
 Once you've 'forked' the code, please follow these steps:
 ```
@@ -55,5 +55,3 @@ The final steps to creating a development environment involve installing [MongoD
 
 
 If you have any problems please contact a maintainer or community volunteer. The GitHub issues or the Slack channel are a great place to start. We look forward to seeing you there! :purple_heart:
-
-

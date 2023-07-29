@@ -41,7 +41,7 @@ This is a standard MongoDB deployment. The deployment can either sit in the same
 as the remainder of the SuperDuperDB cluster, or it can be situated remotely. Performance and latency
 concerns here will play a role in which version works best and is most convenient.
 
-### Linear algebra 
+### Linear algebra
 
 This node returns real time semantic index search outputs to the client. The node loads
 model outputs which are of vector or tensor type, and creates an in-memory search index over

@@ -1,0 +1,36 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.3.0
+  hooks:
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+    args: [--markdown-linebreak-ext=md]
+- repo: https://github.com/psf/black
+  rev: 22.10.0
+  hooks:
+  - id: black
+    name: "Format Python Files"
+- repo: https://github.com/pycqa/isort
+  rev: 5.12.0
+  hooks:
+  - id: isort
+    name: "Re-order Python imports"
+- repo: https://github.com/pycqa/autoflake
+  rev: v2.1.1
+  hooks:
+  - id: autoflake
+    name: "Auto-Flake8 Python files"
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.4.1
+  hooks:
+  - id: mypy
+    name: "MyPy Static Type Checks"
+    additional_dependencies:
+    - types-pillow
+    - types-requests
+    - types-tqdm
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.0.280
+  hooks:
+    - id: ruff
+      name: "Ruff Python Linter"

@@ -61,7 +61,6 @@ class Select(ABC, Serializable):
 
         :param ids: string ids to which subsetting should occur
         """
-        pass
 
     @abstractmethod
     def add_fold(self, fold: str) -> 'Select':
@@ -71,7 +70,6 @@ class Select(ABC, Serializable):
 
         :param fold: possible values {'train', 'valid'}
         """
-        pass
 
     @abstractmethod
     def model_update(self, db, model, key, outputs, ids):
@@ -84,7 +82,6 @@ class Select(ABC, Serializable):
         :param outputs: (encoded) outputs to be added
         :param ids: ids of input documents corresponding to each output
         """
-        pass
 
     @abstractmethod
     def __call__(self, db):
@@ -93,7 +90,6 @@ class Select(ABC, Serializable):
 
         :param db: datalayer instance
         """
-        pass
 
 
 @dc.dataclass
@@ -131,7 +127,6 @@ class Insert(ABC, Serializable):
 
         :param db: datalayer instance
         """
-        pass
 
 
 @dc.dataclass
@@ -147,7 +142,6 @@ class Delete(ABC, Serializable):
 
         :param db: datalayer instance
         """
-        pass
 
 
 @dc.dataclass
@@ -173,7 +167,6 @@ class Update(ABC, Serializable):
         Converts the update object to a Select object, which selects where
         the update was made.
         """
-        pass
 
     @property
     @abstractmethod
@@ -182,7 +175,6 @@ class Update(ABC, Serializable):
         Converts the update object to a Select object, which selects where
         the update was made, and returns only ids.
         """
-        pass
 
     @abstractmethod
     def __call__(self, db):
@@ -191,4 +183,3 @@ class Update(ABC, Serializable):
 
         :param db: datalayer instance
         """
-        pass

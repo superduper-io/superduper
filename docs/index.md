@@ -28,9 +28,9 @@ At SuperDuperDB, our goal is to massively facilitate and accelerate the develope
 
 ## What can you do with SuperDuperDB?
 
-- **Deploy** all your AI models to automatically **populate model outputs** back into the database in a single environment with simple Python commands.  
-- **Train** models on your data in your database simply by querying without additional ingestion and pre-processing.  
-- **Integrate** AI APIs (such as OpenAI) to work together with other models on your data effortlessly. 
+- **Deploy** all your AI models to automatically **populate model outputs** back into the database in a single environment with simple Python commands.
+- **Train** models on your data in your database simply by querying without additional ingestion and pre-processing.
+- **Integrate** AI APIs (such as OpenAI) to work together with other models on your data effortlessly.
 - **Search** your data with vector-search, including model management and serving.
 
 ### Who is SuperDuperDB for?
@@ -41,10 +41,10 @@ At SuperDuperDB, our goal is to massively facilitate and accelerate the develope
 
 ### SuperDuperDB transforms your MongoDB into
 
-  - **An end-to-end live AI deployment** which includes a **model repository and registry**, **model training** and **computation of outputs/ inference** 
-  - **A feature store** in which the model outputs are stored alongside the inputs in any data format. 
-  - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB or LanceDB vector search 
-  - *(Coming soon)* **A model performance monitor** enabling model quality and degradation to be monitored as new data is inserted  
+  - **An end-to-end live AI deployment** which includes a **model repository and registry**, **model training** and **computation of outputs/ inference**
+  - **A feature store** in which the model outputs are stored alongside the inputs in any data format.
+  - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB or LanceDB vector search
+  - *(Coming soon)* **A model performance monitor** enabling model quality and degradation to be monitored as new data is inserted
 
 ## Background
 

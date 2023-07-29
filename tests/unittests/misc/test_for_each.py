@@ -1,3 +1,4 @@
+# type: ignore
 import typing as t
 
 from pydantic import dataclasses as dc

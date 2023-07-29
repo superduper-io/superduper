@@ -168,7 +168,9 @@ class PredictMixin:
                 outputs = self.predict(X=X_data, one=False, distributed=False)
                 if self.encoder is not None:
                     # ruff: noqa: E501
-                    outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
+                    outputs = [
+                        self.encoder(x).encode() for x in outputs
+                    ]  # type: ignore[operator]
 
                 select.model_update(
                     db=db,

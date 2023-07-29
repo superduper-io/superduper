@@ -121,7 +121,6 @@ class VectorCollection(ABC):
     @abstractmethod
     def add(self, items: t.Sequence[VectorCollectionItem]) -> None:
         """Add items to the collection."""
-        pass
 
     @abstractmethod
     def find_nearest_from_id(
@@ -133,7 +132,6 @@ class VectorCollection(ABC):
         offset: int = 0,
     ) -> t.List[VectorCollectionResult]:
         """Find items that are nearest to the item with the given identifier."""
-        pass
 
     @abstractmethod
     def find_nearest_from_array(
@@ -145,7 +143,6 @@ class VectorCollection(ABC):
         offset: int = 0,
     ) -> t.List[VectorCollectionResult]:
         """Find items that are nearest to the given vector."""
-        pass
 
 
 class VectorDatabase(ABC):
@@ -172,4 +169,3 @@ class VectorDatabase(ABC):
         If the collection does not exist, it is created with the specified
         dimensionality.
         """
-        pass

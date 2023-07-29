@@ -1,19 +1,19 @@
-# Datasets 
+# Datasets
 
 ```{note}
 Datasets are immutable snapshots of the `Datalayer`
 ```
 
-When building AI models, in many cases, especially for validation, it's important that 
+When building AI models, in many cases, especially for validation, it's important that
 immutable snapshots of data are maintained for posterity. The purpose of this practice is:
 
 - To foster reproducibility and transparency in experimentation.
 - To have a permanent benchmark via which models may be compared.
 - To maintain a record for auditors and oversight committees to refer to in the worst case.
 
-Correspondingly, SuperDuperDB distinguishes between datasets and data queries from 
+Correspondingly, SuperDuperDB distinguishes between datasets and data queries from
 the `Datalayer`. The `Dataset` is designed to be fetched only once, and preserved
-as an `Artifact`, saved in the configured artifact store. 
+as an `Artifact`, saved in the configured artifact store.
 
 Here is an example of creating a SuperDuperDB dataset:
 
@@ -40,7 +40,7 @@ model.fit(
 )
 ```
 
-Datasets, as with other `Component` descendants, may be created inline: 
+Datasets, as with other `Component` descendants, may be created inline:
 
 ```python
 data = Dataset(

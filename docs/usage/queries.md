@@ -5,11 +5,11 @@ SuperDuperDB wraps the standard MongoDB query API. It augments
 these queries with support for vector-search and recall of complex data-types.
 ```
 
-SuperDuperDB queries are based on the queries of the underlying datalayer, upon which the 
-Datalayer is based (see the [section on the `Datalayer`](datalayer)). 
+SuperDuperDB queries are based on the queries of the underlying datalayer, upon which the
+Datalayer is based (see the [section on the `Datalayer`](datalayer)).
 
 Unlike some Python clients, in SuperDuperDB, queries are objects, rather then methods or functions.
-This allows SuperDuperDB to serialize these queries for use in diverse tasks, such as model 
+This allows SuperDuperDB to serialize these queries for use in diverse tasks, such as model
 applications using the `Watcher` paradigm (see {ref}`watchers`, model application, and management of vector-indices).
 
 A query is executed as follows:
@@ -37,7 +37,7 @@ With this collection standard query types may be executed. Whereas `pymongo` ret
 Document({'_id': ObjectId('64b89e92c08139e1cedc11a4'), 'x': Encodable(x=tensor([ 0.2059,  0.5608,  ...]), encoder=Encoder(identifier='torch.float32[512]', decoder=<Artifact artifact=<superduperdb.encoders.torch.tensor.DecodeTensor object at 0x1785b5750> serializer=pickle>, encoder=<Artifact artifact=<superduperdb.encoders.torch.tensor.EncodeTensor object at 0x1786767d0> serializer=pickle>, shape=[512], version=0)), '_fold': 'train'})
 ```
 
-`Documents` are also used, whenever a query involves inserting data into the database. The reason for this, 
+`Documents` are also used, whenever a query involves inserting data into the database. The reason for this,
 is that the data may contain complex data-types such as images (see [the section on encoders](encoders) for more detail):
 
 ```python

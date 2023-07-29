@@ -75,7 +75,7 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
     :param content: the content to decode
     :param encoders: a dict of encoders
     """
-    documents = bson.decode(content)['docs']  #  type: ignore[arg-type]
+    documents = bson.decode(content)['docs']  # type: ignore[arg-type]
     return [Document(Document.decode(r, encoders=encoders)) for r in documents]
 
 

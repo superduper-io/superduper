@@ -15,7 +15,7 @@ spawned in the configured Dask worker pool.
 - Apply models to data `model.predict`
 - Training models `model.fit`
 
-See [the Dask documentation](https://docs.dask.org/en/stable/) for more information about setting up and managing Dask deployments. The dask deployment may be configured using 
+See [the Dask documentation](https://docs.dask.org/en/stable/) for more information about setting up and managing Dask deployments. The dask deployment may be configured using
 the [configuration stystem](configuration).
 
 The stdout and status of the job may be monitored using the returned `Job` object:

@@ -3,7 +3,7 @@
 SuperDuperDB may be operated in `distributed` mode.
 In this section of the documentation we describe how to set this up.
 
-In `distributed` mode, several features become available to developers, 
+In `distributed` mode, several features become available to developers,
 leading to smoother and more robust productionization:
 
 - Task parallelization using `dask`

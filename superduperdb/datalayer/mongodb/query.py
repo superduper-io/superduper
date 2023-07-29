@@ -291,7 +291,7 @@ class Find(Select):
         if isinstance(self.parent, Collection):
             cursor = db.db[self.collection.name].find(  # type: ignore[union-attr]
                 *self.args, **self.kwargs
-            )  #  type: ignore[union-attr]
+            )  # type: ignore[union-attr]
         elif isinstance(self.parent, Like):  # type: ignore[union-attr]
             intermediate = self.parent(db)
             ids = [ObjectId(r['_id']) for r in intermediate]
@@ -299,7 +299,9 @@ class Find(Select):
                 filter = self.args[0]  # type: ignore[index]
             except IndexError:  # type: ignore[index]
                 filter = {}
-            filter = {'$and': [filter, {'_id': {'$in': ids}}]}  # type: ignore[union-attr]
+            filter = {
+                '$and': [filter, {'_id': {'$in': ids}}]
+            }  # type: ignore[union-attr]
             cursor = db.db[self.like_parent.collection.name].find(  # type: ignore[index,union-attr]
                 filter, *self.args[1:], **self.kwargs  # type: ignore[index]
             )

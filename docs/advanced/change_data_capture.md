@@ -7,7 +7,7 @@ support for keeping AI predictions up-to-date with database changes.
 If MongoDB is deployed in standalone mode, then changes are detected
 by the same process as data is inserted, resp., updated and deleted by.
 
-For deployments involving multiple stakeholders, and roles, this may be 
+For deployments involving multiple stakeholders, and roles, this may be
 overly restrictive. Data inserts and updates may occur from:
 
 - CI/ CD processes triggering data ingestion to MongoDB
@@ -19,7 +19,7 @@ overly restrictive. Data inserts and updates may occur from:
 SuperDuperDB aims to allow it's AI models to be updated and kept in-sync with changes
 from all of the above sources.
 
-Correspondingly, 
+Correspondingly,
 
 DatabaseWatcher for MongoDB in Python
 
@@ -85,4 +85,3 @@ Detailed architecture of the cdc process.
         A[CDC thread] -- sends changed events --> B((Queue))
         B --> D[CDC event handler]
 ```
-

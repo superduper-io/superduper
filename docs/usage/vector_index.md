@@ -1,8 +1,8 @@
 (vectorsearch)=
-# Vector Indexes 
+# Vector Indexes
 
 ```{note}
-SuperDuperDB provides first-class support for Vector-Search, including 
+SuperDuperDB provides first-class support for Vector-Search, including
 encoding of inputs by arbitrary AI models.
 ```
 
@@ -26,7 +26,7 @@ db.add(
 The model `my-model` should have already been registered with SuperDuperDB (see [models](models) for help). `my-key` is the field to be searched. Together `my-model/my-key` refer to the [watcher](watchers) component (previously created) which is responsible for computing vectors from the data.
 See [here](watcher) for how to create such a component.
 
-Alternatively the model and watcher may be created inline. 
+Alternatively the model and watcher may be created inline.
 Here is how to define a simple libear bag-of-words model:
 
 ```python

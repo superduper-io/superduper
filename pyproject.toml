@@ -46,6 +46,9 @@ disable_error_code = [
     "union-attr",
     ]
 
+[tool.flake8]
+max-line-length = 88
+
 [tool.pytest.ini_options]
 addopts = "-W ignore"
 

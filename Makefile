@@ -11,10 +11,7 @@ clean-test-containers:
 
 .PHONY: lint-and-type-check
 lint-and-type-check:
-	isort --check superduperdb tests
-	black --check superduperdb tests
-	ruff check superduperdb tests
-	mypy superduperdb
+	pre-commit run --all-files
 	interrogate superduperdb
 
 .PHONY: test
@@ -23,10 +20,7 @@ test: test-containers
 
 .PHONY: fix-and-test
 fix-and-test: test-containers
-	isort superduperdb tests
-	black superduperdb tests
-	ruff check --fix superduperdb tests
-	mypy superduperdb
+	pre-commit run --all-files
 	pytest $(PYTEST_ARGUMENTS)
 	interrogate superduperdb
 

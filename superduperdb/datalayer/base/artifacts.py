@@ -27,7 +27,6 @@ class ArtifactStore(ABC):
         Delete artifact from artifact store
         :param file_id: File id uses to identify artifact in store
         """
-        pass
 
     def create_artifact(self, bytes: t.Any):
         """

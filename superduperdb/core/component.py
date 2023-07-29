@@ -32,14 +32,12 @@ class Component(Serializable):
 
         :param db: the datalayer that created the component
         """
-        pass
 
     def on_load(self, db: Datalayer) -> None:
         """Called when this component is loaded from the data store
 
         :param db: the datalayer that loaded the component
         """
-        pass
 
     @property
     def child_components(self) -> t.Sequence[t.Any]:

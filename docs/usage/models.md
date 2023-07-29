@@ -16,7 +16,7 @@ is via the `Model` abstraction. This maybe thought of in the following way:
 
 The uniformity of the abstraction is inspired by the Sklearn `.fit`, `.predict` paradigm,
 but with additional features which are required in order to allow the models to read and
-write to the datalayer. We extend this paradigm to frameworks, which have taken their 
+write to the datalayer. We extend this paradigm to frameworks, which have taken their
 own path in API design, bringing all frameworks into a single world of terminology and
 functionality.
 
@@ -88,8 +88,8 @@ Using the same analogy to `sklearn` above, SuperDuperDB supports "in-datalayer" 
 (watchers)=
 ## Daemonizing models with watchers
 
-Models can be configured so that, when new data is inserted through the SuperDuperDB datalayer, 
-then the models spring into action, processing this new data, and repopulating outputs back 
+Models can be configured so that, when new data is inserted through the SuperDuperDB datalayer,
+then the models spring into action, processing this new data, and repopulating outputs back
 into the datalayer.
 
 ```python
@@ -109,9 +109,9 @@ An equivalent syntax is the following:
 )
 ```
 
-After setting up a `Watcher`, whenever data is inserted or updated, jobs are created 
+After setting up a `Watcher`, whenever data is inserted or updated, jobs are created
 which save the outputs of the model in the `"_outputs"` field.
 
-A `Watcher` may also be configured in [distributed mode](), to watch for changes coming in 
-from any sources - i.e. changes are not just detected through the SuperDuperDB datalayer. 
+A `Watcher` may also be configured in [distributed mode](), to watch for changes coming in
+from any sources - i.e. changes are not just detected through the SuperDuperDB datalayer.
 Read more about that [here]().

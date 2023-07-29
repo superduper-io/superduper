@@ -1,11 +1,11 @@
 (clientserver)=
 # Client-server implementation
 
-So that users are able to access SuperDuperDB from remote servers/ client-side, 
+So that users are able to access SuperDuperDB from remote servers/ client-side,
 we provide a client-server implementation to do this. Note that this is not
 strictly necessary to profit from SuperDuperDB functionality. Another
 logical usage pattern for remote servers, would be to access the environment
-from outside using a Jupyter notebook service, deployed with local 
+from outside using a Jupyter notebook service, deployed with local
 network access to the Dask cluster and change data capture components.
 
 To start the server, use the CLI:

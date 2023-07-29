@@ -13,10 +13,10 @@
 </a>
 <a href="https://pypi.org/project/superduperdb" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
-</a>    
+</a>
 <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb-stealth/blob/main/notebooks/playground.ipynb">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
-</a>  
+</a>
 
 </p>
 
@@ -30,7 +30,7 @@
 <h1 align="center">Bring AI to your <a href="https://www.mongodb.com/" target="_blank">MongoDB</a>-based application!
 </h1>
 
-#### SuperDuperDB is an open-source environment to deploy, train and operate AI models and APIs in MongoDB using Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>. 
+#### SuperDuperDB is an open-source environment to deploy, train and operate AI models and APIs in MongoDB using Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>.
 #### Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
 
 #### No data duplication, no pipelines, no duplicate infrastructure — just Python.<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>
@@ -42,14 +42,14 @@
 
 <hr>
 
-# Introduction 🔰 
+# Introduction 🔰
 
 
 ### 🔮 What can you do with SuperDuperDB?
 
-- **Deploy** all your AI models to automatically **populate computed outputs (inference)** back into the database in a single environment with simple Python commands.  
-- **Train** models on your data in your database simply by querying without additional ingestion and pre-processing.  
-- **Integrate** AI APIs (such as OpenAI) to work together with other models on your data effortlessly. 
+- **Deploy** all your AI models to automatically **populate computed outputs (inference)** back into the database in a single environment with simple Python commands.
+- **Train** models on your data in your database simply by querying without additional ingestion and pre-processing.
+- **Integrate** AI APIs (such as OpenAI) to work together with other models on your data effortlessly.
 - **Search** your data with vector-search, including model management and serving.
 
  ### ⁉️ Why choose SuperDuperDB?
@@ -66,10 +66,10 @@
 
 ### 🪄 SuperDuperDB transforms your MongoDB into:
 
-  - **An end-to-end live AI deployment** which includes a **model repository and registry**, **model training** and **computation of outputs/ inference** 
-  - **A feature store** in which the model outputs are stored alongside the inputs in any data format. 
-  - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB or LanceDB vector search 
-  - *(Coming soon)* **A model performance monitor** enabling model quality and degradation to be monitored as new data is inserted  
+  - **An end-to-end live AI deployment** which includes a **model repository and registry**, **model training** and **computation of outputs/ inference**
+  - **A feature store** in which the model outputs are stored alongside the inputs in any data format.
+  - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with MongoDB or LanceDB vector search
+  - *(Coming soon)* **A model performance monitor** enabling model quality and degradation to be monitored as new data is inserted
 
 
 <p align="center">
@@ -78,7 +78,7 @@
 </p>
 
 # How to 🤷
-#### The following are three examples of how you use SuperDuperDB in Python (find all how-tos <a href="404" target="_blank">in the docs here</a>): 
+#### The following are three examples of how you use SuperDuperDB in Python (find all how-tos <a href="404" target="_blank">in the docs here</a>):
 
 - **Add a ML/AI model into your database <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
@@ -230,10 +230,10 @@ If you have any problems, questions, commets or ideas:
 - Search through <a href="404" target="_blank">our GitHub Discussions</a>, or <a href="404" target="_blank">add a new question</a>.
 - Comment <a href="404" target="_blank">an existing issue</a> or create <a href="404" target="_blank">
 a new one</a>.
-- Feel free to contact a maintainer or community volunteer directly! 
+- Feel free to contact a maintainer or community volunteer directly!
 
 
-# Contributing :seedling: 
+# Contributing :seedling:
 
 There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 - Bug reports
@@ -245,7 +245,7 @@ There are many ways to contribute, and they are not limited to writing code. We 
 Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 
-# License 📜 
+# License 📜
 
 SuperDuperDB is open-source and intended to be a community effort, and it won't be possible without your support and enthusiasm.
 It is distributed under the terms of the Apache License Version 2.0. Any contribution made to this project will be licensed under the Apache License Version 2.0.

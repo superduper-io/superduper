@@ -1,10 +1,9 @@
 import os
 import sys
 
-
 sys.path.insert(0, os.path.abspath('..'))
 
-extensions =[
+extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.doctest',
@@ -20,7 +19,7 @@ extensions =[
     'nbsphinx_link',
     'myst_parser',
     'sphinx_copybutton',
-    'sphinxcontrib.mermaid'
+    'sphinxcontrib.mermaid',
 ]
 
 autoclass_content = "both"

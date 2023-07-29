@@ -94,6 +94,12 @@ class MetaDataStore(ABC):
     def get_metadata(self, key):
         pass
 
+    def get_metadata_optional(self, key, default=None):
+        try:
+            return self.get_metadata(key)
+        except KeyError:
+            return default
+
     @abstractmethod
     def get_latest_version(
         self, variety: str, identifier: str, allow_hidden: bool = False

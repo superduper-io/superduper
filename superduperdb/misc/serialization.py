@@ -7,7 +7,7 @@ import dill
 import torch
 import typing_extensions as te
 
-from superduperdb.models.torch.utils import device_of
+from superduperdb.ext.torch.utils import device_of
 
 Info = t.Optional[t.Dict[str, t.Any]]
 

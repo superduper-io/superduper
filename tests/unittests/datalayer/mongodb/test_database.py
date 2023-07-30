@@ -2,17 +2,17 @@ import PIL.PngImagePlugin
 import pytest
 import torch
 
-from superduperdb.core.dataset import Dataset
-from superduperdb.core.document import Document
-from superduperdb.core.encoder import Encoder
-from superduperdb.core.watcher import Watcher
-from superduperdb.datalayer.base.exceptions import (
+from superduperdb.base.dataset import Dataset
+from superduperdb.base.document import Document
+from superduperdb.base.encoder import Encoder
+from superduperdb.base.watcher import Watcher
+from superduperdb.datalayer.exceptions import (
     ComponentInUseError,
     ComponentInUseWarning,
 )
 from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.encoders.torch.tensor import tensor
-from superduperdb.models.torch.wrapper import TorchModel
+from superduperdb.ext.torch.encoder import tensor
+from superduperdb.ext.torch.model import TorchModel
 
 n_data_points = 250
 

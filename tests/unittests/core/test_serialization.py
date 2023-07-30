@@ -3,10 +3,10 @@ import pprint
 import torch
 from sklearn.svm import SVC
 
-from superduperdb.core.artifact import Artifact
-from superduperdb.core.model import Model
-from superduperdb.encoders.torch.tensor import tensor
-from superduperdb.models.sklearn.wrapper import Estimator
+from superduperdb.base.artifact import Artifact
+from superduperdb.base.model import Model
+from superduperdb.ext.torch.encoder import tensor
+from superduperdb.ext.sklearn.model import Estimator
 
 
 def test_model():

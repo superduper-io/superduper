@@ -12,11 +12,11 @@ from tenacity import RetryError, Retrying, stop_after_delay
 from superduperdb import CFG
 from superduperdb.cluster.dask_client import dask_client
 from superduperdb.cluster.server import serve
-from superduperdb.core.document import Document
-from superduperdb.datalayer.base.build import build_datalayer
-from superduperdb.encoders.torch.tensor import tensor
+from superduperdb.base.document import Document
+from superduperdb.datalayer.build import build_datalayer
+from superduperdb.ext.torch.encoder import tensor
 from superduperdb.misc.config import DataLayer, DataLayers
-from superduperdb.models.torch.wrapper import TorchModel
+from superduperdb.ext.torch.model import TorchModel
 
 '''
 All pytest fixtures with _package scope_ are defined in this module.

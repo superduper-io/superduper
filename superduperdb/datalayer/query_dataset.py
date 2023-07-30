@@ -62,7 +62,7 @@ class QueryDataset(Dataset):
     @property
     def database(self):
         if self._database is None:
-            from superduperdb.datalayer.base.build import build_datalayer
+            from superduperdb.datalayer.build import build_datalayer
 
             self._database = build_datalayer()
         return self._database
@@ -151,7 +151,7 @@ class CachedQueryDataset(Dataset):
     @property
     def database(self):
         if self._database is None:
-            from superduperdb.datalayer.base.build import build_datalayer
+            from superduperdb.datalayer.build import build_datalayer
 
             self._database = build_datalayer()
         return self._database

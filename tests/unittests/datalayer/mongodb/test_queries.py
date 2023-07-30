@@ -2,7 +2,7 @@ import PIL.PngImagePlugin
 import pytest
 import torch
 
-from superduperdb.core.document import Document
+from superduperdb.base.document import Document
 from superduperdb.datalayer.mongodb.query import Collection
 
 n_data_points = 250

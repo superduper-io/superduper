@@ -1,6 +1,6 @@
 import typing as t
 
-from superduperdb.core.component import Component
+from superduperdb.base.component import Component
 from superduperdb.datalayer.base.metadata import MetaDataStore
 
 

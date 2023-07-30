@@ -6,15 +6,15 @@ import uuid
 import click
 import requests
 
-from superduperdb.core.artifact_tree import (
+from superduperdb.base.artifact_tree import (
     get_artifacts,
     load_artifacts,
     replace_artifacts_with_dict,
 )
-from superduperdb.core.component import Component
-from superduperdb.core.document import Document, dump_bsons, load_bson, load_bsons
-from superduperdb.core.serializable import Serializable
-from superduperdb.datalayer.base.datalayer import ExecuteQuery
+from superduperdb.base.component import Component
+from superduperdb.base.document import Document, dump_bsons, load_bson, load_bsons
+from superduperdb.base.serializable import Serializable
+from superduperdb.datalayer.datalayer import ExecuteQuery
 from superduperdb.datalayer.base.query import (
     Delete,
     Insert,

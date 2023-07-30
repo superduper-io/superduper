@@ -5,10 +5,10 @@ import torch
 
 from superduperdb import CFG
 from superduperdb.cluster.client import Client
-from superduperdb.core.document import Document
+from superduperdb.base.document import Document
 from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.encoders.torch.tensor import tensor
-from superduperdb.models.torch.wrapper import TorchModel
+from superduperdb.ext.torch.encoder import tensor
+from superduperdb.ext.torch.model import TorchModel
 
 
 @pytest.fixture(scope="module")

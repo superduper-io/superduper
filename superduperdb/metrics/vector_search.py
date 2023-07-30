@@ -3,8 +3,8 @@ from collections import defaultdict
 
 import numpy
 
-from superduperdb.core.metric import Metric
-from superduperdb.core.model import Model
+from superduperdb.base.metric import Metric
+from superduperdb.base.model import Model
 from superduperdb.datalayer.query_dataset import QueryDataset
 from superduperdb.vector_search import VanillaVectorIndex
 from superduperdb.vector_search.base import BaseVectorIndex, VectorCollection

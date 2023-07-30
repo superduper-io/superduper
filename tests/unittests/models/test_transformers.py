@@ -1,10 +1,10 @@
 import pytest
 import tdir
 
-from superduperdb.core.dataset import Dataset
-from superduperdb.core.document import Document as D
+from superduperdb.base.dataset import Dataset
+from superduperdb.base.document import Document as D
 from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.models.transformers.wrapper import (
+from superduperdb.ext.transformers.model import (
     Pipeline,
     TransformersTrainerConfiguration,
 )

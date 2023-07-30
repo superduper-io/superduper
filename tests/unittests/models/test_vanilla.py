@@ -1,4 +1,4 @@
-from superduperdb.core.model import Model
+from superduperdb.base.model import Model
 
 
 def test_function_predict_one():

@@ -3,9 +3,9 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 from superduperdb import CFG
-from superduperdb.core.job import FunctionJob
-from superduperdb.core.task_workflow import TaskWorkflow
-from superduperdb.core.watcher import Watcher
+from superduperdb.base.job import FunctionJob
+from superduperdb.base.task_workflow import TaskWorkflow
+from superduperdb.base.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Collection
 
 

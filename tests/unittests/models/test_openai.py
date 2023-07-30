@@ -3,11 +3,11 @@ import os
 
 import pytest
 
-from superduperdb.core.document import Document
-from superduperdb.core.vector_index import VectorIndex
-from superduperdb.core.watcher import Watcher
+from superduperdb.base.document import Document
+from superduperdb.base.vector_index import VectorIndex
+from superduperdb.base.watcher import Watcher
 from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.models.openai.wrapper import OpenAIChatCompletion, OpenAIEmbedding
+from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 
 SKIP_PAID = os.environ.get('OPENAI_API_KEY') is None
 

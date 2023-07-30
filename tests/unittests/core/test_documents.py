@@ -1,7 +1,7 @@
 import torch
 
-from superduperdb.core.document import Document
-from superduperdb.encoders.torch.tensor import tensor
+from superduperdb.base.document import Document
+from superduperdb.ext.torch.encoder import tensor
 
 
 def test_document_encoding():

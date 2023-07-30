@@ -13,19 +13,19 @@ import torch
 from pymongo import MongoClient
 from tenacity import RetryError, Retrying, stop_after_delay
 
-from superduperdb.core.dataset import Dataset
-from superduperdb.core.document import Document
-from superduperdb.core.metric import Metric
-from superduperdb.core.vector_index import VectorIndex
-from superduperdb.core.watcher import Watcher
-from superduperdb.datalayer.base.datalayer import Datalayer
+from superduperdb.base.dataset import Dataset
+from superduperdb.base.document import Document
+from superduperdb.base.metric import Metric
+from superduperdb.base.vector_index import VectorIndex
+from superduperdb.base.watcher import Watcher
+from superduperdb.datalayer.datalayer import Datalayer
 from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.encoders.numpy.array import array
-from superduperdb.encoders.pillow.image import pil_image
-from superduperdb.encoders.torch.tensor import tensor
+from superduperdb.ext.numpy.encoder import array
+from superduperdb.ext.pillow.encoder import pil_image
+from superduperdb.ext.torch.encoder import tensor
 from superduperdb.misc.config import DataLayer, DataLayers
 from superduperdb.misc.config import MongoDB as MongoDBConfig
-from superduperdb.models.torch.wrapper import TorchModel
+from superduperdb.ext.torch.model import TorchModel
 from tests.material.metrics import PatK
 from tests.material.models import BinaryClassifier
 
@@ -101,7 +101,7 @@ def mongodb_client(mongodb_server: TestMongoDBConfig) -> Iterator[pymongo.MongoC
 
 @contextmanager
 def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[Datalayer]:
-    from superduperdb.datalayer.base.build import build_datalayer
+    from superduperdb.datalayer.build import build_datalayer
 
     mongo_client = MongoClient(
         host=mongodb_config.host,

@@ -15,11 +15,11 @@ from pydantic import BaseModel
 from pymongo.change_stream import CollectionChangeStream
 
 import superduperdb as s
-from superduperdb.core.job import FunctionJob
-from superduperdb.core.serializable import Serializable
-from superduperdb.core.task_workflow import TaskWorkflow
-from superduperdb.core.vector_index import VectorIndex
-from superduperdb.datalayer.base.datalayer import Datalayer
+from superduperdb.base.job import FunctionJob
+from superduperdb.base.serializable import Serializable
+from superduperdb.base.task_workflow import TaskWorkflow
+from superduperdb.base.vector_index import VectorIndex
+from superduperdb.datalayer.datalayer import Datalayer
 from superduperdb.datalayer.mongodb import query
 from superduperdb.misc.logger import logging
 from superduperdb.misc.task_queue import cdc_queue

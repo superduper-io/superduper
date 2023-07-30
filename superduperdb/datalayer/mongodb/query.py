@@ -6,9 +6,9 @@ from bson import ObjectId
 from pymongo import UpdateOne as _UpdateOne
 
 import superduperdb as s
-from superduperdb.core.document import Document
-from superduperdb.core.serializable import Serializable
-from superduperdb.datalayer.base.cursor import SuperDuperCursor
+from superduperdb.base.document import Document
+from superduperdb.base.serializable import Serializable
+from superduperdb.datalayer.cursor import SuperDuperCursor
 from superduperdb.datalayer.base.query import (
     Delete,
     Insert,

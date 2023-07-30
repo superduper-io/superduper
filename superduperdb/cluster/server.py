@@ -5,14 +5,14 @@ import uuid
 from flask import Flask, jsonify, make_response, request
 
 from superduperdb import CFG
-from superduperdb.core.artifact_tree import (
+from superduperdb.base.artifact_tree import (
     get_artifacts,
     load_artifacts_from_store,
     replace_artifacts_with_dict,
 )
-from superduperdb.core.document import load_bson, load_bsons
-from superduperdb.core.serializable import Serializable
-from superduperdb.datalayer.base.build import build_datalayer
+from superduperdb.base.document import load_bson, load_bsons
+from superduperdb.base.serializable import Serializable
+from superduperdb.datalayer.build import build_datalayer
 from superduperdb.misc.serialization import serializers
 
 

@@ -6,9 +6,9 @@ from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
-from superduperdb.core.document import Document
+from superduperdb.base.document import Document
 from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.models.sklearn.wrapper import Estimator
+from superduperdb.ext.sklearn.model import Estimator
 
 
 class Lookup(TransformerMixin):

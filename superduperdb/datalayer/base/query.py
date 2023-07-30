@@ -2,7 +2,7 @@ import dataclasses as dc
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduperdb.core.serializable import Serializable
+from superduperdb.base.serializable import Serializable
 
 
 @dc.dataclass

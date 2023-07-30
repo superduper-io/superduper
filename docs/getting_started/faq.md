@@ -56,3 +56,22 @@ via FastAPI, and the frontend is built in React-Javascript. Due to the Python ba
 
 We are working on a [RESTful client-server](clientserver) implementation, allowing queries involving vector-search models to be dispatched directly from a React frontend. For applications which do not require
 models at query-time, model outputs may be consumed directly via MongoDB, if [change-data-capture (CDC)](CDC) is activated. 
+
+***Why haven't you integrated LangChain with SuperDuperDB?***
+
+LangChain is a Python package for making:
+
+- Data aware applications
+- Allowing language models to interact with your computer system
+
+See more [here](https://python.langchain.com/docs/get_started/introduction.html).
+
+SuperDuperDB is focused around the datalayer, and creating ML and AI models which operate
+at the document/ row-level. This includes the possibility of seeding language models with 
+context which originates from vector search. 
+
+We found we did not need LangChain to seed OpenAI or other language models with prompts constructed out of records
+from the `Datalayer` allows us to do everything we want to do with SuperDuperDB; see [here](examples/voice_memos.html) for an example of using vector-search to seed an OpenAI prompt.
+This includes building highly sophisticated multimodal workflows, including interactions
+between image, text, audio and more. For this reason, we decided initially not 
+to integrate LangChain.

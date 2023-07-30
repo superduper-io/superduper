@@ -12,4 +12,5 @@ compare_vector_search_solutions
 multimodel_image_search_clip
 sentiment_analysis_use_case
 voice_memos
+resnet_features
 ```

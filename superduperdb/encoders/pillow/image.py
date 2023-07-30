@@ -6,6 +6,8 @@ import PIL.PngImagePlugin
 
 from superduperdb.core.encoder import Encoder
 
+BLANK_IMAGE = PIL.Image.new('RGB', (600, 600), (255, 255, 255))
+
 
 def encode_pil_image(x):
     buffer = io.BytesIO()
@@ -13,8 +15,21 @@ def encode_pil_image(x):
     return buffer.getvalue()
 
 
-def decode_pil_image(bytes):
-    return PIL.Image.open(io.BytesIO(bytes))
+class DecoderPILImage:
+    def __init__(self, handle_exceptions: bool = True):
+        self.handle_exceptions = handle_exceptions
+
+    def __call__(self, bytes):
+        try:
+            return PIL.Image.open(io.BytesIO(bytes))
+        except Exception as e:
+            if self.handle_exceptions:
+                return BLANK_IMAGE
+            else:
+                raise e
+
+
+decode_pil_image = DecoderPILImage()
 
 
 pil_image = Encoder(

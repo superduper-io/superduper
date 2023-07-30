@@ -170,12 +170,20 @@ class PreLike(Like):
 
 @dc.dataclass
 class Find(Select):
+    id_field: t.ClassVar[str] = '_id'
     collection: t.Optional[Collection] = None
     like_parent: t.Optional[PreLike] = None
     args: t.Sequence = dc.field(default_factory=lambda: [])
     kwargs: t.Dict = dc.field(default_factory=lambda: {})
-
     type_id: t.Literal['mongodb.Find'] = 'mongodb.Find'
+
+    def select_single_id(self, id, db, encoders=()):
+        id = ObjectId(id)
+        return Document(
+            Document.decode(
+                db.db[self.collection.name].find_one({'_id': id}), encoders=encoders
+            )
+        )
 
     @property
     def parent(self):
@@ -335,6 +343,7 @@ class FeaturizeOne(SelectOne):
 
 @dc.dataclass
 class FindOne(SelectOne):
+    id_field: t.ClassVar[str] = '_id'
     args: t.Optional[t.Sequence] = dc.field(default_factory=list)
     kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     like_parent: t.Optional[PreLike] = None

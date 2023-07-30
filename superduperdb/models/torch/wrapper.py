@@ -402,8 +402,8 @@ class TorchModel(Base, Model):  # type: ignore[misc]
             output = method(singleton_batch)
             output = to_device(output, 'cpu')
             args = unpack_batch(output)[0]
-            if hasattr(self.object.artifact, 'postprocess'):
-                args = self.object.artifact.postprocess(args)
+            if self.preprocess is not None:
+                args = self.postprocess.artifact(args)
             return args
 
     def _predict(self, x, one: bool = False, **kwargs):  # type: ignore[override]

@@ -23,6 +23,9 @@ class QueryDataset(Dataset):
         transform=None,
         features=None,
         db=None,
+        ids=None,
+        in_memory: bool = True,
+        extract=None,
         **kwargs,
     ):
         super().__init__()
@@ -31,10 +34,30 @@ class QueryDataset(Dataset):
         self.keys = keys
 
         self.transform = transform if transform else lambda x: x
-        self.select = select.add_fold(fold)
-        self._documents = list(self.database.execute(self.select))
+        if fold is not None:
+            self.select = select.add_fold(fold)
+        else:
+            self.select = select
+        self.in_memory = in_memory
+        if self.in_memory:
+            if ids is None:
+                self._documents = list(self.database.execute(self.select))
+            else:
+                self._documents = list(
+                    self.database.execute(self.select.select_using_ids(ids))
+                )
+        else:
+            if ids is None:
+                self._ids = [
+                    r[self.select.id_field]
+                    for r in self.database.execute(self.select.select_ids)
+                ]
+            else:
+                self._ids = ids
+            self.select_one = self.select.select_single_id
         self.suppress = suppress
         self.features = features or {}
+        self.extract = extract
 
     @property
     def database(self):
@@ -42,14 +65,22 @@ class QueryDataset(Dataset):
             from superduperdb.datalayer.base.build import build_datalayer
 
             self._database = build_datalayer()
-
         return self._database
 
     def __len__(self):
-        return len(self._documents)
+        if self.in_memory:
+            return len(self._documents)
+        else:
+            return len(self._ids)
 
     def __getitem__(self, item):
-        r = MongoStyleDict(self._documents[item].unpack())
+        if self.in_memory:
+            input = self._documents[item]
+        else:
+            input = self.select_one(
+                self._ids[item], self.database, encoders=self.database.encoders
+            )
+        r = MongoStyleDict(input.unpack())
         s = MongoStyleDict({})
         for k in self.features:
             r[k] = r['_outputs'][k][self.features[k]]
@@ -62,7 +93,10 @@ class QueryDataset(Dataset):
                     s[k] = r[k]
         else:
             s = r
-        return self.transform(s)
+        out = self.transform(s)
+        if self.extract:
+            out = out[self.extract]
+        return out
 
 
 class CachedQueryDataset(Dataset):
@@ -95,6 +129,7 @@ class CachedQueryDataset(Dataset):
 
         self.transform = transform if transform else lambda x: x
         self.select = select.add_fold(fold)
+
         self.ids = [doc.id for doc in self.database.execute(self.select.select_ids)]
         self.suppress = suppress
         self.features = features or {}

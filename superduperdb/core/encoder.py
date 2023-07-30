@@ -3,9 +3,6 @@ import io
 import pickle
 import typing as t
 
-from PIL.PngImagePlugin import PngImageFile
-from torch import Tensor
-
 from superduperdb.core.artifact import Artifact
 from superduperdb.core.component import Component
 from superduperdb.misc import dataclasses as dc
@@ -58,21 +55,34 @@ class Encoder(Component):
         if isinstance(self.encoder, t.Callable):  # type: ignore[arg-type]
             self.encoder = Artifact(artifact=self.encoder)
 
-    def __call__(self, x: t.Union[Tensor, PngImageFile]) -> 'Encodable':
-        return Encodable(x, self)  # type: ignore[call-arg]
+    def __call__(
+        self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
+    ) -> 'Encodable':
+        return Encodable(self, x=x, uri=uri)  # type: ignore[call-arg]
 
     def decode(self, b: bytes) -> t.Any:
         return self(self.decoder.artifact(b))
 
-    def encode(self, x: t.Any) -> t.Dict[str, t.Any]:
+    def encode(
+        self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
+    ) -> t.Dict[str, t.Any]:
         if self.encoder is not None:
-            return {
-                '_content': {
-                    'bytes': self.encoder.artifact(x),
-                    'encoder': self.identifier,
+            if x is not None:
+                return {
+                    '_content': {
+                        'bytes': self.encoder.artifact(x),
+                        'encoder': self.identifier,
+                    }
                 }
-            }
+            else:
+                return {
+                    '_content': {
+                        'uri': uri,
+                        'encoder': self.identifier,
+                    }
+                }
         else:
+            assert x is not None
             return x
 
 
@@ -86,11 +96,12 @@ class Encodable:
     :param encoder: Instance of ``Encoder`` controlling encoding
     """
 
-    x: t.Any
     encoder: t.Callable
+    x: t.Optional[t.Any] = None
+    uri: t.Optional[str] = None
 
     def encode(self) -> t.Dict[str, t.Any]:
-        return self.encoder.encode(self.x)
+        return self.encoder.encode(x=self.x, uri=self.uri)
 
 
 default_encoder = Encoder(identifier='_default')

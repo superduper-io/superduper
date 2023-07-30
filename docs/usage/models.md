@@ -1,3 +1,4 @@
+(modelz)=
 # Models
 
 ```{note}
@@ -85,7 +86,7 @@ Using the same analogy to `sklearn` above, SuperDuperDB supports "in-datalayer" 
 # Lots of output corresponding to training here
 ```
 
-(watchers)=
+(daemonize)=
 ## Daemonizing models with watchers
 
 Models can be configured so that, when new data is inserted through the SuperDuperDB datalayer, 

@@ -17,6 +17,7 @@ from superduperdb.core.job import ComponentJob, Job
 from superduperdb.core.metric import Metric
 from superduperdb.core.serializable import Serializable
 from superduperdb.datalayer.base.query import Select
+from superduperdb.datalayer.query_dataset import QueryDataset
 from superduperdb.misc.configs import CFG
 from superduperdb.misc.special_dicts import MongoStyleDict
 
@@ -109,6 +110,7 @@ class PredictMixin:
         watch: bool = False,
         one: bool = False,
         context: t.Optional[t.Dict] = None,
+        in_memory: bool = True,
         **kwargs,
     ) -> t.Any:
         # TODO this should be separated into sub-procedures
@@ -124,6 +126,11 @@ class PredictMixin:
                     key=X,
                     model=self,  # type: ignore[arg-type]
                     select=select,  # type: ignore[arg-type]
+                    predict_kwargs={
+                        **kwargs,
+                        'in_memory': in_memory,
+                        'max_chunk_size': max_chunk_size,
+                    },
                 ),
                 dependencies=dependencies,
             )
@@ -154,18 +161,30 @@ class PredictMixin:
                     select=select,
                     max_chunk_size=max_chunk_size,
                     one=False,
+                    in_memory=in_memory,
                     **kwargs,
                 )
 
             elif select is not None and ids is not None and max_chunk_size is None:
                 assert not one
-                docs = list(db.execute(select.select_using_ids(ids)))
-                if X != '_base':
-                    X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
-                else:
-                    X_data = [r.unpack() for r in docs]
 
-                outputs = self.predict(X=X_data, one=False, distributed=False)
+                if in_memory:
+                    docs = list(db.execute(select.select_using_ids(ids)))
+                    if X != '_base':
+                        X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
+                    else:
+                        X_data = [r.unpack() for r in docs]
+                else:
+                    X_data = QueryDataset(  # type: ignore[assignment]
+                        select=select,
+                        ids=ids,
+                        fold=None,
+                        db=db,
+                        in_memory=False,
+                        keys=[X],
+                    )
+
+                outputs = self.predict(X=X_data, one=False, distributed=False, **kwargs)
                 if self.encoder is not None:
                     # ruff: noqa: E501
                     outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
@@ -191,6 +210,7 @@ class PredictMixin:
                         select=select,
                         max_chunk_size=None,
                         one=False,
+                        in_memory=in_memory,
                         **kwargs,
                     )
                     it += 1

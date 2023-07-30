@@ -1,4 +1,4 @@
-# Explanations and tutorials for SuperDuperDB
+# Explanations
 
 Read the following pages, if you're interested in understanding more about how SuperDuperDB works.
 
@@ -6,4 +6,7 @@ Read the following pages, if you're interested in understanding more about how S
 
 ```{toctree}
 :maxdepth: 2
+model_design
+serialization
+versioning
 ```

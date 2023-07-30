@@ -27,7 +27,7 @@
 
 </p>
 
-<h1 align="center">Bring AI to your <a href="https://www.mongodb.com/" target="_blank">MongoDB</a>-based application!
+<h1 align="center">AI with <a href="https://www.mongodb.com/" target="_blank">MongoDB</a>!
 </h1>
 
 #### SuperDuperDB is an open-source environment to deploy, train and operate AI models and APIs in MongoDB using Python <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>. 

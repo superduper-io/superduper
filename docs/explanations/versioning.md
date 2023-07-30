@@ -1,7 +1,7 @@
 # Component versioning
 
 SuperDuperDB has a component versioning system. This versioning system applies to subclasses of 
-`Component`:
+[`Component`](component):
 
 - [models](modelz)
 - [encoders](encoders)
@@ -28,11 +28,10 @@ For example the following would create two versions of a `Model`, identified by 
 >>> db.show('model', 'test-model', 0)     # shows full meta-data record of model version
 ```
 
-When creating a `Component`, other `Component` contained in the first are created inline.
+When creating a `Component`, other `Component` instances contained are created inline.
+When removing a `Component` the versioning system is interrogated and if it plays a role in other `Component` instances, it may not be deleted. If deletion is forced, it is marked as hidden, rather than deleted.
 
-When removing a `Component` the versioning system is interrogated and if they play a role in other `Component` instances, they may not be deleted. If deletion is forced, they are marked as hidden, rather than deleted.
-
-For example the following raises an `Exception`:
+For example, the following raises an `Exception`:
 
 ```
 >>> enc = Encoder('my-enc', encode=lambda x: x, decode=lambda x: x)

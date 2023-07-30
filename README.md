@@ -36,9 +36,9 @@
 #### No data duplication, no pipelines, no duplicate infrastructure — just Python.<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>
 
 <hr>
-- <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Exlore the docs!</strong></a><br>
-- <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Check out example use cases!</strong></a><br>
-- <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"><strong>Quickstart with Google Colab!</strong></a><br>
+- <a href="https://superduperdb.github.io/superduperdb"><strong>Exlore the docs!</strong></a><br>
+- <a href="https://superduperdb.github.io/superduperdb/examples"><strong>Check out example use cases!</strong></a><br>
+- <a href=""><strong>Quickstart with Google Colab!</strong></a><br>
 
 <hr>
 
@@ -78,7 +78,7 @@
 </p>
 
 # How to 🤷
-#### The following are three examples of how you use SuperDuperDB in Python (find all how-tos <a href="404" target="_blank">in the docs here</a>): 
+#### The following are three examples of how you use SuperDuperDB in Python (find all examples and how-tos <a href="https://superduperdb.github.io/superduperdb" target="_blank">in the docs here</a>): 
 
 - **Add a ML/AI model into your database <a href="404" target="_blank">(read more in the docs here)</a>:**
 ```python
@@ -216,9 +216,7 @@ pip install superduperdb
 Try SuperDuperDB in Google Colab
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/11SJunSZc52jUuYrmNi5GziombcQ_sdhJ#scrollTo=XwWu32JBovja)
 
-This will set up a playground demo environment:
-- an installation of SuperDuperDB
-- an installation of a MongoDB instance containing Youtube transcripts
+This will set up a playground demo environment installating of SuperDuperDB on top of MongoDB
 
 Enjoy and have fun with it! 🎊
 

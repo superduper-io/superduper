@@ -1,6 +1,6 @@
 # SuperDuperDB Cluster
 
-SuperDuperDB may be operated as a cluter in `distributed` mode, with a client-server
+SuperDuperDB may be operated as a cluster in `distributed` mode, with a client-server
 for communication for production use-cases.
 In this section of the documentation we describe how to set this up.
 

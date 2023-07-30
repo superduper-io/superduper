@@ -11,6 +11,8 @@ We are working on support for vector-search via MongoDB enterprise search in par
 
 Vector-indexes build on top of the [datalayer](datalayer), [models](models) and [watchers](watchers).
 
+## Creating vector indexes
+
 In order to build a vector index, one defines one or two models, and daemonizes them with watchers.
 In the simples variant one does simply:
 
@@ -44,12 +46,39 @@ class TextEmbedding:
 
 db.add(
     VectorIndex(
+        identifier='my-index',
         indexing_watcher=Watcher(
             model=TorchModel(
                 preprocess=TextEmbedding(d),     # "d" should be loaded from disk
                 object=torch.nn.Linear(64, 512),
             )
+            key='<key-to-search>',
         )
     )
 )
+```
+
+## Using vector indexes with MongoDB
+
+To use your vector index to search MongoDB, there are two possibilities:
+
+Firstly, find similar matches and then filter the results:
+
+```python
+>>> from superduperdb.core.document import Document as D
+>>> db.execute(
+...    Collection('my-coll')
+...        .like(D({'<key-to-search>': '<content'>}), vector_index='my-index')
+...        .find(<filter>, <projection>)
+... )
+```
+
+Secondly, filter the data and find similar matches within the results:
+
+```python
+>>> db.execute(
+...    Collection('my-coll')
+...        .like(D({'<key-to-search>': '<content'>}), vector_index='my-index')
+...        .find(<filter>, <projection>)
+... )
 ```

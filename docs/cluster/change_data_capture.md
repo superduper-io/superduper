@@ -19,15 +19,9 @@ overly restrictive. Data inserts and updates may occur from:
 SuperDuperDB aims to allow it's AI models to be updated and kept in-sync with changes
 from all of the above sources.
 
-Correspondingly, 
-
-DatabaseWatcher for MongoDB in Python
-
-The DatabaseWatcher class is a Python implementation of a Change Data Capture (CDC) solution for MongoDB. It allows you to monitor changes in a specified collection by utilizing a daemon thread that watches the change stream.
-
+Correspondingly, the `DatabaseWatcher` class is a Python implementation of a Change Data Capture (CDC) solution for MongoDB. It allows you to monitor changes in a specified collection by utilizing a daemon thread that watches the change stream.
 
 ## Usage
-
 
 Import the necessary dependencies:
 ```python
@@ -45,44 +39,4 @@ Start the watcher thread to initiate the change stream monitoring:
 watcher.watch()
 ```
 
-## `DatabaseWatcher`
-
-Example:
-
-```python
-watcher = DatabaseWatcher(db=db, on=Collection(name='docs'))
-```
-
-### `.watch`
-
-Starts the watcher thread and initiates the change stream monitoring.
-
-```python
-watcher.watch()
-```
-
-This method creates and starts a daemon thread that continuously listens to changes in the specified MongoDB collection.
-
-### `.is_available`
-
-Gives the current avaiblitity of the watcher.
-
-```python
-watcher.is_available()
-```
-### `.info`
-Gets the current dictionary info of database watcher
-
-```python
-watcher.info()
-```
-Returns a dictionary with inserts and updates encountered.
-
-Detailed architecture of the cdc process.
-
-```{mermaid}
-    graph LR
-        A[CDC thread] -- sends changed events --> B((Queue))
-        B --> D[CDC event handler]
-```
-
+See [here](/how_to/mongo_cdc.html) for an example of usage of CDC.

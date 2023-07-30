@@ -1,7 +1,7 @@
 # Encoders
 
 ```{note}
-The `Encoder` allows SuperDuperDB store Python objects in the `Datalayer`,
+The `Encoder` class allows SuperDuperDB to store Python objects in the `Datalayer`,
 and to recall them in the same format in which they were stored.
 ```
 

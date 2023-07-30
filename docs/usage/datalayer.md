@@ -5,16 +5,7 @@
 The `Datalayer` is the primary interface from Python to your data+AI.
 ```
 
-The central datalayer object in SuperDuperDB is the `Datalayer`.
-This is intended as an abstraction which comprises:
-
-- Databases
-- Datawarehouses/ datalakes
-- Filesystems
-- Virtual filesystems, such as object storage
-
-Initially SuperDuperDB ships with support for MongoDB (database) and `gridfs` on MongoDB (filesystem).
-
+The central object for communicating with MongoDB in SuperDuperDB is the `Datalayer`.
 
 The `Datalayer` object combines 4 basic functionalities involved in integrating AI to the datalayer:
 
@@ -64,3 +55,17 @@ from superduperdb import superduper
 
 db = superduper(pymongo.MongoClient().test_db)
 ```
+
+## Databackend
+
+Currently we support MongoDB as the data backend.
+
+(artifactstore)=
+## Artifact Store
+
+Currently we support `gridfs` on MongoDB as the artifact store.
+
+(metadata)=
+## Metadata Store
+
+Currently we support MongoDB as the metadata store.

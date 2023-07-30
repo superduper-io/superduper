@@ -8,38 +8,18 @@ accelerate==0.21.0
     # via -r requirements.in
 aiohttp==3.8.4
     # via
-    #   fsspec
     #   lancedb
-    #   langchain
     #   openai
 aiosignal==1.3.1
-    # via
-    #   aiohttp
-    #   ray
+    # via aiohttp
 anyio==3.7.1
-    # via
-    #   httpcore
-    #   starlette
-arrow==1.2.3
-    # via lightning
+    # via httpcore
 async-timeout==4.0.2
-    # via
-    #   aiohttp
-    #   langchain
+    # via aiohttp
 attr==0.3.2
     # via lancedb
 attrs==23.1.0
-    # via
-    #   aiohttp
-    #   jsonschema
-    #   ray
-    #   referencing
-backoff==2.2.1
-    # via lightning
-beautifulsoup4==4.12.2
-    # via lightning
-blessed==1.20.0
-    # via inquirer
+    # via aiohttp
 blinker==1.6.2
     # via flask
 boto3==1.28.5
@@ -62,31 +42,19 @@ click==8.1.6
     #   dask
     #   distributed
     #   flask
-    #   lightning
-    #   lightning-cloud
-    #   ray
     #   typer
-    #   uvicorn
 cloudpickle==2.2.1
     # via
     #   dask
     #   distributed
 coverage[toml]==7.2.7
     # via pytest-cov
-croniter==1.4.1
-    # via lightning
 dask[distributed]==2023.5.0
     # via
     #   -r requirements.in
     #   distributed
-dataclasses-json==0.5.12
-    # via langchain
-dateutils==0.6.12
-    # via lightning
 decorator==5.1.1
     # via retry
-deepdiff==6.3.1
-    # via lightning
 dek==1.2.0
     # via
     #   tdir
@@ -97,25 +65,17 @@ distributed==2023.5.0
     # via dask
 dnspython==2.4.0
     # via pymongo
-environs==9.5.0
-    # via pymilvus
 exceptiongroup==1.1.2
     # via
     #   anyio
     #   pytest
 faiss-cpu==1.7.4
     # via -r requirements.in
-fastapi==0.100.0
-    # via
-    #   -r requirements.in
-    #   lightning
-    #   lightning-cloud
 fil==1.3.0
     # via -r requirements.in
 filelock==3.12.2
     # via
     #   huggingface-hub
-    #   ray
     #   torch
     #   transformers
 flask==2.3.2
@@ -131,21 +91,12 @@ frozenlist==1.4.0
     # via
     #   aiohttp
     #   aiosignal
-    #   ray
-fsspec[http]==2023.6.0
+fsspec==2023.6.0
     # via
     #   dask
     #   huggingface-hub
-    #   lightning
-    #   pytorch-lightning
-grpcio==1.49.1
-    # via
-    #   pymilvus
-    #   ray
 h11==0.14.0
-    # via
-    #   httpcore
-    #   uvicorn
+    # via httpcore
 httpcore==0.17.3
     # via
     #   dnspython
@@ -166,23 +117,14 @@ importlib-metadata==6.8.0
     # via
     #   dask
     #   flask
-importlib-resources==6.0.0
-    # via
-    #   jsonschema
-    #   jsonschema-specifications
 iniconfig==2.0.0
     # via pytest
-inquirer==3.1.3
-    # via lightning
 itsdangerous==2.1.2
-    # via
-    #   flask
-    #   starsessions
+    # via flask
 jinja2==3.1.2
     # via
     #   distributed
     #   flask
-    #   lightning
     #   torch
 jmespath==1.0.1
     # via
@@ -190,84 +132,42 @@ jmespath==1.0.1
     #   botocore
 joblib==1.3.1
     # via scikit-learn
-jsonschema==4.18.4
-    # via ray
-jsonschema-specifications==2023.7.1
-    # via jsonschema
 lancedb==0.1.10
     # via -r requirements.in
-langchain==0.0.235
-    # via -r requirements.in
-langsmith==0.0.7
-    # via langchain
-lightning==2.0.5
-    # via -r requirements.in
-lightning-cloud==0.5.37
-    # via lightning
-lightning-utilities==0.9.0
-    # via
-    #   lightning
-    #   pytorch-lightning
-    #   torchmetrics
 locket==1.0.0
     # via
     #   distributed
     #   partd
 lorem==0.1.1
     # via -r requirements-test.in
-markdown-it-py==3.0.0
-    # via rich
 markupsafe==2.1.3
     # via
     #   jinja2
     #   werkzeug
-marshmallow==3.19.0
-    # via
-    #   dataclasses-json
-    #   environs
-mdurl==0.1.2
-    # via markdown-it-py
 mpmath==1.3.0
     # via sympy
 msgpack==1.0.5
-    # via
-    #   distributed
-    #   ray
+    # via distributed
 multidict==6.0.4
     # via
     #   aiohttp
     #   yarl
-mypy-extensions==1.0.0
-    # via typing-inspect
 networkx==3.1
     # via
     #   -r requirements.in
     #   torch
-numexpr==2.8.4
-    # via langchain
 numpy==1.24.4
     # via
     #   -r requirements.in
     #   accelerate
-    #   langchain
-    #   lightning
-    #   numexpr
     #   pandas
     #   pyarrow
     #   pylance
-    #   pymilvus
-    #   pytorch-lightning
-    #   ray
     #   scikit-learn
     #   scipy
-    #   torchmetrics
     #   transformers
 openai==0.27.8
     # via -r requirements.in
-openapi-schema-pydantic==1.2.4
-    # via langchain
-ordered-set==4.1.0
-    # via deepdiff
 overrides==7.3.1
     # via -r requirements.in
 packaging==23.1
@@ -276,56 +176,30 @@ packaging==23.1
     #   dask
     #   distributed
     #   huggingface-hub
-    #   lightning
-    #   lightning-utilities
-    #   marshmallow
     #   pytest
-    #   pytorch-lightning
-    #   ray
-    #   torchmetrics
     #   transformers
 pandas==2.0.3
     # via
     #   -r requirements.in
     #   pylance
-    #   pymilvus
 partd==1.4.0
     # via dask
 pillow==10.0.0
     # via -r requirements.in
-pkgutil-resolve-name==1.3.10
-    # via jsonschema
 pluggy==1.2.0
     # via pytest
-protobuf==4.23.4
-    # via
-    #   pymilvus
-    #   ray
 psutil==5.9.5
     # via
     #   accelerate
     #   distributed
-    #   lightning
 py==1.11.0
     # via retry
 pyarrow==12.0.1
     # via pylance
 pydantic==1.10.11
-    # via
-    #   fastapi
-    #   lancedb
-    #   langchain
-    #   langsmith
-    #   lightning
-    #   openapi-schema-pydantic
-pygments==2.15.1
-    # via rich
-pyjwt==2.8.0
-    # via lightning-cloud
+    # via lancedb
 pylance==0.5.8
     # via lancedb
-pymilvus==2.2.13
-    # via -r requirements.in
 pymongo==4.4.1
     # via -r requirements.in
 pytest==7.4.0
@@ -336,72 +210,31 @@ pytest-cov==4.1.0
     # via -r requirements-test.in
 python-dateutil==2.8.2
     # via
-    #   arrow
     #   botocore
-    #   croniter
-    #   dateutils
     #   pandas
-python-dotenv==1.0.0
-    # via environs
-python-editor==1.0.4
-    # via inquirer
-python-multipart==0.0.6
-    # via
-    #   lightning
-    #   lightning-cloud
-pytorch-lightning==2.0.5
-    # via lightning
 pytz==2023.3
-    # via
-    #   dateutils
-    #   pandas
+    # via pandas
 pyyaml==6.0.1
     # via
     #   accelerate
     #   dask
     #   distributed
     #   huggingface-hub
-    #   langchain
-    #   lightning
-    #   pytorch-lightning
-    #   ray
     #   transformers
 ratelimiter==1.2.0.post0
     # via lancedb
-ray==2.5.1
-    # via -r requirements.in
-readchar==4.0.5
-    # via inquirer
 readerwriterlock==1.0.9
     # via -r requirements.in
-referencing==0.30.0
-    # via
-    #   jsonschema
-    #   jsonschema-specifications
 regex==2023.6.3
     # via transformers
 requests==2.31.0
     # via
     #   -r requirements.in
-    #   fsspec
     #   huggingface-hub
-    #   langchain
-    #   langsmith
-    #   lightning
-    #   lightning-cloud
     #   openai
-    #   ray
     #   transformers
 retry==0.9.2
     # via lancedb
-rich==13.4.2
-    # via
-    #   lightning
-    #   lightning-cloud
-rpds-py==0.9.2
-    # via
-    #   jsonschema
-    #   referencing
 s3transfer==0.6.1
     # via boto3
 safer==4.8.0
@@ -413,11 +246,7 @@ scikit-learn==1.3.0
 scipy==1.10.1
     # via scikit-learn
 six==1.16.0
-    # via
-    #   blessed
-    #   grpcio
-    #   lightning-cloud
-    #   python-dateutil
+    # via python-dateutil
 sniffio==1.3.0
     # via
     #   anyio
@@ -426,17 +255,6 @@ sniffio==1.3.0
     #   httpx
 sortedcontainers==2.4.0
     # via distributed
-soupsieve==2.4.1
-    # via beautifulsoup4
-sqlalchemy==2.0.19
-    # via langchain
-starlette==0.27.0
-    # via
-    #   fastapi
-    #   lightning
-    #   starsessions
-starsessions==1.3.0
-    # via lightning
 sympy==1.12
     # via torch
 tblib==2.0.0
@@ -444,9 +262,7 @@ tblib==2.0.0
 tdir==1.6.0
     # via -r requirements-test.in
 tenacity==8.2.2
-    # via
-    #   -r requirements-test.in
-    #   langchain
+    # via -r requirements-test.in
 threadpoolctl==3.2.0
     # via scikit-learn
 tokenizers==0.13.3
@@ -464,13 +280,6 @@ torch==2.0.0
     # via
     #   -r requirements.in
     #   accelerate
-    #   lightning
-    #   pytorch-lightning
-    #   torchmetrics
-torchmetrics==1.0.1
-    # via
-    #   lightning
-    #   pytorch-lightning
 tornado==6.3.2
     # via distributed
 tqdm==4.65.0
@@ -478,58 +287,26 @@ tqdm==4.65.0
     #   -r requirements.in
     #   huggingface-hub
     #   lancedb
-    #   lightning
     #   openai
-    #   pytorch-lightning
     #   transformers
-traitlets==5.9.0
-    # via lightning
 transformers==4.31.0
     # via -r requirements.in
 typer==0.9.0
     # via -r requirements.in
 typing-extensions==4.7.1
     # via
-    #   fastapi
     #   huggingface-hub
-    #   lightning
-    #   lightning-utilities
     #   pydantic
-    #   pytorch-lightning
     #   readerwriterlock
-    #   rich
-    #   sqlalchemy
-    #   starlette
     #   torch
-    #   torchmetrics
     #   typer
-    #   typing-inspect
-    #   uvicorn
-typing-inspect==0.9.0
-    # via dataclasses-json
 tzdata==2023.3
     # via pandas
-ujson==5.8.0
-    # via pymilvus
 urllib3==1.26.16
     # via
     #   botocore
     #   distributed
-    #   lightning
-    #   lightning-cloud
     #   requests
-uvicorn==0.23.1
-    # via
-    #   lightning
-    #   lightning-cloud
-wcwidth==0.2.6
-    # via blessed
-websocket-client==1.6.1
-    # via
-    #   lightning
-    #   lightning-cloud
-websockets==11.0.3
-    # via lightning
 werkzeug==2.3.6
     # via
     #   -r requirements.in
@@ -543,9 +320,4 @@ yarl==1.9.2
 zict==3.0.0
     # via distributed
 zipp==3.16.2
-    # via
-    #   importlib-metadata
-    #   importlib-resources
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
+    # via importlib-metadata

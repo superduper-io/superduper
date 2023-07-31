@@ -11,16 +11,29 @@ description = "🔮 Super-power your database with AI 🔮"
 readme = "README.md"
 license = {file = "LICENSE"}
 maintainers = [{name = "Duncan Blythe", email = "opensource@superduperdb.com"}]
-classifiers = [  # TO BE EXTENDED BEFORE RELEASE
-    "Development Status :: 1 - Planning",  # TO BE UPDATED BEFORE RELEASE
-    "License :: OSI Approved :: Apple Public Source License",
+keywords = [
+    "mongo",
+    "mongodb",
+    "pymongo",
+    "data-science",
+    "machine-learning",
+    "mlops",
+    "vector-database",
+    "ai",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: GPU :: NVIDIA CUDA",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
-    "Typing :: Typed"  # TO BE CONFIRMED BEFORE RELEASE
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed"
 ]
 requires-python = ">=3.8"
 dynamic = ["dependencies", "version"]
@@ -31,8 +44,8 @@ version = {attr = "superduperdb.__version__"}
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"
-documentation = "https://www.superduperdb.com/"  # TO BE UPDATED BEFORE RELEASE
-source = "https://www.superduperdb.com/" # TO BE UPDATED BEFORE RELEASE
+documentation = "https://superduperdb.github.io/superduperdb/"
+source = "https://github.com/SuperDuperDB/superduperdb/"
 
 [tool.black]
 skip-string-normalization = true

@@ -137,9 +137,8 @@ class CachedQueryDataset(Dataset):
         self._cache: ExpiryCache = self._fetch_cache()
         self._total_documents = self.count_documents()
 
-    def count_documents(
-        self,
-    ):
+    def count_documents(self) -> int:
+        """Return the number of matching documents"""
         return self.database.execute(self.select).count()
 
     def _fetch_cache(self):

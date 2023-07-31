@@ -1,33 +1,35 @@
-import dataclasses as dc
+from __future__ import annotations
+
 import typing as t
 from abc import ABC, abstractmethod
 
 from superduperdb.core.serializable import Serializable
 
+if t.TYPE_CHECKING:
+    from superduperdb.core.model import Model
+    from superduperdb.datalayer.base.datalayer import Datalayer
 
-@dc.dataclass
+
 class SelectOne(ABC, Serializable):
     """
     Base class for queries which return a single line/ record of data
     """
 
     @abstractmethod
-    def __call__(self, db):
+    def __call__(self, db: Datalayer):
         pass
 
 
-@dc.dataclass
 class Like(ABC, Serializable):
     """
     Base class for queries which invoke vector-search
     """
 
     @abstractmethod
-    def __call__(self, db):
+    def __call__(self, db: Datalayer):
         pass
 
 
-@dc.dataclass
 class Select(ABC, Serializable):
     """
     Abstract base class, encapsulating Select database queries/ datalayer reads.
@@ -36,45 +38,47 @@ class Select(ABC, Serializable):
     """
 
     @property
-    @abstractmethod
-    def select_table(self):
-        pass
+    def select_table(self) -> 'Select':
+        """Return a query that selects this table"""
+        raise NotImplementedError
 
-    @abstractmethod
     def is_trivial(self) -> bool:
-        # Determines when a select statement is "just" select everything.
-        # For example, in SQL: "FROM my_table SELECT *"
-        # For example, in MongoDB: "collection.find()"
-        pass
+        """Determines when a select statement is "just" select everything.
 
-    @property
-    @abstractmethod
-    def select_ids(self) -> 'Select':
-        # Converts the Serializable into a Serializable which only returns the id
-        # of each column/ document.
-        pass
-
-    @abstractmethod
-    def select_using_ids(self, ids: t.Sequence[str]) -> t.Any:
+        For example, in SQL: "FROM my_table SELECT *"
+        For example, in MongoDB: "collection.find()"
         """
-        Create a select using the same Serializable, subset to the specified ids
+        raise NotImplementedError
+
+    def select_ids(self) -> 'Select':
+        """Converts the Serializable into a Serializable which only returns the id
+        of each column/ document.
+        """
+        raise NotImplementedError
+
+    def select_using_ids(self, ids: t.Sequence[str]) -> t.Any:
+        """Create a select using the same Serializable, subset to the specified ids
 
         :param ids: string ids to which subsetting should occur
         """
         pass
 
-    @abstractmethod
     def add_fold(self, fold: str) -> 'Select':
-        """
-        Create a select which selects the same data, but additionally restricts to the
-        fold specified
+        """Create a select which selects the same data, but additionally restricts to
+        the fold specified
 
         :param fold: possible values {'train', 'valid'}
         """
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
-    def model_update(self, db, model, key, outputs, ids):
+    def model_update(
+        self,
+        db: Datalayer,
+        ids: t.Sequence[t.Any],
+        key: str,
+        model: Model,
+        outputs: t.Sequence[t.Any],
+    ) -> None:
         """
         Add outputs of ``model`` to the datalayer ``db``.
 
@@ -84,10 +88,10 @@ class Select(ABC, Serializable):
         :param outputs: (encoded) outputs to be added
         :param ids: ids of input documents corresponding to each output
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, db):
+    def __call__(self, db: Datalayer):
         """
         Apply Serializable to datalayer
 
@@ -96,7 +100,6 @@ class Select(ABC, Serializable):
         pass
 
 
-@dc.dataclass
 class Insert(ABC, Serializable):
     """
     Base class for database inserts.
@@ -113,19 +116,17 @@ class Insert(ABC, Serializable):
 
     @property
     @abstractmethod
-    def table(self):
-        # extracts the table collection from the object
-        pass
+    def table(self) -> str:
+        """Extracts the table collection from the object"""
 
     @property
     @abstractmethod
     def select_table(self) -> Select:
-        # returns a Select object which selects the table into which the insert
-        # was inserted
-        pass
+        """Returns a Select object which selects the table into which the insert
+        was inserted"""
 
     @abstractmethod
-    def __call__(self, db):
+    def __call__(self, db: Datalayer):
         """
         Apply Serializable to datalayer
 
@@ -134,14 +135,13 @@ class Insert(ABC, Serializable):
         pass
 
 
-@dc.dataclass
 class Delete(ABC, Serializable):
     """
     Base class for deleting documents from datalayer
     """
 
     @abstractmethod
-    def __call__(self, db):
+    def __call__(self, db: Datalayer):
         """
         Apply Serializable to datalayer
 
@@ -150,7 +150,6 @@ class Delete(ABC, Serializable):
         pass
 
 
-@dc.dataclass
 class Update(ABC, Serializable):
     """
     Base class for database updates.
@@ -162,30 +161,29 @@ class Update(ABC, Serializable):
     """
 
     @property
-    @abstractmethod
-    def select_table(self):
-        pass
+    def select_table(self) -> Select:
+        """Returns a Select object which selects the table into which the insert
+        was inserted
+        """
+        raise NotImplementedError
 
     @property
     @abstractmethod
-    def select(self):
-        """
-        Converts the update object to a Select object, which selects where
+    def select(self) -> Select:
+        """Converts the update object to a Select object, which selects where
         the update was made.
         """
-        pass
 
     @property
-    @abstractmethod
-    def select_ids(self):
+    def select_ids(self) -> Select:
         """
         Converts the update object to a Select object, which selects where
         the update was made, and returns only ids.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, db):
+    def __call__(self, db: Datalayer):
         """
         Apply Serializable to datalayer.
 

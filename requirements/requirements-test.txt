@@ -197,7 +197,9 @@ py==1.11.0
 pyarrow==12.0.1
     # via pylance
 pydantic==1.10.11
-    # via lancedb
+    # via
+    #   -r requirements.in
+    #   lancedb
 pylance==0.5.8
     # via lancedb
 pymongo==4.4.1

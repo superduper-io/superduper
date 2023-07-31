@@ -697,24 +697,13 @@ class Datalayer:
             return
 
         if n_download_workers is None:
-            try:
-                n_download_workers = self.metadata.get_metadata(
-                    key='n_download_workers'
-                )
-            except TypeError:
-                n_download_workers = 0
+            n_download_workers = self.metadata.get_metadata('n_download_workers', 0)
 
         if headers is None:
-            try:
-                headers = self.metadata.get_metadata(key='headers')
-            except TypeError:
-                headers = 0
+            headers = self.metadata.get_metadata('headers', 0)
 
         if timeout is None:
-            try:
-                timeout = self.metadata.get_metadata(key='download_timeout')
-            except TypeError:
-                timeout = None
+            timeout = self.metadata.get_metadata('download_timeout')
 
         def download_update(key, id, bytes):
             return query.download_update(db=self, key=key, id=id, bytes=bytes)

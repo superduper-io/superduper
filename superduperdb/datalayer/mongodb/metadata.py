@@ -43,9 +43,12 @@ class MongoMetaDataStore(MetaDataStore):
     def get_job(self, identifier: str):
         return self.job_collection.find_one({'identifier': identifier})
 
-    def get_metadata(self, key):
+    def get_metadata(self, key, default=None):
         meta = self.meta_collection.find_one({'key': key}) or {}
-        return meta['value']
+        try:
+            return meta['value']
+        except KeyError:
+            return default
 
     def get_latest_version(
         self, variety: str, identifier: str, allow_hidden: bool = False

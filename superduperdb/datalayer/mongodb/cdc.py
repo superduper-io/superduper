@@ -58,8 +58,12 @@ class Packet(BaseModel):
     A base packet to represent message in task queue.
     """
 
+    class Config:
+        # TODO: Why is this a BaseModel anyway?
+        arbitrary_types_allowed = True
+
     event_type: str = DBEvent.insert.value
-    ids: t.Sequence[t.Union[ObjectId, str]]
+    ids: t.List[t.Union[ObjectId, str]]
 
     query: Serializable
 

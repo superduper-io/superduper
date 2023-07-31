@@ -186,7 +186,7 @@ class Downloader(BaseDownloader):
         uri = self.uris[i]
         _id = self.ids[i]
         content = self.fetcher(uri)
-        self.update_one(id=self.ids[i], key=self.keys[i], bytes=content)
+        self.update_one(id=self.ids[i], key=self.keys[i], bytes_=content)
 
 
 class InMemoryDownloader(BaseDownloader):

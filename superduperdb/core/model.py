@@ -151,7 +151,7 @@ class PredictMixin:
                 assert not one
                 ids = [
                     str(r[db.databackend.id_field])
-                    for r in db.execute(select.select_ids)
+                    for r in db.execute(select.select_ids)  # type: ignore[arg-type]
                 ]
                 return self.predict(
                     X=X,
@@ -190,7 +190,7 @@ class PredictMixin:
                     outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
 
                 select.model_update(
-                    db=db,
+                    db=db,  # type: ignore[arg-type]
                     model=self.identifier,
                     outputs=outputs,
                     key=X,

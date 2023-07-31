@@ -1,13 +1,8 @@
+import dataclasses as dc
 import typing as t
 
 from .for_each import for_each
 from .typed_cache import TypedCache
-
-if t.TYPE_CHECKING:
-    import dataclasses as dc
-else:
-    from . import dataclasses as dc
-
 
 ContentType = t.TypeVar('ContentType')
 

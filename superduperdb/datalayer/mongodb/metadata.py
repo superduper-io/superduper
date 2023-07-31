@@ -116,35 +116,21 @@ class MongoMetaDataStore(MetaDataStore):
         self, variety: str, identifier: str, version: t.Optional[int] = None
     ) -> bool:
         if version is None:
-            return bool(
-                self.object_collection.count_documents(
-                    {'members': {'$regex': f'^{identifier}/{variety}'}}
-                )
-            )
+            members: t.Union[t.Dict, str] = {'$regex': f'^{identifier}/{variety}'}
         else:
-            return bool(
-                self.object_collection.count_documents(
-                    {'members': Component.make_unique_id(variety, identifier, version)}
-                )
-            )
+            members = Component.make_unique_id(variety, identifier, version)
 
-    def component_has_parents(self, variety: str, identifier: str):
-        return (
-            self.parent_child_mappings.count_documents(
-                {'child': {'$regex': f'^{variety}/{identifier}/'}}
-            )
-            > 0
-        )
+        return bool(self.object_collection.count_documents({'members': members}))
+
+    def component_has_parents(self, variety: str, identifier: str) -> int:
+        doc = {'child': {'$regex': f'^{variety}/{identifier}/'}}
+        return self.parent_child_mappings.count_documents(doc)
 
     def component_version_has_parents(
         self, variety: str, identifier: str, version: int
-    ) -> bool:
-        return (
-            self.parent_child_mappings.count_documents(
-                {'child': Component.make_unique_id(variety, identifier, version)}
-            )
-            > 0
-        )
+    ) -> int:
+        doc = {'child': Component.make_unique_id(variety, identifier, version)}
+        return self.parent_child_mappings.count_documents(doc)
 
     def delete_component_version(
         self, variety: str, identifier: str, version: int

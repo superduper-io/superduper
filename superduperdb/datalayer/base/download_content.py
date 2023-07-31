@@ -72,8 +72,8 @@ def download_content(
         except TypeError:
             pass
 
-    def _download_update(key, id, bytes):
-        return query.download_update(db=db, key=key, id=id, bytes=bytes)
+    def _download_update(key, id, bytes_):
+        return query.download_update(db=db, key=key, id=id, bytes=bytes_)
 
     downloader = Downloader(
         uris=uris,

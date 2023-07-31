@@ -5,9 +5,9 @@ To check that everything is working correctly cut and paste this code into a Jup
 ```python
 import numpy as np
 from pymongo import MongoClient
-from superduperdb.core.document import Document as D
-from superduperdb.encoders.numpy.array import array
-from superduperdb.datalayer.mongodb.query import Collection, InsertMany
+from superduperdb.container.document import Document as D
+from superduperdb.ext.numpy.array import array
+from superduperdb.db.mongodb.query import Collection, InsertMany
 import superduperdb as s
 
 db = s.superduper(MongoClient().documents)

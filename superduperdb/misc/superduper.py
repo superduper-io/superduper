@@ -17,7 +17,7 @@ class DuckTyper:
             return dts[0].create(item, **kwargs)
         raise NotImplementedError(
             f'Couldn\'t auto-identify {item}, please wrap explicitly using '
-            '``superduperdb.core.*``'
+            '``superduperdb.container.*``'
         )
 
     @classmethod
@@ -45,11 +45,11 @@ class MongoDbTyper(DuckTyper):
         from pymongo.database import Database
 
         from superduperdb import CFG
-        from superduperdb.datalayer.base.build import build_vector_database
-        from superduperdb.datalayer.base.datalayer import Datalayer
-        from superduperdb.datalayer.mongodb.artifacts import MongoArtifactStore
-        from superduperdb.datalayer.mongodb.data_backend import MongoDataBackend
-        from superduperdb.datalayer.mongodb.metadata import MongoMetaDataStore
+        from superduperdb.db.base.build import build_vector_database
+        from superduperdb.db.base.datalayer import Datalayer
+        from superduperdb.db.mongodb.artifacts import MongoArtifactStore
+        from superduperdb.db.mongodb.data_backend import MongoDataBackend
+        from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 
         if kwargs:
             raise ValueError('MongoDb creator accepts no parameters')
@@ -74,7 +74,7 @@ class SklearnTyper(DuckTyper):
     def create(cls, item: t.Any, **kwargs) -> t.Any:
         from sklearn.base import BaseEstimator
 
-        from superduperdb.models.sklearn.wrapper import Estimator
+        from superduperdb.ext.sklearn.model import Estimator
 
         if not isinstance(item, BaseEstimator):
             raise TypeError('Expected BaseEstimator but got {type(item)}')
@@ -90,7 +90,7 @@ class TorchTyper(DuckTyper):
     def create(cls, item: t.Any, **kwargs) -> t.Any:
         from torch import jit, nn
 
-        from superduperdb.models.torch.wrapper import TorchModel
+        from superduperdb.ext.torch.model import TorchModel
 
         if isinstance(item, nn.Module) or isinstance(item, jit.ScriptModule):
             return TorchModel(identifier=auto_identify(item), object=item, **kwargs)

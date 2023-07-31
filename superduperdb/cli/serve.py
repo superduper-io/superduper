@@ -1,11 +1,11 @@
 import typing as t
 
 from superduperdb import CFG
-from superduperdb.cluster.dask_client import dask_client
-from superduperdb.cluster.server import serve as _serve
-from superduperdb.datalayer.base.build import build_datalayer
-from superduperdb.datalayer.base.cdc import DatabaseWatcher
-from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.db.base.build import build_datalayer
+from superduperdb.db.base.cdc import DatabaseWatcher
+from superduperdb.db.mongodb.query import Collection
+from superduperdb.server.dask_client import dask_client
+from superduperdb.server.server import serve as _serve
 
 from . import command
 

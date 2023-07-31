@@ -6,7 +6,7 @@ import lancedb
 import pandas as pd
 import pyarrow as pa
 
-from superduperdb.misc.logger import logging
+from superduperdb import logging
 from superduperdb.vector_search.base import (
     BaseVectorIndex,
     VectorCollectionConfig,

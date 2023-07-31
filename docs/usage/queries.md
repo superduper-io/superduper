@@ -24,7 +24,7 @@ db.execute(query)
 We currently support MongoDB as the datalayer backend. As in `pymongo` all queries operate at the collection level:
 
 ```python
-from superduperdb.datalayer.mongodb.query import Collection
+from superduperdb.db.mongodb.query import Collection
 
 collection = Collection(name='documents')
 ```
@@ -41,8 +41,8 @@ Document({'_id': ObjectId('64b89e92c08139e1cedc11a4'), 'x': Encodable(x=tensor([
 is that the data may contain complex data-types such as images (see [the section on encoders](encoders) for more detail):
 
 ```python
-from superduperdb.core.document import Document as D
->>> db.execute(
+from superduperdb.container.document import Document as D
+>> > db.execute(
     collection.insert_many([
         D({'this': f'is a test {i}'})
         for i in range(10)

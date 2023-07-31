@@ -3,17 +3,17 @@ COMPOSE_ARGUMENTS ?=
 
 .PHONY: test-containers
 test-containers:
-	docker compose -f tests/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
+	docker compose -f test/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
 
 .PHONY: clean-test-containers
 clean-test-containers:
-	docker compose -f tests/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
+	docker compose -f test/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
 
 .PHONY: lint-and-type-check
 lint-and-type-check:
-	isort --check superduperdb tests
-	black --check superduperdb tests
-	ruff check superduperdb tests
+	isort --check superduperdb test
+	black --check superduperdb test
+	ruff check superduperdb test
 	mypy superduperdb
 	interrogate superduperdb
 
@@ -23,9 +23,9 @@ test: test-containers
 
 .PHONY: fix-and-test
 fix-and-test: test-containers
-	isort superduperdb tests
-	black superduperdb tests
-	ruff check --fix superduperdb tests
+	isort superduperdb test
+	black superduperdb test
+	ruff check --fix superduperdb test
 	mypy superduperdb
 	pytest $(PYTEST_ARGUMENTS)
 	interrogate superduperdb

@@ -18,7 +18,7 @@ as an `Artifact`, saved in the configured artifact store.
 Here is an example of creating a SuperDuperDB dataset:
 
 ```python
-from superduperdb.core.dataset import Dataset
+from superduperdb.container.dataset import Dataset
 
 db.add(
     Dataset(
@@ -42,10 +42,10 @@ model.fit(
 )
 ```
 
-Datasets, as with other `Component` descendants, may be created inline: 
+Datasets, as with other `Component` descendants, may be created inline:
 
 ```python
-from superduperdb.core.dataset import Dataset
+from superduperdb.container.dataset import Dataset
 
 data = Dataset(
     identifier='my-validation-set',

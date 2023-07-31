@@ -30,40 +30,40 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      
+
       - name: Check out repository
         uses: actions/checkout@v3
-      
+
       - name: Set up Python 3.10
         id: setup-python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      
+
       - name: Cache dependencies and mypy analysis
         uses: actions/cache@v3
         id: cache
         with:
           # https://blog.allenai.org/python-caching-in-github-actions-e9452698e98d
           path: |
-            ./.mypy_cache  
-            ${{ env.pythonLocation }}  
+            ./.mypy_cache
+            ${{ env.pythonLocation }}
           key: 3.8-ubuntu-latest-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements/requirements-lint.txt') }}
-      
+
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements/requirements-lint.txt
-      
-      - name: Basic health check 
+
+      - name: Basic health check
         run: |
           black --version
           ruff --version
           mypy --version
-      
+
       - name: Lint and type-check
         run: |
           make lint-and-type-check
-        
+
   test:
     needs: lint-and-type-check
     runs-on: ${{ matrix.os }}
@@ -79,13 +79,13 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         id: setup-python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          
+
       - name: Cache dependencies
         uses: actions/cache@v3
         id: cache
@@ -93,7 +93,7 @@ jobs:
           path: |
             ${{ env.pythonLocation }}
           key: ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements/requirements-test.txt') }}
-      
+
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r requirements/requirements-test.txt
@@ -105,7 +105,7 @@ jobs:
 
       - name: test
         run: |
-          make test PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml tests"
+          make test PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml test"
 
       # TODO: Activate after releasing first version
       #- name: Upload code coverage to Codecov

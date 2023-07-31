@@ -17,10 +17,10 @@ The `Datalayer` object combines 4 basic functionalities involved in integrating 
 Correspondingly a datalayer may be built by passing these 4 items to the `Datalayer.__init__` method:
 
 ```python
-from superduperdb.datalayer.base.datalayer import Datalayer
-from superduperdb.datalayer.mongodb.data_backend import MongoDatabackend
-from superduperdb.datalayer.mongodb.metadata import MongoMetaDataStore
-from superduperdb.datalayer.mongodb.artifacts import MongoArtifactStore
+from superduperdb.db.base.datalayer import Datalayer
+from superduperdb.db.mongodb.data_backend import MongoDatabackend
+from superduperdb.db.mongodb.metadata import MongoMetaDataStore
+from superduperdb.db.mongodb.artifacts import MongoArtifactStore
 from superduperdb.vector_search.lancedb_client import LanceVectorIndex
 
 import pymongo
@@ -43,7 +43,7 @@ Connecting these 4 elements in this way can be slightly tedious, so we provide a
 the basis of the current configuration (see [here]() for information about configuration).
 
 ```python
-from superduperdb.datalayer.base.build import build_datalayer
+from superduperdb.db.base.build import build_datalayer
 
 db = build_datalayer()
 ```

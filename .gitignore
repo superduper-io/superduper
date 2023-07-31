@@ -148,7 +148,7 @@ dmypy.json
 
 # links
 /architectures
-/superduperdb/cluster/static
+/superduperdb/server/static
 /converters
 /models
 

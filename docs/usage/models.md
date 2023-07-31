@@ -61,11 +61,11 @@ pipeline = superduper(pipeline...)
 All of the models which we created in the previous step are now ready to be applied to the database:
 
 ```python
->>> from superduperdb.datalayer.mongodb.query import Collection
->>> coll = Collection('my_data')
->>> svm.predict(X='x', db=db, select=coll.find())
+>> > from superduperdb.db.mongodb.query import Collection
+>> > coll = Collection('my_data')
+>> > svm.predict(X='x', db=db, select=coll.find())
 # Wait a bit
->>> db.execute(coll.find_one())
+>> > db.execute(coll.find_one())
 Document({
     "_id": ObjectId('64b6ba93f8af205501ca7748'),
     'x': Encodable(x=torch.tensor([...])),
@@ -100,8 +100,8 @@ into the datalayer.
 An equivalent syntax is the following:
 
 ```python
->>> from superduperdb.core.watcher import Watcher
->>> db.add(
+>> > from superduperdb.container.watcher import Watcher
+>> > db.add(
     Watcher(
         model=model,
         select=coll.find(),

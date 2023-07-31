@@ -79,7 +79,7 @@ SuperDuperDB includes wrappers for treating models from diverse AI frameworks ac
 from sklearn.svm import SVC
 import pymongo
 
-from superduperdb.datalayer.mongodb import Collection
+from superduperdb.db.mongodb import Collection
 from superduperdb import superduper
 
 # Models and database clients can be converted to SuperDuperDB objects with a simple wrapper.
@@ -124,14 +124,14 @@ model.predict(
 SuperDuperDB includes tools for working with the database using the complex data types necessary for AI, such as vectors, tensors, images, audio etc. Native python types may be flexibly saved to the DB, to ease use in tricky AI use-cases, such as computer vision:
 
 ```python
-from superduperdb.encoders.pillow import pil_image as i
+from superduperdb.ext.pillow import pil_image as i
 
 # Encoders are first class SuperDuperDB objects which deal with serializing
 # "non-standard" data to the database
 db.execute(
-    coll.insert_many([
-        {'img': i(PIL.image.open(path))} for path in images
-    ])
+  coll.insert_many([
+    {'img': i(PIL.image.open(path))} for path in images
+  ])
 )
 ```
 

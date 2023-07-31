@@ -16,7 +16,7 @@ and register these encoders with SuperDuperDB using `db.add`.
 
 ```python
 import pickle
-from superduperdb.core.encoder import Encoder
+from superduperdb.container.encoder import Encoder
 
 e = Encoder('my-encoder', encode=pickle.dumps, decode=pickle.loads)
 ```
@@ -28,8 +28,8 @@ just a few modifications of a standard insert:
 
 ```python
 from superduperd.encoders.pillow.image import pil_image as i
-from superduperdb.datalayer.mongodb.query import Collection
-from superduperdb.core.documents import Document as D
+from superduperdb.db.mongodb.query import Collection
+from superduperdb.container.documents import Document as D
 
 coll = Collection('documents')
 paths = glob.glob('images/*.png')

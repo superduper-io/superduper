@@ -55,13 +55,13 @@ def download_content(
         return None
 
     if n_download_workers is None:
-        n_download_workers = db.metadata.get_metadata_optional(key='n_download_workers', default=0)
+        n_download_workers = db.metadata.get_metadata_optional('n_download_workers', 0)
 
     if headers is None:
-        headers = db.metadata.get_metadata_optional(key='headers')
+        headers = db.metadata.get_metadata_optional('headers')
 
     if timeout is None:
-        timeout = db.metadata.get_metadata_optional(key='download_timeout')
+        timeout = db.metadata.get_metadata_optional('download_timeout')
 
     def _download_update(key, id, bytes):
         return query.download_update(db=db, key=key, id=id, bytes=bytes)

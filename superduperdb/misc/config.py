@@ -91,8 +91,8 @@ class LogType(str, Enum):
 class Logging(JSONable):
     """Describe how we are going to log. This isn't yet used."""
 
-    level = LogLevel.INFO
-    type = LogType.STDERR
+    level: LogLevel = LogLevel.INFO
+    type: LogType = LogType.STDERR
     kwargs: dict = Factory(dict)
 
 
@@ -137,10 +137,8 @@ class Notebook(JSONable):
     port: int = 8888
     token: str = ''
 
-    @root_validator
-    def check_one_or_none(
-        cls, v: t.Dict[str, t.Union[str, int]]
-    ) -> t.Dict[str, t.Union[str, int]]:
+    @root_validator(skip_on_failure=True)  # type: ignore[call-overload]
+    def check_one_or_none(cls, v: t.Dict) -> t.Dict:
         if v['password'] and v['token']:
             raise ValueError('At most one of password and token may be set')
         return v

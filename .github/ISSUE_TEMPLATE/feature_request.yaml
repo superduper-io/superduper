@@ -27,15 +27,6 @@ body:
       required: true
 
   - type: textarea
-    id: feature
-    attributes:
-      label: Feature Description
-      description: Please describe the feature in detail?
-      placeholder: Description here.
-    validations:
-      required: true
-
-  - type: textarea
     id: use-case
     attributes:
       label: Use Case Description

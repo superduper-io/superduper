@@ -36,8 +36,9 @@ watcher = DatabaseWatcher(db=db, on=Collection(name='docs'))
 ```
 
 Start the watcher thread to initiate the change stream monitoring:
+
 ```python
-watcher.watch()
+watcher.listen()
 ```
 
 See [here](/how_to/mongo_cdc.html) for an example of usage of CDC.

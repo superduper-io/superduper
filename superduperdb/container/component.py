@@ -20,7 +20,7 @@ if t.TYPE_CHECKING:
 @dc.dataclass
 class Component(Serializable):
     """
-    Base component which model, watchers, learning tasks etc. inherit from.
+    Base component which model, listeners, learning tasks etc. inherit from.
 
     :param identifier: Unique ID
     """
@@ -82,7 +82,7 @@ class Component(Serializable):
         distributed: bool = False,
         verbose: bool = False,
     ) -> t.Sequence[t.Any]:
-        """Run the job for this watcher
+        """Run the job for this listener
 
         :param database: The db to process
         :param dependencies: A sequence of dependencies,

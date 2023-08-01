@@ -156,7 +156,7 @@ def test_update(random_data, a_listener):
     )
 
 
-def test_watcher(random_data, a_model, b_model):
+def test_listener(random_data, a_model, b_model):
     random_data.add(
         Listener(
             model='linear_a',

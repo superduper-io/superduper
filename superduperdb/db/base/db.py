@@ -464,11 +464,11 @@ class DB:
                 args=[],
             ),
         )
-        watchers = self.show('listener')
-        if not watchers:
+        listener = self.show('listener')
+        if not listener:
             return G
 
-        for identifier in watchers:
+        for identifier in listener:
             info = self.metadata.get_component('listener', identifier)
             query = info['dict']['select']
             model, key = identifier.split('/')
@@ -487,15 +487,15 @@ class DB:
                 ),
             )
 
-        for identifier in watchers:
+        for identifier in listener:
             model, key = identifier.split('/')
             G.add_edge(
                 f'{download_content.__name__}()',
                 f'{model}.predict({key})',
             )
-            deps = self._get_dependencies_for_watcher(
+            deps = self._get_dependencies_for_listener(
                 identifier
-            )  # TODO remove features as explicit argument to watcher
+            )  # TODO remove features as explicit argument to listener
             for dep in deps:
                 dep_model, dep_key = dep.split('/')
                 G.add_edge(
@@ -631,7 +631,7 @@ class DB:
         for identifier in self.metadata.show_components('listener', active=True):
             G.add_node('listener', job=identifier)
         for identifier in self.metadata.show_components('listener'):
-            deps = self._get_dependencies_for_watcher(identifier)
+            deps = self._get_dependencies_for_listener(identifier)
             for dep in deps:
                 G.add_edge(('listener', dep), ('listener', identifier))
         if not networkx.is_directed_acyclic_graph(G):
@@ -763,13 +763,13 @@ class DB:
             filter = Document(Document.decode(output, encoders=self.encoders))
         return filter
 
-    def _get_dependencies_for_watcher(self, identifier):
+    def _get_dependencies_for_listener(self, identifier):
         info = self.metadata.get_component('listener', identifier)
         if info is None:
             return []
-        watcher_features = info.get('features', {})
+        listener_features = info.get('features', {})
         out = []
-        for k in watcher_features:
+        for k in listener_features:
             out.append(f'{self.features[k]}/{k}')
         if info['dict']['key'].startswith('_outputs.'):
             _, key, model = info['key'].split('.')
@@ -785,7 +785,7 @@ class DB:
     def _get_object_info(self, identifier, type_id, version=None):
         return self.metadata.get_component(type_id, identifier, version=version)
 
-    def _apply_watcher(  # noqa: F811
+    def _apply_listener(  # noqa: F811
         self,
         identifier,
         ids: t.Optional[t.Sequence[str]] = None,
@@ -793,14 +793,14 @@ class DB:
         max_chunk_size=5000,
         model=None,
         recompute: bool = False,
-        watcher_info=None,
+        listener_info=None,
         **kwargs,
     ) -> t.List:
         # NOTE: this method is never called anywhere except for itself!
-        if watcher_info is None:
-            watcher_info = self.metadata.get_component('listener', identifier)
+        if listener_info is None:
+            listener_info = self.metadata.get_component('listener', identifier)
 
-        select = Serializable.deserialize(watcher_info['select'])
+        select = Serializable.deserialize(listener_info['select'])
         if ids is None:
             ids = select.get_ids(self)
         else:
@@ -814,28 +814,28 @@ class DB:
                     'computing chunk '
                     f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
                 )
-                self._apply_watcher(
+                self._apply_listener(
                     identifier,
                     ids=ids[i : i + max_chunk_size],
                     verbose=verbose,
                     max_chunk_size=None,
                     model=model,
                     recompute=recompute,
-                    watcher_info=watcher_info,
+                    listener_info=listener_info,
                     distributed=False,
                     **kwargs,
                 )
             return []
 
-        model_info = self.metadata.get_component('model', watcher_info['model'])
+        model_info = self.metadata.get_component('model', listener_info['model'])
         outputs = self._compute_model_outputs(
             model_info,
             ids,
             select,
-            key=watcher_info['key'],
-            features=watcher_info.get('features', {}),
+            key=listener_info['key'],
+            features=listener_info.get('features', {}),
             model=model,
-            predict_kwargs=watcher_info.get('predict_kwargs', {}),
+            predict_kwargs=listener_info.get('predict_kwargs', {}),
         )
         type = model_info.get('type')
         if type is not None:
@@ -844,8 +844,8 @@ class DB:
 
         select.model_update(
             db=self,
-            model=watcher_info['model'],
-            key=watcher_info['key'],
+            model=listener_info['model'],
+            key=listener_info['key'],
             outputs=outputs,
             ids=ids,
         )

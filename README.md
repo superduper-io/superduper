@@ -195,10 +195,10 @@ model.predict(
 
 ```python
 model.predict(
-		X='input_col',
-		db=db,
-		select=coll.find().featurize({'X': '<upstream-model-id>'}),  # already registered upstream model-id
-		watch=True,
+    X='input_col',
+    db=db,
+    select=coll.find().featurize({'X': '<upstream-model-id>'}),  # already registered upstream model-id
+    listen=True,
 )
 ```
 

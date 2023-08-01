@@ -2,8 +2,9 @@ furo
 ipython
 myst_parser
 nbsphinx
-pandoc
+pandoc>=2.14.2
 sphinx
 sphinx-autodoc-typehints
 sphinx_copybutton
 sphinxcontrib-mermaid
+nbsphinx-link

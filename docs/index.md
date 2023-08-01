@@ -4,7 +4,7 @@
 
 ## What is SuperDuperDB?
 
-SuperDuperDB is a Python package providing tools for developers to apply AI and machine learning in their already deployed MongoDB database, and simulatenously to set-up a scalable, open-source and auditable environment to do this.
+SuperDuperDB is a Python package providing tools for developers to apply AI and machine learning in their already deployed MongoDB database, and simultaneously to set-up a scalable, open-source and auditable environment to do this.
 
 ![](img/overview.png)
 
@@ -72,7 +72,7 @@ In the initial [v0.1 release]() we have built the following features on top of M
 ### Model frameworks directly integrated with the datalayer
 
 SuperDuperDB includes wrappers for treating models from diverse AI frameworks across the open-source Python ecosystem uniformly in combination with the datalayer, using a scikit-learn-like
-`.fit` and `.predict` API.
+`.fit()` and `.predict()` API.
 
 ```python
 # [ Code snippets assume access to a running MongoDB instance read/write ]

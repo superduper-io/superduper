@@ -33,10 +33,10 @@ class TaskWorkflow:
     def add_node(self, node: str, job: t.Union[FunctionJob, ComponentJob]) -> None:
         self.G.add_node(node, job=job)
 
-    def listen(self) -> None:
-        """Listen to each job in this workflow in topological order"""
+    def watch(self) -> None:
+        """Watch the stdout of each job in this workflow in topological order"""
         for node in list(networkx.topological_sort(self.G)):
-            self.G.nodes[node]['job'].listen()
+            self.G.nodes[node]['job'].watch()
 
     def run_jobs(self, distributed: t.Optional[bool] = False):
         """Run all the jobs in this workflow

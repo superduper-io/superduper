@@ -13,7 +13,7 @@ The SuperDuperDB workflow looks like this:
 6. (Optionally) SuperDuperDB retrains **[models](modelz)** on the latest data.
 7. SuperDuperDB creates a **[job](jobs)** to apply the **[models](modelz)** to data, which has yet to be processed, and the outputs
    are stored in the documents to which the **[models](modelz)** were applied.
-8. At inference time, the outputs of the applied **[models](modelz)** may be queried using classifical DB queries,
+8. At inference time, the outputs of the applied **[models](modelz)** may be queried using classical DB queries,
    or, if the outputs are vectors, searched using a **[vector-index](vectorsearch)**.
 
 ![](../img/cycle-linear.svg)

@@ -21,13 +21,13 @@ from superduperdb.container.encoder import Encoder
 e = Encoder('my-encoder', encode=pickle.dumps, decode=pickle.loads)
 ```
 
-SuperDuperDB also includes pre-baked encoders in `superduper.encoders`.
-For example, images may be encoded with `superduperd.encoders.pillow.image.pil_image`
+SuperDuperDB also includes pre-baked encoders in `superduperdb.encoders`.
+For example, images may be encoded with `superduperdb.encoders.pillow.image.pil_image`
 Encoders make it possible to encode Python objects inserted into the database, with
 just a few modifications of a standard insert:
 
 ```python
-from superduperd.encoders.pillow.image import pil_image as i
+from superduperdb.encoders.pillow.image import pil_image as i
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.container.documents import Document as D
 
@@ -43,7 +43,7 @@ db.execute(
 
 Encoders in use with the database may be displayed with `db.show`:
 
-```pyhon
+```python
 >>> db.show('encoder')
 ['pil_image']
 ```

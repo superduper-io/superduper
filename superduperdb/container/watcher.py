@@ -96,7 +96,6 @@ class Watcher(Component):
             db=database,
             select=self.select,
             distributed=distributed,
-            max_chunk_size=self.max_chunk_size,
             dependencies=dependencies,
             **(self.predict_kwargs or {}),
         )

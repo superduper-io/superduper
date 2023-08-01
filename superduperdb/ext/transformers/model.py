@@ -181,7 +181,7 @@ class Pipeline(Model):
 
     def _predict(self, X, one: bool = False, **kwargs):
         if self.pipeline is not None:
-            out = self.pipeline(X, **kwargs)
+            out = self.pipeline(X, **self.preprocess_kwargs, **kwargs)
             out = [r['label'] for r in out]
             for i, p in enumerate(out):
                 if re.match(r'^LABEL_[0-9]+', p):

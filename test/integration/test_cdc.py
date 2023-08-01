@@ -7,7 +7,7 @@ import torch
 
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
-from superduperdb.db.base.cdc import DatabaseWatcher
+from superduperdb.db.base.cdc import DatabaseListener
 from superduperdb.db.mongodb.query import Collection
 
 # NOTE 1:
@@ -27,29 +27,29 @@ from superduperdb.db.mongodb.query import Collection
 
 
 @pytest.fixture(scope="function")
-def watcher_and_collection_name(database_with_default_encoders_and_model):
+def listener_and_collection_name(database_with_default_encoders_and_model):
     collection_name = str(uuid.uuid4())
-    watcher = DatabaseWatcher(
+    listener = DatabaseListener(
         db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
     )
-    watcher._cdc_change_handler._QUEUE_TIMEOUT = 1
-    watcher._cdc_change_handler._QUEUE_BATCH_SIZE = 1
+    listener._cdc_change_handler._QUEUE_TIMEOUT = 1
+    listener._cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
-    yield watcher, collection_name
+    yield listener, collection_name
 
-    watcher.stop()
+    listener.stop()
 
 
 @pytest.fixture(scope="function")
-def watcher_without_cdc_handler_and_collection_name(
+def listener_without_cdc_handler_and_collection_name(
     database_with_default_encoders_and_model,
 ):
     collection_name = str(uuid.uuid4())
-    watcher = DatabaseWatcher(
+    listener = DatabaseListener(
         db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
     )
-    yield watcher, collection_name
-    watcher.stop()
+    yield listener, collection_name
+    listener.stop()
 
 
 def retry_state_check(state_check):
@@ -66,31 +66,31 @@ def retry_state_check(state_check):
     return
 
 
-def test_smoke(watcher_without_cdc_handler_and_collection_name):
+def test_smoke(listener_without_cdc_handler_and_collection_name):
     """Health-check before we test stateful database changes"""
-    watcher, name = watcher_without_cdc_handler_and_collection_name
-    watcher.watch()
+    listener, name = listener_without_cdc_handler_and_collection_name
+    listener.listen()
     assert isinstance(name, str)
 
 
 def test_task_workflow_on_insert(
-    watcher_and_collection_name, database_with_default_encoders_and_model, fake_inserts
+    listener_and_collection_name, database_with_default_encoders_and_model, fake_inserts
 ):
     """Test that task graph executed on `insert`"""
 
-    watcher, name = watcher_and_collection_name
-    watcher.watch()
+    listener, name = listener_and_collection_name
+    listener.listen()
 
-    with add_and_cleanup_watchers(
+    with add_and_cleanup_listeners(
         database_with_default_encoders_and_model, name
-    ) as database_with_watchers:
+    ) as database_with_listeners:
         # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
-        output_id, _ = database_with_watchers.execute(
+        output_id, _ = database_with_listeners.execute(
             Collection(name=name).insert_many([fake_inserts[0]], refresh=False)
         )
 
         def state_check():
-            doc = database_with_watchers.db[name].find_one(
+            doc = database_with_listeners.db[name].find_one(
                 {'_id': output_id.inserted_ids[0]}
             )
             assert '_outputs' in list(doc.keys())
@@ -100,7 +100,7 @@ def test_task_workflow_on_insert(
         # state_check_2 can't be merged with state_check because the
         # '_outputs' key needs to be present in 'doc'
         def state_check_2():
-            doc = database_with_watchers.db[name].find_one(
+            doc = database_with_listeners.db[name].find_one(
                 {'_id': output_id.inserted_ids[0]}
             )
             state = []
@@ -112,46 +112,46 @@ def test_task_workflow_on_insert(
 
 
 def test_single_insert(
-    watcher_without_cdc_handler_and_collection_name,
+    listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
     fake_inserts,
 ):
-    watcher, name = watcher_without_cdc_handler_and_collection_name
-    watcher.watch()
+    listener, name = listener_without_cdc_handler_and_collection_name
+    listener.listen()
     database_with_default_encoders_and_model.execute(
         Collection(name=name).insert_many([fake_inserts[0]])
     )
 
     def state_check():
-        assert watcher.info()["inserts"] == 1
+        assert listener.info()["inserts"] == 1
 
     retry_state_check(state_check)
 
 
 def test_many_insert(
-    watcher_without_cdc_handler_and_collection_name,
+    listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
     fake_inserts,
 ):
-    watcher, name = watcher_without_cdc_handler_and_collection_name
-    watcher.watch()
+    listener, name = listener_without_cdc_handler_and_collection_name
+    listener.listen()
     database_with_default_encoders_and_model.execute(
         Collection(name=name).insert_many(fake_inserts)
     )
 
     def state_check():
-        assert watcher.info()["inserts"] == len(fake_inserts)
+        assert listener.info()["inserts"] == len(fake_inserts)
 
     retry_state_check(state_check)
 
 
 def test_single_update(
-    watcher_without_cdc_handler_and_collection_name,
+    listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
     fake_updates,
 ):
-    watcher, name = watcher_without_cdc_handler_and_collection_name
-    watcher.watch()
+    listener, name = listener_without_cdc_handler_and_collection_name
+    listener.listen()
     output_id, _ = database_with_default_encoders_and_model.execute(
         Collection(name=name).insert_many(fake_updates)
     )
@@ -164,18 +164,18 @@ def test_single_update(
     )
 
     def state_check():
-        assert watcher.info()["updates"] == 1
+        assert listener.info()["updates"] == 1
 
     retry_state_check(state_check)
 
 
 def test_many_update(
-    watcher_without_cdc_handler_and_collection_name,
+    listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
     fake_updates,
 ):
-    watcher, name = watcher_without_cdc_handler_and_collection_name
-    watcher.watch()
+    listener, name = listener_without_cdc_handler_and_collection_name
+    listener.listen()
     output_id, _ = database_with_default_encoders_and_model.execute(
         Collection(name=name).insert_many(fake_updates)
     )
@@ -188,19 +188,19 @@ def test_many_update(
     )
 
     def state_check():
-        assert watcher.info()["updates"] == 5
+        assert listener.info()["updates"] == 5
 
     retry_state_check(state_check)
 
 
 def test_insert_without_cdc_handler(
-    watcher_without_cdc_handler_and_collection_name,
+    listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
     fake_inserts,
 ):
     """Test that `insert` without CDC handler does not execute task graph"""
-    watcher, name = watcher_without_cdc_handler_and_collection_name
-    watcher.watch()
+    listener, name = listener_without_cdc_handler_and_collection_name
+    listener.listen()
     output_id, _ = database_with_default_encoders_and_model.execute(
         Collection(name=name).insert_many(fake_inserts, refresh=True)
     )
@@ -210,23 +210,23 @@ def test_insert_without_cdc_handler(
     assert '_outputs' not in doc.keys()
 
 
-def test_cdc_stop(watcher_and_collection_name):
-    """Test that CDC watch service stopped properly"""
-    watcher, _ = watcher_and_collection_name
-    watcher.watch()
-    watcher.stop()
+def test_cdc_stop(listener_and_collection_name):
+    """Test that CDC listen service stopped properly"""
+    listener, _ = listener_and_collection_name
+    listener.listen()
+    listener.stop()
 
     def state_check():
         assert not all(
-            [watcher._scheduler.is_alive(), watcher._cdc_change_handler.is_alive()]
+            [listener._scheduler.is_alive(), listener._cdc_change_handler.is_alive()]
         )
 
     retry_state_check(state_check)
 
 
 @contextmanager
-def add_and_cleanup_watchers(database, collection_name):
-    """Add watchers to the database and remove them after the test"""
+def add_and_cleanup_listeners(database, collection_name):
+    """Add listeners to the database and remove them after the test"""
     listener_x = Listener(
         key='x',
         model='model_linear_a',

@@ -43,7 +43,7 @@ class VectorIndex(Component):
     #: Unique string identifier of index
     identifier: str
 
-    #: Watcher which is applied to created vectors
+    #: Listener which is applied to created vectors
     indexing_listener: t.Union[Listener, str]
 
     #: List of additional listeners which can "talk" to the index (e.g. multi-modal)

@@ -156,7 +156,7 @@ class PredictMixin:
         ids: t.Optional[t.Sequence[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.Sequence[Job] = (),
-        watch: bool = False,
+        listen: bool = False,
         one: bool = False,
         context: t.Optional[t.Dict] = None,
         in_memory: bool = True,
@@ -167,7 +167,7 @@ class PredictMixin:
         if isinstance(select, dict):
             select = Serializable.deserialize(select)
 
-        if watch:
+        if listen:
             from superduperdb.container.listener import Listener
 
             if db is None:

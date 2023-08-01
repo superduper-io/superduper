@@ -94,7 +94,7 @@ then the models spring into action, processing this new data, and repopulating o
 into the datalayer.
 
 ```python
->>> model.predict(X='input_col', db=db, select=coll.find(), watch=True)
+>> > model.predict(X='input_col', db=db, select=coll.find(), listen=True)
 ```
 
 An equivalent syntax is the following:

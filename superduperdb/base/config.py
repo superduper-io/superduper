@@ -107,9 +107,7 @@ class MongoDB(HostPort):
     """Configure MongoDB's port and credentials"""
 
     host: str = 'localhost'
-    password: str = 'testmongodbpassword'
-    port: int = 27018
-    username: str = 'testmongodbuser'
+    port: int = 27017
 
 
 class DataLayer(JSONable):

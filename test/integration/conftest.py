@@ -1,3 +1,4 @@
+import os
 import random
 import time
 from threading import Thread
@@ -172,6 +173,19 @@ def test_server(database_with_default_encoders_and_model):
 
 @pytest.fixture(scope="package")
 def local_dask_client():
+    for component in ['DATA_BACKEND', 'ARTIFACT', 'METADATA']:
+        os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_PORT'] = '27018'
+        os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_HOST'] = 'localhost'
+        os.environ[
+            f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_USERNAME'
+        ] = 'testmongodbuser'
+        os.environ[
+            f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_PASSWORD'
+        ] = 'testmongodbpassword'
+
+        os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_NAME'] = (
+            '_filesystem:test_db' if component == "ARTIFACT" else 'test_db'
+        )
     client = dask_client(CFG.dask, local=True)
     yield client
     client.shutdown()

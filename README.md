@@ -35,7 +35,7 @@
 <hr>
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
 - <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
-- <a href="https://colab.research.google.com/drive/11SJunSZc52jUuYrmNi5GziombcQ_sdhJ#scrollTo=XwWu32JBovja"><strong>Quickstart with Google Colab!</strong></a><br>
+- <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb"><strong>Quickstart with Google Colab!</strong></a><br>
 <hr>
 
 # Introduction 🔰 

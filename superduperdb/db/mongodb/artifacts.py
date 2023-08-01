@@ -1,6 +1,6 @@
 import gridfs
 
-from superduperdb.db.base.artifacts import ArtifactStore
+from superduperdb.db.base.artifact import ArtifactStore
 
 
 class MongoArtifactStore(ArtifactStore):

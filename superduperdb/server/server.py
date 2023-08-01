@@ -100,7 +100,7 @@ def make_endpoints(app, db):
         version = d.get('version')
         if version:
             version = int(version)
-        m = db.load(variety=d['variety'], identifier=d['identifier'], version=version)
+        m = db.load(type_id=d['type_id'], identifier=d['identifier'], version=version)
         to_send = m.serialize()
         artifacts = list(get_artifacts(to_send))
         lookup = {a: str(uuid.uuid4()) for a in artifacts}
@@ -120,7 +120,7 @@ def make_endpoints(app, db):
             version = int(version)
 
         db.remove(
-            variety=d['variety'],
+            type_id=d['type_id'],
             identifier=d['identifier'],
             version=version,
             force=True,

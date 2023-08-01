@@ -13,8 +13,8 @@ from superduperdb.container.job import ComponentJob, Job
 from superduperdb.container.serializable import Serializable
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.datalayer import Datalayer
     from superduperdb.db.base.dataset import Dataset
+    from superduperdb.db.base.db import DB
 
 
 @dc.dataclass
@@ -25,16 +25,17 @@ class Component(Serializable):
     :param identifier: Unique ID
     """
 
-    variety: t.ClassVar[str]
+    #: A unique name for the class
+    type_id: t.ClassVar[str]
 
-    def on_create(self, db: Datalayer) -> None:
+    def on_create(self, db: DB) -> None:
         """Called the first time this component is created
 
         :param db: the db that created the component
         """
         pass
 
-    def on_load(self, db: Datalayer) -> None:
+    def on_load(self, db: DB) -> None:
         """Called when this component is loaded from the data store
 
         :param db: the db that loaded the component
@@ -50,7 +51,7 @@ class Component(Serializable):
         if getattr(self, 'version', None) is None:
             raise Exception('Version not yet set for component uniqueness')
         return (
-            f'{self.variety}/'  # type: ignore[attr-defined]
+            f'{self.type_id}/'  # type: ignore[attr-defined]
             f'{self.identifier}/'
             f'{self.version}'
         )
@@ -66,7 +67,7 @@ class Component(Serializable):
         return ComponentJob(
             component_identifier=self.identifier,  # type: ignore[attr-defined]
             method_name='predict',
-            variety='model',
+            type_id='model',
             kwargs={
                 'distributed': False,
                 'validation_set': validation_set,
@@ -76,7 +77,7 @@ class Component(Serializable):
 
     def schedule_jobs(
         self,
-        database: Datalayer,
+        database: DB,
         dependencies: t.Sequence[Job] = (),
         distributed: bool = False,
         verbose: bool = False,
@@ -91,5 +92,5 @@ class Component(Serializable):
         return []
 
     @classmethod
-    def make_unique_id(cls, variety: str, identifier: str, version: int) -> str:
-        return f'{variety}/{identifier}/{version}'
+    def make_unique_id(cls, type_id: str, identifier: str, version: int) -> str:
+        return f'{type_id}/{identifier}/{version}'

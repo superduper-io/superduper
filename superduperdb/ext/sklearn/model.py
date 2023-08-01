@@ -7,7 +7,7 @@ from tqdm import tqdm
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.metric import Metric
 from superduperdb.container.model import Model, _TrainingConfiguration
-from superduperdb.db.base.datalayer import Datalayer
+from superduperdb.db.base.db import DB
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
 
@@ -15,7 +15,7 @@ from superduperdb.db.query_dataset import QueryDataset
 def get_data_from_query(
     select: Select,
     X: str,
-    db: Datalayer,
+    db: DB,
     y: t.Optional[str] = None,
     y_preprocess: t.Optional[t.Callable] = None,
     preprocess: t.Optional[t.Callable] = None,
@@ -85,7 +85,7 @@ class Estimator(Model):
         X,
         y=None,
         select: t.Optional[Select] = None,
-        db: t.Optional[Datalayer] = None,
+        db: t.Optional[DB] = None,
         configuration: t.Optional[SklearnTrainingConfiguration] = None,
         validation_sets: t.Optional[t.Sequence[str]] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,

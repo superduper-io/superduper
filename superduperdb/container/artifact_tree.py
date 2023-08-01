@@ -1,7 +1,7 @@
 import typing as t
 
 from superduperdb.data.tree.tree import tree_find, tree_rewrite
-from superduperdb.db.base.artifacts import ArtifactStore
+from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.misc.serialization import serializers
 
 from .artifact import Artifact

@@ -22,7 +22,7 @@ from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.datalayer import Datalayer
+    from superduperdb.db.base.db import DB
 
 EncoderArg = t.Union[Encoder, str, None]
 ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
@@ -44,7 +44,8 @@ class _TrainingConfiguration(Component):
     :param **parameters: Key-values pairs, the variables which configure training.
     """
 
-    variety: t.ClassVar[str] = 'training_configuration'
+    #: A unique name for the class
+    type_id: t.ClassVar[str] = 'training_configuration'
 
     identifier: str
     kwargs: t.Optional[t.Dict] = None
@@ -79,7 +80,7 @@ class PredictMixin:
         return ComponentJob(
             component_identifier=self.identifier,
             method_name='predict',
-            variety='model',
+            type_id='model',
             args=[X],
             kwargs={
                 'distributed': False,
@@ -149,7 +150,7 @@ class PredictMixin:
     def predict(
         self,
         X: t.Any,
-        db: t.Optional[Datalayer] = None,
+        db: t.Optional[DB] = None,
         select: t.Optional[Select] = None,
         distributed: t.Optional[bool] = None,
         ids: t.Optional[t.Sequence[str]] = None,
@@ -167,12 +168,12 @@ class PredictMixin:
             select = Serializable.deserialize(select)
 
         if watch:
-            from superduperdb.container.watcher import Watcher
+            from superduperdb.container.listener import Listener
 
             if db is None:
                 raise ValueError('db cannot be None')
             return db.add(
-                Watcher(
+                Listener(
                     key=X,
                     model=self,  # type: ignore[arg-type]
                     select=select,  # type: ignore[arg-type]
@@ -291,11 +292,8 @@ class Model(Component, PredictMixin):
 
     :param object: Model object, e.g. sklearn model, etc..
     :param encoder: Encoder instance (optional)
-    :param variety: ...
+    :param type_id: ...
     """
-
-    variety: t.ClassVar[str] = 'model'
-    artifacts: t.ClassVar[t.Sequence[str]] = ['object']
 
     identifier: str
     object: t.Union[Artifact, t.Any]
@@ -319,6 +317,11 @@ class Model(Component, PredictMixin):
     version: t.Optional[int] = None
     future: t.Optional[Future] = None  # TODO what's this?
     device: str = "cpu"
+
+    artifacts: t.ClassVar[t.Sequence[str]] = ['object']
+
+    #: A unique name for the class
+    type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self):
         if not isinstance(self.object, Artifact):
@@ -360,7 +363,7 @@ class Model(Component, PredictMixin):
             raise ValueError('self.metric_values cannot be None')
         self.metric_values.update(out)
         db.metadata.update_object(
-            variety='model',
+            type_id='model',
             identifier=self.identifier,
             version=self.version,
             key='dict.metric_values',
@@ -400,7 +403,7 @@ class Model(Component, PredictMixin):
         return ComponentJob(
             component_identifier=self.identifier,
             method_name='fit',
-            variety='model',
+            type_id='model',
             args=[X],
             kwargs={
                 'y': y,
@@ -414,7 +417,7 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional[Datalayer] = None,
+        db: t.Optional[DB] = None,
         select: t.Optional[Select] = None,
         dependencies: t.Sequence[Job] = (),
         configuration: t.Optional[_TrainingConfiguration] = None,
@@ -429,7 +432,7 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional[Datalayer] = None,
+        db: t.Optional[DB] = None,
         select: t.Optional[Select] = None,
         distributed: t.Optional[bool] = None,
         dependencies: t.Sequence[Job] = (),

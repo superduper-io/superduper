@@ -35,7 +35,6 @@ class Encoder(Component):
     :param shape: shape of the data, if any
     """
 
-    variety: t.ClassVar[str] = 'encoder'
     artifacts: t.ClassVar[t.Sequence[str]] = ['decoder', 'encoder']
 
     identifier: str
@@ -48,6 +47,9 @@ class Encoder(Component):
 
     shape: t.Optional[t.Sequence] = None
     version: t.Optional[int] = None
+
+    #: A unique name for the class
+    type_id: t.ClassVar[str] = 'encoder'
 
     def __post_init__(self):
         if isinstance(self.decoder, t.Callable):

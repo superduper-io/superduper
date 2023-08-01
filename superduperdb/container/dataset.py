@@ -13,13 +13,11 @@ from superduperdb.container.document import Document
 from superduperdb.db.mongodb.query import Find
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.datalayer import Datalayer
+    from superduperdb.db.base.db import DB
 
 
 @dc.dataclass
 class Dataset(Component):
-    variety: t.ClassVar[str] = 'dataset'
-
     identifier: str
     select: t.Optional[Find] = None
     sample_size: t.Optional[int] = None
@@ -28,8 +26,11 @@ class Dataset(Component):
     raw_data: t.Optional[t.Union[Artifact, t.Any]] = None
     version: t.Optional[int] = None
 
+    #: A unique name for the class
+    type_id: t.ClassVar[str] = 'dataset'
+
     @override
-    def on_create(self, db: Datalayer) -> None:
+    def on_create(self, db: DB) -> None:
         if self.raw_data is None:
             if self.select is None:
                 raise ValueError('select cannot be None')
@@ -40,7 +41,7 @@ class Dataset(Component):
             self.raw_data = Artifact(artifact=[r.encode() for r in data])
 
     @override
-    def on_load(self, db: Datalayer) -> None:
+    def on_load(self, db: DB) -> None:
         self.data = [
             Document(Document.decode(r.copy(), encoders=db.encoders))
             for r in self.raw_data.artifact  # type: ignore[union-attr]

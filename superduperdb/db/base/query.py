@@ -7,7 +7,7 @@ from superduperdb.container.serializable import Serializable
 
 if t.TYPE_CHECKING:
     from superduperdb.container.model import Model
-    from superduperdb.db.base.datalayer import Datalayer
+    from superduperdb.db.base.db import DB
 
 
 class SelectOne(ABC, Serializable):
@@ -16,7 +16,7 @@ class SelectOne(ABC, Serializable):
     """
 
     @abstractmethod
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         pass
 
 
@@ -26,7 +26,7 @@ class Like(ABC, Serializable):
     """
 
     @abstractmethod
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         pass
 
 
@@ -73,7 +73,7 @@ class Select(ABC, Serializable):
 
     def model_update(
         self,
-        db: Datalayer,
+        db: DB,
         ids: t.Sequence[t.Any],
         key: str,
         model: Model,
@@ -91,7 +91,7 @@ class Select(ABC, Serializable):
         raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         """
         Apply Serializable to db
 
@@ -126,7 +126,7 @@ class Insert(ABC, Serializable):
         was inserted"""
 
     @abstractmethod
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         """
         Apply Serializable to db
 
@@ -141,7 +141,7 @@ class Delete(ABC, Serializable):
     """
 
     @abstractmethod
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         """
         Apply Serializable to db
 
@@ -183,7 +183,7 @@ class Update(ABC, Serializable):
         raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         """
         Apply Serializable to db.
 

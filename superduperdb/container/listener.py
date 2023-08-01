@@ -3,7 +3,7 @@ import typing as t
 
 from overrides import override
 
-from superduperdb.db.base.datalayer import Datalayer
+from superduperdb.db.base.db import DB
 from superduperdb.db.base.query import Select
 
 from .component import Component
@@ -12,9 +12,9 @@ from .model import Model
 
 
 @dc.dataclass
-class Watcher(Component):
+class Listener(Component):
     """
-    Watcher object which is used to process a column/ key of a collection or table,
+    Listener object which is used to process a column/ key of a collection or table,
     and store the outputs.
 
     :param key: Key to be bound to model
@@ -41,7 +41,8 @@ class Watcher(Component):
     select: t.Optional[Select] = None
     version: t.Optional[int] = None
 
-    variety: t.ClassVar[str] = 'watcher'
+    #: A unique name for the class
+    type_id: t.ClassVar[str] = 'listener'
 
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
@@ -49,7 +50,7 @@ class Watcher(Component):
         return [('model', 'model')]
 
     @override
-    def on_create(self, db: Datalayer) -> None:
+    def on_create(self, db: DB) -> None:
         if isinstance(self.model, str):
             self.model = t.cast(Model, db.load('model', self.model))
 
@@ -83,7 +84,7 @@ class Watcher(Component):
     @override
     def schedule_jobs(
         self,
-        database: Datalayer,
+        database: DB,
         dependencies: t.Sequence[Job] = (),
         distributed: bool = False,
         verbose: bool = False,
@@ -96,12 +97,13 @@ class Watcher(Component):
             db=database,
             select=self.select,
             distributed=distributed,
+            max_chunk_size=self.max_chunk_size,
             dependencies=dependencies,
             **(self.predict_kwargs or {}),
         )
 
-    def cleanup(self, database: Datalayer) -> None:
-        """Clean up when the watcher is done
+    def cleanup(self, database: DB) -> None:
+        """Clean up when the listener is done
 
         :param database: The db to process
         """

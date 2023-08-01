@@ -17,7 +17,7 @@ The `Datalayer` object combines 4 basic functionalities involved in integrating 
 Correspondingly a datalayer may be built by passing these 4 items to the `Datalayer.__init__` method:
 
 ```python
-from superduperdb.db.base.datalayer import Datalayer
+from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb.data_backend import MongoDatabackend
 from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 from superduperdb.db.mongodb.artifacts import MongoArtifactStore
@@ -31,7 +31,7 @@ my_metadata = MongoMetaDataStore(mongo_client, name='test_db')
 my_artifact_store = MongoArtifactStore(mongo_client, name='_filesystem:test_db')
 vector_database = LanceVectorIndex(uri='~/.lancedb')
 
-db = Datalayer(
+db = DB(
     data_backend=my_databackend,
     metadata=my_metadata_store,
     artifact_store=my_artifact_store,

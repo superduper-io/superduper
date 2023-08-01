@@ -2,7 +2,7 @@ furo
 ipython
 myst_parser
 nbsphinx
-pandoc>=2.14.2
+pandoc
 sphinx
 sphinx-autodoc-typehints
 sphinx_copybutton

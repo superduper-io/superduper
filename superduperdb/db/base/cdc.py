@@ -27,7 +27,7 @@ import threading
 import typing as t
 
 from superduperdb.db.base import backends
-from superduperdb.db.base.datalayer import Datalayer
+from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb import cdc
 from superduperdb.db.mongodb.query import Collection
 
@@ -55,7 +55,7 @@ class DatabaseWatcherFactory(t.Generic[DBWatcherType]):
 
 
 def DatabaseWatcher(
-    db: Datalayer,
+    db: DB,
     on: Collection,
     identifier: str = '',
     *args,

@@ -4,8 +4,8 @@ import os
 import pytest
 
 from superduperdb.container.document import Document
+from superduperdb.container.listener import Listener
 from superduperdb.container.vector_index import VectorIndex
-from superduperdb.container.watcher import Watcher
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 
@@ -72,7 +72,7 @@ def test_retrieve_with_similar_context(open_ai_with_rhymes):
     db.add(
         VectorIndex(
             identifier='openai-index',
-            indexing_watcher=Watcher(
+            indexing_listener=Listener(
                 model=vectorizer,
                 key='story',
                 select=Collection('openai').find(),

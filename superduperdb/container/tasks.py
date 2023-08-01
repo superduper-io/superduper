@@ -5,7 +5,7 @@ import traceback
 
 def method_job(
     cfg,
-    variety,
+    type_id,
     identifier,
     method_name,
     args,
@@ -17,7 +17,7 @@ def method_job(
 
     cfg.distributed = False
     db = build_datalayer(cfg)
-    component = db.load(variety, identifier)
+    component = db.load(type_id, identifier)
     method = getattr(component, method_name)
     db.metadata.update_job(job_id, 'status', 'running')
 

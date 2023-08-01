@@ -19,10 +19,10 @@ from superduperdb.base.config import DataLayer, DataLayers
 from superduperdb.base.config import MongoDB as MongoDBConfig
 from superduperdb.container.dataset import Dataset
 from superduperdb.container.document import Document
+from superduperdb.container.listener import Listener
 from superduperdb.container.metric import Metric
 from superduperdb.container.vector_index import VectorIndex
-from superduperdb.container.watcher import Watcher
-from superduperdb.db.base.datalayer import Datalayer
+from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.numpy.array import array
 from superduperdb.ext.pillow.image import pil_image
@@ -100,7 +100,7 @@ def mongodb_client(mongodb_server: TestMongoDBConfig) -> Iterator[pymongo.MongoC
 
 
 @contextmanager
-def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[Datalayer]:
+def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[DB]:
     from superduperdb.db.base.build import build_datalayer
 
     mongo_client = MongoClient(
@@ -117,7 +117,7 @@ def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[Datalayer]:
 
 
 @pytest.fixture
-def test_db(mongodb_server: MongoDBConfig) -> Iterator[Datalayer]:
+def test_db(mongodb_server: MongoDBConfig) -> Iterator[DB]:
     with create_datalayer(mongodb_config=mongodb_server) as db:
         yield db
 
@@ -136,7 +136,7 @@ def config(mongodb_server: MongoDBConfig) -> Iterator[None]:
 
 
 @pytest.fixture()
-def empty(test_db: Datalayer):
+def empty(test_db: DB):
     yield test_db
 
 
@@ -255,14 +255,14 @@ def an_update(float_tensors_32):
 def vector_index_factory(a_model):
     def _factory(db, identifier, **kwargs) -> VectorIndex:
         db.add(
-            Watcher(
+            Listener(
                 select=Collection(name='documents').find(),
                 key='x',
                 model='linear_a',
             )
         )
         db.add(
-            Watcher(
+            Listener(
                 select=Collection(name='documents').find(),
                 key='z',
                 model='linear_a',
@@ -270,8 +270,8 @@ def vector_index_factory(a_model):
         )
         vi = VectorIndex(
             identifier=identifier,
-            indexing_watcher='linear_a/x',
-            compatible_watcher='linear_a/z',
+            indexing_listener='linear_a/x',
+            compatible_listener='linear_a/z',
             **kwargs,
         )
         db.add(vi)
@@ -389,30 +389,30 @@ def a_model_base(float_tensors_32, float_tensors_16):
 
 
 @pytest.fixture()
-def a_watcher(a_model):
+def a_listener(a_model):
     a_model.distributed = False
     a_model.add(
-        Watcher(
+        Listener(
             model='linear_a',
             select=Collection(name='documents').find(),
             key='x',
         )
     )
     yield a_model
-    a_model.remove('watcher', 'linear_a/x', force=True)
+    a_model.remove('listener', 'linear_a/x', force=True)
 
 
 @pytest.fixture()
-def a_watcher_base(a_model_base):
+def a_listener_base(a_model_base):
     a_model_base.add(
-        Watcher(
+        Listener(
             model='linear_a_base',
             select=Collection(name='documents').find({}, {'_id': 0}),
             key='_base',
         )
     )
     yield a_model_base
-    a_model_base.remove('watcher', 'linear_a_base/_base', force=True)
+    a_model_base.remove('listener', 'linear_a_base/_base', force=True)
 
 
 @pytest.fixture()

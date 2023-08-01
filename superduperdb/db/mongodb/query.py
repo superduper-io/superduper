@@ -17,7 +17,7 @@ from ..base.query import Delete, Insert, Like, Select, SelectOne, Update
 
 if t.TYPE_CHECKING:
     from superduperdb.container.model import Model
-    from superduperdb.db.base.datalayer import Datalayer
+    from superduperdb.db.base.db import DB
 
 
 @dc.dataclass
@@ -158,7 +158,7 @@ class ReplaceOne(Update):
     type_id: t.Literal['mongodb.ReplaceOne'] = 'mongodb.ReplaceOne'
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         update = self.update.encode()
         return db.db[self.collection.name].replace_one(
             self.filter, update, *self.args[2:], **self.kwargs
@@ -208,7 +208,7 @@ class PreLike(Like):
         return FindOne(like_parent=self, args=args, kwargs=kwargs)
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         ids, scores = db._select_nearest(
             like=self.r, vector_index=self.vector_index, n=self.n
         )
@@ -343,7 +343,7 @@ class Find(Select):
         """
         return Featurize(parent=self, features=features)
 
-    def get_ids(self, db: Datalayer) -> t.Sequence[str]:
+    def get_ids(self, db: DB) -> t.Sequence[str]:
         """Get a list of matching IDs
 
         :param db: The db to query
@@ -362,7 +362,7 @@ class Find(Select):
     @override
     def model_update(
         self,
-        db: Datalayer,
+        db: DB,
         ids: t.Sequence[t.Any],
         key: str,
         model: Model,
@@ -382,7 +382,7 @@ class Find(Select):
             ]
         )
 
-    def model_cleanup(self, db: Datalayer, model: Model, key: str) -> None:
+    def model_cleanup(self, db: DB, model: Model, key: str) -> None:
         """Clean up a model after the computation is done
 
         :param db: The db to use
@@ -400,7 +400,7 @@ class Find(Select):
             return Find(like_parent=self.parent)
         raise TypeError('Expected PreLike')
 
-    def download_update(self, db: Datalayer, id: str, key: str, bytes) -> None:
+    def download_update(self, db: DB, id: str, key: str, bytes) -> None:
         """Download an updated version of this query
 
         TODO: improve this comment.
@@ -421,7 +421,7 @@ class Find(Select):
         )(db)
 
     @override
-    def __call__(self, db: Datalayer) -> SuperDuperCursor:
+    def __call__(self, db: DB) -> SuperDuperCursor:
         if isinstance(self.parent, Collection):
             cursor = db.db[self.collection.name].find(  # type: ignore[union-attr]
                 *self.args, **self.kwargs
@@ -462,7 +462,7 @@ class CountDocuments(Find):
     ] = 'mongodb.CountDocuments'  # type: ignore[assignment]
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         return db.db[self.collection.name].count_documents(  # type: ignore[union-attr]
             *self.args, **self.kwargs
         )
@@ -479,7 +479,7 @@ class FeaturizeOne(SelectOne):
     type_id: t.Literal['mongodb.FeaturizeOne'] = 'mongodb.FeaturizeOne'
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         r = self.parent_find_one(db)
         r = SuperDuperCursor.add_features(r.content, self.features)
         return Document(r)
@@ -506,7 +506,7 @@ class FindOne(SelectOne):
     type_id: t.Literal['mongodb.FindOne'] = 'mongodb.FindOne'
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         if self.collection is not None:
             return SuperDuperCursor.wrap_document(
                 db.db[self.collection.name].find_one(*self.args, **self.kwargs),
@@ -550,7 +550,7 @@ class Aggregate(Select):
     type_id: t.Literal['mongodb.Aggregate'] = 'mongodb.Aggregate'
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         return SuperDuperCursor(
             id_field='_id',
             raw_cursor=db.db[self.collection.name].aggregate(*self.args, **self.kwargs),
@@ -575,7 +575,7 @@ class DeleteOne(Delete):
     type_id: t.Literal['mongodb.DeleteOne'] = 'mongodb.DeleteOne'
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         return db.db[self.collection.name].delete_one(*self.args, **self.kwargs)
 
 
@@ -596,7 +596,7 @@ class DeleteMany(Delete):
     type_id: t.Literal['mongodb.DeleteMany'] = 'mongodb.DeleteMany'
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         return db.db[self.collection.name].delete_many(*self.args, **self.kwargs)
 
 
@@ -627,7 +627,7 @@ class UpdateOne(Update):
     type_id: t.Literal['mongodb.UpdateOne'] = 'mongodb.UpdateOne'
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         return db.db[self.collection.name].update_one(
             self.filter,
             self.update,
@@ -668,7 +668,7 @@ class UpdateMany(Update):
     type_id: t.Literal['mongodb.UpdateMany'] = 'mongodb.UpdateMany'
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         to_update = self.update.encode()
         ids = [
             r['_id'] for r in db.db[self.collection.name].find(self.filter, {'_id': 1})
@@ -741,7 +741,7 @@ class InsertMany(Insert):
         return Find(collection=self.collection, args=[{'_id': {'$in': ids}}])
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         valid_prob = self.kwargs.get('valid_prob', 0.05)
         for e in self.encoders:
             db.add(e)
@@ -791,7 +791,7 @@ class PostLike(Select):
         arbitrary_types_allowed = True
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         cursor = self.find_parent.select_ids.limit(  # type: ignore[union-attr]
             self.max_ids
         )(db)
@@ -824,7 +824,7 @@ class Featurize(Select):
     def select_table(self):
         return self.parent.select_table
 
-    def get_ids(self, db: Datalayer) -> t.Sequence[str]:
+    def get_ids(self, db: DB) -> t.Sequence[str]:
         """Get a list of matching IDs
 
         :param db: The db to query
@@ -863,7 +863,7 @@ class Featurize(Select):
     @override
     def model_update(
         self,
-        db: Datalayer,
+        db: DB,
         ids: t.Sequence[t.Any],
         key: str,
         model: Model,
@@ -874,7 +874,7 @@ class Featurize(Select):
         )
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         if isinstance(self.parent, (Find, Like, Limit)):
             out = self.parent(db)
             out.features = self.features
@@ -901,7 +901,7 @@ class Count(SelectOne):
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         return db[
             self.parent.name  # type: ignore[union-attr]
         ].count_documents()  # type: ignore[index]
@@ -920,7 +920,7 @@ class Limit(Select):
     type_id: t.Literal['mongodb.Limit'] = 'mongodb.Limit'
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         return self.parent(db).limit(self.n)
 
 
@@ -938,7 +938,7 @@ class ChangeStream:
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     @override
-    def __call__(self, db: Datalayer):
+    def __call__(self, db: DB):
         collection = db.db[self.collection.name]
         return collection.watch(**self.kwargs)
 

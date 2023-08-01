@@ -58,7 +58,7 @@ def test_insert_from_uris(empty, image_type):
     assert isinstance(r['other']['item'].x, PIL.PngImagePlugin.PngImageFile)
 
 
-def test_update_many(random_data, a_watcher):
+def test_update_many(random_data, a_listener):
     to_update = torch.randn(32)
     t = random_data.encoders['torch.float32[32]']
     random_data.execute(
@@ -78,7 +78,7 @@ def test_update_many(random_data, a_watcher):
     )
 
 
-def test_insert_many(random_data, a_watcher, an_update):
+def test_insert_many(random_data, a_listener, an_update):
     random_data.execute(Collection(name='documents').insert_many(an_update))
     r = next(random_data.execute(Collection(name='documents').find({'update': True})))
     assert 'linear_a' in r['_outputs']['x']
@@ -99,7 +99,7 @@ def test_like(with_vector_index):
     assert r['_id'] == s['_id']
 
 
-def test_insert_one(random_data, a_watcher, a_single_insert):
+def test_insert_one(random_data, a_listener, a_single_insert):
     out, _ = random_data.execute(
         Collection(name='documents').insert_one(a_single_insert)
     )

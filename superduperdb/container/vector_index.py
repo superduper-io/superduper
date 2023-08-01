@@ -9,8 +9,8 @@ from superduperdb import logging
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encodable
-from superduperdb.container.watcher import Watcher
-from superduperdb.db.base.datalayer import Datalayer
+from superduperdb.container.listener import Listener
+from superduperdb.db.base.db import DB
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 
@@ -44,10 +44,10 @@ class VectorIndex(Component):
     identifier: str
 
     #: Watcher which is applied to created vectors
-    indexing_watcher: t.Union[Watcher, str]
+    indexing_listener: t.Union[Listener, str]
 
-    #: List of additional watchers which can "talk" to the index (e.g. multi-modal)
-    compatible_watcher: t.Union[None, Watcher, str] = None
+    #: List of additional listeners which can "talk" to the index (e.g. multi-modal)
+    compatible_listener: t.Union[None, Listener, str] = None
 
     #: Measure which is used to compare vectors in index
     measure: str = 'cosine'
@@ -59,21 +59,21 @@ class VectorIndex(Component):
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
 
     #: A unique name for the class
-    variety: t.ClassVar[str] = 'vector_index'
+    type_id: t.ClassVar[str] = 'vector_index'
 
     @override
-    def on_create(self, db: Datalayer) -> None:
-        if isinstance(self.indexing_watcher, str):
-            self.indexing_watcher = t.cast(
-                Watcher, db.load('watcher', self.indexing_watcher)
+    def on_create(self, db: DB) -> None:
+        if isinstance(self.indexing_listener, str):
+            self.indexing_listener = t.cast(
+                Listener, db.load('listener', self.indexing_listener)
             )
-        if isinstance(self.compatible_watcher, str):
-            self.compatible_watcher = t.cast(
-                Watcher, db.load('watcher', self.compatible_watcher)
+        if isinstance(self.compatible_listener, str):
+            self.compatible_listener = t.cast(
+                Listener, db.load('listener', self.compatible_listener)
             )
 
     @override
-    def on_load(self, db: Datalayer) -> None:
+    def on_load(self, db: DB) -> None:
         self.vector_table = (
             db.vector_database.get_table(  # type: ignore[call-arg, union-attr]
                 VectorCollectionConfig(
@@ -90,9 +90,9 @@ class VectorIndex(Component):
 
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
-        out = [('indexing_watcher', 'watcher')]
-        if self.compatible_watcher is not None:
-            out.append(('compatible_watcher', 'watcher'))
+        out = [('indexing_listener', 'listener')]
+        if self.compatible_listener is not None:
+            out.append(('compatible_listener', 'listener'))
         return out
 
     def get_nearest(
@@ -135,7 +135,7 @@ class VectorIndex(Component):
             if '_outputs' not in document:
                 document['_outputs'] = {}
             document['_outputs'].update(outputs)
-            features = self.indexing_watcher.features or ()  # type: ignore[union-attr]
+            features = self.indexing_listener.features or ()  # type: ignore[union-attr]
             for subkey in features:
                 subout = document['_outputs'].setdefault(subkey, {})
                 f_subkey = features[subkey]
@@ -167,34 +167,34 @@ class VectorIndex(Component):
     @property
     def models_keys(self) -> t.Tuple[t.Sequence[str], t.Sequence[str]]:
         """
-        Return a list of model and keys for each watcher
+        Return a list of model and keys for each listener
         """
-        if self.compatible_watcher:
-            watchers = [self.indexing_watcher, self.compatible_watcher]
+        if self.compatible_listener:
+            listeners = [self.indexing_listener, self.compatible_listener]
         else:
-            watchers = [self.indexing_watcher]
-        models = [w.model.identifier for w in watchers]  # type: ignore[union-attr]
-        keys = [w.key for w in watchers]  # type: ignore[union-attr]
+            listeners = [self.indexing_listener]
+        models = [w.model.identifier for w in listeners]  # type: ignore[union-attr]
+        keys = [w.key for w in listeners]  # type: ignore[union-attr]
         return models, keys
 
-    def _initialize_vector_database(self, db: Datalayer) -> None:
+    def _initialize_vector_database(self, db: DB) -> None:
         logging.info(f'loading hashes: {self.identifier!r}')
-        if self.indexing_watcher.select is None:  # type: ignore[union-attr]
+        if self.indexing_listener.select is None:  # type: ignore[union-attr]
             raise ValueError('.select must be set')
 
         for record_batch in ibatch(
-            db.execute(self.indexing_watcher.select),  # type: ignore[union-attr]
+            db.execute(self.indexing_listener.select),  # type: ignore[union-attr]
             _BACKFILL_BATCH_SIZE,
         ):
             items = []
             for record in record_batch:
-                key = self.indexing_watcher.key  # type: ignore[union-attr]
+                key = self.indexing_listener.key  # type: ignore[union-attr]
                 if key.startswith('_outputs.'):
                     key = key.split('.')[1]
                 h, id = db.databackend.get_output_from_document(
                     record,
                     key,
-                    self.indexing_watcher.model.identifier,  # type: ignore[union-attr]
+                    self.indexing_listener.model.identifier,  # type: ignore[union-attr]
                 )
                 if isinstance(h, Encodable):
                     h = h.x
@@ -203,15 +203,15 @@ class VectorIndex(Component):
 
     @property
     def _dimensions(self) -> int:
-        if not isinstance(self.indexing_watcher, Watcher):
+        if not isinstance(self.indexing_listener, Listener):
             raise NotImplementedError
         if not hasattr(
-            self.indexing_watcher.model.encoder, 'shape'  # type: ignore[union-attr]
+            self.indexing_listener.model.encoder, 'shape'  # type: ignore[union-attr]
         ):
             raise NotImplementedError(
                 'Couldn\'t find shape of model outputs, based on model encoder.'
             )
-        model_encoder = self.indexing_watcher.model.encoder  # type: ignore[union-attr]
+        model_encoder = self.indexing_listener.model.encoder  # type: ignore[union-attr]
         try:
             dimensions = int(model_encoder.shape[-1])  # type: ignore[index, union-attr]
         except Exception:
@@ -219,7 +219,7 @@ class VectorIndex(Component):
         if not dimensions:
             raise ValueError(
                 'Model '  # type: ignore[union-attr]
-                f'{self.indexing_watcher.model.identifier} '
+                f'{self.indexing_listener.model.identifier} '
                 'has no shape'
             )
         return dimensions

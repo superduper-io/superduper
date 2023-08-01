@@ -100,9 +100,9 @@ into the datalayer.
 An equivalent syntax is the following:
 
 ```python
->> > from superduperdb.container.watcher import Watcher
+>> > from superduperdb.container.listener import Listener
 >> > db.add(
-    Watcher(
+    Listener(
         model=model,
         select=coll.find(),
         key='input_col',

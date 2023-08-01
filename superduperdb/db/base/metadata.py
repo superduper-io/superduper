@@ -73,20 +73,20 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def show_components(self, variety: str, **kwargs):
+    def show_components(self, type_id: str, **kwargs):
         pass
 
     @abstractmethod
-    def show_component_versions(self, variety: str, identifier: str):
+    def show_component_versions(self, type_id: str, identifier: str):
         pass
 
     @abstractmethod
-    def delete_component_version(self, variety: str, identifier: str, version: int):
+    def delete_component_version(self, type_id: str, identifier: str, version: int):
         pass
 
     @abstractmethod
     def component_version_has_parents(
-        self, variety: str, identifier: str, version: int
+        self, type_id: str, identifier: str, version: int
     ):
         pass
 
@@ -96,14 +96,14 @@ class MetaDataStore(ABC):
 
     @abstractmethod
     def get_latest_version(
-        self, variety: str, identifier: str, allow_hidden: bool = False
+        self, type_id: str, identifier: str, allow_hidden: bool = False
     ):
         pass
 
     @abstractmethod
     def _get_component(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: int,
         allow_hidden: bool = False,
@@ -112,17 +112,17 @@ class MetaDataStore(ABC):
 
     def get_component(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
     ) -> t.Dict[str, t.Any]:
         if version is None:
             version = self.get_latest_version(
-                variety=variety, identifier=identifier, allow_hidden=allow_hidden
+                type_id=type_id, identifier=identifier, allow_hidden=allow_hidden
             )
         r = self._get_component(
-            variety=variety,
+            type_id=type_id,
             identifier=identifier,
             version=version,
             allow_hidden=allow_hidden,
@@ -135,41 +135,41 @@ class MetaDataStore(ABC):
     def _update_object(
         self,
         identifier: str,
-        variety: str,
+        type_id: str,
         key: str,
         value: t.Any,
         version: int,
     ):
         pass
 
-    def update_object(self, identifier, variety, key, value, version=None):
+    def update_object(self, identifier, type_id, key, value, version=None):
         if version is not None:
-            version = self.get_latest_version(variety, identifier)
+            version = self.get_latest_version(type_id, identifier)
         return self._update_object(
             identifier=identifier,
-            variety=variety,
+            type_id=type_id,
             key=key,
             value=value,
             version=version,
         )
 
     @abstractmethod
-    def _replace_object(self, info, identifier, variety, version):
+    def _replace_object(self, info, identifier, type_id, version):
         pass
 
     def replace_object(
         self,
         info: t.Dict[str, t.Any],
         identifier: str,
-        variety: str,
+        type_id: str,
         version: t.Optional[int] = None,
     ) -> None:
         if version is not None:
-            version = self.get_latest_version(variety, identifier)
+            version = self.get_latest_version(type_id, identifier)
         return self._replace_object(
             info=info,
             identifier=identifier,
-            variety=variety,
+            type_id=type_id,
             version=version,
         )
 
@@ -182,5 +182,5 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def hide_component_version(self, variety: str, identifier: str, version: int):
+    def hide_component_version(self, type_id: str, identifier: str, version: int):
         pass

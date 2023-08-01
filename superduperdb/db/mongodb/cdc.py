@@ -20,7 +20,7 @@ from superduperdb.container.job import FunctionJob
 from superduperdb.container.serializable import Serializable
 from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.container.vector_index import VectorIndex
-from superduperdb.db.base.datalayer import Datalayer
+from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb import query
 from superduperdb.misc.task_queue import cdc_queue
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
@@ -126,31 +126,31 @@ class BaseDatabaseWatcher(ABC):
 
 
 def copy_vectors(
-    indexing_watcher_identifier: str,
+    indexing_listener_identifier: str,
     cdc_query: Serializable,
     ids: t.Sequence[str],
     db=None,
 ):
     """
-    A helper fxn to copy vectors of a `indexing_watcher` component/model of
-    a `vector_index` watcher.
+    A helper fxn to copy vectors of a `indexing_listener` component/model of
+    a `vector_index` listener.
 
     This function will be added as node to the taskworkflow after every
-    `indexing_watcher` in the defined watchers in db.
+    `indexing_listener` in the defined watchers in db.
     """
     try:
         query = Serializable.deserialize(cdc_query)
         select = query.select_using_ids(ids)
         docs = db.select(select)
         docs = [doc.unpack() for doc in docs]
-        model, key = indexing_watcher_identifier.split('/')
+        model, key = indexing_listener_identifier.split('/')
         vectors = [
             {'vector': doc['_outputs'][key][model], 'id': str(doc['_id'])}
             for doc in docs
         ]
         dimensions = len(vectors[0]['vector'])
         config = VectorCollectionConfig(
-            id=indexing_watcher_identifier, dimensions=dimensions
+            id=indexing_listener_identifier, dimensions=dimensions
         )
         table = db.vector_database.get_table(config, create=True)
 
@@ -158,7 +158,7 @@ def copy_vectors(
         table.add(vector_list, upsert=True)
     except Exception:
         logging.error(
-            f"Error in copying_vectors for vector_index: {indexing_watcher_identifier}"
+            f"Error in copying_vectors for vector_index: {indexing_listener_identifier}"
         )
         raise
 
@@ -173,7 +173,7 @@ class CDCHandler(threading.Thread):
     _QUEUE_BATCH_SIZE: int = 100
     _QUEUE_TIMEOUT: int = 2
 
-    def __init__(self, db: Datalayer, stop_event: threading.Event):
+    def __init__(self, db: DB, stop_event: threading.Event):
         """__init__.
 
         :param db: a superduperdb instance.
@@ -218,25 +218,25 @@ class CDCHandler(threading.Thread):
         :param ids: A list of ids observed during the change
         """
         for identifier in self.db.show('vector_index'):
-            vector_index = self.db.load(identifier=identifier, variety='vector_index')
+            vector_index = self.db.load(identifier=identifier, type_id='vector_index')
             vector_index = t.cast(VectorIndex, vector_index)
-            indexing_watcher_identifier = (
-                vector_index.indexing_watcher.identifier  # type: ignore[union-attr]
+            indexing_listener_identifier = (
+                vector_index.indexing_listener.identifier  # type: ignore[union-attr]
             )
             task_workflow.add_node(
-                f'copy_vectors({indexing_watcher_identifier})',
+                f'copy_vectors({indexing_listener_identifier})',
                 job=FunctionJob(
                     callable=copy_vectors,
-                    args=[indexing_watcher_identifier, cdc_query.serialize(), ids],
+                    args=[indexing_listener_identifier, cdc_query.serialize(), ids],
                     kwargs={},
                 ),
             )
-            model, key = indexing_watcher_identifier.split(  # type: ignore[union-attr]
+            model, key = indexing_listener_identifier.split(  # type: ignore[union-attr]
                 '/'
             )
             task_workflow.add_edge(
                 f'{model}.predict({key})',
-                f'copy_vectors({indexing_watcher_identifier})',
+                f'copy_vectors({indexing_listener_identifier})',
             )
         return task_workflow
 
@@ -307,9 +307,7 @@ class MongoEventMixin:
     DEFAULT_ID: str = '_id'
     EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
 
-    def on_create(
-        self, change: t.Dict, db: Datalayer, collection: query.Collection
-    ) -> None:
+    def on_create(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
         change stream.
@@ -328,7 +326,7 @@ class MongoEventMixin:
         packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
-    def on_update(self, change: t.Dict, db: Datalayer):
+    def on_update(self, change: t.Dict, db: DB):
         """on_update.
 
         :param change:
@@ -390,7 +388,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def __init__(
         self,
-        db: Datalayer,
+        db: DB,
         on: query.Collection,
         stop_event: threading.Event,
         identifier: 'str' = '',

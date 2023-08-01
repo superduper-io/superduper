@@ -20,11 +20,11 @@ from superduperdb.container.document import Document
 from superduperdb.container.job import ComponentJob, FunctionJob, Job
 from superduperdb.container.serializable import Serializable
 from superduperdb.container.task_workflow import TaskWorkflow
-from superduperdb.db.base.downloads import Downloader, gather_uris
+from superduperdb.db.base.download import Downloader, gather_uris
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorDatabase
 
-from .artifacts import ArtifactStore
+from .artifact import ArtifactStore
 from .data_backend import BaseDataBackend
 from .download_content import download_content
 from .exceptions import ComponentInUseError, ComponentInUseWarning
@@ -45,7 +45,7 @@ ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'select_one', 'update'
 
 
-class Datalayer:
+class DB:
     """
     Base database connector for SuperDuperDB
     """
@@ -55,7 +55,7 @@ class Datalayer:
     select_cls: t.Type[Select]
     models: t.Dict
 
-    variety_to_cache_mapping = {
+    type_id_to_cache_mapping = {
         'model': 'models',
         'metric': 'metrics',
         'encoder': 'encoders',
@@ -100,7 +100,7 @@ class Datalayer:
     def validate(
         self,
         identifier: str,
-        variety: str,
+        type_id: str,
         validation_set: str,
         metrics: t.Sequence[str],
     ):
@@ -108,11 +108,11 @@ class Datalayer:
         Evaluate quality of component, using `Component.validate`, if implemented.
 
         :param identifier: identifier of semantic index
-        :param variety: variety of component
+        :param type_id: type_id of component
         :param validation_set: validation dataset on which to validate
         :param metrics: metric functions to compute
         """
-        component = self.load(variety, identifier)
+        component = self.load(type_id, identifier)
         metric_list = [self.load('metric', m) for m in metrics]
         return component.validate(  # type: ignore[union-attr]
             self, validation_set, metric_list
@@ -120,7 +120,7 @@ class Datalayer:
 
     def show(
         self,
-        variety: str,
+        type_id: str,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
     ):
@@ -128,9 +128,9 @@ class Datalayer:
         Show available functionality which has been added using ``self.add``.
         If version is specified, then print full metadata
 
-        :param variety: variety of component to show ["encoder", "model", "watcher",
-                       "learning_task", "training_configuration", "metric",
-                       "vector_index", "job"]
+        :param type_id: type_id of component to show ['encoder', 'model', 'listener',
+                       'learning_task', 'training_configuration', 'metric',
+                       'vector_index', 'job']
         :param identifier: identifying string to component
         :param version: (optional) numerical version - specify for full metadata
         """
@@ -138,18 +138,18 @@ class Datalayer:
             raise ValueError(f'must specify {identifier} to go with {version}')
 
         if identifier is None:
-            return self.metadata.show_components(variety=variety)
+            return self.metadata.show_components(type_id=type_id)
 
         if version is None:
             return self.metadata.show_component_versions(
-                variety=variety, identifier=identifier
+                type_id=type_id, identifier=identifier
             )
 
         if version == -1:
-            return self._get_object_info(variety=variety, identifier=identifier)
+            return self._get_object_info(type_id=type_id, identifier=identifier)
 
         return self._get_object_info(
-            variety=variety, identifier=identifier, version=version
+            type_id=type_id, identifier=identifier, version=version
         )
 
     def predict(
@@ -325,7 +325,7 @@ class Datalayer:
 
     def remove(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: t.Optional[int] = None,
         force: bool = False,
@@ -333,24 +333,24 @@ class Datalayer:
         """
         Remove component (version: optional)
 
-        :param variety: variety of component to remove ["encoder", "model", "watcher",
-                        "training_configuration", "learning_task", "vector_index"]
+        :param type_id: type_id of component to remove ['encoder', 'model', 'listener',
+                        'training_configuration', 'learning_task', 'vector_index']
         :param identifier: identifier of component (see `container.base.Component`)
         :param version: [optional] numerical version to remove
         :param force: force skip confirmation (use with caution)
         """
         if version is not None:
-            return self._remove_component_version(variety, identifier, version=version)
-        versions = self.metadata.show_component_versions(variety, identifier)
+            return self._remove_component_version(type_id, identifier, version=version)
+        versions = self.metadata.show_component_versions(type_id, identifier)
         versions_in_use = []
         for v in versions:
-            if self.metadata.component_version_has_parents(variety, identifier, v):
+            if self.metadata.component_version_has_parents(type_id, identifier, v):
                 versions_in_use.append(v)
 
         if versions_in_use:
             component_versions_in_use = []
             for v in versions_in_use:
-                unique_id = Component.make_unique_id(variety, identifier, v)
+                unique_id = Component.make_unique_id(type_id, identifier, v)
                 component_versions_in_use.append(
                     f"{unique_id} -> "
                     f"{self.metadata.get_component_version_parents(unique_id)}",
@@ -368,20 +368,20 @@ class Datalayer:
                 )
 
         if force or click.confirm(
-            f'You are about to delete {variety}/{identifier}, are you sure?',
+            f'You are about to delete {type_id}/{identifier}, are you sure?',
             default=False,
         ):
             for v in sorted(list(set(versions) - set(versions_in_use))):
-                self._remove_component_version(variety, identifier, v, force=True)
+                self._remove_component_version(type_id, identifier, v, force=True)
 
             for v in sorted(versions_in_use):
-                self.metadata.hide_component_version(variety, identifier, v)
+                self.metadata.hide_component_version(type_id, identifier, v)
         else:
             print('aborting.')
 
     def load(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: t.Optional[int] = None,
         allow_hidden: bool = False,
@@ -390,8 +390,8 @@ class Datalayer:
         """
         Load component using uniquely identifying information.
 
-        :param variety: variety of component to remove ["encoder", "model", "watcher",
-                        "training_configuration", "learning_task", "vector_index"]
+        :param type_id: type_id of component to remove ['encoder', 'model', 'listener',
+                        'training_configuration', 'learning_task', 'vector_index']
         :param identifier: identifier of component (see `container.base.Component`)
         :param version: [optional] numerical version
         :param repopulate: toggle to ``False`` to only load references to other
@@ -400,7 +400,7 @@ class Datalayer:
                              components
         """
         info = self.metadata.get_component(
-            variety=variety,
+            type_id=type_id,
             identifier=identifier,
             version=version,
             allow_hidden=allow_hidden,
@@ -408,7 +408,7 @@ class Datalayer:
 
         if info is None:
             raise Exception(
-                f'No such object of type "{variety}", '
+                f'No such object of type "{type_id}", '
                 f'"{identifier}" has been registered.'
             )
 
@@ -420,7 +420,7 @@ class Datalayer:
                 k: v
                 for k, v in info['dict'].items()
                 if isinstance(v, dict)
-                and set(v.keys()) == {'variety', 'identifier', 'version'}
+                and set(v.keys()) == {'type_id', 'identifier', 'version'}
             }
 
         def replace_children(r):
@@ -440,7 +440,7 @@ class Datalayer:
         m = Component.deserialize(info)
         m.on_load(self)
 
-        if cm := self.variety_to_cache_mapping.get(variety):
+        if cm := self.type_id_to_cache_mapping.get(type_id):
             getattr(self, cm)[m.identifier] = m
         return m
 
@@ -464,12 +464,12 @@ class Datalayer:
                 args=[],
             ),
         )
-        watchers = self.show('watcher')
+        watchers = self.show('listener')
         if not watchers:
             return G
 
         for identifier in watchers:
-            info = self.metadata.get_component('watcher', identifier)
+            info = self.metadata.get_component('listener', identifier)
             query = info['dict']['select']
             model, key = identifier.split('/')
             G.add_node(
@@ -483,7 +483,7 @@ class Datalayer:
                         **info['dict']['predict_kwargs'],
                     },
                     method_name='predict',
-                    variety='model',
+                    type_id='model',
                 ),
             )
 
@@ -544,7 +544,7 @@ class Datalayer:
         object.on_create(self)
 
         existing_versions = self.show(
-            object.variety, object.identifier  # type: ignore[attr-defined]
+            object.type_id, object.identifier  # type: ignore[attr-defined]
         )
         if (
             isinstance(object.version, int)  # type: ignore[attr-defined]
@@ -582,15 +582,15 @@ class Datalayer:
         # TODO abbreviate this code
         for item in object.child_components:
             if isinstance(item[0], str):
-                k, child_variety = item
+                k, child_type_id = item
                 child = getattr(object, k)
                 if isinstance(child, str):
                     serialized['dict'][k] = {
-                        'variety': child_variety,
+                        'type_id': child_type_id,
                         'identifier': child,
                     }
                     serialized['dict'][k]['version'] = self.metadata.get_latest_version(
-                        child_variety, child
+                        child_type_id, child
                     )
                 else:
                     self._add(
@@ -599,20 +599,20 @@ class Datalayer:
                         parent=object.unique_id,
                     )
                     serialized['dict'][k] = {
-                        'variety': child.variety,
+                        'type_id': child.type_id,
                         'identifier': child.identifier,
                         'version': child.version,
                     }
             elif isinstance(item[0], tuple):
-                (k, ix), child_variety = item
+                (k, ix), child_type_id = item
                 child = getattr(object, k)[ix]
                 if isinstance(child, str):
                     serialized['dict'][k][ix] = {
-                        'variety': child_variety,
+                        'type_id': child_type_id,
                         'identifier': child,
                     }
                     serialized['dict'][k]['version'] = self.metadata.get_latest_version(
-                        child_variety, child
+                        child_type_id, child
                     )
                 else:
                     self._add(
@@ -621,19 +621,19 @@ class Datalayer:
                         parent=object.unique_id,
                     )
                     serialized['dict'][k][ix] = {
-                        'variety': child.variety,
+                        'type_id': child.type_id,
                         'identifier': child.identifier,
                         'version': child.version,
                     }
 
     def _create_plan(self):
         G = networkx.DiGraph()
-        for identifier in self.metadata.show_components('watcher', active=True):
-            G.add_node('watcher', job=identifier)
-        for identifier in self.metadata.show_components('watcher'):
+        for identifier in self.metadata.show_components('listener', active=True):
+            G.add_node('listener', job=identifier)
+        for identifier in self.metadata.show_components('listener'):
             deps = self._get_dependencies_for_watcher(identifier)
             for dep in deps:
-                G.add_edge(('watcher', dep), ('watcher', identifier))
+                G.add_edge(('listener', dep), ('listener', identifier))
         if not networkx.is_directed_acyclic_graph(G):
             raise ValueError('G is not a directed, acyclic graph')
         return G
@@ -643,13 +643,13 @@ class Datalayer:
 
     def _remove_component_version(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: int,
         force: bool = False,
     ):
-        unique_id = Component.make_unique_id(variety, identifier, version)
-        if self.metadata.component_version_has_parents(variety, identifier, version):
+        unique_id = Component.make_unique_id(type_id, identifier, version)
+        if self.metadata.component_version_has_parents(type_id, identifier, version):
             parents = self.metadata.get_component_version_parents(unique_id)
             raise Exception(f'{unique_id} is involved in other components: {parents}')
 
@@ -657,13 +657,13 @@ class Datalayer:
             f'You are about to delete {unique_id}, are you sure?',
             default=False,
         ):
-            component = self.load(variety, identifier, version=version)
-            info = self.metadata.get_component(variety, identifier, version=version)
+            component = self.load(type_id, identifier, version=version)
+            info = self.metadata.get_component(type_id, identifier, version=version)
             if hasattr(component, 'cleanup'):
                 component.cleanup(self)
-            if variety in self.variety_to_cache_mapping:
+            if type_id in self.type_id_to_cache_mapping:
                 try:
-                    del getattr(self, self.variety_to_cache_mapping[variety])[
+                    del getattr(self, self.type_id_to_cache_mapping[type_id])[
                         identifier
                     ]
                 except KeyError:
@@ -672,7 +672,7 @@ class Datalayer:
             if hasattr(component, 'artifacts'):
                 for a in component.artifacts:
                     self.artifact_store.delete_artifact(info['dict'][a]['file_id'])
-            self.metadata.delete_component_version(variety, identifier, version=version)
+            self.metadata.delete_component_version(type_id, identifier, version=version)
 
     def _download_content(
         self,
@@ -764,7 +764,7 @@ class Datalayer:
         return filter
 
     def _get_dependencies_for_watcher(self, identifier):
-        info = self.metadata.get_component('watcher', identifier)
+        info = self.metadata.get_component('listener', identifier)
         if info is None:
             return []
         watcher_features = info.get('features', {})
@@ -782,8 +782,8 @@ class Datalayer:
                 r[k] = self._get_file_content(r[k])
         return r
 
-    def _get_object_info(self, identifier, variety, version=None):
-        return self.metadata.get_component(variety, identifier, version=version)
+    def _get_object_info(self, identifier, type_id, version=None):
+        return self.metadata.get_component(type_id, identifier, version=version)
 
     def _apply_watcher(  # noqa: F811
         self,
@@ -798,7 +798,7 @@ class Datalayer:
     ) -> t.List:
         # NOTE: this method is never called anywhere except for itself!
         if watcher_info is None:
-            watcher_info = self.metadata.get_component('watcher', identifier)
+            watcher_info = self.metadata.get_component('listener', identifier)
 
         select = Serializable.deserialize(watcher_info['select'])
         if ids is None:
@@ -864,7 +864,7 @@ class Datalayer:
         """
         try:
             info = self.metadata.get_component(
-                object.variety, object.identifier, version=object.version
+                object.type_id, object.identifier, version=object.version
             )
         except FileNotFoundError as e:
             if upsert:
@@ -887,7 +887,7 @@ class Datalayer:
         self.metadata.replace_object(
             new_info,
             identifier=object.identifier,
-            variety='model',
+            type_id='model',
             version=object.version,
         )
 
@@ -915,7 +915,7 @@ class Datalayer:
 
 @dc.dataclass
 class LoadDict(dict):
-    database: Datalayer
+    database: DB
     field: str
 
     def __missing__(self, key: str):

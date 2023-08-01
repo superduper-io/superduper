@@ -6,7 +6,7 @@ import pytest
 import torch
 
 from superduperdb.container.document import Document
-from superduperdb.container.watcher import Watcher
+from superduperdb.container.listener import Listener
 from superduperdb.db.base.cdc import DatabaseWatcher
 from superduperdb.db.mongodb.query import Collection
 
@@ -227,22 +227,22 @@ def test_cdc_stop(watcher_and_collection_name):
 @contextmanager
 def add_and_cleanup_watchers(database, collection_name):
     """Add watchers to the database and remove them after the test"""
-    watcher_x = Watcher(
+    listener_x = Listener(
         key='x',
         model='model_linear_a',
         select=Collection(name=collection_name).find(),
     )
 
-    watcher_z = Watcher(
+    listener_z = Listener(
         key='z',
         model='model_linear_a',
         select=Collection(name=collection_name).find(),
     )
 
-    database.add(watcher_x)
-    database.add(watcher_z)
+    database.add(listener_x)
+    database.add(listener_z)
     try:
         yield database
     finally:
-        database.remove('watcher', 'model_linear_a/x', force=True)
-        database.remove('watcher', 'model_linear_a/z', force=True)
+        database.remove('listener', 'model_linear_a/x', force=True)
+        database.remove('listener', 'model_linear_a/z', force=True)

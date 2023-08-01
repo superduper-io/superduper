@@ -10,8 +10,8 @@ from superduperdb.db.mongodb.query import Collection
 
 
 @contextmanager
-def add_and_cleanup_watcher(database, collection_name):
-    """Add watcher to the database and remove it after the test"""
+def add_and_cleanup_listener(database, collection_name):
+    """Add listener to the database and remove it after the test"""
     listener_x = Listener(
         key='x',
         model='model_linear_a',
@@ -54,19 +54,19 @@ def test_insert_with_dask(
 ):
     collection_name = str(uuid.uuid4())
     with patch.object(CFG, "distributed", True):
-        with add_and_cleanup_watcher(
+        with add_and_cleanup_listener(
             database_with_default_encoders_and_model, collection_name
-        ) as database_with_watcher:
-            database_with_watcher.distributed = True
-            database_with_watcher._distributed_client = local_dask_client
+        ) as database_with_listener:
+            database_with_listener.distributed = True
+            database_with_listener._distributed_client = local_dask_client
 
-            database_with_watcher.execute(
+            database_with_listener.execute(
                 Collection(name=collection_name).insert_many(fake_updates)
             )
             local_dask_client.wait_all_pending_tasks()
 
             r = next(
-                database_with_watcher.execute(
+                database_with_listener.execute(
                     Collection(name=collection_name).find({'update': True})
                 ),
             )

@@ -56,7 +56,7 @@ class TorchTrainerConfiguration(_TrainingConfiguration):
     splitter: t.Optional[Artifact] = None
     download: bool = False
     validation_interval: int = 100
-    watch: str = 'objective'
+    listen: str = 'objective'
     optimizer_cls: Artifact = Artifact(torch.optim.Adam, serializer='pickle')
     optimizer_kwargs: t.Dict = dc.field(default_factory=dict)
     target_preprocessors: t.Optional[t.Union[Artifact, t.Dict]] = None
@@ -92,22 +92,22 @@ class Base:
         if isinstance(max_iterations, int) and iteration >= max_iterations:
             return True
         if isinstance(no_improve_then_stop, int):
-            if self.training_configuration.watch == 'objective':
-                to_watch = [-x for x in self.metric_values['objective']]
+            if self.training_configuration.listen == 'objective':
+                to_listen = [-x for x in self.metric_values['objective']]
             else:
-                to_watch = self.metric_values[self.training_configuration.watch]
+                to_listen = self.metric_values[self.training_configuration.listen]
 
-            if max(to_watch[-no_improve_then_stop:]) < max(to_watch):
+            if max(to_listen[-no_improve_then_stop:]) < max(to_listen):
                 logging.info('early stopping triggered!')
                 return True
         return False
 
     def saving_criterion(self):
-        if self.training_configuration.watch == 'objective':
-            to_watch = [-x for x in self.metric_values['objective']]
+        if self.training_configuration.listen == 'objective':
+            to_listen = [-x for x in self.metric_values['objective']]
         else:
-            to_watch = self.metric_values[self.training_configuration.watch]
-        if all([to_watch[-1] >= x for x in to_watch[:-1]]):
+            to_listen = self.metric_values[self.training_configuration.listen]
+        if all([to_listen[-1] >= x for x in to_listen[:-1]]):
             return True
         return False
 

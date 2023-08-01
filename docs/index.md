@@ -103,7 +103,7 @@ SuperDuperDB contains components allowing developers to configure models to cont
 ```python
 # Watch the database for incoming data, and process this with a model
 # Model outputs are continuously stored in the input records
-model.predict(X='input_col', db=db, select=coll.find(), watch=True)
+model.predict(X='input_col', db=db, select=coll.find(), listen=True)
 ```
 
 ## Use models outputs as inputs to downstream models
@@ -112,10 +112,10 @@ Simply add a simple method `featurize` to your queries, to register the fact tha
 
 ```python
 model.predict(
-		X='input_col',
-		db=db,
-		select=coll.find().featurize({'X': '<upstream-model-id>'}),  # already registered upstream model-id
-		watch=True,
+  X='input_col',
+  db=db,
+  select=coll.find().featurize({'X': '<upstream-model-id>'}),  # already registered upstream model-id
+  listen=True,
 )
 ```
 

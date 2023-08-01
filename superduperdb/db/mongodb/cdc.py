@@ -70,7 +70,7 @@ class Packet(BaseModel):
 
 @dc.dataclass
 class MongoChangePipeline:
-    """`MongoChangePipeline` is a class to represent watch pipeline
+    """`MongoChangePipeline` is a class to represent listen pipeline
     in mongodb watch api.
     """
 
@@ -80,7 +80,7 @@ class MongoChangePipeline:
         raise NotImplementedError
 
     def build_matching(self) -> t.Sequence[t.Dict]:
-        """A helper fxn to build a watch pipeline for mongo watch api.
+        """A helper fxn to build a listen pipeline for mongo watch api.
 
         :param matching_operations: A list of operations to watch.
         """
@@ -111,13 +111,13 @@ class CachedTokens:
         return self._current_tokens
 
 
-class BaseDatabaseWatcher(ABC):
+class BaseDatabaseListener(ABC):
     """
     A Base class which defines basic functions to implement.
     """
 
     @abstractmethod
-    def watch(self):
+    def listen(self):
         raise NotImplementedError
 
     @abstractmethod
@@ -136,7 +136,7 @@ def copy_vectors(
     a `vector_index` listener.
 
     This function will be added as node to the taskworkflow after every
-    `indexing_listener` in the defined watchers in db.
+    `indexing_listener` in the defined listeners in db.
     """
     try:
         query = Serializable.deserialize(cdc_query)
@@ -188,7 +188,7 @@ class CDCHandler(threading.Thread):
         """submit_task_workflow.
         A fxn to build a taskflow and execute it with changed ids.
         This also extends the task workflow graph with a node.
-        This node is responsible for applying a vector indexing watcher,
+        This node is responsible for applying a vector indexing listener,
         and copying the vectors into a vector search database.
 
         :param cdc_query: A query which will be used by `db._build_task_workflow` method
@@ -197,18 +197,18 @@ class CDCHandler(threading.Thread):
         """
 
         task_workflow = self.db._build_task_workflow(cdc_query, ids=ids, verbose=False)
-        task_workflow = self.create_vector_watcher_task(
+        task_workflow = self.create_vector_listener_task(
             task_workflow, cdc_query=cdc_query, ids=ids
         )
         task_workflow.run_jobs()
 
-    def create_vector_watcher_task(
+    def create_vector_listener_task(
         self,
         task_workflow: TaskWorkflow,
         cdc_query: Serializable,
         ids: t.Sequence[str],
     ) -> TaskWorkflow:
-        """create_vector_watcher_task.
+        """create_vector_listener_task.
         A helper function to define a node in taskflow graph which is responsible for
         copying vectors to a vector db.
 
@@ -299,7 +299,7 @@ class CDCHandler(threading.Thread):
 
 
 class MongoEventMixin:
-    """A Mixin class which defines helper fxns for `MongoDatabaseWatcher`
+    """A Mixin class which defines helper fxns for `MongoDatabaseListener`
     It define basic events handling methods like
     `on_create`, `on_update`, etc.
     """
@@ -350,34 +350,34 @@ class CDCKeys(Enum):
     document_data_key = 'fullDocument'
 
 
-class _DatabaseWatcherThreadScheduler(threading.Thread):
+class _DatabaseListenerThreadScheduler(threading.Thread):
     def __init__(
         self,
-        watcher: BaseDatabaseWatcher,
+        listener: BaseDatabaseListener,
         stop_event: threading.Event,
         start_event: threading.Event,
     ) -> None:
         threading.Thread.__init__(self, daemon=True)
         self.stop_event = stop_event
         self.start_event = start_event
-        self.watcher = watcher
+        self.listener = listener
 
     def run(self) -> None:
-        cdc_stream = self.watcher.setup_cdc()  # type: ignore[attr-defined]
+        cdc_stream = self.listener.setup_cdc()  # type: ignore[attr-defined]
         self.start_event.set()
-        logging.info(f'Database watch service started at {datetime.datetime.now()}')
+        logging.info(f'Database listen service started at {datetime.datetime.now()}')
         while not self.stop_event.is_set():
-            self.watcher.next_cdc(cdc_stream)  # type: ignore[attr-defined]
+            self.listener.next_cdc(cdc_stream)  # type: ignore[attr-defined]
             time.sleep(0.01)
 
 
-class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
+class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
     """
     It is a class which helps capture data from mongodb database and handle it
     accordingly.
 
     This class accepts options and db instance from user and starts a scheduler
-    which could schedule a watching service to watch change stream.
+    which could schedule a listening service to listen change stream.
 
     This class builds a workflow graph on each change observed.
 
@@ -399,7 +399,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         :param db: It is a superduperdb instance.
         :param on: It is used to define a Collection on which CDC would be performed.
         :param stop_event: A threading event flag to notify for stoppage.
-        :param identifier: A identifier to represent the watcher service.
+        :param identifier: A identifier to represent the listener service.
         :param resume_token: A resume token is a token used to resume
         the change stream in mongo.
         """
@@ -443,8 +443,8 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
     ) -> t.Optional[t.Sequence[t.Any]]:
         """_get_stream_pipeline.
 
-        :param change: change can be a prebuilt watch pipeline like
-        'generic' or user Defined watch pipeline.
+        :param change: change can be a prebuilt listen pipeline like
+        'generic' or user Defined listen pipeline.
         """
         return MongoChangePipelines.get(change)
 
@@ -564,7 +564,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def info(self) -> t.Dict:
         """
-        Get info on the current state of watcher.
+        Get info on the current state of listener.
         """
         info = {}
         info.update(
@@ -578,7 +578,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def set_resume_token(self, token: TokenType) -> None:
         """
-        Set the resume token for the watcher.
+        Set the resume token for the listener.
         """
         self.resume_token = token
 
@@ -586,7 +586,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
         self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]]
     ) -> None:
         """
-        Set the change pipeline for the watcher.
+        Set the change pipeline for the listener.
         """
         if change_pipeline is None:
             change_pipeline = MongoChangePipelines.get('generic')
@@ -595,19 +595,19 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def resume(self, token: TokenType) -> None:
         """
-        Resume the watcher from a given token.
+        Resume the listener from a given token.
         """
         self.set_resume_token(token.token)  # type: ignore[attr-defined]
-        self.watch()
+        self.listen()
 
-    def watch(
+    def listen(
         self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]] = None
     ) -> None:
-        """Primary fxn to initiate watching of a database on the collection
+        """Primary fxn to initiate listening of a database on the collection
         with defined `change_pipeline` by the user.
 
-        :param change_pipeline: A mongo watch pipeline defined by the user
-        for more fine grained watching.
+        :param change_pipeline: A mongo listen pipeline defined by the user
+        for more fine grained listening.
         """
         try:
             s.CFG.cdc = True
@@ -615,15 +615,15 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
             if self._scheduler:
                 if self._scheduler.is_alive():
                     raise RuntimeError(
-                        'CDC Watcher thread is already running!,/'
-                        'Please stop the watcher first.'
+                        'CDC Listener thread is already running!,/'
+                        'Please stop the listener first.'
                     )
 
             if not self._cdc_change_handler.is_alive():
                 del self._cdc_change_handler
                 self.start_handler()
 
-            scheduler = _DatabaseWatcherThreadScheduler(
+            scheduler = _DatabaseListenerThreadScheduler(
                 self, stop_event=self._stop_event, start_event=self._startup_event
             )
             self.attach_scheduler(scheduler)
@@ -633,7 +633,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
             while not self._startup_event.is_set():
                 time.sleep(0.1)
         except Exception:
-            logging.exception('Watching service stopped!')  # type: ignore[attr-defined]
+            logging.error('Listening service stopped!')
             s.CFG.cdc = False
             self.stop()
             raise
@@ -652,7 +652,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def stop(self) -> None:
         """
-        Stop watching cdc changes.
+        Stop listening cdc changes.
         This stops the corresponding services as well.
         """
         s.CFG.cdc = False
@@ -663,7 +663,7 @@ class MongoDatabaseWatcher(BaseDatabaseWatcher, MongoEventMixin):
 
     def is_available(self) -> bool:
         """
-        Get the status of watcher.
+        Get the status of listener.
         """
         return not self._stop_event.is_set()
 

@@ -19,8 +19,8 @@ ref: https://www.mongodb.com/docs/manual/changeStreams/
 Use this module like this::
     db = any_arbitary_database.connect(...)
     db = superduper(db)
-    watcher = DatabaseWatcher(db=db, on=Collection('test_collection'))
-    watcher.watch()
+    listener = DatabaseListener(db=db, on=Collection('test_collection'))
+    listener.listen()
 """
 
 import threading
@@ -31,42 +31,41 @@ from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb import cdc
 from superduperdb.db.mongodb.query import Collection
 
-DBWatcherType = t.TypeVar('DBWatcherType')
+DBListenerType = t.TypeVar('DBListenerType')
 
 
-class DatabaseWatcherFactory(t.Generic[DBWatcherType]):
-    """DatabaseWatcherFactory.
-    A Factory class to create instance of DatabaseWatcher corresponding to the
+class DatabaseListenerFactory(t.Generic[DBListenerType]):
+    """A Factory class to create instance of DatabaseListener corresponding to the
     `db_type`.
     """
 
-    SUPPORTED_WATCHERS: t.List[str] = ['mongodb']
+    SUPPORTED_LISTENERS: t.List[str] = ['mongodb']
 
     def __init__(self, db_type: str = 'mongodb'):
-        if db_type not in self.SUPPORTED_WATCHERS:
+        if db_type not in self.SUPPORTED_LISTENERS:
             raise ValueError(f'{db_type} is not supported yet for CDC.')
-        self.watcher = db_type
+        self.listener = db_type
 
-    def create(self, *args, **kwargs) -> DBWatcherType:
+    def create(self, *args, **kwargs) -> DBListenerType:
         stop_event = threading.Event()
         kwargs['stop_event'] = stop_event
-        watcher = cdc.MongoDatabaseWatcher(*args, **kwargs)
-        return t.cast(DBWatcherType, watcher)
+        listener = cdc.MongoDatabaseListener(*args, **kwargs)
+        return t.cast(DBListenerType, listener)
 
 
-def DatabaseWatcher(
+def DatabaseListener(
     db: DB,
     on: Collection,
     identifier: str = '',
     *args,
     **kwargs,
-) -> cdc.BaseDatabaseWatcher:
+) -> cdc.BaseDatabaseListener:
     """
-    Create an instance of `BaseDatabaseWatcher`
+    Create an instance of `BaseDatabaseListener`
 
     :param db: A superduperdb instance.
-    :param on: Which collection/table watcher service this be invoked on?
-    :param identifier: A identity given to the watcher service.
+    :param on: Which collection/table listener service this be invoked on?
+    :param identifier: A identity given to the listener service.
     """
     it = backends.data_backends.items()
     if types := [k for k, v in it if isinstance(db.databackend, v)]:
@@ -77,6 +76,6 @@ def DatabaseWatcher(
     if db_type != 'mongodb':
         raise NotImplementedError(f'Database {db_type} not supported yet!')
 
-    factory_factory = DatabaseWatcherFactory[cdc.MongoDatabaseWatcher]
+    factory_factory = DatabaseListenerFactory[cdc.MongoDatabaseListener]
     db_factory = factory_factory(db_type=db_type)
     return db_factory.create(db=db, on=on, identifier=identifier, *args, **kwargs)

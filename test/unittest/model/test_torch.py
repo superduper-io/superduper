@@ -3,7 +3,6 @@ import torch
 from superduperdb.container.metric import Metric
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.torch.model import TorchModel, TorchTrainerConfiguration
-from superduperdb.misc.classification import compute_classification_metrics
 
 
 class ToDict:
@@ -52,7 +51,6 @@ def test_fit(random_data, si_validation):
             loader_kwargs={'batch_size': 10},
             max_iterations=100,
             validation_interval=10,
-            compute_metrics=compute_classification_metrics,
         ),
         postprocess=lambda x: int(torch.sigmoid(x).item() > 0.5),
     )

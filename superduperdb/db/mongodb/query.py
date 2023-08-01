@@ -370,6 +370,8 @@ class Find(Select):
     ) -> None:
         if key.startswith('_outputs'):
             key = key.split('.')[1]
+        if not outputs:
+            return
         db.db[self.collection.name].bulk_write(  # type: ignore[union-attr]
             [
                 _UpdateOne(

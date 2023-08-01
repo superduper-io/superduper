@@ -82,7 +82,7 @@ class PredictMixin:
             variety='model',
             args=[X],
             kwargs={
-                'remote': False,
+                'distributed': False,
                 'select': select.serialize() if select else None,
                 'ids': ids,
                 'max_chunk_size': max_chunk_size,
@@ -140,7 +140,7 @@ class PredictMixin:
         outputs = self._forward(X, **predict_kwargs)
 
         if isinstance(self.postprocess, Artifact):
-            [self.postprocess.artifact(o) for o in outputs]
+            outputs = [self.postprocess.artifact(o) for o in outputs]
         elif self.postprocess is not None:
             raise ValueError('Bad postprocess')
 
@@ -404,7 +404,7 @@ class Model(Component, PredictMixin):
             args=[X],
             kwargs={
                 'y': y,
-                'remote': False,
+                'distributed': False,
                 'select': select.serialize() if select else None,
                 **kwargs,
             },

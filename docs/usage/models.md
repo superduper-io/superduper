@@ -13,7 +13,7 @@ is via the `Model` abstraction. This maybe thought of in the following way:
 - A wrapper around AI frameworks facilitating use of models with the datalayer.
 - A self contained unit of functionality handling all communication with the datalayer.
 - A unifying abstraction bringing all AI frameworks onto a single playing field.
-- An trainable, parametrizable extension of UDFs from traditional databasing.
+- A trainable, parametrizable extension of UDFs from traditional databases.
 
 The uniformity of the abstraction is inspired by the Sklearn `.fit`, `.predict` paradigm,
 but with additional features which are required in order to allow the models to read and

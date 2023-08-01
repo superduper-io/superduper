@@ -37,7 +37,7 @@ python3 -m pip install -r requirements/requirements-dev.in  # install the Python
 python3 -m pip install -e .  # Install the superduperdb project in editable mode
 ```
 
-The final steps to creating a development environment involve installing [MongoDB](https://www.mongodb.com/docs/manual/installation/) and [Docker](https://docs.docker.com/engine/install/). Once you get this far, you are all set to start contributing - ship it! :shipit:
+The final steps to creating a development environment involve installing [MongoDB](https://www.mongodb.com/docs/manual/installation/), [Docker](https://docs.docker.com/engine/install/) and [pandoc](https://pandoc.org/installing.html). Once you get this far, you are all set to start contributing - ship it! :shipit:
 
 ## Getting Help 🙋
 

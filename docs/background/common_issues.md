@@ -27,7 +27,7 @@ Pre-2023, this is an extremely arduous task. In order to get a model working usi
 
 1. Download a snapshot of his data from MongoDB and place in an AWS s3 bucket.
 2. Write a script to run through all of the images mentioned in the BSON records downloaded, and download these to a fast-access hard drive, in elastic block storage
-3. Write a new script which processes the data downloaded from MongoDB, extracting a dataframe of labels and image URIs in s3. He has to take care not to make bookeeping errors in the process.
+3. Write a new script which processes the data downloaded from MongoDB, extracting a dataframe of labels and image URIs in s3. He has to take care not to make book-keeping errors in the process.
 4. Prepare the model for training, using for example, `torchvision`, to preprocess the images for batching using GPUs, and `torch` for writing the model forward pass.
 5. To perform training, spin up an EC2 instance, or use AWS Sagemaker. Often the lock-in nature of AWS Sagemaker staves off a large percentage of users. This means defining AWS Cloudformation templates allowing us to easily start a training instance, mount the hard-drive containing the images, and stop the instance with an AWS lambda function after completion.
 6. If the model is declared sufficient, we move to building a production pipeline. Again, to avoid, vendor lock-in, we might opt for the open-source Apache Airflow. We build a DAG using Airflow, which periodically checks for records which are have yet to be classified in MongoDB, loads data from the database and dumps this into an s3 bucket, downloads the images referred to in this data, loads the model and applies preprocessing to the images, followed by running the model over this data, and finally applying post-processing to the outputs. The classifications are then made human readable, looking up indices in a lookup table we provide. The classifications are finally inserted back to MongoDB, along with the probabilistic estimates from the PyTorch model. 
@@ -52,7 +52,7 @@ This is where SuperDuperDB comes in. Let's look at how SuperDuperDB might allow 
    so that as new data are inserted, the model is evaluated in inference model, 
    the predictions postprocessed, and human readable outputs are inserted to the user collection.
    
-With SuperDuperDB setup in this way, and models configurated to operate on the "user" collection, 
+With SuperDuperDB setup in this way, and models configured to operate on the "user" collection, 
 the deployment reacts automatically to changes in the "user" collection and 
 model outputs are continuously integrated back into the database.
 

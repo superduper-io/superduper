@@ -173,9 +173,9 @@ class Datalayer:
         context = None
 
         if context_select is not None:
-            assert model.takes_context, (  # type: ignore[attr-defined]
-                'model does not take context'
-            )
+            assert (
+                model.takes_context  # type: ignore[attr-defined]
+            ), 'model does not take context'
             context = list(self.execute(context_select))
             context = [x.unpack() for x in context]
             if context_key is not None:

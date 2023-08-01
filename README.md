@@ -73,7 +73,7 @@
 </p>
 
 # How to 🤷
-### The following are examples of how you use SuperDuperDB with Python (find all how-tos <a href="https://superduperdb.github.io/superduperdb">in the docs here</a>): 
+### The following are examples of how you use SuperDuperDB with Python (find all how-tos and examples <a href="https://superduperdb.github.io/superduperdb">in the docs here</a>): 
 
 - **Add a ML/AI model into your database <a href="404">(read more in the docs here)</a>:**
 ```python
@@ -97,7 +97,7 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 
 <br>
 
-- **Train/fine-tune a model <a href="404">(read more in the docs here)</a>:**
+- **Train/fine-tune a model <a href="https://superduperdb.github.io/superduperdb/usage/models.html#training-models-on-data-with-fit">(read more in the docs here)</a>:**
 
 ```python
 import pymongo
@@ -117,7 +117,7 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 
 <br>
 
-- **Use MongoDB as your vector search database <a href="404">(read more in the docs here)</a>:**
+- **Use MongoDB as your vector search database <a href="https://superduperdb.github.io/superduperdb/usage/vector_index.html">(read more in the docs here)</a>:**
 ```python
 # First a "Watcher" makes sure vectors stay up-to-date
 indexing_watcher = Watcher(model=OpenAIEmbedding(), key='text', select=collection.find())
@@ -133,7 +133,7 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 
 <br>
 
-- **Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search <a href="404">(read more in the docs here)</a>:**
+- **Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search <a href="https://superduperdb.github.io/superduperdb/examples/compare_vector_search_solutions.html">(read more in the docs here)</a>:**
 ```python
 # Create a ``VectorIndex`` instance with indexing watcher as OpenAIEmbedding and add it to the database.
 db.add(
@@ -157,7 +157,7 @@ cur = db.execute(
 
 <br>
 
-- **Add Llama 2 model directly into your database! <a href="404">(read more in the docs here)</a>:**
+- **Add Llama 2 model directly into your database! <a href="https://superduperdb.github.io/superduperdb/usage/models.html#tranformers">(read more in the docs here)</a>:**
 ```python
 model_id = "meta-llama/Llama-2-7b-chat-hf"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -191,7 +191,7 @@ model.predict(
 
 <br>
 
-- **Use models outputs as inputs to downstream models <a href="404">(read more in the docs here)</a>:**
+- **Use models outputs as inputs to downstream models <a href="https://superduperdb.github.io/superduperdb/usage/queries.html#featurization">(read more in the docs here)</a>:**
 
 ```python
 model.predict(
@@ -221,7 +221,7 @@ pip install superduperdb
 # Quickstart 🚀
 
 #### Try SuperDuperDB in Google Colab 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/11SJunSZc52jUuYrmNi5GziombcQ_sdhJ#scrollTo=XwWu32JBovja)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb)
 
 This will set up a playground environment that includes:
 - an installation of SuperDuperDB

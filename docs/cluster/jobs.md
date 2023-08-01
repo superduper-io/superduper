@@ -11,7 +11,7 @@ spawned in the configured Dask worker pool.
 
 - Inserting data
 - Updating data
-- Creating watchers
+- Creating `Listener` instances
 - Apply models to data `model.predict`
 - Training models `model.fit`
 

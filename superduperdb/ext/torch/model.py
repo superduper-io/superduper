@@ -60,12 +60,8 @@ class TorchTrainerConfiguration(_TrainingConfiguration):
     optimizer_cls: Artifact = Artifact(torch.optim.Adam, serializer='pickle')
     optimizer_kwargs: t.Dict = dc.field(default_factory=dict)
     target_preprocessors: t.Optional[t.Union[Artifact, t.Dict]] = None
-    compute_metrics: t.Optional[t.Union[Artifact, t.Callable]] = None
 
     def __post_init__(self):
-        if self.compute_metrics and not isinstance(self.compute_metrics, Artifact):
-            self.compute_metrics = Artifact(artifact=self.compute_metrics)
-
         if self.objective and not isinstance(self.objective, Artifact):
             self.objective = Artifact(artifact=self.objective)
 
@@ -207,18 +203,6 @@ class Base:
                 )
             return sum(objective_values) / len(objective_values)
 
-    def compute_metrics(self, validation_set, database):
-        if validation_set not in self._validation_set_cache:
-            self._validation_set_cache[validation_set] = database.load(
-                'dataset', validation_set
-            )
-        data = [r.unpack() for r in self._validation_set_cache[validation_set].data]
-        return self.training_configuration.compute_metrics.artifact(
-            data,
-            metrics=self.metrics,
-            model=self,
-        )
-
     def _fit_with_dataloaders(
         self,
         train_dataloader: DataLoader,
@@ -239,8 +223,9 @@ class Base:
                     valid_loss = self.compute_validation_objective(valid_dataloader)
                     all_metrics = {}
                     for vs in validation_sets:
-                        metrics = self.compute_metrics(vs, db)
-                        metrics = {f'{vs}/{k}': metrics[k] for k in metrics}
+                        metrics = self._validate(  # type: ignore[attr-defined]
+                            db=db, validation_set=vs, metrics=self.metrics
+                        )
                         all_metrics.update(metrics)
                     all_metrics.update({'objective': valid_loss})
                     self.append_metrics(all_metrics)  # type: ignore[attr-defined]
@@ -408,7 +393,7 @@ class TorchModel(Base, Model):  # type: ignore[misc]
             output = method(singleton_batch)
             output = to_device(output, 'cpu')
             args = unpack_batch(output)[0]
-            if self.preprocess is not None:
+            if self.postprocess is not None:
                 args = self.postprocess.artifact(args)
             return args
 

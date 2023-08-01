@@ -34,7 +34,7 @@ def _available_models():
 class OpenAI(Component, PredictMixin):
     variety: t.ClassVar[str] = 'model'
     model: str
-    identifier: str
+    identifier: t.Optional[str] = None  # type: ignore[assignment]
     version: t.Optional[int] = None
     takes_context: bool = False
     encoder: t.Union[Encoder, str, None] = None

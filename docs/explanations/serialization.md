@@ -1,8 +1,8 @@
 # Serialization
 
 SuperDuperDB makes extensive use of various serialization techniques in Python, 
-in order to save the following objects to the `Datalayer`, which inherit
-from `superduperdb.core.base.Component`
+in order to save the following objects to the `DB`, which inherit
+from `superduperdb.container.base.Component`
 
 - [Models](models)
 - [Vector Indexes](vectorsearch)

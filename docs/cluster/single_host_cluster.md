@@ -12,7 +12,7 @@ This command starts the following components:
 
 - Server (accessible via the SuperDuperDB client)
 - Local Dask Cluster (configurable via configuration system) for deploying jobs
-- Change data capture implementing [watchers](watchers) on MongoDB collections mentioned in space separated list `collection_names`
+- Change data capture implementing [listeners](listeners) on MongoDB collections mentioned in space separated list `collection_names`
 
 See our architecture diagram [here](architecture) for a more detailed explanation of how 
 these components interact.

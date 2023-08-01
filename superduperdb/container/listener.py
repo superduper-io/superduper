@@ -36,7 +36,6 @@ class Listener(Component):
     active: bool = True
     features: t.Optional[t.Dict] = None
     identifier: t.Optional[str] = None
-    max_chunk_size: int = 5000
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     select: t.Optional[Select] = None
     version: t.Optional[int] = None
@@ -97,7 +96,6 @@ class Listener(Component):
             db=database,
             select=self.select,
             distributed=distributed,
-            max_chunk_size=self.max_chunk_size,
             dependencies=dependencies,
             **(self.predict_kwargs or {}),
         )

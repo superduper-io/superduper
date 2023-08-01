@@ -48,10 +48,11 @@ This is where SuperDuperDB comes in. Let's look at how SuperDuperDB might allow 
    to the `.fit` method of the wrapped model.
 3. SuperDuperDB springs into action, uploading the model to SuperDuperDB, and triggering model training on SuperDuperDB's `dask` worker pool.
    Once finished, metrics and model-state are preserved in the configured artifact store.
-4. Using, one command, `model.predict('img', select=q, watch=True)`, Jim installs the model on the user collection, 
+4. Using, one command, `model.predict('img', select=q, listen=True)`, Jim installs the model on the user collection, 
    so that as new data are inserted, the model is evaluated in inference model, 
    the predictions postprocessed, and human readable outputs are inserted to the user collection.
    
+
 With SuperDuperDB setup in this way, and models configured to operate on the "user" collection, 
 the deployment reacts automatically to changes in the "user" collection and 
 model outputs are continuously integrated back into the database.

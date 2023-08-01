@@ -2,6 +2,8 @@ import subprocess
 import typing as t
 from subprocess import PIPE, CalledProcessError
 
+import superduperdb as s
+
 __all__ = (
     'CalledProcessError',
     'PIPE',
@@ -13,7 +15,8 @@ __all__ = (
 def run(
     args: t.Sequence[str], text: bool = True, check: bool = True, **kwargs
 ) -> subprocess.CompletedProcess:
-    print('$', *args)
+    if s.CFG.verbose:
+        print('$', *args)
     return subprocess.run(args, text=text, check=check, **kwargs)
 
 

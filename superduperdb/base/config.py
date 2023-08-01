@@ -194,3 +194,4 @@ class Config(JSONable):
     notebook: Notebook = Factory(Notebook)
     server: Server = Factory(Server)
     vector_search: VectorSearch = Factory(VectorSearch)
+    verbose: bool = False

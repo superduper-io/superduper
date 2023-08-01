@@ -1,20 +1,19 @@
-# Datalayer
-
+# DB
 
 ```{note}
-The `Datalayer` is the primary interface from Python to your data+AI.
+The `DB` is the primary interface from Python to your data+AI.
 ```
 
-The central object for communicating with MongoDB in SuperDuperDB is the `Datalayer`.
+The central object for communicating with MongoDB in SuperDuperDB is the `DB`.
 
-The `Datalayer` object combines 4 basic functionalities involved in integrating AI to the datalayer:
+The `DB` object combines 4 basic functionalities involved in integrating AI to the database:
 
-- Querying, updating and inserting data to the datalayer
+- Querying, updating and inserting data 
 - Uploading and saving AI models and associated functionality involving large data-blobs
 - Saving metadata related to AI models and associated functionality
-- (Optional) performing vector search on the datalayer using configured AI models
+- (Optional) performing vector search on the database using configured AI models
 
-Correspondingly a datalayer may be built by passing these 4 items to the `Datalayer.__init__` method:
+Correspondingly a database may be built by passing these 4 items to the `DB.__init__` method:
 
 ```python
 from superduperdb.db.base.db import DB
@@ -48,7 +47,7 @@ from superduperdb.db.base.build import build_datalayer
 db = build_datalayer()
 ```
 
-In order to build a datalayer based on MongoDB defaults, a one-size-fits-all wrapper is:
+In order to build a database based on MongoDB defaults, a one-size-fits-all wrapper is:
 
 ```python
 from superduperdb import superduper

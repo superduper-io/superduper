@@ -1,5 +1,5 @@
 (replicasetup)=
-# Replica set in MongoDB
+# How to create a replica set in MongoDB
 
 In order to use change data capture in SuperDuperDB together with MongoDB, it's necessary
 to use a MongoDB replica set. (This is a feature of MongoDB in order to preserve performance of master node.)

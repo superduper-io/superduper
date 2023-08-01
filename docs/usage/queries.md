@@ -5,23 +5,23 @@ SuperDuperDB wraps the standard MongoDB query API. It augments
 these queries with support for vector-search and recall of complex data-types.
 ```
 
-SuperDuperDB queries are based on the queries of the underlying datalayer, upon which the 
-Datalayer is based (see the [section on the `Datalayer`](datalayer)). 
+SuperDuperDB queries are based on the queries of the underlying database, upon which the 
+`DB` is based (see the [section on the `DB`](db)). 
 
 Unlike some Python clients, in SuperDuperDB, queries are objects, rather then methods or functions.
 This allows SuperDuperDB to serialize these queries for use in diverse tasks, such as model 
-applications using the `Watcher` paradigm (see {ref}`watchers`, model application, and management of vector-indices).
+applications using the `Listener` paradigm (see [here](listeners)), model application, and management of vector-indices).
 
 A query is executed as follows:
 
 ```python
-db = build_datalayer()
+# db a `DB` instance
 db.execute(query)
 ```
 
 ## MongoDB
 
-We currently support MongoDB as the datalayer backend. As in `pymongo` all queries operate at the collection level:
+We currently support MongoDB as the database backend. As in `pymongo` all queries operate at the collection level:
 
 ```python
 from superduperdb.db.mongodb.query import Collection
@@ -41,8 +41,8 @@ Document({'_id': ObjectId('64b89e92c08139e1cedc11a4'), 'x': Encodable(x=tensor([
 is that the data may contain complex data-types such as images (see [the section on encoders](encoders) for more detail):
 
 ```python
-from superduperdb.container.document import Document as D
->> > db.execute(
+from superduperdb.core.document import Document as D
+>>> db.execute(
     collection.insert_many([
         D({'this': f'is a test {i}'})
         for i in range(10)
@@ -50,7 +50,7 @@ from superduperdb.container.document import Document as D
 )
 ```
 
-SuperDuperDB also includes a composite API, enabling support for vector-search together with the query API of the datalayer: see the [section on vector-search](vectorsearch) for details.
+SuperDuperDB also includes a composite API, enabling support for vector-search together with the query API of the database: see the [section on vector-search](vectorsearch) for details.
 
 Supported MongoDB queries:
 
@@ -76,3 +76,18 @@ cursor = db.execute(
 
 See the [model section](model) for information on how to compute and keep features (model outputs)
 up to date.
+
+## Vector Search queries
+
+If one or more `VectorIndex` instances have been configured together with the `DB`, these 
+may be used in hybrid queries together with standard databasing queries:
+
+```python
+cursor_1 = db.execute(
+    collection.like({'image': my_image}), vector_index='<index>').find({'<key>': '<value>'})
+cursor_2 = db.execute(
+    collection.find({'<key>': '<value>'}).like({'image': my_image}, vector_index='<index>')
+)
+```
+
+See [here](vectorsearch) for more background on vector-search and `VectorIndex` functionality.

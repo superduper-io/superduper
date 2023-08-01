@@ -24,6 +24,6 @@ from superduperdb.db.mongodb.query import Collection
 c = Client(uri='<uri>')
 collection = Collection(name='docs')
 
-c.show('model')  # standard methods supported by `DataLayer` are accessible here
+c.show('model')  # standard methods supported by `DB` are accessible here
 r = c.execute(collection.find_one())  # data fetched with standard queries
 ```

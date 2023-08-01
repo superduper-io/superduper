@@ -6,10 +6,10 @@ See [here](https://github.com/SuperDuperDB/superduperdb-stealth/wiki/Roadmap) fo
 
 ## Components
 
-- [Datalayer](datalayer)
+- [DB](db)
 - [Models](models)
 - [Encoders](encoders)
-- [Watchers](watchers)
+- [listeners](listeners)
 - [Metrics](metrics)
 - [Vector-Indexes](vectorsearch)
 - [Datasets](datasets)
@@ -45,13 +45,13 @@ For `model.fit` and `model.predict`:
 
 Models, and components associated with models are automatically stored in a configured artifact store, and versioned. Dependencies between models and components are logged, and versions are protected from deletion which participate in other components.
 
-### Watchers: daemonizing models on datalayer
+### listeners: daemonizing models on database
 
-Models may be configured to watch the database for changes, and when new data is inserted, compute new outputs over that data, and store this back in the datalayer.
+Models may be configured to listen the database for changes, and when new data is inserted, compute new outputs over that data, and store this back in the database.
 
-## Datalayer
+## Database
 
-### Supported datalayers
+### Supported databases
 
 Currently supported
 
@@ -81,5 +81,5 @@ We have support for these features:
 
 - Task parallelization on Dask
 - Client-server for working with SuperDuperDB from a remote client
-- Change-data capture (CDC): users are enabled to insert data from any client and models may be executed on workers, capturing new inputs and populating outputs to the datalayer
-- Vector-search using LanceDB, which is kept in sync with the datalayer using CDC.
+- Change-data capture (CDC): users are enabled to insert data from any client and models may be executed on workers, capturing new inputs and populating outputs to the database
+- Vector-search using LanceDB, which is kept in sync with the database using CDC.

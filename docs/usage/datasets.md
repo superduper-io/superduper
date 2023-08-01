@@ -1,7 +1,7 @@
 # Datasets 
 
 ```{note}
-Datasets are immutable snapshots of the `Datalayer`
+Datasets are immutable snapshots of the `DB`
 ```
 
 When building AI models, in many cases, especially for validation, it's important that 
@@ -12,7 +12,7 @@ immutable snapshots of data are maintained for posterity. The purpose of this pr
 - To maintain a record for auditors and oversight committees to refer to in the worst case.
 
 Correspondingly, SuperDuperDB distinguishes between datasets and data queries from 
-the `Datalayer`. The `Dataset` is designed to be fetched only once, and preserved
+the `DB`. The `Dataset` is designed to be fetched only once, and preserved
 as an `Artifact`, saved in the configured artifact store. 
 
 Here is an example of creating a SuperDuperDB dataset:

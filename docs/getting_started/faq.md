@@ -51,7 +51,7 @@ MLOps becoming significantly simpler, the moment it becomes absolutely necessary
 
 The [FARM stack](https://www.mongodb.com/developer/languages/python/farm-stack-fastapi-react-mongodb/)
 refers to application development using FastAPI, React and MongoDB. 
-In this triumvirate, MongoDB constitutes the datalayer, the backend is deployed in Python
+In this triumvirate, MongoDB constitutes the database, the backend is deployed in Python
 via FastAPI, and the frontend is built in React-Javascript. Due to the Python backend and the developments in AI in Python in 2023, SuperDuperDB is an ideal candidate to integrate here: AI models are managed by SuperDuperDB, and predictions are stored in MongoDB.
 
 We are working on a [RESTful client-server](clientserver) implementation, allowing queries involving vector-search models to be dispatched directly from a React frontend. For applications which do not require
@@ -66,12 +66,12 @@ LangChain is a Python package for making:
 
 See more [here](https://python.langchain.com/docs/get_started/introduction.html).
 
-SuperDuperDB is focused around the datalayer, and creating ML and AI models which operate
+SuperDuperDB is focused around the database, and creating ML and AI models which operate
 at the document/ row-level. This includes the possibility of seeding language models with 
 context which originates from vector search. 
 
 We found we did not need LangChain to seed OpenAI or other language models with prompts constructed out of records
-from the `Datalayer` allows us to do everything we want to do with SuperDuperDB; see [here](examples/voice_memos.html) for an example of using vector-search to seed an OpenAI prompt.
+from the `DB` allows us to do everything we want to do with SuperDuperDB; see [here](examples/voice_memos.html) for an example of using vector-search to seed an OpenAI prompt.
 This includes building highly sophisticated multimodal workflows, including interactions
 between image, text, audio and more. For this reason, we decided initially not 
 to integrate LangChain.

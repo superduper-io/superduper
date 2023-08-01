@@ -5,7 +5,7 @@ SuperDuperDB has a component versioning system. This versioning system applies t
 
 - [models](modelz)
 - [encoders](encoders)
-- [watchers](watchers)
+- [listeners](listeners)
 - [vector-indexes](vectorsearch)
 
 Here's how it works:

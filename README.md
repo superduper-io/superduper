@@ -1,9 +1,9 @@
 <p align="center">
-<a href="https://github.com/SuperDuperDB/superduperdb-stealth/actions?query=workflow%3Aci+event%3Apush+branch%3Amain">
-    <img src="https://github.com/SuperDuperDB/superduperdb-stealth/workflows/CI/badge.svg?event=push&branch=main" alt="CI">
+<a href="https://github.com/SuperDuperDB/superduperdb/actions?query=workflow%3Aci+event%3Apush+branch%3Amain">
+    <img src="https://github.com/SuperDuperDB/superduperdb/workflows/CI/badge.svg?event=push&branch=main" alt="CI">
 </a>
-<a href="https://codecov.io/gh/SuperDuperDB/superduperdb-stealth/branch/main">
-    <img src="https://codecov.io/gh/SuperDuperDB/superduperdb-stealth/branch/main/graph/badge.svg" alt="Coverage">
+<a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">
+    <img src="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main/graph/badge.svg" alt="Coverage">
 </a>
 <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">
     <img src="https://img.shields.io/badge/slack-superduperdb-8A2BE2?logo=slack" alt="slack">
@@ -14,7 +14,7 @@
 <a href="https://pypi.org/project/superduperdb">
     <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
 </a>    
-<a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb-stealth/blob/main/notebooks/playground.ipynb">
+<a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
 </a>  
 </p>

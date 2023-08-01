@@ -3,7 +3,7 @@ import typing as t
 from superduperdb import logging
 from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
-from superduperdb.db.base.downloads import Downloader, gather_uris
+from superduperdb.db.base.download import Downloader, gather_uris
 from superduperdb.db.base.query import Insert, Select
 
 

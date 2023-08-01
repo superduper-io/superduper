@@ -32,12 +32,14 @@ def _available_models():
 
 @dc.dataclass
 class OpenAI(Component, PredictMixin):
-    variety: t.ClassVar[str] = 'model'
     model: str
     identifier: t.Optional[str] = None  # type: ignore[assignment]
     version: t.Optional[int] = None
     takes_context: bool = False
     encoder: t.Union[Encoder, str, None] = None
+
+    #: A unique name for the class
+    type_id: t.ClassVar[str] = 'model'
 
     @property
     def child_components(self):

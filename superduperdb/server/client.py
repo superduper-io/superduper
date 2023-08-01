@@ -14,7 +14,7 @@ from superduperdb.container.artifact_tree import (
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document, dump_bsons, load_bson, load_bsons
 from superduperdb.container.serializable import Serializable
-from superduperdb.db.base.datalayer import ExecuteQuery
+from superduperdb.db.base.db import ExecuteQuery
 from superduperdb.db.base.query import Delete, Insert, Like, Select, SelectOne, Update
 from superduperdb.misc.serialization import serializers
 
@@ -137,14 +137,14 @@ class Client:
 
     def show(
         self,
-        variety: str,
+        type_id: str,
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
     ):
         return self._make_get_request(
             'show',
             json={
-                'variety': variety,
+                'type_id': type_id,
                 'identifier': identifier,
                 'version': version,
             },
@@ -152,7 +152,7 @@ class Client:
 
     def remove(
         self,
-        variety: str,
+        type_id: str,
         identifier: str,
         version: t.Optional[int] = None,
         force: bool = False,
@@ -160,7 +160,7 @@ class Client:
         version_str = '' if version is None else f'/{version}'
 
         if not force and not click.confirm(
-            f'You are about to delete {variety}/{identifier}{version_str}'
+            f'You are about to delete {type_id}/{identifier}{version_str}'
             ', are you sure?',
             default=False,
         ):
@@ -171,18 +171,18 @@ class Client:
             'remove',
             method='POST',
             json={
-                'variety': variety,
+                'type_id': type_id,
                 'identifier': identifier,
                 'version': version,
             },
         )
 
-    def load(self, variety: str, identifier: str, version: t.Optional[int] = None):
+    def load(self, type_id: str, identifier: str, version: t.Optional[int] = None):
         request_id = str(uuid.uuid4())
         d = self._make_get_request(
             'load',
             json={
-                'variety': variety,
+                'type_id': type_id,
                 'identifier': identifier,
                 'version': version,
                 'request_id': request_id,

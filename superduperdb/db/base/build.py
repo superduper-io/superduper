@@ -8,7 +8,7 @@ from superduperdb.db.base.backends import (
     metadata_stores,
     vector_database_stores,
 )
-from superduperdb.db.base.datalayer import Datalayer
+from superduperdb.db.base.db import DB
 from superduperdb.server.dask_client import dask_client
 
 
@@ -19,7 +19,7 @@ def build_vector_database(cfg):
     return cls(**kwargs)
 
 
-def build_datalayer(cfg=None, **connections) -> Datalayer:
+def build_datalayer(cfg=None, **connections) -> DB:
     """
     Build db as per ``db = superduper(db)`` from configuration.
 
@@ -42,7 +42,7 @@ def build_datalayer(cfg=None, **connections) -> Datalayer:
 
         return cls(name=cfg.name, conn=connection)
 
-    return Datalayer(
+    return DB(
         artifact_store=build(cfg.data_layers.artifact, artifact_stores),
         databackend=build(cfg.data_layers.data_backend, data_backends),
         metadata=build(cfg.data_layers.metadata, metadata_stores),

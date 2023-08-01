@@ -117,7 +117,7 @@ class ComponentJob(Job):
     def __init__(
         self,
         component_identifier: str,
-        variety: str,
+        type_id: str,
         method_name: str,
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
@@ -126,7 +126,7 @@ class ComponentJob(Job):
 
         self.component_identifier = component_identifier
         self.method_name = method_name
-        self.variety = variety
+        self.type_id = type_id
         self._component = None
 
     @property
@@ -143,7 +143,7 @@ class ComponentJob(Job):
         self.future = client.submit(
             method_job,
             cfg=CFG,
-            variety=self.variety,
+            type_id=self.type_id,
             identifier=self.component_identifier,
             method_name=self.method_name,
             job_id=self.identifier,
@@ -166,7 +166,7 @@ class ComponentJob(Job):
         self.db = db
         db.metadata.create_job(self.dict())
         if self.component is None:
-            self.component = db.load(self.variety, self.component_identifier)
+            self.component = db.load(self.type_id, self.component_identifier)
         if not distributed:
             self.run_locally(db)
         else:
@@ -179,7 +179,7 @@ class ComponentJob(Job):
             {
                 'method_name': self.method_name,
                 'component_identifier': self.component_identifier,
-                'variety': self.variety,
+                'type_id': self.type_id,
                 'cls': 'ComponentJob',
             }
         )

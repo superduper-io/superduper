@@ -12,12 +12,14 @@ class Metric(Component):
     These objects are ``callable`` and are applied row-wise to the data, and averaged.
     """
 
-    variety: t.ClassVar[str] = 'metric'
     artifacts: t.ClassVar[t.List[str]] = ['object']
 
     identifier: str
     object: t.Union[Artifact, t.Callable, None] = None
     version: t.Optional[int] = None
+
+    #: A unique name for the class
+    type_id: t.ClassVar[str] = 'metric'
 
     def __post_init__(self) -> None:
         if self.object and not isinstance(self.object, Artifact):

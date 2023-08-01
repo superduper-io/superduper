@@ -4,25 +4,25 @@ from unittest.mock import patch
 
 from superduperdb import CFG
 from superduperdb.container.job import FunctionJob
+from superduperdb.container.listener import Listener
 from superduperdb.container.task_workflow import TaskWorkflow
-from superduperdb.container.watcher import Watcher
 from superduperdb.db.mongodb.query import Collection
 
 
 @contextmanager
 def add_and_cleanup_watcher(database, collection_name):
     """Add watcher to the database and remove it after the test"""
-    watcher_x = Watcher(
+    listener_x = Listener(
         key='x',
         model='model_linear_a',
         select=Collection(name=collection_name).find(),
     )
 
-    database.add(watcher_x)
+    database.add(listener_x)
     try:
         yield database
     finally:
-        database.remove('watcher', 'model_linear_a/x', force=True)
+        database.remove('listener', 'model_linear_a/x', force=True)
 
 
 def test_taskgraph_futures_with_dask(

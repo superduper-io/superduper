@@ -2,7 +2,7 @@ import typing as t
 
 import typing_extensions as te
 
-from superduperdb.db.base.artifacts import ArtifactStore
+from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.misc.serialization import Info, serializers
 
 ArtifactCache = t.Dict[int, t.Any]

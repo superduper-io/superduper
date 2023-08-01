@@ -33,7 +33,7 @@ Here is how to define a simple libear bag-of-words model:
 
 ```python
 from superduperdb.container.vector_index import VectorIndex
-from superduperdb.container.watcher import Watcher
+from superduperdb.container.listener import Listener
 from superduperdb.model.sentence_transformers.wrapper import Pipeline
 
 
@@ -48,7 +48,7 @@ class TextEmbedding:
 db.add(
     VectorIndex(
         identifier='my-index',
-        indexing_watcher=Watcher(
+        indexing_watcher=Listener(
             model=TorchModel(
                 preprocess=TextEmbedding(d),  # "d" should be loaded from disk
                 object=torch.nn.Linear(64, 512),

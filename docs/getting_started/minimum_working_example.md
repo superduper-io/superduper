@@ -22,7 +22,7 @@ db.execute(
     ], encoders=(a,))
 )
 
-model = s.core.model.Model(
+model = s.container.model.Model(
     identifier='test-model',
     object=lambda x: x + 1,
     encoder=a,

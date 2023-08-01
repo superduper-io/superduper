@@ -772,7 +772,7 @@ class DB:
         for k in listener_features:
             out.append(f'{self.features[k]}/{k}')
         if info['dict']['key'].startswith('_outputs.'):
-            _, key, model = info['key'].split('.')
+            _, key, model = info['dict']['key'].split('.')
             out.append(f'{model}/{key}')
         return out
 

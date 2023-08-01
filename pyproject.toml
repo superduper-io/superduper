@@ -2,9 +2,6 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["superduperdb"]
-
 [project]
 name = "superduperdb"
 description = "🔮 Super-power your database with AI 🔮"

@@ -1,24 +1,37 @@
+<!--
+Thanks for contributing a pull request!
+
+If this is your first time, please have a look at the contribution guidelines here:
+
+https://github.com/superduperdb/superduperdb/blob/main/CONTRIBUTING.md
+-->
+
+
 ## Description
 
-<!-- Provide a brief description of the changes introduced by this pull request -->
-<!-- If adding a new feature, please describe the intended way of using this feature as clearly as possible -->
+<!-- A brief description of the changes in this pull request -->
 
-## Related Issue(s)
 
-<!-- If your pull request is related to any GitHub issue(s), mention them here with the appropriate links -->
+## Related Issues
+
+<!-- Link to any related github issues here.
+
+Examples:
+   Update serialization (fix #1234)
+   Move data to location (see #3456)
+
+You might want to read
+https://github.com/blog/1506-closing-issues-via-pull-requests
+-->
+
 
 ## Checklist
 
-<!-- Mark the tasks that are completed. You can add or remove items as necessary -->
-
-- [ ] Change or addition is covered by unit and/or integration tests. If bugfix, there should be at least one test that fails pre-PR and passes after.
-- [ ] Classes and functions substantially affected by this PR have `sphinx` format docstrings added or updated.
-- [ ] If your changes introduce modifications to functionality, behavior, or usage of the project, please ensure that the documentation is updated accordingly.
-<!-- Update relevant sections such as README files and user guides to help users understand the changes and how to use the updated features. -->
-
-## Additional Notes
-
-<!-- Add any additional notes, comments, or explanations that may be helpful to the reviewers -->
+- [ ] Is this code covered by new or existing unit tests or integration tests?
+- [ ] Did you run `make test` successfully?
+- [ ] Do new classes, functions, methods and parameters all have docstrings?
+- [ ] Were existing docstrings updated, if necessary?
+- [ ] Was external documentation updated, if necessary?
 
 
-
+## Additional Notes or Comments

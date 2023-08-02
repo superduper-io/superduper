@@ -37,15 +37,15 @@
 <hr>
 
 <h3 align="center">
-	<a href="https://github.com/SuperDuperDB/superduperdb#installation-electric_plug">Installation</a>
+	<a href="#installation-electric_plug">Installation</a>
 	<span> | </span>
-	<a href="https://github.com/SuperDuperDB/superduperdb#quickstart-">Quickstart</a>
+	<a href="#quickstart-">Quickstart</a>
 	<span> | </span>
-	<a href="https://github.com/SuperDuperDB/superduperdb#contributing-seedling">Contributing </a>
+	<a href="#contributing-seedling">Contributing </a>
 	<span> | </span>
-	<a href="https://github.com/SuperDuperDB/superduperdb#feedback-">Feedback </a>
+	<a href="#feedback-">Feedback </a>
 	<span> | </span>
-	<a href="https://github.com/SuperDuperDB/superduperdb#license-">License </a>
+	<a href="#license-">License </a>
 </h3>
 <hr>
 

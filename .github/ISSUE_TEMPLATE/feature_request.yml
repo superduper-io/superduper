@@ -6,7 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for your interest in SuperDuperDB. We take all feature requests seriously and will endeavour to respond in a timely manner!
+        Thanks for your interest in SuperDuperDB.
+        We take all feature requests seriously and will response as fat as possible.
 
   - type: input
     id: contact
@@ -21,17 +22,22 @@ body:
     id: feature
     attributes:
       label: Feature Description
-      description: Please describe the feature in detail?
-      placeholder: Description here.
+      description: Please describe the feature in detail
+      placeholder: (descriptiion)
+
     validations:
       required: true
 
   - type: textarea
     id: use-case
     attributes:
-      label: Use Case Description
-      description: Please describe the real world issue which the implemented feature will solve
-      placeholder: 'Description here.'
+      label: Use Cases
+      description: >
+        Please describe the real world usage, or the problem which the
+        implemented feature will solve
+
+      placeholder: How to use this
+
     validations:
       required: true
 

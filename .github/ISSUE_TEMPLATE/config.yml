@@ -1,0 +1,21 @@
+blank_issues_enabled: true
+
+contact_links:
+  - name: Discussions
+    url: https://github.com/SuperDuperDB/superduperdb/discussions
+    about: "Discuss superduperdb on GitHub"
+
+  - name: Show and Tell
+    url: https://github.com/SuperDuperDB/superduperdb/discussions/categories/show-and-tell
+    about: "Show the world what you've done with superduperdb"
+
+  - name: Chat with us
+    url: https://superduperdb.slack.com/
+    about: Ask a question, or simply say hello
+
+  - name: Documentation
+    url: https://superduperdb.github.io/superduperdb/
+
+  - name: Feedback
+    about: Ask a question, or simply say hello
+    url: https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform?vc=0&c=0&w=1&flr=0&usp=mail_form_link

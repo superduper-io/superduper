@@ -36,6 +36,20 @@
 - <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb"><strong>Quickstart with Google Colab!</strong></a><br>
 <hr>
 
+<h3 align="center">
+	<a href="https://github.com/SuperDuperDB/superduperdb#installation-electric_plug">Installation</a>
+	<span> | </span>
+	<a href="https://github.com/SuperDuperDB/superduperdb#quickstart-">Quickstart</a>
+	<span> | </span>
+	<a href="https://github.com/SuperDuperDB/superduperdb#contributing-seedling">Contributing </a>
+	<span> | </span>
+	<a href="https://github.com/SuperDuperDB/superduperdb#feedback-">Feedback </a>
+	<span> | </span>
+	<a href="https://github.com/SuperDuperDB/superduperdb#license-">License </a>
+</h3>
+<hr>
+
+
 # Introduction 🔰 
 
 ### 🔮 What can you do with SuperDuperDB?

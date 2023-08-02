@@ -237,8 +237,7 @@ pip install superduperdb
 
 This will set up a playground environment that includes:
 - an installation of SuperDuperDB
-- an installation of a MongoDB instance containing YouTube transcripts
-- TO BE COMPLETED BY KARTIK AND DUNCAN
+- an installation of a MongoDB instance containing image data and `torch` models
 
 Have fun!
 

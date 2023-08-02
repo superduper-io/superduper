@@ -269,4 +269,4 @@ Help us to improve SuperDuperDB by providing your valuable feedback
 # License 📜 
 
 SuperDuperDB is open-source and intended to be a community effort, and it won't be possible without your support and enthusiasm.
-It is distributed under the terms of the Apache License Version 2.0. Any contribution made to this project will be licensed under the Apache License Version 2.0.
+It is distributed under the terms of the AGPL (Affero GPLv3 Public License). Any contribution made to this project will be subject to the same provisions.

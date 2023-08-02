@@ -193,3 +193,6 @@ class Config(JSONable):
     server: Server = Factory(Server)
     vector_search: VectorSearch = Factory(VectorSearch)
     verbose: bool = False
+
+    class Config(JSONable.Config):
+        protected_namespaces = ()

@@ -1,8 +1,12 @@
 import typing as t
 
+import pydantic
+
 import superduperdb as s
 from superduperdb.data.cache import uri_cache
 from superduperdb.misc import dataclasses as dc
+
+IS_2 = pydantic.__version__.startswith('2')
 
 
 class Str(uri_cache.Cached[str]):
@@ -41,6 +45,11 @@ def test_cache_uri():
     )
 
     actual1 = top.dict()
+
+    if IS_2:
+        # This is all unnecessary in version 2
+        return
+
     expected1 = {
         'both': Both(s=Str(uri=''), t=Tuple(uri='')),
         'd': {'one': Str(uri='')},

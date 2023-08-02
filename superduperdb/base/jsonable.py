@@ -2,7 +2,7 @@ import functools
 import sys
 import typing as t
 
-from pydantic import BaseModel, Field
+import pydantic
 
 __all__ = 'Factory', 'JSONable'
 
@@ -11,10 +11,10 @@ _NONE = object()
 
 
 def Factory(factory: t.Callable, **ka) -> t.Any:
-    return Field(default_factory=factory, **ka)
+    return pydantic.Field(default_factory=factory, **ka)
 
 
-class JSONable(BaseModel):
+class JSONable(pydantic.BaseModel):
     """
     JSONable is the base class for all superduperdb classes that can be
     converted to and from JSON
@@ -25,12 +25,15 @@ class JSONable(BaseModel):
         extra = 'forbid'
 
         # See https://github.com/samuelcolvin/pydantic/issues/1241
-        keep_untouched = (functools.cached_property,)
+        if pydantic.__version__.startswith('2'):
+            ignored_types = (functools.cached_property,)
+        else:
+            keep_untouched = (functools.cached_property,)
 
     SUBCLASSES: t.ClassVar[t.Set[t.Type]] = set()
     TYPE_ID_TO_CLASS: t.ClassVar[t.Dict[str, t.Type]] = {}
 
-    @functools.wraps(BaseModel.dict)
+    @functools.wraps(pydantic.BaseModel.dict)
     def dict(self, *a, **ka):
         d = super().dict(*a, **ka)
         properties = self.schema()['properties']

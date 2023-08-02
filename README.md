@@ -227,7 +227,7 @@ pip install superduperdb
 #### 3. Try one of our example use cases/notebooks <a href="https://superduperdb.github.io/superduperdb/examples/index.html">found here</a> (~as many minutes you enjoy)!
 <br>
 
-*⚠️ Disclaimer: SuperDuperDB is currently in *alpha*. Please expect breaking changes, rough edges and fast pace of new and cool feature development!*
+*⚠️ Disclaimer: SuperDuperDB is currently in *beta*. Please expect breaking changes, rough edges and fast pace of new and cool feature development!*
 
 
 # Quickstart 🚀

@@ -1,0 +1,22 @@
+set -ex
+
+# Install mongodb
+apt install wget curl gnupg2 software-properties-common apt-transport-https ca-certificates lsb-release
+curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc| gpg --dearmor -o /etc/apt/trusted.gpg.d/mongodb-6.gpg
+echo "deb http://security.ubuntu.com/ubuntu focal-security main" | sudo tee /etc/apt/sources.list.d/focal-security.list
+sudo apt-get update
+sudo apt-get install libssl1.1
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+apt update
+apt install mongodb-org
+
+# Create an empty dir
+mkdir -p ./data/db
+
+# Start mongodb service
+nohup mongod --dbpath ./data/db > mongo.txt 2>&1 &
+
+# Download mongodb data
+wget https://superduperdb-public.s3.eu-west-1.amazonaws.com/collab_data.zip
+unzip collab_data.zip
+mongorestore dump

@@ -11,5 +11,4 @@ jobs:
     steps:
       - uses: jgehrcke/github-repo-stats@HEAD
         with:
-          repository: SuperDuperDB/superduperdb
           ghtoken: ${{ secrets.GH_TOKEN_ANALYTICS }}

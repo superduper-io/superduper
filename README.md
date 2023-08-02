@@ -20,9 +20,9 @@
 </p>
 
 <p align="center">
-   <a href="https://www.superduperdb.com">
-         <img src="docs/img/1680x420_Header_Logo.png?raw=true" width="100%" alt="SuperDuperDB" />
-   </a>
+	<a href="https://www.superduperdb.com">
+     <img width="90%" src="docs/img/SuperDuperDB_logo_color.svg">
+  </a>
 </p>
 
 <h1 align="center">AI with <a href="https://www.mongodb.com/">MongoDB</a>!

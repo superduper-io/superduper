@@ -12,4 +12,4 @@ jobs:
       - uses: jgehrcke/github-repo-stats@HEAD
         with:
           repository: SuperDuperDB/superduperdb
-          ghtoken: ${{ secrets.GITHUB_TOKEN }}
+          ghtoken: ${{ secrets.GH_TOKEN_ANALYTICS }}

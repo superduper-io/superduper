@@ -11,7 +11,6 @@ from collections import Counter
 from enum import Enum
 
 from bson.objectid import ObjectId as BsonObjectId
-from pydantic import BaseModel
 from pymongo.change_stream import CollectionChangeStream
 
 import superduperdb as s
@@ -53,19 +52,16 @@ class ObjectId(BsonObjectId):
         return str(v)
 
 
-class Packet(BaseModel):
+@dc.dataclass
+class Packet:
     """
     A base packet to represent message in task queue.
     """
 
-    class Config:
-        # TODO: Why is this a BaseModel anyway?
-        arbitrary_types_allowed = True
+    ids: t.List[t.Union[ObjectId, str]]
+    query: Serializable
 
     event_type: str = DBEvent.insert.value
-    ids: t.List[t.Union[ObjectId, str]]
-
-    query: Serializable
 
 
 @dc.dataclass

@@ -1,0 +1,15 @@
+name: "Repo usage stats"
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  calculate-stats:
+    runs-on: ubuntu-22.04
+    environment: "analytics"
+    steps:
+      - uses: jgehrcke/github-repo-stats@HEAD
+        with:
+          repository: SuperDuperDB/superduperdb
+          ghtoken: ${{ secrets.GITHUB_TOKEN }}

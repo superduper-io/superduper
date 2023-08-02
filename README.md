@@ -8,9 +8,6 @@
 </h1>
 
 <p align="center">
-<a href="https://github.com/SuperDuperDB/superduperdb/actions?query=workflow%3Aci+event%3Apush+branch%3Amain">
-    <img src="https://github.com/SuperDuperDB/superduperdb/workflows/CI/badge.svg?event=push&branch=main" alt="CI">
-</a>
 <a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">
     <img src="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main/graph/badge.svg" alt="Coverage">
 </a>

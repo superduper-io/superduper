@@ -1,0 +1,15 @@
+body:
+- type: textarea
+  attributes:
+    label: What's wrong?
+    description: >
+      Tell us what's missing, wrong, or just plain confusing.
+
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: How could it be better?
+    description: >
+      How we could fix the documentation to solve this?

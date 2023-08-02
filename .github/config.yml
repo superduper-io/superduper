@@ -1,9 +1,0 @@
-blank_issues_enabled: true
-contact_links:
-  - name: Slack Channel
-    url: https://superduperdb.slack.com/
-    about: Request a feature, ask a question, or simply say hello
-
-  - name: Docs
-    url: https://superduperdb.github.io/superduperdb/
-    about: Read the docs and

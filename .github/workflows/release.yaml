@@ -59,7 +59,7 @@ jobs:
         run: 'pip install artifact/*.whl'
 
       - name: install pytest
-        run: pip install pytest
+        run: pip install -r requirements/requirements-test.txt
 
         # This checks that all modules can be imported correctly
       - name: test imports

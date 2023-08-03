@@ -1,21 +1,31 @@
 blank_issues_enabled: true
 
 contact_links:
-  - name: Discussions
+  - name: GitHub Discussions
     url: https://github.com/SuperDuperDB/superduperdb/discussions
-    about: "Discuss superduperdb on GitHub"
+    about: Ask questions and discuss SuperDuperDB on GitHub
 
-  - name: Show and Tell
-    url: https://github.com/SuperDuperDB/superduperdb/discussions/categories/show-and-tell
-    about: "Show the world what you've done with superduperdb"
-
-  - name: Chat with us
+  - name: Chat with us on Slack
     url: https://superduperdb.slack.com/
     about: Ask a question, or simply say hello
 
   - name: Documentation
     url: https://superduperdb.github.io/superduperdb/
 
+  - name: Show and Tell
+    url: https://github.com/SuperDuperDB/superduperdb/discussions/categories/show-and-tell
+    about: Show the world what you've done with SuperDuperDB and get showcased!
+
+  - name: Consulting
+    url: mailto:gethelp@superduperdb.com
+    about: Get free help from the maintainers to integrate SuperDuperDB into your AI project
+
   - name: Feedback
-    about: Ask a question, or simply say hello
+    about: Help us improve SuperDuperDB with your feedback!
     url: https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform?vc=0&c=0&w=1&flr=0&usp=mail_form_link
+
+  - name Join us!
+  - about: >
+    We are looking for nice people who are invested in the problem we are trying
+    to solve to join us full-time.
+  - url: https://join.com/companies/superduperdb

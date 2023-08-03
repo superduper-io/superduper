@@ -135,11 +135,11 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 
 - **Use MongoDB as your vector search database <a href="https://superduperdb.github.io/superduperdb/usage/vector_index.html">(read more in the docs here)</a>:**
 ```python
-# First a "Watcher" makes sure vectors stay up-to-date
-indexing_watcher = Watcher(model=OpenAIEmbedding(), key='text', select=collection.find())
+# First a "Listener" makes sure vectors stay up-to-date
+indexing_listener = Listener(model=OpenAIEmbedding(), key='text', select=collection.find())
 
-# This "Watcher" is linked with a "VectorIndex"
-db.add(VectorIndex('my-index', indexing_watcher=indexing_watcher))
+# This "Listener" is linked with a "VectorIndex"
+db.add(VectorIndex('my-index', indexing_listener=indexing_listener))
 
 # The "VectorIndex" may be used to search data. Items to be searched against are passed
 # to the registered model and vectorized. No additional app layer is required.
@@ -151,11 +151,11 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 
 - **Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search <a href="https://superduperdb.github.io/superduperdb/examples/compare_vector_search_solutions.html">(read more in the docs here)</a>:**
 ```python
-# Create a ``VectorIndex`` instance with indexing watcher as OpenAIEmbedding and add it to the database.
+# Create a ``VectorIndex`` instance with indexing listener as OpenAIEmbedding and add it to the database.
 db.add(
     VectorIndex(
         identifier='my-index',
-        indexing_watcher=Watcher(
+        indexing_listener=Listener(
             model=OpenAIEmbedding(identifier='text-embedding-ada-002'),
             key='abstract',
             select=Collection(name='wikipedia').find(),

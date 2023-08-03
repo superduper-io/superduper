@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import io
 import typing as t
+from abc import abstractmethod
 from contextlib import contextmanager
 from functools import cached_property
 
 import torch
+from overrides import override
 from torch.utils import data
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -20,6 +24,9 @@ from superduperdb.db.base.db import DB
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.ext.torch.utils import device_of, eval, to_device
+
+if t.TYPE_CHECKING:
+    from superduperdb.container.dataset import Dataset
 
 
 class BasicDataset(data.Dataset):
@@ -79,11 +86,31 @@ class Base:
     metrics: t.Optional[t.Sequence[t.Union[str, Metric]]] = None
     training_select: t.Optional[Select] = None
 
+    @abstractmethod
     @contextmanager
     def evaluating(self):
         raise NotImplementedError
 
+    @abstractmethod
     def train(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def optimizers(self) -> t.Sequence[Artifact]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def append_metrics(self, d: t.Dict[str, float]) -> None:
+        pass
+
+    @abstractmethod
+    def _validate(self, db: DB, validation_set: Dataset, metrics: Metric):
+        raise NotImplementedError
+
+    @abstractmethod
+    def save(self, database: DB) -> None:
+        """Save this model"""
         raise NotImplementedError
 
     def stopping_criterion(self, iteration):
@@ -214,24 +241,22 @@ class Base:
         iteration = 0
         while True:
             for batch in train_dataloader:
-                train_objective = self.take_step(
-                    batch, self.optimizers  # type: ignore[attr-defined]
-                )
+                train_objective = self.take_step(batch, self.optimizers)
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
 
                 if iteration % self.training_configuration.validation_interval == 0:
                     valid_loss = self.compute_validation_objective(valid_dataloader)
                     all_metrics = {}
                     for vs in validation_sets:
-                        metrics = self._validate(  # type: ignore[attr-defined]
+                        metrics = self._validate(
                             db=db, validation_set=vs, metrics=self.metrics
                         )
                         all_metrics.update(metrics)
                     all_metrics.update({'objective': valid_loss})
-                    self.append_metrics(all_metrics)  # type: ignore[attr-defined]
+                    self.append_metrics(all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion():
-                        self.save(db)  # type: ignore[attr-defined]
+                        self.save(db)
                     stop = self.stopping_criterion(iteration)
                     if stop:
                         return
@@ -319,22 +344,20 @@ class TorchModel(Base, Model):  # type: ignore[misc]
         self._validation_set_cache = {}
 
     @cached_property
-    def optimizer(self):
+    def optimizer(self) -> Artifact:
         return self.training_configuration.optimizer_cls.artifact(
             self.object.artifact.parameters(),
             **self.training_configuration.optimizer_kwargs,
         )
 
     @property
-    def optimizers(self):
+    def optimizers(self) -> t.List[Artifact]:
         return [self.optimizer]
 
-    def save(self, database: DB):
-        self.optimizer_state = Artifact(self.optimizer.state_dict(), serializer='torch')
-        database.replace(
-            object=self,
-            upsert=True,
-        )
+    @override
+    def save(self, database: DB) -> None:
+        self.optimizer_state = Artifact(self.state_dict(), serializer='torch')
+        database.replace(object=self, upsert=True)
 
     @contextmanager
     def evaluating(self):
@@ -397,13 +420,13 @@ class TorchModel(Base, Model):  # type: ignore[misc]
                 args = self.postprocess.artifact(args)
             return args
 
-    def _predict(self, x, one: bool = False, **kwargs):  # type: ignore[override]
+    def _predict(self, x, one: bool = False, **kwargs):
         with torch.no_grad(), eval(self.object.artifact):
             if one:
                 return self._predict_one(x)
             inputs = BasicDataset(
                 x,
-                self.preprocess.artifact  # type: ignore[attr-defined]
+                self.preprocess.artifact
                 if self.preprocess is not None
                 else lambda x: x,
             )
@@ -417,10 +440,7 @@ class TorchModel(Base, Model):  # type: ignore[misc]
                 tmp = to_device(tmp, 'cpu')
                 tmp = unpack_batch(tmp)
                 if self.postprocess is not None:
-                    tmp = [
-                        self.postprocess.artifact(t)  # type: ignore[union-attr]
-                        for t in tmp
-                    ]
+                    tmp = [self.postprocess.artifact(t) for t in tmp]
                 out.extend(tmp)
             return out
 

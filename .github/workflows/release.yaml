@@ -58,6 +58,9 @@ jobs:
       - name: install wheel
         run: 'pip install artifact/*.whl'
 
+      - name: install pytest
+        run: pip install pytest
+
         # This checks that all modules can be imported correctly
       - name: test imports
         run: python -m pytest test/unittest/test_impall.py

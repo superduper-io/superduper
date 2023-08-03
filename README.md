@@ -26,9 +26,9 @@
 </p>
 
 
-#### SuperDuperDB is an open-source environment to deploy, train and operate AI models and APIs in MongoDB using Python. <img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/> 
+#### SuperDuperDB is an open-source environment to deploy, train and operate AI models and APIs in MongoDB using Python.
 #### Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
-#### No data duplication, no pipelines, no duplicate infrastructure — just Python.<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/>
+#### No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="3%"/>
 
 <hr>
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
@@ -46,6 +46,10 @@
 	<a href="#feedback-">Feedback </a>
 	<span> | </span>
 	<a href="#license-">License </a>
+	<span> | </span>
+	<a href="#community--getting-help-">Get Help </a>
+	<span> | </span>
+	<a href="#join-us-">Join Us </a>
 </h3>
 <hr>
 
@@ -247,6 +251,7 @@ Have fun!
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
 - Search through <a href="https://github.com/SuperDuperDB/superduperdb/discussions">our GitHub Discussions</a>, or <a href="https://github.com/SuperDuperDB/superduperdb/discussions/new/choose">add a new question</a>.
 - Comment <a href="https://github.com/SuperDuperDB/superduperdb/issues/">an existing issue</a> or create <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">a new one</a>.
+- Send us an email to gethelp@superduperdb.com.
 - Feel free to contact a maintainer or community volunteer directly! 
 
 # Contributing :seedling: 
@@ -270,3 +275,7 @@ Help us to improve SuperDuperDB by providing your valuable feedback
 
 SuperDuperDB is open-source and intended to be a community effort, and it won't be possible without your support and enthusiasm.
 It is distributed under the terms of the AGPL (Affero GPLv3 Public License). Any contribution made to this project will be subject to the same provisions.
+
+# Join Us 👋
+
+We are looking for nice people who are invested in the problem we are trying to solve to join us full-time. Find roles that we are trying to fill <a href="https://join.com/companies/superduperdb">here</a>!

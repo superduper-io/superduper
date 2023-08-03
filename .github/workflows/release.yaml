@@ -56,7 +56,7 @@ jobs:
         uses: actions/download-artifact@v3
 
       - name: install wheel
-        run: 'pip install artifact/dist/*.whl'
+        run: 'pip install artifact/*.whl'
 
         # This checks that all modules can be imported correctly
       - name: test imports

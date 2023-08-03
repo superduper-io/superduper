@@ -37,8 +37,36 @@ jobs:
         with:
           path: ./dist
 
-  create-release:
+  test-build:
     needs: ['build']
+    # TODO: decide whether it's worth it to run tests on multiple OSes
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+              
+        # Artifacts located in artifact/
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+
+      - name: install wheel
+        run: pip install artifact/dist/*.whl
+
+        # This checks that all modules can be imported correctly
+      - name: test imports
+        run: python -m pytest test/unittest/test_impall.py
+      
+      - name: test CLI
+        run: python -m superduperdb
+  
+  create-release:
+    needs: ['test-build']
     runs-on: ubuntu-latest
     permissions:
       contents: write

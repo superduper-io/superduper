@@ -24,8 +24,6 @@ contact_links:
     about: Help us improve SuperDuperDB with your feedback!
     url: https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform?vc=0&c=0&w=1&flr=0&usp=mail_form_link
 
-  - name Join us!
-  - about: >
-    We are looking for nice people who are invested in the problem we are trying
-    to solve to join us full-time.
-  - url: https://join.com/companies/superduperdb
+  - name: Join us!
+    about: We are looking for nice people who are invested in the problem we are trying to solve to join us full-time.
+    url: https://join.com/companies/superduperdb

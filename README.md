@@ -35,7 +35,6 @@
 - <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb"><strong>Quickstart with Google Colab!</strong></a><br>
 <hr>
 
-
 <h3 align="center">
 	<a href="#installation">Installation</a>
 	<span> | </span>

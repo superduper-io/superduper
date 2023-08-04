@@ -4,7 +4,7 @@
   </a>
 </p>
 
-<h1 align="center">AI with <a href="https://www.mongodb.com/">MongoDB</a>!
+<h1 align="center">Deploy, Train and Operate AI with <a href="https://www.mongodb.com/">MongoDB</a>!
 </h1>
 
 <p align="center">
@@ -26,8 +26,7 @@
 </p>
 
 
-#### SuperDuperDB is an open-source environment to deploy, train and operate AI models and APIs in MongoDB using Python.
-#### Easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
+#### SuperDuperDB is an open-source environment to easily integrate AI with your data: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
 #### No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="3%"/>
 
 <hr>

@@ -35,20 +35,21 @@
 - <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb"><strong>Quickstart with Google Colab!</strong></a><br>
 <hr>
 
+
 <h3 align="center">
-	<a href="#installation-electric_plug">Installation</a>
+	<a href="#installation">Installation</a>
 	<span> | </span>
 	<a href="#quickstart-">Quickstart</a>
 	<span> | </span>
-	<a href="#contributing-seedling">Contributing </a>
+	<a href="#community--getting-help">Get Help </a>
 	<span> | </span>
-	<a href="#feedback-">Feedback </a>
+	<a href="#contributing">Contributing </a>
 	<span> | </span>
-	<a href="#license-">License </a>
+	<a href="#feedback">Feedback </a>
 	<span> | </span>
-	<a href="#community--getting-help-">Get Help </a>
+	<a href="#license">License </a>
 	<span> | </span>
-	<a href="#join-us-">Join Us </a>
+	<a href="#join-us">Join Us </a>
 </h3>
 <hr>
 
@@ -274,6 +275,8 @@ Help us to improve SuperDuperDB by providing your valuable feedback
 
 SuperDuperDB is open-source and intended to be a community effort, and it won't be possible without your support and enthusiasm.
 It is distributed under the terms of the AGPL (Affero GPLv3 Public License). Any contribution made to this project will be subject to the same provisions.
+
+If AGPL doesn’t work for you or your company please reach out to us at license@superduperdb.com to for a more permissive license.
 
 # Join Us 
 

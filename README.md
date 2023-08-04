@@ -53,7 +53,7 @@
 <hr>
 
 
-# Introduction 🔰 
+# Introduction  
 
 ### 🔮 What can you do with SuperDuperDB?
 
@@ -87,7 +87,7 @@
   <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_diagram.svg">
 </p>
 
-# How to 🤷
+# How to
 ### The following are examples of how you use SuperDuperDB with Python (find all how-tos and examples <a href="https://superduperdb.github.io/superduperdb">in the docs here</a>): 
 
 - **Add a ML/AI model into your database <a href="404">(read more in the docs here)</a>:**
@@ -217,8 +217,7 @@ model.predict(
 )
 ```
 
-# Installation :electric_plug:
-
+# Installation
 **1. Install SuperDuperDB via `pip` *(~1 minute)*:**
 ```
 pip install superduperdb
@@ -244,7 +243,7 @@ This will set up a playground environment that includes:
 
 Have fun!
 
-# Community & Getting Help 🙋
+# Community & Getting Help 
 
 #### If you have any problems, questions, comments or ideas:
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
@@ -253,28 +252,29 @@ Have fun!
 - Send us an email to gethelp@superduperdb.com.
 - Feel free to contact a maintainer or community volunteer directly! 
 
-# Contributing :seedling: 
+# Contributing  
 
 #### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 
-- Bug reports
-- Documentation improvements
-- Enhancement suggestions
-- Feature requests
-- Expanding the tutorials and use case examples
+
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Bug reports</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Documentation improvements</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Enhancement suggestions</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Feature requests</a>
+- <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">Expanding the tutorials and use case examples</a>
 
 Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-# Feedback 💡
+# Feedback 
 
 Help us to improve SuperDuperDB by providing your valuable feedback
 <a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">here</a>!
 
-# License 📜 
+# License  
 
 SuperDuperDB is open-source and intended to be a community effort, and it won't be possible without your support and enthusiasm.
 It is distributed under the terms of the AGPL (Affero GPLv3 Public License). Any contribution made to this project will be subject to the same provisions.
 
-# Join Us 👋
+# Join Us 
 
 We are looking for nice people who are invested in the problem we are trying to solve to join us full-time. Find roles that we are trying to fill <a href="https://join.com/companies/superduperdb">here</a>!

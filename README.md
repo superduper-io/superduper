@@ -4,7 +4,7 @@
   </a>
 </p>
 
-<h1 align="center">Deploy, Train and Operate AI with <a href="https://www.mongodb.com/">MongoDB</a>!
+<h1 align="center">Deploy, Train and Operate AI in <a href="https://www.mongodb.com/">MongoDB</a>!
 </h1>
 
 <p align="center">

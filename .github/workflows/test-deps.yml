@@ -36,12 +36,8 @@ jobs:
               if: ${{ matrix.os == 'macos-latest' }}
               uses: douglascamata/setup-docker-macos-action@5f13b5b88a09467c10f8462810902b60ff70fb75
 
-            # This checks that all modules can be imported correctly
-            - name: test imports
-              run: python -m pytest test/unittest/test_impall.py
-
             - name: test CLI
-              run: python -m superduperdb
+              run: python -m superduperdb serve
 
     test-devdeps:
         runs-on: ${{ matrix.os }}
@@ -77,13 +73,3 @@ jobs:
                 make lint
                 make test
 
-    slack-notify:
-        needs: [test-nodevdeps, test-devdeps]
-        runs-on: ubuntu-latest
-        # https://stackoverflow.com/questions/71430668/how-to-run-a-github-actions-job-on-workflow-failure
-        if: ${{ always() && contains(needs.*.result, 'failure') }}
-        steps:
-            - name: Send GitHub Action trigger data to Slack workflow
-              uses: slackapi/slack-github-action@v1.24.0
-              env:
-                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

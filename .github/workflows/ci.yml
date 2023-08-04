@@ -2,8 +2,6 @@ name: ci
 
 on:  # rules for when this action will be triggered
   push:
-    branches:
-      - main
     paths-ignore:  # ignore docs in this action - handled in a separate action
       - 'docs/**'
       - '*.md'

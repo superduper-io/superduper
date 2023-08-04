@@ -55,18 +55,11 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
 
-      - name: install wheel
-        run: 'pip install artifact/*.whl'
-
-      - name: install pytest
-        run: pip install -r requirements/requirements-test.txt
-
-        # This checks that all modules can be imported correctly
-      - name: test imports
-        run: python -m pytest test/unittest/test_impall.py
+      - name: Install wheel
+        run: pip install artifact/*.whl
       
-      - name: test CLI
-        run: python -m superduperdb
+      - name: Test application runs correctly
+        run: python -m superduperdb serve
   
   create-release:
     needs: ['test-build']

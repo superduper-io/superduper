@@ -9,6 +9,8 @@ from superduperdb.container.encoder import Encodable
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 
+_OUTPUTS_KEY: str = '_outputs'
+
 
 class Document:
     """
@@ -30,6 +32,16 @@ class Document:
     def encode(self) -> t.Any:
         """Make a copy of the content with all the Encodables encoded"""
         return _encode(self.content)
+
+    def outputs(self, key: str, model: str) -> t.Any:
+        """
+        Get document ouputs on ``key`` from ``model``
+
+        :param key: Document key to get outputs from.
+        :param model: Model name to get outputs from.
+        """
+        document = self.unpack()[_OUTPUTS_KEY][key][model]
+        return document
 
     @staticmethod
     def decode(r: t.Dict, encoders: t.Dict) -> t.Any:

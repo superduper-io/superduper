@@ -36,39 +36,39 @@
 <hr>
 
 <h3 align="center">
-	<a href="#installation-electric_plug">Installation</a>
+	<a href="#installation">Installation</a>
 	<span> | </span>
-	<a href="#quickstart-">Quickstart</a>
+	<a href="#quickstart">Quickstart</a>
 	<span> | </span>
-	<a href="#contributing-seedling">Contributing </a>
+	<a href="#contributing">Contributing </a>
 	<span> | </span>
-	<a href="#feedback-">Feedback </a>
+	<a href="#feedback">Feedback </a>
 	<span> | </span>
-	<a href="#license-">License </a>
+	<a href="#license">License </a>
 	<span> | </span>
-	<a href="#community--getting-help-">Get Help </a>
+	<a href="#community--getting-help">Get Help </a>
 	<span> | </span>
-	<a href="#join-us-">Join Us </a>
+	<a href="#join-us">Join Us </a>
 </h3>
 <hr>
 
 
 # Introduction  
 
-### 🔮 What can you do with SuperDuperDB?
+### What can you do with SuperDuperDB?
 
 - **Deploy** all your AI models to automatically **compute outputs (inference)** in the database in a single environment with simple Python commands.  
 - **Train** models on your data in your database simply by querying without additional ingestion and pre-processing.  
 - **Integrate** AI APIs (such as OpenAI) to work together with other models on your data effortlessly. 
 - **Search** your data with vector-search, including model management and serving.
 
- ### ⁉️ Why choose SuperDuperDB?
+ ### Why choose SuperDuperDB?
 
 - Avoid data duplication, pipelines and duplicate infrastructure with a **single scalable deployment**.
 - **Deployment always up-to-date** as new data is handled automatically and immediately.
 - A **simple and familiar Python interface** that can handle even the most complex AI use-cases.
 
-### 👨‍💻🧑‍🔬👷 Who is SuperDuperDB for?
+### Who is SuperDuperDB for?
 
   - **Python developers** using MongoDB who want to build AI into their applications easily.
   - **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
@@ -232,7 +232,7 @@ pip install superduperdb
 *⚠️ Disclaimer: SuperDuperDB is currently in *beta*. Please expect breaking changes, rough edges and fast pace of new and cool feature development!*
 
 
-# Quickstart 🚀
+# Quickstart
 
 #### Try SuperDuperDB in Google Colab 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb)

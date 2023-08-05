@@ -5,6 +5,7 @@ import typing as t
 import lancedb
 import pandas as pd
 import pyarrow as pa
+import torch
 
 from superduperdb import logging
 from superduperdb.vector_search.base import (
@@ -82,6 +83,13 @@ class LanceTable:
         vector = vector_df[VECTOR_FIELD_NAME]
         return vector
 
+    def size(self) -> int:
+        """
+        Get the number of rows in ``LanceTable``.
+        """
+        # substract 1 for the seed vector
+        return len(self.table) - 1
+
     def add(self, data: t.Sequence[VectorCollectionItem], upsert: bool = False) -> None:
         """
         Add vectors to the ``LanceTable``.
@@ -89,7 +97,14 @@ class LanceTable:
         :param data: t.Sequence of ``VectorCollectionItem`` objects.
         :param upsert: Whether to perform an upsert operation. Defaults to ``False``.
         """
-        dict_data = [d.to_dict() for d in data]
+        dict_data = []
+        for d in data:
+            dict_d = d.to_dict()
+            vector = dict_d['vector']
+            if isinstance(vector, torch.Tensor):
+                dict_d['vector'] = vector.numpy()
+            dict_data.append(dict_d)
+
         df = pd.DataFrame(dict_data)
         try:
             self.table.add(df)
@@ -163,6 +178,7 @@ class LanceVectorIndex(BaseVectorIndex):
 
         :param uri: URI of the LanceDB database.
         :param measure: Distance measure for vector search. Defaults to 'cosine'.
+        :param client: ``LanceDBClient`` instance. Defaults to ``None``.
         """
         if client:
             self.client = client

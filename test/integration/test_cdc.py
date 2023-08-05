@@ -3,12 +3,15 @@ import uuid
 from contextlib import contextmanager
 
 import pytest
+import tdir
 import torch
 
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.db.base.cdc import DatabaseListener
 from superduperdb.db.mongodb.query import Collection
+from superduperdb.vector_search.base import VectorCollectionConfig
+from superduperdb.vector_search.lancedb_client import LanceVectorIndex
 
 # NOTE 1:
 # Some environments take longer than others for the changes to appear. For this
@@ -41,6 +44,24 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
 
 
 @pytest.fixture(scope="function")
+def listener_with_vector_database(database_with_default_encoders_and_model):
+    collection_name = str(uuid.uuid4())
+    with tdir():
+        vector_db_client = LanceVectorIndex(uri=".lancedb")
+        database_with_default_encoders_and_model.vector_database = vector_db_client
+        listener = DatabaseListener(
+            db=database_with_default_encoders_and_model,
+            on=Collection(name=collection_name),
+        )
+        listener._cdc_change_handler._QUEUE_TIMEOUT = 1
+        listener._cdc_change_handler._QUEUE_BATCH_SIZE = 1
+
+        yield listener, vector_db_client, collection_name
+
+        listener.stop()
+
+
+@pytest.fixture(scope="function")
 def listener_without_cdc_handler_and_collection_name(
     database_with_default_encoders_and_model,
 ):
@@ -60,7 +81,7 @@ def retry_state_check(state_check):
         try:
             state_check()
             return
-        except AssertionError:
+        except Exception:
             pass
     state_check()
     return
@@ -109,6 +130,31 @@ def test_task_workflow_on_insert(
             assert all(state)
 
         retry_state_check(state_check_2)
+
+
+def test_vector_database_sync(
+    listener_with_vector_database,
+    database_with_default_encoders_and_model,
+    fake_inserts,
+):
+    listener, vector_db_client, name = listener_with_vector_database
+    listener.listen()
+
+    with add_and_cleanup_listeners(
+        database_with_default_encoders_and_model, name
+    ) as database_with_listeners:
+        database_with_listeners.execute(
+            Collection(name=name).insert_many([fake_inserts[0]], refresh=False)
+        )
+
+        # check if vector database is in sync with the model outputs
+        def state_check():
+            table = vector_db_client.get_table(
+                VectorCollectionConfig(id='model_linear_a/x', dimensions=0)
+            )
+            assert table.size() == 1
+
+        retry_state_check(state_check)
 
 
 def test_single_insert(

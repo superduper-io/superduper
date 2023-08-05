@@ -359,11 +359,21 @@ class _DatabaseListenerThreadScheduler(threading.Thread):
         self.listener = listener
 
     def run(self) -> None:
-        cdc_stream = self.listener.setup_cdc()  # type: ignore[attr-defined]
-        self.start_event.set()
-        logging.info(f'Database listen service started at {datetime.datetime.now()}')
+        try:
+            cdc_stream = self.listener.setup_cdc()  # type: ignore[attr-defined]
+            self.start_event.set()
+            logging.info(
+                f'Database listen service started at {datetime.datetime.now()}'
+            )
+        except Exception as exc:
+            logging.error(f'Error while setting up cdc stream :: reason {exc}')
+            return
         while not self.stop_event.is_set():
-            self.listener.next_cdc(cdc_stream)  # type: ignore[attr-defined]
+            try:
+                self.listener.next_cdc(cdc_stream)  # type: ignore[attr-defined]
+            except Exception as exc:
+                logging.error(f'Error while listening to cdc stream :: reason {exc}')
+                break
             time.sleep(0.01)
 
 

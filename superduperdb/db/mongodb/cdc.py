@@ -59,8 +59,7 @@ class Packet:
     """
 
     ids: t.List[t.Union[ObjectId, str]]
-    query: Serializable
-
+    query: t.Optional[Serializable]
     event_type: str = DBEvent.insert.value
 
 
@@ -121,6 +120,30 @@ class BaseDatabaseListener(ABC):
         raise NotImplementedError
 
 
+def delete_vectors(
+    indexing_listener_identifier: str,
+    cdc_query: t.Optional[Serializable],
+    ids: t.Sequence[str],
+    db=None,
+):
+    """
+    A helper fxn to copy vectors of a `indexing_listener` component/model of
+    a `vector_index` listener.
+
+    This function will be added as node to the taskworkflow after every
+    `indexing_listener` in the defined listeners in db.
+    """
+    try:
+        config = VectorCollectionConfig(id=indexing_listener_identifier, dimensions=0)
+        table = db.vector_database.get_table(config)
+        table.delete_from_ids(ids)
+    except Exception:
+        logging.error(
+            f"Error while deleting for vector_index: {indexing_listener_identifier}"
+        )
+        raise
+
+
 def copy_vectors(
     indexing_listener_identifier: str,
     cdc_query: Serializable,
@@ -159,6 +182,14 @@ def copy_vectors(
         raise
 
 
+def vector_task_factory(task: str = 'copy') -> t.Tuple[t.Callable, str]:
+    if task == 'copy':
+        return copy_vectors, 'copy_vectors'
+    elif task == 'delete':
+        return delete_vectors, 'delete_vectors'
+    raise NotImplementedError(f'Unknown task: {task}')
+
+
 class CDCHandler(threading.Thread):
     """
     This class is responsible for handling the change by executing the taskflow.
@@ -180,7 +211,9 @@ class CDCHandler(threading.Thread):
 
         threading.Thread.__init__(self, daemon=False)
 
-    def submit_task_workflow(self, cdc_query: Serializable, ids: t.Sequence) -> None:
+    def submit_task_workflow(
+        self, cdc_query: t.Optional[Serializable], ids: t.Sequence, task: str = "copy"
+    ) -> None:
         """submit_task_workflow.
         A fxn to build a taskflow and execute it with changed ids.
         This also extends the task workflow graph with a node.
@@ -190,29 +223,39 @@ class CDCHandler(threading.Thread):
         :param cdc_query: A query which will be used by `db._build_task_workflow` method
         to extract the desired data.
         :param ids: List of ids which were observed as changed document.
+        :param task: A task name to be executed on vector db.
         """
+        if task == "delete":
+            task_workflow = TaskWorkflow(self.db)
+        else:
+            task_workflow = self.db._build_task_workflow(
+                cdc_query, ids=ids, verbose=False
+            )
 
-        task_workflow = self.db._build_task_workflow(cdc_query, ids=ids, verbose=False)
         task_workflow = self.create_vector_listener_task(
-            task_workflow, cdc_query=cdc_query, ids=ids
+            task_workflow, cdc_query=cdc_query, ids=ids, task=task
         )
         task_workflow.run_jobs()
 
     def create_vector_listener_task(
         self,
         task_workflow: TaskWorkflow,
-        cdc_query: Serializable,
+        cdc_query: t.Optional[Serializable],
         ids: t.Sequence[str],
+        task: str = 'copy',
     ) -> TaskWorkflow:
         """create_vector_listener_task.
         A helper function to define a node in taskflow graph which is responsible for
-        copying vectors to a vector db.
+        executing the defined ``task`` on a vector db.
 
         :param task_workflow: A DiGraph task flow which defines task on a di graph.
         :param db: A superduperdb instance.
         :param cdc_query: A basic find query to get cursor on collection.
         :param ids: A list of ids observed during the change
+        :param task: A task name to be executed on vector db.
         """
+        task_callable, task_name = vector_task_factory(task=task)
+        serialized_cdc_query = cdc_query.serialize() if cdc_query else None
         for identifier in self.db.show('vector_index'):
             vector_index = self.db.load(identifier=identifier, type_id='vector_index')
             vector_index = t.cast(VectorIndex, vector_index)
@@ -220,19 +263,20 @@ class CDCHandler(threading.Thread):
                 vector_index.indexing_listener.identifier  # type: ignore[union-attr]
             )
             task_workflow.add_node(
-                f'copy_vectors({indexing_listener_identifier})',
+                f'{task_name}({indexing_listener_identifier})',
                 job=FunctionJob(
-                    callable=copy_vectors,
-                    args=[indexing_listener_identifier, cdc_query.serialize(), ids],
+                    callable=task_callable,
+                    args=[indexing_listener_identifier, serialized_cdc_query, ids],
                     kwargs={},
                 ),
             )
+        if task != 'delete':
             model, key = indexing_listener_identifier.split(  # type: ignore[union-attr]
                 '/'
             )
             task_workflow.add_edge(
                 f'{model}.predict({key})',
-                f'copy_vectors({indexing_listener_identifier})',
+                f'{task_name}({indexing_listener_identifier})',
             )
         return task_workflow
 
@@ -242,14 +286,20 @@ class CDCHandler(threading.Thread):
         self.submit_task_workflow(cdc_query=cdc_query, ids=ids)
 
     def on_update(self, packet: Packet) -> None:
-        # TODO: for now we treat updates as inserts.
         self.on_create(packet)
+
+    def on_delete(self, packet: Packet) -> None:
+        ids = packet.ids
+        cdc_query = packet.query
+        self.submit_task_workflow(cdc_query=cdc_query, ids=ids, task="delete")
 
     def _handle(self, packet: Packet) -> None:
         if packet.event_type == DBEvent.insert.value:
             self.on_create(packet)
         elif packet.event_type == DBEvent.update.value:
             self.on_update(packet)
+        elif packet.event_type == DBEvent.delete.value:
+            self.on_delete(packet)
 
     @staticmethod
     def _collate_packets(packets: t.Sequence[Packet]) -> Packet:
@@ -322,16 +372,44 @@ class MongoEventMixin:
         packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
-    def on_update(self, change: t.Dict, db: DB):
+    def on_update(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
         """on_update.
 
-        :param change:
-        :param db:
+        A helper on update event handler which handles updated document in the
+        change stream.
+        It basically extracts the change document and build the taskflow graph to
+        execute.
+
+        :param change: The changed document.
+        :param db: a superduperdb instance.
+        :param collection: The collection on which change was observed.
         """
 
-        #  prepare updated document
-        change[CDCKeys.update_descriptions_key.value]['updatedFields']
-        change[CDCKeys.update_descriptions_key.value]['removedFields']
+        # TODO: Handle removed fields and updated fields.
+        document = change[CDCKeys.document_key.value]
+        ids = [document[self.DEFAULT_ID]]
+        cdc_query = collection.find()
+        packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
+        cdc_queue.put_nowait(packet)
+
+    def on_delete(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+        """on_delete.
+
+        A helper on delete event handler which handles deleted document in the
+        change stream.
+        It basically extracts the change document and build the taskflow graph to
+        execute.
+
+        :param change: The changed document.
+        :param db: a superduperdb instance.
+        :param collection: The collection on which change was observed.
+        """
+        logging.debug('Triggered `on_delete` handler.')
+        # new document added!
+        document = change[CDCKeys.deleted_document_data_key.value]
+        ids = [document[self.DEFAULT_ID]]
+        packet = Packet(ids=ids, event_type=DBEvent.delete.value, query=None)
+        cdc_queue.put_nowait(packet)
 
 
 class CDCKeys(Enum):
@@ -344,6 +422,7 @@ class CDCKeys(Enum):
     update_descriptions_key = 'updateDescription'
     update_field_key = 'updatedFields'
     document_data_key = 'fullDocument'
+    deleted_document_data_key = 'documentKey'
 
 
 class _DatabaseListenerThreadScheduler(threading.Thread):
@@ -485,7 +564,11 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
 
         elif event == DBEvent.update.value:
             self._change_counters['updates'] += 1
-            self.on_update(change, db=self.db)
+            self.on_update(change, db=self.db, collection=self._on_component)
+
+        elif event == DBEvent.delete.value:
+            self._change_counters['deletes'] += 1
+            self.on_delete(change, db=self.db, collection=self._on_component)
 
     def dump_token(self, change: t.Dict) -> None:
         """dump_token.

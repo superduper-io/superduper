@@ -94,8 +94,13 @@ def test_smoke(listener_without_cdc_handler_and_collection_name):
     assert isinstance(name, str)
 
 
-def test_task_workflow_on_insert(
-    listener_and_collection_name, database_with_default_encoders_and_model, fake_inserts
+@pytest.mark.parametrize('op_type', ['insert', 'update'])
+def test_task_workflow(
+    listener_and_collection_name,
+    database_with_default_encoders_and_model,
+    fake_inserts,
+    fake_updates,
+    op_type,
 ):
     """Test that task graph executed on `insert`"""
 
@@ -106,8 +111,14 @@ def test_task_workflow_on_insert(
         database_with_default_encoders_and_model, name
     ) as database_with_listeners:
         # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
+        data = None
+        if op_type == 'insert':
+            data = fake_inserts
+        elif op_type == 'update':
+            data = fake_updates
+
         output_id, _ = database_with_listeners.execute(
-            Collection(name=name).insert_many([fake_inserts[0]], refresh=False)
+            Collection(name=name).insert_many([data[0]], refresh=False)
         )
 
         def state_check():
@@ -128,6 +139,42 @@ def test_task_workflow_on_insert(
             state.append('model_linear_a' in doc['_outputs']['x'].keys())
             state.append('model_linear_a' in doc['_outputs']['z'].keys())
             assert all(state)
+
+        retry_state_check(state_check_2)
+
+
+def test_vector_database_sync_with_delete(
+    listener_with_vector_database,
+    database_with_default_encoders_and_model,
+    fake_inserts,
+):
+    listener, vector_db_client, name = listener_with_vector_database
+
+    listener.listen()
+    with add_and_cleanup_listeners(
+        database_with_default_encoders_and_model, name
+    ) as database_with_listeners:
+        output, _ = database_with_listeners.execute(
+            Collection(name=name).insert_many([fake_inserts[0]], refresh=False)
+        )
+
+        def state_check():
+            table = vector_db_client.get_table(
+                VectorCollectionConfig(id='model_linear_a/x', dimensions=0)
+            )
+            assert table.size() == 1
+
+        retry_state_check(state_check)
+        database_with_listeners.execute(
+            Collection(name=name).delete_one({'_id': output.inserted_ids[0]})
+        )
+
+        # check if vector database is in sync with the model outputs
+        def state_check_2():
+            table = vector_db_client.get_table(
+                VectorCollectionConfig(id='model_linear_a/x', dimensions=0)
+            )
+            assert table.size() == 0
 
         retry_state_check(state_check_2)
 

@@ -238,6 +238,27 @@ def test_many_insert(
     retry_state_check(state_check)
 
 
+def test_delete_one(
+    listener_without_cdc_handler_and_collection_name,
+    database_with_default_encoders_and_model,
+    fake_inserts,
+):
+    listener, name = listener_without_cdc_handler_and_collection_name
+    listener.listen()
+    output, _ = database_with_default_encoders_and_model.execute(
+        Collection(name=name).insert_many(fake_inserts)
+    )
+
+    database_with_default_encoders_and_model.execute(
+        Collection(name=name).delete_one({'_id': output.inserted_ids[0]})
+    )
+
+    def state_check():
+        assert listener.info()["deletes"] == 1
+
+    retry_state_check(state_check)
+
+
 def test_single_update(
     listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,

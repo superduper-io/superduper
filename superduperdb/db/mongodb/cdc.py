@@ -492,7 +492,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         self._on_component = on
         self._identifier = self._build_identifier([identifier, on.name])
         self.tokens = CachedTokens()
-        self._change_counters = Counter(inserts=0, updates=0)
+        self._change_counters = Counter(inserts=0, updates=0, deletes=0)
 
         self.resume_token = (
             resume_token.token if resume_token else None  # type: ignore[attr-defined]
@@ -660,6 +660,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             {
                 'inserts': self._change_counters['inserts'],
                 'updates': self._change_counters['updates'],
+                'deletes': self._change_counters['deletes'],
             }
         )
         print(json.dumps(info, indent=2))

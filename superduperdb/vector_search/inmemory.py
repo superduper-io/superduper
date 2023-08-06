@@ -35,7 +35,7 @@ class InMemoryVectorCollection(VectorCollection):
     def init(self) -> t.Iterator["VectorCollection"]:
         yield self
 
-    def add(self, items: t.Sequence[VectorCollectionItem]) -> None:
+    def add(self, items: t.Sequence[VectorCollectionItem], **kwargs) -> None:
         for item in items:
             with self._lock.gen_wlock():
                 self._add(item)

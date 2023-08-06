@@ -90,6 +90,15 @@ class LanceTable:
         # substract 1 for the seed vector
         return len(self.table) - 1
 
+    def delete_from_ids(self, ids: t.Sequence[str]) -> None:
+        """
+        Delete vectors from the ``LanceTable``.
+
+        :param ids: t.Sequence of identifiers.
+        """
+        to_remove = ", ".join(f"'{str(id)}'" for id in ids)
+        self.table.delete(f"{_ID} IN ({to_remove})")
+
     def add(self, data: t.Sequence[VectorCollectionItem], upsert: bool = False) -> None:
         """
         Add vectors to the ``LanceTable``.
@@ -165,7 +174,6 @@ class LanceTable:
 
 class LanceVectorIndex(BaseVectorIndex):
     name: str = "lancedb"
-    _ID: str = 'id'
 
     def __init__(
         self,
@@ -195,7 +203,7 @@ class LanceVectorIndex(BaseVectorIndex):
         """
         vector_type = pa.list_(pa.float32(), dimensions)
         return pa.schema(
-            [pa.field(VECTOR_FIELD_NAME, vector_type), pa.field(self._ID, pa.string())]
+            [pa.field(VECTOR_FIELD_NAME, vector_type), pa.field(_ID, pa.string())]
         )
 
     def get_table(
@@ -223,7 +231,7 @@ class LanceVectorIndex(BaseVectorIndex):
         dimensions = config.dimensions
         table = config.id
         measure = t.cast(str, config.measure)
-        seed_data = list([{VECTOR_FIELD_NAME: [0] * dimensions, self._ID: SEED_KEY}])
+        seed_data = list([{VECTOR_FIELD_NAME: [0] * dimensions, _ID: SEED_KEY}])
         schema = self._create_schema(dimensions=dimensions)
         return self.client.create_table(
             table, schema=schema, measure=measure, data=seed_data

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 MONGOTOOLS=mongodb-database-tools-ubuntu1804-x86_64-100.7.4
 MONGOTOOLS_FILE=$MONGOTOOLS.tgz
 MONGOTOOLS_LINK=https://fastdl.mongodb.org/tools/db/$MONGOTOOLS_FILE
@@ -16,7 +18,6 @@ tar -zxvf $MONGOTOOLS_FILE
 # Download mongodb data
 wget https://superduperdb-public.s3.eu-west-1.amazonaws.com/collab_data.zip
 unzip collab_data.zip -d dump
-rm -f collab_data.zip
 
 # Move mongodb tools into a seperate directory
 mkdir -p $HOME/.tools
@@ -31,3 +32,8 @@ cp .binder/start.sh $HOME/.ipython/profile_default/startup
 
 # A hackish way to install superduperdb across the binder system.
 cp -r superduperdb /srv/conda/envs/notebook/lib/python3.10/site-packages/
+
+# Cleanup downloads
+rm -f $MONGODB_FILE
+rm -f $MONGOTOOLS_FILE
+rm -f collab_data.zip

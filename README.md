@@ -20,8 +20,8 @@
 <a href="https://pypi.org/project/superduperdb">
     <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
 </a>    
-<a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
+<a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/HEAD">
+    <img src="https://mybinder.org/badge_logo.svg", alt="launch binder">
 </a>  
 </p>
 
@@ -32,7 +32,7 @@
 <hr>
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
 - <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
-- <a href="https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb"><strong>Quickstart with Google Colab!</strong></a><br>
+- <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/HEAD"><strong>Quickstart with Binder!</strong></a><br>
 <hr>
 
 <h3 align="center">
@@ -235,7 +235,7 @@ pip install superduperdb
 # Quickstart
 
 #### Try SuperDuperDB in Google Colab 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SuperDuperDB/superduperdb/blob/main/docs/how_to/playground.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/HEAD)
 
 This will set up a playground environment that includes:
 - an installation of SuperDuperDB

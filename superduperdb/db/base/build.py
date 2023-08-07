@@ -13,6 +13,12 @@ from superduperdb.server.dask_client import dask_client
 
 
 def build_vector_database(cfg):
+    """
+    Build vector database as per ``vector_database = DB.vector_database``
+    from configuration.
+
+    :param cfg: configuration to use. (See ``superduperdb.CFG.vector_search``)
+    """
     cls = vector_database_stores[cfg.__class__]
     sig = inspect.signature(cls.__init__)
     kwargs = {k: v for k, v in cfg.dict().items() if k in sig.parameters}
@@ -23,6 +29,7 @@ def build_datalayer(cfg=None, **connections) -> DB:
     """
     Build db as per ``db = superduper(db)`` from configuration.
 
+    :param cfg: configuration to use. If None, use ``superduperdb.CFG``.
     :param connections: cache of connections to reuse in the build process.
     """
     cfg = cfg or s.CFG

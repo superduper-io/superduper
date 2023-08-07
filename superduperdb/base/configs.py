@@ -54,6 +54,9 @@ class ConfigSettings:
 
 
 def build_config() -> Config:
+    """
+    Build the config object from the environment variables and config files.
+    """
     CONFIG = ConfigSettings(Config, _ALL_CONFIGS, PREFIX)
     return CONFIG.config
 

@@ -4,13 +4,26 @@ from functools import cached_property
 
 from pymongo.cursor import Cursor
 
+from superduperdb import CFG
 from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encoder
+from superduperdb.misc.files import load_uris
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 
 @dc.dataclass
 class SuperDuperCursor:
+    """
+    A cursor that wraps a cursor and returns ``Document`` wrapping
+    a dict including ``Encodable`` objects.
+
+    :param raw_cursor: the cursor to wrap
+    :param id_field: the field to use as the document id
+    :param encoders: a dict of encoders to use to decode the documents
+    :param features: a dict of features to add to the documents
+    :param scores: a dict of scores to add to the documents
+    """
+
     raw_cursor: Cursor
     id_field: str
     encoders: t.Dict[str, Encoder] = dc.field(default_factory=dict)
@@ -27,6 +40,12 @@ class SuperDuperCursor:
 
     @staticmethod
     def add_features(r, features):
+        """
+        Add features to a document.
+
+        :param r: the document
+        :param features: the features to add
+        """
         r = MongoStyleDict(r)
         for k in features:
             r[k] = r['_outputs'][k][features[k]]
@@ -37,9 +56,15 @@ class SuperDuperCursor:
         return r
 
     def count(self):
+        """
+        Count the number of documents in the cursor.
+        """
         return len(list(self.raw_cursor.clone()))
 
     def limit(self, *args, **kwargs):
+        """
+        Limit the number of documents in the cursor.
+        """
         return SuperDuperCursor(
             raw_cursor=self.raw_cursor.limit(*args, **kwargs),
             id_field=self.id_field,
@@ -50,6 +75,9 @@ class SuperDuperCursor:
 
     @staticmethod
     def wrap_document(r, encoders):
+        """
+        Wrap a document in a ``Document``.
+        """
         return Document(Document.decode(r, encoders))
 
     def __iter__(self):
@@ -68,7 +96,8 @@ class SuperDuperCursor:
             r['_score'] = self.scores[str(r[self.id_field])]
         if self.features is not None and self.features:
             r = self.add_features(r, features=self.features)
-
+        if CFG.downloads.hybrid:
+            load_uris(r, CFG.downloads.root)
         return self.wrap_document(r, self.encoders)
 
     next = __next__

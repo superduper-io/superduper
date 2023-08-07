@@ -1,3 +1,5 @@
+import hashlib
+import os
 import re
 import signal
 import sys
@@ -6,12 +8,13 @@ import warnings
 from contextlib import contextmanager
 from io import BytesIO
 from multiprocessing.pool import ThreadPool
+from typing import Any
 
 import boto3
 import requests
 from tqdm import tqdm
 
-from superduperdb import logging
+from superduperdb import CFG, logging
 
 
 class TimeoutException(Exception):
@@ -122,6 +125,15 @@ class BaseDownloader:
 
         self._parallel_go(f)
 
+    def _check_exists_if_hybrid(self, uri):
+        if uri.startswith('file://'):
+            file = f'{CFG.downloads.root}/{uri.split("file://")[-1]}'
+        else:
+            file = f'{CFG.downloads.root}/{hashlib.sha1(uri.encode()).hexdigest()}'
+        if os.path.exists(file):
+            return True
+        return False
+
     def _parallel_go(self, f):
         pool = ThreadPool(self.n_workers)
         try:
@@ -140,6 +152,16 @@ class BaseDownloader:
             f(i)
 
 
+class SaveFile:
+    def __init__(self, root: str):
+        self.root = root
+
+    def __call__(self, bytes_: bytearray, uri: str, **kwargs) -> Any:
+        path = f'{self.root}/{hashlib.sha1(uri.encode()).hexdigest()}'
+        with open(path, 'wb') as f:
+            f.write(bytes_)
+
+
 class Downloader(BaseDownloader):
     """
 
@@ -148,10 +170,10 @@ class Downloader(BaseDownloader):
     :param ids: list of ids of rows/ documents to update
     :param keys: list of keys in rows/ documents to insert to
     :param n_workers: number of multiprocessing workers
-    :param raises: raises error ``True``/``False``
     :param headers: dictionary of request headers passed to``requests`` package
     :param skip_existing: if ``True`` then don't bother getting already present data
     :param timeout: set seconds until request times out
+    :param raises: raises error ``True``/``False``
     """
 
     results: t.Dict[int, str]
@@ -183,28 +205,23 @@ class Downloader(BaseDownloader):
         self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
 
     def _download(self, i):
-        uri = self.uris[i]
-        _id = self.ids[i]
-        content = self.fetcher(uri)
-        self.update_one(id=self.ids[i], key=self.keys[i], bytes_=content)
-
-
-class InMemoryDownloader(BaseDownloader):
-    def __init__(self, *args, headers=None, n_workers=0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.results = {}
-        self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
-
-    def _download(self, i):
+        if CFG.downloads.hybrid:
+            if self._check_exists_if_hybrid(self.uris[i]):
+                return
         content = self.fetcher(self.uris[i])
-        self.results[i] = content
+        self.update_one(
+            id=self.ids[i],
+            key=self.keys[i],
+            bytes_=content,
+            uri=self.uris[i],
+        )
 
 
 def gather_uris(
     documents: t.Sequence[t.Dict], gather_ids: bool = True
 ) -> t.Tuple[t.List[str], t.List[str], t.List[int]]:
     """
-    Get the URLS out of all documents as denoted by ``{"_content": ...}``
+    Get the uris out of all documents as denoted by ``{"_content": ...}``
 
     :param documents: list of dictionaries
     """

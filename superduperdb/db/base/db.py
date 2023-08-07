@@ -39,7 +39,7 @@ InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
 SelectResult = t.List[Document]
 UpdateResult = t.Any
 
-ExecuteQuery = t.Union[Select, Delete, Update, Insert]
+ExecuteQuery = t.Union[Select, SelectOne, Delete, Update, Insert]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
 ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'select_one', 'update'
@@ -316,7 +316,7 @@ class DB:
 
         :param object: Object to be stored
         :param dependencies: list of jobs which should execute before component
-        init begins
+                             init begins
         """
         return self._add(
             object=object,
@@ -334,7 +334,7 @@ class DB:
         Remove component (version: optional)
 
         :param type_id: type_id of component to remove ['encoder', 'model', 'listener',
-                        'training_configuration', 'learning_task', 'vector_index']
+                        'training_configuration', 'vector_index']
         :param identifier: identifier of component (see `container.base.Component`)
         :param version: [optional] numerical version to remove
         :param force: force skip confirmation (use with caution)
@@ -394,10 +394,9 @@ class DB:
                         'training_configuration', 'learning_task', 'vector_index']
         :param identifier: identifier of component (see `container.base.Component`)
         :param version: [optional] numerical version
-        :param repopulate: toggle to ``False`` to only load references to other
-                           components
         :param allow_hidden: toggle to ``True`` to allow loading of deprecated
                              components
+        :param info_only: toggle to ``True`` to return metadata only
         """
         info = self.metadata.get_component(
             type_id=type_id,
@@ -460,8 +459,11 @@ class DB:
             f'{download_content.__name__}()',
             job=FunctionJob(
                 callable=download_content,
-                kwargs=dict(ids=ids, query=query.serialize()),
                 args=[],
+                kwargs=dict(
+                    ids=ids,
+                    query=query.serialize(),
+                ),
             ),
         )
         listener = self.show('listener')
@@ -674,7 +676,7 @@ class DB:
                     self.artifact_store.delete_artifact(info['dict'][a]['file_id'])
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
-    def _download_content(
+    def _download_content(  # TODO: duplicated function
         self,
         query: t.Optional[t.Union[Select, Insert]] = None,
         ids=None,
@@ -858,7 +860,6 @@ class DB:
     ):
         """
         (Use-with caution!!) Replace a model in artifact store with updated object.
-        :param identifier: model-identifier
         :param object: object to replace
         :param upsert: toggle to ``True`` to enable even if object doesn't exist yet
         """

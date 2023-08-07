@@ -45,27 +45,37 @@ class Collection(Serializable):
         return PreLike(collection=self, r=r, vector_index=vector_index, n=n)
 
     def insert_one(
-        self, *args, refresh: bool = True, encoders=(), **kwargs
+        self,
+        *args,
+        refresh: bool = True,
+        encoders: t.Sequence = (),
+        **kwargs,
     ) -> 'InsertMany':
         """Insert a single document
 
         :param refresh: If true, refresh the underlying collection
+        :param encoders: A dictionary/ lookup of encoders to use for encoding
         """
         return InsertMany(
             args=args[1:],
             collection=self,
             documents=[args[0]],
-            encoders=encoders,
+            encoders=encoders,  #
             kwargs=kwargs,
             refresh=refresh,
         )
 
     def insert_many(
-        self, *args, refresh: bool = True, encoders=(), **kwargs
+        self,
+        *args,
+        refresh: bool = True,
+        encoders: t.Sequence = (),
+        **kwargs,
     ) -> 'InsertMany':
         """Insert many documents
 
         :param refresh: If true, refresh the underlying collection
+        :param encoders: A dictionary/ lookup of encoders to use for encoding
         """
         return InsertMany(
             args=args[1:],
@@ -127,7 +137,7 @@ class Collection(Serializable):
         )
 
     def change_stream(self, *args, **kwargs) -> 'ChangeStream':
-        """Listen to a stream of change from a db"""
+        """Listen to a stream of changes from a collection"""
         return ChangeStream(collection=self, args=args, kwargs=kwargs)
 
 
@@ -225,7 +235,14 @@ class PreLike(Like):
 
 @dc.dataclass
 class Find(Select):
-    """A query to find couments"""
+    """
+    A query to find couments
+
+    :param collection: The collection to perform the query on
+    :param like_parent: The parent query to use for the like query (if applicable)
+    :param args: Positional query arguments to ``pymongo.Collection.find``
+    :param kwargs: Named query arguments to ``pymongo.Collection.find``
+    """
 
     #:
     id_field: t.ClassVar[str] = '_id'
@@ -275,7 +292,13 @@ class Find(Select):
         return Limit(parent=self, n=n)  # type
 
     def count(self, *args, **kwargs) -> 'Count':
-        """Return a new Count query from this Find"""
+        """
+        Return a new Count query from this Find
+
+        :param args: Positional query arguments to
+                     ``pymongo.Collection.count_documents``
+        :param kwargs: Named query arguments to ``pymongo.Collection.count_documents``
+        """
         return Count(self, *args, **kwargs)  # type
 
     def like(
@@ -285,12 +308,12 @@ class Find(Select):
 
         :param vector_index: The name of the vector index to use
         :param n: The number of documents to return
+        :param max_ids: The maximum number of ids to use for the like query
         """
         return PostLike(
             find_parent=self, r=r, n=n, max_ids=max_ids, vector_index=vector_index
         )
 
-    # @override
     def add_fold(self, fold: str) -> Find:
         """Create a select which selects the same data, but additionally restricts to
         the fold specified
@@ -368,6 +391,16 @@ class Find(Select):
         model: Model,
         outputs: t.Sequence[t.Any],
     ) -> None:
+        """
+        Add the outputs of a model to the database
+
+        :param db: The DB instance to use
+        :param ids: The ids of the documents to update
+        :param key: The key to update
+        :param model: The model to update
+        :param outputs: The outputs to add
+        """
+
         if key.startswith('_outputs'):
             key = key.split('.')[1]
         if not outputs:
@@ -401,7 +434,8 @@ class Find(Select):
         raise TypeError('Expected PreLike')
 
     def download_update(self, db: DB, id: str, key: str, bytes) -> None:
-        """Download an updated version of this query
+        """
+        Update a single document with the ``bytes`` provided at the ``key`` provided.
 
         TODO: improve this comment.
 
@@ -444,7 +478,9 @@ class Find(Select):
 
 @dc.dataclass
 class CountDocuments(Find):
-    """A query to count documents"""
+    """
+    A query to count documents
+    """
 
     #: The collection to perform the query on
     collection: t.Optional[Collection] = None
@@ -507,23 +543,30 @@ class FindOne(SelectOne):
 
     @override
     def __call__(self, db: DB):
-        if self.collection is not None:
-            return SuperDuperCursor.wrap_document(
-                db.db[self.collection.name].find_one(*self.args, **self.kwargs),
-                encoders=db.encoders,
-            )
-        else:
-            parent_cursor = self.like_parent(db)  # type: ignore[misc]
-            ids = [r['_id'] for r in parent_cursor]
-            filter = self.args[0] if self.args else {}
-            filter['_id'] = {'$in': ids}
-            col = db.db[self.like_parent.collection.name]  # type: ignore[union-attr]
-            r = col.find_one(
-                filter,
-                *self.args[1:],
-                **self.kwargs,
-            )
-            return Document(Document.decode(r, encoders=db.encoders))
+        find = Find(
+            collection=self.collection,
+            like_parent=self.like_parent,
+            args=self.args,
+            kwargs=self.kwargs,
+        )
+        return next(find(db=db))
+        # if self.collection is not None:
+        #     return SuperDuperCursor.wrap_document(
+        #         db.db[self.collection.name].find_one(*self.args, **self.kwargs),
+        #         encoders=db.encoders,
+        #     )
+        # else:
+        #     parent_cursor = self.like_parent(db)  # type: ignore[misc]
+        #     ids = [r['_id'] for r in parent_cursor]
+        #     filter = self.args[0] if self.args else {}
+        #     filter['_id'] = {'$in': ids}
+        #     col = db.db[self.like_parent.collection.name]  # type: ignore[union-attr]
+        #     r = col.find_one(
+        #         filter,
+        #         *self.args[1:],
+        #         **self.kwargs,
+        #     )
+        #     return Document(Document.decode(r, encoders=db.encoders))
 
     def featurize(self, features: t.Dict[str, str]) -> 'FeaturizeOne':
         """Extract a feature vector
@@ -743,7 +786,7 @@ class InsertMany(Insert):
     @override
     def __call__(self, db: DB):
         valid_prob = self.kwargs.get('valid_prob', 0.05)
-        for e in self.encoders:
+        for e in self.encoders:  # type: ignore[union-attr]
             db.add(e)
         documents = [r.encode() for r in self.documents]
         for r in documents:

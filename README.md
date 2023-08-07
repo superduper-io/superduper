@@ -20,7 +20,7 @@
 <a href="https://pypi.org/project/superduperdb">
     <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
 </a>    
-<a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/HEAD">
+<a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb">
     <img src="https://mybinder.org/badge_logo.svg", alt="launch binder">
 </a>  
 </p>
@@ -32,7 +32,7 @@
 <hr>
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
 - <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
-- <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/HEAD"><strong>Quickstart with Binder!</strong></a><br>
+- <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
 <hr>
 
 <h3 align="center">
@@ -235,7 +235,7 @@ pip install superduperdb
 # Quickstart
 
 #### Try SuperDuperDB in Google Colab 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/HEAD)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb)
 
 This will set up a playground environment that includes:
 - an installation of SuperDuperDB

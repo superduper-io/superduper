@@ -179,6 +179,11 @@ class VectorSearch(JSONable):
     username: str = Field(default='', repr=False)
 
 
+class Downloads(JSONable):
+    hybrid: bool = False
+    root: str = 'data/downloads'
+
+
 class Config(JSONable):
     """The data class containing all configurable superduperdb values"""
 
@@ -193,6 +198,7 @@ class Config(JSONable):
     server: Server = Factory(Server)
     vector_search: VectorSearch = Factory(VectorSearch)
     verbose: bool = False
+    downloads: Downloads = Factory(Downloads)
 
     class Config(JSONable.Config):
         protected_namespaces = ()

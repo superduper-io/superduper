@@ -93,12 +93,15 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
     return [Document(Document.decode(r, encoders=encoders)) for r in documents]
 
 
+# ruff: noqa: E501
 def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
     if isinstance(r, dict) and '_content' in r:
-        type = encoders[r['_content']['encoder']]
+        encoder = encoders[r['_content']['encoder']]
         try:
-            return type.decode(r['_content']['bytes'])
+            return encoder.decode(r['_content']['bytes'])
         except KeyError:
+            if 'uri' in r['_content']:
+                return Encodable(uri=r['_content']['uri'], encoder=encoder)  # type: ignore[call-arg]
             return r
     elif isinstance(r, list):
         return [_decode(x, encoders) for x in r]

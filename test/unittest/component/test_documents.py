@@ -20,3 +20,13 @@ def test_document_encoding(document):
 
 def test_document_outputs(document):
     assert document.outputs('x', 'model_test') == 1
+
+
+def test_only_uri(float_tensors_8):
+    r = Document(
+        Document.decode(
+            {'x': {'_content': {'uri': 'foo', 'encoder': 'torch.float32[8]'}}},
+            encoders=float_tensors_8.encoders,
+        )
+    )
+    assert r['x'].uri == 'foo'

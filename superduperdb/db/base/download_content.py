@@ -1,9 +1,9 @@
 import typing as t
 
-from superduperdb import logging
+from superduperdb import CFG, logging
 from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
-from superduperdb.db.base.download import Downloader, gather_uris
+from superduperdb.db.base.download import Downloader, SaveFile, gather_uris
 from superduperdb.db.base.query import Insert, Select
 
 
@@ -42,10 +42,10 @@ def download_content(
     elif isinstance(query, Select):
         update_db = True
         if ids is None:
-            documents = list(db.select(query).raw_cursor)
+            documents = list(db.execute(query).raw_cursor)
         else:
             select = query.select_using_ids(ids)
-            documents = list(db.select(select))
+            documents = list(db.execute(select))
     else:
         documents = query.documents  # type: ignore[union-attr]
 
@@ -72,8 +72,12 @@ def download_content(
         except TypeError:
             pass
 
-    def _download_update(key, id, bytes_):
-        return query.download_update(db=db, key=key, id=id, bytes=bytes_)
+    if CFG.downloads.hybrid:
+        _download_update = SaveFile(CFG.downloads.root)
+    else:
+
+        def _download_update(key, id, bytes_, **kwargs):  # type: ignore[misc]
+            return query.download_update(db=db, key=key, id=id, bytes=bytes_)
 
     downloader = Downloader(
         uris=uris,

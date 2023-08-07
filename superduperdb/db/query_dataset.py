@@ -13,7 +13,13 @@ class ExpiryCache(list):
         return item
 
 
-class QueryDataset(Dataset):
+class QueryDataset(
+    Dataset
+):  # TODO Not sure this is strictly necessary (the inheritance)
+    """
+    A dataset class which can be used to define a torch dataset class.
+    """
+
     def __init__(
         self,
         select: Select,

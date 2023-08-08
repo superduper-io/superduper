@@ -19,6 +19,14 @@ class BaseDataBackend(ABC):
     def db(self):
         raise NotImplementedError
 
+
+    @abstractmethod
+    def drop(self):
+        """
+        Drop the databackend.
+        """
+        pass
+
     @abstractmethod
     def get_output_from_document(self, r: Document, key: str, model: str):
         pass

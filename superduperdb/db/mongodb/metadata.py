@@ -13,11 +13,17 @@ class MongoMetaDataStore(MetaDataStore):
         name: t.Optional[str] = None,
     ) -> None:
         self.name = name
-        db = conn[name]
-        self.meta_collection = db['_meta']
-        self.object_collection = db['_objects']
-        self.job_collection = db['_jobs']
-        self.parent_child_mappings = db['_parent_child_mappings']
+        self.db = conn[name]
+        self.meta_collection = self.db['_meta']
+        self.object_collection = self.db['_objects']
+        self.job_collection = self.db['_jobs']
+        self.parent_child_mappings = self.db['_parent_child_mappings']
+
+    def drop(self):
+        self.db.drop_collection(self.meta_collection.name)
+        self.db.drop_collection(self.object_collection.name)
+        self.db.drop_collection(self.job_collection.name)
+        self.db.drop_collection(self.parent_child_mappings.name)
 
     def create_parent_child(self, parent: str, child: str) -> None:
         self.parent_child_mappings.insert_one(

@@ -8,7 +8,6 @@ import warnings
 from contextlib import contextmanager
 from io import BytesIO
 from multiprocessing.pool import ThreadPool
-from typing import Any
 
 import boto3
 import requests
@@ -156,7 +155,7 @@ class SaveFile:
     def __init__(self, root: str):
         self.root = root
 
-    def __call__(self, bytes_: bytearray, uri: str, **kwargs) -> Any:
+    def __call__(self, bytes_: bytearray, uri: str, **kwargs) -> None:
         path = f'{self.root}/{hashlib.sha1(uri.encode()).hexdigest()}'
         with open(path, 'wb') as f:
             f.write(bytes_)

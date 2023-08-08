@@ -54,13 +54,13 @@ class Collection(Serializable):
         """Insert a single document
 
         :param refresh: If true, refresh the underlying collection
-        :param encoders: A dictionary/ lookup of encoders to use for encoding
+        :param encoders: A tuple of encoders to use for encoding
         """
         return InsertMany(
             args=args[1:],
             collection=self,
             documents=[args[0]],
-            encoders=encoders,  #
+            encoders=encoders,
             kwargs=kwargs,
             refresh=refresh,
         )
@@ -550,23 +550,6 @@ class FindOne(SelectOne):
             kwargs=self.kwargs,
         )
         return next(find(db=db))
-        # if self.collection is not None:
-        #     return SuperDuperCursor.wrap_document(
-        #         db.db[self.collection.name].find_one(*self.args, **self.kwargs),
-        #         encoders=db.encoders,
-        #     )
-        # else:
-        #     parent_cursor = self.like_parent(db)  # type: ignore[misc]
-        #     ids = [r['_id'] for r in parent_cursor]
-        #     filter = self.args[0] if self.args else {}
-        #     filter['_id'] = {'$in': ids}
-        #     col = db.db[self.like_parent.collection.name]  # type: ignore[union-attr]
-        #     r = col.find_one(
-        #         filter,
-        #         *self.args[1:],
-        #         **self.kwargs,
-        #     )
-        #     return Document(Document.decode(r, encoders=db.encoders))
 
     def featurize(self, features: t.Dict[str, str]) -> 'FeaturizeOne':
         """Extract a feature vector

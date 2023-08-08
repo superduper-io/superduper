@@ -1,6 +1,28 @@
 import hashlib
 
 
+def _get_file(uri):
+    """
+    Get file name from uri.
+
+    >>> _get_file('file://test.txt')
+    'test.txt'
+    >>> _get_file('http://test.txt')
+    '414388bd5644669b8a92e45a96318890f6e8de54'
+    """
+    if uri.startswith('file://'):
+        file = uri[7:]
+    elif (
+        uri.startswith('http://')
+        or uri.startswith('https://')
+        or uri.startswith('s3://')
+    ):
+        file = hashlib.sha1(uri.encode()).hexdigest()
+    else:
+        raise NotImplementedError(f'File type of {file} not supported')
+    return file
+
+
 def load_uris(r: dict, root: str, raises: bool = False):
     """
     Load ``"bytes"`` into ``"_content"`` from ``"uri"`` inside ``r``.
@@ -15,20 +37,10 @@ def load_uris(r: dict, root: str, raises: bool = False):
     for k, v in r.items():
         if isinstance(v, dict):
             if k == '_content' and 'uri' in v and 'bytes' not in v:
-                if v['uri'].startswith('file://'):
-                    file = v['uri'][7:]
-                elif (
-                    v['uri'].startswith('http://')
-                    or v['uri'].startswith('https://')
-                    or v['uri'].startswith('s3://')
-                ):
-                    file = hashlib.sha1(v['uri'].encode()).hexdigest()
-                else:
-                    raise NotImplementedError(f'File type of {v} not supported')
-
+                file = _get_file(v['uri'])
+                if root:
+                    file = f'{root}/{file}'
                 try:
-                    if root:
-                        file = f'{root}/{file}'
                     with open(f'{file}', 'rb') as f:
                         r['_content']['bytes'] = f.read()
                 except FileNotFoundError as e:

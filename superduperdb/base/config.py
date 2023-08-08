@@ -176,6 +176,7 @@ class VectorSearch(JSONable):
     password: str = Field(default='', repr=False)
     port: int = 19530
     type: t.Union[LanceDB, InMemory] = Field(default_factory=InMemory)
+    backfill_batch_size: int = 100
     username: str = Field(default='', repr=False)
 
 

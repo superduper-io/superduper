@@ -32,6 +32,13 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
+    def drop(self):
+        """
+        Drop the metadata store.
+        """
+        pass
+
+    @abstractmethod
     def get_job(self, job_id: str):
         pass
 

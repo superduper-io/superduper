@@ -22,6 +22,7 @@ from superduperdb.container.serializable import Serializable
 from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.db.base.download import Downloader, gather_uris
 from superduperdb.misc.special_dicts import MongoStyleDict
+from superduperdb.misc.colors import Colors
 from superduperdb.vector_search.base import VectorDatabase
 
 from .artifact import ArtifactStore
@@ -96,6 +97,21 @@ class DB:
     @property
     def distributed_client(self):
         return self._distributed_client
+
+    def drop(self):
+        """
+        Drop all associated data.
+        """
+        if not click.confirm(
+            'Are you sure you want to drop the database? '
+            f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU WILL LOSE ALL DATA!!!]{Colors.RESET}',
+            default=False,
+        ):
+            print('Aborting...')
+
+        self.databackend.drop()
+        self.metadata.drop()
+        self.artifact_store.drop()
 
     def validate(
         self,

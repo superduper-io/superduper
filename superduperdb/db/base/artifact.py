@@ -29,6 +29,14 @@ class ArtifactStore(ABC):
         """
         pass
 
+    @abstractmethod
+    def drop(self):
+        """
+        Drop the artifact store.
+        """
+        pass
+    
+
     def create_artifact(self, bytes: t.Any):
         """
         Save serialized object in the artifact store.

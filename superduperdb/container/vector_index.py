@@ -1,6 +1,7 @@
 import dataclasses as dc
 import itertools
 import typing as t
+import tqdm
 
 from overrides import override
 
@@ -32,10 +33,6 @@ def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
         yield batch
 
 
-# TODO configurable
-_BACKFILL_BATCH_SIZE = 100
-
-
 @dc.dataclass
 class VectorIndex(Component):
     """A component representing a VectorIndex"""
@@ -60,6 +57,7 @@ class VectorIndex(Component):
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'vector_index'
+
 
     @override
     def on_create(self, db: DB) -> None:
@@ -182,15 +180,19 @@ class VectorIndex(Component):
         if self.indexing_listener.select is None:  # type: ignore[union-attr]
             raise ValueError('.select must be set')
 
+        progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
             db.execute(self.indexing_listener.select),  # type: ignore[union-attr]
-            _BACKFILL_BATCH_SIZE,
+            s.CFG.vector_search.backfill_batch_size,
         ):
             items = []
             for record in record_batch:
                 key = self.indexing_listener.key  # type: ignore[union-attr]
                 if key.startswith('_outputs.'):
                     key = key.split('.')[1]
+
+                # id = record[db.db.id_field]
+                # h = record.outputs(key, model)
                 h, id = db.databackend.get_output_from_document(
                     record,
                     key,
@@ -199,7 +201,9 @@ class VectorIndex(Component):
                 if isinstance(h, Encodable):
                     h = h.x
                 items.append(VectorCollectionItem.create(id=str(id), vector=h))
+
             self.vector_table.add(items)
+            progress.update(len(items))
 
     @property
     def _dimensions(self) -> int:

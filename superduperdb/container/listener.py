@@ -23,8 +23,6 @@ class Listener(Component):
     :param active: Toggle to ``False`` to deactivate change data triggering
     :param features: Dictionary of mappings from keys to model
     :param identifier: A string used to identify the model.
-    :param max_chunk_size: int = 5000
-
     :param predict_kwargs: Keyword arguments to self.model.predict
     :param select: Object for selecting which data is processed
     :param version: Version number of the model(?)

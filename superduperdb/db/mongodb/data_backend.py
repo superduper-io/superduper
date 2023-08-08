@@ -20,6 +20,9 @@ class MongoDataBackend(BaseDataBackend):
     def db(self):
         return self._db
 
+    def drop(self):
+        return self.db.client.drop_database(self.db.name)
+
     def get_output_from_document(
         self, r: Document, key: str, model: str
     ) -> MongoStyleDict:

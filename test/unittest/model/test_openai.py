@@ -45,15 +45,15 @@ def test_open_ai_chat_completion():
 
 
 @pytest.fixture
-def open_ai_with_rhymes(empty):
+def open_ai_with_rhymes(empty_database):
     with open('test/material/data/rhymes.json') as f:
         data = json.load(f)
     for i, r in enumerate(data):
         data[i] = Document({'story': r.replace('\n', ' ')})
-    empty.execute(Collection('openai').insert_many(data))
-    yield empty
-    empty.remove('model', 'gpt-3.5-turbo', force=True)
-    empty.remove('model', 'text-embedding-ada-002', force=True)
+    empty_database.execute(Collection('openai').insert_many(data))
+    yield empty_database
+    empty_database.remove('model', 'gpt-3.5-turbo', force=True)
+    empty_database.remove('model', 'text-embedding-ada-002', force=True)
 
 
 @pytest.mark.skipif(SKIP_PAID, reason='OPENAI_API_KEY not set')

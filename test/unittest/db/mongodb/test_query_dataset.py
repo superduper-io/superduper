@@ -2,7 +2,9 @@ from superduperdb.db.mongodb.query import Collection
 from superduperdb.db.query_dataset import QueryDataset
 
 
-def test_query_dataset(random_data, a_listener):
+def test_query_dataset(
+    database_with_random_tensor_data, database_with_listener_torch_model_a
+):
     train_data = QueryDataset(
         select=Collection(name='documents').find(
             {}, {'_id': 0, 'x': 1, '_fold': 1, '_outputs': 1}
@@ -32,7 +34,9 @@ def test_query_dataset(random_data, a_listener):
     )
 
 
-def test_query_dataset_base(random_data, a_listener_base):
+def test_query_dataset_base(
+    database_with_random_tensor_data, database_with_listener_torch_model_a
+):
     train_data = QueryDataset(
         select=Collection(name='documents').find({}, {'_id': 0}),
         keys=['_base', 'y'],

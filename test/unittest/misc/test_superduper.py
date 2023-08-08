@@ -4,8 +4,8 @@ from superduperdb import superduper
 from superduperdb.misc.superduper import MongoDbTyper, SklearnTyper, TorchTyper
 
 
-def test_mongodb_typer(test_db):
-    assert MongoDbTyper.accept(test_db.db) is True
+def test_mongodb_typer(empty_database):
+    assert MongoDbTyper.accept(empty_database.db) is True
 
 
 def test_sklearn_typer():
@@ -20,9 +20,9 @@ def test_torch_typer():
     assert TorchTyper.accept(torch.nn.Linear(1, 1)) is True
 
 
-def test_superduper_db(test_db):
-    db = superduper(test_db.db)
-    assert db.db == test_db.db
+def test_superduper_db(empty_database):
+    db = superduper(empty_database.db)
+    assert db.db == empty_database.db
 
 
 def test_superduper_model():

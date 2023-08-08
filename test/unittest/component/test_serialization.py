@@ -19,15 +19,17 @@ def test_model():
     print(m.dict())
 
 
-def test_sklearn(empty):
+def test_sklearn(empty_database):
     m = Estimator(
         identifier='test',
         object=SVC(),
         encoder=tensor(torch.float, shape=(32,)),
     )
-    empty.add(m)
-    assert empty.metadata.object_collection.count_documents({}) == 2
-    pprint.pprint(empty.metadata.get_component(type_id='model', identifier='test'))
-    reloaded = empty.load(type_id='model', identifier='test')
+    empty_database.add(m)
+    assert empty_database.metadata.object_collection.count_documents({}) == 2
+    pprint.pprint(
+        empty_database.metadata.get_component(type_id='model', identifier='test')
+    )
+    reloaded = empty_database.load(type_id='model', identifier='test')
     assert isinstance(reloaded.object, Artifact)
     pprint.pprint(reloaded)

@@ -11,7 +11,7 @@ from superduperdb.ext.transformers.model import (
 
 
 @pytest.fixture(scope="function")
-def transformers_model(random_data):
+def transformers_model(database_with_random_tensor_data):
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
     data = [
@@ -20,7 +20,9 @@ def transformers_model(random_data):
         {'text': 'dummy text 1', 'label': 1},
     ]
     data = [D(d) for d in data]
-    random_data.execute(Collection('train_documents').insert_many(data))
+    database_with_random_tensor_data.execute(
+        Collection('train_documents').insert_many(data)
+    )
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = AutoModelForSequenceClassification.from_pretrained(
         "distilbert-base-uncased", num_labels=2
@@ -43,7 +45,7 @@ def test_transformer_predict(transformers_model):
 
 
 @tdir
-def test_tranformers_fit(transformers_model, random_data):
+def test_tranformers_fit(transformers_model, database_with_random_tensor_data):
     repo_name = "test-superduperdb-sentiment-analysis"
     training_args = TransformersTrainerConfiguration(
         identifier=repo_name,
@@ -59,7 +61,7 @@ def test_tranformers_fit(transformers_model, random_data):
     transformers_model.fit(
         X='text',
         y='label',
-        db=random_data,
+        db=database_with_random_tensor_data,
         select=Collection('train_documents').find(),
         configuration=training_args,
         validation_sets=[

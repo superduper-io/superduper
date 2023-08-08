@@ -7,8 +7,6 @@ from unittest import mock
 import numpy as np
 import pytest
 import torch
-from pymongo import MongoClient
-from tenacity import RetryError, Retrying, stop_after_delay
 
 from superduperdb import CFG
 from superduperdb.base.config import DataLayer, DataLayers
@@ -20,18 +18,16 @@ from superduperdb.server.dask_client import dask_client
 from superduperdb.server.server import serve
 
 '''
-All pytest fixtures with _package scope_ are defined in this module.
-Package scope means that the fixture will be executed once per package,
-which in this case means once per `test/integration/` directory.
-
 Fixtures included here can create:
 - a MongoDB client
 - a MongoDB collection with some basic data
 - a local Dask client
 - a local SuperDuperDB server linked to the MongoDB client
+- INSERT OTHERS HERE
 
-When adding new fixtures, please try to avoid building on top of other fixtures
-as much as possible. This will make it easier to understand the test suite.
+When adding new fixtures, please be considerate when building on top of other
+fixtures to create deeply nested fixtures. This will make it easier to understand
+the test suite for others.
 '''
 
 # Set the seeds
@@ -40,90 +36,22 @@ torch.manual_seed(42)
 np.random.seed(42)
 
 
-mongodb_test_config = {
-    'host': '0.0.0.0',
-    'port': 27018,
-    'username': 'testmongodbuser',
-    'password': 'testmongodbpassword',
-    'serverSelectionTimeoutMS': 5000,
-}
-
-
-@pytest.fixture(autouse=True, scope="package")
-def patch_superduper_config():
-    data_layers_cfg = DataLayers(
-        artifact=DataLayer(name='_filesystem:test_db', kwargs=mongodb_test_config),
-        data_backend=DataLayer(name='test_db', kwargs=mongodb_test_config),
-        metadata=DataLayer(name='test_db', kwargs=mongodb_test_config),
-    )
-
-    with mock.patch('superduperdb.CFG.data_layers', data_layers_cfg):
-        yield
-
-
-@pytest.fixture(scope="package")
-def create_mongodb_client_clean_and_close():
-    mongo_client = MongoClient(**mongodb_test_config)
-
-    try:
-        for attempt in Retrying(stop=stop_after_delay(15)):
-            with attempt:
-                mongo_client.is_mongos
-                print("Connected to test MongoDB client!")
-    except RetryError:
-        pytest.fail("Could not connect to mongodb,")
-
-    yield mongo_client
-
-    for database_name in mongo_client.list_database_names():
-        if database_name in ("admin", "config", "local"):
-            continue
-        mongo_client.drop_database(database_name)
-    mongo_client.close()
-
-
 @pytest.fixture()
-def fresh_client():
-    mongo_client = MongoClient(**mongodb_test_config)
-    try:
-        for attempt in Retrying(stop=stop_after_delay(15)):
-            with attempt:
-                mongo_client.is_mongos
-                print("Connected to test MongoDB client!")
-    except RetryError:
-        pytest.fail("Could not connect to mongodb,")
-    yield mongo_client
-
-
-@pytest.fixture(scope="package")
-def database_with_default_encoders_and_model(create_mongodb_client_clean_and_close):
-    database = build_datalayer(pymongo=create_mongodb_client_clean_and_close)
-    database.add(tensor(torch.float, shape=(32,)))
-    database.add(tensor(torch.float, shape=(16,)))
-    database.add(
+def database_with_default_encoders_and_model(empty_database):
+    empty_database.add(tensor(torch.float, shape=(32,)))
+    empty_database.add(tensor(torch.float, shape=(16,)))
+    empty_database.add(
         TorchModel(
             object=torch.nn.Linear(32, 16),
             identifier='model_linear_a',
             encoder='torch.float32[16]',
         )
     )
-    yield database
+    yield empty_database
 
-    database.remove('model', 'model_linear_a', force=True)
-    database.remove('encoder', 'torch.float32[16]', force=True)
-    database.remove('encoder', 'torch.float32[32]', force=True)
-
-
-@pytest.fixture
-def fresh_database(fresh_client):
-    database = build_datalayer(pymongo=fresh_client)
-    yield database
-    for m in database.show('model'):
-        if m != 'model_linear_a':
-            database.remove('model', m, force=True)
-    for e in database.show('encoder'):
-        if e not in {'torch.float32[16]', 'torch.float32[32]'}:
-            database.remove('encoder', e, force=True)
+    empty_database.remove('model', 'model_linear_a', force=True)
+    empty_database.remove('encoder', 'torch.float32[16]', force=True)
+    empty_database.remove('encoder', 'torch.float32[32]', force=True)
 
 
 def fake_tensor_data(encoder, update: bool = True):
@@ -146,21 +74,52 @@ def fake_tensor_data(encoder, update: bool = True):
     return data
 
 
-@pytest.fixture(scope="package")
+@pytest.fixture()
 def fake_inserts(database_with_default_encoders_and_model):
     encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
     return fake_tensor_data(encoder, update=False)
 
 
-@pytest.fixture(scope="package")
+@pytest.fixture()
 def fake_updates(database_with_default_encoders_and_model):
     encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
     return fake_tensor_data(encoder, update=True)
 
 
-@pytest.fixture(scope="package")
-def test_server(database_with_default_encoders_and_model):
-    app = serve(database_with_default_encoders_and_model)
+# We only want to start the server once ie session scope. This is a
+# database fixture with session scope that can be used with the server.
+@pytest.fixture(scope="session")
+def session_database(mongodb_test_config, mongodb_client):
+    database_name = "test_session_scope_database"
+    data_layers_cfg = DataLayers(
+        artifact=DataLayer(
+            name=f'_filesystem:{database_name}', kwargs=mongodb_test_config
+        ),
+        data_backend=DataLayer(name=database_name, kwargs=mongodb_test_config),
+        metadata=DataLayer(name=database_name, kwargs=mongodb_test_config),
+    )
+
+    with mock.patch('superduperdb.CFG.data_layers', data_layers_cfg):
+        session_database = build_datalayer(pymongo=mongodb_client)
+        session_database.add(tensor(torch.float, shape=(32,)))
+        session_database.add(tensor(torch.float, shape=(16,)))
+        session_database.add(
+            TorchModel(
+                object=torch.nn.Linear(32, 16),
+                identifier='model_linear_a',
+                encoder='torch.float32[16]',
+            )
+        )
+        yield session_database
+
+    # clean-up the databases created by build_datalayer
+    mongodb_client.drop_database(f'_filesystem:{database_name}')
+    mongodb_client.drop_database(f'{database_name}')
+
+
+@pytest.fixture(scope="session")
+def test_server(session_database):
+    app = serve(session_database)
     t = Thread(
         target=app.run,
         kwargs={"host": CFG.server.host, "port": CFG.server.port},
@@ -171,8 +130,8 @@ def test_server(database_with_default_encoders_and_model):
     yield
 
 
-@pytest.fixture(scope="package")
-def local_dask_client():
+@pytest.fixture()
+def local_dask_client(database_name):
     for component in ['DATA_BACKEND', 'ARTIFACT', 'METADATA']:
         os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_PORT'] = '27018'
         os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_HOST'] = 'localhost'
@@ -184,7 +143,9 @@ def local_dask_client():
         ] = 'testmongodbpassword'
 
         os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_NAME'] = (
-            '_filesystem:test_db' if component == "ARTIFACT" else 'test_db'
+            f'_filesystem:{database_name}'
+            if component == "ARTIFACT"
+            else f'{database_name}'
         )
     client = dask_client(CFG.dask, local=True)
     yield client

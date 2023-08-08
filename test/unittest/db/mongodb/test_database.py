@@ -16,29 +16,35 @@ n_data_points = 250
 IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
 
 
-def test_create_component(empty, float_tensors_16, float_tensors_32):
-    empty.add(TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module'))
-    assert 'my-test-module' in empty.show('model')
-    model = empty.models['my-test-module']
+def test_create_component(
+    empty_database, database_with_float_tensors_16, database_with_float_tensors_32
+):
+    empty_database.add(
+        TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module')
+    )
+    assert 'my-test-module' in empty_database.show('model')
+    model = empty_database.models['my-test-module']
     print(model)
     output = model.predict(torch.randn(16), one=True)
     assert output.shape[0] == 32
 
 
-def test_update_component(empty):
-    empty.add(TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module'))
+def test_update_component(empty_database):
+    empty_database.add(
+        TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module')
+    )
     m = TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module')
-    empty.add(m)
-    assert empty.show('model', 'my-test-module') == [0, 1]
-    empty.add(m)
-    assert empty.show('model', 'my-test-module') == [0, 1]
+    empty_database.add(m)
+    assert empty_database.show('model', 'my-test-module') == [0, 1]
+    empty_database.add(m)
+    assert empty_database.show('model', 'my-test-module') == [0, 1]
 
-    n = empty.models[m.identifier]
-    empty.add(n)
-    assert empty.show('model', 'my-test-module') == [0, 1]
+    n = empty_database.models[m.identifier]
+    empty_database.add(n)
+    assert empty_database.show('model', 'my-test-module') == [0, 1]
 
 
-def test_compound_component(empty):
+def test_compound_component(empty_database):
     t = tensor(torch.float, shape=(32,))
 
     m = TorchModel(
@@ -47,44 +53,46 @@ def test_compound_component(empty):
         encoder=t,
     )
 
-    empty.add(m)
-    assert 'torch.float32[32]' in empty.show('encoder')
-    assert 'my-test-module' in empty.show('model')
-    assert empty.show('model', 'my-test-module') == [0]
+    empty_database.add(m)
+    assert 'torch.float32[32]' in empty_database.show('encoder')
+    assert 'my-test-module' in empty_database.show('model')
+    assert empty_database.show('model', 'my-test-module') == [0]
 
-    empty.add(m)
-    assert empty.show('model', 'my-test-module') == [0]
-    assert empty.show('encoder', 'torch.float32[32]') == [0]
+    empty_database.add(m)
+    assert empty_database.show('model', 'my-test-module') == [0]
+    assert empty_database.show('encoder', 'torch.float32[32]') == [0]
 
-    empty.add(
+    empty_database.add(
         TorchModel(
             object=torch.nn.Linear(16, 32),
             identifier='my-test-module',
             encoder=t,
         )
     )
-    assert empty.show('model', 'my-test-module') == [0, 1]
-    assert empty.show('encoder', 'torch.float32[32]') == [0]
+    assert empty_database.show('model', 'my-test-module') == [0, 1]
+    assert empty_database.show('encoder', 'torch.float32[32]') == [0]
 
-    m = empty.load(type_id='model', identifier='my-test-module')
+    m = empty_database.load(type_id='model', identifier='my-test-module')
     assert isinstance(m.encoder, Encoder)
 
     with pytest.raises(ComponentInUseError):
-        empty.remove('encoder', 'torch.float32[32]')
+        empty_database.remove('encoder', 'torch.float32[32]')
 
     with pytest.warns(ComponentInUseWarning):
-        empty.remove('encoder', 'torch.float32[32]', force=True)
+        empty_database.remove('encoder', 'torch.float32[32]', force=True)
 
-    empty.remove('model', 'my-test-module', force=True)
+    empty_database.remove('model', 'my-test-module', force=True)
 
 
-def test_select_vanilla(random_data):
-    r = random_data.execute(Collection(name='documents').find_one())
+def test_select_vanilla(database_with_random_tensor_data):
+    r = database_with_random_tensor_data.execute(
+        Collection(name='documents').find_one()
+    )
     print(r)
 
 
-def test_select(with_vector_index):
-    db = with_vector_index
+def test_select(database_with_vector_index):
+    db = database_with_vector_index
     r = db.execute(Collection(name='documents').find_one())
     query = Collection(name='documents').like(
         r=Document({'x': r['x']}),
@@ -94,21 +102,37 @@ def test_select(with_vector_index):
     assert r['_id'] == s['_id']
 
 
-def test_reload_dataset(si_validation):
-    si_validation.load('dataset', 'my_valid')
+def test_reload_dataset(database_with_dataset):
+    database_with_dataset.load('dataset', 'my_valid')
 
 
-def test_insert(random_data, a_listener, an_update):
-    random_data.execute(Collection(name='documents').insert_many(an_update))
-    r = next(random_data.execute(Collection(name='documents').find({'update': True})))
+def test_insert(
+    database_with_random_tensor_data,
+    database_with_listener_torch_model_a,
+    multiple_documents,
+):
+    database_with_random_tensor_data.execute(
+        Collection(name='documents').insert_many(multiple_documents)
+    )
+    r = next(
+        database_with_random_tensor_data.execute(
+            Collection(name='documents').find({'update': True})
+        )
+    )
     assert 'linear_a' in r['_outputs']['x']
     assert (
-        len(list(random_data.execute(Collection(name='documents').find())))
+        len(
+            list(
+                database_with_random_tensor_data.execute(
+                    Collection(name='documents').find()
+                )
+            )
+        )
         == n_data_points + 10
     )
 
 
-def test_insert_from_uris(empty, image_type):
+def test_insert_from_uris(empty_database, database_with_pil_image):
     to_insert = [
         Document(
             {
@@ -130,21 +154,21 @@ def test_insert_from_uris(empty, image_type):
         )
         for _ in range(2)
     ]
-    empty.execute(Collection(name='documents').insert_many(to_insert))
-    r = empty.execute(Collection(name='documents').find_one())
+    empty_database.execute(Collection(name='documents').insert_many(to_insert))
+    r = empty_database.execute(Collection(name='documents').find_one())
     assert isinstance(r['item'].x, PIL.PngImagePlugin.PngImageFile)
     assert isinstance(r['other']['item'].x, PIL.PngImagePlugin.PngImageFile)
 
 
-def test_update(random_data, a_listener):
+def test_update(database_with_random_tensor_data, database_with_listener_torch_model_a):
     to_update = torch.randn(32)
-    t = random_data.encoders['torch.float32[32]']
-    random_data.execute(
+    t = database_with_random_tensor_data.encoders['torch.float32[32]']
+    database_with_random_tensor_data.execute(
         Collection(name='documents').update_many(
             {}, Document({'$set': {'x': t(to_update)}})
         )
     )
-    cur = random_data.execute(Collection(name='documents').find())
+    cur = database_with_random_tensor_data.execute(Collection(name='documents').find())
     r = next(cur)
     s = next(cur)
 
@@ -156,57 +180,81 @@ def test_update(random_data, a_listener):
     )
 
 
-def test_listener(random_data, a_model, b_model):
-    random_data.add(
+def test_listener(
+    database_with_random_tensor_data,
+    database_with_torch_model_a,
+    database_with_torch_model_b,
+):
+    database_with_random_tensor_data.add(
         Listener(
             model='linear_a',
             select=Collection(name='documents').find(),
             key='x',
         ),
     )
-    r = random_data.execute(Collection(name='documents').find_one())
+    r = database_with_random_tensor_data.execute(
+        Collection(name='documents').find_one()
+    )
     assert 'linear_a' in r['_outputs']['x']
 
-    t = random_data.encoders['torch.float32[32]']
+    t = database_with_random_tensor_data.encoders['torch.float32[32]']
 
-    random_data.execute(
+    database_with_random_tensor_data.execute(
         Collection(name='documents').insert_many(
             [Document({'x': t(torch.randn(32)), 'update': True}) for _ in range(5)]
         )
     )
 
-    r = random_data.execute(Collection(name='documents').find_one({'update': True}))
+    r = database_with_random_tensor_data.execute(
+        Collection(name='documents').find_one({'update': True})
+    )
     assert 'linear_a' in r['_outputs']['x']
 
-    random_data.add(
+    database_with_random_tensor_data.add(
         Listener(
             model='linear_b',
             select=Collection(name='documents').find().featurize({'x': 'linear_a'}),
             key='x',
         )
     )
-    r = random_data.execute(Collection(name='documents').find_one())
+    r = database_with_random_tensor_data.execute(
+        Collection(name='documents').find_one()
+    )
     assert 'linear_b' in r['_outputs']['x']
 
 
-def test_predict(a_model, float_tensors_32, float_tensors_16):
-    t = float_tensors_32.encoders['torch.float32[32]']
-    a_model.predict('linear_a', Document(t(torch.randn(32))))
+def test_predict(
+    database_with_torch_model_a,
+    database_with_float_tensors_32,
+    database_with_float_tensors_16,
+):
+    t = database_with_float_tensors_32.encoders['torch.float32[32]']
+    database_with_torch_model_a.predict('linear_a', Document(t(torch.randn(32))))
 
 
-def test_delete(random_data):
-    r = random_data.execute(Collection(name='documents').find_one())
-    random_data.execute(Collection(name='documents').delete_many({'_id': r['_id']}))
+def test_delete(database_with_random_tensor_data):
+    r = database_with_random_tensor_data.execute(
+        Collection(name='documents').find_one()
+    )
+    database_with_random_tensor_data.execute(
+        Collection(name='documents').delete_many({'_id': r['_id']})
+    )
     with pytest.raises(StopIteration):
-        next(random_data.execute(Collection(name='documents').find({'_id': r['_id']})))
+        next(
+            database_with_random_tensor_data.execute(
+                Collection(name='documents').find({'_id': r['_id']})
+            )
+        )
 
 
-def test_replace(random_data):
-    r = next(random_data.execute(Collection(name='documents').find()))
+def test_replace(database_with_random_tensor_data):
+    r = next(
+        database_with_random_tensor_data.execute(Collection(name='documents').find())
+    )
     x = torch.randn(32)
-    t = random_data.encoders['torch.float32[32]']
+    t = database_with_random_tensor_data.encoders['torch.float32[32]']
     r['x'] = t(x)
-    random_data.execute(
+    database_with_random_tensor_data.execute(
         Collection(name='documents').replace_one(
             {'_id': r['_id']},
             r,
@@ -214,12 +262,14 @@ def test_replace(random_data):
     )
 
 
-def test_dataset(random_data):
+def test_dataset(database_with_random_tensor_data):
     d = Dataset(
         identifier='test_dataset',
         select=Collection(name='documents').find({'_fold': 'valid'}),
     )
-    random_data.add(d)
-    assert random_data.show('dataset') == ['test_dataset']
-    dataset = random_data.load('dataset', 'test_dataset')
-    assert len(dataset.data) == len(list(random_data.execute(dataset.select)))
+    database_with_random_tensor_data.add(d)
+    assert database_with_random_tensor_data.show('dataset') == ['test_dataset']
+    dataset = database_with_random_tensor_data.load('dataset', 'test_dataset')
+    assert len(dataset.data) == len(
+        list(database_with_random_tensor_data.execute(dataset.select))
+    )

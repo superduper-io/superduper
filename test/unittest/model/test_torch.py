@@ -41,7 +41,7 @@ def acc(x, y):
     return x == y
 
 
-def test_fit(random_data, si_validation):
+def test_fit(database_with_random_tensor_data, database_with_dataset):
     m = TorchModel(
         object=torch.nn.Linear(32, 1),
         identifier='test',
@@ -57,7 +57,7 @@ def test_fit(random_data, si_validation):
     m.fit(
         X='x',
         y='y',
-        db=random_data,
+        db=database_with_random_tensor_data,
         select=Collection(name='documents').find(),
         metrics=[Metric(identifier='acc', object=acc)],
         validation_sets=['my_valid'],

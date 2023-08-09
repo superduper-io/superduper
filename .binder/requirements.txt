@@ -270,11 +270,12 @@ toolz==0.12.0
     #   dask
     #   distributed
     #   partd
-torch==2.0.0
+torch==2.0.1
     # via
     #   -r requirements.in
     #   accelerate
     #   triton
+torchvision==0.15.2
 tornado==6.3.2
     # via distributed
 tqdm==4.65.0

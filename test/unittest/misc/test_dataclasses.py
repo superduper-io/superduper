@@ -1,6 +1,7 @@
-from pydantic import Field
+from dataclasses import InitVar, asdict, field, fields, replace
 
-from superduperdb.misc import dataclasses as dc
+from pydantic import Field
+from pydantic import dataclasses as dc
 
 
 @dc.dataclass
@@ -9,8 +10,8 @@ class Un:
 
     # These two unfortunately get JSONized
     nine: str = Field(default='ERROR', exclude=True)
-    ten: str = dc.field(default='ERROR', repr=False, compare=False)
-    eleven: dc.InitVar[str] = 'this goes up to'
+    ten: str = field(default='ERROR', repr=False, compare=False)
+    eleven: InitVar[str] = 'this goes up to'
 
     def __post_init__(self, eleven: str):
         self.seven = self.un + '-sept'
@@ -48,15 +49,17 @@ class Inclus:
 
 
 def test_dataclasses():
-    assert Un(eleven='HAHA!').dict() == UN
+    assert asdict(Un(eleven='HAHA!')) == UN
     assert Un(eleven='HAHA!').eleven == 'HAHA!'
-    assert Inclus(Un()).asdict() == {'ein': UN}
+    assert asdict(Inclus(Un())) == {'ein': UN}
     assert Inclus(**{'ein': UN}) == Inclus(Un())
 
-    actual = Inclus(Un()).replace(ein=Un().replace(nine='nine')).dict()
+    ein = replace(Un(), nine='nine')
+    un = replace(Inclus(Un()), ein=ein)
+    actual = asdict(un)
     expected = {'ein': dict(UN, nine='nine')}
     assert actual == expected
 
 
 def test_methods():
-    assert [f.name for f in Un.fields()] == ['un', 'nine', 'ten']
+    assert [f.name for f in fields(Un)] == ['un', 'nine', 'ten']

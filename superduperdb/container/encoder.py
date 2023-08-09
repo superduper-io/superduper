@@ -1,11 +1,11 @@
 import dataclasses
+import dataclasses as dc
 import io
 import pickle
 import typing as t
 
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.component import Component
-from superduperdb.misc import dataclasses as dc
 
 Decode = t.Callable[[bytes], t.Any]
 Encode = t.Callable[[t.Any], bytes]

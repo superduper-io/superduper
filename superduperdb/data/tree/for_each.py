@@ -1,7 +1,7 @@
+import dataclasses as dc
 import typing as t
 
 import superduperdb as s
-from superduperdb.misc import dataclasses as dc
 
 
 def for_each(

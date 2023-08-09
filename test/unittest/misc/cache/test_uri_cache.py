@@ -1,10 +1,10 @@
 import typing as t
 
 import pydantic
+from pydantic import dataclasses as dc
 
 import superduperdb as s
 from superduperdb.data.cache import uri_cache
-from superduperdb.misc import dataclasses as dc
 
 IS_2 = pydantic.__version__.startswith('2')
 

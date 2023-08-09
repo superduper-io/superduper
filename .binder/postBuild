@@ -17,7 +17,7 @@ tar -zxvf $MONGOTOOLS_FILE
 
 # Download mongodb data
 wget https://superduperdb-public.s3.eu-west-1.amazonaws.com/collab_data.zip
-unzip collab_data.zip -d dump
+unzip collab_data.zip
 
 # Move mongodb tools into a seperate directory
 mkdir -p $HOME/.tools

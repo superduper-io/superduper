@@ -1,8 +1,8 @@
 import dataclasses as dc
 import itertools
 import typing as t
-import tqdm
 
+import tqdm
 from overrides import override
 
 import superduperdb as s
@@ -57,7 +57,6 @@ class VectorIndex(Component):
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'vector_index'
-
 
     @override
     def on_create(self, db: DB) -> None:
@@ -175,6 +174,7 @@ class VectorIndex(Component):
         keys = [w.key for w in listeners]  # type: ignore[union-attr]
         return models, keys
 
+    # ruff: noqa: E501
     def _initialize_vector_database(self, db: DB) -> None:
         logging.info(f'loading hashes: {self.identifier!r}')
         if self.indexing_listener.select is None:  # type: ignore[union-attr]
@@ -191,13 +191,8 @@ class VectorIndex(Component):
                 if key.startswith('_outputs.'):
                     key = key.split('.')[1]
 
-                # id = record[db.db.id_field]
-                # h = record.outputs(key, model)
-                h, id = db.databackend.get_output_from_document(
-                    record,
-                    key,
-                    self.indexing_listener.model.identifier,  # type: ignore[union-attr]
-                )
+                id = record[db.databackend.id_field]
+                h = record.outputs(key, self.indexing_listener.model.identifier)  # type: ignore[union-attr]
                 if isinstance(h, Encodable):
                     h = h.x
                 items.append(VectorCollectionItem.create(id=str(id), vector=h))

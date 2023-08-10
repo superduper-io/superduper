@@ -1,6 +1,6 @@
 <p align="center">
-	<a href="https://www.superduperdb.com">
-     <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_logo_color.svg">
+  <a href="https://www.superduperdb.com">
+    <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_logo_color.svg">
   </a>
 </p>
 <h1 align="center">Deploy, train and operate AI with your datastore (-base/-lake/-warehouse)!
@@ -85,7 +85,7 @@
 <br>
 
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_diagram.svg">
+  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_diagram.png">
 </p>
 
 # How to

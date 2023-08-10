@@ -1,6 +1,8 @@
+import click
 import gridfs
 
 from superduperdb.db.base.artifact import ArtifactStore
+from superduperdb.misc.colors import Colors
 
 
 class MongoArtifactStore(ArtifactStore):
@@ -14,6 +16,13 @@ class MongoArtifactStore(ArtifactStore):
         self.filesystem = gridfs.GridFS(self.db)
 
     def drop(self):
+        if not click.confirm(
+            f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+            f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+            'Are you sure you want to drop the data-backend? ',
+            default=False,
+        ):
+            print('Aborting...')
         return self.db.client.drop_database(self.db.name)
 
     def delete_artifact(self, file_id: str):

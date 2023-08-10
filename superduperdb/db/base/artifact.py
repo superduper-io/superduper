@@ -35,7 +35,6 @@ class ArtifactStore(ABC):
         Drop the artifact store.
         """
         pass
-    
 
     def create_artifact(self, bytes: t.Any):
         """

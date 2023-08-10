@@ -1,9 +1,11 @@
 import typing as t
 
+import click
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 from superduperdb.container.component import Component
 from superduperdb.db.base.metadata import MetaDataStore
+from superduperdb.misc.colors import Colors
 
 
 class MongoMetaDataStore(MetaDataStore):
@@ -20,6 +22,13 @@ class MongoMetaDataStore(MetaDataStore):
         self.parent_child_mappings = self.db['_parent_child_mappings']
 
     def drop(self):
+        if not click.confirm(
+            f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+            f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+            'Are you sure you want to drop the data-backend? ',
+            default=False,
+        ):
+            print('Aborting...')
         self.db.drop_collection(self.meta_collection.name)
         self.db.drop_collection(self.object_collection.name)
         self.db.drop_collection(self.job_collection.name)

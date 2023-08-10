@@ -19,19 +19,20 @@ class BaseVectorIndex:
     measure: str
 
     def __init__(self, h, index, measure):
-        if isinstance(h, list) and isinstance(h[0], torch.Tensor):
-            h = torch.stack(h).numpy()
-        elif isinstance(h, list) and isinstance(h[0], numpy.ndarray):
-            h = numpy.stack(h)
-        elif isinstance(h, list) and isinstance(h[0], list):
-            h = numpy.array(h)
-        elif isinstance(h, torch.Tensor):
-            h = h.numpy()
-        self.h = h
+        if isinstance(h, (numpy.ndarray, torch.Tensor)):
+            h = h.tolist()
+        self.h_list = h
+        self._h = numpy.array(h)
         self.index = index
         if index is not None:
             self.lookup = dict(zip(index, range(len(index))))
         self.measure = measure
+
+    @property  # type: ignore[no-redef]
+    def h(self):
+        if len(self.h_list) != self._h.shape[0]:
+            self._h = numpy.array(self.h_list)
+        return self._h
 
     @property
     def shape(self):  # pragma: no cover

@@ -47,7 +47,7 @@ class InMemoryVectorCollection(VectorCollection):
         else:
             self._index.index.append(item.id)  # type: ignore[attr-defined]
             self._index.lookup[item.id] = len(self._index.lookup)
-            self._index.h = numpy.append(self._index.h, [item.vector], axis=0)
+            self._index.h_list.append(list(item.vector))
 
     def find_nearest_from_id(
         self,

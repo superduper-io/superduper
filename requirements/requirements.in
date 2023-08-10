@@ -24,3 +24,4 @@ torch>=2.0.0,!=2.0.1
 transformers>=4.29.1
 accelerate>=0.20.1
 overrides>=7
+tenacity>=8.1.0

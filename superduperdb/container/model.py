@@ -61,9 +61,9 @@ class _TrainingConfiguration(Component):
 class PredictMixin:
     identifier: str
     encoder: EncoderArg
-    preprocess: t.Union[t.Callable, Artifact, None]
-    postprocess: t.Union[t.Callable, Artifact, None]
-    collate_fn: t.Union[t.Callable, Artifact, None]
+    preprocess: t.Union[t.Callable, Artifact, None] = None
+    postprocess: t.Union[t.Callable, Artifact, None] = None
+    collate_fn: t.Union[t.Callable, Artifact, None] = None
     batch_predict: bool
     takes_context: bool
 

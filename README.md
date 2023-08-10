@@ -3,9 +3,8 @@
     <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_logo_color.svg">
   </a>
 </p>
-<h1 align="center">Deploy, train and operate AI with your datastore (-base/-lake/-warehouse)!
+<h1 align="center">Deploy, train and operate AI with your datastore!
 </h1>
-<h2 align="center">Initial support for <a href="https://www.mongodb.com/">MongoDB</a></h2>
 <p align="center">
 <a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">
     <img src="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main/graph/badge.svg" alt="Coverage">
@@ -75,6 +74,7 @@
   - **Python developers** using datastores (databases/ lakes/ warehouses) who want to build AI into their applications easily.
   - **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
   - **Infrastructure engineers** who want a single scalable setup that supports both local, on-prem and cloud deployment.
+  - **Developers who use MongoDB**, for which we have strong initial support.
 
 ### SuperDuperDB transforms your datastore into:
 

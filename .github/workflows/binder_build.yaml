@@ -1,0 +1,17 @@
+name: 'Trigger-Binder-build'
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  trigger-binder-build:
+    if: github.event.pull_request.merged == true
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: s-weigand/trigger-mybinder-build@v1
+        with:
+          target-repo: SuperDuperDB/superduperdb

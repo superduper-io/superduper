@@ -6,6 +6,7 @@ on:
       - closed
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   trigger-binder-build:

@@ -1,11 +1,13 @@
 import typing as t
 
+import click
 from pymongo import MongoClient
 
 from superduperdb import logging
 from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.data_backend import BaseDataBackend
+from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 
@@ -21,6 +23,13 @@ class MongoDataBackend(BaseDataBackend):
         return self._db
 
     def drop(self):
+        if not click.confirm(
+            f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+            f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+            'Are you sure you want to drop the data-backend? ',
+            default=False,
+        ):
+            print('Aborting...')
         return self.db.client.drop_database(self.db.name)
 
     def get_output_from_document(

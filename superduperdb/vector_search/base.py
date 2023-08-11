@@ -94,7 +94,10 @@ class VectorCollectionItem:
 
     @classmethod
     def create(
-        cls, *, id: VectorCollectionItemId, vector: t.Union[numpy.typing.ArrayLike, torch.Tensor]
+        cls,
+        *,
+        id: VectorCollectionItemId,
+        vector: t.Union[numpy.typing.ArrayLike, torch.Tensor],
     ) -> VectorCollectionItem:
         return VectorCollectionItem(id=id, vector=to_numpy(vector))
 

@@ -6,7 +6,9 @@ from dataclasses import dataclass, field
 
 import numpy
 import numpy.typing
-import torch
+
+if t.TYPE_CHECKING:
+    import torch
 
 import superduperdb as s
 
@@ -19,7 +21,7 @@ class BaseVectorIndex:
     measure: str
 
     def __init__(self, h, index, measure):
-        if isinstance(h, (numpy.ndarray, torch.Tensor)):
+        if hasattr(h, 'tolist'):
             h = h.tolist()
         self.h_list = h
         self._h = numpy.array(h)
@@ -58,13 +60,10 @@ class BaseVectorIndex:
         raise NotImplementedError
 
 
-ArrayLike = t.Union[numpy.typing.ArrayLike, torch.Tensor]
-
-
-def to_numpy(x: ArrayLike) -> numpy.ndarray:
+def to_numpy(x: t.Union[numpy.typing.ArrayLike, torch.Tensor]) -> numpy.ndarray:
     if isinstance(x, numpy.ndarray):
         return x
-    if isinstance(x, torch.Tensor):
+    if hasattr(x, 'numpy'):
         return x.numpy()
     return numpy.array(x)
 

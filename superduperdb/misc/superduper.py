@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import typing as t
 
 from sklearn.linear_model._base import LinearRegression
-from torch.nn.modules.linear import Linear
+
+if t.TYPE_CHECKING:
+    from torch.nn.modules.linear import Linear
 
 __all__ = ('superduper',)
 

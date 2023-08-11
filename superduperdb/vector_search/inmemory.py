@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 from contextlib import contextmanager
 
@@ -7,7 +9,6 @@ from readerwriterlock import rwlock
 from superduperdb.vector_search.table_scan import VanillaVectorIndex
 
 from .base import (
-    ArrayLike,
     VectorCollection,
     VectorCollectionConfig,
     VectorCollectionId,
@@ -19,6 +20,9 @@ from .base import (
     VectorIndexMeasure,
     to_numpy,
 )
+
+if t.TYPE_CHECKING:
+    import torch
 
 
 class InMemoryVectorCollection(VectorCollection):
@@ -67,7 +71,7 @@ class InMemoryVectorCollection(VectorCollection):
 
     def find_nearest_from_array(
         self,
-        array: ArrayLike,
+        array: t.Union[numpy.typing.ArrayLike, torch.Tensor],
         *,
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,

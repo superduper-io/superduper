@@ -10,11 +10,6 @@ import numpy.typing
 import superduperdb as s
 
 
-class HasNumpy(t.Protocol):
-    def numpy(self) -> numpy.ndarray:
-        ...
-
-
 class BaseVectorIndex:
     name: t.Optional[str] = None
     index: t.Sequence[str]
@@ -61,11 +56,7 @@ class BaseVectorIndex:
         raise NotImplementedError
 
 
-def to_numpy(x: t.Union[numpy.typing.ArrayLike, HasNumpy]) -> numpy.ndarray:
-    if isinstance(x, numpy.ndarray):
-        return x
-    if hasattr(x, 'numpy'):
-        return x.numpy()
+def to_numpy(x: numpy.typing.ArrayLike) -> numpy.ndarray:
     return numpy.array(x)
 
 
@@ -98,7 +89,7 @@ class VectorCollectionItem:
         cls,
         *,
         id: VectorCollectionItemId,
-        vector: t.Union[numpy.typing.ArrayLike, HasNumpy],
+        vector: numpy.typing.ArrayLike,
     ) -> VectorCollectionItem:
         return VectorCollectionItem(id=id, vector=to_numpy(vector))
 
@@ -142,7 +133,7 @@ class VectorCollection(ABC):
     @abstractmethod
     def find_nearest_from_array(
         self,
-        array: t.Union[numpy.typing.ArrayLike, HasNumpy],
+        array: numpy.typing.ArrayLike,
         *,
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,

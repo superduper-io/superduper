@@ -22,11 +22,6 @@ from .base import (
 )
 
 
-class HasNumpy(t.Protocol):
-    def numpy(self) -> numpy.ndarray:
-        ...
-
-
 class InMemoryVectorCollection(VectorCollection):
     def __init__(self, *, dimensions: int, measure: VectorIndexMeasure = 'l2') -> None:
         super().__init__()
@@ -73,7 +68,7 @@ class InMemoryVectorCollection(VectorCollection):
 
     def find_nearest_from_array(
         self,
-        array: t.Union[numpy.typing.ArrayLike, HasNumpy],
+        array: numpy.typing.ArrayLike,
         *,
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import typing as t
 
 __all__ = ('superduper',)

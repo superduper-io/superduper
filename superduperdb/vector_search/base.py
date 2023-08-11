@@ -7,15 +7,16 @@ from dataclasses import dataclass, field
 import numpy
 import numpy.typing
 
-if t.TYPE_CHECKING:
-    import torch
-
 import superduperdb as s
+
+
+class HasNumpy(t.Protocol):
+    def numpy(self) -> numpy.ndarray:
+        ...
 
 
 class BaseVectorIndex:
     name: t.Optional[str] = None
-    h: t.Union[torch.Tensor, numpy.ndarray, t.Sequence]
     index: t.Sequence[str]
     lookup: t.Dict[str, t.Union[t.Iterator[int], int]]
     measure: str
@@ -60,7 +61,7 @@ class BaseVectorIndex:
         raise NotImplementedError
 
 
-def to_numpy(x: t.Union[numpy.typing.ArrayLike, torch.Tensor]) -> numpy.ndarray:
+def to_numpy(x: t.Union[numpy.typing.ArrayLike, HasNumpy]) -> numpy.ndarray:
     if isinstance(x, numpy.ndarray):
         return x
     if hasattr(x, 'numpy'):
@@ -97,7 +98,7 @@ class VectorCollectionItem:
         cls,
         *,
         id: VectorCollectionItemId,
-        vector: t.Union[numpy.typing.ArrayLike, torch.Tensor],
+        vector: t.Union[numpy.typing.ArrayLike, HasNumpy],
     ) -> VectorCollectionItem:
         return VectorCollectionItem(id=id, vector=to_numpy(vector))
 
@@ -141,7 +142,7 @@ class VectorCollection(ABC):
     @abstractmethod
     def find_nearest_from_array(
         self,
-        array: t.Union[numpy.typing.ArrayLike, torch.Tensor],
+        array: t.Union[numpy.typing.ArrayLike, HasNumpy],
         *,
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,

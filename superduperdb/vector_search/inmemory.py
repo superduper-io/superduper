@@ -21,8 +21,10 @@ from .base import (
     to_numpy,
 )
 
-if t.TYPE_CHECKING:
-    import torch
+
+class HasNumpy(t.Protocol):
+    def numpy(self) -> numpy.ndarray:
+        ...
 
 
 class InMemoryVectorCollection(VectorCollection):
@@ -71,7 +73,7 @@ class InMemoryVectorCollection(VectorCollection):
 
     def find_nearest_from_array(
         self,
-        array: t.Union[numpy.typing.ArrayLike, torch.Tensor],
+        array: t.Union[numpy.typing.ArrayLike, HasNumpy],
         *,
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,

@@ -94,7 +94,7 @@ class VectorCollectionItem:
 
     @classmethod
     def create(
-        cls, *, id: VectorCollectionItemId, vector: ArrayLike
+        cls, *, id: VectorCollectionItemId, vector: t.Union[numpy.typing.ArrayLike, torch.Tensor]
     ) -> VectorCollectionItem:
         return VectorCollectionItem(id=id, vector=to_numpy(vector))
 
@@ -138,7 +138,7 @@ class VectorCollection(ABC):
     @abstractmethod
     def find_nearest_from_array(
         self,
-        array: ArrayLike,
+        array: t.Union[numpy.typing.ArrayLike, torch.Tensor],
         *,
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,

@@ -15,14 +15,15 @@ class MongoArtifactStore(ArtifactStore):
         self.db = self.conn[self.name]
         self.filesystem = gridfs.GridFS(self.db)
 
-    def drop(self):
-        if not click.confirm(
-            f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-            f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
-            'Are you sure you want to drop the data-backend? ',
-            default=False,
-        ):
-            print('Aborting...')
+    def drop(self, force: bool = False):
+        if not force:
+            if not click.confirm(
+                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                'Are you sure you want to drop all artifacts? ',
+                default=False,
+            ):
+                print('Aborting...')
         return self.db.client.drop_database(self.db.name)
 
     def delete_artifact(self, file_id: str):

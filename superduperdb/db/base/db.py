@@ -98,11 +98,11 @@ class DB:
     def distributed_client(self):
         return self._distributed_client
 
-    def drop(self):
+    def drop(self, force: bool = False):
         """
         Drop all data, artifacts and metadata
         """
-        if not click.confirm(
+        if not force and not click.confirm(
             f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
             f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
             'Are you sure you want to drop the database? ',

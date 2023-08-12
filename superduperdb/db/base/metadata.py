@@ -32,7 +32,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def drop(self):
+    def drop(self, force: bool = False):
         """
         Drop the metadata store.
         """

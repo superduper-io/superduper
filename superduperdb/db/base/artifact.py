@@ -30,7 +30,7 @@ class ArtifactStore(ABC):
         pass
 
     @abstractmethod
-    def drop(self):
+    def drop(self, force: bool = False):
         """
         Drop the artifact store.
         """

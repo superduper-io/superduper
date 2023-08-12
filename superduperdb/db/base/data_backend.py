@@ -20,7 +20,7 @@ class BaseDataBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def drop(self, force=False):
+    def drop(self, force: bool = False):
         """
         Drop the databackend.
         """

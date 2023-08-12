@@ -22,14 +22,15 @@ class MongoDataBackend(BaseDataBackend):
     def db(self):
         return self._db
 
-    def drop(self):
-        if not click.confirm(
-            f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-            f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
-            'Are you sure you want to drop the data-backend? ',
-            default=False,
-        ):
-            print('Aborting...')
+    def drop(self, force: bool = False):
+        if not force:
+            if not click.confirm(
+                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                'Are you sure you want to drop the data-backend? ',
+                default=False,
+            ):
+                print('Aborting...')
         return self.db.client.drop_database(self.db.name)
 
     def get_output_from_document(

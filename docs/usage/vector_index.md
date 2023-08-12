@@ -29,7 +29,7 @@ The model `my-model` should have already been registered with SuperDuperDB (see 
 See [here](listener) for how to create such a component.
 
 Alternatively the model and listener may be created inline. 
-Here is how to define a simple libear bag-of-words model:
+Here is how to define a simple linear bag-of-words model:
 
 ```python
 from superduperdb.container.vector_index import VectorIndex
@@ -53,9 +53,8 @@ db.add(
                 preprocess=TextEmbedding(d),  # "d" should be loaded from disk
                 object=torch.nn.Linear(64, 512),
             )
-key = '<key-to-search>',
-)
-)
+        key = '<key-to-search>',
+    )
 )
 ```
 
@@ -66,12 +65,12 @@ To use your vector index to search MongoDB, there are two possibilities:
 Firstly, find similar matches and then filter the results:
 
 ```python
->> > from superduperdb.container.document import Document as D
->> > db.execute(
-    ...
-Collection('my-coll')
-....like(D({'<key-to-search>': '<content' >}), vector_index='my-index')
-....find( < filter >, < projection >)
+>>> from superduperdb.container.document import Document as D
+>>> db.execute(
+...    Collection('my-coll')
+...       .like(D({'<key-to-search>': '<content' >}, vector_index='my-index')
+...       .find( < filter >, < projection >)
+...    )
 ... )
 ```
 

@@ -21,14 +21,15 @@ class MongoMetaDataStore(MetaDataStore):
         self.job_collection = self.db['_jobs']
         self.parent_child_mappings = self.db['_parent_child_mappings']
 
-    def drop(self):
-        if not click.confirm(
-            f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-            f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
-            'Are you sure you want to drop the data-backend? ',
-            default=False,
-        ):
-            print('Aborting...')
+    def drop(self, force: bool = False):
+        if not force:
+            if not click.confirm(
+                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                'Are you sure you want to drop all meta-data? ',
+                default=False,
+            ):
+                print('Aborting...')
         self.db.drop_collection(self.meta_collection.name)
         self.db.drop_collection(self.object_collection.name)
         self.db.drop_collection(self.job_collection.name)

@@ -5,6 +5,10 @@
 </p>
 <h1 align="center">Deploy, train and operate AI with your datastore!
 </h1>
+
+<h2 align="center">Inititial support for <a href="https://www.mongodb.com/">MongoDB</a> (SQL coming soon)!
+</h2>
+
 <p align="center">
 <a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">
     <img src="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main/graph/badge.svg" alt="Coverage">
@@ -26,52 +30,61 @@
 </a> 
 </p>
 
-#### SuperDuperDB is an open-source environment to easily integrate AI with your data-store: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
+#### SuperDuperDB is an open-source environment to easily integrate any AI models and APIs with your datastore: from LLM based Q&A, image generation with OpenAI API, TimeSeries Forecasting, Anomaly Detection, Classification, Recommenders etc. pp. to nearly any custom machine learning models and use-cases.
+
+#### SuperDuperDB is an open-source environment to easily integrate any AI with your datastore: from LLMs (ie. Llama 2) APIs (ie. OpenAI) to highly custom machine learning models and use-cases.
+
+#### SuperDuperDB allows you to easily deploy, train and operate any AI models and APIs with your datastore: from LLMs (ie. Llama 2) APIs (ie. OpenAI) to highly custom machine learning models and use-cases.
+
+#### SuperDuperDB allows you to easily integrate and manage any AI models and APIs with your datastore in a single (scalable) deployment: from LLMs (ie. Llama 2) APIs (ie. OpenAI) to highly custom machine learning models and use-cases.
+
+#### SuperDuperDB allows you to easily deploy, train and operate any AI models and APIs with your datastore in a single environment: from LLMs (ie. Llama 2) APIs (ie. OpenAI) to highly custom machine learning models and use-cases.
+
+
+
 #### No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="3%"/>
 
+
 <hr>
 
-### Inititial support for MongoDB / Atlas *(SQL coming soon)*!
-<hr>
 	
-### Supported Datastores: MongoDB, MongoDB Atlas, S3
-*Coming soon: PostgreSQL, MySQL, DuckDB, SQLLite, BigQuery, Snowflake*
 
 
-### AI Frameworks, Models and APIs: Pytorch, Sklearn, HuggingFace, OpenAI, LLama 2, Custom Models & Frameworks
+| Supported Data Stores    | AI Frameworks, Models and APIs: |   
+|--------------------------|--------------------------|
+|  ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> ◼️ *Coming soon:* PostgreSQL <br> &nbsp; &nbsp;  MySQL, DuckDB, SQLLite <br> &nbsp; &nbsp; BigQuery, Snowflake | ✅ **PyTorch** <br> ✅ **HuggingFace** <br> ✅ **OpenAI** <br> ✅ **Llama 2** <br> ✅ **Stable Diffusion**<br> 🟡 TensorFlow *coming soon* |   
+
+<hr>
+
+	
 
 
+| Supported Data Stores    | AI Frameworks, Models and APIs: |   
+|--------------------------|--------------------------|
+|  ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> 🟡 *Coming soon:* <br> &nbsp; &nbsp; PostgreSQL <br> &nbsp; &nbsp; MySQL <br> &nbsp; &nbsp; DuckDB <br> &nbsp; &nbsp; SQLLite <br> &nbsp; &nbsp; BigQuery <br> &nbsp; &nbsp; Snowflake | ✅ **PyTorch** <br> ✅ **HuggingFace** <br> ✅ **OpenAI** <br> ✅ **Llama 2** <br> ✅ **Stable Diffusion**<br> 🟡 TensorFlow *coming soon* |   
 
 
 <hr>
 
-| Supported Data Stores    | AI Frameworks, Models and APIs:      |   
-|--------------------------|---------|
-| **MongoDB/ Atlas**|✅ **PyTorch**|   
-| Coming soon: PostgreSQL *(coming soon)*|✅ **Sklearn**|  
-| MySQL *(coming soon)* |✅ **HuggingFace**    |
-| DuckDB *(coming soon)* | ✅ OpenAI        |   
-| BigQuery *(coming soon)* |    ✅ Llama 2     |  
-| Snowflake *(coming soon)* |  ✅ Stable Diffusion       |   
-| SQLLite *(coming soon)* |   TensorFlow *(coming soon)*     |  
-
-hr>
-
-| Supported Data Stores    | AI Frameworks, Models and APIs:      |   
-|--------------------------|---------|
-| ✅ **MongoDB/ Atlas** <br> ✅ **MongoDB Atlas** <br> *Coming soon: PostgreSQL, MySQL,DuckDB, SQLLite,BigQuery, Snowflake*| ✅ **PyTorch** <br> ✅ **HuggingFace** <br> ✅ OpenAI <br> ✅ Llama 2 <br> ✅ Stable Diffusion <br> *(Coming soon)* TensorFlow |   
-
-hr>
-
-| Supported Data Stores    | AI Frameworks, Models and APIs:      |   
-|--------------------------|---------|
-| ✅ **MongoDB/ Atlas** <br> ✅ **MongoDB Atlas** <br> PostgreSQL *(coming soon)* <br> MySQL *(coming soon)* <br> DuckDB *(coming soon)*<br> SQLLite *(coming soon)* <br> BigQuery *(coming soon)* <br> Snowflake *(coming soon)* | ✅ **PyTorch** <br> ✅ **HuggingFace** <br> ✅ **OpenAI** <br> ✅ **Llama 2** <br> ✅ **Stable Diffusion** <br> TensorFlow *(Coming soon)* |   
-
+| Supported Data Stores    | AI Frameworks, Models and APIs: |   
+|--------------------------|--------------------------|
+|  ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> 🟡 PostgreSQL *(coming soon)* <br> 🟡 MySQL *(coming soon)* <br> 🟡 DuckDB *(coming soon)*<br> 🟡 SQLLite *(coming soon)* <br> 🟡 BigQuery *(coming soon)* <br> 🟡 Snowflake *(coming soon)* | ✅ **PyTorch** <br> ✅ **HuggingFace** <br> ✅ **OpenAI** <br> ✅ **Llama 2** <br> ✅ **Stable Diffusion**<br> 🟡 TensorFlow *coming soon* |   
 
 
 <hr>
 
 <hr>
+
+| Supported Data Stores    | AI Frameworks, Models and APIs: |   
+|--------------------------|--------------------------|
+|  ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> ⚫ PostgreSQL *(coming soon)* <br> ⚫ MySQL *(coming soon)* <br> ⚫ DuckDB *(coming soon)*<br> ⚫ SQLLite *(coming soon)* <br> ⚫ BigQuery *(coming soon)* <br> ⚫ Snowflake *(coming soon)* | ✅ **PyTorch** <br> ✅ **HuggingFace** <br> ✅ **OpenAI** <br> ✅ **Llama 2** <br> ✅ **Stable Diffusion**<br> ⚫ TensorFlow *coming soon* |   
+
+<hr>
+
+| Supported Data Stores    | AI Frameworks, Models and APIs: |   
+|--------------------------|--------------------------|
+|  ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> ➖ PostgreSQL *(coming soon)* <br> ➖ MySQL *(coming soon)* <br> ➖ DuckDB *(coming soon)*<br> ➖ SQLLite *(coming soon)* <br> ➖ BigQuery *(coming soon)* <br> ➖ Snowflake *(coming soon)* | ✅ **PyTorch** <br> ✅ **HuggingFace** <br> ✅ **OpenAI** <br> ✅ **Llama 2** <br> ✅ **Stable Diffusion**<br> ➖ TensorFlow *(coming soon)* |   
+
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
 - <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
 - <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
@@ -117,7 +130,6 @@ hr>
   - **Python developers** using datastores (databases/ lakes/ warehouses) who want to build AI into their applications easily.
   - **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
   - **Infrastructure engineers** who want a single scalable setup that supports both local, on-prem and cloud deployment.
-  - **Developers who use MongoDB**, for which we have strong initial support.
 
 ### SuperDuperDB transforms your datastore into:
 

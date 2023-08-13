@@ -1,7 +1,6 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduperdb.container.document import Document
 from superduperdb.container.model import Model
 from superduperdb.db.base.query import Select
 
@@ -19,15 +18,14 @@ class BaseDataBackend(ABC):
     def db(self):
         raise NotImplementedError
 
+    def create_table_or_collection(self, name: str, schema: t.List):
+        raise NotImplementedError
+
     @abstractmethod
     def drop(self, force: bool = False):
         """
         Drop the databackend.
         """
-        pass
-
-    @abstractmethod
-    def get_output_from_document(self, r: Document, key: str, model: str):
         pass
 
     @abstractmethod

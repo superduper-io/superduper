@@ -34,7 +34,7 @@ class Job:
         self.future = None
 
     def watch(self):
-        return self.db.metadata.listen_job(identifier=self.identifier)
+        return self.db.metadata.watch_job(identifier=self.identifier)
 
     def run_locally(self, db):
         try:

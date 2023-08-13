@@ -46,7 +46,7 @@ class MetaDataStore(ABC):
     def update_job(self, job_id: str, key: str, value: t.Any):
         pass
 
-    def listen_job(self, identifier: str):
+    def watch_job(self, identifier: str):
         try:
             status = 'pending'
             n_lines = 0

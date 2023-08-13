@@ -769,6 +769,12 @@ class DB:
             )
         return documents
 
+    def create_table_or_collection(self, name: str, schema: t.List):
+        self.metadata.create_table_or_collection(name, schema)
+        self.databackend.create_table_or_collection(name, schema)
+        for e in schema.encoders:
+            self.add(e)
+
     def _get_content_for_filter(self, filter) -> Document:
         if isinstance(filter, dict):
             filter = Document(content=filter)

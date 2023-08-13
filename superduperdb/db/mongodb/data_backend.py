@@ -33,14 +33,6 @@ class MongoDataBackend(BaseDataBackend):
                 print('Aborting...')
         return self.db.client.drop_database(self.db.name)
 
-    def get_output_from_document(
-        self, r: Document, key: str, model: str
-    ) -> MongoStyleDict:
-        return (
-            MongoStyleDict(r.content)[f'_outputs.{key}.{model}'],  # type: ignore
-            r.content['_id'],  # type: ignore
-        )
-
     def set_content_bytes(self, r, key, bytes_):
         if not isinstance(r, MongoStyleDict):
             r = MongoStyleDict(r)

@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     DEBUG_MODE: bool = False
     HOST: str = "0.0.0.0"
     PORT: int = 8000
+    PATH_TO_REPO = './'
 
 
 settings = Settings()

@@ -4,11 +4,13 @@ import click
 from pymongo import MongoClient
 
 from superduperdb import logging
-from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.data_backend import BaseDataBackend
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
+
+from .metadata import MongoMetaDataStore
+from .artifacts import MongoArtifactStore
 
 
 class MongoDataBackend(BaseDataBackend):
@@ -21,6 +23,14 @@ class MongoDataBackend(BaseDataBackend):
     @property
     def db(self):
         return self._db
+
+    @property
+    def default_metadata_store(self):
+        return MongoMetaDataStore(self.db.client, name=self.db.name)
+
+    @property
+    def default_artifact_store(self):
+        return MongoArtifactStore(self.db.client, name=f'_filesystem:{self.db.name}')
 
     def drop(self, force: bool = False):
         if not force:

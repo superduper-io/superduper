@@ -46,7 +46,6 @@ def build_datalayer(cfg=None, **connections) -> DB:
             # cast port to an integer.
             cfg.kwargs['port'] = int(cfg.kwargs['port'])
             connection = default_connections[cfg.connection](**cfg.kwargs)
-
         return cls(name=cfg.name, conn=connection)
 
     return DB(

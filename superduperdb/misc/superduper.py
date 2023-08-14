@@ -30,7 +30,7 @@ class DuckTyper:
         raise NotImplementedError
 
 
-class MongoDbTyper(DuckTyper):
+class MongoDBTyper(DuckTyper):
     attrs = ('list_collection_names',)
 
     @classmethod
@@ -43,25 +43,21 @@ class MongoDbTyper(DuckTyper):
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
         from pymongo.database import Database
-
         from superduperdb import CFG
         from superduperdb.db.base.build import build_vector_database
         from superduperdb.db.base.db import DB
-        from superduperdb.db.mongodb.artifacts import MongoArtifactStore
         from superduperdb.db.mongodb.data_backend import MongoDataBackend
-        from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 
         if kwargs:
-            raise ValueError('MongoDb creator accepts no parameters')
+            raise ValueError('MongoDB creator accepts no parameters')
         if not isinstance(item, Database):
-            raise TypeError('Expected Database but got {type(item)}')
+            raise TypeError(f'Expected Database but got {type(item)}')
 
+        databackend = MongoDataBackend(conn=item.client, name=item.name)
         return DB(
-            databackend=MongoDataBackend(conn=item.client, name=item.name),
-            metadata=MongoMetaDataStore(conn=item.client, name=item.name),
-            artifact_store=MongoArtifactStore(
-                conn=item.client, name=f'_filesystem:{item.name}'
-            ),
+            databackend=databackend,
+            metadata=databackend.default_metadata_store,
+            artifact_store=databackend.default_artifact_store,
             vector_database=build_vector_database(CFG.vector_search.type),
         )
 
@@ -77,7 +73,7 @@ class SklearnTyper(DuckTyper):
         from superduperdb.ext.sklearn.model import Estimator
 
         if not isinstance(item, BaseEstimator):
-            raise TypeError('Expected BaseEstimator but got {type(item)}')
+            raise TypeError(f'Expected BaseEstimator but got {type(item)}')
 
         kwargs['identifier'] = auto_identify(item)
         return Estimator(object=item, **kwargs)
@@ -95,12 +91,12 @@ class TorchTyper(DuckTyper):
         if isinstance(item, nn.Module) or isinstance(item, jit.ScriptModule):
             return TorchModel(identifier=auto_identify(item), object=item, **kwargs)
 
-        raise TypeError('Expected a Module but got {type(item)}')
+        raise TypeError(f'Expected a Module but got {type(item)}')
 
 
 def auto_identify(instance: t.Union[Linear, LinearRegression]) -> str:
     return instance.__class__.__name__.lower()
 
 
-_DUCK_TYPES = MongoDbTyper, SklearnTyper, TorchTyper
+_DUCK_TYPES = MongoDBTyper, SklearnTyper, TorchTyper
 superduper = DuckTyper.run

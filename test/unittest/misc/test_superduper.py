@@ -1,11 +1,11 @@
 import pytest
 
 from superduperdb import superduper
-from superduperdb.misc.superduper import MongoDbTyper, SklearnTyper, TorchTyper
+from superduperdb.misc.superduper import MongoDBTyper, SklearnTyper, TorchTyper
 
 
 def test_mongodb_typer(test_db):
-    assert MongoDbTyper.accept(test_db.db) is True
+    assert MongoDBTyper.accept(test_db.db) is True
 
 
 def test_sklearn_typer():

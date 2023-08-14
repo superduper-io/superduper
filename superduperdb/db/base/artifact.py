@@ -59,6 +59,7 @@ class ArtifactStore(ABC):
 
         :param file_id: Identifier of artifact in the store
         :param serializer: Serializer to use for deserialization
+        :param info: Additional information to pass to the serializer
         """
         bytes = self._load_bytes(file_id)
         serializer_function = serializers[serializer]

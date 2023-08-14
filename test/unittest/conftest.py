@@ -32,6 +32,12 @@ from superduperdb.ext.torch.tensor import tensor
 n_data_points = 250
 
 
+IBIS_QUERIES = {
+    'insert': lambda x: x,
+    'delete': ...,
+}
+
+
 @dataclass(frozen=True)
 class TestMongoDBConfig:
     host: str = "localhost"

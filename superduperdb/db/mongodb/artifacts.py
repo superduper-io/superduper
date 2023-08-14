@@ -27,6 +27,10 @@ class MongoArtifactStore(ArtifactStore):
         return self.db.client.drop_database(self.db.name)
 
     def delete_artifact(self, file_id: str):
+        """
+        Delete artifact from artifact store on GridFS
+        :param file_id: File id uses to identify artifact in store
+        """
         return self.filesystem.delete(file_id)
 
     def _load_bytes(self, file_id: str):

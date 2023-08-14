@@ -14,9 +14,20 @@ class BaseDataBackend(ABC):
         self.conn = conn
         self.name = name
 
+    @abstractmethod
     @property
     def db(self):
-        raise NotImplementedError
+        pass
+
+    @abstractmethod
+    @property
+    def default_metadata_store(self):
+        pass
+
+    @abstractmethod
+    @property
+    def default_artifact_store(self):
+        pass
 
     def create_table_or_collection(self, name: str, schema: t.List):
         raise NotImplementedError

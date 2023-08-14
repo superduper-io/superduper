@@ -23,10 +23,17 @@ concurrency:
 
 # https://blog.netnerds.net/2022/11/docker-macos-github-actions/
 jobs:
-  lint-and-type-check:
-    runs-on: ubuntu-latest
+  lint-type-check-and-test:
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      matrix:
+        # "macos-latest" removed for now as Docker action is slow
+        os: [ "ubuntu-latest" ]  # TODO: add "windows-latest"
+        python-version: ["3.8", "3.9", "3.10"]
+    defaults:
+      run:
+        shell: bash
     steps:
 
       - name: Check out repository
@@ -46,11 +53,11 @@ jobs:
           path: |
             ./.mypy_cache
             ${{ env.pythonLocation }}
-          key: 3.8-ubuntu-latest-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements/requirements-dev.txt') }}
+          key: 3.8-ubuntu-latest-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('.github/ci-pinned-requirements/dev.txt') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements/requirements-dev.txt
+        run: pip install -r .github/ci-pinned-requirements/dev.txt
 
       - name: Basic health check
         run: |
@@ -62,41 +69,7 @@ jobs:
         run: |
           make lint-and-type-check
 
-  test:
-    needs: lint-and-type-check
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        # "macos-latest" removed for now as Docker action is slow
-        os: [ "ubuntu-latest" ]  # TODO: add "windows-latest"
-        python-version: ["3.8", "3.9", "3.10"]
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python ${{ matrix.python-version }}
-        id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        id: cache
-        with:
-          path: |
-            ${{ env.pythonLocation }}
-          key: ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements/requirements-dev.txt') }}
-
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements/requirements-dev.txt
-
-        # TODO: vendor only the parts that we need from the following action
+      # TODO: vendor only the parts that we need from the following action
       - name: Docker
         if: ${{ matrix.os == 'macos-latest' }}
         uses: douglascamata/setup-docker-macos-action@5f13b5b88a09467c10f8462810902b60ff70fb75

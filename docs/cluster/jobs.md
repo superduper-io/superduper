@@ -21,8 +21,8 @@ the [configuration stystem](configuration).
 The stdout and status of the job may be monitored using the returned `Job` object:
 
 ```python
->> > job = model.predict(X='my-key', db=db, select=collection.find())
->> > job.listen()
+>>> job = model.predict(X='my-key', db=db, select=collection.find())
+>>> job.listen()
 # ... lots of lines of stdout
 ```
 

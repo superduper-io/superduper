@@ -51,11 +51,17 @@ Models may be configured to listen the database for changes, and when new data i
 
 ## Database
 
-### Supported databases
+### Supported datastores
 
 Currently supported
 
+**Primary data**
+
 - **MongoDB**
+
+**Artifacts and linked data**
+
+- **AWS s3**
 
 View plans to support additional databases in the roadmap [here](https://github.com/SuperDuperDB/superduperdb-stealth/wiki/Roadmap).
 

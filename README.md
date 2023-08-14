@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://www.superduperdb.com">
-    <img width="70%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_logo_color.svg">
+    <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_logo_color.svg">
   </a>
 </p>
 
@@ -32,26 +32,6 @@
 </a> 
 </p>
 
-#### SuperDuperDB allows you to easily integrate and manage any AI models and APIs with your datastore: from LLM based Q&A, image generation with OpenAI API, TimeSeries Forecasting, Anomaly Detection, Classification, Recommenders etc. pp. to nearly any custom machine learning models and use-cases.
-#### No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="3%"/>
-
-
-| Supported Data Stores    | AI Frameworks, Models and APIs: |   
-|--------------------------|--------------------------|
-| ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> *Coming soon:* PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake |✅ **PyTorch** <br>✅ **HuggingFace**<br>✅ **OpenAI** <br>✅ **Llama 2** <br>✅ **Stable Diffusion**<br> TensorFlow *coming soon* |   
-
-
-<hr>
-
-
-	
-
-
-- <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
-- <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
-- <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
-<hr>
-
 <h3 align="center">
 	<a href="#installation">Installation</a>
 	<span> | </span>
@@ -70,6 +50,30 @@
 	<a href="#join-us">Join Us </a>
 </h3>
 <hr>
+
+SuperDuperDB allows you to easily integrate and manage any AI models and APIs with your datastore: from LLM based Q&A and vector seatch, image generation with OpenAI API, TimeSeries Forecasting, Anomaly Detection, Classification, Recommenders etc. to highly custom machine learning models and use-cases.
+
+A single scalable deployment of all your AI which is automatically kept up-to-date as models are automatically processing new incoming data. 
+
+No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="3%"/>
+
+
+| Supported Data Stores    | AI Frameworks, Models and APIs: |   
+|--------------------------|--------------------------|
+| ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> *Coming soon:* PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake |✅ **PyTorch** <br>✅ **HuggingFace**<br>✅ **OpenAI** <br>✅ **Llama 2** <br>✅ **Stable Diffusion**<br> TensorFlow *coming soon* |   
+
+
+<hr>
+
+
+	
+
+
+- <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
+- <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
+- <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
+<hr>
+
 
 
 # Introduction  

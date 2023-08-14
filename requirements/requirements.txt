@@ -4,8 +4,6 @@
 #
 #    pip-compile requirements.in
 #
-accelerate==0.21.0
-    # via -r requirements.in
 aiohttp==3.8.4
     # via
     #   lancedb
@@ -46,8 +44,6 @@ cloudpickle==2.2.1
     # via
     #   dask
     #   distributed
-cmake==3.27.1
-    # via triton
 dask[distributed]==2023.5.0
     # via
     #   -r requirements.in
@@ -69,9 +65,7 @@ fil==1.3.0
 filelock==3.12.2
     # via
     #   huggingface-hub
-    #   torch
     #   transformers
-    #   triton
 flask==2.3.2
     # via
     #   -r requirements.in
@@ -110,7 +104,6 @@ jinja2==3.1.2
     # via
     #   distributed
     #   flask
-    #   torch
 jmespath==1.0.1
     # via
     #   boto3
@@ -119,8 +112,6 @@ joblib==1.3.1
     # via scikit-learn
 lancedb==0.1.10
     # via -r requirements.in
-lit==16.0.6
-    # via triton
 locket==1.0.0
     # via
     #   distributed
@@ -129,8 +120,6 @@ markupsafe==2.1.3
     # via
     #   jinja2
     #   werkzeug
-mpmath==1.3.0
-    # via sympy
 msgpack==1.0.5
     # via distributed
 multidict==6.0.4
@@ -138,51 +127,22 @@ multidict==6.0.4
     #   aiohttp
     #   yarl
 networkx==3.1
-    # via
-    #   -r requirements.in
-    #   torch
+    # via -r requirements.in
 numpy==1.24.4
     # via
     #   -r requirements.in
-    #   accelerate
     #   pandas
     #   pyarrow
     #   pylance
     #   scikit-learn
     #   scipy
     #   transformers
-nvidia-cublas-cu11==11.10.3.66
-    # via
-    #   nvidia-cudnn-cu11
-    #   nvidia-cusolver-cu11
-    #   torch
-nvidia-cuda-cupti-cu11==11.7.101
-    # via torch
-nvidia-cuda-nvrtc-cu11==11.7.99
-    # via torch
-nvidia-cuda-runtime-cu11==11.7.99
-    # via torch
-nvidia-cudnn-cu11==8.5.0.96
-    # via torch
-nvidia-cufft-cu11==10.9.0.58
-    # via torch
-nvidia-curand-cu11==10.2.10.91
-    # via torch
-nvidia-cusolver-cu11==11.4.0.1
-    # via torch
-nvidia-cusparse-cu11==11.7.4.91
-    # via torch
-nvidia-nccl-cu11==2.14.3
-    # via torch
-nvidia-nvtx-cu11==11.7.91
-    # via torch
 openai==0.27.8
     # via -r requirements.in
 overrides==7.3.1
     # via -r requirements.in
 packaging==23.1
     # via
-    #   accelerate
     #   dask
     #   distributed
     #   huggingface-hub
@@ -196,9 +156,7 @@ partd==1.4.0
 pillow==10.0.0
     # via -r requirements.in
 psutil==5.9.5
-    # via
-    #   accelerate
-    #   distributed
+    # via distributed
 py==1.11.0
     # via retry
 pyarrow==12.0.1
@@ -219,7 +177,6 @@ pytz==2023.3
     # via pandas
 pyyaml==6.0.1
     # via
-    #   accelerate
     #   dask
     #   distributed
     #   huggingface-hub
@@ -257,8 +214,6 @@ sniffio==1.3.0
     #   httpcore
 sortedcontainers==2.4.0
     # via distributed
-sympy==1.12
-    # via torch
 tblib==2.0.0
     # via distributed
 tenacity==8.2.2
@@ -272,11 +227,6 @@ toolz==0.12.0
     #   dask
     #   distributed
     #   partd
-torch==2.0.0
-    # via
-    #   -r requirements.in
-    #   accelerate
-    #   triton
 tornado==6.3.2
     # via distributed
 tqdm==4.65.0
@@ -288,8 +238,6 @@ tqdm==4.65.0
     #   transformers
 transformers==4.31.0
     # via -r requirements.in
-triton==2.0.0
-    # via torch
 typer==0.9.0
     # via -r requirements.in
 typing-extensions==4.7.1
@@ -297,7 +245,6 @@ typing-extensions==4.7.1
     #   huggingface-hub
     #   pydantic
     #   readerwriterlock
-    #   torch
     #   typer
 tzdata==2023.3
     # via pandas
@@ -310,20 +257,9 @@ werkzeug==2.3.6
     # via
     #   -r requirements.in
     #   flask
-wheel==0.41.1
-    # via
-    #   nvidia-cublas-cu11
-    #   nvidia-cuda-cupti-cu11
-    #   nvidia-cuda-runtime-cu11
-    #   nvidia-curand-cu11
-    #   nvidia-cusparse-cu11
-    #   nvidia-nvtx-cu11
 yarl==1.9.2
     # via aiohttp
 zict==3.0.0
     # via distributed
 zipp==3.16.2
     # via importlib-metadata
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools

@@ -1,6 +1,10 @@
 import PIL.PngImagePlugin
 import pytest
-import torch
+
+try:
+    import torch
+except ImportError:
+    torch = None
 
 from superduperdb.container.document import Document
 from superduperdb.db.mongodb.query import Collection
@@ -10,6 +14,7 @@ n_data_points = 250
 IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_delete_many(random_data):
     r = random_data.execute(Collection(name='documents').find_one())
     random_data.execute(Collection(name='documents').delete_many({'_id': r['_id']}))
@@ -17,6 +22,7 @@ def test_delete_many(random_data):
         next(random_data.execute(Collection(name='documents').find({'_id': r['_id']})))
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_replace(random_data):
     r = next(random_data.execute(Collection(name='documents').find()))
     x = torch.randn(32)
@@ -30,6 +36,7 @@ def test_replace(random_data):
     )
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_from_uris(empty, image_type):
     to_insert = [
         Document(
@@ -58,6 +65,7 @@ def test_insert_from_uris(empty, image_type):
     assert isinstance(r['other']['item'].x, PIL.PngImagePlugin.PngImageFile)
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_update_many(random_data, a_listener):
     to_update = torch.randn(32)
     t = random_data.encoders['torch.float32[32]']
@@ -78,6 +86,7 @@ def test_update_many(random_data, a_listener):
     )
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_many(random_data, a_listener, an_update):
     random_data.execute(Collection(name='documents').insert_many(an_update))
     r = next(random_data.execute(Collection(name='documents').find({'update': True})))
@@ -88,6 +97,7 @@ def test_insert_many(random_data, a_listener, an_update):
     )
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_like(with_vector_index):
     db = with_vector_index
     r = db.execute(Collection(name='documents').find_one())
@@ -99,6 +109,7 @@ def test_like(with_vector_index):
     assert r['_id'] == s['_id']
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_one(random_data, a_listener, a_single_insert):
     out, _ = random_data.execute(
         Collection(name='documents').insert_one(a_single_insert)
@@ -110,6 +121,7 @@ def test_insert_one(random_data, a_listener, a_single_insert):
     assert docs[0]['x'].x.tolist() == a_single_insert['x'].x.tolist()
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_delete_one(random_data):
     r = random_data.execute(Collection(name='documents').find_one())
     random_data.execute(Collection(name='documents').delete_one({'_id': r['_id']}))
@@ -117,16 +129,19 @@ def test_delete_one(random_data):
         next(random_data.execute(Collection(name='documents').find({'_id': r['_id']})))
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_find(random_data):
     r = random_data.execute(Collection(name='documents').find().limit(1))
     assert len(list(r)) == 1
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_find_one(random_data):
     r = random_data.execute(Collection(name='documents').find_one())
     assert isinstance(r, Document)
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_aggregate(random_data):
     r = random_data.execute(
         Collection(name='documents').aggregate([{'$sample': {'size': 1}}])
@@ -134,6 +149,7 @@ def test_aggregate(random_data):
     assert len(list(r)) == 1
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_replace_one(random_data):
     new_x = torch.randn(32)
     t = random_data.encoders['torch.float32[32]']

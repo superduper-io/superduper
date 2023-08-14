@@ -1,13 +1,6 @@
-import numpy as np
-import pandas as pd
 from fastapi import APIRouter, Body, Request
 from superduperdb import superduper
-from superduperdb.container.document import Document as D
-from superduperdb.container.listener import Listener
-from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.mongodb.query import Collection
-from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
-from superduperdb.misc.text import contextualize
 
 from backend.document.models import Query
 
@@ -16,10 +9,11 @@ document_router = APIRouter(prefix="/document", tags=["docs"])
 
 def concept_assist_prompt_build(famous_person):
     return (
-        "Following are some context around a query, please "
-        "try to give an answer for the query with the given context and "
-        f"please respond in the voice of {famous_person}\n"
-        "Context: {context} \nQuery: "
+        f'Use the following description and code-snippets aboout SuperDuperDB to answer this question about SuperDuperDB in the voice of {famous_person}\n'
+        'Do not use any other information you might have learned about other python packages\n'
+        'Only base your answer on the code-snippets retrieved\n'
+        '{context}\n\n'
+        'Here\'s the question:\n'
     )
 
 
@@ -30,43 +24,6 @@ def concept_assist_prompt_build(famous_person):
 def query_docs(request: Request, query: Query = Body(...)):
     db = superduper(request.app.mongodb_client.my_database_name)
 
-    context_select = Collection(name="markdown").like({"text": query.query}, n=8, vector_index="documentation_index").find({})
+    context_select = Collection(name="markdown").like({"text": query.query}, n=5, vector_index="documentation_index").find({})
     prompt = concept_assist_prompt_build("The Terminator")
-
     return db.predict('superbot', query=query, prompt=prompt, context_select=context_select, context_key='text', one=True)
-
-
-@document_router.post(
-    "/populate",
-    response_description="Populate the database with documentation",
-)
-def populate(request: Request):
-    db = superduper(request.app.mongodb_client.my_database_name)
-    # TODO: Replace data with user docs
-
-    raw_df = pd.read_csv("backend/data/doc-words/source.csv")
-
-    raw_df["text"] = raw_df["text"].astype(str)
-    # raw_df["text"].replace("", np.nan, inplace=True)
-    raw_df["text"].fillna(" ", inplace=True)
-
-    df = contextualize(raw_df, window_size=60, stride=17)
-
-    documents = [D({"text": v}) for v in df["text"].values]
-
-    db.execute(Collection("markdown").insert_many(documents))
-
-    db.add(
-        VectorIndex(
-            identifier="documentation_index",
-            indexing_listener=Listener(
-                model=OpenAIEmbedding(model="text-embedding-ada-002"),
-                key="text",
-                select=Collection(name="markdown").find(),
-            ),
-        )
-    )
-
-    # Setup the chatbot into the database
-    model = OpenAIChatCompletion(identifier='superbot', takes_context=True, model="gpt-3.5-turbo")
-    db.add(model)

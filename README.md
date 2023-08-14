@@ -13,76 +13,11 @@
 |--------------------------|--------------------------|
 | ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> *Coming soon:* PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake |✅ **PyTorch** <br>✅ **HuggingFace**<br>✅ **OpenAI** <br>✅ **Llama 2** <br>✅ **Stable Diffusion**<br> TensorFlow *coming soon* |   
 
-
-
-
-
-
-
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-
-
-
-
-
-
-
-
-
-
-<div align="center">
-	
-### Supported Data Stores: 
-#### ✅ MongoDB / ✅ MongoDB Atlas *(SQL coming soon)*
 </div>
 
-<div align="center">
-	
-### AI Frameworks, Models and APIs: 
-#### ✅ PyTorch  ✅ HuggingFace  ✅ OpenAI  ✅ Llama 2  ✅ Stable Diffusion *(TensorFlow coming soon)* 
-</div>
-
-
-
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-
-
-
-
-
-
-
-
-
-
-
-<div align="center">
-	
-### Supported Data Stores: ✅ MongoDB / ✅ MongoDB Atlas *(SQL coming soon)*
-</div>
-
-<div align="center">
-	
-### AI Frameworks, Models and APIs: ✅ PyTorch  ✅ HuggingFace  ✅ OpenAI  ✅ Llama 2  ✅ Stable Diffusion *(TensorFlow coming soon)* 
-</div>
-
-<br>
-<br>
-<br>
-<br>
-<br>
+<h3 align="center">Supported Data Stores: <br> ✅ MongoDB / MongoDB Atlas
+</h3>
+Supported Data Stores: 
 
 
 <p align="center">

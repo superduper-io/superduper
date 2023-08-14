@@ -1,14 +1,7 @@
 import uuid
+from test.torch import TorchModel, skip_torch, tensor, torch
 
 import pytest
-
-try:
-    import torch
-
-    from superduperdb.ext.torch.model import TorchModel
-    from superduperdb.ext.torch.tensor import tensor
-except ImportError:
-    torch = None
 
 from superduperdb import CFG
 from superduperdb.container.document import Document
@@ -28,7 +21,7 @@ def test_collection():
     return Collection(name=collection_name)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_add_load(client, fresh_database, test_collection):
     m = TorchModel(
         identifier='test-add-client',
@@ -43,13 +36,13 @@ def test_add_load(client, fresh_database, test_collection):
     assert isinstance(m.object.artifact, torch.nn.Module)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_show(client, database_with_default_encoders_and_model):
     encoders = client.show('encoder')
     assert encoders == ['torch.float32[16]', 'torch.float32[32]']
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_select_one(
     client, database_with_default_encoders_and_model, test_collection, fake_inserts
 ):
@@ -61,7 +54,7 @@ def test_select_one(
     assert r['_id'] == s['_id']
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_insert(
     client, database_with_default_encoders_and_model, test_collection, fake_inserts
 ):
@@ -70,7 +63,7 @@ def test_insert(
     assert all(torch.eq(r['x'].x, fake_inserts[0]['x'].x))
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_remove(client, database_with_default_encoders_and_model):
     database_with_default_encoders_and_model.add(tensor(torch.float64, shape=(32,)))
     encoders = client.show('encoder')
@@ -81,7 +74,7 @@ def test_remove(client, database_with_default_encoders_and_model):
     assert encoders == ['torch.float32[16]', 'torch.float32[32]']
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_update(
     client, database_with_default_encoders_and_model, test_collection, fake_inserts
 ):

@@ -1,10 +1,6 @@
 import uuid
-import pytest
-try:
-    import torch
-except ImportError:
-    torch = None
 from contextlib import contextmanager
+from test.torch import skip_torch
 from unittest.mock import patch
 
 from superduperdb import CFG
@@ -30,7 +26,7 @@ def add_and_cleanup_listener(database, collection_name):
         database.remove('listener', 'model_linear_a/x', force=True)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_taskgraph_futures_with_dask(
     local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
@@ -55,7 +51,7 @@ def test_taskgraph_futures_with_dask(
     assert all([job.future.status == 'finished' for job in jobs])
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_insert_with_dask(
     local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
@@ -81,7 +77,7 @@ def test_insert_with_dask(
             assert 'model_linear_a' in r['_outputs']['x']
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_dependencies_with_dask(
     local_dask_client, database_with_default_encoders_and_model
 ):

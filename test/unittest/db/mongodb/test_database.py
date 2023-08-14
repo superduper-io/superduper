@@ -1,13 +1,7 @@
+from test.torch import TorchModel, skip_torch, tensor, torch
+
 import PIL.PngImagePlugin
 import pytest
-
-try:
-    import torch
-
-    from superduperdb.ext.torch.model import TorchModel
-    from superduperdb.ext.torch.tensor import tensor
-except ImportError:
-    torch = None
 
 from superduperdb.container.dataset import Dataset
 from superduperdb.container.document import Document
@@ -21,7 +15,7 @@ n_data_points = 250
 IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_create_component(empty, float_tensors_16, float_tensors_32):
     empty.add(TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module'))
     assert 'my-test-module' in empty.show('model')
@@ -31,7 +25,7 @@ def test_create_component(empty, float_tensors_16, float_tensors_32):
     assert output.shape[0] == 32
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_update_component(empty):
     empty.add(TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module'))
     m = TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module')
@@ -45,7 +39,7 @@ def test_update_component(empty):
     assert empty.show('model', 'my-test-module') == [0, 1]
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_compound_component(empty):
     t = tensor(torch.float, shape=(32,))
 
@@ -86,13 +80,13 @@ def test_compound_component(empty):
     empty.remove('model', 'my-test-module', force=True)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_select_vanilla(random_data):
     r = random_data.execute(Collection(name='documents').find_one())
     print(r)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_select(with_vector_index):
     db = with_vector_index
     r = db.execute(Collection(name='documents').find_one())
@@ -104,12 +98,12 @@ def test_select(with_vector_index):
     assert r['_id'] == s['_id']
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_reload_dataset(si_validation):
     si_validation.load('dataset', 'my_valid')
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_insert(random_data, a_listener, an_update):
     random_data.execute(Collection(name='documents').insert_many(an_update))
     r = next(random_data.execute(Collection(name='documents').find({'update': True})))
@@ -120,7 +114,7 @@ def test_insert(random_data, a_listener, an_update):
     )
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_insert_from_uris(empty, image_type):
     to_insert = [
         Document(
@@ -149,7 +143,7 @@ def test_insert_from_uris(empty, image_type):
     assert isinstance(r['other']['item'].x, PIL.PngImagePlugin.PngImageFile)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_update(random_data, a_listener):
     to_update = torch.randn(32)
     t = random_data.encoders['torch.float32[32]']
@@ -170,7 +164,7 @@ def test_update(random_data, a_listener):
     )
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_listener(random_data, a_model, b_model):
     random_data.add(
         Listener(
@@ -204,13 +198,13 @@ def test_listener(random_data, a_model, b_model):
     assert 'linear_b' in r['_outputs']['x']
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_predict(a_model, float_tensors_32, float_tensors_16):
     t = float_tensors_32.encoders['torch.float32[32]']
     a_model.predict('linear_a', Document(t(torch.randn(32))))
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_delete(random_data):
     r = random_data.execute(Collection(name='documents').find_one())
     random_data.execute(Collection(name='documents').delete_many({'_id': r['_id']}))
@@ -218,7 +212,7 @@ def test_delete(random_data):
         next(random_data.execute(Collection(name='documents').find({'_id': r['_id']})))
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_replace(random_data):
     r = next(random_data.execute(Collection(name='documents').find()))
     x = torch.randn(32)
@@ -232,7 +226,7 @@ def test_replace(random_data):
     )
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_dataset(random_data):
     d = Dataset(
         identifier='test_dataset',

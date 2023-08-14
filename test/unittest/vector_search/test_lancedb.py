@@ -1,13 +1,10 @@
 import os
 import tempfile
+from test.torch import skip_torch
 
 import numpy as np
 import pyarrow as pa
 import pytest
-try:
-    import torch
-except ImportError:
-    torch = None
 
 from superduperdb.base.config import LanceDB
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
@@ -80,7 +77,7 @@ def test_create_table_new(lance_client):
     assert table.measure == measure
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_add(lance_table):
     data = [
         {"id": "1", "vector": [2, 3]},
@@ -93,7 +90,7 @@ def test_add(lance_table):
     assert data[0].id == 1
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_find_nearest_from_array(lance_table):
     array = [1, 2]
     limit = 100

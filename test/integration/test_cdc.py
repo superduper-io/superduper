@@ -1,13 +1,10 @@
 import time
 import uuid
 from contextlib import contextmanager
+from test.torch import skip_torch, torch
 
 import pytest
 import tdir
-try:
-    import torch
-except ImportError:
-    torch = None
 
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
@@ -90,7 +87,7 @@ def retry_state_check(state_check):
     return
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_smoke(listener_without_cdc_handler_and_collection_name):
     """Health-check before we test stateful database changes"""
     listener, name = listener_without_cdc_handler_and_collection_name
@@ -99,7 +96,7 @@ def test_smoke(listener_without_cdc_handler_and_collection_name):
 
 
 @pytest.mark.parametrize('op_type', ['insert', 'update'])
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_task_workflow(
     listener_and_collection_name,
     database_with_default_encoders_and_model,
@@ -148,7 +145,7 @@ def test_task_workflow(
         retry_state_check(state_check_2)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_vector_database_sync_with_delete(
     listener_with_vector_database,
     database_with_default_encoders_and_model,
@@ -185,7 +182,7 @@ def test_vector_database_sync_with_delete(
         retry_state_check(state_check_2)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_vector_database_sync(
     listener_with_vector_database,
     database_with_default_encoders_and_model,
@@ -211,7 +208,7 @@ def test_vector_database_sync(
         retry_state_check(state_check)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_single_insert(
     listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
@@ -229,7 +226,7 @@ def test_single_insert(
     retry_state_check(state_check)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_many_insert(
     listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
@@ -247,7 +244,7 @@ def test_many_insert(
     retry_state_check(state_check)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_delete_one(
     listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
@@ -269,7 +266,7 @@ def test_delete_one(
     retry_state_check(state_check)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_single_update(
     listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
@@ -294,7 +291,7 @@ def test_single_update(
     retry_state_check(state_check)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_many_update(
     listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
@@ -319,7 +316,7 @@ def test_many_update(
     retry_state_check(state_check)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_insert_without_cdc_handler(
     listener_without_cdc_handler_and_collection_name,
     database_with_default_encoders_and_model,
@@ -337,7 +334,7 @@ def test_insert_without_cdc_handler(
     assert '_outputs' not in doc.keys()
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_cdc_stop(listener_and_collection_name):
     """Test that CDC listen service stopped properly"""
     listener, _ = listener_and_collection_name

@@ -1,19 +1,12 @@
 import os
 import random
 import time
+from test.torch import TorchModel, skip_torch, tensor, torch
 from threading import Thread
 from unittest import mock
 
 import numpy as np
 import pytest
-
-try:
-    import torch
-
-    from superduperdb.ext.torch.model import TorchModel
-    from superduperdb.ext.torch.tensor import tensor
-except ImportError:
-    torch = None
 from pymongo import MongoClient
 from tenacity import RetryError, Retrying, stop_after_delay
 
@@ -154,7 +147,7 @@ def fresh_database(fresh_client):
             database.remove('encoder', e, force=True)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def fake_tensor_data(encoder, update: bool = True):
     data = []
     for i in range(10):

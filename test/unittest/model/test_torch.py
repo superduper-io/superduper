@@ -1,11 +1,4 @@
-import pytest
-
-try:
-    import torch
-
-    from superduperdb.ext.torch.model import TorchModel, TorchTrainerConfiguration
-except ImportError:
-    torch = None
+from test.torch import TorchModel, skip_torch, torch
 
 from superduperdb.container.metric import Metric
 from superduperdb.db.mongodb.query import Collection
@@ -47,12 +40,12 @@ def acc(x, y):
     return x == y
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_fit(random_data, si_validation):
     m = TorchModel(
         object=torch.nn.Linear(32, 1),
         identifier='test',
-        training_configuration=TorchTrainerConfiguration(
+        training_configuration=torch.TorchTrainerConfiguration(
             identifier='my_configuration',
             objective=my_loss,
             loader_kwargs={'batch_size': 10},

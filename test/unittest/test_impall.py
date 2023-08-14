@@ -1,7 +1,5 @@
-try:
-    import torch
-except ImportError:
-    torch = None
+from test.torch import torch
+
 import impall
 
 

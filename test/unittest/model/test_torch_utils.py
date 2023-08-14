@@ -1,11 +1,9 @@
+from test.torch import skip_torch, torch
+
 import pytest
 
-try:
-    import torch
-
+if torch:
     from superduperdb.ext.torch.utils import device_of, eval, set_device, to_device
-except ImportError:
-    torch = None
 
 
 @pytest.fixture
@@ -13,13 +11,13 @@ def model():
     return torch.nn.Linear(10, 2)
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_device_of_cpu(model):
     device = device_of(model)
     assert device.type == 'cpu'
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_device_of_cuda(model):
     if torch.cuda.is_available():
         model.to(torch.device('cuda'))
@@ -27,13 +25,13 @@ def test_device_of_cuda(model):
         assert device == 'cuda'
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_eval_context_manager(model):
     with eval(model):
         assert not model.training
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_set_device_context_manager(model):
     device_before = device_of(model)
     if torch.cuda.is_available():
@@ -43,7 +41,7 @@ def test_set_device_context_manager(model):
         assert device_of(model) == device_before
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_to_device_tensor(model):
     tensor = torch.tensor([1, 2, 3])
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -51,7 +49,7 @@ def test_to_device_tensor(model):
     assert tensor_device.device == device
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_to_device_nested_list(model):
     nested_list = [
         torch.tensor([1, 2, 3]),
@@ -66,7 +64,7 @@ def test_to_device_nested_list(model):
             assert item.device == device
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_to_device_nested_dict(model):
     nested_dict = {'a': torch.tensor([1, 2, 3]), 'b': {'c': torch.tensor([4, 5])}}
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')

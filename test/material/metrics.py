@@ -1,7 +1,4 @@
-try:
-    import torch
-except ImportError:
-    torch = None
+from test.torch import torch
 
 
 def accuracy(x, y):

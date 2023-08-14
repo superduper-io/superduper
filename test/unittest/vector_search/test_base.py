@@ -1,12 +1,8 @@
+from test.torch import skip_torch, torch
 from unittest import mock
 
 import numpy as np
 import pytest
-
-try:
-    import torch
-except ImportError:
-    torch = None
 
 from superduperdb.vector_search.base import BaseVectorIndex, to_numpy
 
@@ -74,7 +70,7 @@ class TestBaseVectorIndex:
             base_vector_index['item']
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_to_numpy():
     # Test to_numpy function with different input types
     x = np.array([[1, 2, 3], [4, 5, 6]])

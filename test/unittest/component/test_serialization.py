@@ -1,12 +1,6 @@
 import pprint
-import pytest
+from test.torch import skip_torch, tensor, torch
 
-try:
-    import torch
-
-    from superduperdb.ext.torch.tensor import tensor
-except ImportError:
-    torch = None
 from sklearn.svm import SVC
 
 from superduperdb.container.artifact import Artifact
@@ -14,7 +8,7 @@ from superduperdb.container.model import Model
 from superduperdb.ext.sklearn.model import Estimator
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_model():
     m = Model(
         identifier='test',
@@ -25,7 +19,7 @@ def test_model():
     print(m.dict())
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_sklearn(empty):
     m = Estimator(
         identifier='test',

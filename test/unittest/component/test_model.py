@@ -1,16 +1,9 @@
-import pytest
-
-try:
-    import torch
-
-    from superduperdb.ext.torch.model import TorchModel
-except ImportError:
-    torch = None
+from test.torch import TorchModel, skip_torch, torch
 
 from superduperdb.db.mongodb.query import Collection
 
 
-@pytest.mark.skipif(not torch, reason='Torch not installed')
+@skip_torch
 def test_predict(random_data, float_tensors_32):
     encoder = random_data.encoders['torch.float32[32]']
 

@@ -1,13 +1,18 @@
 import uuid
 
 import pytest
-import torch
+
+try:
+    import torch
+
+    from superduperdb.ext.torch.model import TorchModel
+    from superduperdb.ext.torch.tensor import tensor
+except ImportError:
+    torch = None
 
 from superduperdb import CFG
 from superduperdb.container.document import Document
 from superduperdb.db.mongodb.query import Collection
-from superduperdb.ext.torch.model import TorchModel
-from superduperdb.ext.torch.tensor import tensor
 from superduperdb.server.client import Client
 
 
@@ -16,14 +21,14 @@ def client(test_server):  # Warning: Magic so that test_server is started, don't
     return Client(CFG.server.uri)
 
 
-@pytest.fixture(
-    scope="function"
-)  # scope="function" so that each test gets a new collection
+# scope="function" so that each test gets a new collection
+@pytest.fixture(scope="function")
 def test_collection():
     collection_name = str(uuid.uuid4())
     return Collection(name=collection_name)
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_add_load(client, fresh_database, test_collection):
     m = TorchModel(
         identifier='test-add-client',
@@ -38,11 +43,13 @@ def test_add_load(client, fresh_database, test_collection):
     assert isinstance(m.object.artifact, torch.nn.Module)
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_show(client, database_with_default_encoders_and_model):
     encoders = client.show('encoder')
     assert encoders == ['torch.float32[16]', 'torch.float32[32]']
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_select_one(
     client, database_with_default_encoders_and_model, test_collection, fake_inserts
 ):
@@ -54,6 +61,7 @@ def test_select_one(
     assert r['_id'] == s['_id']
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert(
     client, database_with_default_encoders_and_model, test_collection, fake_inserts
 ):
@@ -62,6 +70,7 @@ def test_insert(
     assert all(torch.eq(r['x'].x, fake_inserts[0]['x'].x))
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_remove(client, database_with_default_encoders_and_model):
     database_with_default_encoders_and_model.add(tensor(torch.float64, shape=(32,)))
     encoders = client.show('encoder')
@@ -72,6 +81,7 @@ def test_remove(client, database_with_default_encoders_and_model):
     assert encoders == ['torch.float32[16]', 'torch.float32[32]']
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_update(
     client, database_with_default_encoders_and_model, test_collection, fake_inserts
 ):

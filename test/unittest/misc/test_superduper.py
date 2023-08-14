@@ -1,9 +1,15 @@
 import pytest
 
+try:
+    import torch
+except ImportError:
+    torch = None
+
 from superduperdb import superduper
 from superduperdb.misc.superduper import MongoDbTyper, SklearnTyper, TorchTyper
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_mongodb_typer(test_db):
     assert MongoDbTyper.accept(test_db.db) is True
 
@@ -14,9 +20,8 @@ def test_sklearn_typer():
     assert SklearnTyper.accept(LinearRegression()) is True
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_torch_typer():
-    import torch
-
     assert TorchTyper.accept(torch.nn.Linear(1, 1)) is True
 
 
@@ -25,8 +30,8 @@ def test_superduper_db(test_db):
     assert db.db == test_db.db
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_superduper_model():
-    import torch
     from sklearn.linear_model import LinearRegression
 
     model = superduper(torch.nn.Linear(1, 1))

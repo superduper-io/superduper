@@ -6,8 +6,19 @@
 <h1 align="center">Deploy, train and operate AI with your datastore!
 </h1>
 
-<h2 align="center">Inititial support for <a href="https://www.mongodb.com/">MongoDB</a> (SQL coming soon)!
-</h2>
+	
+<div align="center">
+	
+| Supported Data Stores    | AI Frameworks, Models and APIs: |   
+|--------------------------|--------------------------|
+| ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> *Coming soon:* PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake |✅ **PyTorch** <br>✅ **HuggingFace**<br>✅ **OpenAI** <br>✅ **Llama 2** <br>✅ **Stable Diffusion**<br> TensorFlow *coming soon* |   
+
+</div>
+
+<h3 align="center">Supported Data Stores: <br> ✅ MongoDB / MongoDB Atlas
+</h3>
+Supported Data Stores: 
+
 
 <p align="center">
 <a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">

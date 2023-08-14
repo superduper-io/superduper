@@ -1,7 +1,7 @@
 # Queries
 
 ```{note}
-SuperDuperDB wraps the standard MongoDB query API. It augments
+SuperDuperDB wraps standard datastore query APIs. It augments
 these queries with support for vector-search and recall of complex data-types.
 ```
 
@@ -21,7 +21,7 @@ db.execute(query)
 
 ## MongoDB
 
-We currently support MongoDB as the database backend. As in `pymongo` all queries operate at the collection level:
+We currently provide first-class support for MongoDB as the database backend. As in `pymongo` all queries operate at the collection level:
 
 ```python
 from superduperdb.db.mongodb.query import Collection

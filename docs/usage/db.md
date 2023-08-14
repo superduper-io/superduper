@@ -4,7 +4,7 @@
 The `DB` is the primary interface from Python to your data+AI.
 ```
 
-The central object for communicating with MongoDB in SuperDuperDB is the `DB`.
+The central object for communicating with your datastore in SuperDuperDB is the `DB` class.
 
 The `DB` object combines 4 basic functionalities involved in integrating AI to the database:
 
@@ -47,7 +47,7 @@ from superduperdb.db.base.build import build_datalayer
 db = build_datalayer()
 ```
 
-In order to build a database based on MongoDB defaults, a one-size-fits-all wrapper is:
+In order to build a database based on defaults, a one-size-fits-all wrapper is:
 
 ```python
 from superduperdb import superduper
@@ -57,7 +57,7 @@ db = superduper(pymongo.MongoClient().test_db)
 
 ## Databackend
 
-Currently we support MongoDB as the data backend.
+Currently we support MongoDB as the data backend, with large data blobs on AWS s3.
 
 (artifactstore)=
 ## Artifact Store

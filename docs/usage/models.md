@@ -218,7 +218,7 @@ be used by database users. Examples are:
 
 The aim of postprocessing is to provide outputs in a operationally useful
 form. However, often this form isn't directly amenable to insertion in the `DB`.
-For example, MongoDB doesn't support images or tensors natively. Consequently 
+Datastores don't typically support images or tensors natively. Consequently 
 each model takes the keyword `encoder`, allowing users to specify exactly
 how outputs are stored in the database as `bytes`, if not supported natively 
 by the database. Read more [here](encoders).

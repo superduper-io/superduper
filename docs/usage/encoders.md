@@ -8,7 +8,7 @@ and to recall them in the same format in which they were stored.
 SuperDuperDB supports insertion of any standard datatypes supported by the underlying database.
 However, in many AI use-cases, these data-types are not sufficient for the intended data.
 A typical example is computer-vision use-cases, utilizing `.jpg` or `.png` images,
-for which MongoDB, for example, does not provide native support.
+for which datastores do not typically not provide native support.
 
 In order to use such complex data, SuperDuperDB provides the `Encoder` abstraction.
 Users may create their own encoders with SuperDuperDB using this abstraction directly,

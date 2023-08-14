@@ -55,7 +55,7 @@ SuperDuperDB allows you to easily integrate and manage any AI models and APIs wi
 
 A single scalable deployment of all your AI models which is automatically kept up-to-date new data is handled automatically and immediately.
 
-No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2.5%"/>
+No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="3%"/>
 
 
 | Supported Data Stores    | AI Frameworks, Models and APIs: |   

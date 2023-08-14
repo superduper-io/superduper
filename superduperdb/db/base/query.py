@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from superduperdb.container.serializable import Serializable
 
 if t.TYPE_CHECKING:
-    from superduperdb.container.model import Model
     from superduperdb.db.base.db import DB
 
 
@@ -76,7 +75,7 @@ class Select(ABC, Serializable):
         db: DB,
         ids: t.Sequence[t.Any],
         key: str,
-        model: Model,
+        model: str,
         outputs: t.Sequence[t.Any],
     ) -> None:
         """

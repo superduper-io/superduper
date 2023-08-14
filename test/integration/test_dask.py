@@ -1,5 +1,7 @@
 import uuid
+
 import pytest
+
 try:
     import torch
 except ImportError:

@@ -1,5 +1,2 @@
-pip-tools
--r requirements-docs.in
--r requirements-lint.in
--r requirements-test.in
+-r requirements-dev-no-torch.in
 -r requirements-torch.in

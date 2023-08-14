@@ -3,8 +3,14 @@
     <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_logo_color.svg">
   </a>
 </p>
-<h1 align="center">Deploy, train and operate AI with your datastore!
-</h1>
+
+<div align="center">
+
+# Deploy, train and operate AI with your datastore!
+
+</div>
+
+
 <p align="center">
 <a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">
     <img src="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main/graph/badge.svg" alt="Coverage">
@@ -26,14 +32,6 @@
 </a> 
 </p>
 
-#### SuperDuperDB is an open-source environment to easily integrate AI with your data-store : from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
-#### No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="3%"/>
-<hr>
-- <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
-- <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
-- <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
-<hr>
-
 <h3 align="center">
 	<a href="#installation">Installation</a>
 	<span> | </span>
@@ -52,6 +50,30 @@
 	<a href="#join-us">Join Us </a>
 </h3>
 <hr>
+
+SuperDuperDB allows you to easily integrate and manage any AI models and APIs with your datastore: from LLM based Q&A and vector search, image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc. to highly custom machine learning models and use-cases.
+
+A single scalable deployment of all your AI models which is automatically kept up-to-date new data is handled automatically and immediately.
+
+No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2.5%"/>
+
+
+| Supported Data Stores    | AI Frameworks, Models and APIs: |   
+|--------------------------|--------------------------|
+| ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> *Coming soon:* PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake |✅ **PyTorch** <br>✅ **HuggingFace**<br>✅ **OpenAI** <br>✅ **Llama 2** <br>✅ **Stable Diffusion**<br> TensorFlow *coming soon* |   
+
+
+<hr>
+
+
+	
+
+
+- <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
+- <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
+- <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
+<hr>
+
 
 
 # Introduction  
@@ -74,7 +96,6 @@
   - **Python developers** using datastores (databases/ lakes/ warehouses) who want to build AI into their applications easily.
   - **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
   - **Infrastructure engineers** who want a single scalable setup that supports both local, on-prem and cloud deployment.
-  - **Developers who use MongoDB**, for which we have strong initial support.
 
 ### SuperDuperDB transforms your datastore into:
 
@@ -88,7 +109,7 @@
   <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_diagram.png">
 </p>
 
-# How to
+# How To
 ### The following are examples of how you use SuperDuperDB with Python (find all how-tos and examples <a href="https://superduperdb.github.io/superduperdb">in the docs here</a>): 
 
 - **Add a ML/AI model to your datastore <a href="404">(read more in the docs here)</a>:**

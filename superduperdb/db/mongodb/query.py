@@ -388,7 +388,7 @@ class Find(Select):
         db: DB,
         ids: t.Sequence[t.Any],
         key: str,
-        model: Model,
+        model: str,
         outputs: t.Sequence[t.Any],
     ) -> None:
         """
@@ -892,7 +892,7 @@ class Featurize(Select):
         db: DB,
         ids: t.Sequence[t.Any],
         key: str,
-        model: Model,
+        model: str,
         outputs: t.Sequence[t.Any],
     ) -> None:
         self.parent.model_update(  # type: ignore[union-attr]

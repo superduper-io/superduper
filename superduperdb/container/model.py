@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses as dc
-import inspect
 import multiprocessing
 import typing as t
 
@@ -91,7 +90,13 @@ class PredictMixin:
             },
         )
 
-    def _predict_one(self, X: int, **kwargs) -> int:
+    async def _apredict_one(self, X: t.Any, **kwargs):
+        raise NotImplementedError
+
+    async def _apredict(self, X: t.Any, one: bool = False, **kwargs):
+        raise NotImplementedError
+
+    def _predict_one(self, X: t.Any, **kwargs) -> int:
         if isinstance(self.preprocess, Artifact):
             X = self.preprocess.artifact(X)
         elif self.preprocess is not None:
@@ -147,6 +152,126 @@ class PredictMixin:
 
         return outputs
 
+    async def apredict(
+        self,
+        X: t.Any,
+        context: t.Optional[t.Dict] = None,
+        one: bool = False,
+        **kwargs,
+    ):
+        if self.takes_context:
+            kwargs['context'] = context
+        return await self._apredict(X, one=one, **kwargs)
+
+    def _predict_and_listen(
+        self,
+        X: t.Any,
+        select: Select,
+        db: DB,
+        in_memory: bool = True,
+        max_chunk_size: t.Optional[int] = None,
+        dependencies: t.Sequence[Job] = (),
+        **kwargs,
+    ):
+        from superduperdb.container.listener import Listener
+
+        return db.add(
+            Listener(
+                key=X,
+                model=self,  # type: ignore[arg-type]
+                select=select,  # type: ignore[arg-type]
+                predict_kwargs={
+                    **kwargs,
+                    'in_memory': in_memory,
+                    'max_chunk_size': max_chunk_size,
+                },
+            ),
+            dependencies=dependencies,
+        )
+
+    def _predict_with_select(
+        self,
+        X: t.Any,
+        select: Select,
+        db: DB,
+        max_chunk_size: t.Optional[int] = None,
+        in_memory: bool = True,
+        **kwargs,
+    ):
+        ids = [
+            str(r[db.databackend.id_field])
+            for r in db.execute(select.select_ids)  # type: ignore[arg-type]
+        ]
+        return self._predict_with_select_and_ids(
+            X=X,
+            db=db,
+            ids=ids,
+            select=select,
+            max_chunk_size=max_chunk_size,
+            in_memory=in_memory,
+            **kwargs,
+        )
+
+    def _predict_with_select_and_ids(
+        self,
+        X: t.Any,
+        db: DB,
+        select: Select,
+        ids: t.Sequence[str],
+        in_memory: bool = True,
+        max_chunk_size: t.Optional[int] = None,
+        **kwargs,
+    ):
+        if max_chunk_size is not None:
+            it = 0
+            for i in range(0, len(ids), max_chunk_size):
+                print(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
+                self._predict_with_select_and_ids(
+                    X=X,
+                    db=db,
+                    ids=ids[i : i + max_chunk_size],
+                    select=select,
+                    max_chunk_size=None,
+                    one=False,
+                    in_memory=in_memory,
+                    **kwargs,
+                )
+                it += 1
+            return
+
+        if in_memory:
+            if db is None:
+                raise ValueError('db cannot be None')
+            docs = list(db.execute(select.select_using_ids(ids)))
+            if X != '_base':
+                X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
+            else:
+                X_data = [r.unpack() for r in docs]
+        else:
+            X_data = QueryDataset(  # type: ignore[assignment]
+                select=select,
+                ids=ids,
+                fold=None,
+                db=db,
+                in_memory=False,
+                keys=[X],
+            )
+
+        outputs = self.predict(X=X_data, one=False, distributed=False, **kwargs)
+
+        if self.encoder is not None:
+            # ruff: noqa: E501
+            outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
+
+        select.model_update(
+            db=db,  # type: ignore[arg-type]
+            model=self.identifier,  # type: ignore[arg-type]
+            outputs=outputs,
+            key=X,
+            ids=ids,
+        )
+        return
+
     def predict(
         self,
         X: t.Any,
@@ -162,29 +287,11 @@ class PredictMixin:
         in_memory: bool = True,
         **kwargs,
     ) -> t.Any:
-        # TODO this should be separated into sub-procedures
+        if one:
+            assert db is None, 'db must be None when ``one=True`` (direct call)'
 
         if isinstance(select, dict):
             select = Serializable.deserialize(select)
-
-        if listen:
-            from superduperdb.container.listener import Listener
-
-            if db is None:
-                raise ValueError('db cannot be None')
-            return db.add(
-                Listener(
-                    key=X,
-                    model=self,  # type: ignore[arg-type]
-                    select=select,  # type: ignore[arg-type]
-                    predict_kwargs={
-                        **kwargs,
-                        'in_memory': in_memory,
-                        'max_chunk_size': max_chunk_size,
-                    },
-                ),
-                dependencies=dependencies,
-            )
 
         if db is not None:
             db.add(self)  # type: ignore[arg-type]
@@ -192,97 +299,36 @@ class PredictMixin:
         if distributed is None:
             distributed = s.CFG.distributed
 
+        if listen:
+            return self._predict_and_listen(X=X, db=db, **kwargs)  # type: ignore[arg-type]
+
         if distributed:
-            if one:
-                raise ValueError('one cannot be set')
             return self.create_predict_job(
                 X, select=select, ids=ids, max_chunk_size=max_chunk_size, **kwargs
             )(db=db, distributed=distributed, dependencies=dependencies)
         else:
             if select is not None and ids is None:
-                if db is None:
-                    raise ValueError('db cannot be None')
-                if one:
-                    raise ValueError('one cannot be set')
-                ids = [
-                    str(r[db.databackend.id_field])
-                    for r in db.execute(select.select_ids)  # type: ignore[arg-type]
-                ]
-                return self.predict(
+                return self._predict_with_select(
                     X=X,
-                    db=db,
-                    ids=ids,
-                    distributed=False,
                     select=select,
-                    max_chunk_size=max_chunk_size,
-                    one=False,
+                    db=db,  # type: ignore[arg-type]
                     in_memory=in_memory,
                     **kwargs,
                 )
-
-            elif select is not None and ids is not None and max_chunk_size is None:
-                if one:
-                    raise ValueError('one cannot be set')
-
-                if in_memory:
-                    if db is None:
-                        raise ValueError('db cannot be None')
-                    docs = list(db.execute(select.select_using_ids(ids)))
-                    if X != '_base':
-                        X_data = [MongoStyleDict(r.unpack())[X] for r in docs]
-                    else:
-                        X_data = [r.unpack() for r in docs]
-                else:
-                    X_data = QueryDataset(  # type: ignore[assignment]
-                        select=select,
-                        ids=ids,
-                        fold=None,
-                        db=db,
-                        in_memory=False,
-                        keys=[X],
-                    )
-
-                outputs = self.predict(X=X_data, one=False, distributed=False, **kwargs)
-                if self.encoder is not None:
-                    # ruff: noqa: E501
-                    outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
-
-                # TODO: self.identifier is definitely not a model!
-                select.model_update(
-                    db=db,  # type: ignore[arg-type]
-                    model=self.identifier,  # type: ignore[arg-type]
-                    outputs=outputs,
-                    key=X,
+            elif select is not None and ids is not None:
+                return self._predict_with_select_and_ids(
+                    X=X,
+                    select=select,
                     ids=ids,
+                    db=db,  # type: ignore[arg-type]
+                    max_chunk_size=max_chunk_size,
+                    in_memory=in_memory,
+                    **kwargs,
                 )
-                return
-
-            elif select is not None and ids is not None and max_chunk_size is not None:
-                if one:
-                    raise ValueError('one cannot be set')
-                it = 0
-                for i in range(0, len(ids), max_chunk_size):
-                    print(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
-                    self.predict(
-                        X=X,
-                        db=db,
-                        ids=ids[i : i + max_chunk_size],
-                        select=select,
-                        max_chunk_size=None,
-                        one=False,
-                        in_memory=in_memory,
-                        **kwargs,
-                    )
-                    it += 1
-                return
-
             else:
                 if self.takes_context:
                     kwargs['context'] = context
-                if 'one' in inspect.signature(self._predict).parameters:
-                    return self._predict(X, one=one, **kwargs)
-                else:
-                    return self._predict(X, **kwargs)
+                return self._predict(X, one=one, **kwargs)
 
 
 @dc.dataclass

@@ -3,10 +3,6 @@ from backend.document.routes import document_router
 from backend.ai.bot import setup_qa_documentation
 from fastapi import FastAPI
 from pymongo import MongoClient
-import sys
-
-sys.path.append('/Users/kartiksharma/Work/superduperdb/code/superduperdb')
-
 
 
 def init_routers(app: FastAPI) -> None:

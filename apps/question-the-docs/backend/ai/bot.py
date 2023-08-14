@@ -13,9 +13,9 @@ from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 
 
-def concept_assist_prompt_build(famous_person):
+def concept_assist_prompt_build():
     return (
-        f'Use the following description and code-snippets aboout SuperDuperDB to answer this question about SuperDuperDB in the voice of {famous_person}\n'
+        f'Use the following description and code-snippets aboout SuperDuperDB to answer this question about SuperDuperDB\n'
         'Do not use any other information you might have learned about other python packages\n'
         'Only base your answer on the code-snippets retrieved\n'
         '{context}\n\n'
@@ -61,7 +61,7 @@ def setup_qa_documentation(mongodb_client):
     )
 
     # Setup the chatbot into the database
-    prompt = concept_assist_prompt_build("The Terminator")
+    prompt = concept_assist_prompt_build()
     model = OpenAIChatCompletion(
         takes_context=True, prompt=prompt, model="gpt-3.5-turbo"
     )

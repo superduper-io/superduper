@@ -26,51 +26,8 @@
 </a> 
 </p>
 
-#### SuperDuperDB is an open-source environment to easily integrate AI with your data-store: from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
+#### SuperDuperDB is an open-source environment to easily integrate AI with your data-store : from LLMs and public AI APIs to bespoke machine learning models and custom use-cases.
 #### No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="3%"/>
-
-<hr>
-
-### Inititial support for MongoDB / Atlas *(SQL coming soon)*!
-<hr>
-	
-### Supported Datastores: MongoDB, MongoDB Atlas, S3
-*Coming soon: PostgreSQL, MySQL, DuckDB, SQLLite, BigQuery, Snowflake*
-
-
-### AI Frameworks, Models and APIs: Pytorch, Sklearn, HuggingFace, OpenAI, LLama 2, Custom Models & Frameworks
-
-
-
-
-<hr>
-
-| Supported Data Stores    | AI Frameworks, Models and APIs:      |   
-|--------------------------|---------|
-| **MongoDB/ Atlas**|✅ **PyTorch**|   
-| Coming soon: PostgreSQL *(coming soon)*|✅ **Sklearn**|  
-| MySQL *(coming soon)* |✅ **HuggingFace**    |
-| DuckDB *(coming soon)* | ✅ OpenAI        |   
-| BigQuery *(coming soon)* |    ✅ Llama 2     |  
-| Snowflake *(coming soon)* |  ✅ Stable Diffusion       |   
-| SQLLite *(coming soon)* |   TensorFlow *(coming soon)*     |  
-
-hr>
-
-| Supported Data Stores    | AI Frameworks, Models and APIs:      |   
-|--------------------------|---------|
-| ✅ **MongoDB/ Atlas** <br> ✅ **MongoDB Atlas** <br> *Coming soon: PostgreSQL, MySQL,DuckDB, SQLLite,BigQuery, Snowflake*| ✅ **PyTorch** <br> ✅ **HuggingFace** <br> ✅ OpenAI <br> ✅ Llama 2 <br> ✅ Stable Diffusion <br> *(Coming soon)* TensorFlow |   
-
-hr>
-
-| Supported Data Stores    | AI Frameworks, Models and APIs:      |   
-|--------------------------|---------|
-| ✅ **MongoDB/ Atlas** <br> ✅ **MongoDB Atlas** <br> PostgreSQL *(coming soon)* <br> MySQL *(coming soon)* <br> DuckDB *(coming soon)*<br> SQLLite *(coming soon)* <br> BigQuery *(coming soon)* <br> Snowflake *(coming soon)* | ✅ **PyTorch** <br> ✅ **HuggingFace** <br> ✅ **OpenAI** <br> ✅ **Llama 2** <br> ✅ **Stable Diffusion** <br> TensorFlow *(Coming soon)* |   
-
-
-
-<hr>
-
 <hr>
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
 - <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>

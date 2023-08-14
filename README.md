@@ -51,7 +51,7 @@
 </h3>
 <hr>
 
-SuperDuperDB allows you to easily integrate and manage any AI models and APIs with your datastore: from LLM based Q&A and vector search, image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc. to highly custom machine learning models and use-cases.
+SuperDuperDB allows you to easily integrate and manage any AI models and APIs with your datastore: from LLM based Q&A and vector search, image generation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc. to highly custom machine learning models and use-cases.
 
 A single scalable deployment of all your AI models which is automatically kept up-to-date new data is handled automatically and immediately.
 

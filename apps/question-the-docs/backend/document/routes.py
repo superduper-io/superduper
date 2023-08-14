@@ -3,6 +3,7 @@ from superduperdb import superduper
 from superduperdb.db.mongodb.query import Collection
 
 from backend.document.models import Query
+from backend.config import settings
 
 document_router = APIRouter(prefix="/document", tags=["docs"])
 
@@ -24,6 +25,6 @@ def concept_assist_prompt_build(famous_person):
 def query_docs(request: Request, query: Query = Body(...)):
     db = superduper(request.app.mongodb_client.my_database_name)
 
-    context_select = Collection(name="markdown").like({"text": query.query}, n=5, vector_index="documentation_index").find({})
-    prompt = concept_assist_prompt_build("The Terminator")
-    return db.predict('superbot', query=query, prompt=prompt, context_select=context_select, context_key='text', one=True)
+    context_select = Collection(name="markdown").like({"text": query.query}, n=settings.NEAREST_TO_QUERY, vector_index="documentation_index").find({})
+    response, _ = db.predict('gpt-3.5-turbo', input=query.query, context_select=context_select, context_key='text')
+    return response.unpack()

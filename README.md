@@ -109,7 +109,7 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
   <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_diagram.png">
 </p>
 
-# How To
+# How to
 ### The following are examples of how you use SuperDuperDB with Python (find all how-tos and examples <a href="https://superduperdb.github.io/superduperdb">in the docs here</a>): 
 
 - **Add a ML/AI model to your datastore <a href="404">(read more in the docs here)</a>:**

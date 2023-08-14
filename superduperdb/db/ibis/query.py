@@ -4,91 +4,41 @@ import typing as t
 
 from superduperdb import CFG
 
-
-class Insert:
-    collection: 'Collection'
-    documents: t.List['Document'] = dc.field(default_factory=list)
-    refresh: bool = True
-    verbose: bool = True
-    args: t.Sequence = dc.field(default_factory=list)
-    kwargs: t.Dict = dc.field(default_factory=dict)
-    encoders: t.Sequence = dc.field(default_factory=list)
-    type_id: t.Literal['mongodb.InsertMany'] = 'mongodb.InsertMany'
-
-    def post(self, db, output):
-        graph = None
-        if self.refresh and not CFG.cdc:
-            graph = db.refresh_after_update_or_insert(
-                query=self,  # type: ignore[arg-type]
-                ids=output.inserted_ids,
-                verbose=self.verbose,
-            )
-        return output, graph
-
-    def pre(self, db):
-        valid_prob = self.kwargs.get('valid_prob', 0.05)
-        for e in self.encoders:
-            db.add(e)
-        documents = [r.encode() for r in self.documents]
-        for r in documents:
-            if '_fold' in r:
-                continue
-            if random.random() < valid_prob:
-                r['_fold'] = 'valid'
-            else:
-                r['_fold'] = 'train'
-
-        return documents
-
-
-@dc.dataclass
-class InsertMany(Insert):
-    ...
-
-
-class PlaceHolderQuery:
-    def __init__(self, data, *args, **kwargs):
-        self.name = data
-        self.args = args
-        self.kwargs = kwargs
-
-    def pre(self, db):
-        pass
-
-    def post(self, db, output):
-        pass
-
-
-query_lookup = {'insert': InsertMany}
-
-
 class Query:
-    def __init__(self, name, type='query', args=[], kwargs={}):
+    def __init__(self, name, type='query', args=[], kwargs={}, sddb_kwargs={}, connection_parent=False):
         self.name = name
-        self.query = query_lookup.get(name, PlaceHolderQuery(name))
-        self.next = None
-        self.db = None
+        query = query_lookup.get(name, None)
+        if query is None:
+            self.query = PlaceHolderQuery(name)
+        else:
+            self.query = query(**sddb_kwargs)
         self.type = type
         self.args = args
         self.kwargs = kwargs
+        self.connection_parent = connection_parent
 
     def execute(self, db, parent, table):
         if self.type == "attr":
-            return getattr(parent, self.query.name)
+            return getattr(parent, self.query.type_id)
 
-        self.query.pre(self.db)
-        if len(self.args) == 1:
-            if isinstance(self.args[0], Queries):
-                self.args = [self.args[0].condition(db, table)]
-        parent = getattr(parent, self.query.name)(*self.args, **self.kwargs)
-        self.query.post(self.db, parent)
+        self.query.pre(db)
+        if len(self.args) == 1 and isinstance(self.args[0], QueryLinker):
+            self.args = [self.args[0].execute(db, table)]
+        if self.connection_parent:
+            parent = getattr(db.db, self.query.type_id)(*self.args, **self.kwargs)
+        else:
+            parent = getattr(parent, self.query.type_id)(*self.args, **self.kwargs)
+
+        parent = self.query.post(db, parent)
         return parent
 
 
 class QueryChain:
     def __init__(self, seed=None, type='attr'):
-        if seed:
+        if isinstance(seed, str):
             query = Query(seed, type=type)
+        elif isinstance(seed, Query):
+            query = seed
         else:
             query = None
 
@@ -122,14 +72,36 @@ class Table:
     primary_id: str = 'id'
 
     def __getattr__(self, k):
-        return Queries(self, query_type=k, members=QueryChain(k, type='attr'))
+        if k in self.__dict__:
+            return self.__getattr__(k)
+        return QueryLinker(self, query_type=k, members=QueryChain(k, type='attr'))
+
+    def like(self):
+        raise NotImplementedError
+
+    def insert(self, 
+           *args,
+            refresh: bool = True,
+            verbose: bool = True,
+            encoders: t.Sequence = [],
+            valid_prob: float = 0.05,
+           **kwargs
+               ):
+        
+        sddb_kwargs = {'refresh': refresh, 'verbose': verbose, 'encoders': encoders, 'kwargs': {'valid_prob': valid_prob},   'documents': args[0]}
+        args = args[1:]
+        insert = Query('insert', type='query', args=args, kwargs=kwargs, sddb_kwargs=sddb_kwargs,  connection_parent=True)
+
+        qc =QueryChain(insert)
+        return QueryLinker(self, query_type='insert', members=qc)
+
 
 
 class LogicalExprMixin:
     def _logical_expr(self, other, members, collection, k):
         args = [other]
         members.append_query(Query(k, args=args, kwargs={}))
-        return Queries(collection, query_type=k, members=members)
+        return QueryLinker(collection, query_type=k, members=members)
 
     def eq(self, other, members, collection):
         k = '__eq__'
@@ -145,7 +117,7 @@ class LogicalExprMixin:
 
 
 @dc.dataclass
-class Queries(LogicalExprMixin):
+class QueryLinker(LogicalExprMixin):
     collection: Table
     query_type: str = 'find'
     args: t.Sequence = dc.field(default_factory=list)
@@ -157,7 +129,7 @@ class Queries(LogicalExprMixin):
         if k in self.__dict__:
             return self.__getattr__(k)
         self.members.append(k)
-        return Queries(self.collection, query_type=k, members=self.members)
+        return QueryLinker(self.collection, query_type=k, members=self.members)
 
     def __eq__(self, other):
         self.eq(other, members=self.members, collection=self.collection)
@@ -172,7 +144,7 @@ class Queries(LogicalExprMixin):
         k = 'select'
         args = [self.collection.primary_id]
         self.members.append_query(Query(k, args=args, kwargs={}))
-        return Queries(self.collection, query_type='select', members=self.members)
+        return QueryLinker(self.collection, query_type='select', members=self.members)
 
     def select_from_ids(self, ids):
         isin_query = self.collection.__getattr__(self.collection.primary_id).isin(ids)
@@ -180,12 +152,12 @@ class Queries(LogicalExprMixin):
         args = [isin_query]
         self.members.append_query(Query(k, args=args, kwargs={}))
 
-        return Queries(self.collection, query_type='filter', members=self.members)
+        return QueryLinker(self.collection, query_type='filter', members=self.members)
 
     def __call__(self, *args, **kwargs):
         self.members.update_last_query(args, kwargs, type='query')
 
-        return Queries(
+        return QueryLinker(
             collection=self.collection,
             query_type=self.query_type,
             members=self.members,
@@ -193,7 +165,7 @@ class Queries(LogicalExprMixin):
             kwargs=kwargs,
         )
 
-    def condition(self, db, parent):
+    def execute(self, db, parent):
         for member in self.members:
             parent = member.execute(db, parent, parent)
         return parent
@@ -211,3 +183,64 @@ class IbisConnection:
 
     def execute(self, query):
         return self._execute(self.db, query, self.db.table(query.collection.name))
+
+class PlaceHolderQuery:
+    def __init__(self, data, *args, **kwargs):
+        self.type_id = data
+        self.args = args
+        self.kwargs = kwargs
+
+    def pre(self, db):
+        pass
+
+    def post(self, db, output):
+        pass
+
+
+@dc.dataclass
+class Select:
+    id_field: str = '_id'
+    type_id: t.Literal['Ibis.select'] = 'Ibis.select'
+    def pre(self, db):
+        pass
+
+    def post(self, db, cursor):
+        return SuperDuperCursor(raw_cursor=cursor, id_field=self.id_field, encoders=db.encoders)
+
+@dc.dataclass
+class Insert:
+    documents: t.List['Document'] = dc.field(default_factory=list)
+    refresh: bool = True
+    verbose: bool = True
+    kwargs: t.Dict = dc.field(default_factory=dict)
+    encoders: t.Sequence = dc.field(default_factory=list)
+    type_id: t.Literal['Ibis.insert'] = 'Ibis.insert'
+
+    def pre(self, db):
+        valid_prob = self.kwargs.get('valid_prob', 0.05)
+        for e in self.encoders:
+            db.add(e)
+        documents = [r.encode() for r in self.documents]
+        for r in documents:
+            if '_fold' in r:
+                continue
+            if random.random() < valid_prob:
+                r['_fold'] = 'valid'
+            else:
+                r['_fold'] = 'train'
+
+        return documents
+
+    def post(self, db, output):
+        graph = None
+        if self.refresh and not CFG.cdc:
+            graph = db.refresh_after_update_or_insert(
+                query=self,  # type: ignore[arg-type]
+                ids=output.inserted_ids,
+                verbose=self.verbose,
+            )
+        return graph, output
+
+
+
+query_lookup = {'insert': Insert}

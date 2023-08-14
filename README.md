@@ -58,16 +58,11 @@ A single scalable deployment of all your AI models which is automatically kept u
 No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2.5%"/>
 
 
-| Supported Data Stores    | AI Frameworks, Models and APIs: |   
+| Supported Data Stores: | AI Frameworks, Models and APIs: |
 |--------------------------|--------------------------|
-| ✅ **MongoDB** <br> ✅ **MongoDB Atlas** <br> *Coming soon:* PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake |✅ **PyTorch** <br>✅ **HuggingFace**<br>✅ **OpenAI** <br>✅ **Llama 2** <br>✅ **Stable Diffusion**<br> TensorFlow *coming soon* |   
+| - **MongoDB** <br> - **MongoDB Atlas** <br> - **S3** <br> *Coming soon:*  PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake | - **PyTorch** <br> - **HuggingFace**<br> - **OpenAI**<br> - **Scikit-Learn**<br> - **Llama 2**<br> - **CLIP**<br> - TensorFlow *coming soon* |
 
-
-<hr>
-
-
-	
-
+<hr>	
 
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
 - <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
@@ -251,12 +246,9 @@ pip install superduperdb
 #### 3. Try one of our example use cases/notebooks <a href="https://superduperdb.github.io/superduperdb/examples/index.html">found here</a> (~as many minutes you enjoy)!
 <br>
 
-*⚠️ Disclaimer: SuperDuperDB is currently in *beta*. Please expect breaking changes, rough edges and fast pace of new and cool feature development!*
-
-
 # Quickstart
 
-#### Try SuperDuperDB on binder 
+#### Try SuperDuperDB on Binder 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb)
 
 This will set up a playground environment that includes:

@@ -1,5 +1,9 @@
 import pytest
 import tdir
+try:
+    import torch
+except ImportError:
+    torch = None
 
 from superduperdb.container.dataset import Dataset
 from superduperdb.container.document import Document as D
@@ -35,6 +39,7 @@ def transformers_model(random_data):
     yield model
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_transformer_predict(transformers_model):
     one_prediction = transformers_model.predict('this is a test', one=True)
     assert isinstance(one_prediction, int)
@@ -42,6 +47,7 @@ def test_transformer_predict(transformers_model):
     assert isinstance(predictions, list)
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 @tdir
 def test_tranformers_fit(transformers_model, random_data):
     repo_name = "test-superduperdb-sentiment-analysis"

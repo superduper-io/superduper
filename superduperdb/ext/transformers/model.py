@@ -6,7 +6,6 @@ import re
 import typing as t
 import warnings
 
-import torch
 from transformers import DataCollatorWithPadding
 from transformers import Pipeline as BasePipeline
 from transformers import Trainer, TrainingArguments
@@ -61,6 +60,8 @@ class Pipeline(Model):
                 hash=random.randrange(1000000),
             )
         if not self.device:
+            import torch
+
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     @functools.cached_property

@@ -46,11 +46,11 @@ jobs:
           path: |
             ./.mypy_cache
             ${{ env.pythonLocation }}
-          key: 3.8-ubuntu-latest-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements/requirements-lint.txt') }}
+          key: 3.8-ubuntu-latest-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements/requirements-dev.txt') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements/requirements-lint.txt
+        run: pip install -r requirements/requirements-dev.txt
 
       - name: Basic health check
         run: |
@@ -90,11 +90,11 @@ jobs:
         with:
           path: |
             ${{ env.pythonLocation }}
-          key: ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements/requirements-test.txt') }}
+          key: ${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements/requirements-dev.txt') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r requirements/requirements-test.txt
+        run: pip install -r requirements/requirements-dev.txt
 
         # TODO: vendor only the parts that we need from the following action
       - name: Docker

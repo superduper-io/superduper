@@ -4,6 +4,7 @@ from contextlib import contextmanager
 
 import pytest
 import tdir
+
 try:
     import torch
 except ImportError:

@@ -4,6 +4,7 @@ import tempfile
 import numpy as np
 import pyarrow as pa
 import pytest
+
 try:
     import torch
 except ImportError:

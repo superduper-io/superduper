@@ -1,5 +1,6 @@
 import pytest
 import tdir
+
 try:
     import torch
 except ImportError:

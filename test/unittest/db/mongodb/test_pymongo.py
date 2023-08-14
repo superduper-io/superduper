@@ -1,5 +1,7 @@
 import pytest
+
 from superduperdb.db.mongodb.query import Collection
+
 try:
     import torch
 except ImportError:

@@ -28,23 +28,27 @@ def setup_qa_documentation(mongodb_client):
     if db.show('vector_index'):
         return
 
-    content = []
+    if not os.path.exists(settings.PATH_TO_REPO):
+        print(f"Path to repo: {settings.PATH_TO_REPO} does not exist")
+        return
+
+    context_dfs = []
     for level in range(0, settings.DOC_FILE_LEVELS):
         md_path = os.path.join(
             settings.PATH_TO_REPO,
             *["*"] * level if level else '',
             f"*.{settings.DOC_FILE_EXT}",
         )
-        filecontent = []
+
         for file in glob.glob(md_path):
-            filecontent.append(open(file).readlines())
-        if filecontent:
-            content.append(sum(filecontent, []))
+            print(f"Contextualizing file: {file}")
+            content = open(file).readlines()
+            content_df = pd.DataFrame({"text": content})
+            df = contextualize(content_df, window_size=10, stride=5)
+            context_dfs.append(df)
 
-    content = sum(content, [])
-    content_df = pd.DataFrame({"text": content})
-    df = contextualize(content_df, window_size=10, stride=5)
-
+    # merge all the dataframes
+    df = pd.concat(context_dfs)
     documents = [D({"text": v}) for v in df["text"].values]
 
     db.execute(Collection("markdown").insert_many(documents))

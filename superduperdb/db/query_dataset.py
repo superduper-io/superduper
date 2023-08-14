@@ -1,7 +1,5 @@
 import random
 
-from torch.utils.data import Dataset
-
 from superduperdb.db.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
 
@@ -13,9 +11,7 @@ class ExpiryCache(list):
         return item
 
 
-class QueryDataset(
-    Dataset
-):  # TODO Not sure this is strictly necessary (the inheritance)
+class QueryDataset:
     """
     A dataset class which can be used to define a torch dataset class.
     """
@@ -34,8 +30,6 @@ class QueryDataset(
         extract=None,
         **kwargs,
     ):
-        super().__init__()
-
         self._database = db
         self.keys = keys
 
@@ -105,9 +99,8 @@ class QueryDataset(
         return out
 
 
-class CachedQueryDataset(Dataset):
+class CachedQueryDataset:
     """
-    A cached dataset class which can be used to define a torch dataset class.
     This class which fetch the document corresponding to the given ``index``.
     This class prefetches documents from database and stores in the memory.
 
@@ -128,8 +121,6 @@ class CachedQueryDataset(Dataset):
         database=None,
         prefetch_size: int = 100,
     ):
-        super().__init__()
-
         self._database = database
         self.keys = keys
 

@@ -1,8 +1,14 @@
-import torch
+import pytest
+
+try:
+    import torch
+
+    from superduperdb.ext.torch.model import TorchModel, TorchTrainerConfiguration
+except ImportError:
+    torch = None
 
 from superduperdb.container.metric import Metric
 from superduperdb.db.mongodb.query import Collection
-from superduperdb.ext.torch.model import TorchModel, TorchTrainerConfiguration
 
 
 class ToDict:
@@ -41,6 +47,7 @@ def acc(x, y):
     return x == y
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_fit(random_data, si_validation):
     m = TorchModel(
         object=torch.nn.Linear(32, 1),

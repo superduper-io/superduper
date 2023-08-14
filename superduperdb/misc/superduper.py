@@ -1,8 +1,5 @@
 import typing as t
 
-from sklearn.linear_model._base import LinearRegression
-from torch.nn.modules.linear import Linear
-
 __all__ = ('superduper',)
 
 
@@ -98,7 +95,7 @@ class TorchTyper(DuckTyper):
         raise TypeError('Expected a Module but got {type(item)}')
 
 
-def auto_identify(instance: t.Union[Linear, LinearRegression]) -> str:
+def auto_identify(instance: t.Any) -> str:
     return instance.__class__.__name__.lower()
 
 

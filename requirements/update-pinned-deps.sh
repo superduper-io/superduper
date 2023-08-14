@@ -3,7 +3,12 @@
 set -e  # Stop execution if any command fails
 
 # Ordered by dependence - CHANGE WITH CARE!
-deps=("requirements.in" "requirements-docs.in" "requirements-lint.in" "requirements-test.in" "requirements-dev.in")
+deps=(\
+    "requirements.in" \
+    "requirements-dev-no-torch.in" \
+    "requirements-torch.in" \
+    "requirements-dev.in" \
+)
 
 for dep in "${deps[@]}"
 do

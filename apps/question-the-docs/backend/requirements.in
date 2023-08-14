@@ -1,0 +1,9 @@
+# API Server
+fastapi
+uvicorn[standard]
+pydantic[email]
+
+# Development
+pip-tools
+black
+flake8

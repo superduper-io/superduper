@@ -21,7 +21,7 @@ keywords = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: GPU :: NVIDIA CUDA",
-    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -33,16 +33,86 @@ classifiers = [
     "Typing :: Typed"
 ]
 requires-python = ">=3.8"
-dynamic = ["dependencies", "version"]
+dynamic = ["version"]
+dependencies = [
+    "boto3>=1.26.16",
+    "dask[distributed]>=2022.6.0",
+    "dill>=0.3.6",
+    "fil>=1.1.0",
+    "networkx>=2.8.8",
+    "requests>=2.31.0",
+    "tqdm>=4.64.1",
+    "typer>=0.7.0",
+    "lancedb<0.2",  # TODO: Find a solution and unpin
+    "readerwriterlock>=1.0.9",
+    "pandas>=2.0.2",
+    "flask>=2.2.3",
+    "flask-cors>=3.0.10",
+    "flask-httpauth>=4.7.0",
+    "werkzeug>=2.2.3",
+    "pydantic >=1",
+    "pymongo>=4.3.3",
+    "numpy>=1.24.3",
+    "overrides>=7",
+    "tenacity>=8.1.0",
+    "scikit-learn>=1.1.3",
+    "faiss-cpu>=1.7.4",
+    "openai>=0.27.6",
+    "pillow>=9.4.0",
+]
 
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements/requirements.in"] }
-version = {attr = "superduperdb.__version__"}
+[project.optional-dependencies]
+torch = [
+    "torch>=2.0.0,!=2.0.1",
+    "accelerate>=0.20.1",
+    "transformers>=4.29.1",
+]
+docs = [
+    "furo",
+    "ipython",
+    "myst_parser",
+    "nbsphinx",
+    "pandoc",
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx_copybutton",
+    "sphinxcontrib-mermaid",
+    "nbsphinx-link",
+]
+typing = [
+    "mypy>=1.3.0",
+    "types-pillow>=9.5.0.4",
+    "types-requests>=2.31.0.1",
+    "types-tqdm>=4.65.0.1",
+    "monkeytype",
+    "boto3-stubs>=1.26.154",
+]
+lint = [
+    "black>=23.3",
+    "interrogate>=1.5.0",
+    "isort>=5.12.0",
+    "ruff>=0.0.267",
+]
+tests = [
+    "httpx>=0.24.1",
+    "impall>=1.2.0",
+    "lorem>=0.1.1",
+    "pytest>=7.3.1",
+    "pytest-cov>=2.12.1",
+    "tdir>=1.6"
+]
+dev = ["superduperdb[docs,lint,tests,typing,torch]"]
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"
 documentation = "https://superduperdb.github.io/superduperdb/"
 source = "https://github.com/SuperDuperDB/superduperdb/"
+
+[tool.setuptools]
+packages = ["superduperdb"]
+
+[tool.setuptools.dynamic]
+version = {attr = "superduperdb.__version__"}
 
 [tool.black]
 skip-string-normalization = true

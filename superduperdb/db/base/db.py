@@ -169,6 +169,53 @@ class DB:
             type_id=type_id, identifier=identifier, version=version
         )
 
+    def _get_context(
+        self, model, context_select: t.Optional[Select], context_key: t.Optional[str]
+    ):
+        assert (
+            model.takes_context  # type: ignore[attr-defined]
+        ), 'model does not take context'
+        context = list(self.execute(context_select))  # type: ignore[arg-type]
+        context = [x.unpack() for x in context]
+        if context_key is not None:
+            context = [MongoStyleDict(x)[context_key] for x in context]
+        return context
+
+    async def apredict(
+        self,
+        model: str,
+        input: t.Union[Document, t.Any],
+        context_select: t.Optional[Select] = None,
+        context_key: t.Optional[str] = None,
+        **kwargs,
+    ):
+        """
+        Apply model to input using asyncio.
+
+        :param model: model identifier
+        :param input: input to be passed to the model.
+                      Must be possible to encode with registered encoders
+        :param context_select: select query object to provide context
+        :param context_key: key to use to extract context from context_select
+        """
+        model = self.models[model]
+        context = None
+
+        if context_select is not None:
+            context = self._get_context(model, context_select, context_key)
+
+        out = await model.apredict(  # type: ignore[attr-defined]
+            input.unpack() if isinstance(input, Document) else input,
+            one=True,
+            context=context,
+            **kwargs,
+        )
+        if model.encoder is not None:  # type: ignore[attr-defined]
+            out = model.encoder(out)  # type: ignore[attr-defined]
+        if context is not None:
+            return Document(out), [Document(x) for x in context]
+        return Document(out), []
+
     def predict(
         self,
         model: str,
@@ -180,23 +227,17 @@ class DB:
         """
         Apply model to input.
 
-        :param model_identifier: model or ``str`` referring to an uploaded model
+        :param model: model identifier
         :param input: input to be passed to the model.
                       Must be possible to encode with registered encoders
-        :param one: if True passed a single document else passed multiple documents
-        :param select: select query object to provide context
+        :param context_select: select query object to provide context
+        :param context_key: key to use to extract context from context_select
         """
         model = self.models[model]
         context = None
 
         if context_select is not None:
-            assert (
-                model.takes_context  # type: ignore[attr-defined]
-            ), 'model does not take context'
-            context = list(self.execute(context_select))
-            context = [x.unpack() for x in context]
-            if context_key is not None:
-                context = [MongoStyleDict(x)[context_key] for x in context]
+            context = self._get_context(model, context_select, context_key)
 
         out = model.predict(  # type: ignore[attr-defined]
             input.unpack() if isinstance(input, Document) else input,
@@ -206,7 +247,6 @@ class DB:
         )
         if model.encoder is not None:  # type: ignore[attr-defined]
             out = model.encoder(out)  # type: ignore[attr-defined]
-
         if context is not None:
             return Document(out), [Document(x) for x in context]
         return Document(out), []

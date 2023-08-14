@@ -1,25 +1,25 @@
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Body, Request
-from lancedb.context import contextualize
 from superduperdb import superduper
 from superduperdb.container.document import Document as D
 from superduperdb.container.listener import Listener
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
+from superduperdb.misc.text import contextualize
 
 from backend.document.models import Query
 
 document_router = APIRouter(prefix="/document", tags=["docs"])
 
 
-def concept_assist_prompt_build(famous_person, query, context):
+def concept_assist_prompt_build(famous_person):
     return (
-        "Following is a Query and some context around the query, please "
+        "Following are some context around a query, please "
         "try to give an answer for the query with the given context and "
-        f"please respond in the voice of {famous_person}\nQuery: "
-        f"{query}\nContext: {context}"
+        f"please respond in the voice of {famous_person}\n"
+        "Context: {context} \nQuery: "
     )
 
 
@@ -30,16 +30,10 @@ def concept_assist_prompt_build(famous_person, query, context):
 def query_docs(request: Request, query: Query = Body(...)):
     db = superduper(request.app.mongodb_client.my_database_name)
 
-    context_curr = db.execute(
-        Collection(name="markdown")
-        .like({"text": query.query}, n=8, vector_index="documentation_index")
-        .find({})
-    )
-    context = [c.unpack() for c in context_curr]
-    context = "\n".join([c["text"] for c in context])
-    prompt = concept_assist_prompt_build("The Terminator", query, context)
+    context_select = Collection(name="markdown").like({"text": query.query}, n=8, vector_index="documentation_index").find({})
+    prompt = concept_assist_prompt_build("The Terminator")
 
-    return OpenAIChatCompletion(model="gpt-3.5-turbo").predict(prompt, one=True)
+    return db.predict('superbot', query=query, prompt=prompt, context_select=context_select, context_key='text', one=True)
 
 
 @document_router.post(
@@ -56,7 +50,7 @@ def populate(request: Request):
     # raw_df["text"].replace("", np.nan, inplace=True)
     raw_df["text"].fillna(" ", inplace=True)
 
-    df = contextualize(raw_df).text_col("text").window(60).stride(17).to_df()
+    df = contextualize(raw_df, window_size=60, stride=17)
 
     documents = [D({"text": v}) for v in df["text"].values]
 
@@ -73,4 +67,6 @@ def populate(request: Request):
         )
     )
 
-    # TODO: Add correct response for user
+    # Setup the chatbot into the database
+    model = OpenAIChatCompletion(identifier='superbot', takes_context=True, model="gpt-3.5-turbo")
+    db.add(model)

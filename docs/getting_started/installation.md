@@ -10,6 +10,8 @@ We assume you are running:
 The deployments can be existing deployments already running in your infrastructure, or
 bespoke deployments which you'll use specifically for SuperDuperDB.
 
+### Usage with MongoDB
+
 For MongoDB here are instructions for 2 very popular systems:
 
 - [MongoDB installation on Ubuntu](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu)

@@ -44,7 +44,7 @@ class TextEmbedding:
     def __call__(self, x):
         return sum([self.lookup[y] for y in x.split()])
 
-
+ for
 db.add(
     VectorIndex(
         identifier='my-index',
@@ -58,7 +58,9 @@ db.add(
 )
 ```
 
-## Using vector indexes with MongoDB
+## Using vector indexes
+
+### MongoDB
 
 To use your vector index to search MongoDB, there are two possibilities:
 

@@ -7,7 +7,6 @@ much more convenient:
 - Store Python objects which aren't serializable in standard data handled by JSON.
 - Add data by reference to web-content, `aws s3` URIs and local filesystems
 
-
 The key abstraction for doing this is `superduperdb.core.encoder.Encoder`:
 
 An `Encoder` instance attaches an `encoder` and `decoder` to the data to be sent to the database. 

@@ -23,7 +23,7 @@ To do this, we need to be able to implement these high level steps:
 - Once the model is trained, deploy it in a way so that incoming user data's images are classified using his model in as timely a manner as possible.
 - Consume the outputs of the model in the functionality of the website
 
-Pre-2023, this is an extremely arduous task. In order to get a model working using this data, and working with this deployment, we would typically be required to perform something equivalent to the following sequence of tasks (module cloud provider, exact software choices). 
+Pre-2023, this is an extremely arduous task. In order to get a model working using this data, and working with this deployment, we would typically be required to perform something equivalent to the following sequence of tasks (module cloud provider, exact software choices). (Suppose that our user is using MongoDB as his/ her datastore.)
 
 1. Download a snapshot of his data from MongoDB and place in an AWS s3 bucket.
 2. Write a script to run through all of the images mentioned in the BSON records downloaded, and download these to a fast-access hard drive, in elastic block storage

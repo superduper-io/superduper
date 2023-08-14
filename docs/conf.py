@@ -30,6 +30,8 @@ copyright = 'SuperDuperDB Inc., opensource@superduperdb.com'
 exclude_patterns = ['_build']
 
 html_theme = 'furo'
+html_static_path = ['img']
+html_logo = 'img/SuperDuperDB_logo.png'
 master_doc = 'index'
 
 napoleon_google_docstring = True
@@ -47,7 +49,7 @@ napoleon_use_rtype = True
 nbsphinx_allow_errors = True
 nbsphinx_execute = 'never'
 
-project = 'SuperDuperDB'
+# project = ''
 pygments_style = 'sphinx'
 
 source_suffix = '.rst'

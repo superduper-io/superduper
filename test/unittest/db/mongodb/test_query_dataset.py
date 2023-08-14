@@ -1,7 +1,13 @@
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.db.query_dataset import QueryDataset
+import pytest
+try:
+    import torch
+except ImportError:
+    torch = None
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_query_dataset(random_data, a_listener):
     train_data = QueryDataset(
         select=Collection(name='documents').find(
@@ -32,6 +38,7 @@ def test_query_dataset(random_data, a_listener):
     )
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_query_dataset_base(random_data, a_listener_base):
     train_data = QueryDataset(
         select=Collection(name='documents').find({}, {'_id': 0}),

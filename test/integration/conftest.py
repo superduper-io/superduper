@@ -6,7 +6,14 @@ from unittest import mock
 
 import numpy as np
 import pytest
-import torch
+
+try:
+    import torch
+
+    from superduperdb.ext.torch.model import TorchModel
+    from superduperdb.ext.torch.tensor import tensor
+except ImportError:
+    torch = None
 from pymongo import MongoClient
 from tenacity import RetryError, Retrying, stop_after_delay
 
@@ -17,8 +24,6 @@ from superduperdb.container.listener import Listener
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.base.build import build_datalayer
 from superduperdb.db.mongodb.query import Collection
-from superduperdb.ext.torch.model import TorchModel
-from superduperdb.ext.torch.tensor import tensor
 from superduperdb.server.dask_client import dask_client
 from superduperdb.server.server import serve
 
@@ -39,7 +44,7 @@ as much as possible. This will make it easier to understand the test suite.
 
 # Set the seeds
 random.seed(42)
-torch.manual_seed(42)
+torch and torch.manual_seed(42)
 np.random.seed(42)
 
 
@@ -149,6 +154,7 @@ def fresh_database(fresh_client):
             database.remove('encoder', e, force=True)
 
 
+@pytest.mark.skipif(not torch, reason='Torch not installed')
 def fake_tensor_data(encoder, update: bool = True):
     data = []
     for i in range(10):

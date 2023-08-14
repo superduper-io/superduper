@@ -7,7 +7,6 @@ from readerwriterlock import rwlock
 from superduperdb.vector_search.table_scan import VanillaVectorIndex
 
 from .base import (
-    ArrayLike,
     VectorCollection,
     VectorCollectionConfig,
     VectorCollectionId,
@@ -67,7 +66,7 @@ class InMemoryVectorCollection(VectorCollection):
 
     def find_nearest_from_array(
         self,
-        array: ArrayLike,
+        array: numpy.typing.ArrayLike,
         *,
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,

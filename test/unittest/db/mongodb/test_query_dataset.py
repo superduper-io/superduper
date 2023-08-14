@@ -1,6 +1,8 @@
+import pytest
+
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.db.query_dataset import QueryDataset
-import pytest
+
 try:
     import torch
 except ImportError:

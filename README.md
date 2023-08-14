@@ -53,7 +53,7 @@
 
 SuperDuperDB allows you to easily integrate and manage any AI models and APIs with your datastore: from LLM based Q&A and vector seatch, image generation with OpenAI API, TimeSeries Forecasting, Anomaly Detection, Classification, Recommenders etc. to highly custom machine learning models and use-cases.
 
-A single scalable deployment of all your AI models which is automatically kept up-to-date new data is handled automatically and immediately.
+A single scalable deployment of all your AI which is automatically kept up-to-date as models are automatically processing new incoming data. 
 
 No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="3%"/>
 

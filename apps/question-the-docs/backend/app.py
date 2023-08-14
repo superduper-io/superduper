@@ -1,9 +1,12 @@
 from backend.config import settings
 from backend.document.routes import document_router
+from backend.ai.bot import setup_qa_documentation
 from fastapi import FastAPI
 from pymongo import MongoClient
+import sys
 
-from .ai.bot import setup_qa_documentation
+sys.path.append('/Users/kartiksharma/Work/superduperdb/code/superduperdb')
+
 
 
 def init_routers(app: FastAPI) -> None:
@@ -16,10 +19,9 @@ def create_app() -> FastAPI:
     @_app.on_event("startup")
     def startup_db_client():
         _app.mongodb_client = MongoClient(settings.DB_URL)
-        _client = _app.mongodb_client[settings.DB_NAME]
-        _app.mongodb = _client
+        _app.mongodb = _app.mongodb_client[settings.DB_NAME]
 
-        setup_qa_documentation(_client)
+        setup_qa_documentation(_app.mongodb_client)
 
 
 

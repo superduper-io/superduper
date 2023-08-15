@@ -78,3 +78,17 @@ serializers: t.Dict[str, t.Type] = {
     'dill': DillSerializer,
     'torch': TorchSerializer,
 }
+
+
+class Method:
+    """
+    A callable that calls a method on the object it is called with.
+    """
+
+    def __init__(self, method: str, *args, **kwargs):
+        self.method = method
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, X: t.Any) -> t.Any:
+        return getattr(X, self.method)(*self.args, **self.kwargs)

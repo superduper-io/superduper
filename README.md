@@ -12,11 +12,11 @@
 
 
 <p align="center">
+	<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">
+    <img src="https://img.shields.io/badge/slack-superduperdb-8A2BE2?logo=slack" alt="slack">
+</a>
 <a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">
     <img src="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main/graph/badge.svg" alt="Coverage">
-</a>
-<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">
-    <img src="https://img.shields.io/badge/slack-superduperdb-8A2BE2?logo=slack" alt="slack">
 </a>
 <a href="https://pypi.org/project/superduperdb">
     <img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version">
@@ -33,40 +33,43 @@
 </p>
 
 <h3 align="center">
+	<a href="#how-to">How To</a>
+	<span> | </span>
 	<a href="#installation">Installation</a>
 	<span> | </span>
 	<a href="#quickstart">Quickstart</a>
 	<span> | </span>
-	<a href="#contributing">Contributing </a>
+	<a href="#community--getting-help">Get Help & Community</a>
 	<span> | </span>
-	<a href="#feedback">Feedback </a>
+	<a href="#contributing">Contributing</a>
 	<span> | </span>
-	<a href="#license">License </a>
+	<a href="#feedback">Feedback</a>
 	<span> | </span>
-	<a href="#community--getting-help">Get Help </a>
+	<a href="#license">License</a>
 	<span> | </span>
-	<a href="#how-to">How To</a>
-	<span> | </span>
-	<a href="#join-us">Join Us </a>
+	<a href="#join-us">Join Us</a>
 </h3>
 <hr>
 
 SuperDuperDB allows you to easily integrate and manage any AI models and APIs with your datastore: from LLM based Q&A and vector search, image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc. to highly custom machine learning models and use-cases.
 
-A single scalable deployment of all your AI models which is automatically kept up-to-date new data is handled automatically and immediately.
+A single scalable deployment of all your AI models which is automatically kept up-to-date as new data is handled automatically and immediately.
 
 No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2.5%"/>
 
 
 | Supported Data Stores: | AI Frameworks, Models and APIs: |
 |--------------------------|--------------------------|
-| - **MongoDB** <br> - **MongoDB Atlas** <br> - **S3** <br> *Coming soon:*  PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake | - **PyTorch** <br> - **HuggingFace**<br> - **OpenAI**<br> - **Scikit-Learn**<br> - **Llama 2**<br> - **CLIP**<br> - *Coming soon:* TensorFlow |
+| - **MongoDB** <br> - **MongoDB Atlas** <br> - **S3** <br> - *Coming soon:*  PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake | - **PyTorch** <br> - **HuggingFace**<br> - **OpenAI**<br> - **Scikit-Learn**<br> - **Llama 2**<br> - **CLIP**<br> - *Coming soon:* TensorFlow |
 
 <hr>	
 
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
 - <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
 - <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
+- <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA
+"><strong>Join our Slack!</strong></a><br>
+
 <hr>
 
 
@@ -105,7 +108,7 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
 </p>
 
 # How To
-### The following are examples of how you use SuperDuperDB with Python (find all how-tos and examples <a href="https://superduperdb.github.io/superduperdb">in the docs here</a>): 
+### The following are examples of how to use SuperDuperDB with Python (find all how-tos and examples <a href="https://superduperdb.github.io/superduperdb">in the docs here</a>): 
 
 - **Add a ML/AI model to your datastore <a href="404">(read more in the docs here)</a>:**
 ```python
@@ -248,7 +251,7 @@ pip install superduperdb
 
 # Quickstart
 
-#### Try SuperDuperDB on Binder 
+#### Try SuperDuperDB on Binder: 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb)
 
 This will set up a playground environment that includes:

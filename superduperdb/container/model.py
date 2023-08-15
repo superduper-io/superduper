@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import dataclasses as dc
+import logging
 import multiprocessing
 import typing as t
 
+import tqdm
 from dask.distributed import Future
 from numpy import ndarray
 from sklearn.pipeline import Pipeline
@@ -198,10 +200,9 @@ class PredictMixin:
         in_memory: bool = True,
         **kwargs,
     ):
-        ids = [
-            str(r[db.databackend.id_field])
-            for r in db.execute(select.select_ids)  # type: ignore[arg-type]
-        ]
+        ids = []
+        for r in tqdm.tqdm(db.execute(select.select_ids)):  # type: ignore[arg-type]
+            ids.append(str(r[db.databackend.id_field]))
         return self._predict_with_select_and_ids(
             X=X,
             db=db,
@@ -232,7 +233,6 @@ class PredictMixin:
                     ids=ids[i : i + max_chunk_size],
                     select=select,
                     max_chunk_size=None,
-                    one=False,
                     in_memory=in_memory,
                     **kwargs,
                 )
@@ -294,7 +294,9 @@ class PredictMixin:
             select = Serializable.deserialize(select)
 
         if db is not None:
+            logging.info(f'Adding model {self.identifier} to db')
             db.add(self)  # type: ignore[arg-type]
+            logging.info('Done.')
 
         if distributed is None:
             distributed = s.CFG.distributed
@@ -313,6 +315,7 @@ class PredictMixin:
                     select=select,
                     db=db,  # type: ignore[arg-type]
                     in_memory=in_memory,
+                    max_chunk_size=max_chunk_size,
                     **kwargs,
                 )
             elif select is not None and ids is not None:

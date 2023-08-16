@@ -1,5 +1,5 @@
-from backend.ai.components import install_ai_components
 from backend.ai.artifacts import load_ai_artifacts
+from backend.ai.components import install_ai_components
 from backend.config import settings
 from backend.documents.routes import documents_router
 from fastapi import FastAPI

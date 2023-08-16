@@ -15,11 +15,11 @@ async def query_docs(request: Request, query: Query) -> Answer:
     # Step 1: Build your query
     # Build your query here combining vector-search "like(...)"
     # with classical mongodb queries "find(...)"
-    collection = Collection(name=settings.mongo_collection_name)
+    collection = Collection(name=query.document_index)
     context_select = collection.like(
         {settings.vector_embedding_key: query.query},
         n=settings.nearest_to_query,
-        vector_index="documentation_index",
+        vector_index=query.document_index,
     ).find()
 
     # Step 2: Execute your query

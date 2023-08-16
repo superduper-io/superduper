@@ -2,6 +2,7 @@
 INSERT SUMMARY ON THIS MODULE HERE
 '''
 
+from backend.ai.utils.github import get_repo_details
 from backend.config import settings
 
 from superduperdb.container.listener import Listener
@@ -29,19 +30,21 @@ def install_openai_chatbot(db):
     )
 
 
-def install_openai_vector_index(db):
+def install_openai_vector_index(db, repo):
     db.add(
         VectorIndex(
-            identifier=settings.vector_index_name,
+            identifier=repo,
             indexing_listener=Listener(
                 model=OpenAIEmbedding(model=settings.vector_embedding_model),
                 key=settings.vector_embedding_key,
-                select=Collection(name=settings.mongo_collection_name).find(),
+                select=Collection(name=repo).find(),
             ),
         )
     )
 
 
 def install_ai_components(db):
-    install_openai_vector_index(db)
     install_openai_chatbot(db)
+    for repo in settings.default_repos:
+        repo = get_repo_details(repo)['repo']
+        install_openai_vector_index(db, repo)

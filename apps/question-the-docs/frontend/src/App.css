@@ -1,0 +1,85 @@
+#root {
+  max-width: 1280px;
+  padding: 1rem;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+.banner {
+  display: flex;
+}
+
+.logo {
+  height: 45px;
+  margin-top: 22px;
+}
+
+.info-block {
+  margin-top: 0px;
+  margin-bottom: 30px;
+}
+
+.title {
+  margin-left: 20px;
+  margin-top: 0;
+  font-size: 50px;
+}
+
+.dropdown {
+  border-radius: 10px;
+  background-color: rgb(255, 255, 255);
+  font-size: 18px;
+  padding: 5px;
+  margin-bottom: 20px;
+}
+
+input {
+  width: 700px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  padding: 5px;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.submit {
+  background-color: rgb(218, 218, 218); /* Green */
+  padding: 5px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  display: block;
+  width: 150px;
+  text-align: left;
+  margin-bottom: 0px;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: inherit;
+}
+.submit:hover {
+  background-color: rgb(245, 245, 245);
+}
+
+.box-border {
+  width: 700px; /* Minimum width of the box */
+  min-height: 5px;
+  border-radius: 10px;
+  padding: 5px;
+  overflow-y: hidden;
+  margin-top: 0px;
+}
+
+.sources {
+  padding: 5px;
+}
+
+
+
+

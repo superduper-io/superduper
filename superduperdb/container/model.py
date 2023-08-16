@@ -198,11 +198,18 @@ class PredictMixin:
         db: DB,
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
+        overwrite: bool = False,
         **kwargs,
     ):
         ids = []
-        for r in tqdm.tqdm(db.execute(select.select_ids)):  # type: ignore[arg-type]
+        if overwrite:
+            query = select.select_ids
+        else:
+            query = select.select_ids_of_missing_outputs(key=X, model=self.identifier)  # type: ignore[assignment]
+
+        for r in tqdm.tqdm(db.execute(query)):  # type: ignore[arg-type]
             ids.append(str(r[db.databackend.id_field]))
+
         return self._predict_with_select_and_ids(
             X=X,
             db=db,
@@ -285,6 +292,7 @@ class PredictMixin:
         one: bool = False,
         context: t.Optional[t.Dict] = None,
         in_memory: bool = True,
+        overwrite: bool = False,
         **kwargs,
     ) -> t.Any:
         if one:
@@ -306,7 +314,12 @@ class PredictMixin:
 
         if distributed:
             return self.create_predict_job(
-                X, select=select, ids=ids, max_chunk_size=max_chunk_size, **kwargs
+                X,
+                select=select,
+                ids=ids,
+                max_chunk_size=max_chunk_size,
+                overwrite=overwrite,
+                **kwargs,
             )(db=db, distributed=distributed, dependencies=dependencies)
         else:
             if select is not None and ids is None:
@@ -316,6 +329,7 @@ class PredictMixin:
                     db=db,  # type: ignore[arg-type]
                     in_memory=in_memory,
                     max_chunk_size=max_chunk_size,
+                    overwrite=overwrite,
                     **kwargs,
                 )
             elif select is not None and ids is not None:

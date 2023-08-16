@@ -3,6 +3,7 @@ import random
 import typing as t
 
 from superduperdb import CFG
+from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
 
 class Query:
     def __init__(self, name, type='query', args=[], kwargs={}, sddb_kwargs={}, connection_parent=False):
@@ -200,12 +201,12 @@ class PlaceHolderQuery:
 @dc.dataclass
 class Select:
     id_field: str = '_id'
-    type_id: t.Literal['Ibis.select'] = 'Ibis.select'
+    type_id: t.Literal['select'] = 'select'
     def pre(self, db):
         pass
 
     def post(self, db, cursor):
-        return SuperDuperCursor(raw_cursor=cursor, id_field=self.id_field, encoders=db.encoders)
+        return SuperDuperIbisCursor(raw_cursor=cursor, id_field=self.id_field, encoders={})#db.encoders)
 
 @dc.dataclass
 class Insert:
@@ -214,7 +215,7 @@ class Insert:
     verbose: bool = True
     kwargs: t.Dict = dc.field(default_factory=dict)
     encoders: t.Sequence = dc.field(default_factory=list)
-    type_id: t.Literal['Ibis.insert'] = 'Ibis.insert'
+    type_id: t.Literal['insert'] = 'insert'
 
     def pre(self, db):
         valid_prob = self.kwargs.get('valid_prob', 0.05)
@@ -239,8 +240,8 @@ class Insert:
                 ids=output.inserted_ids,
                 verbose=self.verbose,
             )
-        return graph, output
+        return output
 
 
 
-query_lookup = {'insert': Insert}
+query_lookup = {'insert': Insert, 'select': Select}

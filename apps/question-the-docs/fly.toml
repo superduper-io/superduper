@@ -1,17 +1,41 @@
-# fly.toml app configuration file generated for question-the-doc on 2023-08-16T14:04:57+02:00
+# fly.toml app configuration file generated for question-the-docs on 2023-08-18T20:12:29+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "question-the-doc"
-primary_region = "cdg"
+app = "question-the-docs"
+primary_region = "ams"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[experimental]
+  auto_rollback = true
 
 [build]
+  dockerfile = "Dockerfile"
 
-[http_service]
+[[services]]
+  protocol = "tcp"
   internal_port = 8080
-  force_https = true
-  auto_stop_machines = true
-  auto_start_machines = true
-  min_machines_running = 0
   processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "1s"
+
+[[statics]]
+  guest_path = "/app/dist"
+  url_prefix = "/"

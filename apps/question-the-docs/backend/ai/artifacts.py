@@ -1,4 +1,4 @@
-from backend.ai.utils.github import get_repo_details, save_github_md_files_locally
+from backend.ai.utils.github import save_github_md_files_locally
 from backend.ai.utils.text import chunk_file_contents
 from backend.config import settings
 
@@ -6,13 +6,20 @@ from superduperdb.container.document import Document
 from superduperdb.db.mongodb.query import Collection
 
 
+def _create_ai_text_artifacts(repo):
+    files = save_github_md_files_locally(repo)
+    # Chunked text is more suitable input for the AI models
+    ai_text_artifacts = chunk_file_contents(repo, files)
+    return ai_text_artifacts
+
+
 def load_ai_artifacts(db):
-    for name, repo in settings.default_repos.items():
-        details = get_repo_details(repo)
-        repo = details['repo']
-        if repo in db.show('vector_index'):
+    db_artifacts = db.show('vector_index')
+    for repo in settings.default_repos:
+        if repo in db_artifacts:
             continue
-        artifacts = _create_ai_text_artifacts(details)
+
+        artifacts = _create_ai_text_artifacts(repo)
         documents = [
             Document(
                 {settings.vector_embedding_key: row['text'], 'src_url': row['src_url']}
@@ -20,9 +27,3 @@ def load_ai_artifacts(db):
             for _, row in artifacts.iterrows()
         ]
         db.execute(Collection(name=repo).insert_many(documents))
-
-
-def _create_ai_text_artifacts(repo_details):
-    files = save_github_md_files_locally(repo_details)
-    ai_text_artifacts = chunk_file_contents(repo_details['repo'], files)
-    return ai_text_artifacts

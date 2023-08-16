@@ -1,7 +1,7 @@
-"AI helper functions for loading data from GitHub."
+'AI helper functions for loading data from GitHub.'
 
 import base64
-import json
+import dataclasses as dc
 import os
 import re
 from pathlib import Path
@@ -11,16 +11,42 @@ import requests
 URL_CACHE = {}
 
 
+@dc.dataclass
+class Repo:
+    owner: str
+    name: str
+    branch: str
+    documentation_dir: str
+    documentation_base_url: str
+
+
+superduperdb = Repo(
+    'SuperDuperDB',
+    'superduperdb',
+    'main',
+    'docs/',
+    'https://superduperdb.github.io/superduperdb',
+)
+langchain = Repo(
+    'langchain-ai', 'langchain', 'master', 'docs/', 'https://python.langchain.com/docs'
+)
+fastchat = Repo(
+    'lm-sys', 'FastChat', 'main', 'docs/', 'https://lm-sys.github.io/FastChat'
+)
+
+REPOS = {'superduperdb': superduperdb, 'langchain': langchain, 'fastchat': fastchat}
+
+
 # TODO: Use GraphQL API instead of REST API and convert to async
 def gh_repo_contents(owner, repo, branch=None):
     def get_repo(branch):
         nonlocal owner, repo
         r = requests.get(
-            f"https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=true",
+            f'https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=true',
             headers={'Authorization': f'token {os.environ["GITHUB_TOKEN"]}'},
         )
         if r.status_code != 200:
-            raise Exception(f"Error getting repo contents: {r.status_code, r.json()}")
+            raise Exception(f'Error getting repo contents: {r.status_code, r.json()}')
         return r.json()
 
     if branch:
@@ -34,14 +60,14 @@ def gh_repo_contents(owner, repo, branch=None):
                 errs.append(e)
                 continue
         raise Exception(
-            f"Tried `main` and `master` branches, but neither exist. :: reson {errs}"
+            f'Tried `main` and `master` branches, but neither exist. Reason: {errs}'
         )
 
 
-def documentation_markdown_urls(repo_contents, documentation_location):
+def documentation_markdown_urls(repo_contents, documentation_dir):
     urls = []
     for val in repo_contents['tree']:
-        if documentation_location in val['path'] and val['path'].endswith('.md'):
+        if documentation_dir in val['path'] and val['path'].endswith(('.md', '.mdx')):
             urls.append(val)
         else:
             continue
@@ -56,25 +82,26 @@ def download_and_decode(url):
     return base64.b64decode(blob['content'])
 
 
-def save_github_md_files_locally(repo_details):
-    print(f"Downloading files from GitHub for {json.dumps(repo_details)}")
-    owner = repo_details['owner']
-    name = repo_details['repo']
-    branch = repo_details['branch']
-    documentation_location = repo_details['documentation_location']
-    documentation_base_url = repo_details['documentation_base_url']
+def save_github_md_files_locally(repo):
+    try:
+        repo_metadata = REPOS[repo]
+    except KeyError:
+        raise Exception(f'Repo {repo} not found in {REPOS.keys()}')
+
+    owner = repo_metadata.owner
+    name = repo_metadata.name
+    branch = repo_metadata.branch
+    documentation_dir = repo_metadata.documentation_dir
+    documentation_base_url = repo_metadata.documentation_base_url
 
     repo_contents = gh_repo_contents(owner, name, branch)
-    urls = documentation_markdown_urls(repo_contents, documentation_location)
+    urls = documentation_markdown_urls(repo_contents, documentation_dir)
 
-    try:
-        Path(f"docs/{name}").mkdir(exist_ok=False, parents=True)
-    except FileExistsError:
-        raise FileExistsError(f"Directory docs/{name} already exists.")
+    Path(f'docs/{name}').mkdir(exist_ok=True, parents=True)
 
     URL_CACHE[name] = urls
     doc_base_path = (
-        lambda path, section: f"{documentation_base_url}/{path}.html#{section}"
+        lambda path, section: f'{documentation_base_url}/{path}.html#{section}'
     )
 
     for i, url in enumerate(urls):
@@ -90,27 +117,7 @@ def save_github_md_files_locally(repo_details):
             else:
                 URL_CACHE[(name, s)] = relative_path
 
-        with open(f"docs/{name}/file_{i}", 'wb') as f:
+        with open(f'docs/{name}/file_{i}', 'wb') as f:
             f.write(content)
 
-    return Path(f"docs/{name}").glob("*")
-
-
-def get_repo_details(repo):
-    path = repo['url']
-    documentation_base_url = repo['documentation_url']
-    path_split = path.split('/')
-    branch = None
-    documentation_location = 'docs'
-    owner = path_split[3]
-    repo = path_split[4]
-    if len(path_split) == 7:
-        branch = path_split[-1]
-    details = {
-        'owner': owner,
-        'repo': repo,
-        'branch': branch,
-        'documentation_location': documentation_location,
-        'documentation_base_url': documentation_base_url,
-    }
-    return details
+    return Path(f'docs/{name}').glob('*')

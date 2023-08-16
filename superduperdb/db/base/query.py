@@ -60,7 +60,17 @@ class Select(ABC, Serializable):
 
         :param ids: string ids to which subsetting should occur
         """
-        pass
+        raise NotImplementedError
+
+    def select_ids_of_missing_outputs(self, key: str, model: str) -> 'Select':
+        """
+        Create a select which selects the ids of documents whose
+        `_outputs.key.model` entries are missing
+
+        :param key: key on which model was applied
+        :param model: model identifier
+        """
+        raise NotImplementedError
 
     def add_fold(self, fold: str) -> 'Select':
         """Create a select which selects the same data, but additionally restricts to

@@ -359,6 +359,21 @@ class Find(Select):
             kwargs=self.kwargs,
         )
 
+    def select_ids_of_missing_outputs(self, key: str, model: str):
+        if self.args:
+            args = [
+                {'$and': [self.args[0], {f'_outputs.{key}.{model}': {'$exists': 0}}]},
+                *self.args[1],
+            ]
+        else:
+            args = [{f'_outputs.{key}.{model}': {'$exists': 0}}]
+        return Find(
+            collection=self.collection,
+            like_parent=self.like_parent,
+            args=args,
+            kwargs=self.kwargs,
+        )
+
     def featurize(self, features: t.Dict[str, str]) -> 'Featurize':
         """Extract a feature vector
 
@@ -840,7 +855,7 @@ class Featurize(Select):
     """A feature-extraction query"""
 
     features: t.Dict[str, str]
-    parent: t.Union[PreLike, Find, PostLike]
+    parent: t.Union[Find, PostLike]
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.Featurize'] = 'mongodb.Featurize'
@@ -862,21 +877,20 @@ class Featurize(Select):
         return self.parent.is_trivial()  # type: ignore[union-attr]
 
     @property
-    # @override
     def select_ids(self):
         """Converts the Serializable into a Serializable which only returns the id
         of each column/ document.
         """
         return t.cast(Select, self.parent.select_ids)
 
-    # @override
+    # ruff: noqa: E501
     def add_fold(self, fold: str):
         """Create a select which selects the same data, but additionally restricts to
         the fold specified
 
         :param fold: possible values {'train', 'valid'}
         """
-        return self.parent.add_fold(fold).featurize(  # type: ignore[union-attr]
+        return self.parent.add_fold(fold).featurize(  # type: ignore[union-attr,attr-defined]
             self.features
         )
 
@@ -885,6 +899,13 @@ class Featurize(Select):
         return self.parent.select_using_ids(  # type: ignore[union-attr]
             ids=ids
         ).featurize(features=self.features)
+
+    # ruff: noqa: E501
+    def select_ids_of_missing_outputs(self, key: str, model: str) -> Select:
+        return Featurize(
+            features=self.features,
+            parent=self.parent.select_ids_of_missing_outputs(key, model),  # type: ignore[arg-type]
+        )
 
     @override
     def model_update(

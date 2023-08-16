@@ -1,14 +1,13 @@
 "AI helper functions for text processing."
 
-import dataclasses as dc
+import enum
 
 import pandas as pd
 
 
-@dc.dataclass
-class TextProcessing:
-    stride: int = 5
-    window_size: int = 10
+class TextProcessing(enum.Enum):
+    stride = 5
+    window_size = 10
 
 
 def chunk_text_with_sliding_window(
@@ -37,8 +36,8 @@ def chunk_file_contents(files):
         content_df = pd.DataFrame({"text": content})
         df = chunk_text_with_sliding_window(
             content_df,
-            window_size=TextProcessing.window_size,
-            stride=TextProcessing.stride,
+            window_size=TextProcessing.window_size.value,
+            stride=TextProcessing.stride.value,
         )
         context_dfs.append(df)
     df = pd.concat(context_dfs)

@@ -1,4 +1,4 @@
-"AI helper functions for text processing."
+'AI helper functions for text processing.'
 
 import enum
 import re
@@ -23,7 +23,7 @@ def chunk_text_with_sliding_window(
     context = []
     n = len(df)
 
-    curr_title = ""
+    curr_title = ''
     titles = []
     for i in range(0, n, stride):
         if i + window_size <= n or n - i >= 2:
@@ -43,7 +43,7 @@ def chunk_file_contents(repo, files):
     for file in files:
         with open(file, 'r') as f:
             content = f.readlines()
-        content_df = pd.DataFrame({"text": content})
+        content_df = pd.DataFrame({'text': content})
         df = chunk_text_with_sliding_window(
             repo,
             content_df,

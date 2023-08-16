@@ -4,22 +4,22 @@ from fastapi import APIRouter, Request
 
 from superduperdb.db.mongodb.query import Collection
 
-documents_router = APIRouter(prefix="/documents", tags=["docs"])
+documents_router = APIRouter(prefix='/documents', tags=['docs'])
 
 
 @documents_router.post(
-    "/query",
-    response_description="Query document database for data to answer prompt",
+    '/query',
+    response_description='Query document database for data to answer prompt',
 )
 async def query_docs(request: Request, query: Query) -> Answer:
     # Step 1: Build your query
     # Build your query here combining vector-search "like(...)"
     # with classical mongodb queries "find(...)"
-    collection = Collection(name=query.document_index)
+    collection = Collection(name=query.collection_name)
     context_select = collection.like(
         {settings.vector_embedding_key: query.query},
         n=settings.nearest_to_query,
-        vector_index=query.document_index,
+        vector_index=query.collection_name,
     ).find()
     db = request.app.superduperdb
 
@@ -27,7 +27,6 @@ async def query_docs(request: Request, query: Query) -> Answer:
     src_urls = [context.unpack()['src_url'] for context in contexts]
 
     # Step 2: Execute your query
-    # INSERT INFORMATION HERE
     db_response, _ = await db.apredict(
         'gpt-3.5-turbo',
         input=query.query,

@@ -2,8 +2,6 @@ import dataclasses as dc
 import typing as t
 from functools import cached_property
 
-from pymongo.cursor import Cursor
-
 from superduperdb import CFG
 from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encoder
@@ -24,7 +22,7 @@ class SuperDuperCursor:
     :param scores: a dict of scores to add to the documents
     """
 
-    raw_cursor: Cursor
+    raw_cursor: t.Any 
     id_field: str
     encoders: t.Dict[str, Encoder] = dc.field(default_factory=dict)
     features: t.Optional[t.Dict[str, str]] = None
@@ -83,6 +81,9 @@ class SuperDuperCursor:
     def __iter__(self):
         return self
 
+    def cursor_next(self):
+        return self.raw_cursor.next()
+
     def __next__(self):
         if self.scores is not None:
             try:
@@ -91,7 +92,7 @@ class SuperDuperCursor:
                 raise StopIteration
             self._it += 1
         else:
-            r = self.raw_cursor.next()
+            r =  self.cursor_next()
         if self.scores is not None:
             r['_score'] = self.scores[str(r[self.id_field])]
         if self.features is not None and self.features:

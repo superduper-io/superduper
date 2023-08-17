@@ -8,3 +8,4 @@ class Query(BaseModel):
 
 class Answer(BaseModel):
     answer: str = Field(...)
+    source_urls: list = Field(...)

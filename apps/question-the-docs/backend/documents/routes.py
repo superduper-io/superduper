@@ -7,6 +7,7 @@ from superduperdb.db.mongodb.query import Collection
 documents_router = APIRouter(prefix="/documents", tags=["docs"])
 
 
+
 @documents_router.post(
     "/query",
     response_description="Query document database for data to answer prompt",
@@ -21,15 +22,17 @@ async def query_docs(request: Request, query: Query) -> Answer:
         n=settings.nearest_to_query,
         vector_index=query.document_index,
     ).find()
+    db = request.app.superduperdb
+    
+    contexts = list(db.execute(context_select))
+    src_urls = [context.unpack()['src_url'] for context in contexts]
 
     # Step 2: Execute your query
     # INSERT INFORMATION HERE
-    db = request.app.superduperdb
-    db_response, _ = await db.apredict(
+    db_response, _ = db.predict(
         'gpt-3.5-turbo',
         input=query.query,
         context_select=context_select,
         context_key=settings.vector_embedding_key,
     )
-
-    return Answer(answer=db_response.unpack())
+    return Answer(answer=db_response.unpack(), source_urls=src_urls)

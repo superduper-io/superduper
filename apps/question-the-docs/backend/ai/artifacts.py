@@ -13,11 +13,11 @@ def load_ai_artifacts(db):
         if repo in db.show('vector_index'):
             continue
         artifacts = _create_ai_text_artifacts(details)
-        documents = [Document({settings.vector_embedding_key: v}) for v in artifacts]
+        documents = [Document({settings.vector_embedding_key: row['text'], 'src_url': row['src_url']}) for _, row in artifacts.iterrows()]
         db.execute(Collection(name=repo).insert_many(documents))
 
 
 def _create_ai_text_artifacts(repo_details):
     files = save_github_md_files_locally(repo_details)
-    ai_text_artifacts = chunk_file_contents(files)
+    ai_text_artifacts = chunk_file_contents(repo_details['repo'], files)
     return ai_text_artifacts

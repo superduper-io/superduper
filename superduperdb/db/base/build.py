@@ -19,6 +19,8 @@ def build_vector_database(cfg):
 
     :param cfg: configuration to use. (See ``superduperdb.CFG.vector_search``)
     """
+    if getattr(cfg, 'selfhosted', False):
+        return
     cls = vector_database_stores[cfg.__class__]
     sig = inspect.signature(cls.__init__)
     kwargs = {k: v for k, v in cfg.dict().items() if k in sig.parameters}

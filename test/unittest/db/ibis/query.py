@@ -18,14 +18,10 @@ def connection():
     # Insert some sample data into the table
     data_to_insert = [
         (1, 'Alice', 25),
-        (2, 'Alice', 25),
-        (3, 'Alice', 25),
-        (4, 'Alice', 25),
-        (5, 'Alice', 25),
-        (6, 'Alice', 25),
-        (7, 'Alice', 25),
-        (8, 'Bob', 30),
-        (9, 'Charlie', 28),
+        (2, 'Bob', 26),
+        (3, 'Charlie', 27),
+        (4, 'Noam', 28),
+        (5, 'Chris', 29),
     ]
     connection.insert(table_name, data_to_insert)
     yield connection
@@ -35,13 +31,28 @@ def connection():
 def test_simple_ibis_query(connection):
     # SuperDuperdb Version
     table = Table(name='my_table')
-    specific_ids = [1, 2]
 
-    query = table.filter(table.age == 25).select_from_ids(specific_ids)
+    query = table.select(table.primary_id)
     curr = IbisConnection(connection).execute(query)
-    output = curr.to_dict()
-    assert output == {
-        'id': {0: 1, 1: 2},
-        'name': {0: 'Alice', 1: 'Alice'},
-        'age': {0: 25, 1: 25},
-    }
+    results = [row.unpack() for row in curr]
+    assert results == [{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}, {'id': 5}]
+
+
+def test_select_ids_ibis_query(connection):
+    # SuperDuperdb Version
+    table = Table(name='my_table')
+
+    query = table.filter(table.age > 24).select_ids()
+    curr = IbisConnection(connection).execute(query)
+    results = [row.unpack() for row in curr]
+    assert results == [{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}, {'id': 5}]
+
+
+def test_limit_ibis_query(connection):
+    # SuperDuperdb Version
+    table = Table(name='my_table')
+
+    query = table.filter(table.age > 24).limit(4).select_ids()
+    curr = IbisConnection(connection).execute(query)
+    results = [row.unpack() for row in curr]
+    assert results == [{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}]

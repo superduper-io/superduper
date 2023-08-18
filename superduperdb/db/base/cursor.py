@@ -22,7 +22,7 @@ class SuperDuperCursor:
     :param scores: a dict of scores to add to the documents
     """
 
-    raw_cursor: t.Any 
+    raw_cursor: t.Any
     id_field: str
     encoders: t.Dict[str, Encoder] = dc.field(default_factory=dict)
     features: t.Optional[t.Dict[str, str]] = None
@@ -92,7 +92,7 @@ class SuperDuperCursor:
                 raise StopIteration
             self._it += 1
         else:
-            r =  self.cursor_next()
+            r = self.cursor_next()
         if self.scores is not None:
             r['_score'] = self.scores[str(r[self.id_field])]
         if self.features is not None and self.features:

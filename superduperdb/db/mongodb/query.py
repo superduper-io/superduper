@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import dataclasses as dc
 import random
 import typing as t
@@ -122,9 +123,13 @@ class Collection(Serializable):
         """Find a single document"""
         return FindOne(collection=self, args=args, kwargs=kwargs)
 
-    def aggregate(self, *args, **kwargs) -> 'Aggregate':
+    def aggregate(
+        self, *args, vector_index: t.Optional[str] = None, **kwargs
+    ) -> 'Aggregate':
         """Prepare an aggregate query"""
-        return Aggregate(collection=self, args=args, kwargs=kwargs)
+        return Aggregate(
+            collection=self, args=args, vector_index=vector_index, kwargs=kwargs
+        )
 
     def replace_one(self, *args, **kwargs) -> 'ReplaceOne':
         """Replace a single document"""
@@ -209,12 +214,47 @@ class PreLike(Like):
         """Extracts the table collection from the object"""
         return self.collection.name
 
-    def find(self, *args, **kwargs) -> Find:
-        """Find documents like this one"""
-        return Find(like_parent=self, args=args, kwargs=kwargs)
+    def find(self, *args, **kwargs) -> t.Union[Find, Aggregate]:
+        """
+        Find documents like this one filtered using *args and **kwargs on
+        the basis of ``self.vector_index``
+
+        :param args: Positional arguments to pass to the find query
+        :param kwargs: Named arguments to pass to the find query
+        """
+        if getattr(s.CFG.vector_search.type, 'selfhosted', False):
+            second_part = []
+            if args:
+                second_part.append({"$match": args[0] if args else {}})
+            if args[1:]:
+                second_part.append({'$project': args[1]})
+            pl = [
+                {
+                    "$search": {
+                        "knnBeta": {
+                            'like': self.r,
+                            "k": self.n,
+                        }
+                    }
+                },
+                *second_part,
+            ]
+            return Aggregate(
+                collection=self.collection,
+                args=[pl],
+                **kwargs,
+                vector_index=self.vector_index,
+            )
+        else:
+            return Find(like_parent=self, args=args, kwargs=kwargs)
 
     def find_one(self, *args, **kwargs) -> FindOne:
-        """Find documents like this one"""
+        """
+        Find a document like this one on the basis of ``self.vector_index``
+
+        :param args: Positional arguments to pass to the find query
+        :param kwargs: Named arguments to pass to the find query
+        """
         return FindOne(like_parent=self, args=args, kwargs=kwargs)
 
     @override
@@ -590,11 +630,50 @@ class Aggregate(Select):
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.Aggregate'] = 'mongodb.Aggregate'
 
+    #: Use a vector-index in a `$search` step inside pipeline
+    vector_index: t.Optional[str] = None
+
+    @staticmethod
+    def _replace_document_with_vector(step, vector_index, db):
+        step = copy.deepcopy(step)
+        assert "like" in step['$search']['knnBeta']
+        vector_index = db.vector_indices[vector_index]
+        models, keys = vector_index.models_keys
+        step['$search']['knnBeta']['vector'], model, key = vector_index.get_vector(
+            like=step['$search']['knnBeta']['like'],
+            models=models,
+            keys=keys,
+            db=db,
+        )
+        step['$search']['knnBeta']['path'] = f'_outputs.{key}.{model}'
+        del step['$search']['knnBeta']['like']
+        return step
+
+    @staticmethod
+    def _prepare_pipeline(pipeline, db, vector_index):
+        pipeline = copy.deepcopy(pipeline)
+        try:
+            search_step = next(
+                (i, step) for i, step in enumerate(pipeline) if '$search' in step
+            )
+        except StopIteration:
+            return pipeline
+        pipeline[search_step[0]] = Aggregate._replace_document_with_vector(
+            search_step[1], vector_index, db
+        )
+        return pipeline
+
     @override
     def __call__(self, db: DB):
+        args = self.args
+        if self.vector_index is not None:
+            args = [
+                self._prepare_pipeline(args[0], db, self.vector_index),
+                *self.args[1:],
+            ]
         return SuperDuperCursor(
             id_field='_id',
-            raw_cursor=db.db[self.collection.name].aggregate(*self.args, **self.kwargs),
+            raw_cursor=db.db[self.collection.name].aggregate(*args, **self.kwargs),
             encoders=db.encoders,
         )
 

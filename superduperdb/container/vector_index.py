@@ -69,13 +69,35 @@ class VectorIndex(Component):
                 Listener, db.load('listener', self.compatible_listener)
             )
 
+        selfhosted = False
+        try:
+            selfhosted = s.CFG.vector_search.type.selfhosted  # type: ignore[union-attr]
+        except AttributeError:
+            pass
+        if selfhosted:
+            try:
+                db.databackend.create_vector_index(self)  # type: ignore[attr-defined]
+            except AttributeError as e:
+                raise Exception(
+                    'VectorIndex is not supported by the current database backend'
+                ) from e
+
     @override
     def on_load(self, db: DB) -> None:
+        selfhosted = False
+        try:
+            selfhosted = s.CFG.vector_search.type.selfhosted  # type: ignore[union-attr]
+        except AttributeError:
+            pass
+
+        if selfhosted:
+            return
+
         self.vector_table = (
             db.vector_database.get_table(  # type: ignore[call-arg, union-attr]
                 VectorCollectionConfig(
                     id=self.identifier,
-                    dimensions=self._dimensions,
+                    dimensions=self.dimensions,
                     measure=self.measure,  # type: ignore[arg-type]
                 ),
                 create=True,
@@ -91,6 +113,42 @@ class VectorIndex(Component):
         if self.compatible_listener is not None:
             out.append(('compatible_listener', 'listener'))
         return out
+
+    def get_vector(
+        self,
+        like: Document,
+        models: t.List[str],
+        keys: t.List[str],
+        db: t.Any = None,
+        outputs: t.Optional[t.Dict] = None,
+        featurize: bool = True,
+    ):
+        document = MongoStyleDict(like.unpack())
+        if featurize:
+            outputs = outputs or {}
+            if '_outputs' not in document:
+                document['_outputs'] = {}
+            document['_outputs'].update(outputs)
+            features = self.indexing_listener.features or ()  # type: ignore[union-attr]
+            for subkey in features:
+                subout = document['_outputs'].setdefault(subkey, {})
+                f_subkey = features[subkey]
+                if f_subkey not in subout:
+                    subout[f_subkey] = db.models[f_subkey]._predict(document[subkey])
+                document[subkey] = subout[f_subkey]
+        available_keys = list(document.keys()) + ['_base']
+        try:
+            model, key = next(
+                (m, k) for m, k in zip(models, keys) if k in available_keys
+            )
+        except StopIteration:
+            raise Exception(
+                f'Keys in provided {like} don\'t match'
+                f' VectorIndex keys: {keys}, with model: {models}'
+            )
+        model_input = document[key] if key != '_base' else document
+        model = db.models[model]
+        return model.predict(model_input, one=True), model.identifier, key  # type: ignore[attr-defined]
 
     def get_nearest(
         self,
@@ -124,35 +182,14 @@ class VectorIndex(Component):
                 [result.id for result in nearest],
                 [result.score for result in nearest],
             )
-
-        document = MongoStyleDict(like.unpack())
-
-        if featurize:
-            outputs = outputs or {}
-            if '_outputs' not in document:
-                document['_outputs'] = {}
-            document['_outputs'].update(outputs)
-            features = self.indexing_listener.features or ()  # type: ignore[union-attr]
-            for subkey in features:
-                subout = document['_outputs'].setdefault(subkey, {})
-                f_subkey = features[subkey]
-                if f_subkey not in subout:
-                    subout[f_subkey] = db.models[f_subkey]._predict(document[subkey])
-                document[subkey] = subout[f_subkey]
-        available_keys = list(document.keys()) + ['_base']
-        try:
-            model, key = next(
-                (m, k) for m, k in zip(models, keys) if k in available_keys
-            )
-        except StopIteration:
-            raise Exception(
-                f'Keys in provided {like} don\'t match'
-                f' VectorIndex keys: {keys}, with model: {models}'
-            )
-        model_input = document[key] if key != '_base' else document
-
-        model = db.models[model]
-        h = model.predict(model_input, one=True)  # type: ignore[attr-defined]
+        h = self.get_vector(
+            like=like,
+            models=models,  # type: ignore[arg-type]
+            keys=keys,  # type: ignore[arg-type]
+            db=db,
+            outputs=outputs,
+            featurize=featurize,
+        )[0]
         nearest = self.vector_table.find_nearest_from_array(
             h, within_ids=within_ids, limit=n
         )
@@ -201,7 +238,7 @@ class VectorIndex(Component):
             progress.update(len(items))
 
     @property
-    def _dimensions(self) -> int:
+    def dimensions(self) -> int:
         if not isinstance(self.indexing_listener, Listener):
             raise NotImplementedError
         if not hasattr(

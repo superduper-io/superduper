@@ -169,14 +169,23 @@ class InMemory(JSONable):
     inmemory: bool = True
 
 
+class SelfHosted(JSONable):
+    """A placeholder for the case in which search is self-hosted by data-backend
+
+    For example: MongoDB atlas vector-search, Elastic search etc..
+    """
+
+    selfhosted: bool = True
+
+
 class VectorSearch(JSONable):
     """Configure the full vector search connection information"""
 
     host: str = 'localhost'
     password: str = Field(default='', repr=False)
     port: int = 19530
-    type: t.Union[LanceDB, InMemory] = Field(default_factory=InMemory)
-    backfill_batch_size: int = 100
+    type: t.Union[LanceDB, InMemory, SelfHosted] = Field(default_factory=InMemory)
+    backfill_batch_size: int = 100  # TODO don't need this as well
     username: str = Field(default='', repr=False)
 
 

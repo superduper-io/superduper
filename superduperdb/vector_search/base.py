@@ -164,3 +164,4 @@ class VectorDatabase(ABC):
         :param config: configuration for the vector database
         :param create: create the table if it does not exist
         """
+        pass

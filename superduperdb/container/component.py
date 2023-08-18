@@ -13,7 +13,7 @@ from superduperdb.container.job import ComponentJob, Job
 from superduperdb.container.serializable import Serializable
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.dataset import Dataset
+    from superduperdb.container.dataset import Dataset
     from superduperdb.db.base.db import DB
 
 
@@ -31,7 +31,7 @@ class Component(Serializable):
     def on_create(self, db: DB) -> None:
         """Called the first time this component is created
 
-        :param db: the db that created the component
+        :param db: the db that creates the component
         """
         pass
 

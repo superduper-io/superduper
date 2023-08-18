@@ -58,6 +58,10 @@ class SklearnTrainingConfiguration(_TrainingConfiguration):
     predict_params: t.Dict = dc.field(default_factory=dict)
     y_preprocess: t.Optional[Artifact] = None
 
+    def __post_init__(self):
+        if self.y_preprocess is not None and not isinstance(self.y_preprocess, Artifact):
+            self.y_preprocess = Artifact(self.y_preprocess)
+
 
 @dc.dataclass
 class Estimator(Model):

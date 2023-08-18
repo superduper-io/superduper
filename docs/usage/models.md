@@ -248,9 +248,9 @@ into the database.
 An equivalent syntax is the following:
 
 ```python
->>> from superduperdb.container.listener import listener
+>>> from superduperdb.container.listener import Listener
 >>> db.add(
-...    listener(
+...    Listener(
 ...        model=model,
 ...        select=coll.find(),
 ...        key='input_col',
@@ -258,9 +258,9 @@ An equivalent syntax is the following:
 ... )
 ```
 
-After setting up a `listener`, whenever data is inserted or updated, jobs are created 
+After setting up a `Listener`, whenever data is inserted or updated, jobs are created 
 which save the outputs of the model in the `"_outputs"` field.
 
-A `listener` may also be configured in [cluster mode](clustersection), to listen for changes coming in 
+A `Listener` may also be configured in [cluster mode](clustersection), to listen for changes coming in 
 from any sources - i.e. changes are not just detected through the SuperDuperDB system. 
 Read more about that [here](CDC).

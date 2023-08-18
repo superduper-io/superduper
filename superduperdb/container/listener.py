@@ -30,12 +30,12 @@ class Listener(Component):
 
     key: str
     model: t.Union[str, Model]
+    select: Select
 
     active: bool = True
     features: t.Optional[t.Dict] = None
     identifier: t.Optional[str] = None
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    select: t.Optional[Select] = None
     version: t.Optional[int] = None
 
     #: A unique name for the class
@@ -104,7 +104,7 @@ class Listener(Component):
         :param database: The db to process
         """
 
-        self.select.model_cleanup(  # type: ignore[union-attr]
+        self.select.model_cleanup(  # type: ignore[union-attr,attr-defined]
             database,
             model=self.model.identifier,  # type: ignore[union-attr]
             key=self.key,

@@ -375,6 +375,7 @@ class DB:
         :param dependencies: list of jobs which should execute before component
                              init begins
         """
+        # TODO why this helper function?
         return self._add(
             object=object,
             dependencies=dependencies,
@@ -634,8 +635,11 @@ class DB:
         self.metadata.create_component(serialized)
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)
-        object.on_load(self)
-        return object.schedule_jobs(self, dependencies=dependencies)
+        object.on_load(
+            self
+        )  # TODO do I really need to call this here? Could be handled by `.on_create`?
+        jobs = object.schedule_jobs(self, dependencies=dependencies)
+        return jobs
 
     def _create_children(self, object: Component, serialized: t.Dict):
         # TODO abbreviate this code

@@ -1,11 +1,11 @@
 "AI helper functions for text processing."
 
-import re
 import enum
+import re
 
 import pandas as pd
-
 from backend.ai.utils.github import URL_CACHE
+
 
 class TextProcessing(enum.Enum):
     stride = 5
@@ -32,7 +32,8 @@ def chunk_text_with_sliding_window(
             if title:
                 curr_title = title[0][-1]
             context.append(window_text)
-            titles.append(URL_CACHE[(repo, curr_title)])
+            url = URL_CACHE.get((repo, curr_title), 'nan')
+            titles.append(url)
 
     return pd.DataFrame({text_col: context, 'src_url': titles})
 

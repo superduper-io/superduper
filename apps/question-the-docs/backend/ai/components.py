@@ -45,6 +45,6 @@ def install_openai_vector_index(db, repo):
 
 def install_ai_components(db):
     install_openai_chatbot(db)
-    for repo in settings.default_repos:
+    for name, repo in settings.default_repos.items():
         repo = get_repo_details(repo)['repo']
         install_openai_vector_index(db, repo)

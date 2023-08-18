@@ -60,7 +60,7 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
 
 | Supported Data Stores: | AI Frameworks, Models and APIs: |
 |--------------------------|--------------------------|
-| - **MongoDB** <br> - **MongoDB Atlas** <br> - **S3** <br> - *Coming soon:*  PostgreSQL <br> MySQL, DuckDB, SQLLite <br> BigQuery, Snowflake | - **PyTorch** <br> - **HuggingFace**<br> - **OpenAI**<br> - **Scikit-Learn**<br> - **Llama 2**<br> - **CLIP**<br> - *Coming soon:* TensorFlow |
+| - **MongoDB** <br> - **MongoDB Atlas** <br> - **S3** <br> - *Coming soon:*  PostgreSQL <br> MySQL, DuckDB, SQLite <br> BigQuery, Snowflake | - **PyTorch** <br> - **HuggingFace**<br> - **OpenAI**<br> - **Scikit-Learn**<br> - **Llama 2**<br> - **CLIP**<br> - *Coming soon:* TensorFlow |
 
 <hr>	
 

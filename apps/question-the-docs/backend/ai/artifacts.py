@@ -7,13 +7,18 @@ from superduperdb.db.mongodb.query import Collection
 
 
 def load_ai_artifacts(db):
-    for repo_url in settings.default_repos:
-        details = get_repo_details(repo_url)
+    for name, repo in settings.default_repos.items():
+        details = get_repo_details(repo)
         repo = details['repo']
         if repo in db.show('vector_index'):
             continue
         artifacts = _create_ai_text_artifacts(details)
-        documents = [Document({settings.vector_embedding_key: row['text'], 'src_url': row['src_url']}) for _, row in artifacts.iterrows()]
+        documents = [
+            Document(
+                {settings.vector_embedding_key: row['text'], 'src_url': row['src_url']}
+            )
+            for _, row in artifacts.iterrows()
+        ]
         db.execute(Collection(name=repo).insert_many(documents))
 
 

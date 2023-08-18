@@ -1,15 +1,15 @@
 "AI helper functions for loading data from GitHub."
 
 import base64
-import re
 import json
 import os
+import re
 from pathlib import Path
 
 import requests
 
-
 URL_CACHE = {}
+
 
 # TODO: Use GraphQL API instead of REST API and convert to async
 def gh_repo_contents(owner, repo, branch=None):
@@ -73,7 +73,9 @@ def save_github_md_files_locally(repo_details):
         raise FileExistsError(f"Directory docs/{name} already exists.")
 
     URL_CACHE[name] = urls
-    doc_base_path = lambda path, section: f"{documentation_base_url}/{path}.html#{section}"
+    doc_base_path = (
+        lambda path, section: f"{documentation_base_url}/{path}.html#{section}"
+    )
 
     for i, url in enumerate(urls):
         content = download_and_decode(url['url'])
@@ -83,7 +85,10 @@ def save_github_md_files_locally(repo_details):
             relative_path = '/'.join(relative_path.split('/')[1:])
             section_file = os.path.splitext(relative_path)[0]
             s_encoded = s.replace(' ', '-').lower()
-            URL_CACHE[(name, s)] = doc_base_path(section_file, s_encoded)
+            if documentation_base_url:
+                URL_CACHE[(name, s)] = doc_base_path(section_file, s_encoded)
+            else:
+                URL_CACHE[(name, s)] = relative_path
 
         with open(f"docs/{name}/file_{i}", 'wb') as f:
             f.write(content)
@@ -91,7 +96,9 @@ def save_github_md_files_locally(repo_details):
     return Path(f"docs/{name}").glob("*")
 
 
-def get_repo_details(path):
+def get_repo_details(repo):
+    path = repo['url']
+    documentation_base_url = repo['documentation_url']
     path_split = path.split('/')
     branch = None
     documentation_location = 'docs'

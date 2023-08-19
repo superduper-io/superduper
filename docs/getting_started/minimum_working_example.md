@@ -7,7 +7,7 @@ import numpy as np
 from pymongo import MongoClient
 from superduperdb.container.document import Document as D
 from superduperdb.ext.numpy.array import array
-from superduperdb.db.mongodb.query import Collection, InsertMany
+from superduperdb.db.mongodb.query import Collection
 import superduperdb as s
 
 db = s.superduper(MongoClient().documents)

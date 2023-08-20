@@ -946,7 +946,7 @@ class DB:
 
         new_info = replace_artifacts(new_info, artifact_details)
 
-        self.metadata.replace_object(
+        self.metadata.replace_component(
             new_info,
             identifier=object.identifier,
             type_id='model',

@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import datetime
 import typing as t
 import uuid
@@ -42,6 +43,7 @@ class Job:
         self.args = args
         self.kwargs = kwargs
         self.identifier = str(uuid.uuid4())
+        self.time = datetime.datetime.now()
         self.callable = None
         self.db = None
         self.future = None
@@ -64,6 +66,7 @@ class Job:
             raise e
         return out
 
+    @abstractmethod
     def run_on_dask(self, client, dependencies=()):
         """
         Run the job on a dask cluster.
@@ -76,7 +79,7 @@ class Job:
     def dict(self):
         return {
             'identifier': self.identifier,
-            'time': datetime.datetime.now(),
+            'time': self.time,
             'status': 'pending',
             'args': self.args,
             'kwargs': self.kwargs,

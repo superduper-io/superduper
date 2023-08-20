@@ -56,6 +56,8 @@ class MetaDataStore(ABC):
         """
         pass
 
+    # ------------------ COMPONENTS ------------------
+
     @abstractmethod
     def get_job(self, job_id: str):
         """
@@ -113,7 +115,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-    def show_components(self, type_id: str, **kwargs):
+   def show_components(self, type_id: str, **kwargs):
         """
         Show all components in the metadata store.
 

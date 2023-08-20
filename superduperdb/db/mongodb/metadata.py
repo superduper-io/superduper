@@ -25,7 +25,7 @@ class MongoMetaDataStore(MetaDataStore):
         self.name = name
         self.db = conn[name]
         self.meta_collection = self.db['_meta']
-        self.object_collection = self.db['_objects']
+        self.component_collection = self.db['_objects']
         self.job_collection = self.db['_jobs']
         self.parent_child_mappings = self.db['_parent_child_mappings']
 
@@ -39,14 +39,14 @@ class MongoMetaDataStore(MetaDataStore):
             ):
                 print('Aborting...')
         self.db.drop_collection(self.meta_collection.name)
-        self.db.drop_collection(self.object_collection.name)
+        self.db.drop_collection(self.component_collection.name)
         self.db.drop_collection(self.job_collection.name)
         self.db.drop_collection(self.parent_child_mappings.name)
 
     def create_parent_child(self, parent: str, child: str) -> None:
         self.parent_child_mappings.insert_one(
             {
-                'parent': parent,
+            'parent': parent,
                 'child': child,
             }
         )
@@ -54,7 +54,7 @@ class MongoMetaDataStore(MetaDataStore):
     def create_component(self, info: t.Dict) -> InsertOneResult:
         if 'hidden' not in info:
             info['hidden'] = False
-        return self.object_collection.insert_one(info)
+        return self.component_collection.insert_one(info)
 
     def create_job(self, info: t.Dict) -> InsertOneResult:
         return self.job_collection.insert_one(info)
@@ -68,9 +68,15 @@ class MongoMetaDataStore(MetaDataStore):
 
     def get_job(self, identifier: str):
         return self.job_collection.find_one({'identifier': identifier})
+     
+    def create_metadata(self, key: str, value: str):
+        return self.meta_collection.insert_one({'key': key, 'value': value})
 
     def get_metadata(self, key: str):
         return self.meta_collection.find_one({'key': key})['value']
+
+    def update_metadata(self, key: str, value: str):
+        return self.meta_collection.update_one({'key': key}, {'$set': {'value': value}})
 
     def get_latest_version(
         self, type_id: str, identifier: str, allow_hidden: bool = False
@@ -78,13 +84,13 @@ class MongoMetaDataStore(MetaDataStore):
         try:
             if allow_hidden:
                 return sorted(
-                    self.object_collection.distinct(
+                    self.component_collection.distinct(
                         'version', {'identifier': identifier, 'type_id': type_id}
                     )
                 )[-1]
             else:
                 return sorted(
-                    self.object_collection.distinct(
+                    self.component_collection.distinct(
                         'version',
                         {
                             '$or': [
@@ -111,7 +117,7 @@ class MongoMetaDataStore(MetaDataStore):
         )
 
     def show_components(self, type_id: str, **kwargs) -> t.List[t.Union[t.Any, str]]:
-        return self.object_collection.distinct(
+        return self.component_collection.distinct(
             'identifier', {'type_id': type_id, **kwargs}
         )
 
@@ -120,13 +126,13 @@ class MongoMetaDataStore(MetaDataStore):
     def show_component_versions(
         self, type_id: str, identifier: str
     ) -> t.List[t.Union[t.Any, int]]:
-        return self.object_collection.distinct(
+        return self.component_collection.distinct(
             'version', {'type_id': type_id, 'identifier': identifier}
         )
 
     def list_components_in_scope(self, scope: str):
         out = []
-        for r in self.object_collection.find({'parent': scope}):
+        for r in self.component_collection.find({'parent': scope}):
             out.append((r['type_id'], r['identifier']))
         return out
 
@@ -146,7 +152,7 @@ class MongoMetaDataStore(MetaDataStore):
         else:
             members = Component.make_unique_id(type_id, identifier, version)
 
-        return bool(self.object_collection.count_documents({'members': members}))
+        return bool(self.component_collection.count_documents({'members': members}))
 
     def component_has_parents(self, type_id: str, identifier: str) -> int:
         doc = {'child': {'$regex': f'^{type_id}/{identifier}/'}}
@@ -168,7 +174,7 @@ class MongoMetaDataStore(MetaDataStore):
             {'parent': Component.make_unique_id(type_id, identifier, version)}
         )
 
-        return self.object_collection.delete_many(
+        return self.component_collection.delete_many(
             {
                 'identifier': identifier,
                 'type_id': type_id,
@@ -184,7 +190,7 @@ class MongoMetaDataStore(MetaDataStore):
         allow_hidden: bool = False,
     ) -> t.Dict[str, t.Any]:
         if not allow_hidden:
-            r = self.object_collection.find_one(
+            r = self.component_collection.find_one(
                 {
                     '$or': [
                         {
@@ -203,7 +209,7 @@ class MongoMetaDataStore(MetaDataStore):
                 }
             )
         else:
-            r = self.object_collection.find_one(
+            r = self.component_collection.find_one(
                 {
                     'identifier': identifier,
                     'type_id': type_id,
@@ -217,19 +223,19 @@ class MongoMetaDataStore(MetaDataStore):
             r['parent'] for r in self.parent_child_mappings.find({'child': unique_id})
         ]
 
-    def _replace_object(
+    def _replace_component(
         self,
         info: t.Dict[str, t.Any],
         identifier: str,
         type_id: str,
         version: int,
     ) -> None:
-        self.object_collection.replace_one(
+        self.component_collection.replace_one(
             {'identifier': identifier, 'type_id': type_id, 'version': version},
             info,
         )
 
-    def _update_object(
+    def _update_component(
         self,
         identifier: str,
         type_id: str,
@@ -237,7 +243,7 @@ class MongoMetaDataStore(MetaDataStore):
         value: t.Any,
         version: int,
     ):
-        return self.object_collection.update_one(
+        return self.component_collection.update_one(
             {'identifier': identifier, 'type_id': type_id, 'version': version},
             {'$set': {key: value}},
         )
@@ -252,7 +258,7 @@ class MongoMetaDataStore(MetaDataStore):
     def hide_component_version(
         self, type_id: str, identifier: str, version: int
     ) -> None:
-        self.object_collection.update_one(
+        self.component_collection.update_one(
             {'type_id': type_id, 'identifier': identifier, 'version': version},
             {'$set': {'hidden': True}},
         )

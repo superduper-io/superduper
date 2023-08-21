@@ -14,8 +14,8 @@ DEFECTS = {
 # ALLOWABLE_DEFECTS has the allowable defect counts, which should be non-increasing
 # over time.
 ALLOWABLE_DEFECTS = {
-    'noqa': 14,
-    'type_ignore': 153,
+    'noqa': 13,
+    'type_ignore': 133,
 }
 
 

@@ -135,7 +135,7 @@ class Notebook(JSONable):
     port: int = 8888
     token: str = ''
 
-    @root_validator(skip_on_failure=True)  # type: ignore[call-overload]
+    @root_validator(skip_on_failure=True)
     def check_one_or_none(cls, v: t.Dict) -> t.Dict:
         if v['password'] and v['token']:
             raise ValueError('At most one of password and token may be set')

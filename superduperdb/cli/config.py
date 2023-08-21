@@ -1,3 +1,5 @@
+import json
+
 from typer import Option
 
 from superduperdb import CFG
@@ -11,5 +13,5 @@ def config(
         False, '--schema', '-s', help='If set, print the JSON schema for the model'
     ),
 ):
-    json = CFG.schema_json if schema else CFG.json
-    print(json(indent=2))  # type: ignore[operator]
+    d = CFG.schema() if schema else CFG.dict()
+    print(json.dumps(d, indent=2))

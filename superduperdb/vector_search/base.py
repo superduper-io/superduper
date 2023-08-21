@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import enum
 import typing as t
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -12,7 +13,7 @@ import superduperdb as s
 
 class BaseVectorIndex:
     name: t.Optional[str] = None
-    index: t.Sequence[str]
+    index: t.List[str]
     lookup: t.Dict[str, t.Union[t.Iterator[int], int]]
     measure: str
 
@@ -26,7 +27,7 @@ class BaseVectorIndex:
             self.lookup = dict(zip(index, range(len(index))))
         self.measure = measure
 
-    @property  # type: ignore[no-redef]
+    @property
     def h(self):
         if len(self.h_list) != self._h.shape[0]:
             self._h = numpy.array(self.h_list)
@@ -60,9 +61,15 @@ def to_numpy(x: numpy.typing.ArrayLike) -> numpy.ndarray:
     return numpy.array(x)
 
 
+class VectorIndexMeasureType(str, enum.Enum):
+    cosine = 'cosine'
+    css = 'css'
+    dot = 'dot'
+    l2 = 'l2'
+
+
 VectorCollectionId = str
 VectorCollectionItemId = str
-VectorIndexMeasureType = t.Literal["l2", "dot", "css"]
 VectorIndexMeasureFunction = t.Callable[[numpy.ndarray, numpy.ndarray], float]
 VectorIndexMeasure = t.Union[VectorIndexMeasureType, VectorIndexMeasureFunction]
 
@@ -75,7 +82,7 @@ class VectorCollectionItemNotFound(Exception):
 class VectorCollectionConfig:
     id: VectorCollectionId
     dimensions: int
-    measure: VectorIndexMeasure = "l2"
+    measure: VectorIndexMeasure = VectorIndexMeasureType.l2
     parameters: t.Mapping[str, t.Any] = field(default_factory=dict)
 
 

@@ -4,8 +4,6 @@ from contextlib import contextmanager
 import numpy
 from readerwriterlock import rwlock
 
-from superduperdb.vector_search.table_scan import VanillaVectorIndex
-
 from .base import (
     VectorCollection,
     VectorCollectionConfig,
@@ -16,12 +14,19 @@ from .base import (
     VectorCollectionResult,
     VectorDatabase,
     VectorIndexMeasure,
+    VectorIndexMeasureType,
     to_numpy,
 )
+from .table_scan import VanillaVectorIndex
 
 
 class InMemoryVectorCollection(VectorCollection):
-    def __init__(self, *, dimensions: int, measure: VectorIndexMeasure = 'l2') -> None:
+    def __init__(
+        self,
+        *,
+        dimensions: int,
+        measure: VectorIndexMeasure = VectorIndexMeasureType.l2,
+    ) -> None:
         super().__init__()
         self._index = VanillaVectorIndex(
             numpy.empty((0, dimensions), dtype='float32'),
@@ -42,9 +47,9 @@ class InMemoryVectorCollection(VectorCollection):
     def _add(self, item: VectorCollectionItem) -> None:
         ix = self._index.lookup.get(item.id)
         if ix is not None:
-            self._index.h[ix] = item.vector  # type: ignore[assignment, index]
+            self._index.h[ix] = item.vector
         else:
-            self._index.index.append(item.id)  # type: ignore[attr-defined]
+            self._index.index.append(item.id)
             self._index.lookup[item.id] = len(self._index.lookup)
             self._index.h_list.append(list(item.vector))
 

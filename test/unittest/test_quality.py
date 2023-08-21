@@ -15,7 +15,7 @@ DEFECTS = {
 # over time.
 ALLOWABLE_DEFECTS = {
     'noqa': 14,
-    'type_ignore': 154,
+    'type_ignore': 153,
 }
 
 

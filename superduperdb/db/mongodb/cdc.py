@@ -615,9 +615,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             stream_iterator = stream(self.db)
             logging.info(f'Started listening database with identity {self.identity}...')
         except Exception:
-            logging.exception(  # type: ignore[attr-defined]
-                "Error while setting up cdc stream."
-            )
+            logging.error("Error while setting up cdc stream.")
             raise
         return stream_iterator
 
@@ -637,14 +635,10 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
                     self.event_handler(change)
                 self.dump_token(change)
         except StopIteration:
-            logging.exception(  # type: ignore[attr-defined]
-                'Change stream is close or empty!, stopping cdc!'
-            )
+            logging.error('Change stream is close or empty!, stopping cdc!')
             raise
         except Exception:
-            logging.exception(  # type: ignore[attr-defined]
-                'Error occured during cdc!, stopping cdc!'
-            )
+            logging.error('Error occured during cdc!, stopping cdc!')
             raise
 
     def attach_scheduler(self, scheduler: threading.Thread) -> None:

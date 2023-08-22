@@ -11,7 +11,7 @@ def download_content(
     db,
     query: t.Union[Select, Insert, t.Dict],
     ids: t.Optional[t.Sequence[str]] = None,
-    documents: t.Optional[t.Sequence[Document]] = None,
+    documents: t.Optional[t.List[Document]] = None,
     timeout: t.Optional[int] = None,
     raises: bool = True,
     n_download_workers: t.Optional[int] = None,
@@ -47,7 +47,8 @@ def download_content(
             select = query.select_using_ids(ids)
             documents = list(db.execute(select))
     else:
-        documents = query.documents  # type: ignore[union-attr]
+        assert isinstance(query, Insert)
+        documents = query.documents
 
     uris, keys, place_ids = gather_uris([d.encode() for d in documents])
     logging.info(f'found {len(uris)} uris')
@@ -93,7 +94,7 @@ def download_content(
     if update_db:
         return None
     for id_, key in zip(place_ids, keys):
-        documents[id_] = db.db.set_content_bytes(  # type: ignore[index]
+        documents[id_] = db.db.set_content_bytes(
             documents[id_], key, downloader.results[id_]
         )
     return documents

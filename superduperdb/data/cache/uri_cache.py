@@ -18,12 +18,12 @@ class Cached(t.Generic[ContentType]):
     @property
     def content(self) -> ContentType:
         """Get the cached content. `content` is not JSONized"""
-        return self._content  # type: ignore[return-value, attr-defined]
+        return self._content  # type: ignore[attr-defined]
 
     @content.setter
     def content(self, content: ContentType):
         """Set the cached content. `content` is not JSONized"""
-        self._content = content  # type: ignore[return-value, attr-defined]
+        self._content = content  # type: ignore[attr-defined]
 
     def __post_init__(self, content: ContentType):
         self.content = content

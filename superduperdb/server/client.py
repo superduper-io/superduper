@@ -333,10 +333,8 @@ class Client:
         return load_bson(result, encoders=self.encoders)
 
     def like(self, query: Like):
-        """
-        TODO: Implement server functionality for this endpoint.
-        """
-
+        # TODO: Implement server functionality for this endpoint.
+        # TODO: Like.like does not exist, and there is no candidate to replace it
         like = query.like.dump_bson()  # type: ignore[attr-defined]
         query.like = None  # type: ignore[attr-defined]
         serialized = query.serialize()
@@ -376,6 +374,7 @@ class Client:
         :param query: query type and attached documents to be sent to the server
         """
         # TODO: Not sure that this even works...
+        # TODO: Update.update does not exist, and there is no candidate to replace it
         update = query.update.dump_bson()  # type: ignore[attr-defined]
 
         file_id = str(uuid.uuid4())

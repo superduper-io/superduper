@@ -32,7 +32,7 @@ class TypedCache:
 
         raise ValueError(f'Bad key {key}, expected {name}-')
 
-    def _get_name(self, cls: t.Type) -> str:
+    def _get_name(self, cls: t.Any) -> str:
         with self._lock:
             try:
                 return self._class_to_name[cls]
@@ -40,7 +40,7 @@ class TypedCache:
                 name = cls.__name__
                 if name in self._name_to_cache:
                     name = f'{cls.__module__}.{name}'
-                cache = KeyCache[cls]()  # type: ignore
+                cache = KeyCache[cls]()
 
                 self._class_to_name[cls] = name
                 self._name_to_cache[name] = cache

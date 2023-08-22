@@ -129,6 +129,8 @@ class DB:
         :param validation_set: validation dataset on which to validate
         :param metrics: metric functions to compute
         """
+        # TODO: this is never called.
+
         component = self.load(type_id, identifier)
         metric_list = [self.load('metric', m) for m in metrics]
         return component.validate(  # type: ignore[union-attr]
@@ -172,10 +174,8 @@ class DB:
     def _get_context(
         self, model, context_select: t.Optional[Select], context_key: t.Optional[str]
     ):
-        assert (
-            model.takes_context  # type: ignore[attr-defined]
-        ), 'model does not take context'
-        context = list(self.execute(context_select))  # type: ignore[arg-type]
+        assert model.takes_context, 'model does not take context'
+        context = list(self.execute(context_select))
         context = [x.unpack() for x in context]
         if context_key is not None:
             context = [MongoStyleDict(x)[context_key] for x in context]
@@ -204,14 +204,14 @@ class DB:
         if context_select is not None:
             context = self._get_context(model, context_select, context_key)
 
-        out = await model.apredict(  # type: ignore[attr-defined]
+        out = await model.apredict(
             input.unpack() if isinstance(input, Document) else input,
             one=True,
             context=context,
             **kwargs,
         )
-        if model.encoder is not None:  # type: ignore[attr-defined]
-            out = model.encoder(out)  # type: ignore[attr-defined]
+        if model.encoder is not None:
+            out = model.encoder(out)
         if context is not None:
             return Document(out), [Document(x) for x in context]
         return Document(out), []
@@ -239,14 +239,14 @@ class DB:
         if context_select is not None:
             context = self._get_context(model, context_select, context_key)
 
-        out = model.predict(  # type: ignore[attr-defined]
+        out = model.predict(
             input.unpack() if isinstance(input, Document) else input,
             one=True,
             context=context,
             **kwargs,
         )
-        if model.encoder is not None:  # type: ignore[attr-defined]
-            out = model.encoder(out)  # type: ignore[attr-defined]
+        if model.encoder is not None:
+            out = model.encoder(out)
         if context is not None:
             return Document(out), [Document(x) for x in context]
         return Document(out), []
@@ -603,20 +603,15 @@ class DB:
     ):
         object.on_create(self)
 
-        existing_versions = self.show(
-            object.type_id, object.identifier  # type: ignore[attr-defined]
-        )
-        if (
-            isinstance(object.version, int)  # type: ignore[attr-defined]
-            and object.version in existing_versions  # type: ignore[attr-defined]
-        ):
+        existing_versions = self.show(object.type_id, object.identifier)
+        if isinstance(object.version, int) and object.version in existing_versions:
             s.log.warn(f'{object.unique_id} already exists - doing nothing')
             return
 
         if existing_versions:
-            object.version = max(existing_versions) + 1  # type: ignore[attr-defined]
+            object.version = max(existing_versions) + 1
         else:
-            object.version = 0  # type: ignore[attr-defined]
+            object.version = 0
 
         if serialized is None:
             serialized = object.serialize()
@@ -627,8 +622,8 @@ class DB:
             serialized = t.cast(t.Dict, replace_artifacts(serialized, artifact_info))
 
         else:
-            serialized['version'] = object.version  # type: ignore[attr-defined]
-            serialized['dict']['version'] = object.version  # type: ignore[attr-defined]
+            serialized['version'] = object.version
+            serialized['dict']['version'] = object.version
 
         self._create_children(object, serialized)
 
@@ -758,7 +753,7 @@ class DB:
                 documents = list(self.select(query))
             else:
                 select = query.select_using_ids(ids)
-                cursor = self.select(select).raw_cursor  # type: ignore[attr-defined]
+                cursor = self.select(select).raw_cursor
                 documents = [Document(x) for x in cursor]
         elif isinstance(query, Insert):
             documents = query.documents
@@ -869,7 +864,7 @@ class DB:
         else:
             ids = select.select_using_ids(ids=ids).get_ids(self)
 
-        ids = [str(id) for id in ids]  # type: ignore[union-attr]
+        ids = [str(id) for id in ids]
 
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
@@ -970,9 +965,7 @@ class DB:
             outs = outputs.encode()
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
-        return vector_index.get_nearest(  # type: ignore[attr-defined]
-            like, db=self, ids=ids, n=n, outputs=outs
-        )
+        return vector_index.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
 
 
 @dc.dataclass

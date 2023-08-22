@@ -4,6 +4,7 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from superduperdb.container.serializable import Serializable
+from superduperdb.db.base.cursor import SuperDuperCursor
 
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
@@ -15,7 +16,7 @@ class SelectOne(ABC, Serializable):
     """
 
     @abstractmethod
-    def __call__(self, db: DB):
+    def __call__(self, db: DB) -> SuperDuperCursor:
         pass
 
 
@@ -49,6 +50,7 @@ class Select(ABC, Serializable):
         """
         raise NotImplementedError
 
+    @property
     def select_ids(self) -> 'Select':
         """Converts the Serializable into a Serializable which only returns the id
         of each column/ document.
@@ -100,7 +102,7 @@ class Select(ABC, Serializable):
         raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, db: DB):
+    def __call__(self, db: DB) -> SuperDuperCursor:
         """
         Apply Serializable to db
 

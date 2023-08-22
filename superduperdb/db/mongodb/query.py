@@ -460,7 +460,8 @@ class Find(Select):
             key = key.split('.')[1]
         if not outputs:
             return
-        db.db[self.collection.name].bulk_write(  # type: ignore[union-attr]
+        assert self.collection is not None
+        db.db[self.collection.name].bulk_write(
             [
                 _UpdateOne(
                     {'_id': ObjectId(id)},
@@ -477,7 +478,8 @@ class Find(Select):
         :param model: The model to clean
         :param key: The key to clean
         """
-        db.db[self.collection.name].update_many(  # type: ignore[union-attr]
+        assert self.collection is not None
+        db.db[self.collection.name].update_many(
             {}, {'$unset': {f'_outputs.{key}.{model}': 1}}
         )
 
@@ -523,9 +525,10 @@ class Find(Select):
             except IndexError:
                 filter = {}
             filter = {'$and': [filter, {'_id': {'$in': ids}}]}
-            cursor = db.db[
-                self.like_parent.collection.name  # type: ignore[union-attr]
-            ].find(filter, *self.args[1:], **self.kwargs)
+            assert self.like_parent is not None
+            cursor = db.db[self.like_parent.collection.name].find(
+                filter, *self.args[1:], **self.kwargs
+            )
         else:
             raise NotImplementedError
         return SuperDuperCursor(raw_cursor=cursor, id_field='_id', encoders=db.encoders)
@@ -554,9 +557,8 @@ class CountDocuments(Find):
 
     @override
     def __call__(self, db: DB):
-        return db.db[self.collection.name].count_documents(  # type: ignore[union-attr]
-            *self.args, **self.kwargs
-        )
+        assert self.collection is not None
+        return db.db[self.collection.name].count_documents(*self.args, **self.kwargs)
 
 
 @dc.dataclass
@@ -664,7 +666,7 @@ class Aggregate(Select):
         return pipeline
 
     @override
-    def __call__(self, db: DB):
+    def __call__(self, db: DB) -> SuperDuperCursor:
         args = self.args
         if self.vector_index is not None:
             args = [
@@ -863,7 +865,7 @@ class InsertMany(Insert):
     @override
     def __call__(self, db: DB):
         valid_prob = self.kwargs.get('valid_prob', 0.05)
-        for e in self.encoders:  # type: ignore[union-attr]
+        for e in self.encoders:
             db.add(e)
         documents = [r.encode() for r in self.documents]
         for r in documents:
@@ -881,7 +883,7 @@ class InsertMany(Insert):
         graph = None
         if self.refresh and not s.CFG.cdc:
             graph = db.refresh_after_update_or_insert(
-                query=self,  # type: ignore[arg-type]
+                query=self,
                 ids=output.inserted_ids,
                 verbose=self.verbose,
             )
@@ -911,10 +913,9 @@ class PostLike(Select):
         arbitrary_types_allowed = True
 
     @override
-    def __call__(self, db: DB):
-        cursor = self.find_parent.select_ids.limit(  # type: ignore[union-attr]
-            self.max_ids
-        )(db)
+    def __call__(self, db: DB) -> SuperDuperCursor:
+        assert self.find_parent is not None
+        cursor = self.find_parent.select_ids.limit(self.max_ids)(db)
         ids = [r['_id'] for r in cursor]
         ids, scores = db._select_nearest(
             like=self.r,
@@ -924,7 +925,7 @@ class PostLike(Select):
         )
         ids = [ObjectId(_id) for _id in ids]
         return Find(
-            collection=self.find_parent.collection,  # type: ignore[union-attr]
+            collection=self.find_parent.collection,
             args=[{'_id': {'$in': ids}}],
         )(db)
 
@@ -949,11 +950,12 @@ class Featurize(Select):
 
         :param db: The db to query
         """
-        return self.parent.get_ids(db)  # type: ignore[union-attr]
+        assert isinstance(self.parent, Find)
+        return self.parent.get_ids(db)
 
     @override
     def is_trivial(self) -> bool:
-        return self.parent.is_trivial()  # type: ignore[union-attr]
+        return self.parent.is_trivial()
 
     @property
     def select_ids(self):
@@ -962,29 +964,24 @@ class Featurize(Select):
         """
         return t.cast(Select, self.parent.select_ids)
 
-    # ruff: noqa: E501
     def add_fold(self, fold: str):
         """Create a select which selects the same data, but additionally restricts to
         the fold specified
 
         :param fold: possible values {'train', 'valid'}
         """
-        return self.parent.add_fold(fold).featurize(  # type: ignore[union-attr,attr-defined]
-            self.features
-        )
+        folded = self.parent.add_fold(fold)
+        assert isinstance(folded, (Find, FindOne))
+        folded.featurize(self.features)
 
     @override
     def select_using_ids(self, ids: t.Sequence[str]) -> t.Any:
-        return self.parent.select_using_ids(  # type: ignore[union-attr]
-            ids=ids
-        ).featurize(features=self.features)
+        return self.parent.select_using_ids(ids=ids).featurize(features=self.features)
 
-    # ruff: noqa: E501
     def select_ids_of_missing_outputs(self, key: str, model: str) -> Select:
-        return Featurize(
-            features=self.features,
-            parent=self.parent.select_ids_of_missing_outputs(key, model),  # type: ignore[arg-type]
-        )
+        parent = self.parent.select_ids_of_missing_outputs(key, model)
+        assert isinstance(parent, (Find, PostLike))
+        return Featurize(features=self.features, parent=parent)
 
     @override
     def model_update(
@@ -995,20 +992,21 @@ class Featurize(Select):
         model: str,
         outputs: t.Sequence[t.Any],
     ) -> None:
-        self.parent.model_update(  # type: ignore[union-attr]
-            db=db, ids=ids, key=key, model=model, outputs=outputs
-        )
+        self.parent.model_update(db=db, ids=ids, key=key, model=model, outputs=outputs)
 
     @override
-    def __call__(self, db: DB):
+    def __call__(self, db: DB) -> t.Any:
         if isinstance(self.parent, (Find, Like, Limit)):
             out = self.parent(db)
             out.features = self.features
             return out
         else:
-            r = self.parent(db)
-            r = SuperDuperCursor.add_features(r.content, self.features)
-            return Document(r)
+            cursor = self.parent(db)
+            # TODO: r is a SuperDuperCursor, but that has no .content attribute
+            d = SuperDuperCursor.add_features(
+                cursor.content, self.features  # type: ignore[attr-defined]
+            )
+            return Document(d)
 
 
 @dc.dataclass
@@ -1028,9 +1026,10 @@ class Count(SelectOne):
 
     @override
     def __call__(self, db: DB):
-        return db[
-            self.parent.name  # type: ignore[union-attr]
-        ].count_documents()  # type: ignore[index]
+        # TODO: self.parent does not have a name property
+        # TODO: db is not indexable.
+        # return db[self.parent.name].count_documents()
+        raise NotImplementedError
 
 
 @dc.dataclass
@@ -1046,7 +1045,7 @@ class Limit(Select):
     type_id: t.Literal['mongodb.Limit'] = 'mongodb.Limit'
 
     @override
-    def __call__(self, db: DB):
+    def __call__(self, db: DB) -> SuperDuperCursor:
         return self.parent(db).limit(self.n)
 
 

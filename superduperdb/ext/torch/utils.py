@@ -28,13 +28,13 @@ def eval(model: TorchModel) -> t.Iterator[None]:
 
     :param model: PyTorch model
     """
-    was_training = model.training  # type: ignore[attr-defined]
+    was_training = model.object.artifact.training
     try:
         model.eval()
         yield
     finally:
         if was_training:
-            model.train()
+            model.object.artifact.train()
 
 
 @contextmanager
@@ -47,10 +47,10 @@ def set_device(model: TorchModel, device: _device):
     """
     device_before = device_of(model)
     try:
-        model.to(device)  # type: ignore[attr-defined]
+        model.object.artifact.to(device)
         yield
     finally:
-        model.to(device_before)  # type: ignore[attr-defined]
+        model.object.artifact.to(device_before)
 
 
 def to_device(

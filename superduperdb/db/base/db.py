@@ -531,7 +531,7 @@ class DB:
         for identifier in listener:
             info = self.metadata.get_component('listener', identifier)
             query = info['dict']['select']
-            model, key = identifier.split('/')
+            model, _, key = identifier.rpartition('/')
             G.add_node(
                 f'{model}.predict({key})',
                 job=ComponentJob(
@@ -548,7 +548,7 @@ class DB:
             )
 
         for identifier in listener:
-            model, key = identifier.split('/')
+            model, _, key = identifier.rpartition('/')
             G.add_edge(
                 f'{download_content.__name__}()',
                 f'{model}.predict({key})',
@@ -557,7 +557,7 @@ class DB:
                 identifier
             )  # TODO remove features as explicit argument to listener
             for dep in deps:
-                dep_model, dep_key = dep.split('/')
+                dep_model, _, dep_key = dep.rpartition('/')
                 G.add_edge(
                     f'{dep_model}.predict({dep_key})',
                     f'{model}.predict({key})',

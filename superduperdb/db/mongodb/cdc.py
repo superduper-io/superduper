@@ -162,7 +162,7 @@ def copy_vectors(
         select = query.select_using_ids(ids)
         docs = db.select(select)
         docs = [doc.unpack() for doc in docs]
-        model, key = indexing_listener_identifier.split('/')
+        model, _, key = indexing_listener_identifier.rpartition('/')
         vectors = [
             {'vector': doc['_outputs'][key][model], 'id': str(doc['_id'])}
             for doc in docs
@@ -271,9 +271,8 @@ class CDCHandler(threading.Thread):
                 ),
             )
         if task != 'delete':
-            model, key = indexing_listener_identifier.split(  # type: ignore[union-attr]
-                '/'
-            )
+            assert indexing_listener_identifier
+            model, _, key = indexing_listener_identifier.rpartition('/')
             task_workflow.add_edge(
                 f'{model}.predict({key})',
                 f'{task_name}({indexing_listener_identifier})',

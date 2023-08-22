@@ -18,6 +18,7 @@ from superduperdb.container.artifact_tree import (
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
 from superduperdb.container.job import ComponentJob, FunctionJob, Job
+from superduperdb.container.model import Model
 from superduperdb.container.serializable import Serializable
 from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.db.base.download import Downloader, gather_uris
@@ -26,6 +27,7 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorDatabase
 
 from .artifact import ArtifactStore
+from .cursor import SuperDuperCursor
 from .data_backend import BaseDataBackend
 from .download_content import download_content
 from .exceptions import ComponentInUseError, ComponentInUseWarning
@@ -37,7 +39,7 @@ TaskGraph = t.Any
 
 DeleteResult = DBResult
 InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
-SelectResult = t.List[Document]
+SelectResult = SuperDuperCursor
 UpdateResult = t.Any
 
 ExecuteQuery = t.Union[Select, SelectOne, Delete, Update, Insert]
@@ -129,12 +131,14 @@ class DB:
         :param validation_set: validation dataset on which to validate
         :param metrics: metric functions to compute
         """
-        # TODO: this is never called.
-
+        # TODO: never called
         component = self.load(type_id, identifier)
         metric_list = [self.load('metric', m) for m in metrics]
-        return component.validate(  # type: ignore[union-attr]
-            self, validation_set, metric_list
+        assert isinstance(component, Model)
+        return component.validate(
+            self,
+            validation_set,  # type: ignore[arg-type]
+            metric_list,  # type: ignore[arg-type]
         )
 
     def show(
@@ -175,6 +179,7 @@ class DB:
         self, model, context_select: t.Optional[Select], context_key: t.Optional[str]
     ):
         assert model.takes_context, 'model does not take context'
+        assert context_select is not None
         context = list(self.execute(context_select))
         context = [x.unpack() for x in context]
         if context_key is not None:
@@ -183,7 +188,7 @@ class DB:
 
     async def apredict(
         self,
-        model: str,
+        model_name: str,
         input: t.Union[Document, t.Any],
         context_select: t.Optional[Select] = None,
         context_key: t.Optional[str] = None,
@@ -198,7 +203,7 @@ class DB:
         :param context_select: select query object to provide context
         :param context_key: key to use to extract context from context_select
         """
-        model = self.models[model]
+        model = self.models[model_name]
         context = None
 
         if context_select is not None:
@@ -218,7 +223,7 @@ class DB:
 
     def predict(
         self,
-        model: str,
+        model_name: str,
         input: t.Union[Document, t.Any],
         context_select: t.Optional[Select] = None,
         context_key: t.Optional[str] = None,
@@ -233,7 +238,7 @@ class DB:
         :param context_select: select query object to provide context
         :param context_key: key to use to extract context from context_select
         """
-        model = self.models[model]
+        model = self.models[model_name]
         context = None
 
         if context_select is not None:
@@ -334,7 +339,7 @@ class DB:
 
     def refresh_after_update_or_insert(
         self,
-        query: t.Union[Select, Update],
+        query: t.Union[Insert, Select, Update],
         ids: t.Sequence[str],
         verbose: bool = False,
     ):
@@ -602,6 +607,8 @@ class DB:
         parent: t.Optional[str] = None,
     ):
         object.on_create(self)
+        assert hasattr(object, 'identifier')
+        assert hasattr(object, 'version')
 
         existing_versions = self.show(object.type_id, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
@@ -863,6 +870,7 @@ class DB:
             ids = select.get_ids(self)
         else:
             ids = select.select_using_ids(ids=ids).get_ids(self)
+            assert ids is not None
 
         ids = [str(id) for id in ids]
 
@@ -957,7 +965,7 @@ class DB:
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
         like = self._get_content_for_filter(like)
-        vector_index = self.vector_indices[vector_index]
+        vi = self.vector_indices[vector_index]
 
         if outputs is None:
             outs = {}
@@ -965,7 +973,7 @@ class DB:
             outs = outputs.encode()
             if not isinstance(outs, dict):
                 raise TypeError(f'Expected dict, got {type(outputs)}')
-        return vector_index.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
+        return vi.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
 
 
 @dc.dataclass

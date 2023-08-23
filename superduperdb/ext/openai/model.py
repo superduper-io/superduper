@@ -33,7 +33,7 @@ def _available_models():
 @dc.dataclass
 class OpenAI(Component, PredictMixin):
     model: str
-    identifier: t.Optional[str] = None  # type: ignore[assignment]
+    identifier: str = ''
     version: t.Optional[int] = None
     takes_context: bool = False
     encoder: t.Union[Encoder, str, None] = None
@@ -52,8 +52,7 @@ class OpenAI(Component, PredictMixin):
             msg = f'model {self.model} not in OpenAI available models, {mo}'
             raise ValueError(msg)
 
-        if self.identifier is None:
-            self.identifier = self.model
+        self.identifier = self.identifier or self.model
 
         if 'OPENAI_API_KEY' not in os.environ:
             raise ValueError('OPENAI_API_KEY not set')
@@ -92,12 +91,12 @@ class OpenAIEmbedding(OpenAI):
         ]
         return [r['embedding'] for r in out]
 
-    def _predict(self, X, batch_size=100, **kwargs):
+    def _predict(self, X, batch_size=100, **predict_kwargs):
         if isinstance(X, str):
             return self._predict_one(X)
         out = []
         for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
+            out.extend(self._predict_a_batch(X[i : i + batch_size], **predict_kwargs))
         return out
 
     async def _apredict(self, X, batch_size=100, **kwargs):
@@ -115,9 +114,7 @@ class OpenAIChatCompletion(OpenAI):
     prompt: t.Optional[str] = None
 
     def _format_prompt(self, context, X):
-        prompt = self.prompt.format(  # type: ignore[union-attr]
-            context='\n'.join(context)
-        )
+        prompt = self.prompt.format(context='\n'.join(context))
         return prompt + X
 
     @retry
@@ -149,7 +146,7 @@ class OpenAIChatCompletion(OpenAI):
             assert one, 'context only works with ``one=True``'
         if one:
             return self._predict_one(X, context=context, **kwargs)
-        return [self._predict_one(msg) for msg in X]  # type: ignore[attr-defined]
+        return [self._predict_one(msg) for msg in X]
 
     # ruff: noqa: E501
     async def _apredict(
@@ -159,4 +156,4 @@ class OpenAIChatCompletion(OpenAI):
             assert one, 'context only works with ``one=True``'
         if one:
             return await self._apredict_one(X, context=context, **kwargs)
-        return [await self._apredict_one(msg) for msg in X]  # type: ignore[attr-defined]
+        return [await self._apredict_one(msg) for msg in X]

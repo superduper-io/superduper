@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import io
 import typing as t
@@ -20,6 +22,9 @@ from superduperdb.db.base.db import DB
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.ext.torch.utils import device_of, eval, to_device
+
+if t.TYPE_CHECKING:
+    from superduperdb.container.dataset import Dataset
 
 
 class BasicDataset(data.Dataset):
@@ -86,6 +91,31 @@ class Base:
     def train(self):
         raise NotImplementedError
 
+    if t.TYPE_CHECKING:
+        # TODO: We can't use the actual declarations because of the multiple
+        # inheritance issues.
+        @property
+        def training_keys(self) -> t.List[str]:
+            raise NotImplementedError
+
+        def _validate(
+            self, db: DB, validation_set: Dataset, metrics: t.Sequence[Metric]
+        ):
+            raise NotImplementedError
+
+        def append_metrics(self, d: t.Dict[str, float]) -> None:
+            raise NotImplementedError
+
+    @property
+    def optimizers(self) -> t.List:
+        raise NotImplementedError
+
+    def preprocess(self, r):
+        raise NotImplementedError  # implemented in PyTorch wrapper and PyTorch pipeline
+
+    def save(self, database: DB):
+        raise NotImplementedError
+
     def stopping_criterion(self, iteration):
         max_iterations = self.training_configuration.max_iterations
         no_improve_then_stop = self.training_configuration.no_improve_then_stop
@@ -115,19 +145,19 @@ class Base:
         self,
         X: t.Union[t.List[str], str],
         y: t.Optional[t.Union[t.List, t.Any]] = None,
-        db: t.Optional[DB] = None,
-        select: t.Optional[t.Union[Select, t.Dict]] = None,
         configuration: t.Optional[TorchTrainerConfiguration] = None,
-        validation_sets: t.Optional[t.List[str]] = None,
-        metrics: t.Optional[t.List[Metric]] = None,
         data_prefetch: bool = False,
+        db: t.Optional[DB] = None,
+        metrics: t.Optional[t.List[Metric]] = None,
+        select: t.Optional[t.Union[Select, t.Dict]] = None,
+        validation_sets: t.Optional[t.List[str]] = None,
     ):
         if configuration is not None:
             self.training_configuration = configuration
-        if select is not None:
-            if isinstance(select, dict):
-                select = Serializable.deserialize(select)
-            self.training_select = select  # type: ignore[assignment]
+        if isinstance(select, dict):
+            self.training_select = Serializable.deserialize(select)
+        else:
+            self.training_select = select
         if validation_sets is not None:
             self.validation_sets = validation_sets
         if metrics is not None:
@@ -150,9 +180,6 @@ class Base:
             db=db,
             validation_sets=validation_sets or [],
         )
-
-    def preprocess(self, r):
-        raise NotImplementedError  # implemented in PyTorch wrapper and PyTorch pipeline
 
     def log(self, **kwargs):
         out = ''
@@ -214,24 +241,28 @@ class Base:
         iteration = 0
         while True:
             for batch in train_dataloader:
-                train_objective = self.take_step(
-                    batch, self.optimizers  # type: ignore[attr-defined]
-                )
+                train_objective = self.take_step(batch, self.optimizers)
                 self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
 
                 if iteration % self.training_configuration.validation_interval == 0:
                     valid_loss = self.compute_validation_objective(valid_dataloader)
                     all_metrics = {}
+                    assert isinstance(self.metrics, list)
+                    assert all(isinstance(m, Metric) for m in self.metrics)
+                    metrics = [t.cast(Metric, m) for m in self.metrics]
                     for vs in validation_sets:
-                        metrics = self._validate(  # type: ignore[attr-defined]
-                            db=db, validation_set=vs, metrics=self.metrics
+                        m = self._validate(
+                            db=db,
+                            validation_set=vs,  # type: ignore[arg-type]
+                            metrics=metrics,
                         )
-                        all_metrics.update(metrics)
+                        all_metrics.update(m)
                     all_metrics.update({'objective': valid_loss})
-                    self.append_metrics(all_metrics)  # type: ignore[attr-defined]
+
+                    self.append_metrics(all_metrics)
                     self.log(fold='VALID', iteration=iteration, **all_metrics)
                     if self.saving_criterion():
-                        self.save(db)  # type: ignore[attr-defined]
+                        self.save(db)
                     stop = self.stopping_criterion(iteration)
                     if stop:
                         return
@@ -281,14 +312,14 @@ class Base:
             raise ValueError('self.training_select cannot be None')
         train_data = QueryDataset(
             select=self.training_select,
-            keys=self.training_keys,  # type: ignore[attr-defined]
+            keys=self.training_keys,
             fold='train',
             transform=self.train_preprocess(),
             db=db,
         )
         valid_data = QueryDataset(
             select=self.training_select,
-            keys=self.training_keys,  # type: ignore[attr-defined]
+            keys=self.training_keys,
             fold='valid',
             transform=self.train_preprocess(),
             db=db,
@@ -326,15 +357,12 @@ class TorchModel(Base, Model):  # type: ignore[misc]
         )
 
     @property
-    def optimizers(self):
+    def optimizers(self) -> t.List:
         return [self.optimizer]
 
     def save(self, database: DB):
         self.optimizer_state = Artifact(self.optimizer.state_dict(), serializer='torch')
-        database.replace(
-            object=self,
-            upsert=True,
-        )
+        database.replace(object=self, upsert=True)
 
     @contextmanager
     def evaluating(self):
@@ -401,12 +429,14 @@ class TorchModel(Base, Model):  # type: ignore[misc]
         with torch.no_grad(), eval(self.object.artifact):
             if one:
                 return self._predict_one(x)
-            inputs = BasicDataset(
-                x,
-                self.preprocess.artifact  # type: ignore[attr-defined]
-                if self.preprocess is not None
-                else lambda x: x,
-            )
+            if not isinstance(self.preprocess, Artifact):
+
+                def func(x):
+                    return x
+
+            else:
+                func = self.preprocess.artifact
+            inputs = BasicDataset(x, func)
             loader = torch.utils.data.DataLoader(inputs, **kwargs)
             out = []
             for batch in tqdm(loader, total=len(loader)):
@@ -416,11 +446,8 @@ class TorchModel(Base, Model):  # type: ignore[misc]
                 tmp = method(batch)
                 tmp = to_device(tmp, 'cpu')
                 tmp = unpack_batch(tmp)
-                if self.postprocess is not None:
-                    tmp = [
-                        self.postprocess.artifact(t)  # type: ignore[union-attr]
-                        for t in tmp
-                    ]
+                if isinstance(self.postprocess, Artifact):
+                    tmp = [self.postprocess.artifact(t) for t in tmp]
                 out.extend(tmp)
             return out
 

@@ -5,52 +5,51 @@ from contextlib import contextmanager
 
 if t.TYPE_CHECKING:
     from torch import device as _device
+    from torch.nn.modules import Module
 
-    from .model import TorchModel
 
-
-def device_of(model: TorchModel) -> t.Union[_device, str]:
+def device_of(module: Module) -> t.Union[_device, str]:
     """
     Get device of a model.
 
     :param model: PyTorch model
     """
     try:
-        return next(iter(model.state_dict().values())).device
+        return next(iter(module.state_dict().values())).device
     except StopIteration:
         return 'cpu'
 
 
 @contextmanager
-def eval(model: TorchModel) -> t.Iterator[None]:
+def eval(module: Module) -> t.Iterator[None]:
     """
-    Temporarily set a model to evaluation mode.
+    Temporarily set a module to evaluation mode.
 
-    :param model: PyTorch model
+    :param module: PyTorch module
     """
-    was_training = model.object.artifact.training
+    was_training = module.training
     try:
-        model.eval()
+        module.eval()
         yield
     finally:
         if was_training:
-            model.object.artifact.train()
+            module.train()
 
 
 @contextmanager
-def set_device(model: TorchModel, device: _device):
+def set_device(module: Module, device: _device):
     """
-    Temporarily set a device of a model.
+    Temporarily set a device of a module.
 
-    :param model: PyTorch model
+    :param module: PyTorch module
     :param device: Device to set
     """
-    device_before = device_of(model)
+    device_before = device_of(module)
     try:
-        model.object.artifact.to(device)
+        module.to(device)
         yield
     finally:
-        model.object.artifact.to(device_before)
+        module.to(device_before)
 
 
 def to_device(

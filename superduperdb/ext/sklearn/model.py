@@ -84,12 +84,12 @@ class Estimator(Model):
         self,
         X,
         y=None,
-        select: t.Optional[Select] = None,
-        db: t.Optional[DB] = None,
         configuration: t.Optional[SklearnTrainingConfiguration] = None,
-        validation_sets: t.Optional[t.Sequence[str]] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
         data_prefetch: bool = False,
+        db: t.Optional[DB] = None,
+        metrics: t.Optional[t.Sequence[Metric]] = None,
+        select: t.Optional[Select] = None,
+        validation_sets: t.Optional[t.Sequence[str]] = None,
     ):
         if configuration is not None:
             self.training_configuration = configuration
@@ -108,37 +108,43 @@ class Estimator(Model):
                     y_preprocess = y_preprocess.artifact
             if select is None or db is None:
                 raise ValueError('Neither select nor db can be None')
+
+            if isinstance(self.preprocess, Artifact):
+                preprocess = self.preprocess.artifact
+            else:
+
+                def preprocess(x):
+                    return x
+
             X, y = get_data_from_query(
                 select=select,
                 db=db,
                 X=X,
                 y=y,
+                preprocess=preprocess,
                 y_preprocess=y_preprocess,
-                preprocess=(
-                    self.preprocess.artifact  # type: ignore[union-attr]
-                    if self.preprocess
-                    else lambda x: x
-                ),
             )
         if self.training_configuration is not None:
+            assert not isinstance(self.training_configuration, str)
             to_return = self.estimator.fit(
                 X=X,
                 y=y,
-                **self.training_configuration.get(  # type: ignore[union-attr]
-                    'fit_params', {}
-                ),
+                **self.training_configuration.get('fit_params', {}),
             )
         else:
             to_return = self.estimator.fit(X, y)
 
         if validation_sets is not None:
+            assert db is not None
+            assert metrics is not None
             results = {}
             for validation_set in validation_sets:
                 results.update(
+                    # TODO: this call could never work
                     self._validate(
                         db=db,
                         validation_set=validation_set,  # type: ignore[arg-type]
-                        metrics=metrics,  # type: ignore[arg-type]
+                        metrics=metrics,
                     )
                 )
             self.append_metrics(results)

@@ -8,6 +8,7 @@ import ibis
 from superduperdb import CFG
 from superduperdb.container.document import Document
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
+from superduperdb.container.serializable import Serializable
 
 PRIMARY_ID: str = 'id'
 
@@ -197,7 +198,7 @@ class LogicalExprMixin:
 
 
 @dc.dataclass
-class QueryLinker(LogicalExprMixin):
+class QueryLinker(Serializable, LogicalExprMixin):
     collection: Table
     query_type: str = 'find'
     args: t.Sequence = dc.field(default_factory=list)

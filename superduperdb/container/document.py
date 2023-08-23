@@ -55,10 +55,12 @@ class Document:
         return f'Document({repr(self.content)})'
 
     def __getitem__(self, item: str) -> ItemType:
-        return self.content[item]  # type: ignore[index]
+        assert isinstance(self.content, dict)
+        return self.content[item]
 
     def __setitem__(self, key: str, value: ItemType):
-        self.content[key] = value  # type: ignore[index]
+        assert isinstance(self.content, dict)
+        self.content[key] = value
 
     def unpack(self) -> t.Any:
         """Returns the content, but with any encodables replacecs by their contents"""
@@ -79,7 +81,7 @@ def load_bson(content: t.ByteString, encoders: t.Dict[str, t.Any]) -> Document:
     :param content: the content to decode
     :param encoders: a dict of encoders
     """
-    document = bson.decode(content)  # type: ignore[arg-type, var-annotated]
+    document: t.Dict = bson.decode(content)
     return Document(Document.decode(document, encoders=encoders))
 
 
@@ -101,7 +103,7 @@ def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
             return encoder.decode(r['_content']['bytes'])
         except KeyError:
             if 'uri' in r['_content']:
-                return Encodable(uri=r['_content']['uri'], encoder=encoder)  # type: ignore[call-arg]
+                return Encodable(uri=r['_content']['uri'], encoder=encoder)
             return r
     elif isinstance(r, list):
         return [_decode(x, encoders) for x in r]

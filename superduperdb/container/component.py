@@ -17,7 +17,6 @@ if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
 
 
-@dc.dataclass
 class Component(Serializable):
     """
     Base component which model, listeners, learning tasks etc. inherit from.
@@ -27,6 +26,10 @@ class Component(Serializable):
 
     #: A unique name for the class
     type_id: t.ClassVar[str]
+
+    if t.TYPE_CHECKING:
+        identifier: t.Optional[str]
+        version: t.Optional[int]
 
     def on_create(self, db: DB) -> None:
         """Called the first time this component is created
@@ -50,11 +53,7 @@ class Component(Serializable):
     def unique_id(self) -> str:
         if getattr(self, 'version', None) is None:
             raise Exception('Version not yet set for component uniqueness')
-        return (
-            f'{self.type_id}/'  # type: ignore[attr-defined]
-            f'{self.identifier}/'
-            f'{self.version}'
-        )
+        return f'{self.type_id}/' f'{self.identifier}/' f'{self.version}'
 
     def dict(self) -> t.Dict[str, t.Any]:
         return dc.asdict(self)
@@ -64,8 +63,9 @@ class Component(Serializable):
         validation_set: t.Union[str, Dataset],
         metrics: t.Sequence[str],
     ) -> ComponentJob:
+        assert self.identifier is not None
         return ComponentJob(
-            component_identifier=self.identifier,  # type: ignore[attr-defined]
+            component_identifier=self.identifier,
             method_name='predict',
             type_id='model',
             kwargs={

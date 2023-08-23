@@ -21,6 +21,8 @@ def job(f):
 
 
 class Job:
+    callable: t.Optional[t.Callable]
+
     def __init__(
         self,
         args: t.Optional[t.Sequence] = None,
@@ -73,7 +75,7 @@ class FunctionJob(Job):
         kwargs: t.Optional[t.Dict] = None,
     ):
         super().__init__(args=args, kwargs=kwargs)
-        self.callable = callable  # type: ignore[assignment]
+        self.callable = callable
 
     def dict(self):
         d = super().dict()

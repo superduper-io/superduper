@@ -76,7 +76,7 @@ class Listener(Component):
                 self.identifier = f'{self.model.identifier}/{self.id_key}'
         self.features = {}
         if hasattr(self.select, 'features'):
-            self.features = self.select.features  # type: ignore[union-attr]
+            self.features = self.select.features
 
     @override
     def schedule_jobs(
@@ -89,7 +89,8 @@ class Listener(Component):
         if not self.active:
             return ()
 
-        return self.model.predict(  # type: ignore[union-attr]
+        assert not isinstance(self.model, str)
+        return self.model.predict(
             X=self.key,
             db=database,
             select=self.select,
@@ -103,9 +104,6 @@ class Listener(Component):
 
         :param database: The db to process
         """
-
-        self.select.model_cleanup(  # type: ignore[union-attr,attr-defined]
-            database,
-            model=self.model.identifier,  # type: ignore[union-attr]
-            key=self.key,
-        )
+        if (cleanup := getattr(self.select, 'model_cleanup', None)) is not None:
+            assert not isinstance(self.model, str)
+            cleanup(database, model=self.model.identifier, key=self.key)

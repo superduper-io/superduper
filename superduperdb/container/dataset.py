@@ -42,9 +42,10 @@ class Dataset(Component):
 
     @override
     def on_load(self, db: DB) -> None:
+        assert isinstance(self.raw_data, Artifact)
         self.data = [
             Document(Document.decode(r.copy(), encoders=db.encoders))
-            for r in self.raw_data.artifact  # type: ignore[union-attr]
+            for r in self.raw_data.artifact
         ]
 
     @cached_property

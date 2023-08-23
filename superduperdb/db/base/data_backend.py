@@ -19,13 +19,3 @@ class BaseDataBackend(ABC):
         Drop the databackend.
         """
         pass
-
-    # TODO - not the right place for this
-    @abstractmethod
-    def set_content_bytes(self, r, key, bytes_):
-        pass
-
-    # TODO - not the right place for this
-    @abstractmethod
-    def unset_outputs(self, info):
-        pass

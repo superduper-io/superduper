@@ -113,8 +113,8 @@ class MongoDB(HostPort):
 class DataLayer(JSONable):
     """Configure which db or database is being used"""
 
-    cls: str = 'mongodb'
-    connection: str = 'pymongo'
+    cls: str = 'ibis'
+    connection: str = 'ibis'
     kwargs: t.Dict = Factory(lambda: MongoDB().dict())
     name: str = 'test_db'
 
@@ -122,9 +122,9 @@ class DataLayer(JSONable):
 class DataLayers(JSONable):
     """TBD"""
 
-    artifact: DataLayer = Factory(lambda: DataLayer(name='_filesystem:test_db'))
+    artifact: DataLayer = Factory(lambda: DataLayer(cls='filesystem'))
     data_backend: DataLayer = Factory(DataLayer)
-    metadata: DataLayer = Factory(DataLayer)
+    metadata: DataLayer = Factory(lambda: DataLayer(cls='sqlalchemy'))
 
 
 class Notebook(JSONable):

@@ -3,10 +3,13 @@ import enum
 import random
 import typing as t
 
+import ibis
+
 from superduperdb import CFG
 from superduperdb.container.document import Document
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
 
+PRIMARY_ID: str = 'id'
 
 class QueryType(enum.Enum):
     QUERY = 'query'
@@ -74,7 +77,10 @@ class QueryChain:
         query = Query(data, type=type)
         self.chain.append(query)
 
-    def append_query(self, query):
+    def append_query(self, query, create=False):
+        if create:
+            return self.chain + [query]
+
         self.chain.append(query)
 
     def get(self, ix):
@@ -91,11 +97,38 @@ class QueryChain:
             if query.type in [QueryType.QUERY.value, QueryType.ATTR.value]:
                 yield query
 
+@dc.dataclass
+class OutputTable:
+    model: str
+    primary_id: str = 'id'
+    table: t.Any = None 
+
+    def create(self, conn):
+        self.table = conn.create_table(self.model, schema=self.schema)
+        return self.table
+
+    @property
+    def schema(self):
+        schema = {
+                'id': 'int32',
+                'input_id': 'int32',
+                'output': 'int32', # Use output encoder
+                'query_id': 'string',
+                'key': 'string',
+                }
+        return ibis.schema(schema)
 
 @dc.dataclass
 class Table:
     name: str
     primary_id: str = 'id'
+    table: t.Any = None
+
+    def get_table(self, conn):
+        if self.table is None:
+            self.table = conn.table(self.name)
+        return self.table
+
 
     def __getattr__(self, k):
         if k in self.__dict__:
@@ -126,7 +159,11 @@ class Table:
             'kwargs': {'valid_prob': valid_prob},
             'documents': args[0],
         }
+        kwargs.update({'table_name': self.name})
+        decoded_docs = [d.unpack() for d in args[0]]
+        kwargs.update({'obj': decoded_docs })
         args = args[1:]
+        
         insert = Query(
             'insert',
             type=QueryType.QUERY.value,
@@ -185,16 +222,52 @@ class QueryLinker(LogicalExprMixin):
     def select_ids(self):
         k = 'select'
         args = [self.collection.primary_id]
-        self.members.append_query(Query(k, args=args, kwargs={}))
-        return QueryLinker(self.collection, query_type='select', members=self.members)
+        members = self.members.append_query(Query(k, args=args, kwargs={}), create=True)
+        return QueryLinker(self.collection, query_type='select', members=members)
 
-    def select_from_ids(self, ids):
+    def select_using_ids(self, ids):
         isin_query = self.collection.__getattr__(self.collection.primary_id).isin(ids)
         k = 'filter'
         args = [isin_query]
-        self.members.append_query(Query(k, args=args, kwargs={}))
+        members = self.members.append_query(Query(k, args=args, kwargs={}), create=True)
 
-        return QueryLinker(self.collection, query_type='filter', members=self.members)
+        return QueryLinker(self.collection, query_type='filter', members=members)
+
+
+    def build(self, db):
+        table = parent = self.collection.table
+        for member in self.members:
+            parent = member.execute(db, parent, self.collection, table)
+        return parent
+
+
+    def outputs(self, model, db):
+        curr_query = self.build(db)
+        model_table = db.db.table(model)
+        query = curr_query.join(model_table, [model_table.id == curr_query.id, model_table.query_id == self.collection.name])
+        cursor = SuperDuperIbisCursor(query, self.collection.primary_id, encoders=db.encoders)
+        return cursor.execute()
+
+    def model_update(self, 
+        db,
+        ids: t.Sequence[t.Any],
+        key: str,
+        model: str,
+        outputs: t.Sequence[t.Any],
+                     ):
+        if key.startswith('_outputs'):
+            key = key.split('.')[1]
+        if not outputs:
+            return
+
+        input_table = self.collection.name
+
+        table_record = []
+        for ix in range(len(outputs)):
+            d = Document({'id': int(ids[ix]), 'input_id': int(ids[ix]), 'output': outputs[ix], 'query_id': input_table, 'key': key})
+            table_record.append(d)
+        db.execute(Table(model).insert(table_record))
+
 
     def __call__(self, *args, **kwargs):
         self.members.update_last_query(args, kwargs, type=QueryType.QUERY.value)
@@ -213,21 +286,6 @@ class QueryLinker(LogicalExprMixin):
         return parent
 
 
-class IbisConnection:
-    def __init__(self, db):
-        self.db = db
-
-    def _execute(self, db, query, parent):
-        table = parent
-        for member in query.members:
-            parent = member.execute(
-                db, parent, table=query.collection, ibis_table=table
-            )
-        cursor = SuperDuperIbisCursor(parent, query.collection.primary_id, encoders={})
-        return cursor.execute()
-
-    def execute(self, query):
-        return self._execute(self.db, query, self.db.table(query.collection.name))
 
 
 class PlaceHolderQuery:
@@ -326,15 +384,20 @@ class Insert:
                 r['_fold'] = 'train'
 
         return documents
-
+    
     def post(self, db, output, *args, **kwargs):
         graph = None
+        inserted_ids = [d[PRIMARY_ID] for d in kwargs['kwargs']['obj']]
         if self.refresh and not CFG.cdc:
+            '''
+
             graph = db.refresh_after_update_or_insert(
                 query=self,  # type: ignore[arg-type]
-                ids=output.inserted_ids,
+                ids=inserted_ids,
                 verbose=self.verbose,
             )
+            '''
+            pass
         return graph, output
 
 

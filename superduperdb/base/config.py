@@ -156,8 +156,8 @@ class DbComponent(JSONable):
     :param name: The name of the data layer
     """
 
-    cls: str = 'mongodb'
-    connection: str = 'pymongo'
+    cls: str = 'ibis'
+    connection: str = 'ibis'
     kwargs: t.Dict = Factory(lambda: MongoDB().dict())
     name: str = 'test_db'
 
@@ -170,7 +170,6 @@ class DbComponents(JSONable):
     :param data_backend: The data backend data layer
     :param metadata: The metadata data layer
     """
-
     artifact: DbComponent = Factory(lambda: DbComponent(name='_filesystem:test_db'))
     data_backend: DbComponent = Factory(DbComponent)
     metadata: DbComponent = Factory(DbComponent)

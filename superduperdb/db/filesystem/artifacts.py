@@ -6,11 +6,10 @@ import typing as t
 import click
 from superduperdb.misc.colors import Colors
 
-from superduperdb.misc.serialization import Info, serializers
 from superduperdb.db.base.artifact import ArtifactStore
 
 
-class FilesystemArtifactStore(ArtifactStore):
+class FileSystemArtifactStore(ArtifactStore):
     """
     Abstraction for storing large artifacts separately from primary data.
 
@@ -25,7 +24,9 @@ class FilesystemArtifactStore(ArtifactStore):
     ):
         self.name = name
         self.conn = conn
-        assert self.conn.startswith('./')
+        if not os.path.exists(self.conn):
+            print('Creating artifact store directory')
+            os.makedirs(self.conn, exist_ok=True)
 
     def delete_artifact(self, file_id: str):
         """

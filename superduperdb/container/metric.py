@@ -25,5 +25,6 @@ class Metric(Component):
         if self.object and not isinstance(self.object, Artifact):
             self.object = Artifact(artifact=self.object)
 
-    def __call__(self, x: int, y: int) -> bool:
-        return self.object.artifact(x, y)  # type: ignore[union-attr]
+    def __call__(self, x: t.Sequence[int], y: t.Sequence[int]) -> bool:
+        assert isinstance(self.object, Artifact)
+        return self.object.artifact(x, y)

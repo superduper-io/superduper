@@ -408,11 +408,17 @@ class Model(Component, PredictMixin):
         return out
 
     @property
-    def training_keys(self) -> t.Sequence[str]:
-        out = [self.train_X]
+    def training_keys(self) -> t.List:
+        if isinstance(self.train_X, list):
+            out = list(self.train_X)
+        elif self.train_X is not None:
+            out = [self.train_X]
         if self.train_y is not None:
-            out.append(self.train_y)
-        return out  # type: ignore[return-value]
+            if isinstance(self.train_y, list):
+                out.extend(self.train_y)
+            else:
+                out.append(self.train_y)
+        return out
 
     def append_metrics(self, d: t.Dict[str, float]) -> None:
         if self.metric_values is not None:
@@ -433,9 +439,9 @@ class Model(Component, PredictMixin):
             value=self.metric_values,
         )
 
-    def _validate(self, db, validation_set: Dataset, metrics: Metric):
+    def _validate(self, db: DB, validation_set: Dataset, metrics: Metric):
         if isinstance(validation_set, str):
-            validation_set = db.load('dataset', validation_set)
+            validation_set = t.cast(Dataset, db.load('dataset', validation_set))
         prediction = self._predict(
             [
                 MongoStyleDict(r.unpack())[self.train_X]  # type: ignore[index]
@@ -480,13 +486,13 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional[DB] = None,
-        select: t.Optional[Select] = None,
-        dependencies: t.Sequence[Job] = (),
         configuration: t.Optional[_TrainingConfiguration] = None,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
         data_prefetch: bool = False,
+        db: t.Optional[DB] = None,
+        dependencies: t.Sequence[Job] = (),
+        metrics: t.Optional[t.Sequence[Metric]] = None,
+        select: t.Optional[Select] = None,
+        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
     ):
         raise NotImplementedError
 
@@ -495,14 +501,14 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional[DB] = None,
-        select: t.Optional[Select] = None,
-        distributed: t.Optional[bool] = None,
-        dependencies: t.Sequence[Job] = (),
         configuration: t.Optional[_TrainingConfiguration] = None,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
         data_prefetch: bool = False,
+        db: t.Optional[DB] = None,
+        dependencies: t.Sequence[Job] = (),
+        distributed: t.Optional[bool] = None,
+        metrics: t.Optional[t.Sequence[Metric]] = None,
+        select: t.Optional[Select] = None,
+        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
         **kwargs,
     ) -> t.Optional[Pipeline]:
         if isinstance(select, dict):
@@ -532,11 +538,11 @@ class Model(Component, PredictMixin):
             return self._fit(
                 X,
                 y=y,
-                db=db,
-                validation_sets=validation_sets,
-                metrics=metrics,
                 configuration=configuration,
-                select=select,
                 data_prefetch=data_prefetch,
+                db=db,
+                metrics=metrics,
+                select=select,
+                validation_sets=validation_sets,
                 **kwargs,
             )

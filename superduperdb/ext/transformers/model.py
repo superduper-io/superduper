@@ -121,19 +121,19 @@ class Pipeline(Model):
 
         return train_data, valid_data
 
-    def _fit(  # type: ignore[override,return]
+    def _fit(  # type: ignore[override]
         self,
         X: str,
         y: str,
-        select: t.Optional[Select] = None,
-        db: t.Optional[DB] = None,
         configuration: t.Optional[_TrainingConfiguration] = None,
-        validation_sets: t.Optional[t.Sequence[str]] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
         data_prefetch: bool = False,
+        db: t.Optional[DB] = None,
+        metrics: t.Optional[t.Sequence[Metric]] = None,
         prefetch_size: int = _DEFAULT_PREFETCH_SIZE,
+        select: t.Optional[Select] = None,
+        validation_sets: t.Optional[t.Sequence[str]] = None,
         **kwargs,
-    ) -> t.Optional[t.Dict[str, t.Any]]:
+    ) -> None:
         if configuration is not None:
             self.configuration = configuration
         if select is not None:
@@ -166,15 +166,15 @@ class Pipeline(Model):
             self.append_metrics(output)
             return output
 
+        assert isinstance(self.collate_fn, Artifact)
+        assert db is not None
         trainer = TrainerWithSaving(
             model=self.object.artifact,
             args=self.training_arguments,
             train_dataset=train_data,
             eval_dataset=valid_data,
-            data_collator=self.collate_fn.artifact,  # type: ignore[union-attr]
-            custom_saver=lambda: db.replace(  # type: ignore[union-attr]
-                self, upsert=True
-            ),
+            data_collator=self.collate_fn.artifact,
+            custom_saver=lambda: db.replace(self, upsert=True),
             compute_metrics=compute_metrics,
             **kwargs,
         )

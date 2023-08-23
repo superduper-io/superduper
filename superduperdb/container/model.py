@@ -203,7 +203,7 @@ class PredictMixin:
     ):
         ids = []
         if overwrite:
-            query = select.select_ids
+            query = select.select_ids()
         else:
             query = select.select_ids_of_missing_outputs(key=X, model=self.identifier)  # type: ignore[assignment]
 

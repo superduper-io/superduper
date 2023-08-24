@@ -95,7 +95,6 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
     return [Document(Document.decode(r, encoders=encoders)) for r in documents]
 
 
-# ruff: noqa: E501
 def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
     if isinstance(r, dict) and '_content' in r:
         encoder = encoders[r['_content']['encoder']]

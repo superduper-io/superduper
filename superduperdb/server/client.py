@@ -39,6 +39,9 @@ class ClientArtifactStore:
 
 class Client:
     def __init__(self, uri):
+        """
+        :param uri: uri of the server
+        """
         self.uri = uri
         self.encoders = LoadDict(self, 'encoder')
 
@@ -62,6 +65,27 @@ class Client:
         )
 
     def select(self, query: Select):
+        """
+        Send a request to the server to execute a select query and then
+        retrieve the data from the server.
+
+        The request is split into three parts:
+        1. Send the serialized query to the server for execution
+        2. Retrieve the serialized documents from the server
+        3. Deserialize the documents
+
+        Each serialized query contains the following information:
+        - request_id: id of the request, randomly generated
+        - query: serialized query type
+
+        The request for the serialized documents contains the following information:
+        - request_id: id of the request, randomly generated
+        - file_id: id of the documents, returned by the initial server response
+
+        :param query: query type to be sent to the server
+
+        :return: deserialized documents
+        """
         request_id = str(uuid.uuid4())
         response = self._make_get_request(
             'select',
@@ -75,6 +99,26 @@ class Client:
         return documents
 
     def insert(self, query: Insert):
+        """
+        Dump a sequence of documents into BSON and send to the server.
+
+        The request is split into two parts:
+        1. Send serialized documents to the server in a single request
+        2. Send serialized metadata to the server, including the query type
+
+        Each serialized sequence of documents request contains the following
+        information:
+        - request_id: id of the request, randomly generated
+        - file_id: extra randomly generated id (TODO: redundant?)
+        - data: serialized documents
+
+        The metadata request contains the following information:
+        - request_id: id of the request, randomly generated
+        - query: serialized query type
+        - documents: ID for the documents on the server
+
+        :param query: query type and attached documents to be sent to the server
+        """
         documents = dump_bsons(query.documents)
         query.documents = []
         serialized = query.serialize()
@@ -92,18 +136,38 @@ class Client:
         )
 
     def delete(self, query: Delete):
+        """
+        Send serialized delete query to the server
+
+        :param query: delete query to be sent to the server
+        """
         self._make_post_or_put_request(
             'delete', method='POST', json={'query': query.serialize()}
         )
         return 'ok'
 
     def _get(self, request_id, file_id):
+        """
+        Retrieve serialized artifact from the server
+
+        :param request_id: id of the request that created the artifact on the server
+        :param file_id: id of the artifact
+
+        :return: serialized artifact
+        """
         response = self._make_get_request(
             f'artifacts/get/{request_id}/{file_id}',
         )
         return response.content
 
     def _put(self, request_id, file_id, data):
+        """
+        Send serialized artifact to the server
+
+        :param request_id: id of the request, randomly generated
+        :param file_id: id of the artifact, randomly generated
+        :param data: serialized artifact
+        """
         response = self._make_post_or_put_request(
             f'artifacts/put/{request_id}/{file_id}',
             method='PUT',
@@ -112,18 +176,36 @@ class Client:
         return response.text
 
     def add(self, component: Component):
+        """
+        Serialize component to metadata and artifacts and send to the server.
+
+        The request is split into two parts:
+        1. Send serialized artifacts to the server one-by-one
+        2. Send serialized metadata to the server
+
+        Each artifact request contains the following information:
+        - request_id: id of the request, randomly generated
+        - file_id: id of the file, randomly generated
+        - data: serialized artifact
+
+        The metadata request contains the following information:
+        - request_id: id of the request, randomly generated
+        - component: serialized metadata
+        - serializers: mapping from file_id to serializer name eg 'dill'
+
+        :param component: component to be serialized and sent to the server
+        """
         request_id = str(uuid.uuid4())
         d = component.serialize()
         artifacts = set(get_artifacts(d))
         lookup = {a: str(uuid.uuid4()) for a in artifacts}
         serializers = {lookup[a]: a.serializer for a in artifacts}
         d = replace_artifacts_with_dict(d, lookup)
-        request_id = str(uuid.uuid4())
         for a in artifacts:
             self._put(
                 request_id=request_id,
                 file_id=lookup[a],
-                data=a.serialize(),
+                data=a.serialize(),  # Do we need to serialize again?
             )
         self._make_post_or_put_request(
             'add',
@@ -141,6 +223,17 @@ class Client:
         identifier: t.Optional[str] = None,
         version: t.Optional[int] = None,
     ):
+        """
+        Send show request to the server
+
+        :param type_id: type_id of component to show ['encoder', 'model', 'listener',
+                       'learning_task', 'training_configuration', 'metric',
+                       'vector_index', 'job']
+        :param identifier: identifying string to component
+        :param version: (optional) numerical version - specify for full metadata
+
+        :return: metadata of componentd already added to the database
+        """
         return self._make_get_request(
             'show',
             json={
@@ -157,6 +250,15 @@ class Client:
         version: t.Optional[int] = None,
         force: bool = False,
     ):
+        """
+        Send forced remove request to the server
+
+        :param type_id: type_id of component to show ['encoder', 'model', 'listener',
+                       'learning_task', 'training_configuration', 'metric',
+                       'vector_index', 'job']
+        :param identifier: identifying string to component
+        :param version: (optional) numerical version - specify for full metadata
+        """
         version_str = '' if version is None else f'/{version}'
 
         if not force and not click.confirm(
@@ -178,6 +280,20 @@ class Client:
         )
 
     def load(self, type_id: str, identifier: str, version: t.Optional[int] = None):
+        """
+        Load component from the database via the server.
+
+        This endpoint sends a request to the server to load the component from the
+        database. It then receives the component metadata as a response. Then it
+        retrieves the component from the server, derserialises the component and
+        returns it. It generates a random ID value for communicating with the server.
+
+        :param type_id: type_id of component to load ['encoder', 'model', 'listener',
+                       'learning_task', 'training_configuration', 'metric',
+                       'vector_index', 'job']
+        :param identifier: identifying string to component
+        :param version: (optional) numerical version - specify for full metadata
+        """
         request_id = str(uuid.uuid4())
         d = self._make_get_request(
             'load',
@@ -194,6 +310,17 @@ class Client:
         return Serializable.deserialize(d)
 
     def select_one(self, query: SelectOne) -> Document:
+        """
+        Send a select query to the server and return a the result.
+
+        This endpoint sends a request to the server to execute a single select
+        statement in the database. It receives an ID for the result from the
+        server, and then uses this ID to retrieve the result from the server.
+        Finally it deserializes the result and returns it. It generates a random
+        ID value for communicating with the server.
+
+        :param query: serialized query
+        """
         request_id = str(uuid.uuid4())
         response = self._make_get_request(
             'select_one',
@@ -206,6 +333,10 @@ class Client:
         return load_bson(result, encoders=self.encoders)
 
     def like(self, query: Like):
+        """
+        TODO: Implement server functionality for this endpoint.
+        """
+
         like = query.like.dump_bson()  # type: ignore[attr-defined]
         query.like = None  # type: ignore[attr-defined]
         serialized = query.serialize()
@@ -224,7 +355,29 @@ class Client:
         return load_bsons(results, encoders=self.encoders)
 
     def update(self, query: Update):
+        """
+        Dump a sequence of documents into BSON and send to the server.
+
+        The request is split into two parts:
+        1. Send serialized documents to the server in a single request
+        2. Send serialized metadata to the server, including the query type
+
+        Each serialized sequence of documents request contains the following
+        information:
+        - request_id: id of the request, randomly generated
+        - file_id: extra randomly generated id (TODO: redundant?)
+        - data: serialized documents
+
+        The metadata request contains the following information:
+        - request_id: id of the request, randomly generated
+        - query: serialized query type
+        - documents: ID for the documents on the server
+
+        :param query: query type and attached documents to be sent to the server
+        """
+        # TODO: Not sure that this even works...
         update = query.update.dump_bson()  # type: ignore[attr-defined]
+
         file_id = str(uuid.uuid4())
         request_id = str(uuid.uuid4())
         self._put(request_id=request_id, file_id=file_id, data=update)

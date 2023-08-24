@@ -65,8 +65,13 @@ class Encoder(Component):
     def decode(self, b: bytes) -> t.Any:
         return self(self.decoder.artifact(b))  # type: ignore[union-attr]
 
+    def dump(self, other):
+        return self.encoder.artifact(other)  # type: ignore[union-attr]
+
     def encode(
-        self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
+        self,
+        x: t.Optional[t.Any] = None,
+        uri: t.Optional[str] = None,
     ) -> t.Dict[str, t.Any]:
         if self.encoder is not None:
             if x is not None:

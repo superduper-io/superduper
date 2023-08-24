@@ -356,6 +356,7 @@ class Model(Component, PredictMixin):
     :param object: Model object, e.g. sklearn model, etc..
     :param encoder: Encoder instance (optional)
     :param type_id: ...
+    codeium
     """
 
     identifier: str

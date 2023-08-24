@@ -6,7 +6,10 @@ import typing as t
 import ibis
 
 from superduperdb import CFG
+from superduperdb.container.component import Component
 from superduperdb.container.document import Document
+from superduperdb.container.schema import Schema
+from superduperdb.db.base.db import DB
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
 
 PRIMARY_ID: str = 'id'
@@ -118,17 +121,27 @@ class OutputTable:
                 }
         return ibis.schema(schema)
 
+
 @dc.dataclass
-class Table:
-    name: str
-    primary_id: str = 'id'
+class Table(Component):
+    identifier: str
+    schema: Schema
     table: t.Any = None
+    primary_id: str = 'id'
+    #: A unique name for the class
+    type_id: t.ClassVar[str] = 'table'
+
+    def on_create(self, db: DB) -> None:
+        db.databackend.create_table(self.identifier, schema=self.schema)
 
     def get_table(self, conn):
         if self.table is None:
-            self.table = conn.table(self.name)
+            self.table = conn.table(self.identifier)
         return self.table
 
+    @property
+    def name(self):
+        return self.identifier
 
     def __getattr__(self, k):
         if k in self.__dict__:
@@ -159,9 +172,9 @@ class Table:
             'kwargs': {'valid_prob': valid_prob},
             'documents': args[0],
         }
-        kwargs.update({'table_name': self.name})
+        kwargs.update({'table_name': self.identifier})
         decoded_docs = [d.unpack() for d in args[0]]
-        kwargs.update({'obj': decoded_docs })
+        kwargs.update({'obj': decoded_docs})
         args = args[1:]
         
         insert = Query(
@@ -240,11 +253,10 @@ class QueryLinker(LogicalExprMixin):
             parent = member.execute(db, parent, self.collection, table)
         return parent
 
-
     def outputs(self, model, db):
         curr_query = self.build(db)
         model_table = db.db.table(model)
-        query = curr_query.join(model_table, [model_table.id == curr_query.id, model_table.query_id == self.collection.name])
+        query = curr_query.join(model_table, [model_table.id == curr_query.id, model_table.query_id == self.collection.identifier])
         cursor = SuperDuperIbisCursor(query, self.collection.primary_id, encoders=db.encoders)
         return cursor.execute()
 
@@ -260,7 +272,7 @@ class QueryLinker(LogicalExprMixin):
         if not outputs:
             return
 
-        input_table = self.collection.name
+        input_table = self.collection.identifier
 
         table_record = []
         for ix in range(len(outputs)):
@@ -284,8 +296,6 @@ class QueryLinker(LogicalExprMixin):
         for member in self.members:
             parent = member.execute(db, parent, self.collection, ibis_table=ibis_table)
         return parent
-
-
 
 
 class PlaceHolderQuery:
@@ -370,19 +380,20 @@ class Insert:
     namespace: str = 'ibis'
 
     def pre(self, db):
-        valid_prob = self.kwargs.get('valid_prob', 0.05)
+        if self.base_table.identifier not in db.tables:
+            db.add(self.base_table)
 
         for e in self.encoders:
             db.add(e)
-        documents = [r.encode() for r in self.documents]
+
+        documents = [r.encode(self.base_table.schema) for r in self.documents]
         for r in documents:
             if '_fold' in r:
                 continue
-            if random.random() < valid_prob:
+            if random.random() < 0.05:
                 r['_fold'] = 'valid'
             else:
                 r['_fold'] = 'train'
-
         return documents
     
     def post(self, db, output, *args, **kwargs):
@@ -390,7 +401,6 @@ class Insert:
         inserted_ids = [d[PRIMARY_ID] for d in kwargs['kwargs']['obj']]
         if self.refresh and not CFG.cdc:
             '''
-
             graph = db.refresh_after_update_or_insert(
                 query=self,  # type: ignore[arg-type]
                 ids=inserted_ids,

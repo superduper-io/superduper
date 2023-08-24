@@ -7,6 +7,7 @@ from superduperdb.container.job import Job
 from superduperdb.db.ibis.query import OutputTable
 from superduperdb import logging
 
+
 class IbisDB(DB):
     def _execute(self, query, parent):
         table = parent
@@ -22,10 +23,10 @@ class IbisDB(DB):
         return self._execute(query, table)
 
     def add(self, 
-        object: Component,
-            dependencies: t.Sequence[Job] = ()):
+            object: Component,
+            dependencies: t.Sequence[Job] = (),
+        ):
         super().add(object, dependencies=dependencies)
-
         try:
             table = OutputTable(model=object.identifier)
             table.create(self.db)

@@ -30,7 +30,7 @@ def connection():
 
 def test_simple_ibis_query(connection):
     # SuperDuperdb Version
-    table = Table(name='my_table')
+    table = Table(identifier='my_table')
 
     query = table.select(table.primary_id)
     curr = IbisConnection(connection).execute(query)
@@ -40,7 +40,7 @@ def test_simple_ibis_query(connection):
 
 def test_select_ids_ibis_query(connection):
     # SuperDuperdb Version
-    table = Table(name='my_table')
+    table = Table(identifier='my_table')
 
     query = table.filter(table.age > 24).select_ids()
     curr = IbisConnection(connection).execute(query)
@@ -50,7 +50,7 @@ def test_select_ids_ibis_query(connection):
 
 def test_limit_ibis_query(connection):
     # SuperDuperdb Version
-    table = Table(name='my_table')
+    table = Table(identifier='my_table')
 
     query = table.filter(table.age > 24).limit(4).select_ids()
     curr = IbisConnection(connection).execute(query)

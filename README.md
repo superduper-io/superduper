@@ -6,7 +6,7 @@
 
 <div align="center">
 
-# Deploy, train and operate AI with your datastore!
+# Build and deploy AI on your datastore!
 
 </div>
 
@@ -51,7 +51,7 @@
 </h3>
 <hr>
 
-SuperDuperDB allows you to easily integrate and manage any AI models and APIs with your datastore: from LLM based Q&A and vector search, image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc. to highly custom machine learning models and use-cases.
+SuperDuperDB allows you to easily deploy, train and operate any AI models and APIs on your datastore: from LLM based Q&A and vector search, image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc. to highly custom machine learning models, use-cases and workflows.
 
 A single scalable deployment of all your AI models which is automatically kept up-to-date as new data is handled automatically and immediately.
 
@@ -64,8 +64,8 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
 
 <hr>	
 
-- <a href="https://superduperdb.github.io/superduperdb/"><strong>Explore the docs!</strong></a><br>
-- <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Check out example use cases!</strong></a><br>
+- <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a><br>
+- <a href="https://superduperdb.github.io/superduperdb/examples/index.html"><strong>Example use cases</strong></a><br>
 - <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
 - <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA
 "><strong>Join our Slack!</strong></a><br>
@@ -104,7 +104,7 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
 <br>
 
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_diagram.png">
+  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_diagram.svg">
 </p>
 
 # How To

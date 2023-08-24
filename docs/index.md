@@ -1,12 +1,12 @@
 <!-- # SuperDuperDB documentation -->
 
-# Welcome to the SuperDuperDB docs
+# Welcome to the SuperDuperDB Docs
 
 ## What is SuperDuperDB?
 
 SuperDuperDB is a Python package providing tools for developers to apply AI and machine learning in their already deployed datastore, and simultaneously to set-up a scalable, open-source and auditable environment to do this.
 
-![](img/SuperDuperDB_diagram.png)
+![](img/SuperDuperDB_diagram.svg)
 
 ## Mission
 

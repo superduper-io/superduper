@@ -180,8 +180,8 @@ class PredictMixin:
         return db.add(
             Listener(
                 key=X,
-                model=self,  # type: ignore[arg-type]
-                select=select,  # type: ignore[arg-type]
+                model=t.cast(Model, self),
+                select=select,
                 predict_kwargs={
                     **kwargs,
                     'in_memory': in_memory,
@@ -205,9 +205,9 @@ class PredictMixin:
         if overwrite:
             query = select.select_ids
         else:
-            query = select.select_ids_of_missing_outputs(key=X, model=self.identifier)  # type: ignore[assignment]
+            query = select.select_ids_of_missing_outputs(key=X, model=self.identifier)
 
-        for r in tqdm.tqdm(db.execute(query)):  # type: ignore[arg-type]
+        for r in tqdm.tqdm(db.execute(query)):
             ids.append(str(r[db.databackend.id_field]))
 
         return self._predict_with_select_and_ids(
@@ -246,6 +246,7 @@ class PredictMixin:
                 it += 1
             return
 
+        X_data: t.Any
         if in_memory:
             if db is None:
                 raise ValueError('db cannot be None')
@@ -255,7 +256,7 @@ class PredictMixin:
             else:
                 X_data = [r.unpack() for r in docs]
         else:
-            X_data = QueryDataset(  # type: ignore[assignment]
+            X_data = QueryDataset(
                 select=select,
                 ids=ids,
                 fold=None,
@@ -267,12 +268,12 @@ class PredictMixin:
         outputs = self.predict(X=X_data, one=False, distributed=False, **kwargs)
 
         if self.encoder is not None:
-            # ruff: noqa: E501
-            outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
+            assert not isinstance(self.encoder, str)
+            outputs = [self.encoder(x).encode() for x in outputs]
 
         select.model_update(
-            db=db,  # type: ignore[arg-type]
-            model=self.identifier,  # type: ignore[arg-type]
+            db=db,
+            model=self.identifier,
             outputs=outputs,
             key=X,
             ids=ids,
@@ -303,14 +304,16 @@ class PredictMixin:
 
         if db is not None:
             logging.info(f'Adding model {self.identifier} to db')
-            db.add(self)  # type: ignore[arg-type]
+            assert isinstance(self, Component)
+            db.add(self)
             logging.info('Done.')
 
         if distributed is None:
             distributed = s.CFG.distributed
 
         if listen:
-            return self._predict_and_listen(X=X, db=db, **kwargs)  # type: ignore[arg-type]
+            assert db is not None
+            return self._predict_and_listen(X=X, db=db, **kwargs)
 
         if distributed:
             return self.create_predict_job(
@@ -323,21 +326,23 @@ class PredictMixin:
             )(db=db, distributed=distributed, dependencies=dependencies)
         else:
             if select is not None and ids is None:
+                assert db is not None
                 return self._predict_with_select(
                     X=X,
                     select=select,
-                    db=db,  # type: ignore[arg-type]
+                    db=db,
                     in_memory=in_memory,
                     max_chunk_size=max_chunk_size,
                     overwrite=overwrite,
                     **kwargs,
                 )
             elif select is not None and ids is not None:
+                assert db is not None
                 return self._predict_with_select_and_ids(
                     X=X,
                     select=select,
                     ids=ids,
-                    db=db,  # type: ignore[arg-type]
+                    db=db,
                     max_chunk_size=max_chunk_size,
                     in_memory=in_memory,
                     **kwargs,
@@ -425,7 +430,7 @@ class Model(Component, PredictMixin):
             for k, v in d.items():
                 self.metric_values.setdefault(k, []).append(v)
 
-    def validate(self, db, validation_set: Dataset, metrics: Metric):
+    def validate(self, db, validation_set: Dataset, metrics: t.Sequence[Metric]):
         db.add(self)
         out = self._validate(db, validation_set, metrics)
         if self.metric_values is None:
@@ -439,26 +444,25 @@ class Model(Component, PredictMixin):
             value=self.metric_values,
         )
 
-    def _validate(self, db: DB, validation_set: Dataset, metrics: Metric):
+    def _validate(self, db: DB, validation_set: Dataset, metrics: t.Sequence[Metric]):
         if isinstance(validation_set, str):
             validation_set = t.cast(Dataset, db.load('dataset', validation_set))
-        prediction = self._predict(
-            [
-                MongoStyleDict(r.unpack())[self.train_X]  # type: ignore[index]
-                for r in validation_set.data
-            ]
+
+        mdicts = [MongoStyleDict(r.unpack()) for r in validation_set.data]
+        # TOOD: self.train_X, self.train_y are sequences of strings: this can't work
+        prediction_X = self._predict(
+            [d[self.train_X] for d in mdicts]  # type: ignore[index]
         )
+        prediction_y = self._predict(
+            [d[self.train_X] for d in mdicts]  # type: ignore[index]
+        )
+        assert isinstance(prediction_X, list)
+        assert isinstance(prediction_y, list)
+        assert all(isinstance(i, int) for i in prediction_X + prediction_y)
         results = {}
 
-        # TODO: metrics is definitely not iterable
-        for m in metrics:  # type: ignore[attr-defined]
-            out = m(
-                prediction,
-                [
-                    MongoStyleDict(r.unpack())[self.train_y]  # type: ignore[index]
-                    for r in validation_set.data
-                ],
-            )
+        for m in metrics:
+            out = m(prediction_X, prediction_y)  # type: ignore[index]
             results[f'{validation_set.identifier}/{m.identifier}'] = out
         return results
 
@@ -518,7 +522,8 @@ class Model(Component, PredictMixin):
             validation_sets = list(validation_sets)
             for i, vs in enumerate(validation_sets):
                 if isinstance(vs, Dataset):
-                    db.add(vs)  # type: ignore[union-attr]
+                    assert db is not None
+                    db.add(vs)
                     validation_sets[i] = vs.identifier
 
         if db is not None:

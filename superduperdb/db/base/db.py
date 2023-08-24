@@ -850,7 +850,7 @@ class DB:
     def _get_object_info(self, identifier, type_id, version=None):
         return self.metadata.get_component(type_id, identifier, version=version)
 
-    def _apply_listener(  # noqa: F811
+    def _apply_listener(
         self,
         identifier,
         ids: t.Optional[t.Sequence[str]] = None,

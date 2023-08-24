@@ -5,11 +5,19 @@ from bson.objectid import ObjectId
 
 import superduperdb as s
 from superduperdb.container.encoder import Encodable
+from superduperdb.container.schema import Schema
 
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 
 _OUTPUTS_KEY: str = '_outputs'
+
+
+class Row:
+    content: ContentType
+
+    def __init__(self) -> None:
+        pass
 
 
 class Document:
@@ -31,8 +39,10 @@ class Document:
         """Dump this document into BSON and encode as bytes"""
         return bson.encode(self.encode())
 
-    def encode(self) -> t.Any:
+    def encode(self, schema: t.Optional[Schema] = None) -> t.Any:
         """Make a copy of the content with all the Encodables encoded"""
+        if schema is not None:
+            return _encode_with_schema(self.content, schema)
         return _encode(self.content)
 
     def outputs(self, key: str, model: str) -> t.Any:
@@ -124,6 +134,11 @@ def _encode(r: t.Any) -> t.Any:
         return r
     s.log.info(f'Unexpected type {type(r)} in Document.encode')
     return r
+
+
+def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
+    if isinstance(r, dict):
+        return {k: _encode_with_schema(v, schema) for k, v in r.items()}
 
 
 def _unpack(item: t.Any) -> t.Any:

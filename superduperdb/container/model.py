@@ -500,7 +500,6 @@ class Model(Component, PredictMixin):
     ):
         raise NotImplementedError
 
-    # ruff: noqa: F821
     def fit(
         self,
         X: t.Any,

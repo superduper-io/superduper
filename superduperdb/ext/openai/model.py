@@ -148,7 +148,6 @@ class OpenAIChatCompletion(OpenAI):
             return self._predict_one(X, context=context, **kwargs)
         return [self._predict_one(msg) for msg in X]
 
-    # ruff: noqa: E501
     async def _apredict(
         self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):

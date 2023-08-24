@@ -66,8 +66,13 @@ class Encoder(Component):
         assert isinstance(self.decoder, Artifact)
         return self(self.decoder.artifact(b))
 
+    def dump(self, other):
+        return self.encoder.artifact(other)  # type: ignore[union-attr]
+
     def encode(
-        self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
+        self,
+        x: t.Optional[t.Any] = None,
+        uri: t.Optional[str] = None,
     ) -> t.Dict[str, t.Any]:
         if self.encoder is None:
             assert x is not None

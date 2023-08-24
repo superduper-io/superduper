@@ -36,10 +36,11 @@ class MongoDataBackend(BaseDataBackend):
 
     def get_output_from_document(
         self, r: Document, key: str, model: str
-    ) -> MongoStyleDict:
+    ) -> t.Tuple[MongoStyleDict, t.Any]:
+        assert isinstance(r.content, dict)
         return (
-            MongoStyleDict(r.content)[f'_outputs.{key}.{model}'],  # type: ignore
-            r.content['_id'],  # type: ignore
+            MongoStyleDict(r.content)[f'_outputs.{key}.{model}'],
+            r.content['_id'],
         )
 
     def set_content_bytes(self, r, key, bytes_):
@@ -70,19 +71,31 @@ class MongoDataBackend(BaseDataBackend):
     def delete_vector_index(self, vector_index: VectorIndex):
         # see `VectorIndex` class for details
         # indexing_listener contains a `Select` object
-        collection = vector_index.indexing_listener.select.collection.name  # type: ignore[union-attr]
+        assert not isinstance(vector_index.indexing_listener, str)
+        select = vector_index.indexing_listener.select
+
+        # TODO: probably MongoDB queries should all have a common base class
+        collection = select.collection  # type: ignore[attr-defined]
         self.db.command(
             {
-                "dropSearchIndex": collection,
+                "dropSearchIndex": collection.name,
                 "name": vector_index.identifier,
             }
         )
 
-    # ruff: noqa: E501
     def create_vector_index(self, vector_index):
         collection = vector_index.indexing_listener.select.collection.name
         key = vector_index.indexing_listener.key
         model = vector_index.indexing_listener.model.identifier
+        fields = {
+            model: [
+                {
+                    "dimensions": vector_index.dimensions,
+                    "similarity": vector_index.measure,
+                    "type": "knnVector",
+                }
+            ]
+        }
         self.db.command(
             {
                 "createSearchIndexes": collection,
@@ -96,15 +109,7 @@ class MongoDataBackend(BaseDataBackend):
                                     "_outputs": {
                                         "fields": {
                                             key: {
-                                                "fields": {
-                                                    model: [
-                                                        {
-                                                            "dimensions": vector_index.dimensions,
-                                                            "similarity": vector_index.measure,
-                                                            "type": "knnVector",
-                                                        }
-                                                    ]
-                                                },
+                                                "fields": fields,
                                                 "type": "document",
                                             }
                                         },

@@ -113,11 +113,19 @@ class BaseDatabaseListener(ABC):
 
     @abstractmethod
     def listen(self):
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def stop(self):
-        raise NotImplementedError
+        pass
+
+    @abstractmethod
+    def setup_cdc(self) -> 'CollectionChangeStream':
+        pass
+
+    @abstractmethod
+    def next_cdc(self, stream: 'CollectionChangeStream') -> None:
+        pass
 
 
 def delete_vectors(
@@ -259,9 +267,8 @@ class CDCHandler(threading.Thread):
         for identifier in self.db.show('vector_index'):
             vector_index = self.db.load(identifier=identifier, type_id='vector_index')
             vector_index = t.cast(VectorIndex, vector_index)
-            indexing_listener_identifier = (
-                vector_index.indexing_listener.identifier  # type: ignore[union-attr]
-            )
+            assert not isinstance(vector_index.indexing_listener, str)
+            indexing_listener_identifier = vector_index.indexing_listener.identifier
             task_workflow.add_node(
                 f'{task_name}({indexing_listener_identifier})',
                 job=FunctionJob(
@@ -438,7 +445,7 @@ class _DatabaseListenerThreadScheduler(threading.Thread):
 
     def run(self) -> None:
         try:
-            cdc_stream = self.listener.setup_cdc()  # type: ignore[attr-defined]
+            cdc_stream = self.listener.setup_cdc()
             self.start_event.set()
             logging.info(
                 f'Database listen service started at {datetime.datetime.now()}'
@@ -448,7 +455,7 @@ class _DatabaseListenerThreadScheduler(threading.Thread):
             return
         while not self.stop_event.is_set():
             try:
-                self.listener.next_cdc(cdc_stream)  # type: ignore[attr-defined]
+                self.listener.next_cdc(cdc_stream)
             except Exception as exc:
                 logging.error(f'Error while listening to cdc stream :: reason {exc}')
                 break
@@ -469,6 +476,8 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
 
     IDENTITY_SEP: str = '/'
     _scheduler: t.Optional[threading.Thread]
+
+    _change_pipeline: t.Union[str, t.Sequence[t.Dict], None] = None
 
     def __init__(
         self,
@@ -493,9 +502,11 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         self.tokens = CachedTokens()
         self._change_counters = Counter(inserts=0, updates=0, deletes=0)
 
-        self.resume_token = (
-            resume_token.token if resume_token else None  # type: ignore[attr-defined]
-        )
+        if resume_token is not None:
+            # TODO: resume_token is a dict: this can't work
+            self.resume_token = resume_token.token  # type: ignore[attr-defined]
+        else:
+            self.resume_token = None
         self._change_pipeline = None
         self._stop_event = stop_event
         self._startup_event = threading.Event()
@@ -674,7 +685,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         if change_pipeline is None:
             change_pipeline = MongoChangePipelines.get('generic')
 
-        self._change_pipeline = change_pipeline  # type: ignore [assignment]
+        self._change_pipeline = change_pipeline
 
     def resume(self, token: TokenType) -> None:
         """
@@ -711,7 +722,8 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             )
             self.attach_scheduler(scheduler)
             self.set_change_pipeline(change_pipeline)
-            self._scheduler.start()  # type: ignore[union-attr]
+            assert self._scheduler is not None
+            self._scheduler.start()
 
             while not self._startup_event.is_set():
                 time.sleep(0.1)

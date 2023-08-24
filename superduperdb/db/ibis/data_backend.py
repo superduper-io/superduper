@@ -1,4 +1,6 @@
+from warnings import warn
 import click
+import ibis
 from ibis.backends.base import BaseBackend
 
 from superduperdb.db.base.data_backend import BaseDataBackend
@@ -14,6 +16,20 @@ class IbisDataBackend(BaseDataBackend):
     @property
     def db(self):
         return self._db
+
+    def create_table_and_schema(self, identifier: str, mapping: dict):
+        """
+        Create a schema in the data-backend.
+        """
+        try:
+            t = self.conn.create_table(identifier, schema=ibis.schema(mapping))
+        except Exception as e:
+            if 'exists' in str(e):
+                warn("Table already exists, skipping...")
+                t = self.conn.table(identifier)
+            else:
+                raise e
+        return t
 
     def drop(self, force: bool = False):
         if not force:

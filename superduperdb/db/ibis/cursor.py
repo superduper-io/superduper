@@ -3,6 +3,7 @@ import re
 import typing as t
 
 from superduperdb.db.base.cursor import SuperDuperCursor
+from superduperdb.container.document import Document
 
 
 @dc.dataclass
@@ -19,22 +20,24 @@ class SuperDuperIbisCursor(SuperDuperCursor):
                 if "'NoneType' object has no attribute 'groups'" in str(e):
                     continue
                 raise e
+            name = name.split('::_encodable')[0]
             encoders[name] = self.encoders[identifier]
         return encoders
+
 
     def execute(self):
         if self.raw_cursor[0] is None:
             return
     
         schema_names = self.raw_cursor.schema().names
-        encoders = self._get_encoders_for_schema(schema_names)
 
-        if encoders:
-            raw_cursor = self.raw_cursor.execute()
-            for k in encoders:
-                raw_cursor.loc[:, k] = raw_cursor.loc[:, k].apply(lambda x: encoders[k].decode(x).x)
-            new_cols = [c.split('::_encoder')[0] for c in raw_cursor.columns]
-            raw_cursor.columns = new_cols
+        self.raw_cursor = self.raw_cursor.execute()
+        self.encoders = self._get_encoders_for_schema(schema_names)
+
+        if self.encoders:
+            new_cols = [c.split('::_encodable')[0] for c in self.raw_cursor.columns]
+            self.raw_cursor.columns = new_cols
+
         self.dict_cursor = self.raw_cursor.to_dict(orient="records")
         self._n = len(self.dict_cursor)
         self._index = 0

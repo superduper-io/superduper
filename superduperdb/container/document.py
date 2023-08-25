@@ -74,8 +74,10 @@ class Document:
         assert isinstance(self.content, dict)
         self.content[key] = value
 
-    def unpack(self) -> t.Any:
+    def unpack(self, schema: t.Optional[Schema] = None ) -> t.Any:
         """Returns the content, but with any encodables replacecs by their contents"""
+        if schema is not None:
+            return _unpack_with_schema(self.content, schema)
         return _unpack(self.content)
 
 
@@ -121,7 +123,10 @@ def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
         return [_decode(x, encoders) for x in r]
     elif isinstance(r, dict):
         for k in r:
-            r[k] = _decode(r[k], encoders)
+            if k in encoders:
+                r[k] = encoders[k].decode(r[k]).x
+            else:
+                r[k] = _decode(r[k], encoders)
     return r
 
 

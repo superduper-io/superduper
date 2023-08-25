@@ -72,22 +72,27 @@ class Encoder(Component):
         self,
         x: t.Optional[t.Any] = None,
         uri: t.Optional[str] = None,
-    ) -> t.Dict[str, t.Any]:
+        wrap: bool = True,
+    ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
         if self.encoder is not None:
             if x is not None:
-                return {
-                    '_content': {
-                        'bytes': self.encoder.artifact(x),  # type: ignore[union-attr]
-                        'encoder': self.identifier,
+                if wrap:
+                    return {
+                        '_content': {
+                            'bytes': self.encoder.artifact(x),  # type: ignore[union-attr]
+                            'encoder': self.identifier,
+                        }
                     }
-                }
+                return self.encoder.artifact(x)  # type: ignore[union-attr]
             else:
-                return {
-                    '_content': {
-                        'uri': uri,
-                        'encoder': self.identifier,
+                if wrap:
+                    return {
+                        '_content': {
+                            'uri': uri,
+                            'encoder': self.identifier,
+                        }
                     }
-                }
+                return uri
         else:
             assert x is not None
             return x

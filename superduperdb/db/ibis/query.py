@@ -136,7 +136,8 @@ class Table(Component):
         self.create(db)
 
     def create(self, db):
-        #db.add(schema)
+        for e in self.schema.encoders:
+            db.add(e)
         try:
             db.db.create_table(self.identifier, schema=self.schema.map())
         except Exception as e:
@@ -144,7 +145,6 @@ class Table(Component):
                 pass
             else:
                 raise e
-
 
     def get_table(self, conn):
         if self.table is None:

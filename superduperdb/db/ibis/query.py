@@ -101,6 +101,9 @@ class QueryChain:
             if query.type in [QueryType.QUERY.value, QueryType.ATTR.value]:
                 yield query
 
+    def __repr__(self):
+        return str(self.chain)
+
 @dc.dataclass
 class OutputTable:
     model: str
@@ -154,6 +157,25 @@ class Table(Component):
     @property
     def name(self):
         return self.identifier
+
+    def mutate_args(self, args):
+        mutated_args = []
+        for attr in args:
+            if isinstance(attr, str):
+                if attr in self.schema.fields:
+                    mutated_args.append(self.schema.mutate_column(attr))
+                else:
+                    mutated_args.append(attr)
+            elif isinstance(attr, QueryLinker):
+                attr_query = attr.get_latest_query()
+                if attr_query.type == QueryType.ATTR.value:
+                    mutated_args.append(self.schema.mutate_column(attr.query_type))
+                else:
+                    mutated_args.append(attr)
+            else:
+                mutated_args.append(attr)
+                
+        return mutated_args
 
     def __getattr__(self, k):
         if k in self.__dict__:
@@ -227,6 +249,9 @@ class QueryLinker(Serializable, LogicalExprMixin):
     kwargs: t.Dict = dc.field(default_factory=dict)
     members: QueryChain = dc.field(default_factory=QueryChain)
 
+    def get_latest_query(self):
+        return self.members.get(-1)
+
     def __getattr__(self, k):
         if k in self.__dict__:
             return self.__getattr__(k)
@@ -268,7 +293,7 @@ class QueryLinker(Serializable, LogicalExprMixin):
         model_table = db.db.table(model)
         query = curr_query.join(model_table, [model_table.id == curr_query.id, model_table.query_id == self.collection.identifier])
         cursor = SuperDuperIbisCursor(query, self.collection.primary_id, encoders=db.encoders)
-        return cursor.execute()
+        return cursor
 
     def model_update(self, 
         db,
@@ -288,10 +313,12 @@ class QueryLinker(Serializable, LogicalExprMixin):
         for ix in range(len(outputs)):
             d = Document({'id': int(ids[ix]), 'input_id': int(ids[ix]), 'output': outputs[ix], 'query_id': input_table, 'key': key})
             table_record.append(d)
-        db.execute(Table(model).insert(table_record))
+        db.execute(Table(model, schema=None).insert(table_record))
 
 
     def __call__(self, *args, **kwargs):
+        args = self.collection.mutate_args(args)
+        # TODO: handle kwargs
         self.members.update_last_query(args, kwargs, type=QueryType.QUERY.value)
 
         return QueryLinker(

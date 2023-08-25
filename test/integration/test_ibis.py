@@ -2,7 +2,7 @@ import ibis
 import PIL.Image
 import pandas
 from sklearn import svm
-import torchvision
+#import torchvision
 
 from superduperdb import superduper
 from superduperdb import CFG
@@ -21,6 +21,8 @@ from superduperdb.ext.torch.model import TorchModel
 # from superduperdb.container.schema import Schema
 
 
+import os
+os.remove('mydb.sqlite')
 connection = ibis.sqlite.connect("mydb.sqlite")
 
 # Insert some sample data into the table
@@ -53,6 +55,9 @@ schema = IbisSchema(
 im = PIL.Image.open('test/material/data/test-image.jpeg')
 data_to_insert = [
     {'id': 1, 'health': 0, 'age': 25, 'image': im},
+    {'id': 2, 'health': 0, 'age': 25, 'image': im},
+    {'id': 3, 'health': 0, 'age': 25, 'image': im},
+    {'id': 4, 'health': 0, 'age': 25, 'image': im},
 ]
 t = Table(identifier='my_table', schema=schema)
 t.create(db)
@@ -62,12 +67,16 @@ db.execute(
     t.insert([D({'id': d['id'], 'health': d['health'], 'age': d['age'], 'image': d['image']}) for d in data_to_insert])
 )
 
-imgs = db.execute(t.select("image::_encodable=pil_image/0::"))
 
-import sys
-sys.exit(0)
 
-breakpoint()
+# -------------- retrieve data  from table ----------------
+imgs = db.execute(t.select("image", "age", "health"))
+for img in imgs:
+    print(img)
+
+
+import torchvision
+
 
 # preprocessing function
 preprocess = torchvision.transforms.Compose([
@@ -79,15 +88,37 @@ preprocess = torchvision.transforms.Compose([
     std=[0.229, 0.224, 0.225]
 )])
 
+def postprocess(x):
+    return int(x.topk(1)[1].item())
+
 # create a torchvision model
 resnet = TorchModel(
+        identifier='resnet18',
     preprocess=preprocess,
-    object=torchvision.models.resnet18(pretrained=True),
+    postprocess=postprocess,
+
+    object=torchvision.models.resnet18(pretrained=False),
 )
 
 # apply the torchvision model
-resnet.predict(X='image', db=db, select=t, max_chunk_size=3000, overwrite=True)
+resnet.predict(X='image', db=db, select=t.select('id', 'image'), max_chunk_size=3000, overwrite=True)
 
+
+
+# Query the results back
+q = t.filter(t.age == 25).outputs('resnet18', db)
+curr = db.execute(q)
+for c in curr:
+    print(c)
+
+
+
+
+breakpoint()
+
+
+
+# ------------------ SKLEARN ------------------
 # add a sklearn mode
 svc = svm.SVC(gamma='scale', class_weight='balanced', C=100, verbose=True)
 svc.fit(pandas.DataFrame(data_to_insert).iloc[:, :3], [0, 1, 1, 1, 0])

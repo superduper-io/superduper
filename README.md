@@ -92,7 +92,7 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
 ### Who is SuperDuperDB for?
 
   - **Python developers** who want to implement next gen AI into their applications without MLOps knowledge required.
-  - **Data scientists & ML engineers** who want to develop AI models using their favourite tools, with minimum infrastructural overhead.
+  - **Data scientists & ML engineers** who want to develop and train AI models using their favourite tools, with minimum infrastructural overhead.
   - **Infrastructure engineers** who want a single scalable setup that supports both local, on-prem and cloud deployment.
 
 ### SuperDuperDB transforms your datastore into:

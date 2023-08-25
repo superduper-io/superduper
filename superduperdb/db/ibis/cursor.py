@@ -14,7 +14,7 @@ class SuperDuperIbisCursor(SuperDuperCursor):
         for name in schema_names:
             try:
                 # TODO use version
-                identifier, version = re.match('.*::_encodable=(.*)/([0-9]+)::', name).groups()[:2]
+                identifier, version = re.match('.*::_encodable=(.*)/(.*)::', name).groups()[:2]
             except AttributeError as e:
                 if "'NoneType' object has no attribute 'groups'" in str(e):
                     continue
@@ -23,17 +23,18 @@ class SuperDuperIbisCursor(SuperDuperCursor):
         return encoders
 
     def execute(self):
-        try:
-            schema_names = self.raw_cursor.schema().names
-            encoders = self._get_encoders_for_schema(schema_names)
-            if encoders:
-                raw_cursor = self.raw_cursor.execute()
-                for k in encoders:
-                    raw_cursor.loc[:, k] = raw_cursor.loc[:, k].apply(encoders[k].decode)
-                new_cols = [c.split('::_encoder')[0] for c in raw_cursor.columns]
-                raw_cursor.columns = new_cols
-        except:
-            return None
+        if self.raw_cursor[0] is None:
+            return
+    
+        schema_names = self.raw_cursor.schema().names
+        encoders = self._get_encoders_for_schema(schema_names)
+
+        if encoders:
+            raw_cursor = self.raw_cursor.execute()
+            for k in encoders:
+                raw_cursor.loc[:, k] = raw_cursor.loc[:, k].apply(lambda x: encoders[k].decode(x).x)
+            new_cols = [c.split('::_encoder')[0] for c in raw_cursor.columns]
+            raw_cursor.columns = new_cols
         self.dict_cursor = self.raw_cursor.to_dict(orient="records")
         self._n = len(self.dict_cursor)
         self._index = 0

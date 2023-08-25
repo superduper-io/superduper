@@ -8,7 +8,7 @@ import ibis
 from superduperdb import CFG
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
-from superduperdb.container.schema import Schema
+from superduperdb.db.ibis.schema import IbisSchema
 from superduperdb.db.base.db import DB
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
 from superduperdb.container.serializable import Serializable
@@ -45,7 +45,7 @@ class Query:
         if self.type == QueryType.ATTR.value:
             return getattr(parent, self.query.name)
 
-        self.query.pre(db)
+        self.query.pre(db, table=table, kwargs = self.kwargs)
         if len(self.args) == 1 and isinstance(self.args[0], QueryLinker):
             self.args = [self.args[0].execute(db, parent, ibis_table)]
 
@@ -126,14 +126,25 @@ class OutputTable:
 @dc.dataclass
 class Table(Component):
     identifier: str
-    schema: Schema
+    schema: IbisSchema
     table: t.Any = None
     primary_id: str = 'id'
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'table'
 
     def on_create(self, db: DB) -> None:
-        db.databackend.create_table(self.identifier, schema=self.schema)
+        self.create(db)
+
+    def create(self, db):
+        #db.add(schema)
+        try:
+            db.db.create_table(self.identifier, schema=self.schema.map())
+        except Exception as e:
+            if 'already exists' in str(e):
+                pass
+            else:
+                raise e
+
 
     def get_table(self, conn):
         if self.table is None:
@@ -174,8 +185,6 @@ class Table(Component):
             'documents': args[0],
         }
         kwargs.update({'table_name': self.identifier})
-        decoded_docs = [d.unpack() for d in args[0]]
-        kwargs.update({'obj': decoded_docs})
         args = args[1:]
         
         insert = Query(
@@ -309,7 +318,7 @@ class PlaceHolderQuery:
 
         self.namespace: str = 'ibis'  # type: ignore[annotation-unchecked]
 
-    def pre(self, db):
+    def pre(self, db, **kwargs):
         ...
 
     def post(self, db, output, *args, **kwargs):
@@ -322,7 +331,7 @@ class PostLike:
     name: str = 'postlike'
     namespace: str = 'sddb'
 
-    def pre(self, db):
+    def pre(self, db, **kwargs):
         pass
 
     def post(self, db, output, table=None, ibis_table=None, args=[], kwargs={}):
@@ -354,7 +363,7 @@ class PreLike:
     name: str = 'prelike'
     namespace: str = 'sddb'
 
-    def pre(self, db):
+    def pre(self, db, **kwargs):
         pass
 
     def post(self, db, output, table=None, ibis_table=None, args=[], kwargs={}):
@@ -380,14 +389,20 @@ class Insert:
     name: str = 'insert'
     namespace: str = 'ibis'
 
-    def pre(self, db):
+    def pre(self, db, table=None, **kwargs):
+
+        # TODO: handle adding table later
+        '''
         if self.base_table.identifier not in db.tables:
             db.add(self.base_table)
-
+        '''
         for e in self.encoders:
             db.add(e)
 
-        documents = [r.encode(self.base_table.schema) for r in self.documents]
+        documents = [r.encode(table.schema) for r in self.documents]
+
+        # TODO: handle _fold
+        '''
         for r in documents:
             if '_fold' in r:
                 continue
@@ -395,11 +410,16 @@ class Insert:
                 r['_fold'] = 'valid'
             else:
                 r['_fold'] = 'train'
-        return documents
+        '''
+
+        # mutate kwargs with documents
+        documents = [tuple(d.values())for d in documents]
+        kwargs['kwargs']['obj'] = documents
+        return 
     
     def post(self, db, output, *args, **kwargs):
         graph = None
-        inserted_ids = [d[PRIMARY_ID] for d in kwargs['kwargs']['obj']]
+        # inserted_ids = [d[PRIMARY_ID] for d in kwargs['kwargs']['obj']]
         if self.refresh and not CFG.cdc:
             '''
             graph = db.refresh_after_update_or_insert(

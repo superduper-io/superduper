@@ -10,6 +10,11 @@ from superduperdb.container.encoder import Encoder
 class IbisSchema(Schema):
     encoded_types: t.List = dc.field(default_factory=list)
 
+    def mutate_column(self, column):
+        if column in self.encoded_types:
+            return f'{column}::_encodable={self.fields[column].identifier}/{self.fields[column].version}::'
+        return column
+
     def map(self):
         if self.trivial:
             return

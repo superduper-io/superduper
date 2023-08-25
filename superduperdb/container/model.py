@@ -434,6 +434,11 @@ class Model(Component, PredictMixin):
             value=self.metric_values,
         )
 
+    def on_create(self, db: DB):
+        # TODO: check if output table should be created
+        db.create_output_table(self.identifier)
+        
+
     def _validate(self, db, validation_set: Dataset, metrics: Metric):
         if isinstance(validation_set, str):
             validation_set = db.load('dataset', validation_set)

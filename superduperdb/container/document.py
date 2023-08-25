@@ -138,7 +138,14 @@ def _encode(r: t.Any) -> t.Any:
 
 def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
     if isinstance(r, dict):
-        return {k: _encode_with_schema(v, schema) for k, v in r.items()}
+        return {k: schema.fields[k].encode(v, wrap=False) if k in schema.encoded_types else _encode_with_schema(v, schema) for k, v in r.items()}
+    if isinstance(r, Encodable):
+        return r.encode()
+    if isinstance(r, (bool, int, str, bson.ObjectId)):
+        return r
+
+    s.log.info(f'Unexpected type {type(r)} in Document.encode')
+    return r
 
 
 def _unpack(item: t.Any) -> t.Any:

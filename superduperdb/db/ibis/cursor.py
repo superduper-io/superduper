@@ -34,7 +34,7 @@ class SuperDuperIbisCursor(SuperDuperCursor):
                 raw_cursor.columns = new_cols
         except:
             return None
-        self.dict_cursor = raw_cursor.to_dict(orient="records")
+        self.dict_cursor = self.raw_cursor.to_dict(orient="records")
         self._n = len(self.dict_cursor)
         self._index = 0
         return self

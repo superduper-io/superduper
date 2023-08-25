@@ -15,7 +15,7 @@ class IbisDB(DB):
             parent = member.execute(
                 self, parent, table=query.collection, ibis_table=table
             )
-        cursor = SuperDuperIbisCursor(parent, query.collection.primary_id, encoders={})
+        cursor = SuperDuperIbisCursor(parent, query.collection.primary_id, encoders=self.encoders)
         return cursor.execute()
 
     def execute(self, query):

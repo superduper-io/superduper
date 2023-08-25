@@ -13,6 +13,7 @@ from superduperdb.container.document import Document as D
 from superduperdb.db.ibis.db import IbisDB
 from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.db.ibis.data_backend import IbisDataBackend
+from superduperdb.db.ibis.schema import IbisSchema
 from superduperdb.db.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.db.ibis.query import Table
 from superduperdb.ext.pillow.image import pil_image
@@ -40,7 +41,7 @@ db = IbisDB(
     vector_database=build_vector_database(CFG.vector_search.type),
 )
 
-schema = Schema(
+schema = IbisSchema(
     identifier='my_table',
     fields={
         'id': 'int64',
@@ -49,34 +50,24 @@ schema = Schema(
         'image': pil_image,
     }
 )
-
 im = PIL.Image.open('test/material/data/test-image.jpeg')
-
 data_to_insert = [
-    (1, 0, 25, im),
-    (2, 1, 26, im),
-    (3, 1, 27, im),
-    (4, 1, 28, im),
-    (5, 0, 29, im),
+    {'id': 1, 'health': 0, 'age': 25, 'image': im},
 ]
-
 t = Table(identifier='my_table', schema=schema)
-
-t.create(db, schema=...)
-
-def create(self, db, schema):
-    db.add(schema)
-    new_schema = {}
-    for k, v in schema.fields.items():
-        if isinstance(v, Encoder):
-            new_schema[f'{k}::_encodable={v.identifier}/{v.version}::'] = 'binary'
-    self.conn.create_table(self.identifier, schema=schema.fields)
-
+t.create(db)
+im_b = open('test/material/data/test-image.jpeg', 'rb').read()
 db.add(t)
-
 db.execute(
-    t.insert([D(d) for d in data_to_insert])
+    t.insert([D({'id': d['id'], 'health': d['health'], 'age': d['age'], 'image': d['image']}) for d in data_to_insert])
 )
+
+imgs = db.execute(t.select("image::_encodable=pil_image/0::"))
+
+import sys
+sys.exit(0)
+
+breakpoint()
 
 # preprocessing function
 preprocess = torchvision.transforms.Compose([
@@ -97,9 +88,7 @@ resnet = TorchModel(
 # apply the torchvision model
 resnet.predict(X='image', db=db, select=t, max_chunk_size=3000, overwrite=True)
 
-# add a sklearn model
-
-
+# add a sklearn mode
 svc = svm.SVC(gamma='scale', class_weight='balanced', C=100, verbose=True)
 svc.fit(pandas.DataFrame(data_to_insert).iloc[:, :3], [0, 1, 1, 1, 0])
 
@@ -109,11 +98,11 @@ model = superduper(
     preprocess=lambda x: list(x.values()
 ))
 
-model.predict(X='_base', db=db, select=table.filter(table.age > 25), max_chunk_size=3000, overwrite=True)    
+model.predict(X='_base', db=db, select=t.filter(t.age > 25), max_chunk_size=3000, overwrite=True)    
 
 #  Query result back
 out_table = connection.table(model.identifier)
-q = table.filter(table.age > 26).outputs(model.identifier, db)
+q = t.filter(t.age > 26).outputs(model.identifier, db)
 
 curr = db.execute(q)
 for c in curr:

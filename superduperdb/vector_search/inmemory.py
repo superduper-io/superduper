@@ -4,9 +4,7 @@ from contextlib import contextmanager
 import numpy
 from readerwriterlock import rwlock
 
-from superduperdb.vector_search.table_scan import VanillaVectorIndex
-
-from .base import (
+from superduperdb.vector_search.base import (
     VectorCollection,
     VectorCollectionConfig,
     VectorCollectionId,
@@ -18,6 +16,7 @@ from .base import (
     VectorIndexMeasure,
     to_numpy,
 )
+from superduperdb.vector_search.table_scan import VanillaVectorIndex
 
 
 class InMemoryVectorCollection(VectorCollection):

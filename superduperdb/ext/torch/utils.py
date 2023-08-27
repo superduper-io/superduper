@@ -6,7 +6,7 @@ from contextlib import contextmanager
 if t.TYPE_CHECKING:
     from torch import device as _device
 
-    from .model import TorchModel
+    from superduperdb.ext.torch.model import TorchModel
 
 
 def device_of(model: TorchModel) -> t.Union[_device, str]:

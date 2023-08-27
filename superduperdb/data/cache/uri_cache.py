@@ -1,9 +1,8 @@
 import dataclasses as dc
 import typing as t
 
+from superduperdb.data.cache.typed_cache import TypedCache
 from superduperdb.data.tree.for_each import for_each
-
-from .typed_cache import TypedCache
 
 ContentType = t.TypeVar('ContentType')
 

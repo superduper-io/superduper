@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 
-from . import config_dicts
-from .config import Config
+from superduperdb.base import config_dicts
+from superduperdb.base.config import Config
 
 File = t.Union[Path, str]
 

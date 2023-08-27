@@ -1,10 +1,9 @@
 import typing as t
 
+from superduperdb.container.artifact import Artifact
 from superduperdb.data.tree.tree import tree_find, tree_rewrite
 from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.misc.serialization import serializers
-
-from .artifact import Artifact
 
 """
 A collection of functions that process trees made up of dicts and lists

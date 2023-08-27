@@ -12,9 +12,8 @@ from pymongo import UpdateOne as _UpdateOne
 import superduperdb as s
 from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
-
-from ..base.cursor import SuperDuperCursor
-from ..base.query import Delete, Insert, Like, Select, SelectOne, Update
+from superduperdb.db.base.cursor import SuperDuperCursor
+from superduperdb.db.base.query import Delete, Insert, Like, Select, SelectOne, Update
 
 if t.TYPE_CHECKING:
     from superduperdb.container.model import Model

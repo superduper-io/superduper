@@ -4,9 +4,8 @@ import os
 from typer import Option
 
 from superduperdb import ROOT
+from superduperdb.cli import command
 from superduperdb.misc import run
-
-from . import command
 
 DOCS = 'docs'
 DOCS_ROOT = ROOT / DOCS

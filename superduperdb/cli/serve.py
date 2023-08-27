@@ -1,8 +1,7 @@
 import typing as t
 
 import superduperdb as s
-
-from . import command
+from superduperdb.cli import command
 
 
 @command(help='Start server')

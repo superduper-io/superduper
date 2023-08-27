@@ -1,3 +1,3 @@
-from .model import TorchModel
+from superduperdb.ext.torch.model import TorchModel
 
 __all__ = ('TorchModel',)

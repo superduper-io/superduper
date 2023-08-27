@@ -9,7 +9,7 @@ from enum import Enum
 
 from pydantic import Field, root_validator
 
-from .jsonable import Factory, JSONable
+from superduperdb.base.jsonable import Factory, JSONable
 
 _BAD_KEY = '...bad.key...'
 REST_API_VERSION = '0.1.0'

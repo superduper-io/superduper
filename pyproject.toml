@@ -147,3 +147,14 @@ whitelist-regex = []
 
 [tool.isort]
 profile = "black"
+
+[tool.ruff]
+select = [
+    "E",
+    "F",
+    "TID",
+]
+
+[tool.ruff.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"

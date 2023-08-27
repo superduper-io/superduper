@@ -1,6 +1,6 @@
 from typer import Typer
 
-from .. import ICON
+from superduperdb import ICON
 
 __all__ = 'app', 'command'
 

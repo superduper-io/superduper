@@ -1,11 +1,10 @@
 from collections import Counter
+from test.unittest.base.test_config_dicts import PARENT
 
 import pydantic
 import pytest
 
 from superduperdb.base.config import Config, Factory, JSONable, Notebook
-
-from .test_config_dicts import PARENT
 
 IS_2 = pydantic.__version__.startswith('2')
 

@@ -1,4 +1,4 @@
-from .base import config, configs, jsonable, logger
+from superduperdb.base import config, configs, jsonable, logger
 
 __all__ = 'CFG', 'ICON', 'JSONable', 'ROOT', 'config', 'log', 'logging', 'superduper'
 
@@ -7,7 +7,7 @@ CFG = configs.CFG
 JSONable = jsonable.JSONable
 ROOT = configs.ROOT
 
-from .misc.superduper import superduper  # noqa: E402
+from superduperdb.misc.superduper import superduper  # noqa: E402
 
 logging = log = logger.logging
 

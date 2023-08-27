@@ -12,9 +12,8 @@ from superduperdb.vector_search.base import (
     VectorCollectionConfig,
     VectorCollectionItem,
     VectorCollectionResult,
+    to_numpy,
 )
-
-from .base import to_numpy
 
 _ID: str = 'id'
 SEED_KEY: str = '__SEEDKEY__'

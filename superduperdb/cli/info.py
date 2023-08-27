@@ -7,9 +7,8 @@ import sys
 from pathlib import Path
 
 from superduperdb import ROOT
+from superduperdb.cli import command
 from superduperdb.misc import run
-
-from . import command
 
 PYPROJECT = ROOT / 'pyproject.toml'
 

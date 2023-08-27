@@ -22,13 +22,16 @@ test: test-containers
 	pytest $(PYTEST_ARGUMENTS)
 
 .PHONY: fix-and-test
-fix-and-test: test-containers
+fix-and-test: test-containers fix-codestyle
+	pytest $(PYTEST_ARGUMENTS)
+	interrogate superduperdb
+
+.PHONY: fix-codestyle
+fix-codestyle:
 	isort superduperdb test
 	black superduperdb test
 	ruff check --fix superduperdb test
 	mypy superduperdb
-	pytest $(PYTEST_ARGUMENTS)
-	interrogate superduperdb
 
 .PHONY: clean-test
 clean-test: clean-test-containers

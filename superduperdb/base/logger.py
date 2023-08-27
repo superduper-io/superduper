@@ -1,6 +1,6 @@
 import warnings
 
-from .configs import CFG
+from superduperdb.base.configs import CFG
 
 __all__ = ('logging',)
 

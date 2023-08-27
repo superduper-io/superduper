@@ -24,8 +24,7 @@ except ImportError:
 from pymongo import MongoClient
 from tenacity import RetryError, Retrying, stop_after_delay
 
-from superduperdb.base.config import DataLayer, DataLayers
-from superduperdb.base.config import MongoDB as MongoDBConfig
+from superduperdb.base.config import DataLayer, DataLayers, MongoDB as MongoDBConfig
 from superduperdb.container.dataset import Dataset
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener

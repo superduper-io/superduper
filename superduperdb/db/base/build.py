@@ -3,11 +3,11 @@ import inspect
 import superduperdb as s
 from superduperdb.db.base.backends import (
     artifact_stores,
+    connections as default_connections,
     data_backends,
     metadata_stores,
     vector_database_stores,
 )
-from superduperdb.db.base.backends import connections as default_connections
 from superduperdb.db.base.db import DB
 from superduperdb.server.dask_client import dask_client
 

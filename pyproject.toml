@@ -149,9 +149,7 @@ whitelist-regex = []
 profile = "black"
 
 [tool.ruff]
-select = [
-    "E",
-    "F",
+extend-select = [
     "TID",
 ]
 

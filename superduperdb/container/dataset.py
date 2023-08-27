@@ -19,12 +19,12 @@ if t.TYPE_CHECKING:
 @dc.dataclass
 class Dataset(Component):
     identifier: str
-    select: t.Optional[Find] = None
-    sample_size: t.Optional[int] = None
-    random_seed: t.Optional[int] = None
-    creation_date: t.Optional[str] = None
-    raw_data: t.Optional[t.Union[Artifact, t.Any]] = None
-    version: t.Optional[int] = None
+    select: Find | None = None
+    sample_size: int | None = None
+    random_seed: int | None = None
+    creation_date: str | None = None
+    raw_data: Artifact | t.Any | None = None
+    version: int | None = None
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'dataset'

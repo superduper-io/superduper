@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import typing as t
 from threading import Lock
@@ -17,7 +19,7 @@ class TypedCache:
     its class cache.
     """
 
-    def put(self, entry: t.Any, key: t.Optional[str] = None) -> str:
+    def put(self, entry: t.Any, key: str | None = None) -> str:
         """Put an item into the cache, return a string key"""
         name = self._get_name(type(entry))
         cache = self._name_to_cache[name]
@@ -32,7 +34,7 @@ class TypedCache:
 
         raise ValueError(f'Bad key {key}, expected {name}-')
 
-    def _get_name(self, cls: t.Type) -> str:
+    def _get_name(self, cls: type) -> str:
         with self._lock:
             try:
                 return self._class_to_name[cls]
@@ -51,7 +53,7 @@ class TypedCache:
         name, key = key.split(SEP)
         return self._name_to_cache[name].get(key)
 
-    def expire(self, before: float) -> t.Dict[t.Type, t.Dict[str, t.Any]]:
+    def expire(self, before: float) -> dict[type, dict[str, t.Any]]:
         cn = self._class_to_name.items()
         cc = ((cls, self._name_to_cache[name]) for cls, name in cn)
         return {cls: cache.expire(before) for cls, cache in cc}
@@ -64,6 +66,6 @@ class TypedCache:
         with self._lock:
             return sum(len(i) for i in self._name_to_cache.values())
 
-    _class_to_name: t.Dict[t.Type, str] = dc.field(default_factory=dict)
+    _class_to_name: dict[type, str] = dc.field(default_factory=dict)
     _lock: Lock = dc.field(default_factory=Lock)
-    _name_to_cache: t.Dict[str, KeyCache] = dc.field(default_factory=dict)
+    _name_to_cache: dict[str, KeyCache] = dc.field(default_factory=dict)

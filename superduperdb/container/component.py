@@ -56,12 +56,12 @@ class Component(Serializable):
             f'{self.version}'
         )
 
-    def dict(self) -> t.Dict[str, t.Any]:
+    def dict(self) -> dict[str, t.Any]:
         return dc.asdict(self)
 
     def create_validation_job(
         self,
-        validation_set: t.Union[str, Dataset],
+        validation_set: str | Dataset,
         metrics: t.Sequence[str],
     ) -> ComponentJob:
         return ComponentJob(

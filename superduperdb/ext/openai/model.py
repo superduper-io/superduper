@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import os
 import typing as t
 
 import tqdm
-from openai import ChatCompletion, Embedding
-from openai import Model as OpenAIModel
+from openai import ChatCompletion, Embedding, Model as OpenAIModel
 from openai.error import RateLimitError, ServiceUnavailableError, Timeout, TryAgain
 
 import superduperdb as s
@@ -33,10 +34,10 @@ def _available_models():
 @dc.dataclass
 class OpenAI(Component, PredictMixin):
     model: str
-    identifier: t.Optional[str] = None  # type: ignore[assignment]
-    version: t.Optional[int] = None
+    identifier: str | None = None  # type: ignore[assignment]
+    version: int | None = None
     takes_context: bool = False
-    encoder: t.Union[Encoder, str, None] = None
+    encoder: Encoder | str | None = None
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'model'
@@ -62,7 +63,7 @@ class OpenAI(Component, PredictMixin):
 @dc.dataclass
 class OpenAIEmbedding(OpenAI):
     shapes = {'text-embedding-ada-002': (1536,)}
-    shape: t.Optional[t.Sequence[int]] = None
+    shape: t.Sequence[int] | None = None
 
     def __post_init__(self):
         super().__post_init__()
@@ -112,7 +113,7 @@ class OpenAIEmbedding(OpenAI):
 @dc.dataclass
 class OpenAIChatCompletion(OpenAI):
     takes_context: bool = True
-    prompt: t.Optional[str] = None
+    prompt: str | None = None
 
     def _format_prompt(self, context, X):
         prompt = self.prompt.format(  # type: ignore[union-attr]
@@ -121,7 +122,7 @@ class OpenAIChatCompletion(OpenAI):
         return prompt + X
 
     @retry
-    def _predict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):
+    def _predict_one(self, X, context: list[str] | None = None, **kwargs):
         if context is not None:
             X = self._format_prompt(context, X)
         return ChatCompletion.create(
@@ -131,7 +132,7 @@ class OpenAIChatCompletion(OpenAI):
         )['choices'][0]['message']['content']
 
     @retry
-    async def _apredict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):
+    async def _apredict_one(self, X, context: list[str] | None = None, **kwargs):
         if context is not None:
             X = self._format_prompt(context, X)
         return (
@@ -142,9 +143,7 @@ class OpenAIChatCompletion(OpenAI):
             )
         )['choices'][0]['message']['content']
 
-    def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
-    ):
+    def _predict(self, X, one: bool = True, context: list[str] | None = None, **kwargs):
         if context:
             assert one, 'context only works with ``one=True``'
         if one:
@@ -153,7 +152,7 @@ class OpenAIChatCompletion(OpenAI):
 
     # ruff: noqa: E501
     async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+        self, X, one: bool = True, context: list[str] | None = None, **kwargs
     ):
         if context:
             assert one, 'context only works with ``one=True``'

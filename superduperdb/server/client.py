@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import inspect
-import typing as t
 import uuid
 
 import click
@@ -60,7 +61,7 @@ class Client:
             return self.update(query)
         raise TypeError(
             f'Wrong type of {query}; '
-            f'Expected object of type {t.Union[Select, Delete, Update, Insert]}; '
+            f'Expected object of type {Select | Delete | Update | Insert}; '
             f'Got {type(query)};'
         )
 
@@ -220,8 +221,8 @@ class Client:
     def show(
         self,
         type_id: str,
-        identifier: t.Optional[str] = None,
-        version: t.Optional[int] = None,
+        identifier: str | None = None,
+        version: int | None = None,
     ):
         """
         Send show request to the server
@@ -247,7 +248,7 @@ class Client:
         self,
         type_id: str,
         identifier: str,
-        version: t.Optional[int] = None,
+        version: int | None = None,
         force: bool = False,
     ):
         """
@@ -279,7 +280,7 @@ class Client:
             },
         )
 
-    def load(self, type_id: str, identifier: str, version: t.Optional[int] = None):
+    def load(self, type_id: str, identifier: str, version: int | None = None):
         """
         Load component from the database via the server.
 
@@ -396,8 +397,8 @@ class Client:
     def _make_get_request(
         self,
         route: str,
-        params: t.Optional[t.Dict] = None,
-        json: t.Optional[t.Dict] = None,
+        params: dict | None = None,
+        json: dict | None = None,
     ):
         response = requests.get(f'{self.uri}/{route}', params=params, json=json)
         if response.status_code != 200:
@@ -412,8 +413,8 @@ class Client:
         self,
         route: str,
         method: str,
-        json: t.Optional[t.Dict] = None,
-        data: t.Optional[t.Dict] = None,
+        json: dict | None = None,
+        data: dict | None = None,
     ):
         if method not in ['PUT', 'POST']:
             raise ServerSideException('Only PUT or POST methods are supported')

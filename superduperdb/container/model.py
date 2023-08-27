@@ -25,9 +25,9 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
 
-EncoderArg = t.Union[Encoder, str, None]
-ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
-DataArg = t.Optional[t.Union[str, t.Sequence[str]]]
+EncoderArg = Encoder | str | None
+ObjectsArg = t.Sequence[t.Any | Artifact]
+DataArg = str | t.Sequence[str] | None
 
 
 def TrainingConfiguration(identifier: str, **kwargs):
@@ -49,8 +49,8 @@ class _TrainingConfiguration(Component):
     type_id: t.ClassVar[str] = 'training_configuration'
 
     identifier: str
-    kwargs: t.Optional[t.Dict] = None
-    version: t.Optional[int] = None
+    kwargs: dict | None = None
+    version: int | None = None
 
     def get(self, k, default=None):
         try:
@@ -62,9 +62,9 @@ class _TrainingConfiguration(Component):
 class PredictMixin:
     identifier: str
     encoder: EncoderArg
-    preprocess: t.Union[t.Callable, Artifact, None] = None
-    postprocess: t.Union[t.Callable, Artifact, None] = None
-    collate_fn: t.Union[t.Callable, Artifact, None] = None
+    preprocess: t.Callable | Artifact | None = None
+    postprocess: t.Callable | Artifact | None = None
+    collate_fn: t.Callable | Artifact | None = None
     batch_predict: bool
     takes_context: bool
 
@@ -73,9 +73,9 @@ class PredictMixin:
     def create_predict_job(
         self,
         X: str,
-        select: t.Optional[Select] = None,
-        ids: t.Optional[t.Sequence[str]] = None,
-        max_chunk_size: t.Optional[int] = None,
+        select: Select | None = None,
+        ids: t.Sequence[str] | None = None,
+        max_chunk_size: int | None = None,
         **kwargs,
     ):
         return ComponentJob(
@@ -131,7 +131,7 @@ class PredictMixin:
 
     def _predict(
         self, X: t.Any, one: bool = False, **predict_kwargs
-    ) -> t.Union[ndarray, int, t.Sequence[int]]:
+    ) -> ndarray | int | t.Sequence[int]:
         if one:
             return self._predict_one(X)
 
@@ -157,7 +157,7 @@ class PredictMixin:
     async def apredict(
         self,
         X: t.Any,
-        context: t.Optional[t.Dict] = None,
+        context: dict | None = None,
         one: bool = False,
         **kwargs,
     ):
@@ -171,7 +171,7 @@ class PredictMixin:
         select: Select,
         db: DB,
         in_memory: bool = True,
-        max_chunk_size: t.Optional[int] = None,
+        max_chunk_size: int | None = None,
         dependencies: t.Sequence[Job] = (),
         **kwargs,
     ):
@@ -196,7 +196,7 @@ class PredictMixin:
         X: t.Any,
         select: Select,
         db: DB,
-        max_chunk_size: t.Optional[int] = None,
+        max_chunk_size: int | None = None,
         in_memory: bool = True,
         overwrite: bool = False,
         **kwargs,
@@ -227,7 +227,7 @@ class PredictMixin:
         select: Select,
         ids: t.Sequence[str],
         in_memory: bool = True,
-        max_chunk_size: t.Optional[int] = None,
+        max_chunk_size: int | None = None,
         **kwargs,
     ):
         if max_chunk_size is not None:
@@ -282,15 +282,15 @@ class PredictMixin:
     def predict(
         self,
         X: t.Any,
-        db: t.Optional[DB] = None,
-        select: t.Optional[Select] = None,
-        distributed: t.Optional[bool] = None,
-        ids: t.Optional[t.Sequence[str]] = None,
-        max_chunk_size: t.Optional[int] = None,
+        db: DB | None = None,
+        select: Select | None = None,
+        distributed: bool | None = None,
+        ids: t.Sequence[str] | None = None,
+        max_chunk_size: int | None = None,
         dependencies: t.Sequence[Job] = (),
         listen: bool = False,
         one: bool = False,
-        context: t.Optional[t.Dict] = None,
+        context: dict | None = None,
         in_memory: bool = True,
         overwrite: bool = False,
         **kwargs,
@@ -359,26 +359,26 @@ class Model(Component, PredictMixin):
     """
 
     identifier: str
-    object: t.Union[Artifact, t.Any]
+    object: Artifact | t.Any
     encoder: EncoderArg = None
-    preprocess: t.Union[t.Callable, Artifact, None] = None
-    postprocess: t.Union[t.Callable, Artifact, None] = None
-    collate_fn: t.Union[t.Callable, Artifact, None] = None
-    metrics: t.Sequence[t.Union[str, Metric, None]] = ()
+    preprocess: t.Callable | Artifact | None = None
+    postprocess: t.Callable | Artifact | None = None
+    collate_fn: t.Callable | Artifact | None = None
+    metrics: t.Sequence[str | Metric | None] = ()
     # Need also historical metric values
-    predict_method: t.Optional[str] = None
+    predict_method: str | None = None
     batch_predict: bool = False
     takes_context: bool = False
 
     train_X: DataArg = None  # TODO add to FitMixin
     train_y: DataArg = None
-    training_select: t.Union[Select, None] = None
-    metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    training_select: Select | None = None
+    metric_values: dict | None = dc.field(default_factory=dict)
     # TODO should be training_metric_values
-    training_configuration: t.Union[str, _TrainingConfiguration, None] = None
+    training_configuration: str | _TrainingConfiguration | None = None
 
-    version: t.Optional[int] = None
-    future: t.Optional[Future] = None  # TODO what's this?
+    version: int | None = None
+    future: Future | None = None  # TODO what's this?
     device: str = "cpu"
 
     artifacts: t.ClassVar[t.Sequence[str]] = ['object']
@@ -399,7 +399,7 @@ class Model(Component, PredictMixin):
             self.to_call = getattr(self.object.artifact, self.predict_method)
 
     @property
-    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
+    def child_components(self) -> t.Sequence[tuple[str, str]]:
         out = []
         if self.encoder is not None:
             out.append(('encoder', 'encoder'))
@@ -414,7 +414,7 @@ class Model(Component, PredictMixin):
             out.append(self.train_y)
         return out  # type: ignore[return-value]
 
-    def append_metrics(self, d: t.Dict[str, float]) -> None:
+    def append_metrics(self, d: dict[str, float]) -> None:
         if self.metric_values is not None:
             for k, v in d.items():
                 self.metric_values.setdefault(k, []).append(v)
@@ -458,9 +458,9 @@ class Model(Component, PredictMixin):
 
     def create_fit_job(
         self,
-        X: t.Union[str, t.Sequence[str]],
-        select: t.Optional[Select] = None,
-        y: t.Optional[str] = None,
+        X: str | t.Sequence[str],
+        select: Select | None = None,
+        y: str | None = None,
         **kwargs,
     ):
         return ComponentJob(
@@ -480,12 +480,12 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional[DB] = None,
-        select: t.Optional[Select] = None,
+        db: DB | None = None,
+        select: Select | None = None,
         dependencies: t.Sequence[Job] = (),
-        configuration: t.Optional[_TrainingConfiguration] = None,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
+        configuration: _TrainingConfiguration | None = None,
+        validation_sets: t.Sequence[str | Dataset] | None = None,
+        metrics: t.Sequence[Metric] | None = None,
         data_prefetch: bool = False,
     ):
         raise NotImplementedError
@@ -495,16 +495,16 @@ class Model(Component, PredictMixin):
         self,
         X: t.Any,
         y: t.Any = None,
-        db: t.Optional[DB] = None,
-        select: t.Optional[Select] = None,
-        distributed: t.Optional[bool] = None,
+        db: DB | None = None,
+        select: Select | None = None,
+        distributed: bool | None = None,
         dependencies: t.Sequence[Job] = (),
-        configuration: t.Optional[_TrainingConfiguration] = None,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
+        configuration: _TrainingConfiguration | None = None,
+        validation_sets: t.Sequence[str | Dataset] | None = None,
+        metrics: t.Sequence[Metric] | None = None,
         data_prefetch: bool = False,
         **kwargs,
-    ) -> t.Optional[Pipeline]:
+    ) -> Pipeline | None:
         if isinstance(select, dict):
             select = Serializable.deserialize(select)
 

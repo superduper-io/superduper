@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import os
 import typing as t
@@ -30,7 +32,7 @@ class LanceDBClient:
         self.client = lancedb.connect(uri)
         self.uri = uri
 
-    def get_table(self, table_name: str, measure: str = 'cosine') -> 'LanceTable':
+    def get_table(self, table_name: str, measure: str = 'cosine') -> LanceTable:
         """
         Get a LanceTable from the ``LanceDBClient``.
 
@@ -43,10 +45,10 @@ class LanceDBClient:
     def create_table(
         self,
         table_name: str,
-        data: t.Optional[t.Sequence[t.Dict]] = None,
-        schema: t.Optional[t.Dict] = None,
+        data: t.Sequence[dict] | None = None,
+        schema: dict | None = None,
         measure: str = 'cosine',
-    ) -> 'LanceTable':
+    ) -> LanceTable:
         """
         Create a ``LanceTable``.
 
@@ -72,7 +74,7 @@ class LanceTable:
     table: lancedb.table.LanceTable
     measure: str = "cosine"
 
-    def get(self, identifier: str, limit: int = 1) -> t.List[t.Any]:
+    def get(self, identifier: str, limit: int = 1) -> list[t.Any]:
         """
         Get a vector from the ``LanceTable``.
 
@@ -123,8 +125,8 @@ class LanceTable:
             raise
 
     def find_nearest_from_id(
-        self, identifier: t.Any, limit: int = 100, measure: t.Optional[str] = None
-    ) -> t.List[VectorCollectionResult]:
+        self, identifier: t.Any, limit: int = 100, measure: str | None = None
+    ) -> list[VectorCollectionResult]:
         """
         Find nearest vectors to the vector with the given identifier.
 
@@ -139,9 +141,9 @@ class LanceTable:
         self,
         array: t.Any,
         limit: int = 100,
-        measure: t.Optional[str] = None,
+        measure: str | None = None,
         within_ids: t.Sequence = (),
-    ) -> t.List[VectorCollectionResult]:
+    ) -> list[VectorCollectionResult]:
         """
         Find nearest vectors to the given array.
 
@@ -178,7 +180,7 @@ class LanceVectorIndex(BaseVectorIndex):
         self,
         uri: str,
         measure: str = "cosine",
-        client: t.Optional[LanceDBClient] = None,
+        client: LanceDBClient | None = None,
     ) -> None:
         """
         Initialize the ``LanceVectorIndex``.
@@ -207,7 +209,7 @@ class LanceVectorIndex(BaseVectorIndex):
 
     def get_table(
         self, config: VectorCollectionConfig, create: bool = False
-    ) -> 'LanceTable':
+    ) -> LanceTable:
         """
         Get the ``LanceTable`` based on the ``VectorCollectionConfig``.
 
@@ -221,7 +223,7 @@ class LanceVectorIndex(BaseVectorIndex):
                 return self.create_table(config=config)
             raise
 
-    def create_table(self, config: VectorCollectionConfig) -> 'LanceTable':
+    def create_table(self, config: VectorCollectionConfig) -> LanceTable:
         """
         Create the ``LanceTable`` based on the ``VectorCollectionConfig``.
 

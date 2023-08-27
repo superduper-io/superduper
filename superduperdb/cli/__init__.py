@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typer import Typer
 
 from .. import ICON

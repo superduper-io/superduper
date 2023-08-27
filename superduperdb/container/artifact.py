@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 
 import typing_extensions as te
@@ -5,7 +7,7 @@ import typing_extensions as te
 from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.misc.serialization import Info, serializers
 
-ArtifactCache = t.Dict[int, t.Any]
+ArtifactCache = dict[int, t.Any]
 
 
 class Artifact:
@@ -17,7 +19,7 @@ class Artifact:
     artifact: t.Any = None
 
     #: A file_id is a key used to identify the file in the ``ArtifactStore``
-    file_id: t.Optional[str] = None
+    file_id: str | None = None
 
     #: The ``info`` dictionary is passed into ``ArtifactStore.create_artifact()``
     info: Info = None
@@ -26,7 +28,7 @@ class Artifact:
     object_id: int = 0
 
     #: The name of the finalization method on the artifact to call before saving
-    save_method: t.Optional[str] = None
+    save_method: str | None = None
 
     #: The name of the serializer
     serializer: str = 'dill'
@@ -35,17 +37,17 @@ class Artifact:
     sha1: str = ''
 
     # In case the object isn't hashable (deduplication not possible)
-    hash: t.Optional[int] = None
+    hash: int | None = None
 
     def __init__(
         self,
         artifact: t.Any = None,
         file_id: t.Any = None,
-        info: t.Optional[t.Dict] = None,
+        info: dict | None = None,
         object_id: int = 0,
         serializer: str = 'dill',
         sha1: str = '',
-        hash: t.Optional[int] = None,
+        hash: int | None = None,
     ):
         self.artifact = artifact
         self.file_id = file_id
@@ -76,7 +78,7 @@ class Artifact:
         serializer = serializers[self.serializer]
         return serializer.encode(self.artifact, self.info)
 
-    def save(self, artifact_store: ArtifactStore) -> t.Dict[str, t.Any]:
+    def save(self, artifact_store: ArtifactStore) -> dict[str, t.Any]:
         """Store this artifact, and return a dictionary of the results
 
         :param artifact_store: the store to save the Artifact in

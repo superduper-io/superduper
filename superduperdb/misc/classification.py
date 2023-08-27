@@ -8,10 +8,10 @@ if t.TYPE_CHECKING:
 
 
 def compute_classification_metrics(
-    validation_data: t.List[t.Dict[str, t.Any]],
+    validation_data: list[dict[str, t.Any]],
     model: Model,
-    metrics: t.List[Metric],
-) -> t.Dict[str, float]:
+    metrics: list[Metric],
+) -> dict[str, float]:
     X, y = model.training_keys
     out = {}
     predictions = model.predict([r[X] for r in validation_data])

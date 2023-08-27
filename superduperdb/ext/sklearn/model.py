@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import typing as t
 
@@ -16,9 +18,9 @@ def get_data_from_query(
     select: Select,
     X: str,
     db: DB,
-    y: t.Optional[str] = None,
-    y_preprocess: t.Optional[t.Callable] = None,
-    preprocess: t.Optional[t.Callable] = None,
+    y: str | None = None,
+    y_preprocess: t.Callable | None = None,
+    preprocess: t.Callable | None = None,
 ):
     def transform(r):
         out = {}
@@ -54,9 +56,9 @@ def get_data_from_query(
 
 @dc.dataclass
 class SklearnTrainingConfiguration(_TrainingConfiguration):
-    fit_params: t.Dict = dc.field(default_factory=dict)
-    predict_params: t.Dict = dc.field(default_factory=dict)
-    y_preprocess: t.Optional[Artifact] = None
+    fit_params: dict = dc.field(default_factory=dict)
+    predict_params: dict = dc.field(default_factory=dict)
+    y_preprocess: Artifact | None = None
 
 
 @dc.dataclass
@@ -84,11 +86,11 @@ class Estimator(Model):
         self,
         X,
         y=None,
-        select: t.Optional[Select] = None,
-        db: t.Optional[DB] = None,
-        configuration: t.Optional[SklearnTrainingConfiguration] = None,
-        validation_sets: t.Optional[t.Sequence[str]] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
+        select: Select | None = None,
+        db: DB | None = None,
+        configuration: SklearnTrainingConfiguration | None = None,
+        validation_sets: t.Sequence[str] | None = None,
+        metrics: t.Sequence[Metric] | None = None,
         data_prefetch: bool = False,
     ):
         if configuration is not None:

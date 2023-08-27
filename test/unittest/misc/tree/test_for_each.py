@@ -1,4 +1,4 @@
-import typing as t
+from __future__ import annotations
 
 from pydantic import dataclasses as dc
 
@@ -8,14 +8,14 @@ from superduperdb.data.tree.for_each import for_each
 
 @dc.dataclass
 class One:
-    one: t.Dict
-    uno: t.List
+    one: dict
+    uno: list
     eins: str = ''
 
 
 class Two(s.JSONable):
     one: One
-    nine: t.List[One]
+    nine: list[One]
 
 
 ONE = One(one={'a': 'b'}, uno=['hello', 'world'], eins='zed')

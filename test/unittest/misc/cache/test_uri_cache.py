@@ -1,4 +1,4 @@
-import typing as t
+from __future__ import annotations
 
 import pydantic
 from pydantic import dataclasses as dc
@@ -27,8 +27,8 @@ class Both:
 
 class Top(s.JSONable):
     both: Both
-    d: t.Dict
-    li: t.List
+    d: dict
+    li: list
 
     def __hash__(self):
         return object.__hash__(self)

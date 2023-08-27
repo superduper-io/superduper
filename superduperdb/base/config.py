@@ -3,8 +3,8 @@ The classes in this file define the configuration variables for SuperDuperDB,
 which means that this file gets imported before alost anything else, and
 canot contain any other imports from this project.
 """
+from __future__ import annotations
 
-import typing as t
 from enum import Enum
 
 from pydantic import Field, root_validator
@@ -53,16 +53,16 @@ class Api(JSONable):
 class Apis(JSONable):
     """A container for API connections"""
 
-    providers: t.Dict[str, Api] = Factory(dict)
+    providers: dict[str, Api] = Factory(dict)
     retry: Retry = Factory(Retry)
 
 
 class Dask(IpPort):
     """Describes a connection to Dask"""
 
-    deserializers: t.List[str] = Factory(list)
+    deserializers: list[str] = Factory(list)
     port: int = 8786
-    serializers: t.List[str] = Factory(list)
+    serializers: list[str] = Factory(list)
     local: bool = True
 
 
@@ -115,7 +115,7 @@ class DataLayer(JSONable):
 
     cls: str = 'mongodb'
     connection: str = 'pymongo'
-    kwargs: t.Dict = Factory(lambda: MongoDB().dict())
+    kwargs: dict = Factory(lambda: MongoDB().dict())
     name: str = 'test_db'
 
 
@@ -136,7 +136,7 @@ class Notebook(JSONable):
     token: str = ''
 
     @root_validator(skip_on_failure=True)  # type: ignore[call-overload]
-    def check_one_or_none(cls, v: t.Dict) -> t.Dict:
+    def check_one_or_none(cls, v: dict) -> dict:
         if v['password'] and v['token']:
             raise ValueError('At most one of password and token may be set')
         return v
@@ -184,7 +184,7 @@ class VectorSearch(JSONable):
     host: str = 'localhost'
     password: str = Field(default='', repr=False)
     port: int = 19530
-    type: t.Union[LanceDB, InMemory, SelfHosted] = Field(default_factory=InMemory)
+    type: LanceDB | InMemory | SelfHosted = Field(default_factory=InMemory)
     backfill_batch_size: int = 100  # TODO don't need this as well
     username: str = Field(default='', repr=False)
 

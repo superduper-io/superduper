@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 from contextlib import contextmanager
 
@@ -31,7 +33,7 @@ class InMemoryVectorCollection(VectorCollection):
         self._lock = rwlock.RWLockFair()
 
     @contextmanager
-    def init(self) -> t.Iterator["VectorCollection"]:
+    def init(self) -> t.Iterator[VectorCollection]:
         yield self
 
     def add(self, items: t.Sequence[VectorCollectionItem], **kwargs) -> None:
@@ -55,7 +57,7 @@ class InMemoryVectorCollection(VectorCollection):
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> t.List[VectorCollectionResult]:
+    ) -> list[VectorCollectionResult]:
         with self._lock.gen_rlock():
             try:
                 index = self._index if not within_ids else self._index[within_ids]
@@ -71,7 +73,7 @@ class InMemoryVectorCollection(VectorCollection):
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> t.List[VectorCollectionResult]:
+    ) -> list[VectorCollectionResult]:
         with self._lock.gen_rlock():
             index = self._index if not within_ids else self._index[within_ids]
             ids, scores = index.find_nearest_from_array(
@@ -82,8 +84,8 @@ class InMemoryVectorCollection(VectorCollection):
 
     def _convert_ids_scores_to_results(
         self, ids: numpy.ndarray, scores: numpy.ndarray
-    ) -> t.List[VectorCollectionResult]:
-        results: t.List[VectorCollectionResult] = []
+    ) -> list[VectorCollectionResult]:
+        results: list[VectorCollectionResult] = []
         for id, score in zip(ids, scores):
             results.append(VectorCollectionResult(id=id, score=score))
         return results
@@ -91,7 +93,7 @@ class InMemoryVectorCollection(VectorCollection):
 
 class InMemoryVectorDatabase(VectorDatabase):
     def __init__(self) -> None:
-        self._collections: t.Dict[VectorCollectionId, VectorCollection] = {}
+        self._collections: dict[VectorCollectionId, VectorCollection] = {}
 
     def get_table(self, config: VectorCollectionConfig, **kwargs) -> VectorCollection:
         collection = self._collections.get(config.id)

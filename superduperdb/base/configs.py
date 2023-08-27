@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import typing as t
 from dataclasses import dataclass
@@ -7,7 +9,7 @@ from pathlib import Path
 from . import config_dicts
 from .config import Config
 
-File = t.Union[Path, str]
+File = Path | str
 
 # The top-level directory of the project
 ROOT = Path(__file__).parents[2]
@@ -33,10 +35,10 @@ FILE_SEP = ','
 
 @dataclass(frozen=True)
 class ConfigSettings:
-    cls: t.Type
-    default_files: t.Union[t.Sequence[Path], str]
+    cls: type
+    default_files: t.Sequence[Path] | str
     prefix: str
-    environ: t.Optional[t.Dict] = None
+    environ: dict | None = None
 
     @cached_property
     def config(self) -> t.Any:

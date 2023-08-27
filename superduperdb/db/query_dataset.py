@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 
 from superduperdb.db.base.query import Select

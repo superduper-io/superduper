@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 from abc import ABC, abstractmethod
 
@@ -6,7 +8,7 @@ from superduperdb.db.base.query import Select
 
 
 class BaseDataBackend(ABC):
-    models: t.Dict[str, Model]
+    models: dict[str, Model]
     select_cls = Select
     id_field = 'id'
 

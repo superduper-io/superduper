@@ -37,7 +37,7 @@ class Select(ABC, Serializable):
     """
 
     @property
-    def select_table(self) -> 'Select':
+    def select_table(self) -> Select:
         """Return a query that selects this table"""
         raise NotImplementedError
 
@@ -49,7 +49,7 @@ class Select(ABC, Serializable):
         """
         raise NotImplementedError
 
-    def select_ids(self) -> 'Select':
+    def select_ids(self) -> Select:
         """Converts the Serializable into a Serializable which only returns the id
         of each column/ document.
         """
@@ -62,7 +62,7 @@ class Select(ABC, Serializable):
         """
         raise NotImplementedError
 
-    def select_ids_of_missing_outputs(self, key: str, model: str) -> 'Select':
+    def select_ids_of_missing_outputs(self, key: str, model: str) -> Select:
         """
         Create a select which selects the ids of documents whose
         `_outputs.key.model` entries are missing
@@ -72,7 +72,7 @@ class Select(ABC, Serializable):
         """
         raise NotImplementedError
 
-    def add_fold(self, fold: str) -> 'Select':
+    def add_fold(self, fold: str) -> Select:
         """Create a select which selects the same data, but additionally restricts to
         the fold specified
 
@@ -121,7 +121,7 @@ class Insert(ABC, Serializable):
     """
 
     # must implement attribute/ property self.documents
-    documents: t.List
+    documents: list
 
     @property
     @abstractmethod

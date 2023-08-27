@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 
 import click
@@ -12,7 +14,7 @@ class MongoMetaDataStore(MetaDataStore):
     def __init__(
         self,
         conn: t.Any,
-        name: t.Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         self.name = name
         self.db = conn[name]
@@ -43,12 +45,12 @@ class MongoMetaDataStore(MetaDataStore):
             }
         )
 
-    def create_component(self, info: t.Dict) -> InsertOneResult:
+    def create_component(self, info: dict) -> InsertOneResult:
         if 'hidden' not in info:
             info['hidden'] = False
         return self.object_collection.insert_one(info)
 
-    def create_job(self, info: t.Dict) -> InsertOneResult:
+    def create_job(self, info: dict) -> InsertOneResult:
         return self.job_collection.insert_one(info)
 
     def get_parent_child_relations(self):
@@ -102,14 +104,14 @@ class MongoMetaDataStore(MetaDataStore):
             {'identifier': identifier}, {'$set': {key: value}}
         )
 
-    def show_components(self, type_id: str, **kwargs) -> t.List[t.Union[t.Any, str]]:
+    def show_components(self, type_id: str, **kwargs) -> list[t.Any | str]:
         return self.object_collection.distinct(
             'identifier', {'type_id': type_id, **kwargs}
         )
 
     def show_component_versions(
         self, type_id: str, identifier: str
-    ) -> t.List[t.Union[t.Any, int]]:
+    ) -> list[t.Any | int]:
         return self.object_collection.distinct(
             'version', {'type_id': type_id, 'identifier': identifier}
         )
@@ -129,10 +131,10 @@ class MongoMetaDataStore(MetaDataStore):
         )
 
     def _component_used(
-        self, type_id: str, identifier: str, version: t.Optional[int] = None
+        self, type_id: str, identifier: str, version: int | None = None
     ) -> bool:
         if version is None:
-            members: t.Union[t.Dict, str] = {'$regex': f'^{identifier}/{type_id}'}
+            members: dict | str = {'$regex': f'^{identifier}/{type_id}'}
         else:
             members = Component.make_unique_id(type_id, identifier, version)
 
@@ -172,7 +174,7 @@ class MongoMetaDataStore(MetaDataStore):
         identifier: str,
         version: int,
         allow_hidden: bool = False,
-    ) -> t.Dict[str, t.Any]:
+    ) -> dict[str, t.Any]:
         if not allow_hidden:
             r = self.object_collection.find_one(
                 {
@@ -202,14 +204,14 @@ class MongoMetaDataStore(MetaDataStore):
             )
         return r
 
-    def get_component_version_parents(self, unique_id: str) -> t.List[str]:
+    def get_component_version_parents(self, unique_id: str) -> list[str]:
         return [
             r['parent'] for r in self.parent_child_mappings.find({'child': unique_id})
         ]
 
     def _replace_object(
         self,
-        info: t.Dict[str, t.Any],
+        info: dict[str, t.Any],
         identifier: str,
         type_id: str,
         version: int,

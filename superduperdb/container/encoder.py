@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import dataclasses as dc
 import io
@@ -38,15 +40,15 @@ class Encoder(Component):
     artifacts: t.ClassVar[t.Sequence[str]] = ['decoder', 'encoder']
 
     identifier: str
-    decoder: t.Union[t.Callable, Artifact] = dc.field(
+    decoder: t.Callable | Artifact = dc.field(
         default_factory=lambda: Artifact(artifact=_pickle_decoder)
     )
-    encoder: t.Union[t.Callable, Artifact] = dc.field(
+    encoder: t.Callable | Artifact = dc.field(
         default_factory=lambda: Artifact(artifact=_pickle_encoder)
     )
 
-    shape: t.Optional[t.Sequence] = None
-    version: t.Optional[int] = None
+    shape: t.Sequence | None = None
+    version: int | None = None
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'encoder'
@@ -57,17 +59,15 @@ class Encoder(Component):
         if isinstance(self.encoder, t.Callable):
             self.encoder = Artifact(artifact=self.encoder)
 
-    def __call__(
-        self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
-    ) -> 'Encodable':
+    def __call__(self, x: t.Any | None = None, uri: str | None = None) -> Encodable:
         return Encodable(self, x=x, uri=uri)  # type: ignore[call-arg]
 
     def decode(self, b: bytes) -> t.Any:
         return self(self.decoder.artifact(b))  # type: ignore[union-attr]
 
     def encode(
-        self, x: t.Optional[t.Any] = None, uri: t.Optional[str] = None
-    ) -> t.Dict[str, t.Any]:
+        self, x: t.Any | None = None, uri: str | None = None
+    ) -> dict[str, t.Any]:
         if self.encoder is not None:
             if x is not None:
                 return {
@@ -99,10 +99,10 @@ class Encodable:
     """
 
     encoder: t.Callable
-    x: t.Optional[t.Any] = None
-    uri: t.Optional[str] = None
+    x: t.Any | None = None
+    uri: str | None = None
 
-    def encode(self) -> t.Dict[str, t.Any]:
+    def encode(self) -> dict[str, t.Any]:
         return self.encoder.encode(x=self.x, uri=self.uri)  # type: ignore[attr-defined]
 
 

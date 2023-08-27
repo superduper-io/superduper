@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 import typing as t
 from abc import ABC, abstractmethod
@@ -14,17 +16,17 @@ class MetaDataStore(ABC):
     def __init__(
         self,
         conn: t.Any,
-        name: t.Optional[str] = None,
+        name: str | None = None,
     ):
         self.name = name
         self.conn = conn
 
     @abstractmethod
-    def create_component(self, info: t.Dict):
+    def create_component(self, info: dict):
         pass
 
     @abstractmethod
-    def create_job(self, info: t.Dict):
+    def create_job(self, info: dict):
         pass
 
     @abstractmethod
@@ -121,9 +123,9 @@ class MetaDataStore(ABC):
         self,
         type_id: str,
         identifier: str,
-        version: t.Optional[int] = None,
+        version: int | None = None,
         allow_hidden: bool = False,
-    ) -> t.Dict[str, t.Any]:
+    ) -> dict[str, t.Any]:
         if version is None:
             version = self.get_latest_version(
                 type_id=type_id, identifier=identifier, allow_hidden=allow_hidden
@@ -166,10 +168,10 @@ class MetaDataStore(ABC):
 
     def replace_object(
         self,
-        info: t.Dict[str, t.Any],
+        info: dict[str, t.Any],
         identifier: str,
         type_id: str,
-        version: t.Optional[int] = None,
+        version: int | None = None,
     ) -> None:
         if version is not None:
             version = self.get_latest_version(type_id, identifier)

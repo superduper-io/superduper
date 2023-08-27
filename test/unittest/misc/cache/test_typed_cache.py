@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from unittest import mock
 
 from superduperdb.data.cache.typed_cache import TypedCache

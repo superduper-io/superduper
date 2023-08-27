@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import datetime
 import json
@@ -24,8 +26,8 @@ from superduperdb.db.mongodb import query
 from superduperdb.misc.task_queue import cdc_queue
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 
-MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
-TokenType = t.Dict[str, str]
+MongoChangePipelines: dict[str, t.Sequence[t.Any]] = {'generic': []}
+TokenType = dict[str, str]
 
 
 class DBEvent(Enum):
@@ -58,8 +60,8 @@ class Packet:
     A base packet to represent message in task queue.
     """
 
-    ids: t.List[t.Union[ObjectId, str]]
-    query: t.Optional[Serializable]
+    ids: list[ObjectId | str]
+    query: Serializable | None
     event_type: str = DBEvent.insert.value
 
 
@@ -74,7 +76,7 @@ class MongoChangePipeline:
     def validate(self):
         raise NotImplementedError
 
-    def build_matching(self) -> t.Sequence[t.Dict]:
+    def build_matching(self) -> t.Sequence[dict]:
         """A helper fxn to build a listen pipeline for mongo watch api.
 
         :param matching_operations: A list of operations to watch.
@@ -122,7 +124,7 @@ class BaseDatabaseListener(ABC):
 
 def delete_vectors(
     indexing_listener_identifier: str,
-    cdc_query: t.Optional[Serializable],
+    cdc_query: Serializable | None,
     ids: t.Sequence[str],
     db=None,
 ):
@@ -182,7 +184,7 @@ def copy_vectors(
         raise
 
 
-def vector_task_factory(task: str = 'copy') -> t.Tuple[t.Callable, str]:
+def vector_task_factory(task: str = 'copy') -> tuple[t.Callable, str]:
     if task == 'copy':
         return copy_vectors, 'copy_vectors'
     elif task == 'delete':
@@ -212,7 +214,7 @@ class CDCHandler(threading.Thread):
         threading.Thread.__init__(self, daemon=False)
 
     def submit_task_workflow(
-        self, cdc_query: t.Optional[Serializable], ids: t.Sequence, task: str = "copy"
+        self, cdc_query: Serializable | None, ids: t.Sequence, task: str = "copy"
     ) -> None:
         """submit_task_workflow.
         A fxn to build a taskflow and execute it with changed ids.
@@ -240,7 +242,7 @@ class CDCHandler(threading.Thread):
     def create_vector_listener_task(
         self,
         task_workflow: TaskWorkflow,
-        cdc_query: t.Optional[Serializable],
+        cdc_query: Serializable | None,
         ids: t.Sequence[str],
         task: str = 'copy',
     ) -> TaskWorkflow:
@@ -352,7 +354,7 @@ class MongoEventMixin:
     DEFAULT_ID: str = '_id'
     EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
 
-    def on_create(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+    def on_create(self, change: dict, db: DB, collection: query.Collection) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
         change stream.
@@ -371,7 +373,7 @@ class MongoEventMixin:
         packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
-    def on_update(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+    def on_update(self, change: dict, db: DB, collection: query.Collection) -> None:
         """on_update.
 
         A helper on update event handler which handles updated document in the
@@ -391,7 +393,7 @@ class MongoEventMixin:
         packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
-    def on_delete(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+    def on_delete(self, change: dict, db: DB, collection: query.Collection) -> None:
         """on_delete.
 
         A helper on delete event handler which handles deleted document in the
@@ -468,15 +470,15 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
     """
 
     IDENTITY_SEP: str = '/'
-    _scheduler: t.Optional[threading.Thread]
+    _scheduler: threading.Thread | None
 
     def __init__(
         self,
         db: DB,
         on: query.Collection,
         stop_event: threading.Event,
-        identifier: 'str' = '',
-        resume_token: t.Optional[TokenType] = None,
+        identifier: str = '',
+        resume_token: TokenType | None = None,
     ):
         """__init__.
 
@@ -524,7 +526,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
     @staticmethod
     def _get_stream_pipeline(
         change: str,
-    ) -> t.Optional[t.Sequence[t.Any]]:
+    ) -> t.Sequence[t.Any] | None:
         """_get_stream_pipeline.
 
         :param change: change can be a prebuilt listen pipeline like
@@ -532,7 +534,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         """
         return MongoChangePipelines.get(change)
 
-    def _get_reference_id(self, document: t.Dict) -> t.Optional[str]:
+    def _get_reference_id(self, document: dict) -> str | None:
         """_get_reference_id.
 
         :param document:
@@ -544,7 +546,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             return None
         return reference_id
 
-    def event_handler(self, change: t.Dict) -> None:
+    def event_handler(self, change: dict) -> None:
         """event_handler.
         A helper fxn to handle incoming changes from change stream on a collection.
 
@@ -569,7 +571,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             self._change_counters['deletes'] += 1
             self.on_delete(change, db=self.db, collection=self._on_component)
 
-    def dump_token(self, change: t.Dict) -> None:
+    def dump_token(self, change: dict) -> None:
         """dump_token.
         A helper utility to dump resume token from the changed document.
 
@@ -578,7 +580,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         token = change[self.DEFAULT_ID]
         self.tokens.append(token)
 
-    def check_if_taskgraph_change(self, change: t.Dict) -> bool:
+    def check_if_taskgraph_change(self, change: dict) -> bool:
         """
         A helper method to check if the cdc change is done
         by taskgraph nodes.
@@ -650,7 +652,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
     def attach_scheduler(self, scheduler: threading.Thread) -> None:
         self._scheduler = scheduler
 
-    def info(self) -> t.Dict:
+    def info(self) -> dict:
         """
         Get info on the current state of listener.
         """
@@ -672,7 +674,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         self.resume_token = token
 
     def set_change_pipeline(
-        self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]]
+        self, change_pipeline: str | t.Sequence[dict] | None
     ) -> None:
         """
         Set the change pipeline for the listener.
@@ -689,9 +691,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         self.set_resume_token(token.token)  # type: ignore[attr-defined]
         self.listen()
 
-    def listen(
-        self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]] = None
-    ) -> None:
+    def listen(self, change_pipeline: str | t.Sequence[dict] | None = None) -> None:
         """Primary fxn to initiate listening of a database on the collection
         with defined `change_pipeline` by the user.
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import dataclasses as dc
 import time
@@ -17,7 +19,7 @@ class Cache(abc.ABC):
 
 @dc.dataclass
 class KeyCache(t.Generic[Entry], Cache):
-    def put(self, entry: Entry, key: t.Optional[str] = None) -> str:
+    def put(self, entry: Entry, key: str | None = None) -> str:
         """Put an item into the cache, return a string key"""
         with self._lock:
             try:
@@ -41,7 +43,7 @@ class KeyCache(t.Generic[Entry], Cache):
         with self._lock:
             return self._cache[key][0]
 
-    def expire(self, before: float) -> t.Dict[str, t.Any]:
+    def expire(self, before: float) -> dict[str, t.Any]:
         with self._lock:
             old = {k: e for k, (e, time) in self._cache.items() if time < before}
             for key, entry in old.items():
@@ -55,7 +57,7 @@ class KeyCache(t.Generic[Entry], Cache):
     def __len__(self) -> int:
         return len(self._cache)
 
-    _cache: t.Dict[str, t.Tuple[Entry, float]] = dc.field(default_factory=dict)
+    _cache: dict[str, tuple[Entry, float]] = dc.field(default_factory=dict)
     _count: int = 0
-    _inverse: t.Dict[Entry, str] = dc.field(default_factory=dict)
+    _inverse: dict[Entry, str] = dc.field(default_factory=dict)
     _lock: Lock = dc.field(default_factory=Lock)

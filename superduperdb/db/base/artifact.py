@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import typing as t
 from abc import ABC, abstractmethod
@@ -16,7 +18,7 @@ class ArtifactStore(ABC):
     def __init__(
         self,
         conn: t.Any,
-        name: t.Optional[str] = None,
+        name: str | None = None,
     ):
         self.name = name
         self.conn = conn

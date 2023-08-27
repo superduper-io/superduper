@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def dot(x, y):
     return x.matmul(y.T)
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pymongo import MongoClient
 
 from superduperdb.base import config

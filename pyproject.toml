@@ -90,7 +90,6 @@ typing = [
 lint = [
     "black>=23.3",
     "interrogate>=1.5.0",
-    "isort>=5.12.0",
     "ruff>=0.0.267",
 ]
 tests = [
@@ -145,5 +144,13 @@ quiet = false
 verbose = 0
 whitelist-regex = []
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+extend-select = [
+    "I", # Missing required import (auto-fixable)
+    "UP", # Pyupgrade
+]
+
+[tool.ruff.isort]
+# we can remove this above python 3.10, ref https://peps.python.org/pep-0604/
+required-imports = ["from __future__ import annotations"]
+combine-as-imports = true

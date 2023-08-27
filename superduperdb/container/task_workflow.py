@@ -30,7 +30,7 @@ class TaskWorkflow:
         self.G.add_edge(node1, node2)
 
     @wraps(DiGraph.add_node)
-    def add_node(self, node: str, job: t.Union[FunctionJob, ComponentJob]) -> None:
+    def add_node(self, node: str, job: FunctionJob | ComponentJob) -> None:
         self.G.add_node(node, job=job)
 
     def watch(self) -> None:
@@ -38,7 +38,7 @@ class TaskWorkflow:
         for node in list(networkx.topological_sort(self.G)):
             self.G.nodes[node]['job'].watch()
 
-    def run_jobs(self, distributed: t.Optional[bool] = False):
+    def run_jobs(self, distributed: bool | None = False):
         """Run all the jobs in this workflow
 
         :param distributed: if True, use dask to distribute these tasks

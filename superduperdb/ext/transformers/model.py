@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import functools
 import logging
@@ -6,10 +8,13 @@ import re
 import typing as t
 import warnings
 
-from transformers import DataCollatorWithPadding
-from transformers import Pipeline as BasePipeline
-from transformers import Trainer, TrainingArguments
-from transformers import pipeline as _pipeline
+from transformers import (
+    DataCollatorWithPadding,
+    Pipeline as BasePipeline,
+    Trainer,
+    TrainingArguments,
+    pipeline as _pipeline,
+)
 
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.metric import Metric
@@ -34,8 +39,8 @@ def TransformersTrainerConfiguration(identifier: str, *args, **kwargs):
 @dc.dataclass
 class Pipeline(Model):
     preprocess_type: str = 'tokenizer'
-    preprocess_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
-    postprocess_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
+    preprocess_kwargs: dict[str, t.Any] = dc.field(default_factory=dict)
+    postprocess_kwargs: dict[str, t.Any] = dc.field(default_factory=dict)
     task: str = 'text-classification'
 
     def __post_init__(self):
@@ -125,15 +130,15 @@ class Pipeline(Model):
         self,
         X: str,
         y: str,
-        select: t.Optional[Select] = None,
-        db: t.Optional[DB] = None,
-        configuration: t.Optional[_TrainingConfiguration] = None,
-        validation_sets: t.Optional[t.Sequence[str]] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
+        select: Select | None = None,
+        db: DB | None = None,
+        configuration: _TrainingConfiguration | None = None,
+        validation_sets: t.Sequence[str] | None = None,
+        metrics: t.Sequence[Metric] | None = None,
         data_prefetch: bool = False,
         prefetch_size: int = _DEFAULT_PREFETCH_SIZE,
         **kwargs,
-    ) -> t.Optional[t.Dict[str, t.Any]]:
+    ) -> dict[str, t.Any] | None:
         if configuration is not None:
             self.configuration = configuration
         if select is not None:

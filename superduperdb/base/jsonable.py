@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import sys
 import typing as t
@@ -30,8 +32,8 @@ class JSONable(pydantic.BaseModel):
         else:
             keep_untouched = (functools.cached_property,)
 
-    SUBCLASSES: t.ClassVar[t.Set[t.Type]] = set()
-    TYPE_ID_TO_CLASS: t.ClassVar[t.Dict[str, t.Type]] = {}
+    SUBCLASSES: t.ClassVar[set[t.Any]] = set()
+    TYPE_ID_TO_CLASS: t.ClassVar[dict[str, t.Any]] = {}
 
     @functools.wraps(pydantic.BaseModel.dict)
     def dict(self, *a, **ka):
@@ -39,7 +41,7 @@ class JSONable(pydantic.BaseModel):
         properties = self.schema()['properties']
         return {k: v for k, v in d.items() if k in properties}
 
-    def deepcopy(self) -> 'JSONable':
+    def deepcopy(self) -> JSONable:
         return self.copy(deep=True)
 
     def __init_subclass__(cls, *a, **ka):

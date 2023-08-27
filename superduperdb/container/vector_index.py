@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import itertools
 import typing as t
@@ -18,7 +20,7 @@ from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollec
 T = t.TypeVar('T')
 
 
-def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
+def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[list[T]]:
     """
     Batch an iterable into chunks of size `batch_size`
 
@@ -41,19 +43,19 @@ class VectorIndex(Component):
     identifier: str
 
     #: Listener which is applied to created vectors
-    indexing_listener: t.Union[Listener, str]
+    indexing_listener: Listener | str
 
     #: List of additional listeners which can "talk" to the index (e.g. multi-modal)
-    compatible_listener: t.Union[None, Listener, str] = None
+    compatible_listener: None | Listener | str = None
 
     #: Measure which is used to compare vectors in index
     measure: str = 'cosine'
 
     #: A version number for the index (unused)
-    version: t.Optional[int] = None
+    version: int | None = None
 
     #: Metric values used for training
-    metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
+    metric_values: dict | None = dc.field(default_factory=dict)
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'vector_index'
@@ -108,7 +110,7 @@ class VectorIndex(Component):
             self._initialize_vector_database(db)
 
     @property
-    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
+    def child_components(self) -> t.Sequence[tuple[str, str]]:
         out = [('indexing_listener', 'listener')]
         if self.compatible_listener is not None:
             out.append(('compatible_listener', 'listener'))
@@ -117,10 +119,10 @@ class VectorIndex(Component):
     def get_vector(
         self,
         like: Document,
-        models: t.List[str],
-        keys: t.List[str],
+        models: list[str],
+        keys: list[str],
         db: t.Any = None,
-        outputs: t.Optional[t.Dict] = None,
+        outputs: dict | None = None,
         featurize: bool = True,
     ):
         document = MongoStyleDict(like.unpack())
@@ -154,11 +156,11 @@ class VectorIndex(Component):
         self,
         like: Document,
         db: t.Any = None,
-        outputs: t.Optional[t.Dict] = None,
+        outputs: dict | None = None,
         featurize: bool = True,
-        ids: t.Optional[t.Sequence[str]] = None,
+        ids: t.Sequence[str] | None = None,
         n: int = 100,
-    ) -> t.Tuple[t.List[str], t.List[float]]:
+    ) -> tuple[list[str], list[float]]:
         """Given a document, find the nearest results in this vector index, returned as
         two parallel lists of result IDs and scores
 
@@ -199,7 +201,7 @@ class VectorIndex(Component):
         )
 
     @property
-    def models_keys(self) -> t.Tuple[t.Sequence[str], t.Sequence[str]]:
+    def models_keys(self) -> tuple[t.Sequence[str], t.Sequence[str]]:
         """
         Return a list of model and keys for each listener
         """

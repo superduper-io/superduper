@@ -11,9 +11,9 @@ import superduperdb as s
 
 
 class BaseVectorIndex:
-    name: t.Optional[str] = None
+    name: str | None = None
     index: t.Sequence[str]
-    lookup: t.Dict[str, t.Union[t.Iterator[int], int]]
+    lookup: dict[str, t.Iterator[int] | int]
     measure: str
 
     def __init__(self, h, index, measure):
@@ -64,7 +64,7 @@ VectorCollectionId = str
 VectorCollectionItemId = str
 VectorIndexMeasureType = t.Literal["l2", "dot", "css"]
 VectorIndexMeasureFunction = t.Callable[[numpy.ndarray, numpy.ndarray], float]
-VectorIndexMeasure = t.Union[VectorIndexMeasureType, VectorIndexMeasureFunction]
+VectorIndexMeasure = VectorIndexMeasureType | VectorIndexMeasureFunction
 
 
 class VectorCollectionItemNotFound(Exception):
@@ -93,7 +93,7 @@ class VectorCollectionItem:
     ) -> VectorCollectionItem:
         return VectorCollectionItem(id=id, vector=to_numpy(vector))
 
-    def to_dict(self) -> t.Dict:
+    def to_dict(self) -> dict:
         return {'id': self.id, 'vector': self.vector}
 
 
@@ -126,7 +126,7 @@ class VectorCollection(ABC):
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> t.List[VectorCollectionResult]:
+    ) -> list[VectorCollectionResult]:
         """Find items that are nearest to the item with the given identifier."""
         pass
 
@@ -138,7 +138,7 @@ class VectorCollection(ABC):
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
-    ) -> t.List[VectorCollectionResult]:
+    ) -> list[VectorCollectionResult]:
         """Find items that are nearest to the given vector."""
         pass
 

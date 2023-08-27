@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import importlib
 import inspect
@@ -27,7 +29,7 @@ def _deserialize(r: t.Any, db: None = None) -> t.Any:
     return component_cls(**kwargs)
 
 
-def _serialize(item: t.Any) -> t.Dict[str, t.Any]:
+def _serialize(item: t.Any) -> dict[str, t.Any]:
     def fix(k, v):
         attr = getattr(item, k)
         if isinstance(attr, Serializable):
@@ -65,5 +67,5 @@ class Serializable:
     deserialize = staticmethod(_deserialize)
     serialize = _serialize
 
-    def dict(self) -> t.Dict[str, t.Any]:
+    def dict(self) -> dict[str, t.Any]:
         return dc.asdict(self)

@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from dataclasses import InitVar, asdict, field, fields, replace
 
-from pydantic import Field
-from pydantic import dataclasses as dc
+from pydantic import Field, dataclasses as dc
 
 
 @dc.dataclass

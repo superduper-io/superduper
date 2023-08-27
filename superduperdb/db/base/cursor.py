@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import dataclasses as dc
-import typing as t
 from functools import cached_property
 
 from pymongo.cursor import Cursor
@@ -26,13 +27,13 @@ class SuperDuperCursor:
 
     raw_cursor: Cursor
     id_field: str
-    encoders: t.Dict[str, Encoder] = dc.field(default_factory=dict)
-    features: t.Optional[t.Dict[str, str]] = None
-    scores: t.Optional[t.Dict[str, float]] = None
+    encoders: dict[str, Encoder] = dc.field(default_factory=dict)
+    features: dict[str, str] | None = None
+    scores: dict[str, float] | None = None
     _it: int = 0
 
     @cached_property
-    def _results(self) -> t.Optional[t.List[t.Dict]]:
+    def _results(self) -> list[dict] | None:
         def key(r):
             return -self.scores[str(r[self.id_field])]
 

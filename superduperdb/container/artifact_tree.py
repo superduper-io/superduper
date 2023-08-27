@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 
 from superduperdb.data.tree.tree import tree_find, tree_rewrite
@@ -11,7 +13,7 @@ A collection of functions that process trees made up of dicts and lists
 which contain Artifacts
 """
 
-Info = t.Dict[int, t.Dict[str, t.Any]]
+Info = dict[int, t.Dict[str, t.Any]]
 
 
 def get_artifacts(tree: t.Any) -> t.Iterator[Artifact]:
@@ -31,7 +33,7 @@ def infer_artifacts(tree: t.Any) -> t.Iterator:
     return (t['file_id'] for t in tree_find(tree, _has_file_id))
 
 
-def replace_artifacts_with_dict(tree: t.Any, info: t.Dict[Artifact, str]) -> t.Any:
+def replace_artifacts_with_dict(tree: t.Any, info: dict[Artifact, str]) -> t.Any:
     """Replace every Artifact in a tree with an ArtifactDesc
 
     :param tree: A tree made up of dicts and lists
@@ -59,8 +61,8 @@ def replace_artifacts(tree: t.Any, info: Info) -> t.Any:
 
 def load_artifacts_from_store(
     tree: t.Any,
-    cache: t.Dict[str, Artifact],
-    artifact_store: t.Optional[ArtifactStore] = None,
+    cache: dict[str, Artifact],
+    artifact_store: ArtifactStore | None = None,
 ):
     """
     Recursively search through a tree for ArtifactDescs by an Artifact with
@@ -82,7 +84,7 @@ def load_artifacts_from_store(
 
 def load_artifacts(
     tree: t.Any,
-    cache: t.Dict[str, Artifact],
+    cache: dict[str, Artifact],
     getter: t.Callable[[str], bytes],
 ) -> t.Any:
     """Replace ArtifactDesc dicts in a tree by Artifacts with a getter
@@ -100,7 +102,7 @@ def load_artifacts(
 
 
 def _load_artifacts(
-    tree: t.Any, make: t.Callable[[str, str], bytes], cache: t.Dict[str, Artifact]
+    tree: t.Any, make: t.Callable[[str, str], bytes], cache: dict[str, Artifact]
 ) -> t.Any:
     """Replace ArtifactDesc dicts in a tree by Artifacts."""
 

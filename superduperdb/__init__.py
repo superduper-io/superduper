@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .base import config, configs, jsonable, logger
 
 __all__ = 'CFG', 'ICON', 'JSONable', 'ROOT', 'config', 'log', 'logging', 'superduper'

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 
 import bson
@@ -6,8 +8,8 @@ from bson.objectid import ObjectId
 import superduperdb as s
 from superduperdb.container.encoder import Encodable
 
-ContentType = t.Union[t.Dict, Encodable]
-ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
+ContentType = dict | Encodable
+ItemType = dict[str, t.Any] | Encodable | ObjectId
 
 _OUTPUTS_KEY: str = '_outputs'
 
@@ -44,7 +46,7 @@ class Document:
         return document
 
     @staticmethod
-    def decode(r: t.Dict, encoders: t.Dict) -> t.Any:
+    def decode(r: dict, encoders: dict) -> t.Any:
         if isinstance(r, Document):
             return Document(_decode(r, encoders))
         elif isinstance(r, dict):
@@ -73,7 +75,7 @@ def dump_bsons(documents: t.Sequence[Document]) -> bytes:
     return bytes(bson.encode({'docs': [d.encode() for d in documents]}))
 
 
-def load_bson(content: t.ByteString, encoders: t.Dict[str, t.Any]) -> Document:
+def load_bson(content: t.ByteString, encoders: dict[str, t.Any]) -> Document:
     """Load a Document from bson-encoded content
 
     :param content: the content to decode
@@ -83,7 +85,7 @@ def load_bson(content: t.ByteString, encoders: t.Dict[str, t.Any]) -> Document:
     return Document(Document.decode(document, encoders=encoders))
 
 
-def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
+def load_bsons(content: t.ByteString, encoders: dict) -> list[Document]:
     """Load a list of Documents from bson-encoded content
 
     :param content: the content to decode
@@ -94,7 +96,7 @@ def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
 
 
 # ruff: noqa: E501
-def _decode(r: t.Dict, encoders: t.Dict) -> t.Any:
+def _decode(r: dict, encoders: dict) -> t.Any:
     if isinstance(r, dict) and '_content' in r:
         encoder = encoders[r['_content']['encoder']]
         try:

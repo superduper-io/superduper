@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 import pickle
 import typing as t
@@ -6,7 +8,7 @@ from abc import ABC
 import dill
 import typing_extensions as te
 
-Info = t.Optional[t.Dict[str, t.Any]]
+Info = dict[str, t.Any] | None
 
 
 class ModuleClassDict(te.TypedDict):
@@ -14,7 +16,7 @@ class ModuleClassDict(te.TypedDict):
 
     module: str
     cls: str
-    dict: t.Dict[str, t.Any]
+    dict: dict[str, t.Any]
 
 
 class Serializer(ABC):
@@ -73,7 +75,7 @@ class TorchSerializer(Serializer):
         return torch.load(io.BytesIO(b))
 
 
-serializers: t.Dict[str, t.Type] = {
+serializers: dict[str, t.Any] = {
     'pickle': PickleSerializer,
     'dill': DillSerializer,
     'torch': TorchSerializer,

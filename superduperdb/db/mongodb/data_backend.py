@@ -1,4 +1,4 @@
-import typing as t
+from __future__ import annotations
 
 import click
 from pymongo import MongoClient
@@ -48,7 +48,7 @@ class MongoDataBackend(BaseDataBackend):
         r[f'{key}._content.bytes'] = bytes_
         return r
 
-    def unset_outputs(self, info: t.Dict):
+    def unset_outputs(self, info: dict):
         select = Serializable.deserialize(info['select'])
         logging.info(f'unsetting output field _outputs.{info["key"]}.{info["model"]}')
         doc = {'$unset': {f'_outputs.{info["key"]}.{info["model"]}': 1}}

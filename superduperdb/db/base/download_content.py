@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 
 from superduperdb import CFG, logging
@@ -9,16 +11,16 @@ from superduperdb.db.base.query import Insert, Select
 
 def download_content(
     db,
-    query: t.Union[Select, Insert, t.Dict],
-    ids: t.Optional[t.Sequence[str]] = None,
-    documents: t.Optional[t.Sequence[Document]] = None,
-    timeout: t.Optional[int] = None,
+    query: Select | Insert | dict,
+    ids: t.Sequence[str] | None = None,
+    documents: t.Sequence[Document] | None = None,
+    timeout: int | None = None,
     raises: bool = True,
-    n_download_workers: t.Optional[int] = None,
-    headers: t.Optional[t.Dict] = None,
-    download_update: t.Optional[t.Callable] = None,
+    n_download_workers: int | None = None,
+    headers: dict | None = None,
+    download_update: t.Callable | None = None,
     **kwargs,
-) -> t.Optional[t.Sequence[Document]]:
+) -> t.Sequence[Document] | None:
     """
     Download content contained in uploaded data. Items to be downloaded are identifier
     via the subdocuments in the form exemplified below. By default items are downloaded

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import typing as t
 
@@ -5,7 +7,7 @@ import tenacity
 
 import superduperdb as s
 
-ExceptionTypes = t.Union[t.Type[BaseException], t.Tuple[t.Type[BaseException], ...]]
+ExceptionTypes = t.Type[BaseException] | t.Tuple[t.Type[BaseException], ...]
 
 
 @dc.dataclass

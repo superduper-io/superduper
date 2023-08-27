@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from superduperdb.container.document import Document
 from superduperdb.db.mongodb import query as q
 

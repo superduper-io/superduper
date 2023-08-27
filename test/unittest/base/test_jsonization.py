@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 
 import pydantic
@@ -17,10 +19,10 @@ def test_jsonization1():
     class Blob(pydantic.BaseModel):
         uri: str = ''
         type_id: t.Literal['blob1'] = 'blob1'
-        contents: bytes = bytes()
+        contents: bytes = b''
 
         @pydantic.model_serializer
-        def ser_model(self) -> t.Dict[str, t.Any]:
+        def ser_model(self) -> dict[str, t.Any]:
             return {'uri': self.uri, 'type_id': self.type_id}
 
     blob = Blob(url='s')
@@ -43,7 +45,7 @@ def test_jsonization2():
             arbitrary_types_allowed = True
 
         @pydantic.model_serializer
-        def ser_model(self) -> t.Dict[str, t.Any]:
+        def ser_model(self) -> dict[str, t.Any]:
             return {'uri': self.uri, 'type_id': self.type_id}
 
     doc = Document()

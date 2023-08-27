@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import typing as t
 import uuid
@@ -9,7 +11,7 @@ from superduperdb.container.tasks import callable_job, method_job
 def job(f):
     def wrapper(
         *args,
-        distributed: t.Optional[bool] = None,
+        distributed: bool | None = None,
         db: t.Any = None,
         dependencies: t.Sequence[Job] = (),
         **kwargs,
@@ -23,8 +25,8 @@ def job(f):
 class Job:
     def __init__(
         self,
-        args: t.Optional[t.Sequence] = None,
-        kwargs: t.Optional[t.Dict] = None,
+        args: t.Sequence | None = None,
+        kwargs: dict | None = None,
     ):
         self.args = args
         self.kwargs = kwargs
@@ -60,7 +62,7 @@ class Job:
         }
 
     def __call__(
-        self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
+        self, db: t.Any = None, distributed: bool | None = None, dependencies=()
     ):
         raise NotImplementedError
 
@@ -69,8 +71,8 @@ class FunctionJob(Job):
     def __init__(
         self,
         callable: t.Callable,
-        args: t.Optional[t.Sequence] = None,
-        kwargs: t.Optional[t.Dict] = None,
+        args: t.Sequence | None = None,
+        kwargs: dict | None = None,
     ):
         super().__init__(args=args, kwargs=kwargs)
         self.callable = callable  # type: ignore[assignment]
@@ -95,7 +97,7 @@ class FunctionJob(Job):
         return
 
     def __call__(
-        self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
+        self, db: t.Any = None, distributed: bool | None = None, dependencies=()
     ):
         if db is None:
             from superduperdb.db.base.build import build_datalayer
@@ -119,8 +121,8 @@ class ComponentJob(Job):
         component_identifier: str,
         type_id: str,
         method_name: str,
-        args: t.Optional[t.Sequence] = None,
-        kwargs: t.Optional[t.Dict] = None,
+        args: t.Sequence | None = None,
+        kwargs: dict | None = None,
     ):
         super().__init__(args=args, kwargs=kwargs)
 
@@ -155,7 +157,7 @@ class ComponentJob(Job):
         return
 
     def __call__(
-        self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
+        self, db: t.Any = None, distributed: bool | None = None, dependencies=()
     ):
         if distributed is None:
             distributed = s.CFG.distributed

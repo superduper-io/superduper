@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import os
 import re
@@ -175,7 +177,7 @@ class Downloader(BaseDownloader):
     :param raises: raises error ``True``/``False``
     """
 
-    results: t.Dict[int, str]
+    results: dict[int, str]
 
     def __init__(
         self,
@@ -217,8 +219,8 @@ class Downloader(BaseDownloader):
 
 
 def gather_uris(
-    documents: t.Sequence[t.Dict], gather_ids: bool = True
-) -> t.Tuple[t.List[str], t.List[str], t.List[int]]:
+    documents: t.Sequence[dict], gather_ids: bool = True
+) -> tuple[list[str], list[str], list[int]]:
     """
     Get the uris out of all documents as denoted by ``{"_content": ...}``
 
@@ -238,7 +240,7 @@ def gather_uris(
     return uris, mongo_keys, ids
 
 
-def _gather_uris_for_document(r: t.Dict):
+def _gather_uris_for_document(r: dict):
     '''
     >>> _gather_uris_for_document({'a': {'_content': {'uri': 'test'}}})
     (['test'], ['a'])

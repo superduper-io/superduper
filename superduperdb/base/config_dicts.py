@@ -2,6 +2,7 @@
 Operations on dictionaries used to fill and combine config files
 and environment variables
 """
+from __future__ import annotations
 
 import os
 import sys
@@ -14,17 +15,15 @@ SEP = '_'
 _NONE = object()
 
 
-def read_all(
-    files: t.Sequence[t.Union[Path, str]], fail: bool = False
-) -> t.Sequence[t.Dict]:
+def read_all(files: t.Sequence[Path | str], fail: bool = False) -> t.Sequence[dict]:
     if fail:
         return [fil.read(f) for f in files]
     else:
         return [fil.read(f, {}) for f in files]
 
 
-def combine(dicts: t.Sequence[t.Dict]) -> t.Dict:
-    result: t.Dict = {}
+def combine(dicts: t.Sequence[dict]) -> dict:
+    result: dict = {}
     for d in dicts:
         _combine_one(result, d)
     return result
@@ -32,9 +31,9 @@ def combine(dicts: t.Sequence[t.Dict]) -> t.Dict:
 
 def environ_to_config_dict(
     prefix: str,
-    parent: t.Dict,
-    environ: t.Optional[t.Dict] = None,
-    err: t.Optional[t.TextIO] = sys.stderr,
+    parent: dict,
+    environ: dict | None = None,
+    err: t.TextIO | None = sys.stderr,
     fail: bool = False,
 ):
     env_dict = environ_dict(prefix, environ)
@@ -55,9 +54,7 @@ def environ_to_config_dict(
     return good
 
 
-def split_address(
-    key: str, parent: t.Dict
-) -> t.Iterator[t.Tuple[t.Dict, t.Tuple[str]]]:
+def split_address(key: str, parent: dict) -> t.Iterator[tuple[dict, tuple[str]]]:
     def split(key, parent, *address):
         if key in parent:
             yield *address, key
@@ -69,7 +66,7 @@ def split_address(
     return split(key, parent)
 
 
-def environ_dict(prefix: str, environ: t.Optional[t.Dict] = None) -> t.Dict:
+def environ_dict(prefix: str, environ: dict | None = None) -> dict:
     if not (prefix.isupper() and prefix.endswith(SEP) and not prefix.startswith(SEP)):
         raise ValueError(f'Bad prefix={prefix}')
 
@@ -96,10 +93,10 @@ def _combine_one(target, source):
 
 
 def _env_dict_to_config_dict(
-    env_dict: t.Dict[str, str], parent: t.Dict
-) -> t.Tuple[t.Dict, t.Dict]:
-    good: t.Dict = {}
-    bad: t.Dict = {}
+    env_dict: dict[str, str], parent: dict
+) -> tuple[dict, dict]:
+    good: dict = {}
+    bad: dict = {}
 
     for k, v in env_dict.items():
         addresses = list(split_address(k, parent))

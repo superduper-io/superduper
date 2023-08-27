@@ -11,7 +11,6 @@ clean-test-containers:
 
 .PHONY: lint-and-type-check
 lint-and-type-check:
-	isort --check superduperdb test
 	black --check superduperdb test
 	ruff check superduperdb test
 	mypy superduperdb
@@ -22,13 +21,18 @@ test: test-containers
 	pytest $(PYTEST_ARGUMENTS)
 
 .PHONY: fix-and-test
-fix-and-test: test-containers
-	isort superduperdb test
+fix-and-test: test-containers fix-codestyle
 	black superduperdb test
 	ruff check --fix superduperdb test
 	mypy superduperdb
 	pytest $(PYTEST_ARGUMENTS)
 	interrogate superduperdb
+
+.PHONY: fix-codestyle
+fix-codestyle:
+	black superduperdb test
+	ruff check --fix superduperdb test
+	mypy superduperdb
 
 .PHONY: clean-test
 clean-test: clean-test-containers

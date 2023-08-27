@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import io
 import typing as t
@@ -49,17 +51,17 @@ class BasicDataset(data.Dataset):
 
 @dc.dataclass
 class TorchTrainerConfiguration(_TrainingConfiguration):
-    objective: t.Optional[t.Union[Artifact, t.Callable]] = None
-    loader_kwargs: t.Dict = dc.field(default_factory=dict)
+    objective: Artifact | t.Callable | None = None
+    loader_kwargs: dict = dc.field(default_factory=dict)
     max_iterations: int = 10**100
     no_improve_then_stop: int = 5
-    splitter: t.Optional[Artifact] = None
+    splitter: Artifact | None = None
     download: bool = False
     validation_interval: int = 100
     listen: str = 'objective'
     optimizer_cls: Artifact = Artifact(torch.optim.Adam, serializer='pickle')
-    optimizer_kwargs: t.Dict = dc.field(default_factory=dict)
-    target_preprocessors: t.Optional[t.Union[Artifact, t.Dict]] = None
+    optimizer_kwargs: dict = dc.field(default_factory=dict)
+    target_preprocessors: Artifact | dict | None = None
 
     def __post_init__(self):
         if self.objective and not isinstance(self.objective, Artifact):
@@ -73,11 +75,11 @@ class TorchTrainerConfiguration(_TrainingConfiguration):
 
 @dc.dataclass
 class Base:
-    collate_fn: t.Optional[t.Union[Artifact, t.Callable]] = None
-    is_batch: t.Optional[t.Union[Artifact, t.Callable]] = None
+    collate_fn: Artifact | t.Callable | None = None
+    is_batch: Artifact | t.Callable | None = None
     num_directions: int = 2
-    metrics: t.Optional[t.Sequence[t.Union[str, Metric]]] = None
-    training_select: t.Optional[Select] = None
+    metrics: t.Sequence[str | Metric] | None = None
+    training_select: Select | None = None
 
     @contextmanager
     def evaluating(self):
@@ -113,13 +115,13 @@ class Base:
 
     def _fit(
         self,
-        X: t.Union[t.List[str], str],
-        y: t.Optional[t.Union[t.List, t.Any]] = None,
-        db: t.Optional[DB] = None,
-        select: t.Optional[t.Union[Select, t.Dict]] = None,
-        configuration: t.Optional[TorchTrainerConfiguration] = None,
-        validation_sets: t.Optional[t.List[str]] = None,
-        metrics: t.Optional[t.List[Metric]] = None,
+        X: list[str] | str,
+        y: list | t.Any | None = None,
+        db: DB | None = None,
+        select: Select | dict | None = None,
+        configuration: TorchTrainerConfiguration | None = None,
+        validation_sets: list[str] | None = None,
+        metrics: list[Metric] | None = None,
         data_prefetch: bool = False,
     ):
         if configuration is not None:
@@ -167,7 +169,7 @@ class Base:
     def forward(self, X):
         return self.object.artifact(X)
 
-    def extract_batch_key(self, batch, key: t.Union[t.List[str], str]):
+    def extract_batch_key(self, batch, key: list[str] | str):
         if isinstance(key, str):
             return batch[key]
         return [batch[k] for k in key]
@@ -208,7 +210,7 @@ class Base:
         train_dataloader: DataLoader,
         valid_dataloader: DataLoader,
         db: DB,
-        validation_sets: t.List[str],
+        validation_sets: list[str],
     ):
         self.train()
         iteration = 0
@@ -276,7 +278,7 @@ class Base:
                 preprocessors[k] = preprocessors[k].artifact
         return lambda r: {k: preprocessors[k](r[k]) for k in preprocessors}
 
-    def _get_data(self, db: t.Optional[DB]):
+    def _get_data(self, db: DB | None):
         if self.training_select is None:
             raise ValueError('self.training_select cannot be None')
         train_data = QueryDataset(
@@ -298,7 +300,7 @@ class Base:
 
 @dc.dataclass
 class TorchModel(Base, Model):  # type: ignore[misc]
-    optimizer_state: t.Optional[Artifact] = None
+    optimizer_state: Artifact | None = None
     forward_method: str = '__call__'
     train_forward_method: str = '__call__'
 

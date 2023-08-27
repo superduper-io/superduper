@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import typing as t
 
@@ -29,20 +31,20 @@ class Listener(Component):
     """
 
     key: str
-    model: t.Union[str, Model]
+    model: str | Model
     select: Select
 
     active: bool = True
-    features: t.Optional[t.Dict] = None
-    identifier: t.Optional[str] = None
-    predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    version: t.Optional[int] = None
+    features: dict | None = None
+    identifier: str | None = None
+    predict_kwargs: dict | None = dc.field(default_factory=dict)
+    version: int | None = None
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'listener'
 
     @property
-    def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
+    def child_components(self) -> t.Sequence[tuple[str, str]]:
         """Returns a list of child components as pairs TBD"""
         return [('model', 'model')]
 
@@ -52,7 +54,7 @@ class Listener(Component):
             self.model = t.cast(Model, db.load('model', self.model))
 
     @property
-    def dependencies(self) -> t.List[str]:
+    def dependencies(self) -> list[str]:
         out = []
         if self.features:
             for k in self.features:

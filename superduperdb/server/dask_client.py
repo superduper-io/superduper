@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing as t
 import uuid
 
@@ -14,10 +16,10 @@ class DaskClient:
     def __init__(
         self,
         address: str,
-        serializers: t.Optional[t.Sequence[t.Callable]] = None,
-        deserializers: t.Optional[t.Sequence[t.Callable]] = None,
+        serializers: t.Sequence[t.Callable] | None = None,
+        deserializers: t.Sequence[t.Callable] | None = None,
         local: bool = False,
-        envs: t.Dict[str, t.Any] = {},
+        envs: dict[str, t.Any] = {},
         **kwargs,
     ):
         """
@@ -28,7 +30,7 @@ class DaskClient:
         :param local: Set to True to create a local Dask cluster. (optional)
         :param envs: An environment dict for cluster.
         """
-        self.futures_collection: t.Dict[str, distributed.Future] = {}
+        self.futures_collection: dict[str, distributed.Future] = {}
         if local:
             cluster = distributed.LocalCluster(env=envs)
             self.client = distributed.Client(cluster, **kwargs)
@@ -95,8 +97,8 @@ class DaskClient:
 
 def dask_client(
     cfg,
-    envs: t.Dict[str, t.Any] = {},
-    local: t.Optional[bool] = None,
+    envs: dict[str, t.Any] = {},
+    local: bool | None = None,
     **kwargs,
 ) -> DaskClient:
     """

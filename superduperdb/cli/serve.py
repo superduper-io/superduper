@@ -1,4 +1,4 @@
-import typing as t
+from __future__ import annotations
 
 import superduperdb as s
 
@@ -15,7 +15,7 @@ def serve():
 
 
 @command(help='Start local cluster: server, dask and change data capture')
-def local_cluster(on: t.List[str] = []):
+def local_cluster(on: list[str] = []):
     from superduperdb.db.base.build import build_datalayer
     from superduperdb.db.base.cdc import DatabaseListener
     from superduperdb.db.mongodb.query import Collection

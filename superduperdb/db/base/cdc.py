@@ -22,6 +22,7 @@ Use this module like this::
     listener = DatabaseListener(db=db, on=Collection('test_collection'))
     listener.listen()
 """
+from __future__ import annotations
 
 import threading
 import typing as t
@@ -39,7 +40,7 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
     `db_type`.
     """
 
-    SUPPORTED_LISTENERS: t.List[str] = ['mongodb']
+    SUPPORTED_LISTENERS: list[str] = ['mongodb']
 
     def __init__(self, db_type: str = 'mongodb'):
         if db_type not in self.SUPPORTED_LISTENERS:

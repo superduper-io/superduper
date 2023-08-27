@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import math
 import typing as t
@@ -36,12 +38,12 @@ DBResult = t.Any
 TaskGraph = t.Any
 
 DeleteResult = DBResult
-InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
-SelectResult = t.List[Document]
+InsertResult = t.Tuple[DBResult, TaskGraph | None]
+SelectResult = list[Document]
 UpdateResult = t.Any
 
-ExecuteQuery = t.Union[Select, SelectOne, Delete, Update, Insert]
-ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
+ExecuteQuery = Select | SelectOne | Delete | Update | Insert
+ExecuteResult = SelectResult | DeleteResult | UpdateResult | InsertResult
 
 ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'select_one', 'update'
 
@@ -53,8 +55,8 @@ class DB:
 
     _database_type: str
     name: str
-    select_cls: t.Type[Select]
-    models: t.Dict
+    select_cls: type[Select]
+    models: dict
 
     type_id_to_cache_mapping = {
         'model': 'models',
@@ -68,7 +70,7 @@ class DB:
         databackend: BaseDataBackend,
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
-        vector_database: t.Optional[VectorDatabase] = None,
+        vector_database: VectorDatabase | None = None,
         distributed_client=None,
     ):
         """
@@ -138,8 +140,8 @@ class DB:
     def show(
         self,
         type_id: str,
-        identifier: t.Optional[str] = None,
-        version: t.Optional[int] = None,
+        identifier: str | None = None,
+        version: int | None = None,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -170,7 +172,7 @@ class DB:
         )
 
     def _get_context(
-        self, model, context_select: t.Optional[Select], context_key: t.Optional[str]
+        self, model, context_select: Select | None, context_key: str | None
     ):
         assert (
             model.takes_context  # type: ignore[attr-defined]
@@ -184,9 +186,9 @@ class DB:
     async def apredict(
         self,
         model: str,
-        input: t.Union[Document, t.Any],
-        context_select: t.Optional[Select] = None,
-        context_key: t.Optional[str] = None,
+        input: Document | t.Any,
+        context_select: Select | None = None,
+        context_key: str | None = None,
         **kwargs,
     ):
         """
@@ -219,11 +221,11 @@ class DB:
     def predict(
         self,
         model: str,
-        input: t.Union[Document, t.Any],
-        context_select: t.Optional[Select] = None,
-        context_key: t.Optional[str] = None,
+        input: Document | t.Any,
+        context_select: Select | None = None,
+        context_key: str | None = None,
         **kwargs,
-    ) -> t.Tuple[Document, t.List[Document]]:
+    ) -> tuple[Document, list[Document]]:
         """
         Apply model to input.
 
@@ -271,7 +273,7 @@ class DB:
             return self.update(query)
         raise TypeError(
             f'Wrong type of {query}; '
-            f'Expected object of type {t.Union[Select, Delete, Update, Insert]}; '
+            f'Expected object of type {Select | Delete | Update | Insert}; '
             f'Got {type(query)};'
         )
 
@@ -294,8 +296,8 @@ class DB:
     def run(
         self,
         job,
-        depends_on: t.Optional[t.Sequence[Future]] = None,
-        distributed: t.Optional[bool] = None,
+        depends_on: t.Sequence[Future] | None = None,
+        distributed: bool | None = None,
     ):
         """
         Run job. See ``container.job.Job``, ``container.job.FunctionJob``,
@@ -334,7 +336,7 @@ class DB:
 
     def refresh_after_update_or_insert(
         self,
-        query: t.Union[Select, Update],
+        query: Select | Update,
         ids: t.Sequence[str],
         verbose: bool = False,
     ):
@@ -385,7 +387,7 @@ class DB:
         self,
         type_id: str,
         identifier: str,
-        version: t.Optional[int] = None,
+        version: int | None = None,
         force: bool = False,
     ):
         """
@@ -441,10 +443,10 @@ class DB:
         self,
         type_id: str,
         identifier: str,
-        version: t.Optional[int] = None,
+        version: int | None = None,
         allow_hidden: bool = False,
         info_only: bool = False,
-    ) -> t.Union[Component, t.Dict[str, t.Any]]:
+    ) -> Component | dict[str, t.Any]:
         """
         Load component using uniquely identifying information.
 
@@ -508,7 +510,7 @@ class DB:
         dependencies=(),
         verbose: bool = True,
     ) -> TaskWorkflow:
-        job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
+        job_ids: dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
         G = TaskWorkflow(self)
 
@@ -591,15 +593,15 @@ class DB:
             model = self.models[model_identifier]
         return model.predict(passed_docs, **(predict_kwargs or {}))
 
-    def _save_artifacts(self, artifact_dictionary: t.Dict):
+    def _save_artifacts(self, artifact_dictionary: dict):
         raise NotImplementedError  # TODO use in the server code...
 
     def _add(
         self,
         object: Component,
         dependencies: t.Sequence[Job] = (),
-        serialized: t.Optional[t.Dict] = None,
-        parent: t.Optional[str] = None,
+        serialized: dict | None = None,
+        parent: str | None = None,
     ):
         object.on_create(self)
 
@@ -641,7 +643,7 @@ class DB:
         jobs = object.schedule_jobs(self, dependencies=dependencies)
         return jobs
 
-    def _create_children(self, object: Component, serialized: t.Dict):
+    def _create_children(self, object: Component, serialized: dict):
         # TODO abbreviate this code
         for item in object.child_components:
             if isinstance(item[0], str):
@@ -739,7 +741,7 @@ class DB:
 
     def _download_content(  # TODO: duplicated function
         self,
-        query: t.Optional[t.Union[Select, Insert]] = None,
+        query: Select | Insert | None = None,
         ids=None,
         documents=None,
         timeout=None,
@@ -851,14 +853,14 @@ class DB:
     def _apply_listener(  # noqa: F811
         self,
         identifier,
-        ids: t.Optional[t.Sequence[str]] = None,
+        ids: t.Sequence[str] | None = None,
         verbose: bool = False,
         max_chunk_size=5000,
         model=None,
         recompute: bool = False,
         listener_info=None,
         **kwargs,
-    ) -> t.List:
+    ) -> list:
         # NOTE: this method is never called anywhere except for itself!
         if listener_info is None:
             listener_info = self.metadata.get_component('listener', identifier)
@@ -957,10 +959,10 @@ class DB:
         self,
         like: Document,
         vector_index: str,
-        ids: t.Optional[t.Sequence[str]] = None,
-        outputs: t.Optional[Document] = None,
+        ids: t.Sequence[str] | None = None,
+        outputs: Document | None = None,
         n: int = 100,
-    ) -> t.Tuple[t.List[str], t.List[float]]:
+    ) -> tuple[list[str], list[float]]:
         like = self._get_content_for_filter(like)
         vector_index = self.vector_indices[vector_index]
 

@@ -32,11 +32,11 @@ class Collection(Serializable):
     def table(self) -> str:
         return self.name
 
-    def count_documents(self, *args, **kwargs) -> 'CountDocuments':
+    def count_documents(self, *args, **kwargs) -> CountDocuments:
         """Return a query counting the number of documents"""
         return CountDocuments(collection=self, args=args, kwargs=kwargs)
 
-    def like(self, r: Document, vector_index: str, n: int = 100) -> 'PreLike':
+    def like(self, r: Document, vector_index: str, n: int = 100) -> PreLike:
         """Return a query for Documents like a given one
 
         :param r: The document to match
@@ -51,7 +51,7 @@ class Collection(Serializable):
         refresh: bool = True,
         encoders: t.Sequence = (),
         **kwargs,
-    ) -> 'InsertMany':
+    ) -> InsertMany:
         """Insert a single document
 
         :param refresh: If true, refresh the underlying collection
@@ -72,7 +72,7 @@ class Collection(Serializable):
         refresh: bool = True,
         encoders: t.Sequence = (),
         **kwargs,
-    ) -> 'InsertMany':
+    ) -> InsertMany:
         """Insert many documents
 
         :param refresh: If true, refresh the underlying collection
@@ -87,15 +87,15 @@ class Collection(Serializable):
             refresh=refresh,
         )
 
-    def delete_one(self, *args, **kwargs) -> 'DeleteOne':
+    def delete_one(self, *args, **kwargs) -> DeleteOne:
         """Delete a single document"""
         return DeleteOne(collection=self, args=args, kwargs=kwargs)
 
-    def delete_many(self, *args, **kwargs) -> 'DeleteMany':
+    def delete_many(self, *args, **kwargs) -> DeleteMany:
         """Delete many documents"""
         return DeleteMany(collection=self, args=args, kwargs=kwargs)
 
-    def update_one(self, *args, **kwargs) -> 'UpdateOne':
+    def update_one(self, *args, **kwargs) -> UpdateOne:
         """Update a single document"""
         return UpdateOne(
             args=args,
@@ -105,7 +105,7 @@ class Collection(Serializable):
             update=args[1],
         )
 
-    def update_many(self, *args, **kwargs) -> 'UpdateMany':
+    def update_many(self, *args, **kwargs) -> UpdateMany:
         """Update many documents"""
         return UpdateMany(
             args=args[2:],
@@ -115,23 +115,21 @@ class Collection(Serializable):
             update=args[1],
         )
 
-    def find(self, *args, **kwargs) -> 'Find':
+    def find(self, *args, **kwargs) -> Find:
         """Find many documents"""
         return Find(collection=self, args=args, kwargs=kwargs)
 
-    def find_one(self, *args, **kwargs) -> 'FindOne':
+    def find_one(self, *args, **kwargs) -> FindOne:
         """Find a single document"""
         return FindOne(collection=self, args=args, kwargs=kwargs)
 
-    def aggregate(
-        self, *args, vector_index: t.Optional[str] = None, **kwargs
-    ) -> 'Aggregate':
+    def aggregate(self, *args, vector_index: str | None = None, **kwargs) -> Aggregate:
         """Prepare an aggregate query"""
         return Aggregate(
             collection=self, args=args, vector_index=vector_index, kwargs=kwargs
         )
 
-    def replace_one(self, *args, **kwargs) -> 'ReplaceOne':
+    def replace_one(self, *args, **kwargs) -> ReplaceOne:
         """Replace a single document"""
         return ReplaceOne(
             args=args,
@@ -141,7 +139,7 @@ class Collection(Serializable):
             update=args[1],
         )
 
-    def change_stream(self, *args, **kwargs) -> 'ChangeStream':
+    def change_stream(self, *args, **kwargs) -> ChangeStream:
         """Listen to a stream of changes from a collection"""
         return ChangeStream(collection=self, args=args, kwargs=kwargs)
 
@@ -154,14 +152,14 @@ class ReplaceOne(Update):
     collection: Collection
 
     #: Filter results by this dictionary
-    filter: t.Dict
+    filter: dict
     update: Document
 
     #: Positional query arguments
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     #: If true, refresh the underlying collection
     refresh: bool = True
@@ -181,12 +179,12 @@ class ReplaceOne(Update):
 
     @property
     @override
-    def select(self) -> 'Find':
+    def select(self) -> Find:
         return Find(like_parent=t.cast(PreLike, self.collection), args=[self.args[0]])
 
     @property
     @override
-    def select_ids(self) -> 'Find':
+    def select_ids(self) -> Find:
         return self.select.select_ids
 
 
@@ -214,7 +212,7 @@ class PreLike(Like):
         """Extracts the table collection from the object"""
         return self.collection.name
 
-    def find(self, *args, **kwargs) -> t.Union[Find, Aggregate]:
+    def find(self, *args, **kwargs) -> Find | Aggregate:
         """
         Find documents like this one filtered using *args and **kwargs on
         the basis of ``self.vector_index``
@@ -288,14 +286,14 @@ class Find(Select):
     id_field: t.ClassVar[str] = '_id'
 
     #: The collection to perform the query on
-    collection: t.Optional[Collection] = None
-    like_parent: t.Optional[PreLike] = None
+    collection: Collection | None = None
+    like_parent: PreLike | None = None
 
     #: Positional query arguments
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.Find'] = 'mongodb.Find'
@@ -309,7 +307,7 @@ class Find(Select):
         )
 
     @property
-    def parent(self) -> t.Union[Collection, PreLike]:
+    def parent(self) -> Collection | PreLike:
         """Return whichever of self.like_parent or self.collection isn't None"""
         if self.like_parent is not None:
             if self.collection is None:
@@ -323,7 +321,7 @@ class Find(Select):
         """Extracts the table collection from the object"""
         return self.parent.table
 
-    def limit(self, n: int) -> 'Limit':
+    def limit(self, n: int) -> Limit:
         """
         Return a new query with the number of documents limited to n
 
@@ -331,7 +329,7 @@ class Find(Select):
         """
         return Limit(parent=self, n=n)  # type
 
-    def count(self, *args, **kwargs) -> 'Count':
+    def count(self, *args, **kwargs) -> Count:
         """
         Return a new Count query from this Find
 
@@ -414,7 +412,7 @@ class Find(Select):
             kwargs=self.kwargs,
         )
 
-    def featurize(self, features: t.Dict[str, str]) -> 'Featurize':
+    def featurize(self, features: dict[str, str]) -> Featurize:
         """Extract a feature vector
 
         :param features: The features to extract
@@ -426,7 +424,7 @@ class Find(Select):
 
         :param db: The db to query
         """
-        args: t.List[t.Dict[str, t.Any]] = [{}, {}]
+        args: list[dict[str, t.Any]] = [{}, {}]
         args[: len(self.args)] = self.args
         args[1] = {'_id': 1}  # What happens to the data overwritten?
         cursor = Find(
@@ -483,7 +481,7 @@ class Find(Select):
 
     @property
     @override
-    def select_table(self) -> 'Find':
+    def select_table(self) -> Find:
         if isinstance(self.parent, PreLike):
             return Find(like_parent=self.parent)
         raise TypeError('Expected PreLike')
@@ -538,14 +536,14 @@ class CountDocuments(Find):
     """
 
     #: The collection to perform the query on
-    collection: t.Optional[Collection] = None
-    like_parent: t.Optional[PreLike] = None
+    collection: Collection | None = None
+    like_parent: PreLike | None = None
 
     #: Positional query arguments
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal[
@@ -563,7 +561,7 @@ class CountDocuments(Find):
 class FeaturizeOne(SelectOne):
     """A query to feature just one document"""
 
-    features: t.Dict[str, str]
+    features: dict[str, str]
     parent_find_one: t.Any = None
 
     #: Uniquely identifies serialized elements of this class
@@ -582,16 +580,16 @@ class FindOne(SelectOne):
     id_field: t.ClassVar[str] = '_id'
 
     #: The collection to perform the query on
-    collection: t.Optional[Collection] = None
+    collection: Collection | None = None
 
     #:
-    like_parent: t.Optional[PreLike] = None
+    like_parent: PreLike | None = None
 
     #: Positional query arguments
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.FindOne'] = 'mongodb.FindOne'
@@ -606,7 +604,7 @@ class FindOne(SelectOne):
         )
         return next(find(db=db))
 
-    def featurize(self, features: t.Dict[str, str]) -> 'FeaturizeOne':
+    def featurize(self, features: dict[str, str]) -> FeaturizeOne:
         """Extract a feature vector
 
         :param features: The features to extract
@@ -625,13 +623,13 @@ class Aggregate(Select):
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.Aggregate'] = 'mongodb.Aggregate'
 
     #: Use a vector-index in a `$search` step inside pipeline
-    vector_index: t.Optional[str] = None
+    vector_index: str | None = None
 
     @staticmethod
     def _replace_document_with_vector(step, vector_index, db):
@@ -689,7 +687,7 @@ class DeleteOne(Delete):
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.DeleteOne'] = 'mongodb.DeleteOne'
@@ -710,7 +708,7 @@ class DeleteMany(Delete):
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.DeleteMany'] = 'mongodb.DeleteMany'
@@ -729,7 +727,7 @@ class UpdateOne(Update):
     update: Document
 
     #: Filter results by this dictionary
-    filter: t.Dict
+    filter: dict
 
     #: If true, refresh the underlying collection
     refresh: bool = True
@@ -741,7 +739,7 @@ class UpdateOne(Update):
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.UpdateOne'] = 'mongodb.UpdateOne'
@@ -769,7 +767,7 @@ class UpdateMany(Update):
     collection: Collection
 
     #: Filter results by this dictionary
-    filter: t.Dict
+    filter: dict
     update: Document
 
     #: If true, refresh the underlying collection
@@ -782,7 +780,7 @@ class UpdateMany(Update):
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.UpdateMany'] = 'mongodb.UpdateMany'
@@ -824,7 +822,7 @@ class InsertMany(Insert):
     #: The collection to perform the query on
     collection: Collection
 
-    documents: t.List[Document] = dc.field(default_factory=list)
+    documents: list[Document] = dc.field(default_factory=list)
 
     #: If true, refresh the underlying collection
     refresh: bool = True
@@ -836,7 +834,7 @@ class InsertMany(Insert):
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     encoders: t.Sequence = dc.field(default_factory=list)
 
@@ -892,7 +890,7 @@ class InsertMany(Insert):
 class PostLike(Select):
     """Find documents like this one"""
 
-    find_parent: t.Optional[Find]
+    find_parent: Find | None
 
     #: The document to match
     r: Document
@@ -933,8 +931,8 @@ class PostLike(Select):
 class Featurize(Select):
     """A feature-extraction query"""
 
-    features: t.Dict[str, str]
-    parent: t.Union[Find, PostLike]
+    features: dict[str, str]
+    parent: Find | PostLike
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.Featurize'] = 'mongodb.Featurize'
@@ -1015,7 +1013,7 @@ class Featurize(Select):
 class Count(SelectOne):
     """A query to count matches"""
 
-    parent: t.Union[Featurize, Find, PostLike, PreLike]
+    parent: Featurize | Find | PostLike | PreLike
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.Count'] = 'mongodb.Count'
@@ -1024,7 +1022,7 @@ class Count(SelectOne):
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     @override
     def __call__(self, db: DB):
@@ -1040,7 +1038,7 @@ class Limit(Select):
     #: The number of documents to return
     n: int
 
-    parent: t.Union[Featurize, Find, PreLike, PostLike]
+    parent: Featurize | Find | PreLike | PostLike
 
     #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.Limit'] = 'mongodb.Limit'
@@ -1061,7 +1059,7 @@ class ChangeStream:
     args: t.Sequence = dc.field(default_factory=list)
 
     #: Named query arguments
-    kwargs: t.Dict = dc.field(default_factory=dict)
+    kwargs: dict = dc.field(default_factory=dict)
 
     @override
     def __call__(self, db: DB):

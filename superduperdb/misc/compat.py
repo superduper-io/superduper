@@ -1,6 +1,7 @@
 """
 Functions from later standard libraries not available in Python 3.8
 """
+from __future__ import annotations
 
 from functools import lru_cache
 

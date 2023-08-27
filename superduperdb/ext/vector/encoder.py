@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from superduperdb.container.encoder import Encoder
 from superduperdb.ext.utils import str_shape
 

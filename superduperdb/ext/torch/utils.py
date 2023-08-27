@@ -9,7 +9,7 @@ if t.TYPE_CHECKING:
     from .model import TorchModel
 
 
-def device_of(model: TorchModel) -> t.Union[_device, str]:
+def device_of(model: TorchModel) -> _device | str:
     """
     Get device of a model.
 
@@ -55,7 +55,7 @@ def set_device(model: TorchModel, device: _device):
 
 def to_device(
     item: t.Any,  # lists or dicts of Tensors
-    device: t.Union[str, _device],
+    device: str | _device,
 ) -> t.Any:
     """
     Send tensor leaves of nested list/ dictionaries/ tensors to device.

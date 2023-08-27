@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses as dc
 import typing as t
 
@@ -12,11 +14,11 @@ class Metric(Component):
     These objects are ``callable`` and are applied row-wise to the data, and averaged.
     """
 
-    artifacts: t.ClassVar[t.List[str]] = ['object']
+    artifacts: t.ClassVar[list[str]] = ['object']
 
     identifier: str
-    object: t.Union[Artifact, t.Callable, None] = None
-    version: t.Optional[int] = None
+    object: Artifact | t.Callable | None = None
+    version: int | None = None
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'metric'

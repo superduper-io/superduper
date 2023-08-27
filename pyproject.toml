@@ -101,7 +101,6 @@ typing = [
 lint = [
     "black>=23.3",
     "interrogate>=1.5.0",
-    "isort>=5.12.0",
     "ruff>=0.0.267",
 ]
 tests = [
@@ -168,5 +167,7 @@ quiet = false
 verbose = 0
 whitelist-regex = []
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+extend-select = [
+    "I", # Missing required import (auto-fixable)
+]

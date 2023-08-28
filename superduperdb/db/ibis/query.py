@@ -5,6 +5,7 @@ import typing as t
 import ibis
 
 from superduperdb import CFG
+from ibis.expr.types.relations import Table as IbisTable
 from superduperdb.container.encoder import Encoder
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
@@ -133,6 +134,27 @@ class OutputTable:
                 }
         return ibis.schema(schema)
 
+@dc.dataclass
+class InMemoryTable(Component):
+    identifier: str
+    table: t.Any = None
+    primary_id: str = 'id'
+    type_id: t.ClassVar[str] = 'inmemory_table'
+
+    def mutate_args(self, args):
+        return args
+
+    def __getattr__(self, k):
+        if k in self.__dict__:
+            return self.__getattr__(k)
+
+        if not hasattr(self.table, k):
+            raise AttributeError(k)
+
+        return QueryLinker(
+            self, query_type=k, members=QueryChain(k, type=QueryType.ATTR.value)
+        )
+
 
 @dc.dataclass
 class Table(Component):
@@ -142,11 +164,12 @@ class Table(Component):
     primary_id: str = 'id'
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'table'
+    version: t.ClassVar[t.Optional[int]] = None
 
-    def on_create(self, db: DB) -> None:
+    def on_create(self, db: DB):
         self.create(db)
 
-    def create(self, db):
+    def create(self, db: DB):
         for e in self.schema.encoders:
             db.add(e)
         try:
@@ -188,6 +211,11 @@ class Table(Component):
     def __getattr__(self, k):
         if k in self.__dict__:
             return self.__getattr__(k)
+
+        if not (hasattr(IbisTable, k) or k in self.schema.fields):
+            breakpoint()
+            raise AttributeError(k)
+
         return QueryLinker(
             self, query_type=k, members=QueryChain(k, type=QueryType.ATTR.value)
         )
@@ -326,6 +354,7 @@ class QueryLinker(Serializable, LogicalExprMixin):
 
     def __call__(self, *args, **kwargs):
         args = self.collection.mutate_args(args)
+
         # TODO: handle kwargs
         self.members.update_last_query(args, kwargs, type=QueryType.QUERY.value)
 

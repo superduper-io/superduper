@@ -1,11 +1,7 @@
 name: Release
 on:
   workflow_dispatch:  # allows triggering a github action manually - see 'Actions' tab
-    inputs:
-      version:
-        description: Version number to be attached to Python package
-        type: string
-        required: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,12 +21,14 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade build
 
-      - name: Update version number
-        run: |
-          sed -i "s/__version__ = '0.0.0'/__version__ = '${{ github.event.inputs.version }}'/" superduperdb/__init__.py
-
       - name: Build
         run: python -m build
+
+        # smoke-test that build is valid
+      - name: Check wheel contents
+        run: |
+          python -m pip install check-wheel-contents
+          check-wheel-contents dist
       
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -39,7 +37,6 @@ jobs:
 
   test-build:
     needs: ['build']
-    # TODO: decide whether it's worth it to run tests on multiple OSes
     runs-on: ubuntu-latest
     steps:
 
@@ -56,10 +53,25 @@ jobs:
         uses: actions/download-artifact@v3
 
       - name: Install wheel
-        run: pip install artifact/*.whl
+        run: python -m pip install artifact/*.whl
       
-      - name: Test application runs correctly
-        run: python -m superduperdb serve
+        # smoke-tests that check imports
+      - name: Check imports
+        # these modules cover most of the imports for the core package
+        # Note: if these modules are renamed, please update this list
+        run: |
+          python -m superduperdb.db.base.db
+          python -m superduperdb.db.base.backends
+          python -m superduperdb.container.model 
+
+      - name: Set version for tagging
+        id: set-version
+        run: |
+          export PACKAGE_VERSION=$(python -c "import superduperdb as s; print(s.__version__)")
+          echo "package_version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT 
+
+    outputs:
+      package_version: ${{ steps.set-version.outputs.package_version }}
   
   create-release:
     needs: ['test-build']
@@ -74,8 +86,8 @@ jobs:
 
       - name: create release
         run: >
-          gh release create --draft --repo ${{ github.repository }}
-          ${{ github.ref_name }}
+          gh release create ${{ needs.test-build.outputs.package_version }}
+          --repo ${{ github.repository }} --generate-notes
           artifact/*
         env:
           GH_TOKEN: ${{ github.token }}

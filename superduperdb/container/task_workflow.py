@@ -20,6 +20,9 @@ class TaskWorkflow:
     """
     Keep a graph of jobs that need to be performed and their dependencies,
     and perform them when called.
+
+    :param database: ``DB`` instance to use
+    :param G: ``networkx.DiGraph`` to use as the graph
     """
 
     database: DB

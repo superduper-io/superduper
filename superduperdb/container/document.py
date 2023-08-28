@@ -16,6 +16,8 @@ class Document:
     """
     A wrapper around an instance of dict or a Encodable which may be used to dump
     that resource to a mix of JSONable and `bytes`
+
+    :param content: The content to wrap
     """
 
     _DEFAULT_ID_KEY: str = '_id'

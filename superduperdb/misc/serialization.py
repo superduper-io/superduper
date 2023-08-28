@@ -10,7 +10,11 @@ Info = t.Optional[t.Dict[str, t.Any]]
 
 
 class ModuleClassDict(te.TypedDict):
-    """A ``dict``with the module, class and JSONization of an object"""
+    """
+    A ``dict``with the module, class and JSONization of an object
+
+    :param module: The module of the object
+    """
 
     module: str
     cls: str
@@ -83,6 +87,10 @@ serializers: t.Dict[str, t.Type] = {
 class Method:
     """
     A callable that calls a method on the object it is called with.
+
+    :param method: The method to call.
+    :param *args: The args to call the method with.
+    :param **kwargs: The kwargs to call the method with.
     """
 
     def __init__(self, method: str, *args, **kwargs):

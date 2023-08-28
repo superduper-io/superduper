@@ -33,6 +33,15 @@ def TransformersTrainerConfiguration(identifier: str, *args, **kwargs):
 
 @dc.dataclass
 class Pipeline(Model):
+    """
+    A wrapper for ``transformers.Pipeline``.
+
+    :param preprocess_type: The type of preprocessing to use {'tokenizer'}
+    :param preprocess_kwargs: The type of preprocessing to use. Currently only
+    :param postprocess_kwargs: The type of postprocessing to use.
+    :param task: The task to use for the pipeline.
+    """
+
     preprocess_type: str = 'tokenizer'
     preprocess_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
     postprocess_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
@@ -168,7 +177,7 @@ class Pipeline(Model):
 
         assert isinstance(self.collate_fn, Artifact)
         assert db is not None
-        trainer = TrainerWithSaving(
+        trainer = _TrainerWithSaving(
             model=self.object.artifact,
             args=self.training_arguments,
             train_dataset=train_data,
@@ -194,19 +203,7 @@ class Pipeline(Model):
         return out
 
 
-class PreprocessFunction:
-    def __init__(self, preprocess, key: str = '', **kwargs):
-        self.preprocess = preprocess
-        self.kwargs = kwargs
-        self.key = key
-
-    def __call__(self, input):
-        x = input[self.key]
-        input.update(**self.preprocess(x, **self.kwargs))
-        return input
-
-
-class TrainerWithSaving(Trainer):
+class _TrainerWithSaving(Trainer):
     def __init__(self, custom_saver=None, **kwargs):
         super().__init__(**kwargs)
         self.custom_saver = custom_saver

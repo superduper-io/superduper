@@ -62,6 +62,11 @@ def _serialize(item: t.Any) -> t.Dict[str, t.Any]:
 
 @dc.dataclass
 class Serializable:
+    """
+    Base class for serializable objects. This class is used to serialize and
+    deserialize objects to and from JSON + Artifact instances.
+    """
+
     deserialize = staticmethod(_deserialize)
     serialize = _serialize
 

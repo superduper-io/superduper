@@ -42,27 +42,25 @@ def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
 
 @dc.dataclass
 class VectorIndex(Component):
-    """A component representing a VectorIndex"""
+    """
+    A component carrying the information to apply a vector index to a ``DB`` instance
 
-    #: Unique string identifier of index
+    :param identifier: unique string identifier of index
+    :param indexing_listener: listener which is applied to created vectors
+    :param compatible_listener: listener which is applied to vectors to be compared
+    :param measure: measure to use for comparison
+    :param version: version of this index
+    :param metric_values: metric values for this index
+    :param type_id: type of this component
+    """
+
     identifier: str
-
-    #: Listener which is applied to created vectors
     indexing_listener: t.Union[Listener, str]
-
-    #: List of additional listeners which can "talk" to the index (e.g. multi-modal)
     compatible_listener: t.Union[None, Listener, str] = None
 
-    #: Measure which is used to compare vectors in index
     measure: VectorIndexMeasureType = VectorIndexMeasureType.cosine
-
-    #: A version number for the index (unused)
     version: t.Optional[int] = None
-
-    #: Metric values used for training
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-
-    #: A unique name for the class
     type_id: t.ClassVar[str] = 'vector_index'
 
     @override

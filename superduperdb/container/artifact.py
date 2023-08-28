@@ -11,6 +11,17 @@ ArtifactCache = t.Dict[int, t.Any]
 class Artifact:
     """
     An artifact from a computation that can be serialized or deserialized
+
+    :param artifact: the computed artifact, which may be of any type
+    :param file_id: a key used to identify the file in the ``ArtifactStore``
+    :param info: the ``info`` dictionary is passed into
+                 ``ArtifactStore.create_artifact()``
+    :param object_id: the Python ``id()`` of the artifact
+    :param save_method: the name of the finalization method on the artifact
+                        to call before saving
+    :param serializer: the name of the serializer
+    :param sha1: the sha1 hash of the artifact
+    :param hash: in case the object isn't hashable (deduplication not possible)
     """
 
     #: The computed artifact, which may be of any type

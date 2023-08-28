@@ -95,8 +95,9 @@ class Encodable:
     Data variable wrapping encode-able item. Encoding is controlled by the referred
     to ``Encoder`` instance.
 
-    :param x: Wrapped content
     :param encoder: Instance of ``Encoder`` controlling encoding
+    :param x: Wrapped content
+    :param uri: URI of the content, if any
     """
 
     encoder: t.Callable

@@ -1,4 +1,5 @@
 import random
+import typing as t
 
 from superduperdb.db.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
@@ -14,20 +15,32 @@ class ExpiryCache(list):
 class QueryDataset:
     """
     A dataset class which can be used to define a torch dataset class.
+
+    :param select: A select query object which defines the query to be executed.
+    :param keys: A list of keys to be returned from the dataset.
+    :param fold: The fold to be used for the dataset.
+    :param suppress: A list of keys to be suppressed from the dataset.
+    :param transform: A callable which can be used to transform the dataset.
+    :param features: A dictionary of features to be returned from the dataset.
+    :param db: A ``DB`` object to be used for the dataset.
+    :param ids: A list of ids to be used for the dataset.
+    :param in_memory: A boolean flag to indicate if the dataset should be loaded
+                      in memory.
+    :param extract: A key to be extracted from the dataset.
     """
 
     def __init__(
         self,
         select: Select,
-        keys=None,
-        fold='train',
-        suppress=(),
-        transform=None,
-        features=None,
+        keys: t.Optional[t.List[str]] = None,
+        fold: t.Union[str, None] = 'train',
+        suppress: t.Sequence[str] = (),
+        transform: t.Optional[t.Callable] = None,
+        features: t.Optional[t.Dict] = None,
         db=None,
-        ids=None,
+        ids: t.Optional[t.List[str]] = None,
         in_memory: bool = True,
-        extract=None,
+        extract: t.Optional[str] = None,
         **kwargs,
     ):
         self._database = db

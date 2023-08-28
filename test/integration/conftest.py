@@ -18,7 +18,7 @@ from pymongo import MongoClient
 from tenacity import RetryError, Retrying, stop_after_delay
 
 from superduperdb import CFG
-from superduperdb.base.config import DataLayer, DataLayers
+from superduperdb.base.config import DbComponent, DbComponents
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.container.vector_index import VectorIndex
@@ -59,13 +59,13 @@ mongodb_test_config = {
 
 @pytest.fixture(autouse=True, scope="package")
 def patch_superduper_config():
-    data_layers_cfg = DataLayers(
-        artifact=DataLayer(name='_filesystem:test_db', kwargs=mongodb_test_config),
-        data_backend=DataLayer(name='test_db', kwargs=mongodb_test_config),
-        metadata=DataLayer(name='test_db', kwargs=mongodb_test_config),
+    db_components_cfg = DbComponents(
+        artifact=DbComponent(name='_filesystem:test_db', kwargs=mongodb_test_config),
+        data_backend=DbComponent(name='test_db', kwargs=mongodb_test_config),
+        metadata=DbComponent(name='test_db', kwargs=mongodb_test_config),
     )
 
-    with mock.patch('superduperdb.CFG.data_layers', data_layers_cfg):
+    with mock.patch('superduperdb.CFG.db_components', db_components_cfg):
         yield
 
 
@@ -203,16 +203,16 @@ def test_server(database_with_default_encoders_and_model):
 @pytest.fixture(scope="package")
 def local_dask_client():
     for component in ['DATA_BACKEND', 'ARTIFACT', 'METADATA']:
-        os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_PORT'] = '27018'
-        os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_HOST'] = 'localhost'
+        os.environ[f'SUPERDUPERDB_DB_COMPONENTS_{component}_KWARGS_PORT'] = '27018'
+        os.environ[f'SUPERDUPERDB_DB_COMPONENTS_{component}_KWARGS_HOST'] = 'localhost'
         os.environ[
-            f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_USERNAME'
+            f'SUPERDUPERDB_DB_COMPONENTS_{component}_KWARGS_USERNAME'
         ] = 'testmongodbuser'
         os.environ[
-            f'SUPERDUPERDB_DATA_LAYERS_{component}_KWARGS_PASSWORD'
+            f'SUPERDUPERDB_DB_COMPONENTS_{component}_KWARGS_PASSWORD'
         ] = 'testmongodbpassword'
 
-        os.environ[f'SUPERDUPERDB_DATA_LAYERS_{component}_NAME'] = (
+        os.environ[f'SUPERDUPERDB_DB_COMPONENTS_{component}_NAME'] = (
             '_filesystem:test_db' if component == "ARTIFACT" else 'test_db'
         )
     client = dask_client(CFG.dask, local=True)

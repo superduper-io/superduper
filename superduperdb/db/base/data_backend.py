@@ -1,13 +1,8 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduperdb.container.model import Model
-from superduperdb.db.base.query import Select
-
 
 class BaseDataBackend(ABC):
-    models: t.Dict[str, Model]
-    select_cls = Select
     id_field = 'id'
 
     def __init__(self, conn: t.Any, name: str):

@@ -10,6 +10,10 @@ class Metric(Component):
     """
     Metric base object with which to evaluate performance on a data-set.
     These objects are ``callable`` and are applied row-wise to the data, and averaged.
+
+    :param identifier: unique identifier
+    :param object: callable or ``Artifact`` to be applied to the data
+    :param version: version of the ``Metric``
     """
 
     artifacts: t.ClassVar[t.List[str]] = ['object']

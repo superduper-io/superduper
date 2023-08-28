@@ -27,6 +27,12 @@ class DecodeTensor:
 
 
 def tensor(dtype, shape: t.Sequence):
+    """
+    Create an encoder for a tensor of a given dtype and shape.
+
+    :param dtype: The dtype of the tensor.
+    :param shape: The shape of the tensor.
+    """
     return Encoder(
         identifier=f'{str(dtype)}[{str_shape(shape)}]',
         encoder=EncodeTensor(dtype),

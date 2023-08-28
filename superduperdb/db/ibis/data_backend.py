@@ -11,7 +11,17 @@ class IbisDataBackend(BaseDataBackend):
 
     def __init__(self, conn: BaseBackend , name:str):
         super().__init__(conn=conn, name=name)
-        self._db = self.conn
+
+        self._db = conn
+        if isinstance(conn, BaseBackend):
+            self._backend = "sql"
+        elif isinstance(conn.op(), ibis.expr.operations.relations.InMemoryTable):
+            # TODO: find the backend for in-memory tables
+            self._backend = "duckdb"
+
+    @property
+    def backend(self):
+        return self._backend
 
     @property
     def db(self):

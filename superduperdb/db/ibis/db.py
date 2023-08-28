@@ -1,10 +1,25 @@
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
 from superduperdb.db.base.db import DB
-from superduperdb.db.ibis.query import OutputTable
+from superduperdb.db.ibis.query import OutputTable, InMemoryTable
 from superduperdb import logging
 
+_INMEMORY_BACKENDS = ['duckdb']
 
 class IbisDB(DB):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._table = None
+        if self.backend in _INMEMORY_BACKENDS:
+            self._table = InMemoryTable(identifier=self.db.name, table=self.db)
+
+    @property
+    def backend(self):
+        return self.databackend.backend
+
+    @property
+    def table(self):
+        return self._table
+
     def _execute(self, query, parent):
         table = parent
         for member in query.members:
@@ -18,7 +33,10 @@ class IbisDB(DB):
         if isinstance(query, SuperDuperIbisCursor):
             return query.execute()
 
-        table = query.collection.get_table(self.db)
+        if self.backend  in _INMEMORY_BACKENDS:
+            table = self.db
+        else:
+            table = query.collection.get_table(self.db)
         return self._execute(query, table)
     
     def create_output_table(self, model):

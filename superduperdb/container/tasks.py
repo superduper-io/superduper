@@ -13,6 +13,18 @@ def method_job(
     job_id,
     dependencies=(),
 ):
+    """
+    Run a method on a component in the database.
+
+    :param cfg: ``CFG`` instance
+    :param type_id: type of component
+    :param identifier: identifier of component
+    :param method_name: name of method to run
+    :param args: positional arguments to pass to the method
+    :param kwargs: keyword arguments to pass to the method
+    :param job_id: unique identifier for this job
+    :param dependencies: other jobs that this job depends on
+    """
     from superduperdb.db.base.build import build_datalayer
 
     cfg.distributed = False

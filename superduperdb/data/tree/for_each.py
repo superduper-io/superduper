@@ -12,6 +12,10 @@ def for_each(
 
     `for_each` recurses through dicts, lists and tuples, and also through
     members of dataclasses and Pydantic model.
+
+    :param fn: function to apply
+    :param item: item to apply function to
+    :param depth_first: whether to apply the function before recursing
     """
     if not depth_first:
         fn(item)

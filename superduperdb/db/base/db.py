@@ -53,11 +53,6 @@ class DB:
     Base database connector for SuperDuperDB
     """
 
-    _database_type: str
-    name: str
-    select_cls: t.Type[Select]
-    models: t.Dict
-
     type_id_to_cache_mapping = {
         'model': 'models',
         'metric': 'metrics',
@@ -74,10 +69,12 @@ class DB:
         distributed_client=None,
     ):
         """
-        :param databackend:
-        :param metadata:
-        :param artifact_store:
-        :param vector_database:
+        :param databackend: databackend object containing connection to Datastore
+        :param metadata: metadata object containing connection to Metadatastore
+        :param artifact_store: artifact_store object containing connection to
+                               Artifactstore
+        :param vector_database: vector_database object containing connection to
+                                VectorDatabase
         :param distributed_client:
         """
         self.metrics = LoadDict(self, 'metric')
@@ -811,7 +808,7 @@ class DB:
             return
         for id_, key in zip(place_ids, keys):
             documents[id_] = self.db.set_content_bytes(
-                documents[id_], key, downloader.results[id_]
+                documents[id_], key, downloader.results[id_]  # type: ignore[index]
             )
         return documents
 

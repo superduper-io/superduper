@@ -4,6 +4,7 @@ import dataclasses as dc
 import logging
 import multiprocessing
 import typing as t
+from functools import wraps
 
 import tqdm
 from dask.distributed import Future
@@ -30,10 +31,6 @@ ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
 DataArg = t.Optional[t.Union[str, t.Sequence[str]]]
 
 
-def TrainingConfiguration(identifier: str, **kwargs):
-    return _TrainingConfiguration(identifier=identifier, kwargs=kwargs)
-
-
 @dc.dataclass
 class _TrainingConfiguration(Component):
     """
@@ -42,7 +39,8 @@ class _TrainingConfiguration(Component):
     and returns a class which may be invoked to apply training.
 
     :param identifier: Unique identifier of configuration
-    :param **parameters: Key-values pairs, the variables which configure training.
+    :param **kwargs: Key-values pairs, the variables which configure training.
+    :param version: Version number of the configuration
     """
 
     #: A unique name for the class
@@ -60,6 +58,18 @@ class _TrainingConfiguration(Component):
 
 
 class PredictMixin:
+    """
+    Mixin class for components which can predict.
+
+    :param identifier: Unique identifier of model
+    :param encoder: Encoder instance (optional)
+    :param preprocess: Preprocess function (optional)
+    :param postprocess: Postprocess function (optional)
+    :param collate_fn: Collate function (optional)
+    :param batch_predict: Whether to batch predict (optional)
+    :param takes_context: Whether the model takes context into account (optional)
+    """
+
     identifier: str
     encoder: EncoderArg
     preprocess: t.Union[t.Callable, Artifact, None] = None
@@ -67,7 +77,6 @@ class PredictMixin:
     collate_fn: t.Union[t.Callable, Artifact, None] = None
     batch_predict: bool
     takes_context: bool
-
     to_call: t.Callable
 
     def create_predict_job(
@@ -225,7 +234,7 @@ class PredictMixin:
         X: t.Any,
         db: DB,
         select: Select,
-        ids: t.Sequence[str],
+        ids: t.List[str],
         in_memory: bool = True,
         max_chunk_size: t.Optional[int] = None,
         **kwargs,
@@ -286,7 +295,7 @@ class PredictMixin:
         db: t.Optional[DB] = None,
         select: t.Optional[Select] = None,
         distributed: t.Optional[bool] = None,
-        ids: t.Optional[t.Sequence[str]] = None,
+        ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.Sequence[Job] = (),
         listen: bool = False,
@@ -358,9 +367,16 @@ class Model(Component, PredictMixin):
     """
     Model component which wraps a model to become serializable
 
+    :param identifier: Unique identifier of model
     :param object: Model object, e.g. sklearn model, etc..
     :param encoder: Encoder instance (optional)
-    :param type_id: ...
+    :param preprocess: Preprocess function (optional)
+    :param postprocess: Postprocess function (optional)
+    :param collate_fn: Collate function (optional)
+    :param metrics: Metrics to use (optional)
+    :param predict_method: The method to use for prediction (optional)
+    :param batch_predict: Whether to batch predict (optional)
+    :param takes_context: Whether the model takes context into account (optional)
     """
 
     identifier: str
@@ -370,25 +386,22 @@ class Model(Component, PredictMixin):
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
     metrics: t.Sequence[t.Union[str, Metric, None]] = ()
-    # Need also historical metric values
     predict_method: t.Optional[str] = None
     batch_predict: bool = False
     takes_context: bool = False
 
-    train_X: DataArg = None  # TODO add to FitMixin
+    train_X: DataArg = None
     train_y: DataArg = None
     training_select: t.Union[Select, None] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
-    # TODO should be training_metric_values
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
 
     version: t.Optional[int] = None
-    future: t.Optional[Future] = None  # TODO what's this?
+    future: t.Optional[Future] = None
     device: str = "cpu"
 
     artifacts: t.ClassVar[t.Sequence[str]] = ['object']
 
-    #: A unique name for the class
     type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self):
@@ -550,3 +563,8 @@ class Model(Component, PredictMixin):
                 validation_sets=validation_sets,
                 **kwargs,
             )
+
+
+@wraps(_TrainingConfiguration)
+def TrainingConfiguration(identifier: str, **kwargs):
+    return _TrainingConfiguration(identifier=identifier, kwargs=kwargs)

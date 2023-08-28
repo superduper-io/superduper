@@ -33,6 +33,15 @@ FILE_SEP = ','
 
 @dataclass(frozen=True)
 class ConfigSettings:
+    """
+    A class that reads a Pydantic class from config files and environment variables.
+
+    :param cls: The Pydantic class to read.
+    :param default_files: The default config files to read.
+    :param prefix: The prefix to use for environment variables.
+    :param environ: The environment variables to read from.
+    """
+
     cls: t.Type
     default_files: t.Union[t.Sequence[Path], str]
     prefix: str

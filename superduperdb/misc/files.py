@@ -27,6 +27,10 @@ def load_uris(r: dict, root: str, raises: bool = False):
     """
     Load ``"bytes"`` into ``"_content"`` from ``"uri"`` inside ``r``.
 
+    :param r: The dict to load the bytes into
+    :param root: The root directory to load the bytes from
+    :param raises: Whether to raise an error if the file is not found
+
     >>> with open('/tmp/test.txt', 'wb') as f:
     ...     _ = f.write(bytes('test', 'utf-8'))
     >>> r = {"_content": {"uri": "file://test.txt"}}

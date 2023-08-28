@@ -14,6 +14,9 @@ class Retry:
     Retry a function until it succeeds.
 
     This is a thin wrapper around the tenacity retry library, using our configs.
+
+    :param exception_types: The exception types to retry on.
+    :param cfg: The retry config.
     """
 
     exception_types: ExceptionTypes

@@ -122,7 +122,11 @@ class VectorCollection(ABC):
 
     @abstractmethod
     def add(self, items: t.Sequence[VectorCollectionItem]) -> None:
-        """Add items to the collection."""
+        """
+        Add items to the collection.
+
+        :param items: items to add
+        """
         pass
 
     @abstractmethod
@@ -134,7 +138,14 @@ class VectorCollection(ABC):
         limit: int = 100,
         offset: int = 0,
     ) -> t.List[VectorCollectionResult]:
-        """Find items that are nearest to the item with the given identifier."""
+        """
+        Find items that are nearest to the item with the given identifier.
+
+        :param identifier: identifier of the item
+        :param within_ids: identifiers to search within
+        :param limit: maximum number of nearest items to return
+        :param offset: offset of the first item to return
+        """
         pass
 
     @abstractmethod
@@ -146,7 +157,14 @@ class VectorCollection(ABC):
         limit: int = 100,
         offset: int = 0,
     ) -> t.List[VectorCollectionResult]:
-        """Find items that are nearest to the given vector."""
+        """
+        Find items that are nearest to the given vector.
+
+        :param array: array representing the vector
+        :param within_ids: identifiers to search within
+        :param limit: maximum number of nearest items to return
+        :param offset: offset of the first item to return
+        """
         pass
 
 

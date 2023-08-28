@@ -61,7 +61,8 @@ def DatabaseListener(
     **kwargs,
 ) -> cdc.BaseDatabaseListener:
     """
-    Create an instance of `BaseDatabaseListener`
+    Create an instance of ``BaseDatabaseListener``.
+    Not to be confused with ``superduperdb.container.listener.Listener``.
 
     :param db: A superduperdb instance.
     :param on: Which collection/table listener service this be invoked on?

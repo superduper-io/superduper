@@ -140,6 +140,11 @@ def delete_vectors(
 
     This function will be added as node to the taskworkflow after every
     `indexing_listener` in the defined listeners in db.
+
+    :param indexing_listener_identifier: A identifier of indexing listener.
+    :param cdc_query: A query which will be used by `db._build_task_workflow` method
+    :param ids: List of ids which were observed as changed documents.
+    :param db: A ``DB`` instance.
     """
     try:
         config = VectorCollectionConfig(id=indexing_listener_identifier, dimensions=0)
@@ -164,6 +169,11 @@ def copy_vectors(
 
     This function will be added as node to the taskworkflow after every
     `indexing_listener` in the defined listeners in db.
+
+    :param indexing_listener_identifier: A identifier of indexing listener.
+    :param cdc_query: A query which will be used by `db._build_task_workflow` method
+    :param ids: List of ids which were observed as changed documents.
+    :param db: A ``DB`` instance.
     """
     try:
         query = Serializable.deserialize(cdc_query)
@@ -190,7 +200,7 @@ def copy_vectors(
         raise
 
 
-def vector_task_factory(task: str = 'copy') -> t.Tuple[t.Callable, str]:
+def _vector_task_factory(task: str = 'copy') -> t.Tuple[t.Callable, str]:
     if task == 'copy':
         return copy_vectors, 'copy_vectors'
     elif task == 'delete':
@@ -262,7 +272,7 @@ class CDCHandler(threading.Thread):
         :param ids: A list of ids observed during the change
         :param task: A task name to be executed on vector db.
         """
-        task_callable, task_name = vector_task_factory(task=task)
+        task_callable, task_name = _vector_task_factory(task=task)
         serialized_cdc_query = cdc_query.serialize() if cdc_query else None
         for identifier in self.db.show('vector_index'):
             vector_index = self.db.load(identifier=identifier, type_id='vector_index')

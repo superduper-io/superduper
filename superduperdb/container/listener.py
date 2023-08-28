@@ -19,12 +19,12 @@ class Listener(Component):
 
     :param key: Key to be bound to model
     :param model: Model for processing data
+    :param select: Object for selecting which data is processed
 
     :param active: Toggle to ``False`` to deactivate change data triggering
     :param features: Dictionary of mappings from keys to model
     :param identifier: A string used to identify the model.
     :param predict_kwargs: Keyword arguments to self.model.predict
-    :param select: Object for selecting which data is processed
     :param version: Version number of the model(?)
     """
 
@@ -86,6 +86,14 @@ class Listener(Component):
         distributed: bool = False,
         verbose: bool = False,
     ) -> t.Sequence[t.Any]:
+        """
+        Schedule jobs for the listener
+
+        :param database: The DB instance to process
+        :param dependencies: A list of dependencies
+        :param distributed: Whether to run the job on a distributed system
+        :param verbose: Whether to print verbose output
+        """
         if not self.active:
             return ()
 
@@ -100,9 +108,9 @@ class Listener(Component):
         )
 
     def cleanup(self, database: DB) -> None:
-        """Clean up when the listener is done
+        """Clean up when the listener is deleted
 
-        :param database: The db to process
+        :param database: The DB instance to process
         """
         if (cleanup := getattr(self.select, 'model_cleanup', None)) is not None:
             assert not isinstance(self.model, str)

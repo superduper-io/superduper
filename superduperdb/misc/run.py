@@ -2,8 +2,6 @@ import subprocess
 import typing as t
 from subprocess import PIPE, CalledProcessError
 
-import superduperdb as s
-
 __all__ = (
     'CalledProcessError',
     'PIPE',
@@ -13,12 +11,30 @@ __all__ = (
 
 
 def run(
-    args: t.Sequence[str], text: bool = True, check: bool = True, **kwargs
+    args: t.Sequence[str],
+    text: bool = True,
+    check: bool = True,
+    verbose: bool = False,
+    **kwargs,
 ) -> subprocess.CompletedProcess:
-    if s.CFG.verbose:
+    """
+    Run a command, printing it if verbose is enabled.
+
+    :param args: The command to run.
+    :param text: Whether to use text mode.
+    :param check: Whether to raise an error if the command fails.
+    :param **kwargs: Additional arguments to pass to ``subprocess.run``.
+    """
+    if verbose:
         print('$', *args)
     return subprocess.run(args, text=text, check=check, **kwargs)
 
 
 def out(args: t.Sequence[str], **kwargs) -> str:
+    """
+    Run a command and return the output.
+
+    :param args: The command to run.
+    :param **kwargs: Additional arguments to pass to ``subprocess.run``.
+    """
     return run(args, stdout=PIPE, **kwargs).stdout.strip()

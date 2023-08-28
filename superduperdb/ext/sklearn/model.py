@@ -12,7 +12,7 @@ from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
 
 
-def get_data_from_query(
+def _get_data_from_query(
     select: Select,
     X: str,
     db: DB,
@@ -116,7 +116,7 @@ class Estimator(Model):
                 def preprocess(x):
                     return x
 
-            X, y = get_data_from_query(
+            X, y = _get_data_from_query(
                 select=select,
                 db=db,
                 X=X,

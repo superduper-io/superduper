@@ -32,6 +32,16 @@ def _available_models():
 
 @dc.dataclass
 class OpenAI(Component, PredictMixin):
+    """
+    OpenAI predictor.
+
+    :param model: The model to use, e.g. ``'text-embedding-ada-002'``.
+    :param identifier: The identifier to use, e.g. ``'my-model'``.
+    :param version: The version to use, e.g. ``0`` (leave empty)
+    :param takes_context: Whether the model takes context into account.
+    :param encoder: The encoder identifier.
+    """
+
     model: str
     identifier: str = ''
     version: t.Optional[int] = None
@@ -60,7 +70,13 @@ class OpenAI(Component, PredictMixin):
 
 @dc.dataclass
 class OpenAIEmbedding(OpenAI):
-    shapes = {'text-embedding-ada-002': (1536,)}
+    """
+    OpenAI embedding predictor.
+
+    :param shape: The shape as ``tuple`` of the embedding.
+    """
+
+    shapes: t.ClassVar[t.Dict] = {'text-embedding-ada-002': (1536,)}
     shape: t.Optional[t.Sequence[int]] = None
 
     def __post_init__(self):
@@ -110,6 +126,13 @@ class OpenAIEmbedding(OpenAI):
 
 @dc.dataclass
 class OpenAIChatCompletion(OpenAI):
+    """
+    OpenAI chat completion predictor.
+
+    :param takes_context: Whether the model takes context into account.
+    :param prompt: The prompt to use to seed the response.
+    """
+
     takes_context: bool = True
     prompt: t.Optional[str] = None
 

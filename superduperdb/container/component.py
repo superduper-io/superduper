@@ -19,8 +19,6 @@ if t.TYPE_CHECKING:
 class Component(Serializable):
     """
     Base component which model, listeners, learning tasks etc. inherit from.
-
-    :param identifier: Unique ID
     """
 
     #: A unique name for the class

@@ -36,12 +36,12 @@ classifiers = [
 requires-python = ">=3.8"
 dynamic = ["version"]
 dependencies = [
-    "boto3>=1.26.16",
+    "boto3>=1.16",
     "dask[distributed]>=2022.6.0",
     "dill>=0.3.6",
     "fil>=1.1.0",
     "networkx>=2.8.8",
-    "requests>=2.31.0",
+    "requests>=2.22",  # lower bound from openai and boto3
     "tqdm>=4.64.1",
     "typer>=0.7.0",
     "lancedb<0.2",  # TODO: Find a solution and unpin

@@ -7,17 +7,17 @@ from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 from superduperdb.vector_search.inmemory import InMemoryVectorDatabase
 from superduperdb.vector_search.lancedb_client import LanceVectorIndex
 
-data_backends = {'mongodb': MongoDataBackend}
+DATA_BACKENDS = {'mongodb': MongoDataBackend}
 
-artifact_stores = {'mongodb': MongoArtifactStore}
+ARTIFACT_STORES = {'mongodb': MongoArtifactStore}
 
-metadata_stores = {'mongodb': MongoMetaDataStore}
+METADATA_STORES = {'mongodb': MongoMetaDataStore}
 
-vector_database_stores = {
+VECTOR_DATA_STORES = {
     config.LanceDB: LanceVectorIndex,
     config.InMemory: InMemoryVectorDatabase,
 }
 
-connections = {
+CONNECTIONS = {
     'pymongo': MongoClient,
 }

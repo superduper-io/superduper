@@ -1,12 +1,12 @@
 import inspect
 
 import superduperdb as s
-from superduperdb.db.base.backends import artifact_stores
-from superduperdb.db.base.backends import connections as default_connections
 from superduperdb.db.base.backends import (
-    data_backends,
-    metadata_stores,
-    vector_database_stores,
+    ARTIFACT_STORES,
+    CONNECTIONS,
+    DATA_BACKENDS,
+    METADATA_STORES,
+    VECTOR_DATA_STORES,
 )
 from superduperdb.db.base.db import DB
 from superduperdb.server.dask_client import dask_client
@@ -21,7 +21,7 @@ def build_vector_database(cfg):
     """
     if getattr(cfg, 'selfhosted', False):
         return
-    cls = vector_database_stores[cfg.__class__]
+    cls = VECTOR_DATA_STORES[cfg.__class__]
     sig = inspect.signature(cls.__init__)
     kwargs = {k: v for k, v in cfg.dict().items() if k in sig.parameters}
     return cls(**kwargs)
@@ -47,14 +47,14 @@ def build_datalayer(cfg=None, **connections) -> DB:
         else:
             # cast port to an integer.
             cfg.kwargs['port'] = int(cfg.kwargs['port'])
-            connection = default_connections[cfg.connection](**cfg.kwargs)
+            connection = CONNECTIONS[cfg.connection](**cfg.kwargs)
 
         return cls(name=cfg.name, conn=connection)
 
     return DB(
-        artifact_store=build(cfg.db_components.artifact, artifact_stores),
-        databackend=build(cfg.db_components.data_backend, data_backends),
-        metadata=build(cfg.db_components.metadata, metadata_stores),
+        artifact_store=build(cfg.db_components.artifact, ARTIFACT_STORES),
+        databackend=build(cfg.db_components.data_backend, DATA_BACKENDS),
+        metadata=build(cfg.db_components.metadata, METADATA_STORES),
         vector_database=build_vector_database(cfg.vector_search.type),
         distributed_client=build_distributed_client(cfg),
     )

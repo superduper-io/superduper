@@ -23,7 +23,7 @@ class IbisDB(DB):
     
     def create_output_table(self, model):
         try:
-            table = OutputTable(model=model)
+            table = OutputTable(model=model.identifier, output_type=model.output_type)
             table.create(self.db)
         except Exception as e:
             logging.error(e)

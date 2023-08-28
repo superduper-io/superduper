@@ -36,7 +36,14 @@ def timeout(seconds):  # pragma: no cover
 
 
 class Fetcher:
-    def __init__(self, headers=None, n_workers=0):
+    """
+    Fetches data from a URI
+
+    :param headers: headers to be used for download
+    :param n_workers: number of download workers
+    """
+
+    def __init__(self, headers: t.Optional[t.Dict] = None, n_workers: int = 0):
         session = boto3.Session()
         self.headers = headers
         self.s3_client = session.client("s3")
@@ -65,7 +72,12 @@ class Fetcher:
     def _download_from_uri(self, uri):
         return self.request_session.get(uri, headers=self.headers).content
 
-    def __call__(self, uri):
+    def __call__(self, uri: str):
+        """
+        Download data from a URI
+
+        :param uri: uri to download from
+        """
         if uri.startswith('file://'):
             return self._download_file(uri)
         elif uri.startswith('s3://'):
@@ -77,8 +89,23 @@ class Fetcher:
 
 
 class BaseDownloader:
+    """
+    Base class for downloading files
+
+    :param uris: list of uris/ file names to fetch
+    :param n_workers: number of multiprocessing workers
+    :param timeout: set seconds until request times out
+    :param headers: dictionary of request headers passed to``requests`` package
+    :param raises: raises error ``True``/``False``
+    """
+
     def __init__(
-        self, uris, n_workers=0, timeout=None, headers=None, raises: bool = True
+        self,
+        uris: t.List[str],
+        n_workers: int = 0,
+        timeout: t.Optional[int] = None,
+        headers: t.Optional[t.Dict] = None,
+        raises: bool = True,
     ):
         self.timeout = timeout
         self.n_workers = n_workers
@@ -91,7 +118,6 @@ class BaseDownloader:
         Download all files
         Uses a :py:class:`multiprocessing.pool.ThreadPool` to parallelize
                           connections.
-        :param test: If *True* perform a test run.
         """
         logging.info(f'number of workers {self.n_workers}')
         prog = tqdm(total=len(self.uris))
@@ -152,6 +178,12 @@ class BaseDownloader:
 
 
 class SaveFile:
+    """
+    Save file to disk.
+
+    :param root: root directory to save files to.
+    """
+
     def __init__(self, root: str):
         self.root = root
 
@@ -163,6 +195,7 @@ class SaveFile:
 
 class Downloader(BaseDownloader):
     """
+    Download files from a list of URIs.
 
     :param uris: list of uris/ file names to fetch
     :param update_one: function to call to insert data into table
@@ -180,21 +213,22 @@ class Downloader(BaseDownloader):
     def __init__(
         self,
         uris,
-        update_one=None,
-        ids=None,
-        keys=None,
-        n_workers=20,
-        headers=None,
+        update_one: t.Optional[t.Callable] = None,
+        ids: t.Optional[t.Union[t.List[str], t.List[int]]] = None,
+        keys: t.Optional[t.List[str]] = None,
+        n_workers: int = 20,
+        headers: t.Optional[t.Dict] = None,
         skip_existing: bool = True,
-        timeout=None,
+        timeout: t.Optional[int] = None,
         raises: bool = True,
     ):
         super().__init__(
             uris, n_workers=n_workers, timeout=timeout, headers=headers, raises=raises
         )
 
-        if len(ids) != len(uris):
-            raise ValueError(f'len(ids={ids}) != len(uris={uris})')
+        if ids is not None:
+            if len(ids) != len(uris):
+                raise ValueError(f'len(ids={ids}) != len(uris={uris})')
 
         self.ids = ids
         self.keys = keys
@@ -218,11 +252,12 @@ class Downloader(BaseDownloader):
 
 def gather_uris(
     documents: t.Sequence[t.Dict], gather_ids: bool = True
-) -> t.Tuple[t.List[str], t.List[str], t.List[int]]:
+) -> t.Tuple[t.List[str], t.List[str], t.Union[t.List[int], t.List[str]]]:
     """
     Get the uris out of all documents as denoted by ``{"_content": ...}``
 
     :param documents: list of dictionaries
+    :param gather_ids: if ``True`` then gather ids of documents
     """
     uris = []
     mongo_keys = []

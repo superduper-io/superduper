@@ -52,9 +52,9 @@ def build_datalayer(cfg=None, **connections) -> DB:
         return cls(name=cfg.name, conn=connection)
 
     return DB(
-        artifact_store=build(cfg.data_layers.artifact, artifact_stores),
-        databackend=build(cfg.data_layers.data_backend, data_backends),
-        metadata=build(cfg.data_layers.metadata, metadata_stores),
+        artifact_store=build(cfg.db_components.artifact, artifact_stores),
+        databackend=build(cfg.db_components.data_backend, data_backends),
+        metadata=build(cfg.db_components.metadata, metadata_stores),
         vector_database=build_vector_database(cfg.vector_search.type),
         distributed_client=build_distributed_client(cfg),
     )

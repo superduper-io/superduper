@@ -24,6 +24,17 @@ def download_content(
     via the subdocuments in the form exemplified below. By default items are downloaded
     to the database, unless a ``download_update`` function is provided.
 
+    :param db: database instance
+    :param query: query to be executed
+    :param ids: ids to be downloaded
+    :param documents: documents to be downloaded
+    :param timeout: timeout for download
+    :param raises: whether to raise errors
+    :param n_download_workers: number of download workers
+    :param headers: headers to be used for download
+    :param download_update: function to be used for updating the database
+    :param **kwargs: additional keyword arguments
+
     >>> d = {"_content": {"uri": "<uri>", "encoder": "<encoder-identifier>"}}
     >>> def update(key, id, bytes):
     >>> ... with open(f'/tmp/{key}+{id}', 'wb') as f:
@@ -80,6 +91,7 @@ def download_content(
         def _download_update(key, id, bytes_, **kwargs):  # type: ignore[misc]
             return query.download_update(db=db, key=key, id=id, bytes=bytes_)
 
+    assert place_ids is not None
     downloader = Downloader(
         uris=uris,
         ids=place_ids,
@@ -93,8 +105,10 @@ def download_content(
     downloader.go()
     if update_db:
         return None
+
+    # ruff: noqa: E501
     for id_, key in zip(place_ids, keys):
-        documents[id_] = db.db.set_content_bytes(
-            documents[id_], key, downloader.results[id_]
+        documents[id_] = db.db.set_content_bytes(  # type: ignore[call-overload]
+            documents[id_], key, downloader.results[id_]  # type: ignore[call-overload,index]
         )
     return documents

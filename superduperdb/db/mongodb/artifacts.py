@@ -6,11 +6,14 @@ from superduperdb.misc.colors import Colors
 
 
 class MongoArtifactStore(ArtifactStore):
+    """
+    Artifact store for MongoDB.
+
+    :param conn: MongoDB client connection
+    :param name: Name of database to host filesystem
+    """
+
     def __init__(self, conn, name: str):
-        """
-        :param conn: MongoDB client connection
-        :param name: Name of database to host filesystem
-        """
         super().__init__(name=name, conn=conn)
         self.db = self.conn[self.name]
         self.filesystem = gridfs.GridFS(self.db)

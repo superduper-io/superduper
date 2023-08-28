@@ -21,6 +21,17 @@ def job(f):
 
 
 class Job:
+    """
+    Base class for jobs. Jobs are used to run functions or methods on.
+
+    :param args: positional arguments to be passed to the function or method
+    :param kwargs: keyword arguments to be passed to the function or method
+    :param identifier: unique identifier
+    :param callable: function or method to be called
+    :param db: DB instance to be used
+    :param future: future object returned by dask
+    """
+
     callable: t.Optional[t.Callable]
 
     def __init__(
@@ -36,9 +47,15 @@ class Job:
         self.future = None
 
     def watch(self):
-        return self.db.metadata.listen_job(identifier=self.identifier)
+        """
+        Watch the stdout of the job.
+        """
+        return self.db.metadata.watch_job(identifier=self.identifier)
 
     def run_locally(self, db):
+        """
+        Run the job locally.
+        """
         try:
             out = self.callable(*self.args, db=db, **self.kwargs)
             db.metadata.update_job(self.identifier, 'status', 'success')
@@ -48,6 +65,12 @@ class Job:
         return out
 
     def run_on_dask(self, client, dependencies=()):
+        """
+        Run the job on a dask cluster.
+
+        :param client: dask client
+        :param dependencies: list of dependencies
+        """
         raise NotImplementedError
 
     def dict(self):
@@ -64,10 +87,26 @@ class Job:
     def __call__(
         self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
     ):
+        """
+        Run the job.
+
+        :param db: DB instance to be used
+        :param distributed: whether to run the job on a dask cluster
+        :param dependencies: list of dependencies
+        """
         raise NotImplementedError
 
 
 class FunctionJob(Job):
+    """
+    Job for running a function.
+    on a dask cluster.
+
+    :param callable: function to be called
+    :param args: positional arguments to be passed to the function
+    :param kwargs: keyword arguments to be passed to the function
+    """
+
     def __init__(
         self,
         callable: t.Callable,
@@ -83,6 +122,12 @@ class FunctionJob(Job):
         return d
 
     def run_on_dask(self, client, dependencies=()):
+        """
+        Run the job on a dask cluster.
+
+        :param client: dask client
+        :param dependencies: list of dependencies
+        """
         CFG = s.configs.build_config()  # Why not use s.CFG or s.CFG.deepcopy()
         self.future = client.submit(
             callable_job,
@@ -116,6 +161,16 @@ class FunctionJob(Job):
 
 
 class ComponentJob(Job):
+    """
+    Job for running a class method of a component.
+
+    :param component_identifier: unique identifier of the component
+    :param type_id: type of the component
+    :param method_name: name of the method to be called
+    :param args: positional arguments to be passed to the method
+    :param kwargs: keyword arguments to be passed to the method
+    """
+
     def __init__(
         self,
         component_identifier: str,
@@ -141,6 +196,12 @@ class ComponentJob(Job):
         self.callable = getattr(self._component, self.method_name)
 
     def run_on_dask(self, client, dependencies=()):
+        """
+        Run the job on a dask cluster.
+
+        :param client: dask client
+        :param dependencies: list of dependencies
+        """
         CFG = s.configs.build_config()  # Why?
         self.future = client.submit(
             method_job,

@@ -18,6 +18,18 @@ if t.TYPE_CHECKING:
 
 @dc.dataclass
 class Dataset(Component):
+    """
+    A dataset is an immutable collection of documents that can be used for training
+
+    :param identifier: A unique identifier for the dataset
+    :param select: A query to select the documents for the dataset
+    :param sample_size: The number of documents to sample from the query
+    :param random_seed: The random seed to use for sampling
+    :param creation_date: The date the dataset was created
+    :param raw_data: The raw data for the dataset
+    :param version: The version of the dataset
+    """
+
     identifier: str
     select: t.Optional[Find] = None
     sample_size: t.Optional[int] = None

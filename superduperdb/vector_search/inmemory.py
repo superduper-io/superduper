@@ -21,6 +21,13 @@ from .table_scan import VanillaVectorIndex
 
 
 class InMemoryVectorCollection(VectorCollection):
+    """
+    An in-memory vector collection.
+
+    :param dimensions: The number of dimensions of the vectors in the collection.
+    :param measure: The distance measure to use for vector search.
+    """
+
     def __init__(
         self,
         *,
@@ -40,6 +47,9 @@ class InMemoryVectorCollection(VectorCollection):
         yield self
 
     def add(self, items: t.Sequence[VectorCollectionItem], **kwargs) -> None:
+        """
+        Add items to the collection.
+        """
         for item in items:
             with self._lock.gen_wlock():
                 self._add(item)
@@ -61,6 +71,14 @@ class InMemoryVectorCollection(VectorCollection):
         limit: int = 100,
         offset: int = 0,
     ) -> t.List[VectorCollectionResult]:
+        """
+        Find items that are nearest to the item with the given identifier.
+
+        :param identifier: identifier of the item
+        :param within_ids: identifiers to search within
+        :param limit: maximum number of nearest items to return
+        :param offset: offset of the first item to return
+        """
         with self._lock.gen_rlock():
             try:
                 index = self._index if not within_ids else self._index[within_ids]
@@ -77,6 +95,15 @@ class InMemoryVectorCollection(VectorCollection):
         limit: int = 100,
         offset: int = 0,
     ) -> t.List[VectorCollectionResult]:
+        """
+        Find items that are nearest to the given vector.
+
+        :param array: array representing the vector
+        :param within_ids: identifiers to search within
+        :param limit: maximum number of nearest items to return
+        :param offset: offset of the first item to return
+        """
+
         with self._lock.gen_rlock():
             index = self._index if not within_ids else self._index[within_ids]
             ids, scores = index.find_nearest_from_array(
@@ -95,6 +122,10 @@ class InMemoryVectorCollection(VectorCollection):
 
 
 class InMemoryVectorDatabase(VectorDatabase):
+    """
+    An in-memory vector database.
+    """
+
     def __init__(self) -> None:
         self._collections: t.Dict[VectorCollectionId, VectorCollection] = {}
 

@@ -3,7 +3,7 @@ from collections import Counter
 import pydantic
 import pytest
 
-from superduperdb.base.config import Config, Factory, JSONable, Notebook
+from superduperdb.base.config import Config, Factory, JSONable
 
 from .test_config_dicts import PARENT
 
@@ -19,12 +19,6 @@ NAME_ERROR = """
 bad_name
   extra fields not permitted (type=value_error.extra)
 """
-VALIDATION_ERROR = """
-1 validation error for Notebook
-__root__
-  At most one of password and token may be set (type=value_error)
-"""
-
 TYPE_ERROR2 = """
 1 validation error for Config
 dask.port
@@ -35,11 +29,6 @@ NAME_ERROR2 = """
 1 validation error for Config
 bad_name
   Extra inputs are not permitted [type=extra_forbidden, input_value={}, input_type=dict]
-"""
-VALIDATION_ERROR2 = """
-1 validation error for Notebook
-  Value error, At most one of password and token may be set [type=value_error,\
- input_value={'password': 'password', 'token': 'token'}, input_type=dict]
 """
 
 
@@ -60,15 +49,6 @@ def test_unknown_name():
         Config(bad_name={})
 
     expected = (NAME_ERROR2 if IS_2 else NAME_ERROR).strip()
-    actual = str(pr.value).strip()
-    assert actual.startswith(expected)
-
-
-def test_validation():
-    with pytest.raises(pydantic.ValidationError) as pr:
-        Notebook(password='password', token='token')
-
-    expected = (VALIDATION_ERROR2 if IS_2 else VALIDATION_ERROR).strip()
     actual = str(pr.value).strip()
     assert actual.startswith(expected)
 

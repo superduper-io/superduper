@@ -10,6 +10,13 @@ from superduperdb.misc.colors import Colors
 
 
 class MongoMetaDataStore(MetaDataStore):
+    """
+    Metadata store for MongoDB.
+
+    :param conn: MongoDB client connection
+    :param name: Name of database to host filesystem
+    """
+
     def __init__(
         self,
         conn: t.Any,

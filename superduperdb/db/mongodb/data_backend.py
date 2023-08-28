@@ -4,7 +4,6 @@ import click
 from pymongo import MongoClient
 
 from superduperdb import logging
-from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.base.data_backend import BaseDataBackend
@@ -13,6 +12,13 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 
 
 class MongoDataBackend(BaseDataBackend):
+    """
+    Data backend for MongoDB.
+
+    :param conn: MongoDB client connection
+    :param name: Name of database to host filesystem
+    """
+
     id_field = '_id'
 
     def __init__(self, conn: MongoClient, name: str):
@@ -33,15 +39,6 @@ class MongoDataBackend(BaseDataBackend):
             ):
                 print('Aborting...')
         return self.db.client.drop_database(self.db.name)
-
-    def get_output_from_document(
-        self, r: Document, key: str, model: str
-    ) -> t.Tuple[MongoStyleDict, t.Any]:
-        assert isinstance(r.content, dict)
-        return (
-            MongoStyleDict(r.content)[f'_outputs.{key}.{model}'],
-            r.content['_id'],
-        )
 
     def set_content_bytes(self, r, key, bytes_):
         if not isinstance(r, MongoStyleDict):
@@ -69,6 +66,11 @@ class MongoDataBackend(BaseDataBackend):
         return indexes
 
     def delete_vector_index(self, vector_index: VectorIndex):
+        """
+        Delete a vector index in the data backend if an Atlas deployment.
+
+        :param vector_index: vector index to delete
+        """
         # see `VectorIndex` class for details
         # indexing_listener contains a `Select` object
         assert not isinstance(vector_index.indexing_listener, str)
@@ -84,6 +86,11 @@ class MongoDataBackend(BaseDataBackend):
         )
 
     def create_vector_index(self, vector_index):
+        """
+        Create a vector index in the data backend if an Atlas deployment.
+
+        :param vector_index: vector index to create
+        """
         collection = vector_index.indexing_listener.select.collection.name
         key = vector_index.indexing_listener.key
         model = vector_index.indexing_listener.model.identifier

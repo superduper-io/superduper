@@ -68,6 +68,14 @@ VECTOR_FIELD_NAME = "vector"
 
 @dc.dataclass
 class LanceTable:
+    """
+    A ``LanceTable`` within a ``LanceDBClient``.
+
+    :param client: ``LanceDBClient`` instance.
+    :param table: ``LanceTable`` instance.
+    :param measure: Distance measure for vector search. Defaults to 'cosine'.
+    """
+
     client: lancedb.db.LanceDBConnection
     table: lancedb.table.LanceTable
     measure: str = "cosine"
@@ -77,6 +85,7 @@ class LanceTable:
         Get a vector from the ``LanceTable``.
 
         :param identifier: Identifier of the vector.
+        :param limit: Maximum number of vectors to return. Defaults to 1.
         """
         vector_df = self.table.search(f"id = '{identifier}'").limit(limit).to_df()
         vector = vector_df[VECTOR_FIELD_NAME]

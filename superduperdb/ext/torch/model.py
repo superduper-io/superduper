@@ -54,6 +54,23 @@ class BasicDataset(data.Dataset):
 
 @dc.dataclass
 class TorchTrainerConfiguration(_TrainingConfiguration):
+    """
+    Configuration for the PyTorch trainer.
+
+    :param objective: objective function
+    :param loader_kwargs: kwargs for the dataloader
+    :param max_iterations: maximum number of iterations
+    :param no_improve_then_stop: number of iterations to wait for improvement
+                                 before stopping
+    :param splitter: splitter for the data
+    :param download: whether to download the data
+    :param validation_interval: how often to validate
+    :param listen: which metric to listen to for early stopping
+    :param optimizer_cls: optimizer class
+    :param optimizer_kwargs: kwargs for the optimizer
+    :param target_preprocessors: preprocessors for the target
+    """
+
     objective: t.Optional[t.Union[Artifact, t.Callable]] = None
     loader_kwargs: t.Dict = dc.field(default_factory=dict)
     max_iterations: int = 10**100

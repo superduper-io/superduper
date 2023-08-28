@@ -11,4 +11,4 @@ from .misc.superduper import superduper  # noqa: E402
 
 logging = log = logger.logging
 
-__version__ = '0.0.0'  # overwritten by build system on GH Actions
+__version__ = '0.0.5'

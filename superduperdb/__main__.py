@@ -2,7 +2,7 @@ import sys
 
 import click
 
-from .cli import app, config, docs, info  # noqa: F401, E402
+from .cli import app, config, docs, info, release  # noqa: F401, E402
 from .cli.serve import local_cluster, serve  # noqa: F401, E402
 
 

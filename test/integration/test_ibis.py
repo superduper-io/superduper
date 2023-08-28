@@ -1,6 +1,7 @@
 import os
 import ibis
 import PIL.Image
+import pandas as pd
 import torchvision
 
 import pytest
@@ -34,8 +35,28 @@ def ibis_db():
     yield db
     os.remove('mydb.sqlite')
 
+@pytest.fixture(scope='session')
+def ibis_pandas_db():
+    connection = ibis.sqlite.connect("mydb.sqlite")
+    df = pd.DataFrame(
+    [[1, 0, 25, 'kk'], [2, 1, 26, 'kk'], [3, 0, 27, 'kk'], [4, 1, 28, 'kk']],
+    columns=['id', 'health', 'age', 'name'],
+)
+    t = ibis.memtable(df, name="pandas")
 
-def test_end2end(ibis_db):
+    # Create data layer
+    db = IbisDB(
+        databackend=IbisDataBackend(conn=t, name='ibis'),
+        metadata=SQLAlchemyMetadata(conn=connection.con, name='ibis'),
+        artifact_store=FileSystemArtifactStore(
+            conn='./.tmp', name='ibis'
+        ),
+        vector_database=build_vector_database(CFG.vector_search.type),
+    )
+    yield db
+    os.remove('mydb.sqlite')
+
+def test_end2end_sql(ibis_db):
     db = ibis_db
     schema = IbisSchema(
         identifier='my_table',
@@ -49,9 +70,9 @@ def test_end2end(ibis_db):
     im = PIL.Image.open('test/material/data/test-image.jpeg')
     data_to_insert = [
         {'id': 1, 'health': 0, 'age': 25, 'image': im},
-        {'id': 2, 'health': 0, 'age': 25, 'image': im},
-        {'id': 3, 'health': 0, 'age': 25, 'image': im},
-        {'id': 4, 'health': 0, 'age': 25, 'image': im},
+        {'id': 2, 'health': 1, 'age': 26, 'image': im},
+        {'id': 3, 'health': 0, 'age': 27, 'image': im},
+        {'id': 4, 'health': 1, 'age': 28, 'image': im},
     ]
     t = Table(identifier='my_table', schema=schema)
     t.create(db)
@@ -64,9 +85,13 @@ def test_end2end(ibis_db):
 
 
     # -------------- retrieve data  from table ----------------
-    imgs = db.execute(t.select("image", "age", "health"))
+    q = t.select("image", "age", "health")
+    imgs = db.execute(q)
     for img in imgs:
-        print(img)
+        img = img.unpack()
+        assert isinstance(img['image'], PIL.Image.Image)
+        assert isinstance(img['age'], int)
+        assert isinstance(img['health'], int)
 
 
     # preprocessing function
@@ -97,8 +122,18 @@ def test_end2end(ibis_db):
 
 
     # Query the results back
-    q = t.filter(t.age == 25).outputs('resnet18', db)
+    q = t.select('id', 'image', 'age').filter(t.age > 25).outputs('resnet18', db)
     curr = db.execute(q)
 
     for c in curr:
         assert all([ k in ['id', 'health', 'age', 'image', 'output', 'query_id', 'key', 'input_id'] for k in c.unpack().keys()])
+
+def test_end2end_pandas(ibis_pandas_db):
+    db = ibis_pandas_db
+    # -------------- retrieve data  from table ----------------
+    q = db.table.select("id", "age", "health").filter(db.table.age> 25)
+    imgs = db.execute(q)
+    for img in imgs:
+        img = img.unpack()
+        assert isinstance(img['age'], int)
+        assert isinstance(img['health'], int)

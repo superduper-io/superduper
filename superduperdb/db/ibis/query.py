@@ -1,11 +1,11 @@
 import dataclasses as dc
 import enum
-import random
 import typing as t
 
 import ibis
 
 from superduperdb import CFG
+from superduperdb.container.encoder import Encoder
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
 from superduperdb.db.ibis.schema import IbisSchema
@@ -109,6 +109,7 @@ class OutputTable:
     model: str
     primary_id: str = 'id'
     table: t.Any = None 
+    output_type: t.Any = None
 
     def create(self, conn):
         self.table = conn.create_table(self.model, schema=self.schema)
@@ -116,11 +117,18 @@ class OutputTable:
 
     @property
     def schema(self):
+        assert self.output_type is not None, "Output type must be set"
+
+        if isinstance(self.output_type, Encoder):
+            output_type = 'binary'
+        else:
+            output_type = self.output_type
+
         schema = {
                 'id': 'int32',
                 'input_id': 'int32',
-                'output': 'int32', # Use output encoder
                 'query_id': 'string',
+                'output': output_type,
                 'key': 'string',
                 }
         return ibis.schema(schema)

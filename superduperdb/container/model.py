@@ -21,6 +21,7 @@ from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.misc.special_dicts import MongoStyleDict
+from superduperdb.container.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
@@ -387,6 +388,9 @@ class Model(Component, PredictMixin):
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'model'
 
+    # Output model type
+    output_type: t.Any =  None
+
     def __post_init__(self):
         if not isinstance(self.object, Artifact):
             self.object = Artifact(artifact=self.object)
@@ -436,7 +440,7 @@ class Model(Component, PredictMixin):
 
     def on_create(self, db: DB):
         # TODO: check if output table should be created
-        db.create_output_table(self.identifier)
+        db.create_output_table(self)
         
 
     def _validate(self, db, validation_set: Dataset, metrics: Metric):

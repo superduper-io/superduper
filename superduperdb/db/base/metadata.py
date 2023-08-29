@@ -82,33 +82,28 @@ class MetaDataStore(ABC):
 
         :param identifier: job identifier
         """
-        try:
-            status = 'pending'
-            n_lines = 0
-            n_lines_stderr = 0
-            while status in {'pending', 'running'}:
-                r = self.get_job(identifier)
-                status = r['status']
-                if status == 'running':
-                    if len(r['stdout']) > n_lines:
-                        print(''.join(r['stdout'][n_lines:]), end='')
-                        n_lines = len(r['stdout'])
-                    if len(r['stderr']) > n_lines_stderr:
-                        print(''.join(r['stderr'][n_lines_stderr:]), end='')
-                        n_lines_stderr = len(r['stderr'])
-                    time.sleep(0.2)
-                else:
-                    time.sleep(0.2)
+        status = 'pending'
+        n_lines = 0
+        n_lines_stderr = 0
+        while status in {'pending', 'running'}:
             r = self.get_job(identifier)
-            if status == 'success':
+            status = r['status']
+            if status == 'running':
                 if len(r['stdout']) > n_lines:
                     print(''.join(r['stdout'][n_lines:]), end='')
+                    n_lines = len(r['stdout'])
                 if len(r['stderr']) > n_lines_stderr:
                     print(''.join(r['stderr'][n_lines_stderr:]), end='')
-            elif status == 'failed':  # pragma: no cover
-                print(r['msg'])
-        except KeyboardInterrupt:  # pragma: no cover
-            return
+                    n_lines_stderr = len(r['stderr'])
+            time.sleep(0.01)
+        r = self.get_job(identifier)
+        if status == 'success':
+            if len(r['stdout']) > n_lines:
+                print(''.join(r['stdout'][n_lines:]), end='')
+            if len(r['stderr']) > n_lines_stderr:
+                print(''.join(r['stderr'][n_lines_stderr:]), end='')
+        elif status == 'failed':  # pragma: no cover
+            print(r['msg'])
 
     @abstractmethod
     def show_jobs(self):

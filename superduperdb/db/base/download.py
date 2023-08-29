@@ -135,8 +135,6 @@ class BaseDownloader:
                     self._download(i)
             except TimeoutException:  # pragma: no cover
                 logging.warning(f'timed out {i}')
-            except KeyboardInterrupt:  # pragma: no cover
-                raise
             except Exception as e:  # pragma: no cover
                 if self.raises:
                     raise e
@@ -167,7 +165,7 @@ class BaseDownloader:
             logging.warning("--keyboard interrupt--")
             pool.terminate()
             pool.join()
-            sys.exit(1)
+            sys.exit(1)  # Kill this subprocess so it doesn't hang
 
         pool.close()
         pool.join()

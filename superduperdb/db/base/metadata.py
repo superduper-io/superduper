@@ -43,7 +43,7 @@ class MetaDataStore(ABC):
     def component_version_has_parents(
         self, type_id: str, identifier: str, version: int
     ):
-        """ 
+        """
         Check if a component version has parents.
 
         :param type_id: Type of component
@@ -79,7 +79,7 @@ class MetaDataStore(ABC):
     ):
         """
         Get the latest version of a component.
-        
+
         :param type_id: Type of component
         :param identifier: Identifier of component
         :param allow_hidden: Allow hidden components to be returned
@@ -126,7 +126,9 @@ class MetaDataStore(ABC):
             allow_hidden=allow_hidden,
         )
         if r is None:
-            raise FileNotFoundError(f'Component {identifier} does not exist in metadata')
+            raise FileNotFoundError(
+                f'Component {identifier} does not exist in metadata'
+            )
         return r
 
     @abstractmethod

@@ -4,9 +4,9 @@ import shutil
 import typing as t
 
 import click
-from superduperdb.misc.colors import Colors
 
 from superduperdb.db.base.artifact import ArtifactStore
+from superduperdb.misc.colors import Colors
 
 
 class FileSystemArtifactStore(ArtifactStore):

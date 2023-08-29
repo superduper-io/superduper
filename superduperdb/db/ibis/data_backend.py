@@ -1,4 +1,5 @@
 from warnings import warn
+
 import click
 import ibis
 from ibis.backends.base import BaseBackend
@@ -8,8 +9,7 @@ from superduperdb.misc.colors import Colors
 
 
 class IbisDataBackend(BaseDataBackend):
-
-    def __init__(self, conn: BaseBackend , name:str):
+    def __init__(self, conn: BaseBackend, name: str):
         super().__init__(conn=conn, name=name)
 
         self._db = conn

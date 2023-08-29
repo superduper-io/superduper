@@ -629,7 +629,6 @@ class DB:
         else:
             serialized['version'] = object.version  # type: ignore[attr-defined]
             serialized['dict']['version'] = object.version  # type: ignore[attr-defined]
-
         self._create_children(object, serialized)
 
         self.metadata.create_component(serialized)

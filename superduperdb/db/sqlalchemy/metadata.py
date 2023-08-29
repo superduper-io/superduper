@@ -1,16 +1,21 @@
-from contextlib import contextmanager
-import time
 import typing as t
+from contextlib import contextmanager
 
 import click
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, sessionmaker
 
 from superduperdb.db.base.metadata import MetaDataStore
-
-
-from sqlalchemy import Column, DateTime, Integer, String, JSON, Boolean, ForeignKey, Table
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, backref, sessionmaker
-
 from superduperdb.misc.colors import Colors
 
 Base = declarative_base()
@@ -23,7 +28,7 @@ class DictMixin:
 
 class Job(Base, DictMixin):
     __tablename__ = 'job'
-    
+
     identifier = Column(String, primary_key=True)
     info = Column(JSON)
     time = Column(DateTime)
@@ -32,22 +37,24 @@ class Job(Base, DictMixin):
     kwargs = Column(JSON)
 
 
-parent_child_association = Table('parent_child_association', Base.metadata,
+parent_child_association = Table(
+    'parent_child_association',
+    Base.metadata,
     Column('parent_id', String, ForeignKey('component.id')),
-    Column('child_id', String, ForeignKey('component.id'))
+    Column('child_id', String, ForeignKey('component.id')),
 )
 
 
 class Component(Base, DictMixin):
     __tablename__ = 'component'
-    
+
     id = Column(String, primary_key=True)
     identifier = Column(String)
     version = Column(Integer)
     hidden = Column(Boolean)
     type_id = Column(String)
     cls = Column(String)
-    module =  Column(String)
+    module = Column(String)
     dict = Column(JSON)
 
     # Define the parent-child relationship
@@ -57,13 +64,13 @@ class Component(Base, DictMixin):
         primaryjoin=id == parent_child_association.c.child_id,
         secondaryjoin=id == parent_child_association.c.parent_id,
         backref="children",
-        cascade="all, delete"
+        cascade="all, delete",
     )
 
 
 class Meta(Base, DictMixin):
     __tablename__ = 'meta'
-    
+
     key = Column(String, primary_key=True)
     value = Column(String)
 
@@ -118,11 +125,17 @@ class SQLAlchemyMetadata(MetaDataStore):
         self, type_id: str, identifier: str, version: int
     ):
         with self.session_context() as session:
-            return session.query(Component).filter(
-                Component.type_id == type_id,
-                Component.identifier == identifier,
-                Component.version == version,
-            ).first().parent_id is not None
+            return (
+                session.query(Component)
+                .filter(
+                    Component.type_id == type_id,
+                    Component.identifier == identifier,
+                    Component.version == version,
+                )
+                .first()
+                .parent_id
+                is not None
+            )
 
     def create_component(self, info: t.Dict):
         if 'hidden' not in info:
@@ -133,18 +146,23 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     def create_parent_child(self, parent_id: str, child_id: str):
         with self.session_context() as session:
-            session.add(parent_child_association.insert().values(
-                parent_id=parent_id,
-                child_id=child_id
-            ))
+            session.add(
+                parent_child_association.insert().values(
+                    parent_id=parent_id, child_id=child_id
+                )
+            )
 
     def delete_component_version(self, type_id: str, identifier: str, version: int):
         with self.session_context() as session:
-            cv = session.query(Component).filter(
-                Component.type_id == type_id,
-                Component.identifier == identifier,
-                Component.version == version,
-            ).first()
+            cv = (
+                session.query(Component)
+                .filter(
+                    Component.type_id == type_id,
+                    Component.identifier == identifier,
+                    Component.version == version,
+                )
+                .first()
+            )
             if cv:
                 session.delete(cv)
 
@@ -157,37 +175,55 @@ class SQLAlchemyMetadata(MetaDataStore):
     ):
         with self.session_context() as session:
             if not allow_hidden:
-                res = session.query(Component).filter(
-                    Component.type_id == type_id,
-                    Component.identifier == identifier,
-                    Component.version == version,
-                    Component.hidden == False,
-                ).first()
+                res = (
+                    session.query(Component)
+                    .filter(
+                        Component.type_id == type_id,
+                        Component.identifier == identifier,
+                        Component.version == version,
+                        Component.hidden is False,
+                    )
+                    .first()
+                )
             else:
-                res = session.query(Component).filter(
-                    Component.type_id == type_id,
-                    Component.identifier == identifier,
-                    Component.version == version,
-                ).first()
+                res = (
+                    session.query(Component)
+                    .filter(
+                        Component.type_id == type_id,
+                        Component.identifier == identifier,
+                        Component.version == version,
+                    )
+                    .first()
+                )
 
             return res.as_dict()
 
     def get_component_version_parents(self, unique_id: str):
         with self.session_context() as session:
-            components = session.query(Component).filter(
-                Component.id == unique_id,
-            ).all()
+            components = (
+                session.query(Component)
+                .filter(
+                    Component.id == unique_id,
+                )
+                .all()
+            )
             return sum([c.parents for c in components], [])
 
     def get_latest_version(
         self, type_id: str, identifier: str, allow_hidden: bool = False
     ):
         with self.session_context() as session:
-            return session.query(Component).filter(
-                Component.type_id == type_id,
-                Component.identifier == identifier,
-                Component.hidden == allow_hidden,
-            ).order_by(Component.version.desc()).first().version
+            return (
+                session.query(Component)
+                .filter(
+                    Component.type_id == type_id,
+                    Component.identifier == identifier,
+                    Component.hidden == allow_hidden,
+                )
+                .order_by(Component.version.desc())
+                .first()
+                .version
+            )
 
     def hide_component_version(self, type_id: str, identifier: str, version: int):
         with self.session_context() as session:
@@ -224,17 +260,21 @@ class SQLAlchemyMetadata(MetaDataStore):
     def show_components(self, type_id: str, **kwargs):
         with self.session_context() as session:
             return [
-                c.identifier for c in session.query(Component).filter(Component.type_id == type_id).all()
+                c.identifier
+                for c in session.query(Component)
+                .filter(Component.type_id == type_id)
+                .all()
             ]
 
     def show_component_versions(self, type_id: str, identifier: str):
         with self.session_context() as session:
             return [
                 c.version
-                for c in session.query(Component).filter(
-                    Component.type_id == type_id,
-                    Component.identifier == identifier
-                ).all()
+                for c in session.query(Component)
+                .filter(
+                    Component.type_id == type_id, Component.identifier == identifier
+                )
+                .all()
             ]
 
     def _update_component(

@@ -32,7 +32,6 @@ class MetaDataStore(ABC):
     def create_job(self, info: t.Dict):
         """
         Create a job in the metadata store.
-
         :param info: dictionary containing information about the job.
         """
         pass
@@ -314,5 +313,15 @@ class MetaDataStore(ABC):
         :param type_id: type of component
         :param identifier: identifier of component
         :param version: version of component
+        """
+        pass
+
+    @abstractmethod
+    def update_metadata(self, key, value):
+        """
+        Update metadata in the metadata store.
+
+        :param key: Key of metadata
+        :param value: Value of metadata
         """
         pass

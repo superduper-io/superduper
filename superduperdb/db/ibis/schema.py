@@ -3,8 +3,9 @@ import typing as t
 
 import ibis
 
-from superduperdb.container.schema import Schema
 from superduperdb.container.encoder import Encoder
+from superduperdb.container.schema import Schema
+
 
 @dc.dataclass
 class IbisSchema(Schema):
@@ -18,13 +19,17 @@ class IbisSchema(Schema):
     def map(self):
         if self.trivial:
             return
-        assert not any(['_encodable' in k for k in self.fields.keys()]), 'Reserved substring: _encodable'
+        assert not any(
+            ['_encodable' in k for k in self.fields.keys()]
+        ), 'Reserved substring: _encodable'
 
         mapped_schema = {}
         for k, v in self.fields.items():
             if isinstance(v, Encoder):
                 self.encoded_types.append(k)
-                mapped_schema[f'{k}::_encodable={v.identifier}/{v.version}::'] = 'binary'
+                mapped_schema[
+                    f'{k}::_encodable={v.identifier}/{v.version}::'
+                ] = 'binary'
             else:
                 mapped_schema[k] = v
         return ibis.schema(mapped_schema)

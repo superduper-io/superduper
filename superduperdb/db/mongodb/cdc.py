@@ -3,7 +3,6 @@ import datetime
 import json
 import queue
 import threading
-import time
 import traceback
 import typing as t
 from abc import ABC, abstractmethod
@@ -457,19 +456,11 @@ class _DatabaseListenerThreadScheduler(threading.Thread):
         try:
             cdc_stream = self.listener.setup_cdc()
             self.start_event.set()
-            logging.info(
-                f'Database listen service started at {datetime.datetime.now()}'
-            )
-        except Exception as exc:
-            logging.error(f'Error while setting up cdc stream :: reason {exc}')
-            return
-        while not self.stop_event.is_set():
-            try:
+            while not self.stop_event.is_set():
                 self.listener.next_cdc(cdc_stream)
-            except Exception as exc:
-                logging.error(f'Error while listening to cdc stream :: reason {exc}')
-                break
-            time.sleep(0.01)
+        except Exception:
+            logging.error('In _DatabaseListenerThreadScheduler')
+            traceback.print_exc()
 
 
 class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
@@ -705,7 +696,9 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         self.listen()
 
     def listen(
-        self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]] = None
+        self,
+        change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]] = None,
+        timeout: t.Optional[float] = None,
     ) -> None:
         """Primary fxn to initiate listening of a database on the collection
         with defined `change_pipeline` by the user.
@@ -735,8 +728,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             assert self._scheduler is not None
             self._scheduler.start()
 
-            while not self._startup_event.is_set():
-                time.sleep(0.1)
+            self._startup_event.wait(timeout=timeout)
         except Exception:
             logging.error('Listening service stopped!')
             s.CFG.cdc = False

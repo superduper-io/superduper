@@ -17,12 +17,17 @@ from superduperdb.db.mongodb.query import Collection
 from superduperdb.vector_search.base import VectorCollectionConfig
 from superduperdb.vector_search.lancedb_client import LanceVectorIndex
 
+TIMEOUT = 10
+
+
 # NOTE 1:
 # Some environments take longer than others for the changes to appear. For this
 # reason this module has a special retry wrapper function.
 #
 # If you find yourself experiencing non-deterministic test runs which are linked
 # to this module, consider increasing the number of retry attempts.
+#
+# TODO: this should add be done with a callback when the changes are ready.
 
 # NOTE 2:
 # Each fixture writes to a collection with a unique name. This means that the
@@ -78,17 +83,13 @@ def listener_without_cdc_handler_and_collection_name(
 
 
 def retry_state_check(state_check):
-    _attempts = 5
-    while _attempts > 0:
-        _attempts -= 1
-        time.sleep(5 - _attempts)  # 1, 2, 3, 4, 5
+    start = time.time()
+
+    while (time.time() - start) < TIMEOUT:
         try:
-            state_check()
-            return
+            return state_check()
         except Exception:
-            pass
-    state_check()
-    return
+            time.sleep(0.01)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

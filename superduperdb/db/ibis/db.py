@@ -1,9 +1,10 @@
-from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
-from superduperdb.db.base.db import DB
-from superduperdb.db.ibis.query import OutputTable, InMemoryTable
 from superduperdb import logging
+from superduperdb.db.base.db import DB
+from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
+from superduperdb.db.ibis.query import InMemoryTable, OutputTable
 
 _INMEMORY_BACKENDS = ['duckdb']
+
 
 class IbisDB(DB):
     def __init__(self, *args, **kwargs):
@@ -26,22 +27,24 @@ class IbisDB(DB):
             parent = member.execute(
                 self, parent, table=query.collection, ibis_table=table
             )
-        cursor = SuperDuperIbisCursor(parent, query.collection.primary_id, encoders=self.encoders)
+        cursor = SuperDuperIbisCursor(
+            parent, query.collection.primary_id, encoders=self.encoders
+        )
         return cursor.execute()
 
     def execute(self, query):
         if isinstance(query, SuperDuperIbisCursor):
             return query.execute()
 
-        if self.backend  in _INMEMORY_BACKENDS:
+        if self.backend in _INMEMORY_BACKENDS:
             table = self.db
         else:
             table = query.collection.get_table(self.db)
         return self._execute(query, table)
-    
+
     def create_output_table(self, model):
         try:
-            table = OutputTable(model=model.identifier, output_type=model.output_type)
+            table = OutputTable(model=model.identifier, output_type=model.encoder)
             table.create(self.db)
         except Exception as e:
             logging.error(e)

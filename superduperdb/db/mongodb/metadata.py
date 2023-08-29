@@ -46,7 +46,7 @@ class MongoMetaDataStore(MetaDataStore):
     def create_parent_child(self, parent: str, child: str) -> None:
         self.parent_child_mappings.insert_one(
             {
-            'parent': parent,
+                'parent': parent,
                 'child': child,
             }
         )
@@ -68,7 +68,7 @@ class MongoMetaDataStore(MetaDataStore):
 
     def get_job(self, identifier: str):
         return self.job_collection.find_one({'identifier': identifier})
-     
+
     def create_metadata(self, key: str, value: str):
         return self.meta_collection.insert_one({'key': key, 'value': value})
 

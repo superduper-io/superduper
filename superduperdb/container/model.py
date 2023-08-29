@@ -22,7 +22,6 @@ from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.container.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
@@ -277,9 +276,9 @@ class PredictMixin:
 
         outputs = self.predict(X=X_data, one=False, distributed=False, **kwargs)
 
-        if self.encoder is not None:
-            assert not isinstance(self.encoder, str)
-            outputs = [self.encoder(x).encode() for x in outputs]
+        if isinstance(self.encoder, Encoder):
+            # ruff: noqa: E501
+            outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
 
         select.model_update(
             db=db,
@@ -382,7 +381,7 @@ class Model(Component, PredictMixin):
 
     identifier: str
     object: t.Union[Artifact, t.Any]
-    encoder: EncoderArg = None
+    encoder: t.Any = None
     preprocess: t.Union[t.Callable, Artifact, None] = None
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
@@ -405,9 +404,6 @@ class Model(Component, PredictMixin):
 
     type_id: t.ClassVar[str] = 'model'
 
-    # Output model type
-    output_type: t.Any =  None
-
     def __post_init__(self):
         if not isinstance(self.object, Artifact):
             self.object = Artifact(artifact=self.object)
@@ -423,7 +419,7 @@ class Model(Component, PredictMixin):
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
         out = []
-        if self.encoder is not None:
+        if isinstance(self.encoder, Encoder):
             out.append(('encoder', 'encoder'))
         if self.training_configuration is not None:
             out.append(('training_configuration', 'training_configuration'))
@@ -464,7 +460,6 @@ class Model(Component, PredictMixin):
     def on_create(self, db: DB):
         # TODO: check if output table should be created
         db.create_output_table(self)
-        
 
     def _validate(self, db, validation_set: Dataset, metrics: Metric):
         if isinstance(validation_set, str):

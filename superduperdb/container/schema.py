@@ -1,6 +1,6 @@
 import dataclasses as dc
-from functools import cached_property
 import typing as t
+from functools import cached_property
 
 from superduperdb.container.component import Component
 from superduperdb.container.encoder import Encoder
@@ -34,6 +34,10 @@ class Schema(Component):
         if self.trivial:
             return data
         return {
-            k: (self.fields[k].encode.artifact(v) if isinstance(self.fields[k], Encoder) else v)
+            k: (
+                self.fields[k].encode.artifact(v)
+                if isinstance(self.fields[k], Encoder)
+                else v
+            )
             for k, v in data.items()
         }

@@ -3,18 +3,19 @@ import enum
 import typing as t
 
 import ibis
+from ibis.expr.types.relations import Table as IbisTable
 
 from superduperdb import CFG
-from ibis.expr.types.relations import Table as IbisTable
-from superduperdb.container.encoder import Encoder
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
-from superduperdb.db.ibis.schema import IbisSchema
+from superduperdb.container.encoder import Encoder
+from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.db import DB
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
-from superduperdb.container.serializable import Serializable
+from superduperdb.db.ibis.schema import IbisSchema
 
 PRIMARY_ID: str = 'id'
+
 
 class QueryType(enum.Enum):
     QUERY = 'query'
@@ -46,7 +47,7 @@ class Query:
         if self.type == QueryType.ATTR.value:
             return getattr(parent, self.query.name)
 
-        self.query.pre(db, table=table, kwargs = self.kwargs)
+        self.query.pre(db, table=table, kwargs=self.kwargs)
         if len(self.args) == 1 and isinstance(self.args[0], QueryLinker):
             self.args = [self.args[0].execute(db, parent, ibis_table)]
 
@@ -105,11 +106,12 @@ class QueryChain:
     def __repr__(self):
         return str(self.chain)
 
+
 @dc.dataclass
 class OutputTable:
     model: str
     primary_id: str = 'id'
-    table: t.Any = None 
+    table: t.Any = None
     output_type: t.Any = None
 
     def create(self, conn):
@@ -126,13 +128,14 @@ class OutputTable:
             output_type = self.output_type
 
         schema = {
-                'id': 'int32',
-                'input_id': 'int32',
-                'query_id': 'string',
-                'output': output_type,
-                'key': 'string',
-                }
+            'id': 'int32',
+            'input_id': 'int32',
+            'query_id': 'string',
+            'output': output_type,
+            'key': 'string',
+        }
         return ibis.schema(schema)
+
 
 @dc.dataclass
 class InMemoryTable(Component):
@@ -205,7 +208,7 @@ class Table(Component):
                     mutated_args.append(attr)
             else:
                 mutated_args.append(attr)
-                
+
         return mutated_args
 
     def __getattr__(self, k):
@@ -244,7 +247,7 @@ class Table(Component):
         }
         kwargs.update({'table_name': self.identifier})
         args = args[1:]
-        
+
         insert = Query(
             'insert',
             type=QueryType.QUERY.value,
@@ -317,7 +320,6 @@ class QueryLinker(Serializable, LogicalExprMixin):
 
         return QueryLinker(self.collection, query_type='filter', members=members)
 
-
     def build(self, db):
         table = parent = self.collection.table
         for member in self.members:
@@ -327,17 +329,26 @@ class QueryLinker(Serializable, LogicalExprMixin):
     def outputs(self, model, db):
         curr_query = self.build(db)
         model_table = db.db.table(model)
-        query = curr_query.join(model_table, [model_table.id == curr_query.id, model_table.query_id == self.collection.identifier])
-        cursor = SuperDuperIbisCursor(query, self.collection.primary_id, encoders=db.encoders)
+        query = curr_query.join(
+            model_table,
+            [
+                model_table.id == curr_query.id,
+                model_table.query_id == self.collection.identifier,
+            ],
+        )
+        cursor = SuperDuperIbisCursor(
+            query, self.collection.primary_id, encoders=db.encoders
+        )
         return cursor
 
-    def model_update(self, 
+    def model_update(
+        self,
         db,
         ids: t.Sequence[t.Any],
         key: str,
         model: str,
         outputs: t.Sequence[t.Any],
-                     ):
+    ):
         if key.startswith('_outputs'):
             key = key.split('.')[1]
         if not outputs:
@@ -347,10 +358,17 @@ class QueryLinker(Serializable, LogicalExprMixin):
 
         table_record = []
         for ix in range(len(outputs)):
-            d = Document({'id': int(ids[ix]), 'input_id': int(ids[ix]), 'output': outputs[ix], 'query_id': input_table, 'key': key})
+            d = Document(
+                {
+                    'id': int(ids[ix]),
+                    'input_id': int(ids[ix]),
+                    'output': outputs[ix],
+                    'query_id': input_table,
+                    'key': key,
+                }
+            )
             table_record.append(d)
         db.execute(Table(model, schema=None).insert(table_record))
-
 
     def __call__(self, *args, **kwargs):
         args = self.collection.mutate_args(args)
@@ -454,7 +472,6 @@ class Insert:
     namespace: str = 'ibis'
 
     def pre(self, db, table=None, **kwargs):
-
         # TODO: handle adding table later
         '''
         if self.base_table.identifier not in db.tables:
@@ -477,10 +494,10 @@ class Insert:
         '''
 
         # mutate kwargs with documents
-        documents = [tuple(d.values())for d in documents]
+        documents = [tuple(d.values()) for d in documents]
         kwargs['kwargs']['obj'] = documents
-        return 
-    
+        return
+
     def post(self, db, output, *args, **kwargs):
         graph = None
         # inserted_ids = [d[PRIMARY_ID] for d in kwargs['kwargs']['obj']]

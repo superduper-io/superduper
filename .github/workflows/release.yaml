@@ -1,9 +1,32 @@
 name: Release
 on:
-  workflow_dispatch:  # allows triggering a github action manually - see 'Actions' tab
+  push:
+    branches:
+      - main
 
 jobs:
+  # Any commit message that contains the phrase 'Update to version' will trigger the release process.
+  # The first job in this action checks for this phrase, and the release process is aborted if not found.
+  # We have an additional safety mechanism in the upload to PyPI step, which requires manual approval.
+  # This is to prevent accidental releases. All other steps (eg build, upload to GitHub) are reversible.
+  check-commit-for-release:
+    runs-on: ubuntu-latest
+    defaults:
+        run:
+          shell: bash
+    steps:
+      - name: Check for release
+        run: |
+          if [[ "${{ github.event.head_commit.message }}" =~ 'Update to version' ]];
+          then
+            echo "Release commit message detected. Release process will run."
+          else 
+            echo "Release commit message not detected. Release process will not run."
+            exit 1
+          fi
+
   build:
+    needs: ['check-commit-for-release']
     runs-on: ubuntu-latest
     defaults:
         run:

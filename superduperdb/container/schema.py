@@ -11,7 +11,7 @@ class Schema(Component):
     type_id: t.ClassVar[str] = 'schema'
     identifier: str
     fields: t.Mapping[str, t.Union[Encoder, str]]
-    encoded_types: t.ClassVar[t.List] = dc.field(default_factory=list)
+    encoded_types: t.ClassVar[t.List] = []
 
     @cached_property
     def trivial(self):

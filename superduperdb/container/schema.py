@@ -10,7 +10,8 @@ from superduperdb.container.encoder import Encoder
 class Schema(Component):
     type_id: t.ClassVar[str] = 'schema'
     identifier: str
-    fields: t.Mapping[str, t.Union[str, Encoder]]
+    fields: t.Mapping[str, t.Union[Encoder, str]]
+    encoded_types: t.ClassVar[t.List] = dc.field(default_factory=list)
 
     @cached_property
     def trivial(self):
@@ -25,10 +26,13 @@ class Schema(Component):
     def decode(self, data: t.Mapping[str, t.Any]) -> t.Mapping[str, t.Any]:
         if self.trivial:
             return data
-        return {
-            k: (self.fields[k].decode(v) if isinstance(self.fields[k], Encoder) else v)
-            for k, v in data.items()
-        }
+        decoded = {}
+        for k, v in data.items():
+            if k in self.encoded_types:
+                field = t.cast(Encoder, self.fields[k])
+                v = field.decode(v)
+            decoded[k] = v
+        return decoded
 
     def encode(self, data):
         if self.trivial:

@@ -75,15 +75,18 @@ class Encoder(Component):
         uri: t.Optional[str] = None,
         wrap: bool = True,
     ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
+        def _wrap_content(x):
+            return {
+                '_content': {
+                    'bytes': self.encoder.artifact(x),  # type: ignore[union-attr]
+                    'encoder': self.identifier,
+                }
+            }
+
         if self.encoder is not None:
             if x is not None:
                 if wrap:
-                    return {
-                        '_content': {
-                            'bytes': self.encoder.artifact(x),  # type: ignore[union-attr]
-                            'encoder': self.identifier,
-                        }
-                    }
+                    return _wrap_content(x)
                 return self.encoder.artifact(x)  # type: ignore[union-attr]
             else:
                 if wrap:

@@ -162,7 +162,7 @@ class InMemoryTable(Component):
 @dc.dataclass
 class Table(Component):
     identifier: str
-    schema: IbisSchema
+    schema: t.Optional[IbisSchema] = None
     table: t.Any = None
     primary_id: str = 'id'
     #: A unique name for the class
@@ -173,6 +173,7 @@ class Table(Component):
         self.create(db)
 
     def create(self, db: DB):
+        assert self.schema is not None, "Schema must be set"
         for e in self.schema.encoders:
             db.add(e)
         try:
@@ -368,7 +369,7 @@ class QueryLinker(Serializable, LogicalExprMixin):
                 }
             )
             table_record.append(d)
-        db.execute(Table(model, schema=None).insert(table_record))
+        db.execute(Table(model).insert(table_record))
 
     def __call__(self, *args, **kwargs):
         args = self.collection.mutate_args(args)

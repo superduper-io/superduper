@@ -25,7 +25,7 @@ from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.base.build import build_datalayer
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.server.dask_client import dask_client
-from superduperdb.server.server import serve
+from superduperdb.server.server import make_flask_app
 
 '''
 All pytest fixtures with _package scope_ are defined in this module.
@@ -189,7 +189,7 @@ def fake_updates(database_with_default_encoders_and_model):
 
 @pytest.fixture(scope="package")
 def test_server(database_with_default_encoders_and_model):
-    app = serve(database_with_default_encoders_and_model)
+    app = make_flask_app(database_with_default_encoders_and_model)
     t = Thread(
         target=app.run,
         kwargs={"host": CFG.server.host, "port": CFG.server.port},

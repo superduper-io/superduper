@@ -257,17 +257,18 @@ def make_endpoints(app, db):
         return jsonify(response), 500
 
 
-def serve(db):
+def make_flask_app(db):
     app = Flask(__name__)
     make_endpoints(app, db)
     return app
 
 
-def main():
-    db = build_datalayer()
-    app = serve(db)
+def serve(db=None):
+    if db is None:
+        db = build_datalayer()
+    app = make_flask_app(db)
     app.run(CFG.server.host, CFG.server.port)
 
 
 if __name__ == '__main__':
-    main()
+    serve()

@@ -16,7 +16,7 @@ LOCK = Lock()
 SLEEPS = {}
 SLEEP_FILE = s.ROOT / 'test/sleep.json'
 MAX_SLEEP_TIME = float('inf')
-AUTOUSE = True
+AUTOUSE = False
 
 SDDB_USE_MONGOMOCK = 'SDDB_USE_MONGOMOCK' in os.environ
 SDDB_INSTRUMENT_TIME = 'SDDB_INSTRUMENT_TIME' in os.environ

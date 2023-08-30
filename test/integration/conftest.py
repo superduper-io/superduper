@@ -1,6 +1,5 @@
 import os
 import random
-import time
 from threading import Thread
 from unittest import mock
 
@@ -196,8 +195,8 @@ def test_server(database_with_default_encoders_and_model):
         daemon=True,
     )
     t.start()
-    time.sleep(2)
-    yield
+    with app.app_context():
+        yield
 
 
 @pytest.fixture(scope="package")

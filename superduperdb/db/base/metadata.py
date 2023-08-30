@@ -57,8 +57,8 @@ class MetaDataStore(ABC):
         """
         Create a parent-child relationship between two components.
 
-        :param parent: Unique ID of parent component ``{type_id}/{identifier}/{version}``
-        :param child: Unique ID of child component ``{type_id}/{identifier}/{version}``
+        :param parent: Parent component Unique ID ``{type_id}/{identifier}/{version}``
+        :param child: Child component Unique ID ``{type_id}/{identifier}/{version}``
         """
         pass
 
@@ -136,7 +136,8 @@ class MetaDataStore(ABC):
         """
         Get the parents of a component version.
 
-        :param unique_id: Unique ID of component version ``{type_id}/{identifier}/{version}``
+        :param unique_id: Unique ID of component
+        version ``{type_id}/{identifier}/{version}``
         """
         pass
 
@@ -236,14 +237,14 @@ class MetaDataStore(ABC):
 
         :param info: Information about the job found in ``job.dict()``
         """
-        return self.job_collection.insert_one(info)
+        raise NotImplementedError
 
     @abstractmethod
     def get_job(self, job_id: str):
         """
         Get a job from the metadata store.
         """
-        pass
+        raise NotImplementedError
 
     def listen_job(self, identifier: str):
         """

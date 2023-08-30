@@ -26,7 +26,7 @@ class DictMixin:
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
-class Job(Base, DictMixin):
+class Job(Base, DictMixin):  # type: ignore[valid-type, misc]
     __tablename__ = 'job'
 
     identifier = Column(String, primary_key=True)
@@ -45,7 +45,7 @@ parent_child_association = Table(
 )
 
 
-class Component(Base, DictMixin):
+class Component(Base, DictMixin):  # type: ignore[valid-type, misc]
     __tablename__ = 'component'
 
     id = Column(String, primary_key=True)
@@ -68,7 +68,7 @@ class Component(Base, DictMixin):
     )
 
 
-class Meta(Base, DictMixin):
+class Meta(Base, DictMixin):  # type: ignore[valid-type, misc]
     __tablename__ = 'meta'
 
     key = Column(String, primary_key=True)
@@ -285,7 +285,7 @@ class SQLAlchemyMetadata(MetaDataStore):
         value: t.Any,
         version: int,
     ):
-        with self.session_context(self.conn) as session:
+        with self.session_context() as session:
             session.query(Component).filter(
                 Component.type_id == type_id,
                 Component.identifier == identifier,

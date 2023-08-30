@@ -70,10 +70,8 @@ class Document:
     def __setitem__(self, key: str, value: ItemType):
         self.content[key] = value  # type: ignore[index]
 
-    def unpack(self, schema: t.Optional[Schema] = None) -> t.Any:
+    def unpack(self) -> t.Any:
         """Returns the content, but with any encodables replacecs by their contents"""
-        if schema is not None:
-            return _unpack_with_schema(self.content, schema)
         return _unpack(self.content)
 
 
@@ -140,8 +138,8 @@ def _encode(r: t.Any) -> t.Any:
 def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
     if isinstance(r, dict):
         return {
-            k: schema.fields[k].encode(v, wrap=False)
-            if k in schema.encoded_types
+            k: schema.fields[k].encode(v, wrap=False)  # type: ignore[call-arg]
+            if k in schema.encoded_types  # type: ignore[operator]
             else _encode_with_schema(v, schema)
             for k, v in r.items()
         }

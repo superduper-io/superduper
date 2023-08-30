@@ -181,7 +181,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                         Component.type_id == type_id,
                         Component.identifier == identifier,
                         Component.version == version,
-                        Component.hidden is False,
+                        Component.hidden.__eq__(False),
                     )
                     .first()
                 )

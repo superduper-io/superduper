@@ -212,7 +212,7 @@ class PredictMixin:
     ):
         ids = []
         if overwrite:
-            query = select.select_ids()
+            query = select.select_ids
         else:
             query = select.select_ids_of_missing_outputs(key=X, model=self.identifier)
 
@@ -417,10 +417,17 @@ class Model(Component, PredictMixin):
         else:
             self.to_call = getattr(self.object.artifact, self.predict_method)
 
+    def _check_if_encoder(self, encoder):
+        if isinstance(encoder, Encoder):
+            return True
+        elif isinstance(encoder, str) and encoder in Encoder.encoders:
+            return True
+        return False
+
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
         out = []
-        if isinstance(self.encoder, Encoder):
+        if self._check_if_encoder(self.encoder):
             out.append(('encoder', 'encoder'))
         if self.training_configuration is not None:
             out.append(('training_configuration', 'training_configuration'))

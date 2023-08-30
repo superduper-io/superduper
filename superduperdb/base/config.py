@@ -156,8 +156,8 @@ class DbComponent(JSONable):
     :param name: The name of the data layer
     """
 
-    cls: str = 'ibis'
-    connection: str = 'ibis'
+    cls: str = 'mongodb'
+    connection: str = 'pymongo'
     kwargs: t.Dict = Factory(lambda: MongoDB().dict())
     name: str = 'test_db'
 

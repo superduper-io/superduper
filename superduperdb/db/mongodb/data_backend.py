@@ -1,7 +1,7 @@
 import typing as t
 
 import click
-from pymongo import MongoClient
+import pymongo
 
 from superduperdb import logging
 from superduperdb.container.serializable import Serializable
@@ -21,7 +21,7 @@ class MongoDataBackend(BaseDataBackend):
 
     id_field = '_id'
 
-    def __init__(self, conn: MongoClient, name: str):
+    def __init__(self, conn: pymongo.MongoClient, name: str):
         super().__init__(conn=conn, name=name)
         self._db = self.conn[self.name]
 

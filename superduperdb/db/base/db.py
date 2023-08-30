@@ -97,6 +97,13 @@ class DB:
     def distributed_client(self):
         return self._distributed_client
 
+    def create_output_table(self, *args):
+        """
+        Create output table for a model, This is valid for sql databases,
+        and databases with seperate output table configuration.
+        """
+        pass
+
     def drop(self, force: bool = False):
         """
         Drop all data, artifacts and metadata

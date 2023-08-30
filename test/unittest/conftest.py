@@ -21,7 +21,6 @@ try:
 except ImportError:
     torch = None
 
-from pymongo import MongoClient
 from tenacity import RetryError, Retrying, stop_after_delay
 
 from superduperdb.base.config import DbComponent, DbComponents
@@ -110,7 +109,7 @@ def mongodb_client(mongodb_server: TestMongoDBConfig) -> Iterator[pymongo.MongoC
 def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[DB]:
     from superduperdb.db.base.build import build_datalayer
 
-    mongo_client = MongoClient(
+    mongo_client = pymongo.MongoClient(
         host=mongodb_config.host,
         port=mongodb_config.port,
         username=mongodb_config.username,

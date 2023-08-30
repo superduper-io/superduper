@@ -14,7 +14,7 @@ try:
     from superduperdb.ext.torch.tensor import tensor
 except ImportError:
     torch = None
-from pymongo import MongoClient
+import pymongo
 from tenacity import RetryError, Retrying, stop_after_delay
 
 from superduperdb import CFG
@@ -71,7 +71,7 @@ def patch_superduper_config():
 
 @pytest.fixture(scope="package")
 def create_mongodb_client_clean_and_close():
-    mongo_client = MongoClient(**mongodb_test_config)
+    mongo_client = pymongo.MongoClient(**mongodb_test_config)
 
     try:
         for attempt in Retrying(stop=stop_after_delay(15)):
@@ -92,7 +92,7 @@ def create_mongodb_client_clean_and_close():
 
 @pytest.fixture()
 def fresh_client():
-    mongo_client = MongoClient(**mongodb_test_config)
+    mongo_client = pymongo.MongoClient(**mongodb_test_config)
     try:
         for attempt in Retrying(stop=stop_after_delay(15)):
             with attempt:

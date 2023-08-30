@@ -1,5 +1,7 @@
 import typing as t
 
+from pymongo.database import Database
+
 __all__ = ('superduper',)
 
 
@@ -39,8 +41,6 @@ class MongoDbTyper(DuckTyper):
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
-        from pymongo.database import Database
-
         from superduperdb import CFG
         from superduperdb.db.base.build import build_vector_database
         from superduperdb.db.base.db import DB

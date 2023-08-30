@@ -2,8 +2,8 @@ import os
 import random
 
 import lorem
+import pymongo
 import pytest
-from pymongo import MongoClient
 
 import superduperdb as s
 from superduperdb import superduper
@@ -35,7 +35,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
     model = Model(
         identifier='test-model', object=random_vector_model, encoder=vector(shape=(16,))
     )
-    client = MongoClient(ATLAS_VECTOR_URI)
+    client = pymongo.MongoClient(ATLAS_VECTOR_URI)
     db = superduper(client.test_atlas_vector_search)
     collection = Collection('docs')
 
@@ -65,7 +65,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
 
 @pytest.mark.skipif(ATLAS_VECTOR_URI is None, reason='Only atlas deployments relevant.')
 def test_use_atlas_vector_search(atlas_search_config):
-    client = MongoClient(ATLAS_VECTOR_URI)
+    client = pymongo.MongoClient(ATLAS_VECTOR_URI)
     db = superduper(client.test_atlas_vector_search)
     collection = Collection('docs')
 

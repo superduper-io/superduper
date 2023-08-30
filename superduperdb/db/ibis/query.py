@@ -307,6 +307,7 @@ class QueryLinker(Serializable, LogicalExprMixin):
     def __gt__(self, other):
         return self.gt(other, members=self.members, collection=self.collection)
 
+    @property
     def select_ids(self):
         k = 'select'
         args = [self.collection.primary_id]

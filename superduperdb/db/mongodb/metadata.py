@@ -1,6 +1,7 @@
 import typing as t
 
 import click
+import tenacity
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 from superduperdb.container.component import Component
@@ -107,6 +108,8 @@ class MongoMetaDataStore(MetaDataStore):
             'identifier', {'type_id': type_id, **kwargs}
         )
 
+    # TODO: Why is this is needed to prevent failures in CI?
+    @tenacity.retry(stop=tenacity.stop_after_attempt(10))
     def show_component_versions(
         self, type_id: str, identifier: str
     ) -> t.List[t.Union[t.Any, int]]:

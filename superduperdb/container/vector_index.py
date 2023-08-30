@@ -239,23 +239,8 @@ class VectorIndex(Component):
 
     @property
     def dimensions(self) -> int:
-        if not isinstance(self.indexing_listener, Listener):
-            raise NotImplementedError
-        if not hasattr(
-            self.indexing_listener.model.encoder, 'shape'  # type: ignore[union-attr]
-        ):
-            raise NotImplementedError(
-                'Couldn\'t find shape of model outputs, based on model encoder.'
-            )
-        model_encoder = self.indexing_listener.model.encoder  # type: ignore[union-attr]
-        try:
-            dimensions = int(model_encoder.shape[-1])  # type: ignore[index, union-attr]
-        except Exception:
-            dimensions = None
-        if not dimensions:
-            raise ValueError(
-                'Model '  # type: ignore[union-attr]
-                f'{self.indexing_listener.model.identifier} '
-                'has no shape'
-            )
-        return dimensions
+        assert not isinstance(self.indexing_listener, str)
+        assert not isinstance(self.indexing_listener.model, str)
+        if shape := getattr(self.indexing_listener.model.encoder, 'shape', None):
+            return shape[-1]
+        raise ValueError('Couldn\'t get shape of model outputs from model encoder')

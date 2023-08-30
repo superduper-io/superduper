@@ -113,8 +113,8 @@ class MongoDB(HostPort):
 class DataLayer(JSONable):
     """Configure which db or database is being used"""
 
-    cls: str = 'ibis'
-    connection: str = 'ibis'
+    cls: str = 'mongodb'
+    connection: str = 'pymongo'
     kwargs: t.Dict = Factory(lambda: MongoDB().dict())
     name: str = 'test_db'
 

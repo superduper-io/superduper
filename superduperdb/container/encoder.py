@@ -51,7 +51,10 @@ class Encoder(Component):
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'encoder'
 
+    encoders: t.ClassVar[t.List] = []
+
     def __post_init__(self):
+        self.encoders.append(self.identifier)
         if isinstance(self.decoder, t.Callable):
             self.decoder = Artifact(artifact=self.decoder)
         if isinstance(self.encoder, t.Callable):

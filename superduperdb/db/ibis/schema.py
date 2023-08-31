@@ -1,5 +1,4 @@
 import dataclasses as dc
-import typing as t
 
 import ibis
 
@@ -9,8 +8,6 @@ from superduperdb.container.schema import Schema
 
 @dc.dataclass
 class IbisSchema(Schema):
-    encoded_types: t.ClassVar[t.List] = []
-
     def mutate_column(self, column):
         if column in self.encoded_types:
             name = f'{self.fields[column].identifier}/{self.fields[column].version}'
@@ -27,10 +24,9 @@ class IbisSchema(Schema):
         mapped_schema = {}
         for k, v in self.fields.items():
             if isinstance(v, Encoder):
-                self.encoded_types.append(k)
                 mapped_schema[
                     f'{k}::_encodable={v.identifier}/{v.version}::'
                 ] = 'binary'
             else:
-                mapped_schema[k] = v
+                mapped_schema[k] = v.type
         return ibis.schema(mapped_schema)

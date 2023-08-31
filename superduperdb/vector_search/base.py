@@ -70,8 +70,7 @@ class VectorIndexMeasureType(str, enum.Enum):
 
 VectorCollectionId = str
 VectorCollectionItemId = str
-VectorIndexMeasureFunction = t.Callable[[numpy.ndarray, numpy.ndarray], float]
-VectorIndexMeasure = t.Union[VectorIndexMeasureType, VectorIndexMeasureFunction]
+VectorIndexMeasure = t.Union[VectorIndexMeasureType, str]
 
 
 class VectorCollectionItemNotFound(Exception):

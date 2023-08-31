@@ -1,7 +1,7 @@
 import datetime
 import typing as t
 import uuid
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 import superduperdb as s
 from superduperdb.container.tasks import callable_job, method_job

@@ -18,6 +18,8 @@ asttokens==2.3.0
     # via stack-data
 async-timeout==4.0.3
     # via aiohttp
+atpublic==3.1.2
+    # via ibis-framework
 attr==0.3.2
     # via lancedb
 attrs==23.1.0
@@ -33,6 +35,8 @@ beautifulsoup4==4.12.2
     # via
     #   furo
     #   nbconvert
+bidict==0.22.1
+    # via ibis-framework
 bleach==6.0.0
     # via nbconvert
 blinker==1.6.2
@@ -80,6 +84,12 @@ docutils==0.20.1
     #   myst-parser
     #   nbsphinx
     #   sphinx
+duckdb==0.8.1
+    # via
+    #   duckdb-engine
+    #   ibis-framework
+duckdb-engine==0.9.2
+    # via ibis-framework
 executing==1.2.0
     # via stack-data
 fastjsonschema==2.18.0
@@ -103,6 +113,10 @@ fsspec==2023.9.0
     # via dask
 furo==2023.8.19
     # via superduperdb (pyproject.toml)
+greenlet==2.0.2
+    # via sqlalchemy
+ibis-framework[duckdb,sqlite]==5.1.0
+    # via superduperdb (pyproject.toml)
 idna==3.4
     # via
     #   requests
@@ -116,8 +130,9 @@ importlib-metadata==6.8.0
     #   jupyter-client
     #   nbconvert
     #   sphinx
-importlib-resources==6.0.1
+importlib-resources==5.13.0
     # via
+    #   ibis-framework
     #   jsonschema
     #   jsonschema-specifications
 ipython==8.12.2
@@ -164,6 +179,7 @@ markdown-it-py==3.0.0
     # via
     #   mdit-py-plugins
     #   myst-parser
+    #   rich
 markupsafe==2.1.3
     # via
     #   jinja2
@@ -183,6 +199,8 @@ multidict==6.0.4
     # via
     #   aiohttp
     #   yarl
+multipledispatch==0.6.0
+    # via ibis-framework
 myst-parser==2.0.0
     # via superduperdb (pyproject.toml)
 nbclient==0.8.0
@@ -204,6 +222,7 @@ networkx==3.1
     # via superduperdb (pyproject.toml)
 numpy==1.24.4
     # via
+    #   ibis-framework
     #   pandas
     #   pyarrow
     #   pylance
@@ -218,16 +237,22 @@ packaging==23.1
     # via
     #   dask
     #   distributed
+    #   ibis-framework
     #   nbconvert
+    #   pooch
     #   sphinx
 pandas==2.0.3
-    # via superduperdb (pyproject.toml)
+    # via
+    #   ibis-framework
+    #   superduperdb (pyproject.toml)
 pandoc==2.3
     # via superduperdb (pyproject.toml)
 pandocfilters==1.5.0
     # via nbconvert
 parso==0.8.3
     # via jedi
+parsy==2.1
+    # via ibis-framework
 partd==1.4.0
     # via dask
 pexpect==4.8.0
@@ -239,11 +264,15 @@ pillow==10.0.0
 pkgutil-resolve-name==1.3.10
     # via jsonschema
 platformdirs==3.10.0
-    # via jupyter-core
+    # via
+    #   jupyter-core
+    #   pooch
 plumbum==1.8.2
     # via pandoc
 ply==3.11
     # via pandoc
+pooch[progress,xxhash]==1.7.0
+    # via ibis-framework
 prompt-toolkit==3.0.39
     # via ipython
 psutil==5.9.5
@@ -254,8 +283,10 @@ pure-eval==0.2.2
     # via stack-data
 py==1.11.0
     # via retry
-pyarrow==13.0.0
-    # via pylance
+pyarrow==11.0.0
+    # via
+    #   ibis-framework
+    #   pylance
 pydantic==2.3.0
     # via
     #   lancedb
@@ -267,6 +298,7 @@ pygments==2.16.1
     #   furo
     #   ipython
     #   nbconvert
+    #   rich
     #   sphinx
 pylance==0.5.10
     # via lancedb
@@ -275,11 +307,13 @@ pymongo==4.5.0
 python-dateutil==2.8.2
     # via
     #   botocore
+    #   ibis-framework
     #   jupyter-client
     #   pandas
 pytz==2023.3
     # via
     #   babel
+    #   ibis-framework
     #   pandas
 pyyaml==6.0.1
     # via
@@ -296,14 +330,19 @@ referencing==0.30.2
     # via
     #   jsonschema
     #   jsonschema-specifications
+regex==2023.8.8
+    # via ibis-framework
 requests==2.31.0
     # via
     #   openai
+    #   pooch
     #   sphinx
     #   superduperdb (pyproject.toml)
 retry==0.9.2
     # via lancedb
-rpds-py==0.10.0
+rich==13.5.2
+    # via ibis-framework
+rpds-py==0.10.2
     # via
     #   jsonschema
     #   referencing
@@ -325,6 +364,7 @@ six==1.16.0
     # via
     #   asttokens
     #   bleach
+    #   multipledispatch
     #   python-dateutil
 snowballstemmer==2.2.0
     # via sphinx
@@ -362,6 +402,15 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
+sqlalchemy==2.0.20
+    # via
+    #   duckdb-engine
+    #   ibis-framework
+    #   sqlalchemy-views
+sqlalchemy-views==0.3.2
+    # via ibis-framework
+sqlglot==11.7.1
+    # via ibis-framework
 stack-data==0.6.2
     # via ipython
 tblib==2.0.0
@@ -376,6 +425,7 @@ toolz==0.12.0
     # via
     #   dask
     #   distributed
+    #   ibis-framework
     #   partd
 tornado==6.3.3
     # via
@@ -385,6 +435,7 @@ tqdm==4.66.1
     # via
     #   lancedb
     #   openai
+    #   pooch
     #   superduperdb (pyproject.toml)
 traitlets==5.9.0
     # via
@@ -401,10 +452,13 @@ typer==0.9.0
 typing-extensions==4.7.1
     # via
     #   annotated-types
+    #   ibis-framework
     #   ipython
     #   pydantic
     #   pydantic-core
     #   readerwriterlock
+    #   rich
+    #   sqlalchemy
     #   typer
 tzdata==2023.3
     # via pandas
@@ -423,6 +477,8 @@ werkzeug==2.3.7
     # via
     #   flask
     #   superduperdb (pyproject.toml)
+xxhash==3.3.0
+    # via pooch
 yarl==1.9.2
     # via aiohttp
 zict==3.0.0

@@ -277,8 +277,7 @@ class PredictMixin:
         outputs = self.predict(X=X_data, one=False, distributed=False, **kwargs)
 
         if isinstance(self.encoder, Encoder):
-            # ruff: noqa: E501
-            outputs = [self.encoder(x).encode() for x in outputs]  # type: ignore[operator]
+            outputs = [self.encoder(x).encode() for x in outputs]
 
         select.model_update(
             db=db,
@@ -417,17 +416,10 @@ class Model(Component, PredictMixin):
         else:
             self.to_call = getattr(self.object.artifact, self.predict_method)
 
-    def _check_if_encoder(self, encoder):
-        if isinstance(encoder, Encoder):
-            return True
-        elif isinstance(encoder, str) and encoder in Encoder.encoders:
-            return True
-        return False
-
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
         out = []
-        if self._check_if_encoder(self.encoder):
+        if isinstance(self.encoder, Encoder):
             out.append(('encoder', 'encoder'))
         if self.training_configuration is not None:
             out.append(('training_configuration', 'training_configuration'))
@@ -451,7 +443,9 @@ class Model(Component, PredictMixin):
             for k, v in d.items():
                 self.metric_values.setdefault(k, []).append(v)
 
-    def validate(self, db, validation_set: Dataset, metrics: t.Sequence[Metric]):
+    def validate(
+        self, db, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
+    ):
         db.add(self)
         out = self._validate(db, validation_set, metrics)
         if self.metric_values is None:
@@ -466,10 +460,14 @@ class Model(Component, PredictMixin):
         )
 
     def on_create(self, db: DB):
+        if isinstance(self.encoder, str):
+            self.encoder = db.load('encoder', self.encoder)
         # TODO: check if output table should be created
         db.create_output_table(self)
 
-    def _validate(self, db, validation_set: Dataset, metrics: Metric):
+    def _validate(
+        self, db: DB, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
+    ):
         if isinstance(validation_set, str):
             validation_set = t.cast(Dataset, db.load('dataset', validation_set))
 

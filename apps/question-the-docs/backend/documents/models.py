@@ -14,6 +14,5 @@ class Query(BaseModel):
     collection_name: Repo = Field(...)
 
 
-class Answer(BaseModel):
-    answer: str = Field(...)
-    source_urls: list = Field(...)
+class Source(BaseModel):
+    urls: list = Field(...)

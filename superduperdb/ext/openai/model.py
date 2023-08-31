@@ -154,6 +154,13 @@ class OpenAIChatCompletion(OpenAI):
     async def _apredict_one(self, X, context: t.Optional[t.List[str]] = None, **kwargs):
         if context is not None:
             X = self._format_prompt(context, X)
+        if 'stream' in kwargs:
+            if kwargs['stream'] is True:
+                return await ChatCompletion.acreate(
+                    messages=[{'role': 'user', 'content': X}],
+                    model=self.identifier,
+                    **kwargs,
+                )
         return (
             await ChatCompletion.acreate(
                 messages=[{'role': 'user', 'content': X}],

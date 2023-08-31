@@ -223,7 +223,7 @@ class MongoMetaDataStore(MetaDataStore):
             r['parent'] for r in self.parent_child_mappings.find({'child': unique_id})
         ]
 
-    def _replace_component(
+    def _replace_object(
         self,
         info: t.Dict[str, t.Any],
         identifier: str,
@@ -235,7 +235,7 @@ class MongoMetaDataStore(MetaDataStore):
             info,
         )
 
-    def _update_component(
+    def _update_object(
         self,
         identifier: str,
         type_id: str,

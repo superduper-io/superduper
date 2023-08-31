@@ -233,7 +233,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 Component.version == version,
             ).update({'hidden': True})
 
-    def _replace_component(self, info, identifier, type_id, version):
+    def _replace_object(self, info, identifier, type_id, version):
         with self.session_context() as session:
             session.query(Component).filter(
                 Component.type_id == type_id,
@@ -250,7 +250,7 @@ class SQLAlchemyMetadata(MetaDataStore):
     ) -> None:
         if version is not None:
             version = self.get_latest_version(type_id, identifier)
-        return self._replace_component(
+        return self._replace_object(
             info=info,
             identifier=identifier,
             type_id=type_id,
@@ -277,7 +277,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 .all()
             ]
 
-    def _update_component(
+    def _update_object(
         self,
         identifier: str,
         type_id: str,

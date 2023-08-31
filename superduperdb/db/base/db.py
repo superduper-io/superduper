@@ -141,7 +141,7 @@ class DB:
         assert isinstance(component, Model)
         return component.validate(
             self,
-            validation_set,  # type: ignore[arg-type]
+            validation_set,
             metric_list,  # type: ignore[arg-type]
         )
 
@@ -953,7 +953,7 @@ class DB:
 
         new_info = replace_artifacts(new_info, artifact_details)
 
-        self.metadata.replace_component(
+        self.metadata.replace_object(
             new_info,
             identifier=object.identifier,
             type_id='model',

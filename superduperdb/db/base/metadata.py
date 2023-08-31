@@ -114,7 +114,7 @@ class MetaDataStore(ABC):
         pass
 
     @abstractmethod
-   def show_components(self, type_id: str, **kwargs):
+    def show_components(self, type_id: str, **kwargs):
         """
         Show all components in the metadata store.
 

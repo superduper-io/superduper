@@ -11,7 +11,10 @@ class Schema(Component):
     type_id: t.ClassVar[str] = 'schema'
     identifier: str
     fields: t.Mapping[str, t.Union[Encoder, str]]
-    encoded_types: t.ClassVar[t.List] = []
+
+    @cached_property
+    def encoded_types(self):
+        return [k for k, v in self.fields.items() if isinstance(v, Encoder)]
 
     @cached_property
     def trivial(self):
@@ -29,7 +32,8 @@ class Schema(Component):
         decoded = {}
         for k, v in data.items():
             if k in self.encoded_types:
-                field = t.cast(Encoder, self.fields[k])
+                field = self.fields[k]
+                assert isinstance(field, Encoder)
                 v = field.decode(v)
             decoded[k] = v
         return decoded
@@ -37,6 +41,7 @@ class Schema(Component):
     def encode(self, data):
         if self.trivial:
             return data
+
         return {
             k: (
                 self.fields[k].encode.artifact(v)

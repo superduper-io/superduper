@@ -2,11 +2,11 @@ import inspect
 
 import superduperdb as s
 from superduperdb.db.base.backends import (
-    ARTIFACT_STORES,
     CONNECTIONS,
-    DATA_BACKENDS,
-    METADATA_STORES,
     VECTOR_DATA_STORES,
+    artifact_stores,
+    data_backends,
+    metadata_stores,
 )
 from superduperdb.db.base.db import DB
 from superduperdb.server.dask_client import dask_client
@@ -52,9 +52,9 @@ def build_datalayer(cfg=None, **connections) -> DB:
         return cls(name=cfg.name, conn=connection)
 
     return DB(
-        artifact_store=build(cfg.db_components.artifact, ARTIFACT_STORES),
-        databackend=build(cfg.db_components.data_backend, DATA_BACKENDS),
-        metadata=build(cfg.db_components.metadata, METADATA_STORES),
+        artifact_store=build(cfg.db_components.artifact, artifact_stores),
+        databackend=build(cfg.db_components.data_backend, data_backends),
+        metadata=build(cfg.db_components.metadata, metadata_stores),
         vector_database=build_vector_database(cfg.vector_search.type),
         distributed_client=build_distributed_client(cfg),
     )

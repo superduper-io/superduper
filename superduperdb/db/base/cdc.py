@@ -68,7 +68,7 @@ def DatabaseListener(
     :param on: Which collection/table listener service this be invoked on?
     :param identifier: A identity given to the listener service.
     """
-    it = backends.DATA_BACKENDS.items()
+    it = backends.data_backends.items()
     if types := [k for k, v in it if isinstance(db.databackend, v)]:
         db_type = types[0]
     else:

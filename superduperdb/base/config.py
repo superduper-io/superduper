@@ -170,6 +170,7 @@ class DbComponents(JSONable):
     :param data_backend: The data backend data layer
     :param metadata: The metadata data layer
     """
+
     artifact: DbComponent = Factory(lambda: DbComponent(name='_filesystem:test_db'))
     data_backend: DbComponent = Factory(DbComponent)
     metadata: DbComponent = Factory(DbComponent)

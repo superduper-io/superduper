@@ -544,15 +544,14 @@ class Find(Select):
         return UpdateOne(
             collection=self.collection,
             filter={'_id': id},
-            update=update,  # type: ignore[arg-type]
+            update=update,
         )(db)
 
     @override
     def __call__(self, db: DB) -> SuperDuperCursor:
         if isinstance(self.parent, Collection):
-            cursor = db.db[self.collection.name].find(  # type: ignore[union-attr]
-                *self.args, **self.kwargs
-            )
+            assert self.collection, "Please set a valid collection name"
+            cursor = db.db[self.collection.name].find(*self.args, **self.kwargs)
         elif isinstance(self.parent, Like):
             intermediate = self.parent(db)
             ids = [ObjectId(r['_id']) for r in intermediate]
@@ -571,7 +570,7 @@ class Find(Select):
 
 
 @dc.dataclass
-class CountDocuments(Find):
+class CountDocuments(Select):
     """
     A query to count documents
 
@@ -592,9 +591,7 @@ class CountDocuments(Find):
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     #: Uniquely identifies serialized elements of this class
-    type_id: t.Literal[
-        'mongodb.CountDocuments'
-    ] = 'mongodb.CountDocuments'  # type: ignore[assignment]
+    type_id: t.Literal['mongodb.CountDocuments'] = 'mongodb.CountDocuments'
 
     @override
     def __call__(self, db: DB):
@@ -777,7 +774,7 @@ class UpdateOne(Update):
 
     #: The collection to perform the query on
     collection: Collection
-    update: Document
+    update: t.Any
 
     #: Filter results by this dictionary
     filter: t.Dict
@@ -987,7 +984,7 @@ class Featurize(Select):
     """
 
     features: t.Dict[str, str]
-    parent: t.Union[Find, PostLike]
+    parent: Find
 
     type_id: t.Literal['mongodb.Featurize'] = 'mongodb.Featurize'
 
@@ -1021,10 +1018,7 @@ class Featurize(Select):
         folded = self.parent.add_fold(fold)
         assert isinstance(folded, (Find, FindOne))
         folded.featurize(self.features)
-
-        return self.parent.add_fold(fold).featurize(  # type: ignore[attr-defined]
-            self.features
-        )
+        return self.parent.add_fold(fold).featurize(self.features)
 
     @override
     def select_using_ids(self, ids: t.Sequence[str]) -> t.Any:
@@ -1032,7 +1026,7 @@ class Featurize(Select):
 
     def select_ids_of_missing_outputs(self, key: str, model: str) -> Select:
         parent = self.parent.select_ids_of_missing_outputs(key, model)
-        assert isinstance(parent, (Find, PostLike))
+        assert isinstance(parent, Find)
         return Featurize(features=self.features, parent=parent)
 
     @override
@@ -1055,9 +1049,7 @@ class Featurize(Select):
         else:
             cursor = self.parent(db)
             # TODO: r is a SuperDuperCursor, but that has no .content attribute
-            d = SuperDuperCursor.add_features(
-                cursor.content, self.features  # type: ignore[attr-defined]
-            )
+            d = SuperDuperCursor.add_features(cursor.content, self.features)
             return Document(d)
 
 

@@ -43,7 +43,6 @@ def test(metadata):
             'version': 0,
             'cls': 'Model',
             'module': 'superduperdb.container.model',
-            'parent': 'model/my-model/0',
         }
     )
 

@@ -61,6 +61,8 @@ dependencies = [
     "pillow>=9.4.0",
     "safer>=4.8.0",
     "semver>=3",
+    "ibis-framework[sqlite]>=5.1.0",
+    "ibis-framework[duckdb]>=5.1.0"
 ]
 
 [project.optional-dependencies]

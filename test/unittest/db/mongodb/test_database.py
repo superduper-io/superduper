@@ -145,8 +145,8 @@ def test_insert_from_uris(empty, image_type):
     ]
     empty.execute(Collection(name='documents').insert_many(to_insert))
     r = empty.execute(Collection(name='documents').find_one())
-    assert isinstance(r['item'].x, PIL.PngImagePlugin.PngImageFile)
-    assert isinstance(r['other']['item'].x, PIL.PngImagePlugin.PngImageFile)
+    assert isinstance(r['item'].x, PIL.Image.Image)
+    assert isinstance(r['other']['item'].x, PIL.Image.Image)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

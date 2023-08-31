@@ -12,6 +12,7 @@ from superduperdb.container.encoder import Encoder
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.db import DB
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
+from superduperdb.db.ibis.field_types import FieldType
 from superduperdb.db.ibis.schema import IbisSchema
 
 PRIMARY_ID: str = 'id'
@@ -316,7 +317,8 @@ class OutputTable:
         if isinstance(self.output_type, Encoder):
             output_type = 'binary'
         else:
-            output_type = self.output_type
+            assert isinstance(self.output_type, FieldType)
+            output_type = self.output_type.type
 
         schema = {
             'id': 'int32',

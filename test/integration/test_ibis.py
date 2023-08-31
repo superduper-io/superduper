@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import ibis
 import pandas as pd
@@ -8,11 +9,11 @@ import torchvision
 
 from superduperdb import CFG
 from superduperdb.container.document import Document as D
-from superduperdb.db import types
 from superduperdb.db.base.build import build_vector_database
 from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.db.ibis.data_backend import IbisDataBackend
 from superduperdb.db.ibis.db import IbisDB
+from superduperdb.db.ibis.field_types import dtype
 from superduperdb.db.ibis.query import Table
 from superduperdb.db.ibis.schema import IbisSchema
 from superduperdb.db.sqlalchemy.metadata import SQLAlchemyMetadata
@@ -39,6 +40,7 @@ def ibis_db(sqllite_conn):
         vector_database=build_vector_database(CFG.vector_search.type),
     )
     yield db
+    shutil.rmtree('./.tmp')
 
 
 @pytest.fixture(scope='session')
@@ -65,9 +67,9 @@ def test_end2end_sql(ibis_db):
     schema = IbisSchema(
         identifier='my_table',
         fields={
-            'id': 'int64',
-            'health': 'int32',
-            'age': 'int32',
+            'id': dtype('int64'),
+            'health': dtype('int32'),
+            'age': dtype('int32'),
             'image': pil_image,
         },
     )
@@ -128,7 +130,7 @@ def test_end2end_sql(ibis_db):
         preprocess=preprocess,
         postprocess=postprocess,
         object=torchvision.models.resnet18(pretrained=False),
-        encoder=types.int32,
+        encoder=dtype('int32'),
     )
 
     # Apply the torchvision model

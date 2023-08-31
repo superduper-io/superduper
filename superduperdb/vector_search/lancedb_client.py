@@ -238,9 +238,8 @@ class LanceVectorIndex(BaseVectorIndex):
         """
         dimensions = config.dimensions
         table = config.id
-        measure = t.cast(str, config.measure)
         seed_data = list([{VECTOR_FIELD_NAME: [0] * dimensions, _ID: SEED_KEY}])
         schema = self._create_schema(dimensions=dimensions)
         return self.client.create_table(
-            table, schema=schema, measure=measure, data=seed_data
+            table, schema=schema, measure=config.measure, data=seed_data
         )

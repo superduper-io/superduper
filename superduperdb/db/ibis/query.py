@@ -12,6 +12,7 @@ from superduperdb.container.encoder import Encoder
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.db import DB
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
+from superduperdb.db.ibis.field_types import FieldType
 from superduperdb.db.ibis.schema import IbisSchema
 
 PRIMARY_ID: str = 'id'
@@ -42,7 +43,8 @@ class Table(Component):
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'table'
-    version: t.ClassVar[t.Optional[int]] = None
+
+    version: t.Optional[int] = None
 
     def on_create(self, db: DB):
         self.create(db)
@@ -214,7 +216,7 @@ class Query:
         if self.type == QueryType.ATTR.value:
             return getattr(parent, self.query.name)
 
-        self.query.pre(db, table=table, kwargs=self.kwargs)
+        pre_output = self.query.pre(db, table=table, kwargs=self.kwargs)
         if len(self.args) == 1 and isinstance(self.args[0], QueryLinker):
             self.args = [self.args[0].execute(db, parent, ibis_table)]
 
@@ -231,6 +233,7 @@ class Query:
             ibis_table=ibis_table,
             args=self.args,
             kwargs=self.kwargs,
+            pre_output=pre_output,
         )
         return parent
 
@@ -316,7 +319,8 @@ class OutputTable:
         if isinstance(self.output_type, Encoder):
             output_type = 'binary'
         else:
-            output_type = self.output_type
+            assert isinstance(self.output_type, FieldType)
+            output_type = self.output_type.type
 
         schema = {
             'id': 'int32',
@@ -534,14 +538,14 @@ class QueryLinker(Serializable, _LogicalExprMixin):
 
 
 class PlaceHolderQuery:
-    type_id: t.Literal['query'] = 'query'  # type: ignore[annotation-unchecked]
+    type_id: t.Literal['query'] = 'query'
 
     def __init__(self, name, *args, **kwargs):
         self.name = name
         self.args = args
         self.kwargs = kwargs
 
-        self.namespace: str = 'ibis'  # type: ignore[annotation-unchecked]
+        self.namespace: str = 'ibis'
 
     def pre(self, db, **kwargs):
         ...
@@ -572,9 +576,7 @@ class PostLike:
             n=n,
             ids=ids,
         )
-        return output.filter(  # type: ignore[annotation-unchecked]
-            ibis_table.__getattr__(table.primary_id).isin(ids)
-        )
+        return output.filter(ibis_table.__getattr__(table.primary_id).isin(ids))
 
 
 @dc.dataclass
@@ -626,32 +628,17 @@ class Insert:
         documents = [r.encode(table.schema) for r in self.documents]
 
         # TODO: handle _fold
-        '''
-        for r in documents:
-            if '_fold' in r:
-                continue
-            if random.random() < 0.05:
-                r['_fold'] = 'valid'
-            else:
-                r['_fold'] = 'train'
-        '''
-
         # mutate kwargs with documents
+        ids = [d[PRIMARY_ID] for d in documents]
         documents = [tuple(d.values()) for d in documents]
         kwargs['kwargs']['obj'] = documents
-        return
+        return {'ids': ids}
 
     def post(self, db, output, *args, **kwargs):
         graph = None
-        # inserted_ids = [d[PRIMARY_ID] for d in kwargs['kwargs']['obj']]
+        [_id for _id in kwargs['pre_output']['ids']]
         if self.refresh and not CFG.cdc:
-            '''
-            graph = db.refresh_after_update_or_insert(
-                query=self,  # type: ignore[arg-type]
-                ids=inserted_ids,
-                verbose=self.verbose,
-            )
-            '''
+            # TODO: add refresh functionality
             pass
         return graph, output
 

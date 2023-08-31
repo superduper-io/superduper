@@ -4,7 +4,7 @@ import bson
 from bson.objectid import ObjectId
 
 import superduperdb as s
-from superduperdb.container.encoder import Encodable
+from superduperdb.container.encoder import Encodable, Encoder
 from superduperdb.container.schema import Schema
 
 ContentType = t.Union[t.Dict, Encodable]
@@ -143,16 +143,12 @@ def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
     if isinstance(r, dict):
         return {
             k: schema.fields[k].encode(v, wrap=False)  # type: ignore[call-arg]
-            if k in schema.encoded_types  # type: ignore[operator]
+            if isinstance(schema.fields[k], Encoder)
             else _encode_with_schema(v, schema)
             for k, v in r.items()
         }
     if isinstance(r, Encodable):
         return r.encode()
-    if isinstance(r, (bool, int, str, bson.ObjectId)):
-        return r
-
-    s.log.info(f'Unexpected type {type(r)} in Document.encode')
     return r
 
 

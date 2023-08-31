@@ -502,12 +502,11 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         self._identifier = self._build_identifier([identifier, on.name])
         self.tokens = CachedTokens()
         self._change_counters = Counter(inserts=0, updates=0, deletes=0)
+        self.resume_token = None
 
         if resume_token is not None:
-            # TODO: resume_token is a dict: this can't work
-            self.resume_token = resume_token.token  # type: ignore[attr-defined]
-        else:
-            self.resume_token = None
+            self.resume_token = resume_token
+
         self._change_pipeline = None
         self._stop_event = stop_event
         self._startup_event = threading.Event()
@@ -692,7 +691,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         """
         Resume the listener from a given token.
         """
-        self.set_resume_token(token.token)  # type: ignore[attr-defined]
+        self.set_resume_token(token)
         self.listen()
 
     def listen(

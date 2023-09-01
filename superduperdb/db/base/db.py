@@ -581,13 +581,13 @@ class DB:
         features = features or {}
         model_identifier = model_info['identifier']
         if features is None:
-            features = {}  # pragma: no cover
+            features = {}
         documents = list(self.execute(select.select_using_ids(_ids)))
         s.log.info('done.')
         documents = [x.unpack() for x in documents]
         if key != '_base' or '_base' in features:
             passed_docs = [r[key] for r in documents]
-        else:  # pragma: no cover
+        else:
             passed_docs = documents
         if model is None:
             model = self.models[model_identifier]

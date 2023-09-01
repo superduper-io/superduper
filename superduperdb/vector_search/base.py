@@ -34,7 +34,7 @@ class BaseVectorIndex:
         return self._h
 
     @property
-    def shape(self):  # pragma: no cover
+    def shape(self):
         return self.h.shape
 
     def find_nearest_from_id(self, _id, n=100):

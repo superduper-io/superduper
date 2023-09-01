@@ -20,12 +20,12 @@ class TimeoutException(Exception):
     ...
 
 
-def timeout_handler(signum, frame):  # pragma: no cover
+def timeout_handler(signum, frame):
     raise TimeoutException()
 
 
 @contextmanager
-def timeout(seconds):  # pragma: no cover
+def timeout(seconds):
     old_handler = signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(seconds)
     try:
@@ -128,14 +128,14 @@ class BaseDownloader:
         def f(i):
             prog.update()
             try:
-                if self.timeout is not None:  # pragma: no cover
+                if self.timeout is not None:
                     with timeout(self.timeout):
                         self._download(i)
                 else:
                     self._download(i)
-            except TimeoutException:  # pragma: no cover
+            except TimeoutException:
                 logging.warning(f'timed out {i}')
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 if self.raises:
                     raise e
                 warnings.warn(str(e))
@@ -161,7 +161,7 @@ class BaseDownloader:
         pool = ThreadPool(self.n_workers)
         try:
             pool.map(f, range(len(self.uris)))
-        except KeyboardInterrupt:  # pragma: no cover
+        except KeyboardInterrupt:
             logging.warning("--keyboard interrupt--")
             pool.terminate()
             pool.join()

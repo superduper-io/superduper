@@ -4,7 +4,7 @@
 #
 #    pip-compile --extra=dev --output-file=.github/ci-pinned-requirements/dev.txt pyproject.toml
 #
-accelerate==0.21.0
+accelerate==0.22.0
     # via superduperdb
 aiohttp==3.8.5
     # via
@@ -16,9 +16,9 @@ alabaster==0.7.13
     # via sphinx
 annotated-types==0.5.0
     # via pydantic
-anyio==3.7.1
+anyio==4.0.0
     # via httpcore
-asttokens==2.2.1
+asttokens==2.3.0
     # via stack-data
 async-timeout==4.0.3
     # via aiohttp
@@ -39,22 +39,24 @@ beautifulsoup4==4.12.2
     #   furo
     #   nbconvert
 black==23.7.0
-    # via superduperdb
+    # via
+    #   impall
+    #   superduperdb
 bleach==6.0.0
     # via nbconvert
 blinker==1.6.2
     # via flask
-boto3==1.28.26
+boto3==1.28.40
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-boto3-stubs==1.28.26
+boto3-stubs==1.28.40
     # via superduperdb
-botocore==1.31.26
+botocore==1.31.40
     # via
     #   boto3
     #   s3transfer
-botocore-stubs==1.31.23
+botocore-stubs==1.31.40
     # via boto3-stubs
 certifi==2023.7.22
     # via
@@ -65,7 +67,7 @@ charset-normalizer==3.2.0
     # via
     #   aiohttp
     #   requests
-click==8.1.6
+click==8.1.7
     # via
     #   black
     #   dask
@@ -117,23 +119,19 @@ exceptiongroup==1.1.3
     #   pytest
 executing==1.2.0
     # via stack-data
-faiss-cpu==1.7.4
-    # via
-    #   superduperdb
-    #   superduperdb (pyproject.toml)
 fastjsonschema==2.18.0
     # via nbformat
 fil==1.3.0
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-filelock==3.12.2
+filelock==3.12.3
     # via
     #   huggingface-hub
     #   torch
     #   transformers
     #   triton
-flask==2.3.2
+flask==2.3.3
     # via
     #   flask-cors
     #   flask-httpauth
@@ -151,11 +149,11 @@ frozenlist==1.4.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2023.6.0
+fsspec==2023.9.0
     # via
     #   dask
     #   huggingface-hub
-furo==2023.7.26
+furo==2023.8.19
     # via superduperdb
 h11==0.14.0
     # via httpcore
@@ -173,7 +171,7 @@ idna==3.4
     #   yarl
 imagesize==1.4.1
     # via sphinx
-impall==1.2.0
+impall==1.3.1
     # via superduperdb
 importlib-metadata==6.8.0
     # via
@@ -193,7 +191,9 @@ interrogate==1.5.0
 ipython==8.12.2
     # via superduperdb
 isort==5.12.0
-    # via superduperdb
+    # via
+    #   impall
+    #   superduperdb
 itsdangerous==2.1.2
     # via flask
 jedi==0.19.0
@@ -217,7 +217,7 @@ jsonschema==4.19.0
     # via nbformat
 jsonschema-specifications==2023.7.1
     # via jsonschema
-jupyter-client==8.3.0
+jupyter-client==8.3.1
     # via nbclient
 jupyter-core==5.3.1
     # via
@@ -268,8 +268,10 @@ multidict==6.0.4
     # via
     #   aiohttp
     #   yarl
-mypy==1.5.0
-    # via superduperdb
+mypy==1.5.1
+    # via
+    #   impall
+    #   superduperdb
 mypy-extensions==1.0.0
     # via
     #   black
@@ -280,14 +282,14 @@ myst-parser==2.0.0
     # via superduperdb
 nbclient==0.8.0
     # via nbconvert
-nbconvert==7.7.3
+nbconvert==7.8.0
     # via nbsphinx
 nbformat==5.9.2
     # via
     #   nbclient
     #   nbconvert
     #   nbsphinx
-nbsphinx==0.9.2
+nbsphinx==0.9.3
     # via
     #   nbsphinx-link
     #   superduperdb
@@ -334,7 +336,7 @@ nvidia-nccl-cu11==2.14.3
     # via torch
 nvidia-nvtx-cu11==11.7.91
     # via torch
-openai==0.27.8
+openai==0.28.0
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
@@ -381,7 +383,7 @@ platformdirs==3.10.0
     # via
     #   black
     #   jupyter-core
-pluggy==1.2.0
+pluggy==1.3.0
     # via pytest
 plumbum==1.8.2
     # via pandoc
@@ -401,14 +403,14 @@ py==1.11.0
     # via
     #   interrogate
     #   retry
-pyarrow==12.0.1
+pyarrow==13.0.0
     # via pylance
-pydantic==2.1.1
+pydantic==2.3.0
     # via
     #   lancedb
     #   superduperdb
     #   superduperdb (pyproject.toml)
-pydantic-core==2.4.0
+pydantic-core==2.6.3
     # via pydantic
 pygments==2.16.1
     # via
@@ -418,11 +420,11 @@ pygments==2.16.1
     #   sphinx
 pylance==0.5.10
     # via lancedb
-pymongo==4.4.1
+pymongo==4.5.0
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-pytest==7.4.0
+pytest==7.4.1
     # via
     #   pytest-cov
     #   superduperdb
@@ -470,17 +472,22 @@ requests==2.31.0
     #   transformers
 retry==0.9.2
     # via lancedb
-rpds-py==0.9.2
+rpds-py==0.10.0
     # via
     #   jsonschema
     #   referencing
 ruff==0.0.284
-    # via superduperdb
-s3transfer==0.6.1
+    # via
+    #   impall
+    #   superduperdb
+s3transfer==0.6.2
     # via boto3
 safer==4.8.0
-    # via fil
-safetensors==0.3.2
+    # via
+    #   fil
+    #   superduperdb
+    #   superduperdb (pyproject.toml)
+safetensors==0.3.3
     # via transformers
 scikit-learn==1.3.0
     # via
@@ -489,7 +496,10 @@ scikit-learn==1.3.0
 scipy==1.10.1
     # via scikit-learn
 semver==3.0.1
-    # via lancedb
+    # via
+    #   lancedb
+    #   superduperdb
+    #   superduperdb (pyproject.toml)
 six==1.16.0
     # via
     #   asttokens
@@ -504,7 +514,7 @@ snowballstemmer==2.2.0
     # via sphinx
 sortedcontainers==2.4.0
     # via distributed
-soupsieve==2.4.1
+soupsieve==2.5
     # via beautifulsoup4
 sphinx==7.1.2
     # via
@@ -538,6 +548,8 @@ sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 stack-data==0.6.2
     # via ipython
+superduperdb[docs,lint,tests,torch,typing]
+    # via superduperdb (pyproject.toml)
 sympy==1.12
     # via torch
 tabulate==0.9.0
@@ -596,7 +608,7 @@ traitlets==5.9.0
     #   nbconvert
     #   nbformat
     #   nbsphinx
-transformers==4.31.0
+transformers==4.32.1
     # via superduperdb
 triton==2.0.0
     # via torch
@@ -604,17 +616,15 @@ typer==0.9.0
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-types-awscrt==0.18.0
-    # via
-    #   botocore-stubs
-    #   types-s3transfer
+types-awscrt==0.19.1
+    # via botocore-stubs
 types-pillow==10.0.0.2
     # via superduperdb
 types-requests==2.31.0.2
     # via superduperdb
-types-s3transfer==0.6.1
+types-s3transfer==0.6.2
     # via boto3-stubs
-types-tqdm==4.66.0.1
+types-tqdm==4.66.0.2
     # via superduperdb
 types-urllib3==1.26.25.14
     # via types-requests
@@ -624,6 +634,7 @@ typing-extensions==4.7.1
     #   black
     #   boto3-stubs
     #   botocore-stubs
+    #   filelock
     #   huggingface-hub
     #   ipython
     #   libcst
@@ -654,7 +665,7 @@ werkzeug==2.3.7
     #   flask
     #   superduperdb
     #   superduperdb (pyproject.toml)
-wheel==0.41.1
+wheel==0.41.2
     # via
     #   nvidia-cublas-cu11
     #   nvidia-cuda-cupti-cu11

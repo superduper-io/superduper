@@ -8,8 +8,8 @@ In cluster mode, several features become available to developers,
 leading to smoother and more robust productionization:
 
 - Task parallelization using `dask`
-- Change data capture using MongoDB [change streams](https://www.mongodb.com/docs/manual/changeStreams/).
-- A client-server implementation, allowing remote access to a SuperDuperDB deployment.
+- Change data capture using MongoDB [change streams](https://www.mongodb.com/docs/manual/changeStreams/)
+- A client-server implementation, allowing remote access to a SuperDuperDB deployment
 
 ## Contents
 

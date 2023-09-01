@@ -102,7 +102,7 @@ class MetaDataStore(ABC):
                 print(''.join(r['stdout'][n_lines:]), end='')
             if len(r['stderr']) > n_lines_stderr:
                 print(''.join(r['stderr'][n_lines_stderr:]), end='')
-        elif status == 'failed':  # pragma: no cover
+        elif status == 'failed':
             print(r['msg'])
 
     @abstractmethod

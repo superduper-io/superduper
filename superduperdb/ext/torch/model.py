@@ -511,17 +511,18 @@ def unpack_batch(args):
 
     if isinstance(args, torch.Tensor):
         return [args[i] for i in range(args.shape[0])]
-    else:
-        if isinstance(args, list) or isinstance(args, tuple):
-            tmp = [unpack_batch(x) for x in args]
-            batch_size = len(tmp[0])
-            return [[x[i] for x in tmp] for i in range(batch_size)]
-        elif isinstance(args, dict):
-            tmp = {k: unpack_batch(v) for k, v in args.items()}
-            batch_size = len(next(iter(tmp.values())))
-            return [{k: v[i] for k, v in tmp.items()} for i in range(batch_size)]
-        else:  # pragma: no cover
-            raise NotImplementedError
+
+    if isinstance(args, list) or isinstance(args, tuple):
+        tmp = [unpack_batch(x) for x in args]
+        batch_size = len(tmp[0])
+        return [[x[i] for x in tmp] for i in range(batch_size)]
+
+    if isinstance(args, dict):
+        tmp = {k: unpack_batch(v) for k, v in args.items()}
+        batch_size = len(next(iter(tmp.values())))
+        return [{k: v[i] for k, v in tmp.items()} for i in range(batch_size)]
+
+    raise NotImplementedError
 
 
 def create_batch(args):
@@ -549,6 +550,4 @@ def create_batch(args):
         return args.unsqueeze(0)
     if isinstance(args, (float, int)):
         return torch.tensor([args])
-    raise TypeError(
-        'only tensors and tuples of tensors recursively supported...'
-    )  # pragma: no cover
+    raise TypeError('Only tensors and tuples of tensors recursively supported...')

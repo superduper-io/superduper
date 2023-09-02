@@ -21,15 +21,13 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
-# https://blog.netnerds.net/2022/11/docker-macos-github-actions/
 jobs:
   lint-type-check-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        # "macos-latest" removed for now as Docker action is slow
-        os: [ "ubuntu-latest" ]  # TODO: add "windows-latest"
+        os: [ "ubuntu-latest" ]  # TODO: add "windows-latest" and "macos-latest"
         python-version: ["3.8", "3.9", "3.10", "3.11"]
     defaults:
       run:
@@ -39,11 +37,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.10
+      - name: Set up Python ${{ matrix.python-version }}
         id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
 
       - name: Cache dependencies and mypy analysis
         uses: actions/cache@v3
@@ -53,7 +51,7 @@ jobs:
           path: |
             ./.mypy_cache
             ${{ env.pythonLocation }}
-          key: 3.8-ubuntu-latest-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('.github/ci-pinned-requirements/dev.txt') }}
+          key: ${{ matrix.python-version }}-ubuntu-latest-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('.github/ci-pinned-requirements/dev.txt') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -68,11 +66,6 @@ jobs:
       - name: Lint and type-check
         run: |
           make lint-and-type-check
-
-      # TODO: vendor only the parts that we need from the following action
-      - name: Docker
-        if: ${{ matrix.os == 'macos-latest' }}
-        uses: douglascamata/setup-docker-macos-action@5f13b5b88a09467c10f8462810902b60ff70fb75
 
       - name: test
         run: |

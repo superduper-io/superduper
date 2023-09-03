@@ -12,3 +12,7 @@ minimum_working_example
 features
 faq
 ```
+
+
+
+TODO: documentation of configuration

@@ -49,7 +49,7 @@ napoleon_use_rtype = True
 nbsphinx_allow_errors = True
 nbsphinx_execute = 'never'
 
-# project = ''
-pygments_style = 'sphinx'
+pygments_style = "default"
+pygments_dark_style = "monokai"
 
 source_suffix = '.rst'

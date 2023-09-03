@@ -5,8 +5,8 @@ SuperDuperDB wraps standard datastore query APIs. It augments
 these queries with support for vector-search and recall of complex data-types.
 ```
 
-SuperDuperDB queries are based on the queries of the underlying database, upon which the 
-`DB` is based (see the [section on the `DB`](db)). 
+SuperDuperDB queries are based on the queries of the underlying data-store, upon which the 
+`DB` instance is based (see the [section on the `DB`](db)). 
 
 Unlike some Python clients, in SuperDuperDB, queries are objects, rather then methods or functions.
 This allows SuperDuperDB to serialize these queries for use in diverse tasks, such as model 
@@ -21,7 +21,7 @@ db.execute(query)
 
 ## MongoDB
 
-We currently provide first-class support for MongoDB as the database backend. As in `pymongo` all queries operate at the collection level:
+We currently provide first-class support for MongoDB as the data-store backend. As in `pymongo` all queries operate at the collection level:
 
 ```python
 from superduperdb.db.mongodb.query import Collection

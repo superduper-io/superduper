@@ -19,7 +19,7 @@ overly restrictive. Data inserts and updates may occur from:
 SuperDuperDB aims to allow it's AI models to be updated and kept in-sync with changes
 from all of the above sources.
 
-Correspondingly, the `DatabaseListener` class is a Python implementation of a Change Data Capture (CDC). It allows you to monitor changes in a specified collection by utilizing a daemon thread that listens to the change stream.
+Correspondingly, the `DatabaseListener` class is a Python implementation of Change Data Capture (CDC). It allows you to monitor changes in a specified collection by utilizing a daemon thread that listens to the change stream.
 
 ## Usage
 

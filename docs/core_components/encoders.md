@@ -5,9 +5,9 @@ The `Encoder` class allows SuperDuperDB to store Python objects in the `DB`,
 and to recall them in the same format in which they were stored.
 ```
 
-SuperDuperDB supports insertion of any standard datatypes supported by the underlying database.
-However, in many AI use-cases, these data-types are not sufficient for the intended data.
-A typical example is computer-vision use-cases, utilizing `.jpg` or `.png` images,
+SuperDuperDB supports insertion of any standard datatypes supported by the underlying data-store.
+However, in many AI use-cases, these data-types are not sufficient for the intended AI application.
+A typical such example application is computer-vision, utilizing `.jpg` or `.png` images,
 for which datastores do not typically not provide native support.
 
 In order to use such complex data, SuperDuperDB provides the `Encoder` abstraction.
@@ -22,7 +22,7 @@ e = Encoder('my-encoder', encode=pickle.dumps, decode=pickle.loads)
 ```
 
 SuperDuperDB also includes pre-baked encoders in `superduperdb.encoders`.
-For example, images may be encoded with `superduperdb.encoders.pillow.image.pil_image`
+For example, images may be encoded with `superduperdb.encoders.pillow.image.pil_image`. 
 Encoders make it possible to encode Python objects inserted into the database, with
 just a few modifications of a standard insert:
 

@@ -13,7 +13,7 @@ The `DB` object combines 4 basic functionalities involved in integrating AI to t
 - Saving metadata related to AI models and associated functionality
 - (Optional) performing vector search on the database using configured AI models
 
-Correspondingly a database may be built by passing these 4 items to the `DB.__init__` method:
+Correspondingly a `DB` instance may be built by passing 4 items to the `DB.__init__` method:
 
 ```python
 from superduperdb.db.base.db import DB

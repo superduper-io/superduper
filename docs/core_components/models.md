@@ -40,7 +40,7 @@ The key class is located in `superduperdb.ext.<framework>.<Framework>Model`:
 The wrappers from each framework include parameters fom the `Model` base class:
 
 ```python
-from superduperdb.core.model import Model
+from superduperdb.container.model import Model
 
 m = Model(
     object=<model>,    # object from one of the AI frameworks
@@ -78,9 +78,9 @@ m = TorchModel(
 )
 ```
 
-## Tranformers
+## Transformers (Hugging-Face)
 
-Transformers provides a large compendium of pre-trained and pre-defined architectures and pipelines. Their `transformers.Pipeline` abstraction fits well with the `Model` framework:
+The `transformers` python library provides a large compendium of pre-trained and pre-defined architectures and pipelines. Their `transformers.Pipeline` abstraction fits well with the `Model` framework:
 
 ```python
 from superduperdb.ext.transformers import TransformersModel
@@ -111,7 +111,7 @@ m = SklearnModel(
 
 ## OpenAI
 
-Since OpenAI consists of calls to an external API, it's model definitions are slightly different:
+Since OpenAI consists of calls to an external API, its model definitions are slightly different:
 
 ```python
 from superduperdb.ext.openai import OpenAIEmbedding, OpenAIChatCompletion

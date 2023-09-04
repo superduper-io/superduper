@@ -68,6 +68,7 @@ class PredictMixin:
     :param collate_fn: Collate function (optional)
     :param batch_predict: Whether to batch predict (optional)
     :param takes_context: Whether the model takes context into account (optional)
+    :param to_call: The method to use for prediction (optional)
     """
 
     identifier: str
@@ -318,7 +319,7 @@ class PredictMixin:
             logging.info('Done.')
 
         if distributed is None:
-            distributed = s.CFG.distributed
+            distributed = s.CFG.cluster.distributed
 
         if listen:
             assert db is not None
@@ -542,7 +543,7 @@ class Model(Component, PredictMixin):
             db.add(self)
 
         if distributed is None:
-            distributed = s.CFG.distributed
+            distributed = s.CFG.cluster.distributed
 
         if distributed:
             return self.create_fit_job(

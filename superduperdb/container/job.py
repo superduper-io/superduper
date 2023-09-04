@@ -128,7 +128,7 @@ class FunctionJob(Job):
         :param client: dask client
         :param dependencies: list of dependencies
         """
-        CFG = s.configs.build_config()  # Why not use s.CFG or s.CFG.deepcopy()
+        CFG = s.configs.build_config()
         self.future = client.submit(
             callable_job,
             cfg=CFG,
@@ -150,7 +150,7 @@ class FunctionJob(Job):
             db = build_datalayer()
 
         if distributed is None:
-            distributed = s.CFG.distributed
+            distributed = s.CFG.cluster.distributed
         self.db = db
         db.metadata.create_job(self.dict())
         if not distributed:
@@ -221,7 +221,7 @@ class ComponentJob(Job):
         self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
     ):
         if distributed is None:
-            distributed = s.CFG.distributed
+            distributed = s.CFG.cluster.distributed
         if db is None:
             from superduperdb.db.base.build import build_datalayer
 

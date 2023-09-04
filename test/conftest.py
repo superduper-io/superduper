@@ -1,12 +1,16 @@
 import inspect
 import os
+from tenacity import Retrying, stop_after_delay
 import time
 from threading import Lock
+
+from typing import Iterator
 
 import fil
 import pytest
 
 import superduperdb as s
+from superduperdb.db.base.db import DB
 from superduperdb.misc import superduper
 
 _sleep = time.sleep
@@ -60,3 +64,20 @@ def patch_mongomock(monkeypatch):
     monkeypatch.setattr(pymongo, 'MongoClient', MongoClient)
 
     monkeypatch.setitem(CONNECTIONS, 'pymongo', MongoClient)
+
+
+@pytest.fixture
+def test_db() -> Iterator[DB]:
+    from superduperdb.db.base.build import build_datalayer
+    from superduperdb import CFG
+    CFG.data_backend = 'mongodb://testmongodbuser:testmongodbpassword@localhost:27018/test_db'
+    for attempt in Retrying(stop=stop_after_delay(15)):
+            with attempt:
+                db = build_datalayer(CFG)
+                db.databackend.conn.is_mongos
+                print("Connected to DB instance with MongoDB!")
+    yield db
+    for database_name in db.databackend.conn.list_database_names():
+        if database_name in ("admin", "config", "local"):
+            continue
+        db.databackend.conn.drop_database(database_name)

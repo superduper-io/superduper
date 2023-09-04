@@ -44,22 +44,19 @@ class MongoDbTyper(DuckTyper):
         from superduperdb import CFG
         from superduperdb.db.base.build import build_vector_database
         from superduperdb.db.base.db import DB
-        from superduperdb.db.mongodb.artifacts import MongoArtifactStore
         from superduperdb.db.mongodb.data_backend import MongoDataBackend
-        from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 
         if kwargs:
             raise ValueError('MongoDb creator accepts no parameters')
         if not isinstance(item, Database):
             raise TypeError('Expected Database but got {type(item)}')
 
+        databackend = MongoDataBackend(conn=item.client, name=item.name)
         return DB(
-            databackend=MongoDataBackend(conn=item.client, name=item.name),
-            metadata=MongoMetaDataStore(conn=item.client, name=item.name),
-            artifact_store=MongoArtifactStore(
-                conn=item.client, name=f'_filesystem:{item.name}'
-            ),
-            vector_database=build_vector_database(CFG.vector_search.type),
+            databackend=databackend,
+            metadata=databackend.build_metadata(),
+            artifact_store=databackend.build_artifact_store(),
+            vector_database=build_vector_database(CFG),
         )
 
 

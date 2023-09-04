@@ -7,7 +7,6 @@ import pytest
 
 import superduperdb as s
 from superduperdb import superduper
-from superduperdb.base.config import SelfHosted
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.container.model import Model
@@ -24,10 +23,10 @@ def random_vector_model(x):
 
 @pytest.fixture()
 def atlas_search_config():
-    previous = s.CFG.vector_search.type
-    s.CFG.vector_search.type = SelfHosted()
+    previous = s.CFG.vector_search
+    s.CFG.vector_search = s.CFG.data_backend
     yield
-    s.CFG.vector_search.type = previous
+    s.CFG.vector_search = previous
 
 
 @pytest.mark.skipif(ATLAS_VECTOR_URI is None, reason='Only atlas deployments relevant.')

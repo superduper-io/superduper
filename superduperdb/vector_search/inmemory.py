@@ -126,7 +126,8 @@ class InMemoryVectorDatabase(VectorDatabase):
     An in-memory vector database.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, uri: str = 'inmemory://') -> None:
+        assert uri.startswith('inmemory://')
         self._collections: t.Dict[VectorCollectionId, VectorCollection] = {}
 
     def get_table(self, config: VectorCollectionConfig, **kwargs) -> VectorCollection:

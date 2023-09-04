@@ -10,7 +10,6 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.base.config import LanceDB
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 from superduperdb.vector_search.lancedb_client import (
     LanceDBClient,
@@ -22,9 +21,7 @@ from superduperdb.vector_search.lancedb_client import (
 @pytest.fixture(scope="function")
 def lance_client():
     with tempfile.TemporaryDirectory() as tmpdirname:
-        path = os.path.join(tmpdirname, '.test_db')
-        config = LanceDB(uri=path)
-        client = LanceDBClient(uri=config.uri)
+        client = LanceDBClient(uri=f'./{tmpdirname}/.test_db')
         table = client.create_table(
             "test_table", data=[{'vector': [1.0, 1.0], 'id': 1}], schema=None
         )

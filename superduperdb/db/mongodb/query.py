@@ -851,7 +851,7 @@ class UpdateMany(Update):
             **self.kwargs,
         )
         graph = None
-        if self.refresh and not s.CFG.cdc:
+        if self.refresh and not s.CFG.cluster.cdc:
             graph = db.refresh_after_update_or_insert(
                 query=self, ids=ids, verbose=self.verbose
             )
@@ -927,7 +927,7 @@ class InsertMany(Insert):
             **self.kwargs,
         )
         graph = None
-        if self.refresh and not s.CFG.cdc:
+        if self.refresh and not s.CFG.cluster.cdc:
             graph = db.refresh_after_update_or_insert(
                 query=self,
                 ids=output.inserted_ids,

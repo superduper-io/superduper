@@ -1,7 +1,6 @@
 import os
 import random
 from threading import Thread
-from unittest import mock
 
 import numpy as np
 import pytest
@@ -13,15 +12,11 @@ try:
     from superduperdb.ext.torch.tensor import tensor
 except ImportError:
     torch = None
-import pymongo
-from tenacity import RetryError, Retrying, stop_after_delay
 
 from superduperdb import CFG
-from superduperdb.base.config import DbComponent, DbComponents
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.container.vector_index import VectorIndex
-from superduperdb.db.base.build import build_datalayer
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.server.dask_client import dask_client
 from superduperdb.server.server import make_flask_app
@@ -47,81 +42,25 @@ torch and torch.manual_seed(42)
 np.random.seed(42)
 
 
-mongodb_test_config = {
-    'host': '0.0.0.0',
-    'port': 27018,
-    'username': 'testmongodbuser',
-    'password': 'testmongodbpassword',
-    'serverSelectionTimeoutMS': 5000,
-}
-
-
-@pytest.fixture(autouse=True, scope="package")
-def patch_superduper_config():
-    db_components_cfg = DbComponents(
-        artifact=DbComponent(name='_filesystem:test_db', kwargs=mongodb_test_config),
-        data_backend=DbComponent(name='test_db', kwargs=mongodb_test_config),
-        metadata=DbComponent(name='test_db', kwargs=mongodb_test_config),
-    )
-
-    with mock.patch('superduperdb.CFG.db_components', db_components_cfg):
-        yield
-
-
-@pytest.fixture(scope="package")
-def create_mongodb_client_clean_and_close():
-    mongo_client = pymongo.MongoClient(**mongodb_test_config)
-
-    try:
-        for attempt in Retrying(stop=stop_after_delay(15)):
-            with attempt:
-                mongo_client.is_mongos
-                print("Connected to test MongoDB client!")
-    except RetryError:
-        pytest.fail("Could not connect to mongodb,")
-
-    yield mongo_client
-
-    for database_name in mongo_client.list_database_names():
-        if database_name in ("admin", "config", "local"):
-            continue
-        mongo_client.drop_database(database_name)
-    mongo_client.close()
-
-
-@pytest.fixture()
-def fresh_client():
-    mongo_client = pymongo.MongoClient(**mongodb_test_config)
-    try:
-        for attempt in Retrying(stop=stop_after_delay(15)):
-            with attempt:
-                mongo_client.is_mongos
-                print("Connected to test MongoDB client!")
-    except RetryError:
-        pytest.fail("Could not connect to mongodb,")
-    yield mongo_client
-
-
-@pytest.fixture(scope="package")
-def database_with_default_encoders_and_model(create_mongodb_client_clean_and_close):
-    database = build_datalayer(pymongo=create_mongodb_client_clean_and_close)
-    database.add(tensor(torch.float, shape=(32,)))
-    database.add(tensor(torch.float, shape=(16,)))
-    database.add(
+@pytest.fixture
+def database_with_default_encoders_and_model(test_db):
+    test_db.add(tensor(torch.float, shape=(32,)))
+    test_db.add(tensor(torch.float, shape=(16,)))
+    test_db.add(
         TorchModel(
             object=torch.nn.Linear(32, 16),
             identifier='model_linear_a',
             encoder='torch.float32[16]',
         )
     )
-    database.add(
+    test_db.add(
         Listener(
             select=Collection(name='documents').find(),
             key='x',
             model='model_linear_a',
         )
     )
-    database.add(
+    test_db.add(
         Listener(
             select=Collection(name='documents').find(),
             key='z',
@@ -133,24 +72,11 @@ def database_with_default_encoders_and_model(create_mongodb_client_clean_and_clo
         indexing_listener='model_linear_a/x',
         compatible_listener='model_linear_a/z',
     )
-    database.add(vi)
-    yield database
-
-    database.remove('model', 'model_linear_a', force=True)
-    database.remove('encoder', 'torch.float32[16]', force=True)
-    database.remove('encoder', 'torch.float32[32]', force=True)
-
-
-@pytest.fixture
-def fresh_database(fresh_client):
-    database = build_datalayer(pymongo=fresh_client)
-    yield database
-    for m in database.show('model'):
-        if m != 'model_linear_a':
-            database.remove('model', m, force=True)
-    for e in database.show('encoder'):
-        if e not in {'torch.float32[16]', 'torch.float32[32]'}:
-            database.remove('encoder', e, force=True)
+    test_db.add(vi)
+    yield test_db
+    test_db.remove('model', 'model_linear_a', force=True)
+    test_db.remove('encoder', 'torch.float32[16]', force=True)
+    test_db.remove('encoder', 'torch.float32[32]', force=True)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -174,19 +100,19 @@ def fake_tensor_data(encoder, update: bool = True):
     return data
 
 
-@pytest.fixture(scope="package")
+@pytest.fixture
 def fake_inserts(database_with_default_encoders_and_model):
     encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
     return fake_tensor_data(encoder, update=False)
 
 
-@pytest.fixture(scope="package")
+@pytest.fixture
 def fake_updates(database_with_default_encoders_and_model):
     encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
     return fake_tensor_data(encoder, update=True)
 
 
-@pytest.fixture(scope="package")
+@pytest.fixture
 def test_server(database_with_default_encoders_and_model):
     app = make_flask_app(database_with_default_encoders_and_model)
     t = Thread(
@@ -199,21 +125,11 @@ def test_server(database_with_default_encoders_and_model):
         yield
 
 
-@pytest.fixture(scope="package")
+@pytest.fixture
 def local_dask_client():
-    for component in ['DATA_BACKEND', 'ARTIFACT', 'METADATA']:
-        os.environ[f'SUPERDUPERDB_DB_COMPONENTS_{component}_KWARGS_PORT'] = '27018'
-        os.environ[f'SUPERDUPERDB_DB_COMPONENTS_{component}_KWARGS_HOST'] = 'localhost'
-        os.environ[
-            f'SUPERDUPERDB_DB_COMPONENTS_{component}_KWARGS_USERNAME'
-        ] = 'testmongodbuser'
-        os.environ[
-            f'SUPERDUPERDB_DB_COMPONENTS_{component}_KWARGS_PASSWORD'
-        ] = 'testmongodbpassword'
-
-        os.environ[f'SUPERDUPERDB_DB_COMPONENTS_{component}_NAME'] = (
-            '_filesystem:test_db' if component == "ARTIFACT" else 'test_db'
-        )
-    client = dask_client(CFG.dask, local=True)
+    os.environ[
+        f'SUPERDUPERDB_DATA_BACKEND'
+    ] = 'mongodb://testmongodbuser:testmongodbpassword@localhost:27018/test_db'
+    client = dask_client(CFG.cluster, local=True)
     yield client
     client.shutdown()

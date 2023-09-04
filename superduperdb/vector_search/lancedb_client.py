@@ -196,6 +196,7 @@ class LanceVectorIndex(BaseVectorIndex):
         :param measure: Distance measure for vector search. Defaults to 'cosine'.
         :param client: ``LanceDBClient`` instance. Defaults to ``None``.
         """
+        uri = uri.split('lancedb://')[-1]
         if client:
             self.client = client
         else:

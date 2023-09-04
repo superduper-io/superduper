@@ -16,15 +16,15 @@ _NONE = object()
 
 def read_all(
     files: t.Sequence[t.Union[Path, str]], fail: bool = False
-) -> t.Sequence[t.Dict]:
+) -> t.Sequence[t.Dict[str, t.Any]]:
     if fail:
         return [fil.read(f) for f in files]
     else:
         return [fil.read(f, {}) for f in files]
 
 
-def combine(dicts: t.Sequence[t.Dict]) -> t.Dict:
-    result: t.Dict = {}
+def combine(dicts: t.Sequence[t.Dict[str, t.Any]]) -> t.Dict[str, t.Any]:
+    result: t.Dict[str, t.Any] = {}
     for d in dicts:
         _combine_one(result, d)
     return result
@@ -32,8 +32,8 @@ def combine(dicts: t.Sequence[t.Dict]) -> t.Dict:
 
 def environ_to_config_dict(
     prefix: str,
-    parent: t.Dict,
-    environ: t.Optional[t.Dict] = None,
+    parent: t.Dict[str, t.Any],
+    environ: t.Optional[t.Dict[str, t.Any]] = None,
     err: t.Optional[t.TextIO] = sys.stderr,
     fail: bool = False,
 ):
@@ -56,8 +56,8 @@ def environ_to_config_dict(
 
 
 def split_address(
-    key: str, parent: t.Dict
-) -> t.Iterator[t.Tuple[t.Dict, t.Tuple[str]]]:
+    key: str, parent: t.Dict[str, t.Any]
+) -> t.Iterator[t.Tuple[t.Dict[str, t.Any], t.Tuple[str]]]:
     def split(key, parent, *address):
         if key in parent:
             yield *address, key
@@ -69,7 +69,9 @@ def split_address(
     return split(key, parent)
 
 
-def environ_dict(prefix: str, environ: t.Optional[t.Dict] = None) -> t.Dict:
+def environ_dict(
+    prefix: str, environ: t.Optional[t.Dict[str, t.Any]] = None
+) -> t.Dict[str, t.Any]:
     if not (prefix.isupper() and prefix.endswith(SEP) and not prefix.startswith(SEP)):
         raise ValueError(f'Bad prefix={prefix}')
 
@@ -96,7 +98,7 @@ def _combine_one(target, source):
 
 
 def _env_dict_to_config_dict(
-    env_dict: t.Dict[str, str], parent: t.Dict
+    env_dict: t.Dict[str, str], parent: t.Dict[str, str]
 ) -> t.Tuple[t.Dict, t.Dict]:
     good: t.Dict = {}
     bad: t.Dict = {}

@@ -476,7 +476,7 @@ class Model(Component, PredictMixin):
         results = {}
 
         for m in metrics:
-            out = m(prediction_X, prediction_y)  # type: ignore[index]
+            out = m(prediction_X, prediction_y)
             results[f'{validation_set.identifier}/{m.identifier}'] = out
         return results
 

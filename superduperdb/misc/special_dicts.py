@@ -1,7 +1,7 @@
 import typing as t
 
 
-class MongoStyleDict(dict):
+class MongoStyleDict(t.Dict[str, t.Any]):
     """
     Dictionary object mirroring how fields can be referred to and set in MongoDB.
 

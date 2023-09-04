@@ -106,9 +106,10 @@ def download_content(
     if update_db:
         return None
 
-    # ruff: noqa: E501
     for id_, key in zip(place_ids, keys):
         documents[id_] = db.db.set_content_bytes(  # type: ignore[call-overload]
-            documents[id_], key, downloader.results[id_]  # type: ignore[call-overload,index]
+            documents[id_],  # type: ignore[call-overload]
+            key,
+            downloader.results[id_],  # type: ignore[index]
         )
     return documents

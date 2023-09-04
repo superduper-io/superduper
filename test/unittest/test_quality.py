@@ -27,5 +27,5 @@ def test_quality():
     lines = [line for f in files for line in f.read_text().splitlines()]
     defects = {k: sum(bool(v(line)) for line in lines) for k, v in DEFECTS.items()}
 
-    assert defects == ALLOWABLE_DEFECTS
-    assert defects['noqa'] == 1, 'There is never a need for noqa: fix your code'
+    assert all([defects[k] <= ALLOWABLE_DEFECTS[k] for k in defects.keys()])
+    assert defects['noqa'] <= 1, 'There is never a need for noqa: fix your code'

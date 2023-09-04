@@ -50,16 +50,15 @@ class ConfigSettings:
     @cached_property
     def config(self) -> t.Any:
         """Read a Pydantic class"""
-        environ = dict(os.environ if self.environ is None else self.environ)
+        env = dict(os.environ if self.environ is None else self.environ)
 
-        files = environ.pop(self.prefix + FILES_NAME, self.default_files)
+        files = env.pop(self.prefix + FILES_NAME, self.default_files)
         if isinstance(files, str):
             files = files.split(FILE_SEP)
 
-        data = config_dicts.read_all(files)
         parent = self.cls().dict()
-        environ_dict = config_dicts.environ_to_config_dict(self.prefix, parent, environ)
-        return self.cls(**config_dicts.combine((*data, environ_dict)))
+        kwargs = config_dicts.config_dicts(files, parent, self.prefix, env)
+        return self.cls(**kwargs)
 
 
 def build_config() -> Config:

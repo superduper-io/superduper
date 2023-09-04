@@ -5,8 +5,10 @@ import superduperdb as s
 CODE_ROOTS = s.ROOT / 'superduperdb', s.ROOT / 'test'
 
 # DEFECTS maps defect names to functions that match a defect in a line of code.
-# Each pattern matches its own definition :-D so 1 is the lowest possible defect count.
+# The last two patterns match their own definitions :-D so 1 is the lowest possible
+# defect count for them.
 DEFECTS = {
+    'cast': re.compile(r't\.cast\(').search,
     'noqa': re.compile(r'# .*noqa: ').search,
     'type_ignore': re.compile(r'# .*type: ignore').search,
 }
@@ -14,6 +16,7 @@ DEFECTS = {
 # ALLOWABLE_DEFECTS has the allowable defect counts, which should be NON-INCREASING
 # over time.
 ALLOWABLE_DEFECTS = {
+    'cast': 12,  # Try to keep this down
     'noqa': 1,  # This should never change
     'type_ignore': 42,  # This should only ever increase in obscure edge cases
 }

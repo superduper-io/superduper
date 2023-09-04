@@ -322,7 +322,8 @@ class PredictMixin:
 
         if listen:
             assert db is not None
-            return self._predict_and_listen(X=X, db=db, **kwargs)
+            assert select is not None
+            return self._predict_and_listen(X=X, db=db, select=select, **kwargs)
 
         if distributed:
             return self.create_predict_job(

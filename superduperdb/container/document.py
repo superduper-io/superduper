@@ -13,13 +13,6 @@ ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
 _OUTPUTS_KEY: str = '_outputs'
 
 
-class Row:
-    content: ContentType
-
-    def __init__(self) -> None:
-        pass
-
-
 class Document:
     """
     A wrapper around an instance of dict or a Encodable which may be used to dump

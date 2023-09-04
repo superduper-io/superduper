@@ -30,7 +30,7 @@ can be "semantically joined". This might mean, for example:
 - Training cross-modality search, for instance, aligning textual queries resulting for typed queries, 
   with product features.
 
-From this point of view, we believe that the ultimate production enviroment for AI, is a database, where 
+From this point of view, we believe that the ultimate production environment for AI, is a database, where 
 all documents/ rows are game to be fed through AI models, and the outputs may be saved in the database, 
 to be used downstream as inputs to further AI models, and for use in vector-search, and further approaches
 to navigating data with AI models. This is an extension of the now-standard vector-database paradigm, 

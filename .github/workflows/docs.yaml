@@ -6,12 +6,22 @@ on:
     paths:  # only run this action when the docs folder is changed
       - 'docs/**'
 
+# allow the action to write to the gh-pages branch
+permissions:
+  contents: write
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
+
+        # required for 
+      - name: Install pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
 
       - name: Set up Python 3.10
         id: setup-python

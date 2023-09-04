@@ -31,4 +31,5 @@ def test_predict(random_data, float_tensors_32):
         db=random_data,
         select=Collection(name='documents').find(),
         distributed=False,
+        listen=True,
     )

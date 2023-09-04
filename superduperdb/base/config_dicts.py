@@ -10,34 +10,42 @@ from pathlib import Path
 
 import fil
 
+Dict = t.Dict[str, object]
+Files = t.Sequence[t.Union[Path, str]]
+StrDict = t.Dict[str, str]
+
 SEP = '_'
 _NONE = object()
 
 
-def read_all(
-    files: t.Sequence[t.Union[Path, str]], fail: bool = False
-) -> t.Sequence[t.Dict[str, t.Any]]:
+def config_dicts(files: Files, parent: StrDict, prefix: str, environ: StrDict) -> Dict:
+    data = _read_all(files)
+    environ_dict = _environ_to_config_dict(prefix, parent, environ)
+    return _combine((*data, environ_dict))
+
+
+def _read_all(files: Files, fail: bool = False) -> t.Sequence[Dict]:
     if fail:
         return [fil.read(f) for f in files]
     else:
         return [fil.read(f, {}) for f in files]
 
 
-def combine(dicts: t.Sequence[t.Dict[str, t.Any]]) -> t.Dict[str, t.Any]:
-    result: t.Dict[str, t.Any] = {}
+def _combine(dicts: t.Sequence[Dict]) -> Dict:
+    result: Dict = {}
     for d in dicts:
         _combine_one(result, d)
     return result
 
 
-def environ_to_config_dict(
+def _environ_to_config_dict(
     prefix: str,
-    parent: t.Dict[str, t.Any],
-    environ: t.Optional[t.Dict[str, t.Any]] = None,
+    parent: StrDict,
+    environ: t.Optional[StrDict] = None,
     err: t.Optional[t.TextIO] = sys.stderr,
     fail: bool = False,
 ):
-    env_dict = environ_dict(prefix, environ)
+    env_dict = _environ_dict(prefix, environ)
 
     good, bad = _env_dict_to_config_dict(env_dict, parent)
 
@@ -55,9 +63,9 @@ def environ_to_config_dict(
     return good
 
 
-def split_address(
-    key: str, parent: t.Dict[str, t.Any]
-) -> t.Iterator[t.Tuple[t.Dict[str, t.Any], t.Tuple[str]]]:
+def _split_address(
+    key: str, parent: StrDict
+) -> t.Iterator[t.Tuple[StrDict, t.Tuple[str]]]:
     def split(key, parent, *address):
         if key in parent:
             yield *address, key
@@ -69,9 +77,7 @@ def split_address(
     return split(key, parent)
 
 
-def environ_dict(
-    prefix: str, environ: t.Optional[t.Dict[str, t.Any]] = None
-) -> t.Dict[str, t.Any]:
+def _environ_dict(prefix: str, environ: t.Optional[StrDict] = None) -> StrDict:
     if not (prefix.isupper() and prefix.endswith(SEP) and not prefix.startswith(SEP)):
         raise ValueError(f'Bad prefix={prefix}')
 
@@ -98,13 +104,13 @@ def _combine_one(target, source):
 
 
 def _env_dict_to_config_dict(
-    env_dict: t.Dict[str, str], parent: t.Dict[str, str]
-) -> t.Tuple[t.Dict, t.Dict]:
+    env_dict: StrDict, parent: StrDict
+) -> t.Tuple[StrDict, StrDict]:
     good: t.Dict = {}
     bad: t.Dict = {}
 
     for k, v in env_dict.items():
-        addresses = list(split_address(k, parent))
+        addresses = list(_split_address(k, parent))
         if not addresses:
             bad.setdefault('unknown', []).append(k)
         elif len(addresses) > 1:

@@ -22,11 +22,11 @@ if CFG.logging.type == 'stdout':
         pass
 
     elif level == level.INFO:
-        logging.debug = dont_print  # type: ignore[attr-defined, assignment]
+        logging.debug = dont_print  # type: ignore[assignment]
 
     else:
-        logging.debug = dont_print  # type: ignore[attr-defined, assignment]
-        logging.info = dont_print  # type: ignore[attr-defined, assignment]
+        logging.debug = dont_print  # type: ignore[assignment]
+        logging.info = dont_print  # type: ignore[assignment]
 
 else:
     import logging  # type: ignore[assignment]

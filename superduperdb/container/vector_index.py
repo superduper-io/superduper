@@ -204,10 +204,7 @@ class VectorIndex(Component):
         else:
             listeners = [self.indexing_listener]
 
-        models = [
-            w.model.identifier  # type: ignore[assignment, identifier, union-attr]
-            for w in listeners
-        ]
+        models = [w.model.identifier for w in listeners]  # type: ignore[union-attr]
         keys = [w.key for w in listeners]
         return models, keys
 

@@ -1021,8 +1021,8 @@ class Featurize(Select):
         folded = self.parent.add_fold(fold)
         assert isinstance(folded, (Find, FindOne))
         folded.featurize(self.features)
-        # ruff: noqa: E501
-        return self.parent.add_fold(fold).featurize(  # type: ignore[union-attr,attr-defined]
+
+        return self.parent.add_fold(fold).featurize(  # type: ignore[attr-defined]
             self.features
         )
 

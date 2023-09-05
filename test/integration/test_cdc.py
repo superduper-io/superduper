@@ -44,7 +44,6 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
     listener = DatabaseListener(
         db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
     )
-    listener._cdc_change_handler._QUEUE_TIMEOUT = 1
     listener._cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
     yield listener, collection_name

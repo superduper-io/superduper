@@ -215,7 +215,7 @@ class CDCHandler(threading.Thread):
     """
 
     _QUEUE_BATCH_SIZE: int = 100
-    _QUEUE_TIMEOUT: int = 2
+    _QUEUE_TIMEOUT: float = 0.01
 
     def __init__(self, db: DB, stop_event: threading.Event):
         """__init__.

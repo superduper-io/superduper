@@ -14,11 +14,12 @@ DEFECTS = {
 }
 
 # ALLOWABLE_DEFECTS has the allowable defect counts, which should be NON-INCREASING
-# over time.
+# over time.  If you have decreased the number of defects, change it here,
+# and take a bow!
 ALLOWABLE_DEFECTS = {
     'cast': 13,  # Try to keep this down
     'noqa': 1,  # This should never change
-    'type_ignore': 40,  # This should only ever increase in obscure edge cases
+    'type_ignore': 36,  # This should only ever increase in obscure edge cases
 }
 
 
@@ -27,5 +28,5 @@ def test_quality():
     lines = [line for f in files for line in f.read_text().splitlines()]
     defects = {k: sum(bool(v(line)) for line in lines) for k, v in DEFECTS.items()}
 
-    assert all([defects[k] <= ALLOWABLE_DEFECTS[k] for k in defects.keys()])
-    assert defects['noqa'] <= 1, 'There is never a need for noqa: fix your code'
+    assert defects == ALLOWABLE_DEFECTS
+    assert defects['noqa'] == 1, 'There is never a need for noqa: fix your code'

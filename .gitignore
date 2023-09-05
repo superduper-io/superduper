@@ -143,8 +143,11 @@ dmypy.json
 /config.json
 /examples/*/config.json
 
-# Annoying Mac thingy
+# Annoying Mac thingies
 .DS_Store
+
+# Common IDE files
+.vscode
 
 # links
 /architectures

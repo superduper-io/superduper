@@ -37,7 +37,7 @@ def test_taskgraph_futures_with_dask(
     local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
     collection_name = str(uuid.uuid4())
-    with patch.object(CFG, "distributed", True):
+    with patch.object(CFG.cluster, "distributed", True):
         database_with_default_encoders_and_model.distributed = True
         database_with_default_encoders_and_model._distributed_client = local_dask_client
         _, graph = database_with_default_encoders_and_model.execute(
@@ -61,25 +61,18 @@ def test_taskgraph_futures_with_dask(
 def test_insert_with_dask(
     local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
+    db = database_with_default_encoders_and_model
     collection_name = str(uuid.uuid4())
-    with patch.object(CFG, "distributed", True):
+    with patch.object(CFG.cluster, "distributed", True):
         with add_and_cleanup_listener(
             database_with_default_encoders_and_model, collection_name
-        ) as database_with_listener:
-            database_with_listener.distributed = True
-            database_with_listener._distributed_client = local_dask_client
-
-            database_with_listener.execute(
-                Collection(name=collection_name).insert_many(fake_updates)
-            )
+        ) as db:
+            db.distributed = True
+            db._distributed_client = local_dask_client
+            db.execute(Collection(name=collection_name).insert_many(fake_updates))
             local_dask_client.wait_all_pending_tasks()
-
-            r = next(
-                database_with_listener.execute(
-                    Collection(name=collection_name).find({'update': True})
-                ),
-            )
-
+            q = Collection(name=collection_name).find({'update': True})
+            r = next(db.execute(q))
             assert 'model_linear_a' in r['_outputs']['x']
 
 

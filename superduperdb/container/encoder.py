@@ -70,7 +70,7 @@ class Encoder(Component):
         return self(self.decoder.artifact(b))
 
     def dump(self, other):
-        return self.encoder.artifact(other)  # type: ignore[union-attr]
+        return self.encoder.artifact(other)
 
     def encode(
         self,
@@ -81,7 +81,7 @@ class Encoder(Component):
         def _wrap_content(x):
             return {
                 '_content': {
-                    'bytes': self.encoder.artifact(x),  # type: ignore[union-attr]
+                    'bytes': self.encoder.artifact(x),
                     'encoder': self.identifier,
                 }
             }

@@ -47,7 +47,7 @@ class TaskWorkflow:
         :param distributed: if True, use dask to distribute these tasks
         """
         if distributed is None:
-            distributed = s.CFG.distributed
+            distributed = s.CFG.cluster.distributed
         pred = self.G.predecessors
         current_group = [n for n in self.G.nodes if not ancestors(self.G, n)]
         done = set()

@@ -143,7 +143,7 @@ class Estimator(Model):
                     # TODO: this call could never work
                     self._validate(
                         db=db,
-                        validation_set=validation_set,  # type: ignore[arg-type]
+                        validation_set=validation_set,
                         metrics=metrics,
                     )
                 )

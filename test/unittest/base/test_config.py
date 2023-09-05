@@ -19,29 +19,11 @@ NAME_ERROR = """
 bad_name
   extra fields not permitted (type=value_error.extra)
 """
-TYPE_ERROR2 = """
-1 validation error for Config
-dask.port
-  Input should be a valid integer, unable to parse string as an integer\
- [type=int_parsing, input_value='bad port', input_type=str]
-"""
 NAME_ERROR2 = """
 1 validation error for Config
 bad_name
   Extra inputs are not permitted [type=extra_forbidden, input_value={}, input_type=dict]
 """
-
-
-def test_type_error():
-    d2 = Config().dict()
-    d2['dask']['port'] = 'bad port'
-
-    with pytest.raises(pydantic.ValidationError) as pr:
-        Config(**d2)
-
-    expected = (TYPE_ERROR2 if IS_2 else TYPE_ERROR).strip()
-    actual = str(pr.value).strip()
-    assert actual.startswith(expected)
 
 
 def test_unknown_name():

@@ -706,7 +706,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         for more fine grained listening.
         """
         try:
-            s.CFG.cdc = True
+            s.CFG.cluster.cdc = True
             self._stop_event.clear()
             if self._scheduler:
                 if self._scheduler.is_alive():
@@ -730,7 +730,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             self._startup_event.wait(timeout=timeout)
         except Exception:
             logging.error('Listening service stopped!')
-            s.CFG.cdc = False
+            s.CFG.cluster.cdc = False
             self.stop()
             raise
 
@@ -751,7 +751,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         Stop listening cdc changes.
         This stops the corresponding services as well.
         """
-        s.CFG.cdc = False
+        s.CFG.cluster.cdc = False
         self._stop_event.set()
         self._cdc_change_handler.join()
         if self._scheduler:

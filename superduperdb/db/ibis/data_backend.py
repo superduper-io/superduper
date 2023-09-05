@@ -19,6 +19,12 @@ class IbisDataBackend(BaseDataBackend):
             # TODO: find the backend for in-memory tables
             self._backend = "duckdb"
 
+    def build_artifact_store(self):
+        raise NotImplementedError
+
+    def build_metadata(self):
+        raise NotImplementedError
+
     @property
     def backend(self):
         return self._backend

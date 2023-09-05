@@ -1,7 +1,6 @@
 from ibis.backends.base import BaseBackend
 from pymongo import MongoClient
 
-from superduperdb.base import config
 from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.db.ibis.data_backend import IbisDataBackend
 from superduperdb.db.mongodb.artifacts import MongoArtifactStore
@@ -17,12 +16,14 @@ artifact_stores = {'mongodb': MongoArtifactStore, 'filesystem': FileSystemArtifa
 
 metadata_stores = {'mongodb': MongoMetaDataStore, 'sqlalchemy': SQLAlchemyMetadata}
 
-VECTOR_DATA_STORES = {
-    config.LanceDB: LanceVectorIndex,
-    config.InMemory: InMemoryVectorDatabase,
+vector_data_stores = {
+    'lancedb': LanceVectorIndex,
+    'inmemory': InMemoryVectorDatabase,
 }
 
 CONNECTIONS = {
     'pymongo': MongoClient,
     'ibis': BaseBackend,
+    'lancedb': LanceVectorIndex,
+    'inmemory': InMemoryVectorDatabase,
 }

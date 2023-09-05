@@ -14,6 +14,20 @@ class BaseDataBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def build_metadata(self):
+        """
+        Build a default metadata store based on current connection.
+        """
+        pass
+
+    @abstractmethod
+    def build_artifact_store(self):
+        """
+        Build a default artifact store based on current connection.
+        """
+        pass
+
+    @abstractmethod
     def drop(self, force: bool = False):
         """
         Drop the databackend.

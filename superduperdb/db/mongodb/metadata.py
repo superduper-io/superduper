@@ -136,6 +136,9 @@ class MongoMetaDataStore(MetaDataStore):
             out.append((r['type_id'], r['identifier']))
         return out
 
+    def show_job(self, job_id: str):
+        return self.job_collection.find_one({'identifier': job_id})
+
     def show_jobs(self, status=None):
         status = {} if status is None else {'status': status}
         return list(

@@ -1,5 +1,6 @@
 import dataclasses as dc
 import inspect
+import logging
 import typing as t
 import uuid
 
@@ -266,7 +267,7 @@ class Client:
             ', are you sure?',
             default=False,
         ):
-            print('aborting...')
+            logging.info('aborting...')
             return
 
         self._make_post_or_put_request(

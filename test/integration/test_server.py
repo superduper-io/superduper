@@ -16,7 +16,7 @@ from superduperdb.db.mongodb.query import Collection
 from superduperdb.server.client import Client
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def client(test_server):  # Warning: Magic so that test_server is started, don't remove!
     return Client(CFG.server.uri)
 
@@ -29,14 +29,14 @@ def test_collection():
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_add_load(client, fresh_database, test_collection):
+def test_add_load(client, test_db, test_collection):
     m = TorchModel(
         identifier='test-add-client',
         object=torch.nn.Linear(10, 20),
         encoder=tensor(torch.float, shape=(20,)),
     )
     client.add(m)
-    models = fresh_database.show('model')
+    models = test_db.show('model')
     print(models)
     assert 'test-add-client' in models
     m = client.load('model', 'test-add-client')

@@ -1,12 +1,12 @@
-import inspect
+import pymongo
 
 import superduperdb as s
+from superduperdb.base.logger import logging
 from superduperdb.db.base.backends import (
-    CONNECTIONS,
-    VECTOR_DATA_STORES,
     artifact_stores,
     data_backends,
     metadata_stores,
+    vector_data_stores,
 )
 from superduperdb.db.base.db import DB
 from superduperdb.server.dask_client import dask_client
@@ -19,42 +19,61 @@ def build_vector_database(cfg):
 
     :param cfg: configuration to use. (See ``superduperdb.CFG.vector_search``)
     """
-    if getattr(cfg, 'selfhosted', False):
+    if cfg.vector_search == cfg.data_backend:
+        logging.warning(
+            'Vector database URI is the same as the data backend URI. '
+            'Using the data backend as the vector database.'
+        )
         return
-    cls = VECTOR_DATA_STORES[cfg.__class__]
-    sig = inspect.signature(cls.__init__)
-    kwargs = {k: v for k, v in cfg.dict().items() if k in sig.parameters}
-    return cls(**kwargs)
+    cls = vector_data_stores[cfg.vector_search.split('://')[0]]
+    return cls(cfg.vector_search)
 
 
-def build_datalayer(cfg=None, **connections) -> DB:
+def build_datalayer(cfg=None) -> DB:
     """
     Build db as per ``db = superduper(db)`` from configuration.
 
     :param cfg: configuration to use. If None, use ``superduperdb.CFG``.
-    :param connections: cache of connections to reuse in the build process.
     """
     cfg = cfg or s.CFG
 
-    def build_distributed_client(cfg):
-        if cfg.distributed:
-            return dask_client(cfg.dask)
-
-    def build(cfg, stores):
-        cls = stores[cfg.cls]
-        if connections:
-            connection = connections[cfg.connection]
+    def build(uri, mapping):
+        if uri.startswith('mongodb://'):
+            name = uri.split('/')[-1]
+            uri = 'mongodb://' + uri.split('mongodb://')[-1].split('/')[0]
+            conn = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000)
+            return mapping['mongodb'](conn, name)
         else:
-            # cast port to an integer.
-            cfg.kwargs['port'] = int(cfg.kwargs['port'])
-            connection = CONNECTIONS[cfg.connection](**cfg.kwargs)
+            import ibis
 
-        return cls(name=cfg.name, conn=connection)
+            conn = ibis.connect(uri)
+            return mapping['ibis'](conn, uri.split('//')[0])
 
-    return DB(
-        artifact_store=build(cfg.db_components.artifact, artifact_stores),
-        databackend=build(cfg.db_components.data_backend, data_backends),
-        metadata=build(cfg.db_components.metadata, metadata_stores),
-        vector_database=build_vector_database(cfg.vector_search.type),
-        distributed_client=build_distributed_client(cfg),
+    databackend = build(cfg.data_backend, data_backends)
+
+    logging.warn(cfg.data_backend)
+
+    db = DB(
+        databackend=databackend,
+        metadata=(
+            build(cfg.metadata_store, metadata_stores)
+            if cfg.metadata_store is not None
+            else databackend.build_metadata()
+        ),
+        artifact_store=(
+            build(cfg.artifact_store, artifact_stores)
+            if cfg.artifact_store is not None
+            else databackend.build_artifact_store()
+        ),
+        vector_database=build_vector_database(cfg),
+        distributed_client=dask_client(
+            cfg.cluster.dask_scheduler,
+            local=cfg.cluster.local,
+            serializers=cfg.cluster.serializers,
+            deserializers=cfg.cluster.deserializers,
+        )
+        if cfg.cluster.distributed
+        else None,
     )
+
+    return db

@@ -1,14 +1,9 @@
 import json
 import random
-from contextlib import contextmanager
-from dataclasses import asdict, dataclass, field
 from test.material.metrics import PatK
-from typing import Iterator
-from unittest import mock
 
 import lorem
 import numpy
-import pymongo
 import pytest
 
 try:
@@ -21,10 +16,6 @@ try:
 except ImportError:
     torch = None
 
-from tenacity import RetryError, Retrying, stop_after_delay
-
-from superduperdb.base.config import DbComponent, DbComponents
-from superduperdb.base.config import MongoDB as MongoDBConfig
 from superduperdb.container.dataset import Dataset
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
@@ -36,109 +27,6 @@ from superduperdb.ext.numpy.array import array
 from superduperdb.ext.pillow.image import pil_image
 
 n_data_points = 250
-
-
-@dataclass(frozen=True)
-class TestMongoDBConfig:
-    host: str = "localhost"
-    port: int = 27018
-    username: str = field(repr=False, default="testmongodbuser")
-    password: str = field(repr=False, default="testmongodbpassword")
-    serverSelectionTimeoutMS: float = 5.0
-
-
-@contextmanager
-def create_mongodb_client(config: TestMongoDBConfig) -> Iterator[pymongo.MongoClient]:
-    client: pymongo.MongoClient
-    with pymongo.MongoClient(
-        host=config.host,
-        port=config.port,
-        username=config.username,
-        password=config.password,
-        serverSelectionTimeoutMS=int(config.serverSelectionTimeoutMS * 1000),
-    ) as client:
-        yield client
-
-
-def wait_for_mongodb(config: TestMongoDBConfig, *, timeout_s: float = 30) -> None:
-    try:
-        for attempt in Retrying(stop=stop_after_delay(timeout_s)):
-            with attempt:
-                with create_mongodb_client(config) as client:
-                    client.is_mongos
-                    return
-            print("Waiting for mongodb to start...")
-    except RetryError:
-        pytest.fail("Could not connect to mongodb")
-
-
-def cleanup_mongodb(config: TestMongoDBConfig) -> None:
-    with create_mongodb_client(config) as client:
-        for database_name in client.list_database_names():
-            if database_name in ("admin", "config", "local"):
-                continue
-            client.drop_database(database_name)
-
-
-@pytest.fixture(scope='package')
-def mongodb_config() -> TestMongoDBConfig:
-    return TestMongoDBConfig()
-
-
-@pytest.fixture(scope='package')
-def _mongodb_server(mongodb_config: TestMongoDBConfig) -> Iterator[TestMongoDBConfig]:
-    wait_for_mongodb(mongodb_config)
-    yield mongodb_config
-
-
-@pytest.fixture
-def mongodb_server(_mongodb_server: TestMongoDBConfig) -> Iterator[TestMongoDBConfig]:
-    # we are cleaning up the database before each test because in case of a test failure
-    # one might want to inspect the state of the database
-    cleanup_mongodb(_mongodb_server)
-    yield _mongodb_server
-
-
-@pytest.fixture
-def mongodb_client(mongodb_server: TestMongoDBConfig) -> Iterator[pymongo.MongoClient]:
-    with create_mongodb_client(mongodb_server) as client:
-        yield client
-
-
-@contextmanager
-def create_datalayer(*, mongodb_config: MongoDBConfig) -> Iterator[DB]:
-    from superduperdb.db.base.build import build_datalayer
-
-    mongo_client = pymongo.MongoClient(
-        host=mongodb_config.host,
-        port=mongodb_config.port,
-        username=mongodb_config.username,
-        password=mongodb_config.password,
-        serverSelectionTimeoutMS=int(mongodb_config.serverSelectionTimeoutMS * 1000),
-    )
-    with mongo_client:
-        yield build_datalayer(
-            pymongo=mongo_client,
-        )
-
-
-@pytest.fixture
-def test_db(mongodb_server: MongoDBConfig) -> Iterator[DB]:
-    with create_datalayer(mongodb_config=mongodb_server) as db:
-        yield db
-
-
-@pytest.fixture(autouse=True)
-def config(mongodb_server: MongoDBConfig) -> Iterator[None]:
-    kwargs = asdict(TestMongoDBConfig())
-    db_components_cfg = DbComponents(
-        artifact=DbComponent(name='_filesystem:test_db', kwargs=kwargs),
-        data_backend=DbComponent(name='test_db', kwargs=kwargs),
-        metadata=DbComponent(name='test_db', kwargs=kwargs),
-    )
-
-    with mock.patch('superduperdb.CFG.db_components', db_components_cfg):
-        yield
 
 
 @pytest.fixture()

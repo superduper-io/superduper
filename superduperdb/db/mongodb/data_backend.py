@@ -7,6 +7,8 @@ from superduperdb import logging
 from superduperdb.container.serializable import Serializable
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.base.data_backend import BaseDataBackend
+from superduperdb.db.mongodb.artifacts import MongoArtifactStore
+from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
 
@@ -28,6 +30,12 @@ class MongoDataBackend(BaseDataBackend):
     @property
     def db(self):
         return self._db
+
+    def build_metadata(self):
+        return MongoMetaDataStore(self.conn, self.name)
+
+    def build_artifact_store(self):
+        return MongoArtifactStore(self.conn, f'_filesystem:{self.name}')
 
     def drop(self, force: bool = False):
         if not force:

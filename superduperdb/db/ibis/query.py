@@ -545,7 +545,7 @@ class PlaceHolderQuery:
         self.args = args
         self.kwargs = kwargs
 
-        self.namespace: str = 'ibis'
+        self.namespace = 'ibis'
 
     def pre(self, db, **kwargs):
         ...

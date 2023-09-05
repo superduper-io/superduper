@@ -637,7 +637,7 @@ class Insert:
     def post(self, db, output, *args, **kwargs):
         graph = None
         [_id for _id in kwargs['pre_output']['ids']]
-        if self.refresh and not CFG.cdc:
+        if self.refresh and not CFG.cluster.cdc:
             # TODO: add refresh functionality
             pass
         return graph, output

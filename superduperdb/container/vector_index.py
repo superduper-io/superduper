@@ -75,7 +75,7 @@ class VectorIndex(Component):
                 Listener, db.load('listener', self.compatible_listener)
             )
 
-        if getattr(s.CFG.vector_search.type, 'selfhosted', False):
+        if s.CFG.vector_search == s.CFG.data_backend:
             if (create := getattr(db.databackend, 'create_vector_index', None)) is None:
                 msg = 'VectorIndex is not supported by the current database backend'
                 raise ValueError(msg)
@@ -84,7 +84,7 @@ class VectorIndex(Component):
 
     @override
     def on_load(self, db: DB) -> None:
-        if not getattr(s.CFG.vector_search.type, 'selfhosted', False):
+        if not s.CFG.vector_search == s.CFG.data_backend:
             assert db.vector_database
             self.vector_table = db.vector_database.get_table(
                 VectorCollectionConfig(
@@ -95,7 +95,7 @@ class VectorIndex(Component):
                 create=True,  # type: ignore[call-arg]
             )
 
-        if not s.CFG.cdc:
+        if not s.CFG.cluster.cdc:
             self._initialize_vector_database(db)
 
     @property
@@ -218,7 +218,7 @@ class VectorIndex(Component):
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
             db.execute(self.indexing_listener.select),
-            s.CFG.vector_search.backfill_batch_size,
+            s.CFG.cluster.backfill_batch_size,
         ):
             items = []
             for record in record_batch:

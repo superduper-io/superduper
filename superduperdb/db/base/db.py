@@ -82,7 +82,7 @@ class DB:
         self.encoders = LoadDict(self, 'encoder')
         self.vector_indices = LoadDict(self, 'vector_index')
 
-        self.distributed = s.CFG.distributed
+        self.distributed = s.CFG.cluster.distributed
         self.metadata = metadata
         self.artifact_store = artifact_store
         self.databackend = databackend
@@ -314,7 +314,7 @@ class DB:
         :param depends_on: t.Sequence of dependencies
         """
         if distributed is None:
-            distributed = s.CFG.distributed
+            distributed = s.CFG.cluster.distributed
         return job(db=self, dependencies=depends_on, distributed=distributed)
 
     def select(self, select: Select) -> SelectResult:

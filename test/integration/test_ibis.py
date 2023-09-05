@@ -37,7 +37,7 @@ def ibis_db(sqllite_conn):
         databackend=IbisDataBackend(conn=connection, name='ibis'),
         metadata=SQLAlchemyMetadata(conn=connection.con, name='ibis'),
         artifact_store=FileSystemArtifactStore(conn='./.tmp', name='ibis'),
-        vector_database=build_vector_database(CFG.vector_search.type),
+        vector_database=build_vector_database(CFG),
     )
     yield db
     shutil.rmtree('./.tmp')
@@ -57,7 +57,7 @@ def ibis_pandas_db(sqllite_conn):
         databackend=IbisDataBackend(conn=t, name='ibis'),
         metadata=SQLAlchemyMetadata(conn=connection.con, name='ibis'),
         artifact_store=FileSystemArtifactStore(conn='./.tmp', name='ibis'),
-        vector_database=build_vector_database(CFG.vector_search.type),
+        vector_database=build_vector_database(CFG),
     )
     yield db
 

@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import typing as t
 from subprocess import PIPE, CalledProcessError
@@ -26,7 +27,7 @@ def run(
     :param **kwargs: Additional arguments to pass to ``subprocess.run``.
     """
     if verbose:
-        print('$', *args)
+        logging.info('$', *args)
     return subprocess.run(args, text=text, check=check, **kwargs)
 
 

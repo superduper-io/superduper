@@ -1,14 +1,18 @@
 import typing as t
-import uuid
 
 from dask import distributed
-
-from superduperdb import logging
 
 
 class DaskClient:
     """
-    A client for interacting with a Dask cluster.
+    A client for interacting with a Dask cluster. Initialize the DaskClient.
+
+    :param address: The address of the Dask cluster.
+    :param serializers: A list of serializers to be used by the client. (optional)
+    :param deserializers: A list of deserializers to be used by the client. (optional)
+    :param local: Set to True to create a local Dask cluster. (optional)
+    :param envs: An environment dict for cluster.
+    :param **kwargs: Additional keyword arguments to be passed to the DaskClient.
     """
 
     def __init__(
@@ -17,18 +21,12 @@ class DaskClient:
         serializers: t.Optional[t.Sequence[t.Callable]] = None,
         deserializers: t.Optional[t.Sequence[t.Callable]] = None,
         local: bool = False,
-        envs: t.Dict[str, t.Any] = {},
+        envs: t.Optional[t.Dict[str, t.Any]] = None,
         **kwargs,
     ):
-        """
-        Initialize the DaskClient.
-
-        :param address: The address of the Dask cluster.
-        :param serializers: A list of serializers to be used by the client. (optional)
-        :param local: Set to True to create a local Dask cluster. (optional)
-        :param envs: An environment dict for cluster.
-        """
+        envs = envs or {}
         self.futures_collection: t.Dict[str, distributed.Future] = {}
+
         if local:
             cluster = distributed.LocalCluster(env=envs)
             self.client = distributed.Client(cluster, **kwargs)
@@ -48,13 +46,7 @@ class DaskClient:
         :param kwargs: Additional keyword arguments to be passed to the function.
         """
         future = self.client.submit(function, **kwargs)
-        identifier = kwargs.get('identifier', None)
-        if not identifier:
-            logging.warn(
-                'Could not get an identifier from submitted function, creating one!'
-            )
-            identifier = str(uuid.uuid4())
-        self.futures_collection[identifier] = future
+        self.futures_collection[future.key] = future
         return future
 
     def submit_and_forget(self, function: t.Callable, **kwargs) -> distributed.Future:
@@ -94,23 +86,28 @@ class DaskClient:
 
 
 def dask_client(
-    cfg,
-    envs: t.Dict[str, t.Any] = {},
-    local: t.Optional[bool] = None,
+    uri: str,
+    serializers: t.Optional[t.Sequence[t.Callable]] = None,
+    deserializers: t.Optional[t.Sequence[t.Callable]] = None,
+    envs: t.Optional[t.Dict[str, t.Any]] = None,
+    local: bool = False,
     **kwargs,
 ) -> DaskClient:
     """
     Creates a DaskClient instance.
 
-    :param cfg: Configuration object containing Dask cluster details.
-    :param local: t.Set to True to create a local Dask cluster. (optional)
+    :param uri: The address of the Dask cluster.
+    :param serializers: A list of serializers to be used by the client. (optional)
+    :param deserializers: A list of deserializers to be used by the client. (optional)
     :param envs: An environment dict for cluster.
+    :param local: Set to True to create a local Dask cluster. (optional)
+    :param **kwargs: Additional keyword arguments to be passed to the DaskClient.
     """
     return DaskClient(
-        address=f'tcp://{cfg.ip}:{cfg.port}',
-        serializers=cfg.serializers,
-        deserializers=cfg.deserializers,
+        address=uri,
+        serializers=serializers,
+        deserializers=deserializers,
         envs=envs,
-        local=local if local is not None else getattr(cfg, 'local', True),
+        local=local,
         **kwargs,
     )

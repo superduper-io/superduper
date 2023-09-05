@@ -27,8 +27,9 @@ def method_job(
     """
     from superduperdb.db.base.build import build_datalayer
 
-    cfg.distributed = False
+    cfg.cluster.distributed = False
     db = build_datalayer(cfg)
+
     component = db.load(type_id, identifier)
     method = getattr(component, method_name)
     db.metadata.update_job(job_id, 'status', 'running')
@@ -82,7 +83,7 @@ def callable_job(
 ):
     from superduperdb.db.base.build import build_datalayer
 
-    cfg.distributed = False
+    cfg.cluster.distributed = False
     db = build_datalayer(cfg)
     db.metadata.update_job(job_id, 'status', 'running')
     output = None

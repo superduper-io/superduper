@@ -23,7 +23,10 @@ def local_cluster(on: t.List[str] = []):
     from superduperdb.server.server import serve
 
     db = build_datalayer()
-    dask_client(s.CFG.dask, local=True)
+    dask_client(
+        uri=s.CFG.cluster.dask_scheduler,
+        local=True,
+    )
     for collection in on:
         w = DatabaseListener(
             db=db,

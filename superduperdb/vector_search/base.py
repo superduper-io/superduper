@@ -8,8 +8,6 @@ from dataclasses import dataclass, field
 import numpy
 import numpy.typing
 
-import superduperdb as s
-
 
 class BaseVectorIndex:
     name: t.Optional[str] = None
@@ -178,7 +176,7 @@ class VectorDatabase(ABC):
     operations.
     """
 
-    def __init__(self, *, config: s.config.VectorSearch) -> None:
+    def __init__(self, *, config: str) -> None:
         self._config = config
 
     @abstractmethod

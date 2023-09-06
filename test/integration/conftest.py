@@ -1,6 +1,5 @@
 import os
 import random
-from threading import Thread
 
 import numpy as np
 import pytest
@@ -19,7 +18,6 @@ from superduperdb.container.listener import Listener
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.server.dask_client import dask_client
-from superduperdb.server.server import make_flask_app
 
 '''
 All pytest fixtures with _package scope_ are defined in this module.
@@ -110,19 +108,6 @@ def fake_inserts(database_with_default_encoders_and_model):
 def fake_updates(database_with_default_encoders_and_model):
     encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
     return fake_tensor_data(encoder, update=True)
-
-
-@pytest.fixture
-def test_server(database_with_default_encoders_and_model):
-    app = make_flask_app(database_with_default_encoders_and_model)
-    t = Thread(
-        target=app.run,
-        kwargs={"host": CFG.server.host, "port": CFG.server.port},
-        daemon=True,
-    )
-    t.start()
-    with app.app_context():
-        yield
 
 
 @pytest.fixture

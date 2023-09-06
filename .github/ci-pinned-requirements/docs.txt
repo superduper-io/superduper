@@ -14,7 +14,9 @@ alabaster==0.7.13
     # via sphinx
 annotated-types==0.5.0
     # via pydantic
-asttokens==2.3.0
+appnope==0.1.3
+    # via ipython
+asttokens==2.4.0
     # via stack-data
 async-timeout==4.0.3
     # via aiohttp
@@ -41,9 +43,9 @@ bleach==6.0.0
     # via nbconvert
 blinker==1.6.2
     # via flask
-boto3==1.28.40
+boto3==1.28.42
     # via superduperdb (pyproject.toml)
-botocore==1.31.40
+botocore==1.31.42
     # via
     #   boto3
     #   s3transfer
@@ -113,8 +115,6 @@ fsspec==2023.9.0
     # via dask
 furo==2023.8.19
     # via superduperdb (pyproject.toml)
-greenlet==2.0.2
-    # via sqlalchemy
 ibis-framework[duckdb,sqlite]==5.1.0
     # via superduperdb (pyproject.toml)
 idna==3.4
@@ -310,7 +310,7 @@ python-dateutil==2.8.2
     #   ibis-framework
     #   jupyter-client
     #   pandas
-pytz==2023.3
+pytz==2023.3.post1
     # via
     #   babel
     #   ibis-framework

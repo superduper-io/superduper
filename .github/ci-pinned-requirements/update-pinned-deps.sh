@@ -22,3 +22,5 @@ do
     --upgrade \
     pyproject.toml
 done
+
+sed -I '' '/superduperdb\[/d' .github/ci-pinned-requirements/dev.txt

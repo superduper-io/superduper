@@ -9,9 +9,9 @@ except ImportError:
 from superduperdb.container.document import Document
 from superduperdb.db.mongodb.query import Collection
 
-n_data_points = 250
+from .test_database import IMAGE_URL
 
-IMAGE_URL = 'https://upload.wikimedia.org/wikipedia/commons/c/ca/1x1.png'
+n_data_points = 250
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

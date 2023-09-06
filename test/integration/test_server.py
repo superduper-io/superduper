@@ -48,8 +48,7 @@ def client(database_with_default_encoders_and_model):
     yield Client(CFG.server.uri, TestRequest(app.test_client()))
 
 
-# scope="function" so that each test gets a new collection
-@pytest.fixture(scope="function")
+@pytest.fixture
 def test_collection():
     collection_name = str(uuid.uuid4())
     return Collection(name=collection_name)

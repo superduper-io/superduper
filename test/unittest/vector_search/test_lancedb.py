@@ -17,7 +17,7 @@ from superduperdb.vector_search.lancedb_client import (
 )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def lance_client():
     with tempfile.TemporaryDirectory() as tmpdirname:
         client = LanceDBClient(uri=f'./{tmpdirname}/.test_db')
@@ -27,13 +27,13 @@ def lance_client():
         yield client, table
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def lance_table(lance_client):
     lance_client, table = lance_client
     yield table
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def lance_vector_index(lance_client):
     lance_client, table = lance_client
     vector_index = LanceVectorIndex(uri='./.lancedb', client=lance_client)

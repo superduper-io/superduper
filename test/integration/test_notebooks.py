@@ -6,7 +6,7 @@ import tempfile
 import pytest
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def copy_superduperdb():
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree('superduperdb', os.path.join(tmp_dir, 'superduperdb'))

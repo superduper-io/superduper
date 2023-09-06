@@ -18,7 +18,9 @@ annotated-types==0.5.0
     # via pydantic
 anyio==4.0.0
     # via httpcore
-asttokens==2.3.0
+appnope==0.1.3
+    # via ipython
+asttokens==2.4.0
     # via stack-data
 async-timeout==4.0.3
     # via aiohttp
@@ -50,17 +52,17 @@ bleach==6.0.0
     # via nbconvert
 blinker==1.6.2
     # via flask
-boto3==1.28.40
+boto3==1.28.42
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-boto3-stubs==1.28.40
+boto3-stubs==1.28.42
     # via superduperdb
-botocore==1.31.40
+botocore==1.31.42
     # via
     #   boto3
     #   s3transfer
-botocore-stubs==1.31.40
+botocore-stubs==1.31.42
     # via boto3-stubs
 certifi==2023.7.22
     # via
@@ -83,11 +85,9 @@ cloudpickle==2.2.1
     # via
     #   dask
     #   distributed
-cmake==3.27.2
-    # via triton
 colorama==0.4.6
     # via interrogate
-coverage[toml]==7.3.0
+coverage[toml]==7.3.1
     # via pytest-cov
 dask[distributed]==2023.5.0
     # via
@@ -127,6 +127,8 @@ exceptiongroup==1.1.3
     # via
     #   anyio
     #   pytest
+execnet==2.0.2
+    # via pytest-xdist
 executing==1.2.0
     # via stack-data
 fastjsonschema==2.18.0
@@ -140,7 +142,6 @@ filelock==3.12.3
     #   huggingface-hub
     #   torch
     #   transformers
-    #   triton
 flask==2.3.3
     # via
     #   flask-cors
@@ -165,8 +166,6 @@ fsspec==2023.9.0
     #   huggingface-hub
 furo==2023.8.19
     # via superduperdb
-greenlet==2.0.2
-    # via sqlalchemy
 h11==0.14.0
     # via httpcore
 httpcore==0.17.3
@@ -250,8 +249,6 @@ lancedb==0.1.16
     #   superduperdb (pyproject.toml)
 libcst==1.0.1
     # via monkeytype
-lit==16.0.6
-    # via triton
 locket==1.0.0
     # via
     #   distributed
@@ -333,31 +330,6 @@ numpy==1.24.4
     #   superduperdb (pyproject.toml)
     #   torchvision
     #   transformers
-nvidia-cublas-cu11==11.10.3.66
-    # via
-    #   nvidia-cudnn-cu11
-    #   nvidia-cusolver-cu11
-    #   torch
-nvidia-cuda-cupti-cu11==11.7.101
-    # via torch
-nvidia-cuda-nvrtc-cu11==11.7.99
-    # via torch
-nvidia-cuda-runtime-cu11==11.7.99
-    # via torch
-nvidia-cudnn-cu11==8.5.0.96
-    # via torch
-nvidia-cufft-cu11==10.9.0.58
-    # via torch
-nvidia-curand-cu11==10.2.10.91
-    # via torch
-nvidia-cusolver-cu11==11.4.0.1
-    # via torch
-nvidia-cusparse-cu11==11.7.4.91
-    # via torch
-nvidia-nccl-cu11==2.14.3
-    # via torch
-nvidia-nvtx-cu11==11.7.91
-    # via torch
 openai==0.28.0
     # via
     #   superduperdb
@@ -461,8 +433,11 @@ pymongo==4.5.0
 pytest==7.4.1
     # via
     #   pytest-cov
+    #   pytest-xdist
     #   superduperdb
 pytest-cov==4.1.0
+    # via superduperdb
+pytest-xdist==3.3.1
     # via superduperdb
 python-dateutil==2.8.2
     # via
@@ -470,7 +445,7 @@ python-dateutil==2.8.2
     #   ibis-framework
     #   jupyter-client
     #   pandas
-pytz==2023.3
+pytz==2023.3.post1
     # via
     #   babel
     #   ibis-framework
@@ -600,7 +575,6 @@ sqlglot==11.7.1
     # via ibis-framework
 stack-data==0.6.2
     # via ipython
-superduperdb[docs,lint,tests,torch,typing]
     # via superduperdb (pyproject.toml)
 sympy==1.12
     # via torch
@@ -639,7 +613,6 @@ torch==2.0.0
     #   accelerate
     #   superduperdb
     #   torchvision
-    #   triton
 torchvision==0.15.1
     # via superduperdb
 tornado==6.3.3
@@ -665,17 +638,15 @@ traitlets==5.9.0
     #   nbconvert
     #   nbformat
     #   nbsphinx
-transformers==4.32.1
+transformers==4.33.1
     # via superduperdb
-triton==2.0.0
-    # via torch
 typer==0.9.0
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
 types-awscrt==0.19.1
     # via botocore-stubs
-types-pillow==10.0.0.2
+types-pillow==10.0.0.3
     # via superduperdb
 types-requests==2.31.0.2
     # via superduperdb
@@ -725,14 +696,6 @@ werkzeug==2.3.7
     #   flask
     #   superduperdb
     #   superduperdb (pyproject.toml)
-wheel==0.41.2
-    # via
-    #   nvidia-cublas-cu11
-    #   nvidia-cuda-cupti-cu11
-    #   nvidia-cuda-runtime-cu11
-    #   nvidia-curand-cu11
-    #   nvidia-cusparse-cu11
-    #   nvidia-nvtx-cu11
 xmod==1.5.0
     # via
     #   dek
@@ -747,6 +710,3 @@ zipp==3.16.2
     # via
     #   importlib-metadata
     #   importlib-resources
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools

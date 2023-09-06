@@ -15,7 +15,7 @@ from superduperdb.ext.transformers.model import (
 )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def transformers_model(random_data):
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 

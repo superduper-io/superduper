@@ -1,13 +1,11 @@
-import os
-import shutil
-
 import ibis
 import pandas as pd
 import PIL.Image
 import pytest
+import tdir
 import torchvision
 
-from superduperdb import CFG
+import superduperdb as s
 from superduperdb.container.document import Document as D
 from superduperdb.db.base.build import build_vector_database
 from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
@@ -21,45 +19,36 @@ from superduperdb.ext.pillow.image import pil_image
 from superduperdb.ext.torch.model import TorchModel
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture
 def sqllite_conn():
-    connection = ibis.sqlite.connect("mydb.sqlite")
-    yield connection
-    os.remove("mydb.sqlite")
+    with tdir(chdir=False) as tmp_dir:
+        yield ibis.sqlite.connect(tmp_dir / 'mydb.sqlite'), tmp_dir
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture
 def ibis_db(sqllite_conn):
-    connection = sqllite_conn
-
-    # Create data layer
-    db = IbisDB(
-        databackend=IbisDataBackend(conn=connection, name='ibis'),
-        metadata=SQLAlchemyMetadata(conn=connection.con, name='ibis'),
-        artifact_store=FileSystemArtifactStore(conn='./.tmp', name='ibis'),
-        vector_database=build_vector_database(CFG),
-    )
-    yield db
-    shutil.rmtree('./.tmp')
+    connection, tmp_dir = sqllite_conn
+    yield make_ibis_db(connection, connection, tmp_dir)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture
 def ibis_pandas_db(sqllite_conn):
-    connection = sqllite_conn
+    connection, tmp_dir = sqllite_conn
     df = pd.DataFrame(
         [[1, 0, 25, 'kk'], [2, 1, 26, 'kk'], [3, 0, 27, 'kk'], [4, 1, 28, 'kk']],
         columns=['id', 'health', 'age', 'name'],
     )
-    t = ibis.memtable(df, name="pandas")
+    t = ibis.memtable(df, name='pandas')
+    yield make_ibis_db(t, connection, tmp_dir)
 
-    # Create data layer
-    db = IbisDB(
-        databackend=IbisDataBackend(conn=t, name='ibis'),
-        metadata=SQLAlchemyMetadata(conn=connection.con, name='ibis'),
-        artifact_store=FileSystemArtifactStore(conn='./.tmp', name='ibis'),
-        vector_database=build_vector_database(CFG),
+
+def make_ibis_db(db_conn, metadata_conn, tmp_dir):
+    return IbisDB(
+        databackend=IbisDataBackend(conn=db_conn, name='ibis'),
+        metadata=SQLAlchemyMetadata(conn=metadata_conn.con, name='ibis'),
+        artifact_store=FileSystemArtifactStore(conn=tmp_dir, name='ibis'),
+        vector_database=build_vector_database(s.CFG),
     )
-    yield db
 
 
 def test_end2end_sql(ibis_db):
@@ -101,7 +90,7 @@ def test_end2end_sql(ibis_db):
     )
 
     # -------------- retrieve data  from table ----------------
-    q = t.select("image", "age", "health")
+    q = t.select('image', 'age', 'health')
     imgs = db.execute(q)
     for img in imgs:
         img = img.unpack()
@@ -168,7 +157,7 @@ def test_end2end_sql(ibis_db):
 def test_end2end_pandas(ibis_pandas_db):
     db = ibis_pandas_db
     # -------------- retrieve data  from table ----------------
-    q = db.table.select("id", "age", "health").filter(db.table.age > 25)
+    q = db.table.select('id', 'age', 'health').filter(db.table.age > 25)
     imgs = db.execute(q)
     for img in imgs:
         img = img.unpack()

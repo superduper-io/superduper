@@ -39,12 +39,13 @@ class ClientArtifactStore:
 
 
 class Client:
-    def __init__(self, uri):
+    def __init__(self, uri, requests=requests):
         """
         :param uri: uri of the server
         """
         self.uri = uri
         self.encoders = LoadDict(self, 'encoder')
+        self.requests = requests
 
     def execute(self, query: ExecuteQuery):
         if isinstance(query, Delete):
@@ -399,10 +400,11 @@ class Client:
         params: t.Optional[t.Dict] = None,
         json: t.Optional[t.Dict] = None,
     ):
-        response = requests.get(f'{self.uri}/{route}', params=params, json=json)
+        response = self.requests.get(f'{self.uri}/{route}', params=params, json=json)
+        print('YYYYY', response)
         if response.status_code != 200:
             raise ServerSideException(
-                f'Non 200 status while making request to'
+                f'HTTP status {response.status_code} while making request to'
                 f' /{route} with params {params} and json {json}:\n'
                 f'{response.text}'
             )
@@ -417,7 +419,7 @@ class Client:
     ):
         if method not in ['PUT', 'POST']:
             raise ServerSideException('Only PUT or POST methods are supported')
-        fn = getattr(requests, method.lower())
+        fn = getattr(self.requests, method.lower())
         response = fn(
             f'{self.uri}/{route}',
             data=data,

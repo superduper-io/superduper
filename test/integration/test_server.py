@@ -14,11 +14,38 @@ from superduperdb import CFG
 from superduperdb.container.document import Document
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.server.client import Client
+from superduperdb.server.server import make_flask_app
+
+
+class Delegate:
+    def __init__(self, delegate):
+        self._delegate = delegate
+
+    def __getattr__(self, k):
+        return getattr(self._delegate, k)
+
+
+class TestRequest(Delegate):
+    def get(self, *a, params=None, **ka):
+        if params is not None:
+            ka['query_string'] = params
+        response = self._delegate.get(*a, **ka)
+        return TestResponse(response)
+
+
+class TestResponse(Delegate):
+    def json(self):
+        return self._delegate.json
+
+    @property
+    def content(self):
+        return self.data
 
 
 @pytest.fixture
-def client(test_server):  # Warning: Magic so that test_server is started, don't remove!
-    return Client(CFG.server.uri)
+def client(database_with_default_encoders_and_model):
+    app = make_flask_app(database_with_default_encoders_and_model)
+    yield Client(CFG.server.uri, TestRequest(app.test_client()))
 
 
 # scope="function" so that each test gets a new collection

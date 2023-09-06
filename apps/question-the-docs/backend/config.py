@@ -17,20 +17,18 @@ class AISettings(FastAPISettings):
     vector_embedding_key: str = 'text'
     qa_model: str = 'gpt-3.5-turbo'
     default_repos: t.List[str] = [
-        'superduperdb',
         'langchain',
-        'fastchat',
     ]
 
     # Query configuration
     nearest_to_query: int = 5
 
-    prompt: str = '''Use the following descriptions and code-snippets to answer the question.
-    Do NOT use any information you have learned about other python packages.
-    ONLY base your answer on the code-snippets retrieved:
-    
-    {context}
-    
+    prompt: str = '''
+    Given the following context {context},
+    please try to answer the question given below.
+
+    NOTE: Try to answer as much in line with the context as possible. Only provide an answer if you think the provided context enables you to formulate a sufficient answer. If the provided context is not sufficient or irrelevant to the query, please respond with "I have no sufficient answer based on the information available. Sorry.", if the query is like `hello`, `hi`, `how are you`, etc. please repsond to it.
+
     Here's the question:
     '''
 

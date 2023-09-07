@@ -33,4 +33,5 @@ async def query_docs(request: Request, query: Query) -> Answer:
         context_select=context_select,
         context_key=settings.vector_embedding_key,
     )
+    src_urls = list(set(src_urls))
     return Answer(answer=db_response.unpack(), source_urls=src_urls)

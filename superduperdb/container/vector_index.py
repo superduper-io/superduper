@@ -12,6 +12,7 @@ from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encodable
 from superduperdb.container.listener import Listener
 from superduperdb.db.base.db import DB
+from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import (
     VectorCollectionConfig,
@@ -69,6 +70,15 @@ class VectorIndex(Component):
 
     @override
     def on_create(self, db: DB) -> None:
+        if s.CFG.vector_search == s.CFG.data_backend:
+            if (create := getattr(db.databackend, 'create_vector_index', None)) is None:
+                msg = 'VectorIndex is not supported by the current database backend'
+                raise ValueError(msg)
+
+            create(self)
+
+    @override
+    def on_load(self, db: DB) -> None:
         if isinstance(self.indexing_listener, str):
             self.indexing_listener = t.cast(
                 Listener, db.load('listener', self.indexing_listener)
@@ -79,15 +89,6 @@ class VectorIndex(Component):
                 Listener, db.load('listener', self.compatible_listener)
             )
 
-        if s.CFG.vector_search == s.CFG.data_backend:
-            if (create := getattr(db.databackend, 'create_vector_index', None)) is None:
-                msg = 'VectorIndex is not supported by the current database backend'
-                raise ValueError(msg)
-
-            create(self)
-
-    @override
-    def on_load(self, db: DB) -> None:
         if not s.CFG.vector_search == s.CFG.data_backend:
             assert db.vector_database
             self.vector_table = db.vector_database.get_table(
@@ -99,7 +100,10 @@ class VectorIndex(Component):
                 create=True,  # type: ignore[call-arg]
             )
 
-        if not s.CFG.cluster.cdc:
+        assert hasattr(self.indexing_listener.select, 'collection')
+        clt = self.indexing_listener.select.collection
+
+        if not CDC_COLLECTION_LOCKS.get(clt.name, False):
             self._initialize_vector_database(db)
 
     @property

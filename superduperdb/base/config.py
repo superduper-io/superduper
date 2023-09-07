@@ -50,10 +50,6 @@ class Cluster(JSONable):
 
     #: Whether the connection is local
     local: bool = True
-
-    #: Whether change data capture should be used
-    cdc: bool = False
-
     backfill_batch_size: int = 100
 
 

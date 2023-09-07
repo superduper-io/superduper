@@ -17,7 +17,7 @@ class AISettings(FastAPISettings):
     vector_embedding_key: str = 'text'
     qa_model: str = 'gpt-3.5-turbo'
     default_repos: t.List[str] = [
-        'langchain',
+        'langchain', 'superduperdb', 'huggingface'
     ]
 
     # Query configuration

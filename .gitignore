@@ -180,3 +180,8 @@ lightning_logs/
 monkeytype.sqlite3
 
 test/sleep.json
+
+# editors
+.vscode
+
+

@@ -12,14 +12,13 @@ from enum import Enum
 from bson.objectid import ObjectId as BsonObjectId
 from pymongo.change_stream import CollectionChangeStream
 
-import superduperdb as s
 from superduperdb import logging
 from superduperdb.container.job import FunctionJob
 from superduperdb.container.serializable import Serializable
 from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.base.db import DB
-from superduperdb.db.mongodb import query
+from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS, query
 from superduperdb.misc.task_queue import cdc_queue
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 
@@ -679,7 +678,8 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         for more fine grained listening.
         """
         try:
-            s.CFG.cluster.cdc = True
+            CDC_COLLECTION_LOCKS[self._on_component.name] = True
+
             self._stop_event.clear()
             if self._scheduler:
                 if self._scheduler.is_alive():
@@ -703,7 +703,8 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             self._startup_event.wait(timeout=timeout)
         except Exception:
             logging.error('Listening service stopped!')
-            s.CFG.cluster.cdc = False
+            CDC_COLLECTION_LOCKS.pop(self._on_component.name, None)
+
             self.stop()
             raise
 
@@ -724,7 +725,8 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         Stop listening cdc changes.
         This stops the corresponding services as well.
         """
-        s.CFG.cluster.cdc = False
+        CDC_COLLECTION_LOCKS.pop(self._on_component.name, None)
+
         self._stop_event.set()
         self._cdc_change_handler.join()
         if self._scheduler:

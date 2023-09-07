@@ -145,15 +145,9 @@ def delete_vectors(
     :param ids: List of ids which were observed as changed documents.
     :param db: A ``DB`` instance.
     """
-    try:
-        config = VectorCollectionConfig(id=indexing_listener_identifier, dimensions=0)
-        table = db.vector_database.get_table(config)
-        table.delete_from_ids(ids)
-    except Exception:
-        logging.error(
-            f"Error while deleting for vector_index: {indexing_listener_identifier}"
-        )
-        raise
+    config = VectorCollectionConfig(id=indexing_listener_identifier, dimensions=0)
+    table = db.vector_database.get_table(config)
+    table.delete_from_ids(ids)
 
 
 def copy_vectors(
@@ -174,29 +168,22 @@ def copy_vectors(
     :param ids: List of ids which were observed as changed documents.
     :param db: A ``DB`` instance.
     """
-    try:
-        query = Serializable.deserialize(cdc_query)
-        select = query.select_using_ids(ids)
-        docs = db.select(select)
-        docs = [doc.unpack() for doc in docs]
-        model, _, key = indexing_listener_identifier.rpartition('/')
-        vectors = [
-            {'vector': doc['_outputs'][key][model], 'id': str(doc['_id'])}
-            for doc in docs
-        ]
-        dimensions = len(vectors[0]['vector'])
-        config = VectorCollectionConfig(
-            id=indexing_listener_identifier, dimensions=dimensions
-        )
-        table = db.vector_database.get_table(config, create=True)
+    query = Serializable.deserialize(cdc_query)
+    select = query.select_using_ids(ids)
+    docs = db.select(select)
+    docs = [doc.unpack() for doc in docs]
+    model, _, key = indexing_listener_identifier.rpartition('/')
+    vectors = [
+        {'vector': doc['_outputs'][key][model], 'id': str(doc['_id'])} for doc in docs
+    ]
+    dimensions = len(vectors[0]['vector'])
+    config = VectorCollectionConfig(
+        id=indexing_listener_identifier, dimensions=dimensions
+    )
+    table = db.vector_database.get_table(config, create=True)
 
-        vector_list = [VectorCollectionItem(**vector) for vector in vectors]
-        table.add(vector_list, upsert=True)
-    except Exception:
-        logging.error(
-            f"Error in copying_vectors for vector_index: {indexing_listener_identifier}"
-        )
-        raise
+    vector_list = [VectorCollectionItem(**vector) for vector in vectors]
+    table.add(vector_list, upsert=True)
 
 
 def _vector_task_factory(task: str = 'copy') -> t.Tuple[t.Callable, str]:
@@ -606,28 +593,23 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         """
         Setup cdc change stream from user provided
         """
-        try:
-            if isinstance(self._change_pipeline, str):
-                pipeline = self._get_stream_pipeline(self._change_pipeline)
+        if isinstance(self._change_pipeline, str):
+            pipeline = self._get_stream_pipeline(self._change_pipeline)
 
-            elif isinstance(self._change_pipeline, list):
-                pipeline = self._change_pipeline
-                if not pipeline:
-                    pipeline = None
-            else:
-                raise TypeError(
-                    'Change pipeline can be either a string or a dictionary, '
-                    f'provided {type(self._change_pipeline)}'
-                )
-            stream = self._on_component.change_stream(
-                pipeline=pipeline, resume_after=self.resume_token
+        elif isinstance(self._change_pipeline, list):
+            pipeline = self._change_pipeline or None
+
+        else:
+            raise TypeError(
+                'Change pipeline can be either a string or a dictionary, '
+                f'provided {type(self._change_pipeline)}'
             )
+        stream = self._on_component.change_stream(
+            pipeline=pipeline, resume_after=self.resume_token
+        )
 
-            stream_iterator = stream(self.db)
-            logging.info(f'Started listening database with identity {self.identity}...')
-        except Exception:
-            logging.error("Error while setting up cdc stream.")
-            raise
+        stream_iterator = stream(self.db)
+        logging.info(f'Started listening database with identity {self.identity}...')
         return stream_iterator
 
     def next_cdc(self, stream: CollectionChangeStream) -> None:
@@ -635,22 +617,13 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         Get the next stream of change observed on the given `Collection`.
         """
 
-        try:
-            change = stream.try_next()
-            if change is not None:
-                logging.debug(
-                    f'Database change encountered at {datetime.datetime.now()}'
-                )
+        change = stream.try_next()
+        if change is not None:
+            logging.debug(f'Database change encountered at {datetime.datetime.now()}')
 
-                if not self.check_if_taskgraph_change(change):
-                    self.event_handler(change)
-                self.dump_token(change)
-        except StopIteration:
-            logging.error('Change stream is close or empty!, stopping cdc!')
-            raise
-        except Exception:
-            logging.error('Error occured during cdc!, stopping cdc!')
-            raise
+            if not self.check_if_taskgraph_change(change):
+                self.event_handler(change)
+            self.dump_token(change)
 
     def attach_scheduler(self, scheduler: threading.Thread) -> None:
         self._scheduler = scheduler

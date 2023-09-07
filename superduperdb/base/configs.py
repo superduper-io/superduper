@@ -35,16 +35,18 @@ FILE_SEP = ','
 class ConfigSettings:
     """
     A class that reads a Pydantic class from config files and environment variables.
-
-    :param cls: The Pydantic class to read.
-    :param default_files: The default config files to read.
-    :param prefix: The prefix to use for environment variables.
-    :param environ: The environment variables to read from.
     """
 
+    #: The Pydantic class to read.
     cls: t.Type
+
+    #: The default config files to read.
     default_files: t.Union[t.Sequence[Path], str]
+
+    #: The prefix to use for environment variables.
     prefix: str
+
+    #: The environment variables to read from.
     environ: t.Optional[t.Dict] = None
 
     @cached_property

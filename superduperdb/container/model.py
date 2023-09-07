@@ -43,12 +43,12 @@ class _TrainingConfiguration(Component):
     :param version: Version number of the configuration
     """
 
-    #: A unique name for the class
-    type_id: t.ClassVar[str] = 'training_configuration'
-
     identifier: str
     kwargs: t.Optional[t.Dict] = None
     version: t.Optional[int] = None
+
+    #: A unique name for the class
+    type_id: t.ClassVar[str] = 'training_configuration'
 
     def get(self, k, default=None):
         try:
@@ -60,24 +60,30 @@ class _TrainingConfiguration(Component):
 class PredictMixin:
     """
     Mixin class for components which can predict.
-
-    :param identifier: Unique identifier of model
-    :param encoder: Encoder instance (optional)
-    :param preprocess: Preprocess function (optional)
-    :param postprocess: Postprocess function (optional)
-    :param collate_fn: Collate function (optional)
-    :param batch_predict: Whether to batch predict (optional)
-    :param takes_context: Whether the model takes context into account (optional)
-    :param to_call: The method to use for prediction (optional)
     """
 
+    #: Unique identifier of model
     identifier: str
+
+    #: Encoder instance (optional)
     encoder: EncoderArg
+
+    #: Preprocess function (optional)
     preprocess: t.Union[t.Callable, Artifact, None] = None
+
+    #: Postprocess function (optional)
     postprocess: t.Union[t.Callable, Artifact, None] = None
+
+    #: Collate function (optional)
     collate_fn: t.Union[t.Callable, Artifact, None] = None
+
+    #: Whether to batch predict (optional)
     batch_predict: bool
+
+    #: Whether the model takes context into account (optional)
     takes_context: bool
+
+    #: The method to use for prediction (optional)
     to_call: t.Callable
 
     def create_predict_job(
@@ -365,30 +371,36 @@ class PredictMixin:
 
 @dc.dataclass
 class Model(Component, PredictMixin):
-    """
-    Model component which wraps a model to become serializable
+    """Model component which wraps a model to become serializable"""
 
-    :param identifier: Unique identifier of model
-    :param object: Model object, e.g. sklearn model, etc..
-    :param encoder: Encoder instance (optional)
-    :param preprocess: Preprocess function (optional)
-    :param postprocess: Postprocess function (optional)
-    :param collate_fn: Collate function (optional)
-    :param metrics: Metrics to use (optional)
-    :param predict_method: The method to use for prediction (optional)
-    :param batch_predict: Whether to batch predict (optional)
-    :param takes_context: Whether the model takes context into account (optional)
-    """
-
+    #: Unique identifier of model
     identifier: str
+
+    #: Model object, e.g. sklearn model, etc..
     object: t.Union[Artifact, t.Any]
+
+    #: Encoder instance (optional)
     encoder: t.Any = None
+
+    #: Preprocess function (optional)
     preprocess: t.Union[t.Callable, Artifact, None] = None
+
+    #: Postprocess function (optional)
     postprocess: t.Union[t.Callable, Artifact, None] = None
+
+    #: Collate function (optional)
     collate_fn: t.Union[t.Callable, Artifact, None] = None
+
+    #: Metrics to use (optional)
     metrics: t.Sequence[t.Union[str, Metric, None]] = ()
+
+    #: The method to use for prediction (optional)
     predict_method: t.Optional[str] = None
+
+    #: Whether to batch predict (optional)
     batch_predict: bool = False
+
+    #: Whether the model takes context into account (optional)
     takes_context: bool = False
 
     train_X: DataArg = None

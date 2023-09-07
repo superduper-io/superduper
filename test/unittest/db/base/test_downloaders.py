@@ -1,7 +1,8 @@
 import os
-import shutil
+from test.unittest.db.mongodb.test_database import IMAGE_URL
 
 import pytest
+import tdir
 
 from superduperdb import CFG
 from superduperdb.container.document import Document
@@ -9,10 +10,7 @@ from superduperdb.db.base.download import Fetcher
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.pillow.image import pil_image
 
-remote = os.environ.get('SUPERDUPERDB_REMOTE_TEST', 'local')
-
-
-IMAGE_URL = 'https://www.superduperdb.com/logos/white.png'
+remote = os.environ.get('SDDB_REMOTE_TEST', 'local')
 
 
 def test_s3_and_web():
@@ -21,19 +19,14 @@ def test_s3_and_web():
 
 
 @pytest.fixture
-def make_hybrid_cfg():
-    old = CFG.downloads.hybrid
-    CFG.downloads.hybrid = True
-    root_old = CFG.downloads.root
-    CFG.downloads.root = '.tdir_hybrid'
-    os.makedirs('.tdir_hybrid', exist_ok=True)
-    yield CFG
-    CFG.downloads.hybrid = old
-    CFG.downloads.root = root_old
-    shutil.rmtree('.tdir_hybrid')
+def patch_cfg_downloads(monkeypatch):
+    with tdir() as td:
+        monkeypatch.setattr(CFG.downloads, 'hybrid', True)
+        monkeypatch.setattr(CFG.downloads, 'root', td)
+        yield
 
 
-def test_file_blobs(empty, make_hybrid_cfg):
+def test_file_blobs(empty, patch_cfg_downloads):
     to_insert = [
         Document(
             {
@@ -58,6 +51,4 @@ def test_file_blobs(empty, make_hybrid_cfg):
 
     empty.execute(Collection('documents').insert_many(to_insert, encoders=(pil_image,)))
     empty.execute(Collection('documents').find_one())
-    imgs = os.listdir('.tdir_hybrid/')
-
-    assert imgs
+    assert list(CFG.downloads.root.iterdir())

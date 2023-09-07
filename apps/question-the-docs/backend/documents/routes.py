@@ -1,3 +1,5 @@
+import typing as t
+
 from backend.config import settings
 from backend.documents.models import Answer, Query
 from fastapi import APIRouter, Request
@@ -6,6 +8,11 @@ from superduperdb.db.mongodb.query import Collection
 
 documents_router = APIRouter(prefix='/documents', tags=['docs'])
 
+@documents_router.get(
+    '/documentation_list',
+)
+async def documentation_list() -> t.List[str]:
+    return settings.default_repos
 
 @documents_router.post(
     '/query',

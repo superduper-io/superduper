@@ -1,6 +1,11 @@
 #!/bin/bash
 
-set -e  # Stop execution if any command fails
+set -eu
+
+if [[ "$(python --version)" != "Python 3.8"* ]] ; then
+    echo 'This script must be run under Python 3.8'
+    exit 1
+fi
 
 python -m pip install --upgrade pip-tools pip
 

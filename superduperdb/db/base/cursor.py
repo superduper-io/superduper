@@ -14,19 +14,23 @@ class SuperDuperCursor:
     """
     A cursor that wraps a cursor and returns ``Document`` wrapping
     a dict including ``Encodable`` objects.
-
-    :param raw_cursor: the cursor to wrap
-    :param id_field: the field to use as the document id
-    :param encoders: a dict of encoders to use to decode the documents
-    :param features: a dict of features to add to the documents
-    :param scores: a dict of scores to add to the documents
     """
 
+    #: the cursor to wrap
     raw_cursor: t.Any
+
+    #: the field to use as the document id
     id_field: str
+
+    #: a dict of encoders to use to decode the documents
     encoders: t.Dict[str, Encoder] = dc.field(default_factory=dict)
+
+    #: a dict of features to add to the documents
     features: t.Optional[t.Dict[str, str]] = None
+
+    #: a dict of scores to add to the documents
     scores: t.Optional[t.Dict[str, float]] = None
+
     _it: int = 0
 
     @cached_property

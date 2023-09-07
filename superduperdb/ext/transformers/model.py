@@ -33,18 +33,18 @@ def TransformersTrainerConfiguration(identifier: str, *args, **kwargs):
 
 @dc.dataclass
 class Pipeline(Model):
-    """
-    A wrapper for ``transformers.Pipeline``.
+    """A wrapper for ``transformers.Pipeline``."""
 
-    :param preprocess_type: The type of preprocessing to use {'tokenizer'}
-    :param preprocess_kwargs: The type of preprocessing to use. Currently only
-    :param postprocess_kwargs: The type of postprocessing to use.
-    :param task: The task to use for the pipeline.
-    """
-
+    #: The type of preprocessing to use {'tokenizer'}
     preprocess_type: str = 'tokenizer'
+
+    #: The type of preprocessing to use. Currently only
     preprocess_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
+
+    #: The type of postprocessing to use.
     postprocess_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
+
+    #: The task to use for the pipeline.
     task: str = 'text-classification'
 
     def __post_init__(self):

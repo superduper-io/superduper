@@ -14,21 +14,22 @@ class Retry:
     Retry a function until it succeeds.
 
     This is a thin wrapper around the tenacity retry library, using our configs.
-
-    :param exception_types: The exception types to retry on.
-    :param cfg: The retry config.
     """
 
+    #: The exception types to retry on.
     exception_types: ExceptionTypes
-    cfg: s.config.Retry = dc.field(default_factory=lambda: s.CFG.apis.retry)
+
+    #: The retry config.
+    cfg: t.Optional[s.config.Retry] = None
 
     def __call__(self, f: t.Callable) -> t.Any:
+        cfg = self.cfg or s.CFG.apis.retry
         retry = tenacity.retry_if_exception_type(self.exception_types)
-        stop = tenacity.stop_after_attempt(self.cfg.stop_after_attempt)
+        stop = tenacity.stop_after_attempt(cfg.stop_after_attempt)
         wait = tenacity.wait_exponential(
-            max=self.cfg.wait_max,
-            min=self.cfg.wait_min,
-            multiplier=self.cfg.wait_multiplier,
+            max=cfg.wait_max,
+            min=cfg.wait_min,
+            multiplier=cfg.wait_multiplier,
         )
         retrier = tenacity.retry(retry=retry, stop=stop, wait=wait)
         return retrier(f)

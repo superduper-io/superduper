@@ -5,7 +5,6 @@ import typing as t
 import ibis
 from ibis.expr.types.relations import Table as IbisTable
 
-from superduperdb import CFG
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encoder
@@ -641,9 +640,8 @@ class Insert:
     def post(self, db, output, *args, **kwargs):
         graph = None
         [_id for _id in kwargs['pre_output']['ids']]
-        if self.refresh and not CFG.cluster.cdc:
-            # TODO: add refresh functionality
-            pass
+        # TODO: add refresh functionality
+
         return graph, output
 
 

@@ -28,17 +28,18 @@ class QueryType(enum.Enum):
 
 @dc.dataclass
 class Table(Component):
-    '''
-    This is a representation of a table in ibis.
-    '''
+    """This is a representation of an SQL table in ibis."""
 
-    # The name of the table
+    #: The name of the table
     identifier: str
-    # The schema of the table
+
+    #: The schema of the table
     schema: t.Optional[IbisSchema] = None
-    # The table object
+
+    #: The table object
     table: t.Any = None
-    # Primary id of the table
+
+    #: Primary id of the table
     primary_id: str = 'id'
 
     #: A unique name for the class
@@ -91,13 +92,13 @@ class Table(Component):
         return mutated_args
 
     def __getattr__(self, k: str) -> 'QueryLinker':
-        '''
+        """
         This method is responsible for dynamically creating a query chain,
         which can be executed on a database. This is done by creating a
         QueryLinker object, which is a representation of a query chain.
         Under the hood, this is done by creating a QueryChain object, which
         is a representation of a query chain.
-        '''
+        """
 
         if k in self.__dict__:
             return self.__getattr__(k)
@@ -111,14 +112,14 @@ class Table(Component):
         )
 
     def like(self, r: t.Any = None, n: int = 10, vector_index: t.Optional[str] = None):
-        '''
+        """
         This appends a query to the query chain where the query is repsonsible
         for performing a vector search on the parent query chain inputs.
 
         :param r: The vector to search for
         :param n: The number of results to return
         :param vector_index: The vector index to use
-        '''
+        """
         k = 'prelike'
         kwargs = {'r': r, 'n': n, 'vector_index': vector_index}
         query = Query(k, args=[], sddb_kwargs=kwargs)
@@ -133,7 +134,7 @@ class Table(Component):
         valid_prob: float = 0.05,
         **kwargs,
     ):
-        '''
+        """
         This appends a query to the query chain where the query is repsonsible
         for inserting data into the table.
 
@@ -142,7 +143,7 @@ class Table(Component):
         :param verbose: Whether to print the progress of the insert
         :param encoders: The encoders to use
         :param valid_prob: The probability of validating the data
-        '''
+        """
         sddb_kwargs = {
             'refresh': refresh,
             'verbose': verbose,
@@ -167,7 +168,7 @@ class Table(Component):
 
 
 class Query:
-    '''
+    """
     This is a representation of a single query object in ibis query chain.
     This is used to build a query chain that can be executed on a database.
     Query will be executed in the order they are added to the chain.
@@ -184,7 +185,7 @@ class Query:
     :param kwargs: The keyword arguments to pass to the query
     :param sddb_kwargs: The keyword arguments from sddb to pass to the query
     :param connection_parent: If True, the parent of the query will be the connection
-    '''
+    """
 
     def __init__(
         self,
@@ -239,14 +240,14 @@ class Query:
 
 
 class QueryChain:
-    '''
+    """
     This is a representation of a query chain. This is used to build a query chain
     that can be executed on a database. Query will be executed in the order they are
     added to the chain.
 
     :param seed: The seed to start the chain with
     :param type: The type of the seed, either `query` or `attr`
-    '''
+    """
 
     def __init__(
         self,
@@ -292,23 +293,24 @@ class QueryChain:
 
 @dc.dataclass
 class OutputTable:
-    '''
-    This is a representation of model output table in ibis
-    '''
+    """This is a representation of model output table in ibis"""
 
-    # The name of the table
+    #: The name of the table
     model: str
-    # Primary id of the table
+
+    #: Primary id of the table
     primary_id: str = 'id'
-    # The table object
+
+    #: The table object
     table: t.Any = None
-    # The schema of the table
+
+    #: The schema of the table
     output_type: t.Any = None
 
     def create(self, conn: t.Any):
-        '''
+        """
         Create the table in the database
-        '''
+        """
         self.table = conn.create_table(self.model, schema=self.schema)
         return self.table
 
@@ -334,15 +336,17 @@ class OutputTable:
 
 @dc.dataclass
 class InMemoryTable(Component):
-    '''
+    """
     This is a representation of a table in memory (memtable) in ibis.
-    '''
+    """
 
-    # The name of the table
+    #: The name of the table
     identifier: str
-    # The table object
+
+    #: The table object
     table: t.Any = None
-    # Primary id of the table
+
+    #: Primary id of the table
     primary_id: str = 'id'
 
     type_id: t.ClassVar[str] = 'inmemory_table'
@@ -351,13 +355,13 @@ class InMemoryTable(Component):
         return args
 
     def __getattr__(self, k):
-        '''
+        """
         This method is responsible for dynamically creating a query chain,
         which can be executed on a database. This is done by creating a
         QueryLinker object, which is a representation of a query chain.
         Under the hood, this is done by creating a QueryChain object, which
         is a representation of a query chain.
-        '''
+        """
         if k in self.__dict__:
             return self.__getattr__(k)
 
@@ -390,13 +394,13 @@ class _LogicalExprMixin:
 
 @dc.dataclass
 class QueryLinker(Serializable, _LogicalExprMixin):
-    '''
+    """
     This class is responsible for linking together a query chain. It is
     responsible for creating a query chain, which is a representation of a
     ibis query. This is done by creating a QueryChain object, which creates
     a list of `Query` objects. Each `Query` object is a representation of
     a query in the query chain.
-    '''
+    """
 
     # The table that this query chain is linked.
     # This table is the parent ibis table.
@@ -449,7 +453,7 @@ class QueryLinker(Serializable, _LogicalExprMixin):
         return parent
 
     def outputs(self, model: str, db: DB):
-        '''
+        """
         This method is responsible for returning the outputs of a model.
         It is used to get the outputs of a model from a ibis query chain.
         Example:
@@ -457,7 +461,7 @@ class QueryLinker(Serializable, _LogicalExprMixin):
         The above query will return the outputs of the `model_name` model
         with t.filter() ids.
 
-        '''
+        """
         curr_query = self.build(db)
         model_table = db.db.table(model)
         query = curr_query.join(
@@ -502,7 +506,7 @@ class QueryLinker(Serializable, _LogicalExprMixin):
         db.execute(Table(model).insert(table_record))
 
     def __call__(self, *args, **kwargs):
-        '''
+        """
         This method is responsible to mutate the arguments of a query and
         return a new QueryLinker object with updated members.
         The last member of the query chain is updated with theses mutated arguments.
@@ -517,7 +521,7 @@ class QueryLinker(Serializable, _LogicalExprMixin):
         `image::encodable::pil_image`. So, we need to mutate the args to
         `['name', 'age', 'image::encodable::pil_image']`.
 
-        '''
+        """
         args = self.collection.mutate_args(args)
 
         # TODO: handle kwargs
@@ -594,12 +598,12 @@ class PreLike:
         pass
 
     def post(self, db, output, table=None, ibis_table=None, args=[], kwargs={}):
-        '''
+        """
 
         ids, _ = db._select_nearest(
             like=self.r, vector_index=self.vector_index, n=self.n
         )
-        '''
+        """
         ids = [1, 2, 3]
         f = output.filter(ibis_table.__getattr__(self.primary_id).isin(ids))
         return f
@@ -618,10 +622,10 @@ class Insert:
 
     def pre(self, db, table=None, **kwargs):
         # TODO: handle adding table later
-        '''
+        """
         if self.base_table.identifier not in db.tables:
             db.add(self.base_table)
-        '''
+        """
         for e in self.encoders:
             db.add(e)
 

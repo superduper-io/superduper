@@ -11,51 +11,49 @@ from .jsonable import Factory, JSONable
 
 
 class Retry(JSONable):
-    """
-    Describes how to retry using the `tenacity` library
+    """Describes how to retry using the `tenacity` library"""
 
-    :param stop_after_attempt: The number of attempts to make
-    :param wait_max: The maximum time to wait between attempts
-    :param wait_min: The minimum time to wait between attempts
-    :param wait_multiplier: The multiplier for the wait time between attempts
-    """
-
+    #: The number of attempts to make
     stop_after_attempt: int = 2
+
+    #: The maximum time to wait between attempts
     wait_max: float = 10.0
+
+    #: The minimum time to wait between attempts
     wait_min: float = 4.0
+
+    #: The multiplier for the wait time between attempts
     wait_multiplier: float = 1.0
 
 
 class Apis(JSONable):
-    """
-    A container for API connections
+    """A container for API connections"""
 
-    :param providers: A dictionary of API connections
-    :param retry: A ``Retry`` object
-    """
-
+    #: A ``Retry`` object
     retry: Retry = Factory(Retry)
 
 
 class Cluster(JSONable):
-    """
-    Describes a connection to distributed work via Dask
+    """Describes a connection to distributed work via Dask"""
 
-    :param distributed: Whether to use distributed task
-                        management via Dask or not
-    :param deserializers: A list of deserializers
-    :param serializers: A list of serializers
-    :param dask_scheduler: The Dask scheduler URI
-    :param local: Whether the connection is local
-    :param cdc: Whether change data capture should be used
-    """
-
+    #: Whether to use distributed task management via Dask or not
     distributed: bool = False
+
+    #: A list of deserializers
     deserializers: t.List[str] = Factory(list)
+
+    #: A list of serializers
     serializers: t.List[str] = Factory(list)
+
+    #: The Dask scheduler URI
     dask_scheduler: str = 'tcp://localhost:8786'
+
+    #: Whether the connection is local
     local: bool = True
+
+    #: Whether change data capture should be used
     cdc: bool = False
+
     backfill_batch_size: int = 100
 
 
@@ -75,30 +73,28 @@ class LogType(str, Enum):
 
 
 class Logging(JSONable):
-    """
-    Describe how we are going to log. This isn't yet used.
+    """Describe how we are going to log. This isn't yet used."""
 
-    :param level: The log level
-    :param type: The log type
-    :param kwargs: Any additional keyword arguments
-    """
-
+    #: The log level
     level: LogLevel = LogLevel.INFO
+
+    #: The log type
     type: LogType = LogType.STDERR
+
+    #: Any additional keyword arguments
     kwargs: dict = Factory(dict)
 
 
 class Server(JSONable):
-    """
-    Configure the SuperDuperDB server connection information
+    """Configure the SuperDuperDB server connection information"""
 
-    :param host: The host for the connection
-    :param port: The port for the connection
-    :param protocol: The protocol for the connection
-    """
-
+    #: The host for the connection
     host: str = '127.0.0.1'
+
+    #: The port for the connection
     port: int = 3223
+
+    #: The protocol for the connection
     protocol: str = 'http'
 
     @property
@@ -110,51 +106,44 @@ class Downloads(JSONable):
     """
     Configure how downloads are saved in the database
     or to hybrid filestorage (references to filesystem from datastore)
-
-    :param hybrid: Whether hybrid is being used
-    :param root: The root for the connection
     """
 
+    #: Whether hybrid is being used
     hybrid: bool = False
+
+    #: The root for the connection
     root: str = 'data/downloads'
 
 
 class Config(JSONable):
-    """
-    The data class containing all configurable superduperdb values
-
-    :param data_backend: The URI for the data backend
-    :param vector_search: The URI for the vector search
-    :param artifact_store: The URI for the artifact store
-    :param metadata_store: The URI for the metadata store
-
-    :param apis: The ``Apis`` object
-    :param cluster: The ``Cluster`` object
-    :param logging: The ``Logging`` object
-    :param server: The ``Server`` object
-    :param downloads: The ``Downloads`` object
-    """
+    """The data class containing all configurable superduperdb values"""
 
     # 4 main components are URI strings
+    #: The URI for the data backend
     data_backend: str = 'mongodb://localhost:27017'
+
+    #: The URI for the vector search
     vector_search: 'str' = 'inmemory://'  # 'lancedb://./.lancedb'
+
+    #: The URI for the artifact store
     artifact_store: t.Optional[str] = None
+
+    #: The URI for the metadata store
     metadata_store: t.Optional[str] = None
 
-    # main settings for all things related to distributed computing
-    # and change data capture in Cluster
+    #: Settings distributed computing and change data capture
     cluster: Cluster = Factory(Cluster)
 
-    # settings for OPENAI etc.
+    #: Settings for OPENAI and other APIs
     apis: Apis = Factory(Apis)
 
-    # logging - nuff said
+    #: Logging
     logging: Logging = Factory(Logging)
 
-    # experimental server
+    #: Settings for the experimental Rest server
     server: Server = Factory(Server)
 
-    # settings for downloads
+    #: Settings for downloading files
     downloads: Downloads = Factory(Downloads)
 
     class Config(JSONable.Config):

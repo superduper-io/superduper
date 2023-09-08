@@ -4,29 +4,31 @@ import styles from './styles.module.css';
 
 const FeatureList = [
   {
-    title: 'Easy to Use',
+    title: 'Bring AI to your data store',
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Easily deploy, train and manage any AI models and APIs on your datastore: 
+        from LLMs, public APIs to highly custom machine learning models, 
+        use-cases and workflows.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
+    title: 'Build AI applications on top of your datastore',
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        A single scalable deployment of all your AI models and APIs which is 
+        automatically kept up-to-date as new data is processed immediately.
       </>
     ),
   },
   {
-    title: 'Powered by React',
+    title: 'Work with any ML/AI frameworks and APIs',
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Integrate and combine models from Sklearn, PyTorch, HuggingFace
+        with AI APIs such as OpenAI to build even the most complex AI
+        applications and workflows.
       </>
     ),
   },

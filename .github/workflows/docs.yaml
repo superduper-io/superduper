@@ -1,10 +1,10 @@
-name: Documentation
+name: New documentation
 on:
-  push:
-    branches:
-      - main
-    paths:  # only run this action when the docs folder is changed
-      - 'docs/**'
+push:
+  branches:
+    - main
+  paths:  # only run this action when the newdocs folder is changed
+    - 'newdocs/content/**'
 
 # allow the action to write to the gh-pages branch
 permissions:
@@ -22,6 +22,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc
+          sudo apt-get install nodejs npm
 
       - name: Set up Python 3.10
         id: setup-python
@@ -38,20 +39,31 @@ jobs:
             ${{ env.pythonLocation }}
           key: 3.10-ubuntu-latest-${{ hashFiles('.github/ci-pinned-requirements/docs.txt') }}
 
+      - name: Build docs and use-cases
+        run: |
+          cd newdocs
+          npm i
+          npm run build
+          cd ..
+
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r .github/ci-pinned-requirements/docs.txt
     
-      - name: Build docs
+      - name: Build api docs
         # doc build is available in .cache/docs
         run: |
           python -m superduperdb docs
 
+      - name: Copy api docs to build directory
+        run: |
+          cp -r .cache/docs newdocs/build/apidocs
+
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/heads/main'
+        # if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .cache/docs
+          publish_dir: newdocs/build
           cname: docs.superduperdb.com
           enable_jekyll: true

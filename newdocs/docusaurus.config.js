@@ -21,7 +21,7 @@ const config = {
   organizationName: 'SuperDuperDB', // Usually your GitHub org/user name.
   projectName: 'superduperdb', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -86,7 +86,7 @@ const config = {
           },
         //   {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://docs.superduperdb.com/source/modules.html',
+            href: 'https://docs.superduperdb.com/apidocs/source/superduperdb.html',
             label: 'API',
             position: 'left',
           },

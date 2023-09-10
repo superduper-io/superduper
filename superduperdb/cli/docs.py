@@ -8,11 +8,11 @@ from superduperdb.misc import run
 
 from . import command
 
-DOCS = 'docs'
+DOCS = 'apidocs'
 DOCS_ROOT = ROOT / DOCS
 SOURCE_ROOT = DOCS_ROOT / 'source'
 CODE_ROOT = ROOT / 'superduperdb'
-TMP_DIR = ROOT / '.cache/docs'
+TMP_DIR = ROOT / '.cache/apidocs'
 
 run_cmd = functools.partial(run.run, cwd=TMP_DIR)
 

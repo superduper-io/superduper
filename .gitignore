@@ -175,8 +175,8 @@ lightning_logs/
 .lancedb
 
 # docs
-/docs/source/
-/docs/examples/*.zip
+/apidocs/source/
+/docs/source
 /docs/node_modules
 /docs/.docusaurus
 
@@ -186,5 +186,3 @@ test/sleep.json
 
 # editors
 .vscode
-
-

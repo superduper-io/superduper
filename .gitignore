@@ -177,6 +177,9 @@ lightning_logs/
 # docs
 /docs/source/
 /docs/examples/*.zip
+/docs/node_modules
+/docs/.docusaurus
+
 monkeytype.sqlite3
 
 test/sleep.json

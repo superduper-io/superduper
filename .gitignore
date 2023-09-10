@@ -175,8 +175,7 @@ lightning_logs/
 .lancedb
 
 # docs
-/docs/source/
-/docs/examples/*.zip
+/apidocs/source/
 monkeytype.sqlite3
 
 test/sleep.json

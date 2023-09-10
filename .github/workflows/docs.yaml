@@ -4,7 +4,7 @@ push:
   branches:
     - main
   paths:  # only run this action when the newdocs folder is changed
-    - 'newdocs/content/**'
+    - 'docs/content/**'
 
 # allow the action to write to the gh-pages branch
 permissions:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Build docs and use-cases
         run: |
-          cd newdocs
+          cd docs
           npm i
           npm run build
           cd ..
@@ -57,13 +57,13 @@ jobs:
 
       - name: Copy api docs to build directory
         run: |
-          cp -r .cache/docs newdocs/build/apidocs
+          cp -r .cache/apidocs docs/build/apidocs
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         # if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: newdocs/build
+          publish_dir: docs/build
           cname: docs.superduperdb.com
           enable_jekyll: true

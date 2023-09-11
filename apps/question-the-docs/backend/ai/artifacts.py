@@ -1,4 +1,4 @@
-from backend.ai.utils.github import save_github_md_files_locally
+from backend.ai.utils.github import URL_CACHE, save_github_md_files_locally
 from backend.ai.utils.text import chunk_file_contents
 from backend.config import settings
 
@@ -18,7 +18,7 @@ def _docs(src):
     files = save_github_md_files_locally(src)
 
     # Chunked text is more suitable input for the AI models
-    artifacts = chunk_file_contents(src, files)
+    artifacts = chunk_file_contents(src, files, URL_CACHE)
     rows = (row for _, row in artifacts.iterrows())
 
     key = settings.vector_embedding_key

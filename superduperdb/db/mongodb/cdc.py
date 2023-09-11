@@ -19,7 +19,7 @@ from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS, query
-from superduperdb.misc.task_queue import cdc_queue
+from superduperdb.db.mongodb.cdc_queue import cdc_queue
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 
 MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}

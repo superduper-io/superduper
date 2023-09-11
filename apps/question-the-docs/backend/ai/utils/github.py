@@ -1,12 +1,15 @@
 'AI helper functions for loading data from GitHub.'
 
 import base64
+import json
 import dataclasses as dc
 import os
 import re
 from pathlib import Path
 
 import requests
+
+from backend.config import settings
 
 URL_CACHE = {}
 
@@ -18,28 +21,21 @@ class Repo:
     branch: str
     documentation_dir: str
     documentation_base_url: str
+    documentation_url_root_path: str
     documentation_file_extension: str = 'html'
 
-
-superduperdb = Repo(
-    'SuperDuperDB',
-    'superduperdb',
-    'main',
-    'docs',
-    'https://superduperdb.github.io/superduperdb/docs/docs',
-    documentation_file_extension = ''
-)
-langchain = Repo(
-    'langchain-ai', 'langchain', 'master', 'docs/docs_skeleton/docs', 'https://python.langchain.com/docs'
-)
+REPOS = {}
 
 
-huggingface= Repo(
-    'huggingface', 'transformers', 'main', 'docs/source/en', 'https://huggingface.co/docs/transformers', documentation_file_extension=''
-)
+def load_repos():
+    with open(settings.repo_config_path, 'rb') as r:
+        repo_config = json.load(r)
+    
+    for repo, config in repo_config.items():
+        REPOS[repo] = Repo(**config)
 
-
-REPOS = {'superduperdb': superduperdb, 'langchain': langchain, 'huggingface': huggingface}
+# Load the repo configuration.
+load_repos()
 
 
 # TODO: Use GraphQL API instead of REST API and convert to async
@@ -100,6 +96,7 @@ def save_github_md_files_locally(repo):
     documentation_dir = repo_metadata.documentation_dir
     documentation_base_url = repo_metadata.documentation_base_url
     doc_extension = repo_metadata.documentation_file_extension
+    documentation_url_root_path = repo_metadata.documentation_url_root_path
 
     repo_contents = gh_repo_contents(owner, name, branch)
     urls = documentation_markdown_urls(repo_contents, documentation_dir)
@@ -115,25 +112,17 @@ def save_github_md_files_locally(repo):
             return f'{documentation_base_url}/{path}#{section}'
 
 
-    def _remove_overlap_prefix(x, y):
-        x_dirs = x.split('/')
-        y_dirs  = y.split('/')
-        for i in range(len(y_dirs)):
-            try:
-                if y_dirs[i] == x_dirs[-i]:
-                    return '/'.join(y_dirs[i+1:])
-            except:
-                return '/'.join(y_dirs)
-        return y
-
+    def _remove_overlap_prefix(doc_path, base_overlap):
+        x_dirs = doc_path.split('/')
+        y_dirs  = base_overlap.split('/')
+        return '/'.join(x_dirs[len(y_dirs):]) 
 
     for i, url in enumerate(urls):
         content = download_and_decode(url['url'])
         sections = re.findall(r'^\s*(#+)\s*(.*)', content.decode('utf-8'), re.MULTILINE)
         for _, s in sections:
             relative_path = url['path']
-            relative_path = '/'.join(relative_path.split('/')[1:])
-            relative_path = _remove_overlap_prefix(documentation_dir, relative_path)
+            relative_path = _remove_overlap_prefix(relative_path, documentation_url_root_path)
             section_file = os.path.splitext(relative_path)[0]
             s_encoded = s.replace(' ', '-').lower()
             if documentation_base_url:

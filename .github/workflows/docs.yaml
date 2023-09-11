@@ -5,6 +5,7 @@ on:
       - main
     paths:  # only run this action when the newdocs folder is changed
       - 'docs/content/**'
+      - 'docs/blog/**'
 
 # allow the action to write to the gh-pages branch
 permissions:

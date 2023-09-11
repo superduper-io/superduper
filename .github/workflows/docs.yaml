@@ -1,10 +1,10 @@
 name: New documentation
 on:
-push:
-  branches:
-    - main
-  paths:  # only run this action when the newdocs folder is changed
-    - 'docs/content/**'
+  push:
+    branches:
+      - main
+    paths:  # only run this action when the newdocs folder is changed
+      - 'docs/content/**'
 
 # allow the action to write to the gh-pages branch
 permissions:

@@ -1,17 +1,19 @@
-from pydantic.v1 import BaseModel, Field
+from enum import Enum
+
+from pydantic.v1 import BaseModel
 
 
-class Repo(str):
+class Repo(str, Enum):
     superduperdb = 'superduperdb'
     langchain = 'langchain'
     fastchat = 'fastchat'
 
 
 class Query(BaseModel):
-    query: str = Field(...)
-    collection_name: Repo = Field(...)
+    query: str
+    collection_name: Repo
 
 
 class Answer(BaseModel):
-    answer: str = Field(...)
-    source_urls: list = Field(...)
+    answer: str
+    source_urls: list

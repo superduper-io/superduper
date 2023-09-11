@@ -8,9 +8,9 @@ from pymongo import MongoClient
 
 from superduperdb import superduper
 
-# TODO: Fix before deployment
 origins = [
-    '*',
+    'https://staging.djjaum0vi81ax.amplifyapp.com/',
+    'https://www.qtd.superduperdb.com/',
 ]
 
 

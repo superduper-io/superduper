@@ -2,6 +2,8 @@ FROM python:3.10-bullseye
 
 WORKDIR /app
 
+COPY ./.default_repo_config.json /app/.default_repo_config.json
+
 COPY backend backend
 
 COPY frontend/ .

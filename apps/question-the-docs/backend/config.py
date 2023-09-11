@@ -19,6 +19,7 @@ class AISettings(FastAPISettings):
     default_repos: t.List[str] = [
         'langchain', 'superduperdb', 'huggingface'
     ]
+    repo_config_path = '.default_repo_config.json'
 
     # Query configuration
     nearest_to_query: int = 5

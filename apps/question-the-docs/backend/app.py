@@ -14,14 +14,10 @@ origins = [
 ]
 
 
-def init_routers(app: FastAPI) -> None:
-    app.include_router(documents_router)
-
-
 def create_app() -> FastAPI:
-    _app = FastAPI(title='Question the Docs')
+    app = FastAPI(title='Question the Docs')
 
-    _app.add_middleware(
+    app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=True,
@@ -29,25 +25,25 @@ def create_app() -> FastAPI:
         allow_headers=['*'],
     )
 
-    @_app.on_event('startup')
+    @app.on_event('startup')
     def startup_db_client():
-        _app.mongodb_client = MongoClient(settings.mongo_uri)
-        _app.mongodb = _app.mongodb_client[settings.mongo_db_name]
+        app.mongodb_client = MongoClient(settings.mongo_uri)
+        app.mongodb = app.mongodb_client[settings.mongo_db_name]
 
         # We wrap our MongoDB to make it a SuperDuperDB!
-        _app.superduperdb = superduper(_app.mongodb)
+        app.superduperdb = superduper(app.mongodb)
 
         # An Artifact is information that has been pre-processed
         # for use with AI models.
-        load_ai_artifacts(_app.superduperdb)
+        load_ai_artifacts(app.superduperdb)
 
         # A Component is an AI Model. Each Component can process
         # one or more types of Artifact.
-        install_ai_components(_app.superduperdb)
+        install_ai_components(app.superduperdb)
 
-    @_app.on_event('shutdown')
+    @app.on_event('shutdown')
     def shutdown_db_client():
-        _app.mongodb_client.close()
+        app.mongodb_client.close()
 
-    init_routers(app=_app)
-    return _app
+    app.include_router(documents_router)
+    return app

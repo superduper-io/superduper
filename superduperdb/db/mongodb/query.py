@@ -87,6 +87,7 @@ class Collection(Serializable):
         :param *args: Positional query arguments to ``pymongo.Collection.insert_many``
         :param refresh: If true, refresh the underlying collection
         :param encoders: A dictionary/ lookup of encoders to use for encoding
+        :param **kwargs: Named query arguments to ``pymongo.Collection.insert_many``
         """
         return InsertMany(
             args=args[1:],
@@ -208,6 +209,7 @@ class ReplaceOne(Update):
 
     #: The collection to perform the query on
     collection: Collection
+
     #: Filter results by this dictionary
     filter: t.Dict
 
@@ -251,13 +253,13 @@ class PreLike(Like):
     """A query that returns documents like another document"""
 
     #: The collection to perform the query on
-    r: Document
+    collection: Collection
 
     #: The document to match
-    vector_index: str
+    r: Document
 
     #: The name of the vector index to use
-    collection: Collection
+    vector_index: str
 
     #: The number of documents to return
     n: int = 100
@@ -600,10 +602,12 @@ class CountDocuments(Select):
 class FeaturizeOne(SelectOne):
     """A query to feature just one document"""
 
+    #: The features to extract
     features: t.Dict[str, str]
+
+    #: The parent query to use for the like query (if applicable)
     parent_find_one: t.Any = None
 
-    #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.FeaturizeOne'] = 'mongodb.FeaturizeOne'
 
     @override

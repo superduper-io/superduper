@@ -10,8 +10,6 @@ from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 
 
-
-
 def install_openai_chatbot(db):
     db.add(
         OpenAIChatCompletion(

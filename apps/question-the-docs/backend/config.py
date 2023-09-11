@@ -1,6 +1,9 @@
 import typing as t
 
-from pydantic.v1 import BaseSettings
+try:
+    from pydantic.v1 import BaseSettings
+except ImportError:
+    from pydantic import BaseSettings
 
 PROMPT_LINE = '\
 NOTE: Try to answer as much in line with the context as possible. \

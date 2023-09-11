@@ -126,7 +126,10 @@ def _encode(r: t.Any) -> t.Any:
         return {k: _encode(v) for k, v in r.items()}
     if isinstance(r, Encodable):
         return r.encode()
-    if isinstance(r, (bool, int, str, bson.ObjectId)):
+
+    from superduperdb.db.mongodb.cdc.base import ObjectId
+
+    if isinstance(r, (bool, int, str, ObjectId)):
         return r
     s.log.info(f'Unexpected type {type(r)} in Document.encode')
     return r

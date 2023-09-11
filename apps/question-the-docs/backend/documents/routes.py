@@ -9,11 +9,9 @@ from superduperdb.db.mongodb.query import Collection
 documents_router = APIRouter(prefix='/documents', tags=['docs'])
 
 
-@documents_router.get(
-    '/documentation_list',
-)
+@documents_router.get('/documentation_list')
 async def documentation_list() -> t.List[str]:
-    return settings.default_repos
+    return settings.documentation_sources
 
 
 @documents_router.post(
@@ -21,19 +19,23 @@ async def documentation_list() -> t.List[str]:
     response_description='Query document database for data to answer prompt',
 )
 async def query_docs(request: Request, query: Query) -> Answer:
+    #
     # Step 1: Build your query
+    #
     # Build your query here combining vector-search "like(...)"
     # with classical mongodb queries "find(...)"
+    #
     collection = Collection(name=query.collection_name)
+
+    to_find = {settings.vector_embedding_key: query.query}
     context_select = collection.like(
-        {settings.vector_embedding_key: query.query},
+        to_find,
         n=settings.nearest_to_query,
         vector_index=query.collection_name,
     ).find()
-    db = request.app.superduperdb
 
-    contexts = list(db.execute(context_select))
-    src_urls = [context.unpack()['src_url'] for context in contexts]
+    db = request.app.superduperdb
+    src_urls = {c.unpack()['src_url'] for c in db.execute(context_select)}
 
     # Step 2: Execute your query
     db_response, _ = await db.apredict(
@@ -42,5 +44,4 @@ async def query_docs(request: Request, query: Query) -> Answer:
         context_select=context_select,
         context_key=settings.vector_embedding_key,
     )
-    src_urls = list(set(src_urls))
-    return Answer(answer=db_response.unpack(), source_urls=src_urls)
+    return Answer(answer=db_response.unpack(), source_urls=list(src_urls))

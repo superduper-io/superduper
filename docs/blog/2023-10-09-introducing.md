@@ -10,7 +10,7 @@ It's 2023, and unless you've been in cryo-sleep  since mid-2022, you'll have hea
 
 <!--truncate-->
 
-AI models can allow users to extract valuable information out of their existing data stores (databases, data lakes, data warehouses), in a host of different ways: semantic search, retrieval augmented generation, visual classification, conditional image generation, recommendation systems, anomaly and fraud detection, image search, multimodal search, time-series analysis and much more.
+AI models can allow users to extract valuable information out of their existing data stores (databases, data lakes, data warehouses), in a host of different ways: semantic search, retrieval augmented generation, visual classification, conditional image generation, recommendation systems, anomaly and fraud detection, image search, multimodal search, time-series analysis and much, much more.
 
 In the AI-powered future, a full-featured data application will have five parts:
 

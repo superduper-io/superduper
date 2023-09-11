@@ -28,7 +28,8 @@ import typing as t
 
 from superduperdb.db.base import backends
 from superduperdb.db.base.db import DB
-from superduperdb.db.mongodb import cdc
+from superduperdb.db.mongodb.cdc.base import BaseDatabaseListener
+from superduperdb.db.mongodb.cdc.db_listener import MongoDatabaseListener
 from superduperdb.db.mongodb.query import Collection
 
 DBListenerType = t.TypeVar('DBListenerType')
@@ -49,7 +50,7 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
     def create(self, *args, **kwargs) -> DBListenerType:
         stop_event = threading.Event()
         kwargs['stop_event'] = stop_event
-        listener = cdc.MongoDatabaseListener(*args, **kwargs)
+        listener = MongoDatabaseListener(*args, **kwargs)
         return t.cast(DBListenerType, listener)
 
 
@@ -59,7 +60,7 @@ def DatabaseListener(
     identifier: str = '',
     *args,
     **kwargs,
-) -> cdc.BaseDatabaseListener:
+) -> BaseDatabaseListener:
     """
     Create an instance of ``BaseDatabaseListener``.
     Not to be confused with ``superduperdb.container.listener.Listener``.
@@ -77,6 +78,6 @@ def DatabaseListener(
     if db_type != 'mongodb':
         raise NotImplementedError(f'Database {db_type} not supported yet!')
 
-    factory_factory = DatabaseListenerFactory[cdc.MongoDatabaseListener]
+    factory_factory = DatabaseListenerFactory[MongoDatabaseListener]
     db_factory = factory_factory(db_type=db_type)
     return db_factory.create(db=db, on=on, identifier=identifier, *args, **kwargs)

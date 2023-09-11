@@ -1,64 +1,59 @@
 import dataclasses as dc
 import datetime
 import json
-import queue
 import threading
 import traceback
 import typing as t
-from abc import ABC, abstractmethod
 from collections import Counter
 from enum import Enum
 
-from bson.objectid import ObjectId as BsonObjectId
 from pymongo.change_stream import CollectionChangeStream
 
 from superduperdb import logging
-from superduperdb.container.job import FunctionJob
-from superduperdb.container.serializable import Serializable
-from superduperdb.container.task_workflow import TaskWorkflow
-from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS, query
-from superduperdb.db.mongodb.cdc_queue import cdc_queue
-from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
+
+from .base import BaseDatabaseListener, CachedTokens, DBEvent, Packet, TokenType
+from .handler import CDCHandler
+from .task_queue import cdc_queue
 
 MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
-TokenType = t.Dict[str, str]
 
 
-class DBEvent(Enum):
-    """`DBEvent` simple enum to hold mongo basic events."""
-
-    delete: str = 'delete'
-    insert: str = 'insert'
-    update: str = 'update'
-
-    @classmethod
-    def has_value(cls, value):
-        return value in cls._value2member_map_
-
-
-class ObjectId(BsonObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if not isinstance(v, BsonObjectId):
-            raise TypeError('Id is required.')
-        return str(v)
-
-
-@dc.dataclass
-class Packet:
+class CDCKeys(Enum):
     """
-    A base packet to represent message in task queue.
+    A enum to represent mongo change document keys.
     """
 
-    ids: t.List[t.Union[ObjectId, str]]
-    query: t.Optional[Serializable]
-    event_type: str = DBEvent.insert.value
+    operation_type = 'operationType'
+    document_key = 'documentKey'
+    update_descriptions_key = 'updateDescription'
+    update_field_key = 'updatedFields'
+    document_data_key = 'fullDocument'
+    deleted_document_data_key = 'documentKey'
+
+
+class _DatabaseListenerThreadScheduler(threading.Thread):
+    def __init__(
+        self,
+        listener: BaseDatabaseListener,
+        stop_event: threading.Event,
+        start_event: threading.Event,
+    ) -> None:
+        threading.Thread.__init__(self, daemon=True)
+        self.stop_event = stop_event
+        self.start_event = start_event
+        self.listener = listener
+
+    def run(self) -> None:
+        try:
+            cdc_stream = self.listener.setup_cdc()
+            self.start_event.set()
+            while not self.stop_event.is_set():
+                self.listener.next_cdc(cdc_stream)
+        except Exception:
+            logging.error('In _DatabaseListenerThreadScheduler')
+            traceback.print_exc()
 
 
 @dc.dataclass
@@ -81,268 +76,6 @@ class MongoChangePipeline:
             raise ValueError(f'Unknown operations: {bad}')
 
         return [{'$match': {'operationType': {'$in': [*self.matching_operations]}}}]
-
-
-class CachedTokens:
-    token_path = '.cdc.tokens'
-    separate = '\n'
-
-    def __init__(self):
-        # BROKEN: self._current_tokens is never read from
-        self._current_tokens = []
-
-    def append(self, token: TokenType) -> None:
-        with open(CachedTokens.token_path, 'a') as fp:
-            stoken = json.dumps(token)
-            stoken = stoken + self.separate
-            fp.write(stoken)
-
-    def load(self) -> t.Sequence[TokenType]:
-        with open(CachedTokens.token_path) as fp:
-            tokens = fp.read().split(self.separate)[:-1]
-            self._current_tokens = [TokenType(json.loads(t)) for t in tokens]
-        return self._current_tokens
-
-
-class BaseDatabaseListener(ABC):
-    """
-    A Base class which defines basic functions to implement.
-    """
-
-    @abstractmethod
-    def listen(self):
-        pass
-
-    @abstractmethod
-    def stop(self):
-        pass
-
-    @abstractmethod
-    def setup_cdc(self) -> 'CollectionChangeStream':
-        pass
-
-    @abstractmethod
-    def next_cdc(self, stream: 'CollectionChangeStream') -> None:
-        pass
-
-
-def delete_vectors(
-    indexing_listener_identifier: str,
-    cdc_query: t.Optional[Serializable],
-    ids: t.Sequence[str],
-    db=None,
-):
-    """
-    A helper fxn to copy vectors of a `indexing_listener` component/model of
-    a `vector_index` listener.
-
-    This function will be added as node to the taskworkflow after every
-    `indexing_listener` in the defined listeners in db.
-
-    :param indexing_listener_identifier: A identifier of indexing listener.
-    :param cdc_query: A query which will be used by `db._build_task_workflow` method
-    :param ids: List of ids which were observed as changed documents.
-    :param db: A ``DB`` instance.
-    """
-    config = VectorCollectionConfig(id=indexing_listener_identifier, dimensions=0)
-    table = db.vector_database.get_table(config)
-    table.delete_from_ids(ids)
-
-
-def copy_vectors(
-    indexing_listener_identifier: str,
-    cdc_query: Serializable,
-    ids: t.Sequence[str],
-    db=None,
-):
-    """
-    A helper fxn to copy vectors of a `indexing_listener` component/model of
-    a `vector_index` listener.
-
-    This function will be added as node to the taskworkflow after every
-    `indexing_listener` in the defined listeners in db.
-
-    :param indexing_listener_identifier: A identifier of indexing listener.
-    :param cdc_query: A query which will be used by `db._build_task_workflow` method
-    :param ids: List of ids which were observed as changed documents.
-    :param db: A ``DB`` instance.
-    """
-    query = Serializable.deserialize(cdc_query)
-    select = query.select_using_ids(ids)
-    docs = db.select(select)
-    docs = [doc.unpack() for doc in docs]
-    model, _, key = indexing_listener_identifier.rpartition('/')
-    vectors = [
-        {'vector': doc['_outputs'][key][model], 'id': str(doc['_id'])} for doc in docs
-    ]
-    dimensions = len(vectors[0]['vector'])
-    config = VectorCollectionConfig(
-        id=indexing_listener_identifier, dimensions=dimensions
-    )
-    table = db.vector_database.get_table(config, create=True)
-
-    vector_list = [VectorCollectionItem(**vector) for vector in vectors]
-    table.add(vector_list, upsert=True)
-
-
-def _vector_task_factory(task: str = 'copy') -> t.Tuple[t.Callable, str]:
-    if task == 'copy':
-        return copy_vectors, 'copy_vectors'
-    elif task == 'delete':
-        return delete_vectors, 'delete_vectors'
-    raise NotImplementedError(f'Unknown task: {task}')
-
-
-class CDCHandler(threading.Thread):
-    """
-    This class is responsible for handling the change by executing the taskflow.
-    This class also extends the task graph by adding funcation job node which
-    does post model executiong jobs, i.e `copy_vectors`.
-    """
-
-    _QUEUE_BATCH_SIZE: int = 100
-    _QUEUE_TIMEOUT: float = 0.01
-
-    def __init__(self, db: DB, stop_event: threading.Event):
-        """__init__.
-
-        :param db: a superduperdb instance.
-        :param stop_event: A threading event flag to notify for stoppage.
-        """
-        self.db = db
-        self._stop_event = stop_event
-
-        threading.Thread.__init__(self, daemon=False)
-
-    def submit_task_workflow(
-        self, cdc_query: t.Optional[Serializable], ids: t.Sequence, task: str = "copy"
-    ) -> None:
-        """submit_task_workflow.
-        A fxn to build a taskflow and execute it with changed ids.
-        This also extends the task workflow graph with a node.
-        This node is responsible for applying a vector indexing listener,
-        and copying the vectors into a vector search database.
-
-        :param cdc_query: A query which will be used by `db._build_task_workflow` method
-        to extract the desired data.
-        :param ids: List of ids which were observed as changed document.
-        :param task: A task name to be executed on vector db.
-        """
-        if task == "delete":
-            task_workflow = TaskWorkflow(self.db)
-        else:
-            task_workflow = self.db._build_task_workflow(
-                cdc_query, ids=ids, verbose=False
-            )
-
-        task_workflow = self.create_vector_listener_task(
-            task_workflow, cdc_query=cdc_query, ids=ids, task=task
-        )
-        task_workflow.run_jobs()
-
-    def create_vector_listener_task(
-        self,
-        task_workflow: TaskWorkflow,
-        cdc_query: t.Optional[Serializable],
-        ids: t.Sequence[str],
-        task: str = 'copy',
-    ) -> TaskWorkflow:
-        """create_vector_listener_task.
-        A helper function to define a node in taskflow graph which is responsible for
-        executing the defined ``task`` on a vector db.
-
-        :param task_workflow: A DiGraph task flow which defines task on a di graph.
-        :param db: A superduperdb instance.
-        :param cdc_query: A basic find query to get cursor on collection.
-        :param ids: A list of ids observed during the change
-        :param task: A task name to be executed on vector db.
-        """
-        task_callable, task_name = _vector_task_factory(task=task)
-        serialized_cdc_query = cdc_query.serialize() if cdc_query else None
-        for identifier in self.db.show('vector_index'):
-            vector_index = self.db.load(identifier=identifier, type_id='vector_index')
-            vector_index = t.cast(VectorIndex, vector_index)
-            assert not isinstance(vector_index.indexing_listener, str)
-            indexing_listener_identifier = vector_index.indexing_listener.identifier
-            task_workflow.add_node(
-                f'{task_name}({indexing_listener_identifier})',
-                job=FunctionJob(
-                    callable=task_callable,
-                    args=[indexing_listener_identifier, serialized_cdc_query, ids],
-                    kwargs={},
-                ),
-            )
-        if task != 'delete':
-            assert indexing_listener_identifier
-            model, _, key = indexing_listener_identifier.rpartition('/')
-            task_workflow.add_edge(
-                f'{model}.predict({key})',
-                f'{task_name}({indexing_listener_identifier})',
-            )
-        return task_workflow
-
-    def on_create(self, packet: Packet) -> None:
-        ids = packet.ids
-        cdc_query = packet.query
-        self.submit_task_workflow(cdc_query=cdc_query, ids=ids)
-
-    def on_update(self, packet: Packet) -> None:
-        self.on_create(packet)
-
-    def on_delete(self, packet: Packet) -> None:
-        ids = packet.ids
-        cdc_query = packet.query
-        self.submit_task_workflow(cdc_query=cdc_query, ids=ids, task="delete")
-
-    def _handle(self, packet: Packet) -> None:
-        if packet.event_type == DBEvent.insert.value:
-            self.on_create(packet)
-        elif packet.event_type == DBEvent.update.value:
-            self.on_update(packet)
-        elif packet.event_type == DBEvent.delete.value:
-            self.on_delete(packet)
-
-    @staticmethod
-    def _collate_packets(packets: t.Sequence[Packet]) -> Packet:
-        """
-        A helper function to coallate batch of packets into one
-        `Packet`.
-        """
-
-        ids = [packet.ids[0] for packet in packets]
-        query = packets[0].query
-
-        # TODO: cluster Packet for each event.
-        event_type = packets[0].event_type
-        return Packet(ids=ids, query=query, event_type=event_type)
-
-    def get_batch_from_queue(self):
-        """
-        Get a batch of packets from task queue, with a timeout.
-        """
-        packets = []
-        try:
-            for _ in range(self._QUEUE_BATCH_SIZE):
-                packets.append(cdc_queue.get(block=True, timeout=self._QUEUE_TIMEOUT))
-                if self._stop_event.is_set():
-                    return 0
-
-        except queue.Empty:
-            if len(packets) == 0:
-                return None
-        return CDCHandler._collate_packets(packets)
-
-    def run(self):
-        while not self._stop_event.is_set():
-            try:
-                packets = self.get_batch_from_queue()
-                if packets:
-                    self._handle(packets)
-                if packets == 0:
-                    break
-            except Exception as exc:
-                traceback.print_exc()
-                logging.info(f'Error while handling cdc batches :: reason {exc}')
 
 
 class MongoEventMixin:
@@ -411,42 +144,6 @@ class MongoEventMixin:
         ids = [document[self.DEFAULT_ID]]
         packet = Packet(ids=ids, event_type=DBEvent.delete.value, query=None)
         cdc_queue.put_nowait(packet)
-
-
-class CDCKeys(Enum):
-    """
-    A enum to represent mongo change document keys.
-    """
-
-    operation_type = 'operationType'
-    document_key = 'documentKey'
-    update_descriptions_key = 'updateDescription'
-    update_field_key = 'updatedFields'
-    document_data_key = 'fullDocument'
-    deleted_document_data_key = 'documentKey'
-
-
-class _DatabaseListenerThreadScheduler(threading.Thread):
-    def __init__(
-        self,
-        listener: BaseDatabaseListener,
-        stop_event: threading.Event,
-        start_event: threading.Event,
-    ) -> None:
-        threading.Thread.__init__(self, daemon=True)
-        self.stop_event = stop_event
-        self.start_event = start_event
-        self.listener = listener
-
-    def run(self) -> None:
-        try:
-            cdc_stream = self.listener.setup_cdc()
-            self.start_event.set()
-            while not self.stop_event.is_set():
-                self.listener.next_cdc(cdc_stream)
-        except Exception:
-            logging.error('In _DatabaseListenerThreadScheduler')
-            traceback.print_exc()
 
 
 class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):

@@ -1,15 +1,16 @@
 'AI helper functions for loading data from GitHub.'
 
 import base64
-import json
 import dataclasses as dc
+import json
 import os
 import re
 from pathlib import Path
 
 import requests
-
 from backend.config import settings
+
+from superduperdb.misc.compat import cache
 
 URL_CACHE = {}
 
@@ -24,18 +25,11 @@ class Repo:
     documentation_url_root_path: str
     documentation_file_extension: str = 'html'
 
-REPOS = {}
 
-
-def load_repos():
+@cache
+def _repos():
     with open(settings.repo_config_path, 'rb') as r:
-        repo_config = json.load(r)
-    
-    for repo, config in repo_config.items():
-        REPOS[repo] = Repo(**config)
-
-# Load the repo configuration.
-load_repos()
+        return {k: Repo(**v) for k, v in json.load(r).items()}
 
 
 # TODO: Use GraphQL API instead of REST API and convert to async
@@ -53,7 +47,6 @@ def gh_repo_contents(owner, repo, branch=None):
     if branch:
         return get_repo(branch)
     else:
-
         errs = []
         for br in ['main', 'master']:
             try:
@@ -86,9 +79,9 @@ def download_and_decode(url):
 
 def save_github_md_files_locally(repo):
     try:
-        repo_metadata = REPOS[repo]
+        repo_metadata = _repos()[repo]
     except KeyError:
-        raise Exception(f'Repo {repo} not found in {REPOS.keys()}')
+        raise Exception(f'Repo {repo} not found in {_repos().keys()}')
 
     owner = repo_metadata.owner
     name = repo_metadata.name
@@ -111,22 +104,25 @@ def save_github_md_files_locally(repo):
         else:
             return f'{documentation_base_url}/{path}#{section}'
 
-
     def _remove_overlap_prefix(doc_path, base_overlap):
         x_dirs = doc_path.split('/')
-        y_dirs  = base_overlap.split('/')
-        return '/'.join(x_dirs[len(y_dirs):]) 
+        y_dirs = base_overlap.split('/')
+        return '/'.join(x_dirs[len(y_dirs) :])
 
     for i, url in enumerate(urls):
         content = download_and_decode(url['url'])
         sections = re.findall(r'^\s*(#+)\s*(.*)', content.decode('utf-8'), re.MULTILINE)
         for _, s in sections:
             relative_path = url['path']
-            relative_path = _remove_overlap_prefix(relative_path, documentation_url_root_path)
+            relative_path = _remove_overlap_prefix(
+                relative_path, documentation_url_root_path
+            )
             section_file = os.path.splitext(relative_path)[0]
             s_encoded = s.replace(' ', '-').lower()
             if documentation_base_url:
-                URL_CACHE[(repo, s)] = doc_base_path(section_file, s_encoded, doc_extension)
+                URL_CACHE[(repo, s)] = doc_base_path(
+                    section_file, s_encoded, doc_extension
+                )
             else:
                 URL_CACHE[(repo, s)] = relative_path
         with open(f'docs/{repo}/file_{i}', 'wb') as f:

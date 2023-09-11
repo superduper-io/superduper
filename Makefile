@@ -1,5 +1,6 @@
 PYTEST_ARGUMENTS ?=
 COMPOSE_ARGUMENTS ?=
+DIRECTORIES = superduperdb test apps
 
 .PHONY: test-containers
 test-containers:
@@ -11,9 +12,9 @@ clean-test-containers:
 
 .PHONY: lint-and-type-check
 lint-and-type-check:
-	isort --check superduperdb test
-	black --check superduperdb test
-	ruff check superduperdb test
+	isort --check $(DIRECTORIES)
+	black --check $(DIRECTORIES)
+	ruff check $(DIRECTORIES)
 	mypy superduperdb
 	interrogate superduperdb
 
@@ -23,9 +24,9 @@ test: test-containers
 
 .PHONY: fix-and-test
 fix-and-test: test-containers
-	isort superduperdb test
-	black superduperdb test
-	ruff check --fix superduperdb test
+	isort $(DIRECTORIES)
+	black $(DIRECTORIES)
+	ruff check --fix $(DIRECTORIES)
 	mypy superduperdb
 	pytest $(PYTEST_ARGUMENTS)
 	interrogate superduperdb

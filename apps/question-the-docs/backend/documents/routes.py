@@ -8,11 +8,13 @@ from superduperdb.db.mongodb.query import Collection
 
 documents_router = APIRouter(prefix='/documents', tags=['docs'])
 
+
 @documents_router.get(
     '/documentation_list',
 )
 async def documentation_list() -> t.List[str]:
     return settings.default_repos
+
 
 @documents_router.post(
     '/query',

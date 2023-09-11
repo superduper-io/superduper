@@ -1,55 +1,39 @@
 'AI helper functions for text processing.'
-
-import enum
+import dataclasses as dc
 import re
 
 import pandas as pd
-from backend.ai.utils.github import URL_CACHE
+
+search_title = re.compile(r'^\s*(#+)\s*(.*)', re.MULTILINE).search
 
 
-class TextProcessing(enum.Enum):
-    stride = 5
-    window_size = 10
+@dc.dataclass(frozen=True)
+class TextChunker:
+    stride: int = 5
+    window_size: int = 10
+    combine: str = ' '
+    text_col: str = 'text'
 
+    def __call__(self, src, files, cache):
+        return pd.concat([self._slide_window(src, f, cache) for f in files])
 
-def chunk_text_with_sliding_window(
-    repo: str,
-    df: pd.DataFrame,
-    window_size: int,
-    stride: int,
-    combine: str = ' ',
-    text_col: str = 'text',
-) -> pd.DataFrame:
-    context = []
-    n = len(df)
-
-    curr_title = ''
-    titles = []
-    for i in range(0, n, stride):
-        if i + window_size <= n or n - i >= 2:
-            window_text = combine.join(df[text_col].iloc[i : min(i + window_size, n)])
-            title = re.findall(r'^\s*(#+)\s*(.*)', window_text, re.MULTILINE)
-            if title:
-                curr_title = title[0][-1]
-            context.append(window_text)
-            url = URL_CACHE.get((repo, curr_title), 'nan')
-            titles.append(url)
-
-    return pd.DataFrame({text_col: context, 'src_url': titles})
-
-
-def chunk_file_contents(repo, files):
-    context_dfs = []
-    for file in files:
+    def _slide_window(self, src, file, cache):
         with open(file, 'r') as f:
-            content = f.readlines()
-        content_df = pd.DataFrame({'text': content})
-        df = chunk_text_with_sliding_window(
-            repo,
-            content_df,
-            window_size=TextProcessing.window_size.value,
-            stride=TextProcessing.stride.value,
-        )
-        context_dfs.append(df)
-    df = pd.concat(context_dfs)
-    return df
+            df = pd.DataFrame({'text': f.readlines()})
+
+        curr_title = ''
+        context, titles = [], []
+        n = len(df)
+
+        for i in range(0, n - min(2, self.window_size), self.stride):
+            col = df[self.text_col]
+            window_text = self.combine.join(col.iloc[i : min(i + self.window_size, n)])
+            if m := search_title(window_text):
+                curr_title = m.group()
+            context.append(window_text)
+            titles.append(cache.get((src, curr_title), 'nan'))
+
+        return pd.DataFrame({self.text_col: context, 'src_url': titles})
+
+
+chunk_file_contents = TextChunker()

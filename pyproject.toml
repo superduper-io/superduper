@@ -99,6 +99,7 @@ lint = [
     "ruff>=0.0.267",
 ]
 tests = [
+    "fastapi>=0.103.1",
     "httpx>=0.24.1",
     "impall>=1.2.0",
     "lorem>=0.1.1",

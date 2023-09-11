@@ -29,7 +29,7 @@ class TextChunker:
             col = df[self.text_col]
             window_text = self.combine.join(col.iloc[i : min(i + self.window_size, n)])
             if m := search_title(window_text):
-                curr_title = m.match()
+                curr_title = m.group()
             context.append(window_text)
             titles.append(cache.get((src, curr_title), 'nan'))
 

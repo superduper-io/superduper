@@ -84,7 +84,7 @@ const config = {
             label: 'Use-Cases',
             
           },
-        //   {to: '/blog', label: 'Blog', position: 'left'},
+          {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://docs.superduperdb.com/apidocs/source/superduperdb.html',
             label: 'API',

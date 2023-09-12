@@ -1,5 +1,6 @@
 import typing as t
 
+from backend.ai.utils.github import repos
 from backend.config import settings
 from backend.documents.models import Answer, Query
 from fastapi import APIRouter, Request
@@ -10,8 +11,11 @@ documents_router = APIRouter(prefix='/documents', tags=['docs'])
 
 
 @documents_router.get('/documentation_list')
-async def documentation_list() -> t.List[str]:
-    return settings.documentation_sources
+async def documentation_list() -> t.Sequence[str]:
+    names = []
+    for _, config in repos().items():
+        names.append(config.documentation_name)
+    return names
 
 
 @documents_router.post(

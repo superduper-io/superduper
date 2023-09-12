@@ -6,7 +6,7 @@ COPY ./.default_repo_config.json /app/.default_repo_config.json
 
 COPY backend backend
 
-COPY frontend/ .
+COPY mock-frontend/ .
 
 RUN apt-get update && apt-get install -y
 

@@ -1,4 +1,4 @@
 fastapi
 uvicorn[standard]
-pydantic[email]<2
+pydantic
 superduperdb

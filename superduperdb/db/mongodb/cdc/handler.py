@@ -125,20 +125,6 @@ class CDCHandler(threading.Thread):
         elif packet.event_type == DBEvent.delete:
             self.on_delete(packet)
 
-    @staticmethod
-    def _collate_packets(packets: t.Sequence[Packet]) -> Packet:
-        """
-        A helper function to coallate batch of packets into one
-        `Packet`.
-        """
-
-        ids = [packet.ids[0] for packet in packets]
-        query = packets[0].query
-
-        # TODO: cluster Packet for each event.
-        event_type = packets[0].event_type
-        return Packet(ids=ids, query=query, event_type=event_type)
-
     def get_batch_from_queue(self):
         """
         Get a batch of packets from task queue, with a timeout.
@@ -153,7 +139,7 @@ class CDCHandler(threading.Thread):
         except queue.Empty:
             if len(packets) == 0:
                 return None
-        return CDCHandler._collate_packets(packets)
+        return Packet.collate(packets)
 
     def run(self):
         while not self._stop_event.is_set():

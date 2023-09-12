@@ -4,8 +4,6 @@ import re
 
 import pandas as pd
 
-search_title = re.compile(r'^\s*(#+)\s*(.*)', re.MULTILINE).search
-
 
 @dc.dataclass(frozen=True)
 class TextChunker:
@@ -28,9 +26,11 @@ class TextChunker:
         for i in range(0, n - min(2, self.window_size), self.stride):
             col = df[self.text_col]
             window_text = self.combine.join(col.iloc[i : min(i + self.window_size, n)])
-            if m := search_title(window_text):
-                curr_title = m.group()
+            title = re.findall(r'^\s*(#+)\s*(.*)', window_text, re.MULTILINE)
+            if title:
+                curr_title = title[0][-1]
             context.append(window_text)
+
             titles.append(cache.get((src, curr_title), 'nan'))
 
         return pd.DataFrame({self.text_col: context, 'src_url': titles})

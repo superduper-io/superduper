@@ -22,7 +22,7 @@ async def documentation_list() -> t.Sequence[str]:
     '/query',
     response_description='Query document database for data to answer prompt',
 )
-async def query_docs(request: Request, query: Query) -> Answer:
+def query_docs(request: Request, query: Query) -> Answer:
     #
     # Step 1: Build your query
     #
@@ -42,7 +42,7 @@ async def query_docs(request: Request, query: Query) -> Answer:
     src_urls = {c.unpack()['src_url'] for c in db.execute(context_select)}
 
     # Step 2: Execute your query
-    db_response, _ = await db.apredict(
+    db_response, _ = db.predict(
         'gpt-3.5-turbo',
         input=query.query,
         context_select=context_select,

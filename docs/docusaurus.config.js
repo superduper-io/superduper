@@ -102,11 +102,44 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
+            title: 'Resources',
             items: [
               {
                 label: 'Documentation',
-                to: '/docs/intro',
+                to: '/docs/docs/intro',
+              },
+              {
+                label: 'Use-Cases',
+                to: '/docs/category/use_cases',
+              },
+              {
+                label: 'Blog',
+                to: '/blog',
+              },
+              {
+                label: 'Youtube',
+                to: 'https://www.youtube.com/@SuperDuperDB',
+              },
+            ],
+          },
+          {
+            title: 'Project',
+            items: [
+              {
+                label: 'GitHub',
+                href: 'https://github.com/SuperDuperDB/superduperdb',
+              },
+              {
+                label: 'Issues',
+                href: 'https://github.com/SuperDuperDB/superduperdb/issues',
+              },
+              {
+                label: 'Discussions',
+                href: 'https://github.com/SuperDuperDB/superduperdb/discussions',
+              },
+              {
+                label: 'Roadmap',
+                href: 'https://github.com/orgs/SuperDuperDB/projects/1/views/10',
               },
             ],
           },
@@ -114,25 +147,16 @@ const config = {
             title: 'Community',
             items: [
               {
+                label: 'LinkedIn',
+                href: 'https://www.linkedin.com/company/superduperdb/',
+              },
+              {
                 label: 'Slack',
                 href: 'https://superduperdb.slack.com/',
               },
               {
                 label: 'X / Twitter',
                 href: 'https://twitter.com/superduperdb',
-              },
-            ],
-          },
-          {
-            title: 'More',
-            items: [
-              {
-                label: 'Blog',
-                to: '/blog',
-              },
-              {
-                label: 'GitHub',
-                href: 'https://github.com/SuperDuperDB/superduperdb',
               },
             ],
           },

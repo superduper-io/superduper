@@ -4,7 +4,7 @@ from functools import cached_property
 from queue import Empty, Queue
 
 from .runnable import Runnable
-from .thread import HasThread, print_err
+from .thread import HasThread, none
 
 _SENTINEL_MESSAGE = object()
 
@@ -52,7 +52,7 @@ class ThreadQueue(HasRunnables):
     """
 
     callback: t.Callable[[t.Any], None]
-    error: t.Callable = print_err
+    error: t.Callable = none
     maxsize: int = 0
     name: str = 'thread_queue'
     thread_count: int = 1

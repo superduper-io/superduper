@@ -23,11 +23,12 @@ class Repo:
     documentation_dir: str
     documentation_base_url: str
     documentation_url_root_path: str
+    documentation_name: str
     documentation_file_extension: str = 'html'
 
 
 @cache
-def _repos():
+def repos():
     with open(settings.repo_config_path, 'rb') as r:
         return {k: Repo(**v) for k, v in json.load(r).items()}
 
@@ -79,9 +80,9 @@ def download_and_decode(url):
 
 def save_github_md_files_locally(repo):
     try:
-        repo_metadata = _repos()[repo]
+        repo_metadata = repos()[repo]
     except KeyError:
-        raise Exception(f'Repo {repo} not found in {_repos().keys()}')
+        raise Exception(f'Repo {repo} not found in {repos().keys()}')
 
     owner = repo_metadata.owner
     name = repo_metadata.name

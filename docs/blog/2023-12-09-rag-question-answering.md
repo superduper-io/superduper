@@ -9,6 +9,8 @@ Imagine effortlessly infusing AI into your data repositories—databases, data w
 
 In this latest blog post we take a dive into one such example - a Retrieval Augmented Generation (RAG) app we built directly on top of our MongoDB store (pretty quickly).
 
+<!--truncate-->
+
 Since we’re in the business of building open-source software, a logical in-house application of our own technology is a question-answering app, directly on our own documentation. We built this app using SuperDuperDB together with FastAPI, React and MongoDB (the “FARMS” stack).
 
 We use retrieval augmented generation, or RAG, to integrate an existing Large Language Model (LLM) with our own data; including documents found in vector-search in an initial pass, enables using an LLM on a domain it was not trained on. SuperDuperDB allows developers to apply RAG to their own standard database, instead of insisting that users migrate a portion of their data to a vector-search database such as Pinecone, Chroma or Milvus.

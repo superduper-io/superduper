@@ -1,10 +1,10 @@
-from superduperdb.misc import runnable
+from superduperdb.misc.runnable import thread
 
 
 def test_is_thread():
     result = []
 
-    class IsThread(runnable.IsThread):
+    class IsThread(thread.IsThread):
         def callback(self):
             result.append(0)
             if len(result) >= 4:
@@ -36,7 +36,7 @@ def test_is_thread():
 def test_has_thread():
     result = []
 
-    ht = runnable.HasThread()
+    ht = thread.HasThread()
 
     def callback():
         result.append(0)

@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from superduperdb.misc.runnable import ThreadQueue
+from superduperdb.misc.runnable.collection import ThreadQueue
 
 
 @pytest.mark.parametrize('thread_count', [1, 3])

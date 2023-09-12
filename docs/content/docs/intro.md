@@ -61,16 +61,16 @@ currently is. (Read "{doc}`common_issues`"
 for more context.) By moving to a closer symbiosis of AI and the datastore, we believe
 many pain-points in AI development become non-issues. With SuperDuperDB:
 
-- Model predictions may be [evaluated and inserted back into the datastore](predictmodel), without ever needing
+- Model predictions may be [evaluated and inserted back into the datastore](/docs/docs/usage/models#applying-models-to-data-with-predict), without ever needing
   to load data from the datastore to the client-side.
-- Training may be [deployed in one line](fitmodel), without having to munge, preprocess or fetch data;
+- Training may be [deployed in one line](/docs/docs/usage/models#training-models-on-data-with-fit), without having to munge, preprocess or fetch data;
   simply point to the data with a data-base query.
-- Models may be configured to [listen for incoming data](daemonize), maintaining a catalogue of up-to-date
+- Models may be configured to [listen for incoming data](/docs/docs/usage/models#), maintaining a catalogue of up-to-date
   predictions and features.
-- Working [with difficult data types](externaldata), (images, audio, etc.) requires no additional effort in comparison
+- Working [with difficult data types](/docs/docs/explanations/external_data), (images, audio, etc.) requires no additional effort in comparison
   to working with "standard data" (numbers, text, etc.)
 - Outputs of configured AI models may be used to "navigate" the datastore, including [configuring
-  and using vector-search](vectorsearch) with just a few lines of Python code.
+  and using vector-search](/docs/docs/usage/vector_index) with just a few lines of Python code.
 
 ## Code snippets to pique your interest!
 

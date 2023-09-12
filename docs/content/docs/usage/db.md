@@ -63,12 +63,10 @@ db = superduper(pymongo.MongoClient().test_db)
 
 Currently we support MongoDB as the data backend, with large data blobs on AWS s3.
 
-(artifactstore)=
 ## Artifact Store
 
 Currently we support `gridfs` on MongoDB as the artifact store.
 
-(metadata)=
 ## Metadata Store
 
 Currently we support MongoDB as the metadata store.

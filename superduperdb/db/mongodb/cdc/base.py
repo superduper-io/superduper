@@ -4,7 +4,7 @@ import typing as t
 from abc import ABC, abstractmethod
 from enum import Enum
 
-from bson.objectid import ObjectId as BsonObjectId
+from bson import objectid
 from pymongo.change_stream import CollectionChangeStream
 
 from superduperdb.container.serializable import Serializable
@@ -63,14 +63,14 @@ class DBEvent(str, Enum):
     update = 'update'
 
 
-class ObjectId(BsonObjectId):
+class ObjectId(objectid.ObjectId):
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
 
     @classmethod
     def validate(cls, v):
-        if not isinstance(v, BsonObjectId):
+        if not isinstance(v, objectid.ObjectId):
             raise TypeError('Id is required.')
         return str(v)
 
@@ -83,4 +83,18 @@ class Packet:
 
     ids: t.List[t.Union[ObjectId, str]]
     query: t.Optional[Serializable]
+
     event_type: str = DBEvent.insert
+
+    @staticmethod
+    def collate(packets: t.Sequence['Packet']) -> 'Packet':
+        """
+        Collate a batch of packets into one
+        """
+
+        ids = [packet.ids[0] for packet in packets]
+        query = packets[0].query
+
+        # TODO: cluster Packet for each event.
+        event_type = packets[0].event_type
+        return Packet(ids=ids, query=query, event_type=event_type)

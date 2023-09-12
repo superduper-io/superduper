@@ -6,7 +6,7 @@ Using `pydantic`, SuperDuperDB comes with wall-to-wall defaults in `superduperdb
 These configurations may be overridden by:
 
 - import `superduperdb.CFG` and overwriting values in that object
-- environment variable 'SUPERDUPERB_...`
+- environment variable `SUPERDUPERB_...`
 - by a file `configs.json` in the
 working directory.
 

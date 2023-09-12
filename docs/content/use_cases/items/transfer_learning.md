@@ -52,7 +52,7 @@ r
 Let's create a SuperDuperDB model based on a `sentence_transformers` model.
 You'll notice that we don't necessarily need a native SuperDuperDB integration to a model library 
 in order to leverage its power with SuperDuperDB. For example, in this case, we just need 
-to configure the `Model` wrapper to interoperate correctly with the `SentenceTransformer` class. After doing this, we can link the model to a collection, and daemonize the model using the `listen=True` keyword:
+to configure the `Model` wrapper to interoperate correctly with the `SentenceTransformer` class. After doing this, we can link the model to a collection, and /docs/docs/usage/models#daemonizing-models-with-listeners the model using the `listen=True` keyword:
 
 
 ```python

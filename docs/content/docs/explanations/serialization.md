@@ -5,7 +5,7 @@ in order to save the following objects to the `DB`, which inherit
 from `superduperdb.container.base.Component`
 
 - [Models](models)
-- [Vector Indexes](vectorsearch)
+- [Vector Indexes](/docs/docs/usage/vector_index)
 - [Encoders](encoders)
 
 Since these are compound objects consisting of multiple component parts, we utilize a hybrid 
@@ -20,13 +20,13 @@ serialization scheme, in order to save these objects. The scheme is based on:
 Important items which can't be saved using JSON, are signified inside the object
 with the wrapper `superduperdb.core.artifact.Artifact`. This wrapper carries
 around the serialization method necessary to save it's wrapped object in the 
-[artifact store](artifactstore).
+[artifact store](/docs/docs/usage/db#artifact-store).
 
 At save time the following algorithm is executed:
 
 1. The user passes `my_object` a descendant of `Component` to be saved in `db.add`
 2. SuperDuperDB executes `d = my_object.to_dict()`.
 3. SuperDuperDB extracts the `Artifact` instances out of `d` and saves these
-   in the [artifact store](artifactstore).
+   in the [artifact store](/docs/docs/usage/db#artifact-store).
 4. SuperDuperDB saves the `d` which includes references to the `Artifact` instances
-   to the [metadata store](metadata).
+   to the [metadata store](/docs/docs/usage/db#metadata-store).

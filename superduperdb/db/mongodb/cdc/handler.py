@@ -118,11 +118,11 @@ class CDCHandler(threading.Thread):
         self.submit_task_workflow(cdc_query=cdc_query, ids=ids, task="delete")
 
     def _handle(self, packet: Packet) -> None:
-        if packet.event_type == DBEvent.insert.value:
+        if packet.event_type == DBEvent.insert:
             self.on_create(packet)
-        elif packet.event_type == DBEvent.update.value:
+        elif packet.event_type == DBEvent.update:
             self.on_update(packet)
-        elif packet.event_type == DBEvent.delete.value:
+        elif packet.event_type == DBEvent.delete:
             self.on_delete(packet)
 
     @staticmethod

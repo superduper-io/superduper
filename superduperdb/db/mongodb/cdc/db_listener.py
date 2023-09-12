@@ -20,7 +20,7 @@ from .task_queue import cdc_queue
 MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
 
 
-class CDCKeys(Enum):
+class CDCKeys(str, Enum):
     """
     A enum to represent mongo change document keys.
     """
@@ -72,7 +72,7 @@ class MongoChangePipeline:
 
         :param matching_operations: A list of operations to watch.
         """
-        if bad := [op for op in self.matching_operations if not DBEvent.has_value(op)]:
+        if bad := [op for op in self.matching_operations if op not in DBEvent]:
             raise ValueError(f'Unknown operations: {bad}')
 
         return [{'$match': {'operationType': {'$in': [*self.matching_operations]}}}]
@@ -100,10 +100,10 @@ class MongoEventMixin:
         """
         logging.debug('Triggered `on_create` handler.')
         # new document added!
-        document = change[CDCKeys.document_data_key.value]
+        document = change[CDCKeys.document_data_key]
         ids = [document[self.DEFAULT_ID]]
         cdc_query = collection.find()
-        packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
+        packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
     def on_update(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
@@ -120,10 +120,10 @@ class MongoEventMixin:
         """
 
         # TODO: Handle removed fields and updated fields.
-        document = change[CDCKeys.document_key.value]
+        document = change[CDCKeys.document_key]
         ids = [document[self.DEFAULT_ID]]
         cdc_query = collection.find()
-        packet = Packet(ids=ids, event_type=DBEvent.insert.value, query=cdc_query)
+        packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
         cdc_queue.put_nowait(packet)
 
     def on_delete(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
@@ -140,9 +140,9 @@ class MongoEventMixin:
         """
         logging.debug('Triggered `on_delete` handler.')
         # new document added!
-        document = change[CDCKeys.deleted_document_data_key.value]
+        document = change[CDCKeys.deleted_document_data_key]
         ids = [document[self.DEFAULT_ID]]
-        packet = Packet(ids=ids, event_type=DBEvent.delete.value, query=None)
+        packet = Packet(ids=ids, event_type=DBEvent.delete, query=None)
         cdc_queue.put_nowait(packet)
 
 
@@ -232,7 +232,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         :param document:
         """
         try:
-            document_key = document[CDCKeys.document_key.value]
+            document_key = document[CDCKeys.document_key]
             reference_id = str(document_key['_id'])
         except KeyError:
             return None
@@ -244,22 +244,22 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
 
         :param change: The change (document) observed during the change stream.
         """
-        event = change[CDCKeys.operation_type.value]
+        event = change[CDCKeys.operation_type]
         reference_id = self._get_reference_id(change)
 
         if not reference_id:
             logging.warn('Document change not handled due to no document key')
             return
 
-        if event == DBEvent.insert.value:
+        if event == DBEvent.insert:
             self._change_counters['inserts'] += 1
             self.on_create(change, db=self.db, collection=self._on_component)
 
-        elif event == DBEvent.update.value:
+        elif event == DBEvent.update:
             self._change_counters['updates'] += 1
             self.on_update(change, db=self.db, collection=self._on_component)
 
-        elif event == DBEvent.delete.value:
+        elif event == DBEvent.delete:
             self._change_counters['deletes'] += 1
             self.on_delete(change, db=self.db, collection=self._on_component)
 
@@ -277,9 +277,9 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         A helper method to check if the cdc change is done
         by taskgraph nodes.
         """
-        if change[CDCKeys.operation_type.value] == DBEvent.update.value:
-            updates = change[CDCKeys.update_descriptions_key.value]
-            updated_fields = updates[CDCKeys.update_field_key.value]
+        if change[CDCKeys.operation_type] == DBEvent.update:
+            updates = change[CDCKeys.update_descriptions_key]
+            updated_fields = updates[CDCKeys.update_field_key]
             return any(
                 [True for k in updated_fields.keys() if k.startswith('_outputs')]
             )

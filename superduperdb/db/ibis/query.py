@@ -20,7 +20,7 @@ IbisTableType = t.TypeVar('IbisTableType')
 ParentType = t.TypeVar('ParentType')
 
 
-class QueryType(enum.Enum):
+class QueryType(str, enum.Enum):
     QUERY = 'query'
     ATTR = 'attr'
 
@@ -81,7 +81,7 @@ class Table(Component):
                     mutated_args.append(attr)
             elif isinstance(attr, QueryLinker):
                 attr_query = attr.get_latest_query()
-                if attr_query.type == QueryType.ATTR.value:
+                if attr_query.type == QueryType.ATTR:
                     mutated_args.append(self.schema.mutate_column(attr.query_type))
                 else:
                     mutated_args.append(attr)
@@ -107,7 +107,7 @@ class Table(Component):
             raise AttributeError(k)
 
         return QueryLinker(
-            self, query_type=k, members=QueryChain(k, type=QueryType.ATTR.value)
+            self, query_type=k, members=QueryChain(k, type=QueryType.ATTR)
         )
 
     def like(self, r: t.Any = None, n: int = 10, vector_index: t.Optional[str] = None):
@@ -155,7 +155,7 @@ class Table(Component):
 
         insert = Query(
             'insert',
-            type=QueryType.QUERY.value,
+            type=QueryType.QUERY,
             args=t.cast(t.Sequence, args),
             kwargs=kwargs,
             sddb_kwargs=sddb_kwargs,
@@ -189,7 +189,7 @@ class Query:
     def __init__(
         self,
         name: str,
-        type: str = QueryType.QUERY.value,
+        type: str = QueryType.QUERY,
         args: t.Sequence = [],
         kwargs: t.Dict = {},
         sddb_kwargs: t.Dict = {},
@@ -213,7 +213,7 @@ class Query:
         table: Table,
         ibis_table: t.Optional[IbisTableType] = None,
     ):
-        if self.type == QueryType.ATTR.value:
+        if self.type == QueryType.ATTR:
             return getattr(parent, self.query.name)
 
         pre_output = self.query.pre(db, table=table, kwargs=self.kwargs)
@@ -251,7 +251,7 @@ class QueryChain:
     def __init__(
         self,
         seed: t.Optional[t.Union[str, Query]] = None,
-        type: str = QueryType.QUERY.value,
+        type: str = QueryType.QUERY,
     ):
         if isinstance(seed, str):
             query = Query(seed, type=type)
@@ -262,7 +262,7 @@ class QueryChain:
 
         self.chain = [query]
 
-    def append(self, data, type=QueryType.QUERY.value):
+    def append(self, data, type=QueryType.QUERY):
         query = Query(data, type=type)
         self.chain.append(query)
 
@@ -283,7 +283,7 @@ class QueryChain:
 
     def __iter__(self):
         for query in self.chain:
-            if query.type in [QueryType.QUERY.value, QueryType.ATTR.value]:
+            if query.type in [QueryType.QUERY, QueryType.ATTR]:
                 yield query
 
     def __repr__(self):
@@ -368,7 +368,7 @@ class InMemoryTable(Component):
             raise AttributeError(k)
 
         return QueryLinker(
-            self, query_type=k, members=QueryChain(k, type=QueryType.ATTR.value)
+            self, query_type=k, members=QueryChain(k, type=QueryType.ATTR)
         )
 
 
@@ -524,7 +524,7 @@ class QueryLinker(Serializable, _LogicalExprMixin):
         args = self.collection.mutate_args(args)
 
         # TODO: handle kwargs
-        self.members.update_last_query(args, kwargs, type=QueryType.QUERY.value)
+        self.members.update_last_query(args, kwargs, type=QueryType.QUERY)
 
         return QueryLinker(
             collection=self.collection,

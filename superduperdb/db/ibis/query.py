@@ -496,8 +496,8 @@ class QueryLinker(Serializable, _LogicalExprMixin):
                 {
                     'id': int(ids[ix]),
                     'input_id': int(ids[ix]),
-                    'output': outputs[ix],
                     'query_id': input_table,
+                    'output': outputs[ix],
                     'key': key,
                 }
             )

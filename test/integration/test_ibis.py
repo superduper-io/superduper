@@ -22,12 +22,26 @@ from superduperdb.ext.torch.model import TorchModel
 @pytest.fixture
 def sqllite_conn():
     with tdir(chdir=False) as tmp_dir:
-        yield ibis.sqlite.connect(tmp_dir / 'mydb.sqlite'), tmp_dir
+        tmp_db = tmp_dir / 'mydb.sqlite'
+        yield ibis.connect('sqlite://' + str(tmp_db)), tmp_dir
 
 
 @pytest.fixture
-def ibis_db(sqllite_conn):
+def duckdb_conn():
+    with tdir(chdir=False) as tmp_dir:
+        tmp_db = tmp_dir / 'mydb.ddb'
+        yield ibis.connect('duckdb://' + str(tmp_db)), tmp_dir
+
+
+@pytest.fixture
+def ibis_sqllite_db(sqllite_conn):
     connection, tmp_dir = sqllite_conn
+    yield make_ibis_db(connection, connection, tmp_dir)
+
+
+@pytest.fixture
+def ibis_duckdb(duckdb_conn):
+    connection, tmp_dir = duckdb_conn
     yield make_ibis_db(connection, connection, tmp_dir)
 
 
@@ -35,7 +49,7 @@ def ibis_db(sqllite_conn):
 def ibis_pandas_db(sqllite_conn):
     connection, tmp_dir = sqllite_conn
     df = pd.DataFrame(
-        [[1, 0, 25, 'kk'], [2, 1, 26, 'kk'], [3, 0, 27, 'kk'], [4, 1, 28, 'kk']],
+        [[1, 0, 25, 'adam'], [2, 1, 26, 'ash'], [3, 0, 27, 'nick'], [4, 1, 28, 'buck']],
         columns=['id', 'health', 'age', 'name'],
     )
     t = ibis.memtable(df, name='pandas')
@@ -51,7 +65,7 @@ def make_ibis_db(db_conn, metadata_conn, tmp_dir):
     )
 
 
-def test_end2end_sql(ibis_db):
+def end2end_workflow(ibis_db):
     db = ibis_db
     schema = IbisSchema(
         identifier='my_table',
@@ -154,6 +168,14 @@ def test_end2end_sql(ibis_db):
         )
 
 
+def test_end2end_sql(ibis_sqllite_db):
+    end2end_workflow(ibis_sqllite_db)
+
+
+def test_end2end_duckdb(ibis_duckdb):
+    end2end_workflow(ibis_duckdb)
+
+
 def test_end2end_pandas(ibis_pandas_db):
     db = ibis_pandas_db
     # -------------- retrieve data  from table ----------------
@@ -163,3 +185,5 @@ def test_end2end_pandas(ibis_pandas_db):
         img = img.unpack()
         assert isinstance(img['age'], int)
         assert isinstance(img['health'], int)
+
+    # -------------- vector search -----------------

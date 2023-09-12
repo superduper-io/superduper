@@ -597,13 +597,9 @@ class PreLike:
         pass
 
     def post(self, db, output, table=None, ibis_table=None, args=[], kwargs={}):
-        """
-
         ids, _ = db._select_nearest(
             like=self.r, vector_index=self.vector_index, n=self.n
         )
-        """
-        ids = [1, 2, 3]
         f = output.filter(ibis_table.__getattr__(self.primary_id).isin(ids))
         return f
 
@@ -621,10 +617,6 @@ class Insert:
 
     def pre(self, db, table=None, **kwargs):
         # TODO: handle adding table later
-        """
-        if self.base_table.identifier not in db.tables:
-            db.add(self.base_table)
-        """
         for e in self.encoders:
             db.add(e)
 

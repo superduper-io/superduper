@@ -174,6 +174,6 @@ Thanks for reading! If you have any questions about this article, or SuperDuperD
 
 ### Useful links
 
-- Question the docs online!
-- SuperDuperDB on GitHub
-- Play with the code on GitHub
+- [Question the docs online](https://www.qtd.superduperdb.com/)!
+- [SuperDuperDB on GitHub](https://github.com/SuperDuperDB/superduperdb)
+- [Play with the code on GitHub](https://github.com/SuperDuperDB/superduperdb/tree/main/apps/question-the-docs)

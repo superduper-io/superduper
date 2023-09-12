@@ -246,7 +246,7 @@ pip install superduperdb
    - You already have MongoDB installed? Let's go!
    - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>.
 
-#### 3. Try one of our example use cases/notebooks <a href="https://superduperdb.github.io/superduperdb/docs/category/use_cases/">found here</a> (~as many minutes you enjoy)!
+#### 3. Try one of our example use cases/notebooks <a href="https://superduperdb.github.io/superduperdb/docs/category/use-cases/">found here</a> (~as many minutes you enjoy)!
 <br>
 
 # Quickstart

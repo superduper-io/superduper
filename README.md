@@ -104,13 +104,13 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
 <br>
 
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_diagram.svg">
+  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_diagram.svg">
 </p>
 
 # How To
 ### The following are examples of how to use SuperDuperDB with Python (find all how-tos and examples <a href="https://superduperdb.github.io/superduperdb">in the docs here</a>): 
 
-- **Add a ML/AI model to your datastore <a href="404">(read more in the docs here)</a>:**
+- **Add a ML/AI model to your datastore <a href="https://superduperdb.github.io/superduperdb/">(read more in the docs here)</a>:**
 ```python
 import pymongo
 from sklearn.svm import SVC
@@ -132,7 +132,7 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 
 <br>
 
-- **Train/fine-tune a model using data from your datastore directly <a href="https://superduperdb.github.io/superduperdb/usage/models.html#training-models-on-data-with-fit">(read more in the docs here)</a>:**
+- **Train/fine-tune a model using data from your datastore directly <a href="https://superduperdb.github.io/superduperdb/docs/docs/usage/models#training-models-on-data-with-fit">(read more in the docs here)</a>:**
 
 ```python
 import pymongo
@@ -152,7 +152,7 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 
 <br>
 
-- **Use your datastore as a vector search database <a href="https://superduperdb.github.io/superduperdb/usage/vector_index.html">(read more in the docs here)</a>:**
+- **Use your datastore as a vector search database <a href="https://superduperdb.github.io/superduperdb/docs/docs/usage/vector_index">(read more in the docs here)</a>:**
 ```python
 # First a "Listener" makes sure vectors stay up-to-date
 indexing_listener = Listener(model=OpenAIEmbedding(), key='text', select=collection.find())
@@ -168,7 +168,7 @@ db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand':
 
 <br>
 
-- **Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search <a href="https://superduperdb.github.io/superduperdb/examples/compare_vector_search_solutions.html">(read more in the docs here)</a>:**
+- **Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search <a href="https://superduperdb.github.io/superduperdb/docs/use_cases/items/compare_vector_search_solutions">(read more in the docs here)</a>:**
 ```python
 # Create a ``VectorIndex`` instance with indexing listener as OpenAIEmbedding and add it to the database.
 db.add(
@@ -192,7 +192,7 @@ cur = db.execute(
 
 <br>
 
-- **Add a Llama 2 model directly into your datastore! <a href="https://superduperdb.github.io/superduperdb/usage/models.html#tranformers">(read more in the docs here)</a>:**
+- **Add a Llama 2 model directly into your datastore! <a href="https://superduperdb.github.io/superduperdb/docs/docs/usage/models.html#tranformers">(read more in the docs here)</a>:**
 ```python
 model_id = "meta-llama/Llama-2-7b-chat-hf"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -226,7 +226,7 @@ model.predict(
 
 <br>
 
-- **Use models outputs as inputs to downstream models <a href="https://superduperdb.github.io/superduperdb/usage/queries.html#featurization">(read more in the docs here)</a>:**
+- **Use models outputs as inputs to downstream models <a href="https://superduperdb.github.io/superduperdb/docs/docs/usage/queries#featurization">(read more in the docs here)</a>:**
 
 ```python
 model.predict(
@@ -246,7 +246,7 @@ pip install superduperdb
    - You already have MongoDB installed? Let's go!
    - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>.
 
-#### 3. Try one of our example use cases/notebooks <a href="https://superduperdb.github.io/superduperdb/examples/index.html">found here</a> (~as many minutes you enjoy)!
+#### 3. Try one of our example use cases/notebooks <a href="https://superduperdb.github.io/superduperdb/docs/category/use-cases/">found here</a> (~as many minutes you enjoy)!
 <br>
 
 # Quickstart

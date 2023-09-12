@@ -142,7 +142,6 @@ linear = superduper(Linear(10, 20))
 pipeline = superduper(pipeline...)
 ```
 
-(predictmodel)=
 ## Applying models to data with `.predict`
 
 All of the models which we created in the previous step are now ready to be applied to the database:
@@ -162,7 +161,6 @@ Document({
 
 A similar result may be obtained by replaced the `svm` by any of the other models above.
 
-(fitmodel)=
 ## Training models on data with `.fit`
 
 Using the same analogy to `sklearn` above, SuperDuperDB supports "in-database" training of models:
@@ -178,9 +176,9 @@ Using the same analogy to `sklearn` above, SuperDuperDB supports "in-database" t
 Models in SuperDuperDB differ from models in the standard AI frameworks, by
 including several additional aspects:
 
-- [preprocessing](preprocessing)
-- [postprocessing](postprocessing)
-- [output encoding](encoding)
+- [preprocessing](#preprocessing)
+- [postprocessing](#postprocessing)
+- [output encoding](#encoding)
 
 ### Preprocessing
 
@@ -237,7 +235,6 @@ SuperDuperDB has native support for:
 
 Other model frameworks may be used for inference only (`model.predict`).
 
-(daemonize)=
 ## Daemonizing models with listeners
 
 Models can be configured so that, when new data is inserted through SuperDuperDB database, 
@@ -264,6 +261,6 @@ An equivalent syntax is the following:
 After setting up a `Listener`, whenever data is inserted or updated, jobs are created 
 which save the outputs of the model in the `"_outputs"` field.
 
-A `Listener` may also be configured in [cluster mode](clustersection), to listen for changes coming in 
+A `Listener` may also be configured in [cluster mode](/docs/category/cluster), to listen for changes coming in 
 from any sources - i.e. changes are not just detected through the SuperDuperDB system. 
-Read more about that [here](CDC).
+Read more about that [here](/docs/docs/cluster/change_data_capture).

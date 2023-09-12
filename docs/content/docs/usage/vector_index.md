@@ -16,7 +16,7 @@ Vector-indexes build on top of the [DB](db), [models](models) and [listeners](li
 
 ## Creating vector indexes
 
-In order to build a vector index, one defines one or two models, and daemonizes them with listeners.
+In order to build a vector index, one defines one or two models, and /docs/docs/usage/models#daemonizing-models-with-listenerss them with listeners.
 In the simples variant one does simply:
 
 ```python
@@ -28,8 +28,8 @@ db.add(
 )
 ```
 
-The model `my-model` should have already been registered with SuperDuperDB (see [models](models) for help). `my-key` is the field to be searched. Together `my-model/my-key` refer to the [listener](listeners) component (previously created) which is responsible for computing vectors from the data.
-See [here](listener) for how to create such a component.
+The model `my-model` should have already been registered with SuperDuperDB (see [models](models) for help). `my-key` is the field to be searched. Together `my-model/my-key` refer to the [listener](/docs/docs/usage/models#daemonizing-models-with-listeners) component (previously created) which is responsible for computing vectors from the data.
+See [here](/docs/docs/usage/models#daemonizing-models-with-listeners) for how to create such a component.
 
 Alternatively the model and listener may be created inline. 
 Here is how to define a simple linear bag-of-words model:

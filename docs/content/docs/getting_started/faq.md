@@ -71,7 +71,7 @@ at the document/ row-level. This includes the possibility of seeding language mo
 context which originates from vector search. 
 
 We found we did not need LangChain to seed OpenAI or other language models with prompts constructed out of records
-from the `DB` allows us to do everything we want to do with SuperDuperDB; see [here](examples/voice_memos.html) for an example of using vector-search to seed an OpenAI prompt.
+from the `DB` allows us to do everything we want to do with SuperDuperDB; see [here](/docs/use_cases/items/question-the-docs) for an example of using vector-search to seed an OpenAI prompt.
 This includes building highly sophisticated multimodal workflows, including interactions
 between image, text, audio and more. For this reason, we decided initially not 
 to integrate LangChain.

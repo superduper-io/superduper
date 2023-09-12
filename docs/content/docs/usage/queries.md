@@ -54,7 +54,7 @@ from superduperdb.core.document import Document as D
 )
 ```
 
-SuperDuperDB also includes a composite API, enabling support for vector-search together with the query API of the database: see the [section on vector-search](vectorsearch) for details.
+SuperDuperDB also includes a composite API, enabling support for vector-search together with the query API of the database: see the [section on vector-search](/docs/docs/usage/vector_index) for details.
 
 Supported MongoDB queries:
 
@@ -94,4 +94,4 @@ cursor_2 = db.execute(
 )
 ```
 
-See [here](vectorsearch) for more background on vector-search and `VectorIndex` functionality.
+See [here](/docs/docs/usage/vector_index) for more background on vector-search and `VectorIndex` functionality.

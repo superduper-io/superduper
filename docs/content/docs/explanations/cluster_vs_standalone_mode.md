@@ -26,9 +26,9 @@ In standalone mode, all computations and queries run in a single thread.
 
 ## Cluster
 
-In cluster mode, all computations run asynchronously on a [Dask cluster](jobs). In addition, 
-a [change-data capture](CDC) service (CDC) is run on a separate thread, which listens to MongoDB for changes.
-Read more [here](clustersection).
+In cluster mode, all computations run asynchronously on a [Dask cluster](/docs/docs/cluster/jobs). In addition, 
+a [change-data capture](/docs/docs/cluster/change_data_capture) service (CDC) is run on a separate thread, which listens to MongoDB for changes.
+Read more [here](/docs/category/cluster).
 
 ***Advantages***
 

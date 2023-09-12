@@ -3,10 +3,10 @@
 SuperDuperDB has a component versioning system. This versioning system applies to subclasses of 
 `Component`:
 
-- [models](modelz)
-- [encoders](encoders)
-- [listeners](listeners)
-- [vector-indexes](vectorsearch)
+- [models](/docs/docs/usage/models)
+- [encoders](/docs/docs/usage/encoders)
+- [listeners](/docs/docs/usage/models#daemonizing-models-with-listeners)
+- [vector-indexes](/docs/docs/usage/vector_index)
 
 Here's how it works:
 

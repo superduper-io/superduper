@@ -4,7 +4,7 @@
 
 In order to most efficiently marshall computational resources,
 SuperDuperDB may be configured to run in asynchronous mode `{"distributed": True}`.
-The simplesst way to set a distributed SuperDuperDB deployment is using a [single-host cluster](singlehost). See [the section on configuration](configuration) for details in setting up SuperDuperDB.
+The simplesst way to set a distributed SuperDuperDB deployment is using a [single-host cluster](single_host_cluster). See [the section on configuration](configuration) for details in setting up SuperDuperDB.
 
 There are several key functionalities in SuperDuperDB which trigger asynchronous jobs to be
 spawned in the configured Dask worker pool.

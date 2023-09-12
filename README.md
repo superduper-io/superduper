@@ -104,7 +104,7 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
 <br>
 
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/img/SuperDuperDB_diagram.svg">
+  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_diagram.svg">
 </p>
 
 # How To

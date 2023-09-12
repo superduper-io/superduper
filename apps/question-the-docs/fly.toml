@@ -28,13 +28,13 @@ kill_timeout = "5s"
     handlers = ["tls", "http"]
   [services.concurrency]
     type = "connections"
-    hard_limit = 25
-    soft_limit = 20
+    hard_limit = 1100
+    soft_limit = 1000
 
   [[services.tcp_checks]]
     interval = "15s"
-    timeout = "2s"
-    grace_period = "1s"
+    timeout = "15s"
+    grace_period = "60s"
 
 [[statics]]
   guest_path = "/app/dist"

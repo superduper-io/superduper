@@ -11,7 +11,7 @@ const config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://documentation.superduperdb.com',
+  url: 'https://docs.superduperdb.com',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -87,7 +87,7 @@ const config = {
           },
           {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://documentation.superduperdb.com/apidocs/source/superduperdb.html',
+            href: 'https://docs.superduperdb.com/apidocs/source/superduperdb.html',
             label: 'API',
             position: 'left',
           },

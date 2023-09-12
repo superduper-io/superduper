@@ -28,3 +28,16 @@
   --ifm-color-primary-lightest: #b896f2;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+.hero__title {
+    font-size: 2.5rem;
+}
+
+main-wrapper {
+    display: grid;
+}
+
+.hero {
+    grid-area: 1 / 1 / 2 / 2;
+    /* height: 100%; */
+}

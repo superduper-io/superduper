@@ -55,16 +55,12 @@ class CachedTokens:
         return self._current_tokens
 
 
-class DBEvent(Enum):
+class DBEvent(str, Enum):
     """`DBEvent` simple enum to hold mongo basic events."""
 
-    delete: str = 'delete'
-    insert: str = 'insert'
-    update: str = 'update'
-
-    @classmethod
-    def has_value(cls, value):
-        return value in cls._value2member_map_
+    delete = 'delete'
+    insert = 'insert'
+    update = 'update'
 
 
 class ObjectId(BsonObjectId):
@@ -87,4 +83,4 @@ class Packet:
 
     ids: t.List[t.Union[ObjectId, str]]
     query: t.Optional[Serializable]
-    event_type: str = DBEvent.insert.value
+    event_type: str = DBEvent.insert

@@ -9,6 +9,7 @@ from functools import wraps
 import tqdm
 from dask.distributed import Future
 from numpy import ndarray
+from overrides import override
 from sklearn.pipeline import Pipeline
 
 import superduperdb as s
@@ -397,6 +398,9 @@ class Model(Component, PredictMixin):
     #: The method to use for prediction (optional)
     predict_method: t.Optional[str] = None
 
+    #: The method to transfer the model to a device
+    to_method: t.Optional[str] = None
+
     #: Whether to batch predict (optional)
     batch_predict: bool = False
 
@@ -412,6 +416,7 @@ class Model(Component, PredictMixin):
     version: t.Optional[int] = None
     future: t.Optional[Future] = None
     device: str = "cpu"
+    preferred_devices: t.ClassVar[t.Sequence[str]] = ["cuda", "mps", "cpu"]
 
     artifacts: t.ClassVar[t.Sequence[str]] = ['object']
 
@@ -428,6 +433,20 @@ class Model(Component, PredictMixin):
             self.to_call = self.object.artifact
         else:
             self.to_call = getattr(self.object.artifact, self.predict_method)
+
+    @override
+    def on_load(self, db: DB) -> None:
+        if not self.to_method:
+            return
+
+        for device in self.preferred_devices:
+            try:
+                getattr(self.object.artifact, self.to_method)(device)
+                return
+            except Exception as e:
+                logging.warning(e)
+        else:
+            raise Exception(f"Could not load model on any of {self.preferred_devices}")
 
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
@@ -457,7 +476,10 @@ class Model(Component, PredictMixin):
                 self.metric_values.setdefault(k, []).append(v)
 
     def validate(
-        self, db, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
+        self,
+        db,
+        validation_set: t.Union[Dataset, str],
+        metrics: t.Sequence[Metric],
     ):
         db.add(self)
         out = self._validate(db, validation_set, metrics)
@@ -479,7 +501,10 @@ class Model(Component, PredictMixin):
         db.create_output_table(self)
 
     def _validate(
-        self, db: DB, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
+        self,
+        db: DB,
+        validation_set: t.Union[Dataset, str],
+        metrics: t.Sequence[Metric],
     ):
         if isinstance(validation_set, str):
             validation_set = t.cast(Dataset, db.load('dataset', validation_set))

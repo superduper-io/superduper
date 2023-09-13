@@ -267,7 +267,11 @@ class Base:
         while True:
             for batch in train_dataloader:
                 train_objective = self.take_step(batch, self.optimizers)
-                self.log(fold='TRAIN', iteration=iteration, objective=train_objective)
+                self.log(
+                    fold='TRAIN',
+                    iteration=iteration,
+                    objective=train_objective,
+                )
 
                 if iteration % self.training_configuration.validation_interval == 0:
                     valid_loss = self.compute_validation_objective(valid_dataloader)
@@ -367,6 +371,7 @@ class TorchModel(Base, Model):  # type: ignore[misc]
         super().__post_init__()
 
         self.object.serializer = 'torch'
+        self.object.to_method = 'move_to_device'
 
         if self.optimizer_state is not None:
             self.optimizer.load_state_dict(self.optimizer_state.artifact)
@@ -403,6 +408,10 @@ class TorchModel(Base, Model):  # type: ignore[misc]
 
     def state_dict(self):
         return self.object.state_dict()
+
+    def move_to_device(self, device):
+        if hasattr(self.object.artifact, "to"):
+            getattr(self.object.artifact, self.to_method)(device)
 
     @contextmanager
     def saving(self):

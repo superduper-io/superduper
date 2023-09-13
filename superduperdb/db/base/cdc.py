@@ -23,7 +23,6 @@ Use this module like this::
     listener.listen()
 """
 
-import threading
 import typing as t
 
 from superduperdb.db.base import backends
@@ -31,6 +30,7 @@ from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb.cdc.base import BaseDatabaseListener
 from superduperdb.db.mongodb.cdc.db_listener import MongoDatabaseListener
 from superduperdb.db.mongodb.query import Collection
+from superduperdb.misc.runnable.runnable import Event
 
 DBListenerType = t.TypeVar('DBListenerType')
 
@@ -48,7 +48,7 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
         self.listener = db_type
 
     def create(self, *args, **kwargs) -> DBListenerType:
-        stop_event = threading.Event()
+        stop_event = Event()
         kwargs['stop_event'] = stop_event
         listener = MongoDatabaseListener(*args, **kwargs)
         return t.cast(DBListenerType, listener)

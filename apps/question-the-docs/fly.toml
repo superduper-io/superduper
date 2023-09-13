@@ -36,6 +36,3 @@ kill_timeout = "5s"
     timeout = "15s"
     grace_period = "60s"
 
-[[statics]]
-  guest_path = "/app/dist"
-  url_prefix = "/"

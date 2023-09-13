@@ -164,18 +164,3 @@ db.add(VectorIndex('my-index', indexing_listener=indexing_listener))
 # By default, SuperDuperDB uses LanceDB for vector comparison operations
 db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
 ```
-
-## Contents
-
-```{toctree}
-:maxdepth: 3
-
-getting_started/index
-usage/index
-explanations/index
-cluster/index
-how_to/index
-examples/index
-background/index
-source/modules
-```

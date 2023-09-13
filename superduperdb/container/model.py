@@ -399,7 +399,7 @@ class Model(Component, PredictMixin):
     predict_method: t.Optional[str] = None
 
     #: The method to transfer the model to a device
-    to_method: t.Optional[str] = None
+    transfer_method_name: t.Optional[str] = None
 
     #: Whether to batch predict (optional)
     batch_predict: bool = False
@@ -436,12 +436,12 @@ class Model(Component, PredictMixin):
 
     @override
     def on_load(self, db: DB) -> None:
-        if not self.to_method:
+        if not self.transfer_method_name:
             return
 
         for device in self.preferred_devices:
             try:
-                getattr(self.object.artifact, self.to_method)(device)
+                getattr(self.object.artifact, self.transfer_method_name)(device)
                 return
             except Exception as e:
                 logging.warning(e)

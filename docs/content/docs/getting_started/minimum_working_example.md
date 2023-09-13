@@ -1,6 +1,8 @@
 # Minimum working example
 
-To check that everything is working correctly cut and paste this code into a Jupyter notebook:
+To check that everything is working correctly cut and paste this code into a Jupyter notebook.
+For this example to work, you should have a working local deployment of MongoDB 
+without security running on `27017`.
 
 ```python
 import numpy as np
@@ -40,3 +42,5 @@ print(db.execute(collection.find_one()))
 3. We wrap our model, which in this case, is a simple `lambda` function.
 4. We apply the model to store predictions on the inserted data in the database.
 5. We query the database, to retrieve a sample datapoint.
+
+See the [section on the `DB` class](/docs/docs/usage/db) and [the section on models](/docs/docs/usage/models) for further explanation and usage.

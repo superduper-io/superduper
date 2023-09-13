@@ -192,7 +192,7 @@ cur = db.execute(
 
 <br>
 
-- **Add a Llama 2 model directly into your datastore! <a href="https://superduperdb.github.io/superduperdb/docs/docs/usage/models.html#tranformers">(read more in the docs here)</a>:**
+- **Add a Llama 2 model directly into your datastore! <a href="https://superduperdb.github.io/superduperdb/docs/docs/usage/models.html#transformers">(read more in the docs here)</a>:**
 ```python
 model_id = "meta-llama/Llama-2-7b-chat-hf"
 tokenizer = AutoTokenizer.from_pretrained(model_id)

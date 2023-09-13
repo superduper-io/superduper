@@ -19,13 +19,13 @@ starting at 0, and incremented each time an item with `identifier` is recreated.
 For example the following would create two versions of a `Model`, identified by `"test-model"`:
 
 ```python
->>> db.add(Model(identifier='test-model', object=my_model))
->>> db.add(Model(identifier='test-model', object=my_model))
->>> db.show('model')   # shows distinct identifiers
+db.add(Model(identifier='test-model', object=my_model))
+db.add(Model(identifier='test-model', object=my_model))
+db.show('model')   # shows distinct identifiers
 ['test-model']
->>> db.show('model', 'test-model')       # shows distinct versions
+db.show('model', 'test-model')       # shows distinct versions
 [0, 1]
->>> db.show('model', 'test-model', 0)     # shows full meta-data record of model version
+db.show('model', 'test-model', 0)     # shows full meta-data record of model version
 ```
 
 When creating a `Component`, other `Component` contained in the first are created inline.
@@ -35,7 +35,7 @@ When removing a `Component` the versioning system is interrogated and if they pl
 For example the following raises an `Exception`:
 
 ```
->>> enc = Encoder('my-enc', encode=lambda x: x, decode=lambda x: x)
->>> db.add(Model(identifier='test-model', object=my_model, enc=enc))
->>> db.remove('encoder', 'my-enc')
+enc = Encoder('my-enc', encode=lambda x: x, decode=lambda x: x)
+db.add(Model(identifier='test-model', object=my_model, enc=enc))
+db.remove('encoder', 'my-enc')
 ```

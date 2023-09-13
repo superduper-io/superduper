@@ -4,11 +4,14 @@ sidebar_position: 3
 
 # Models
 
-```{note}
+:::info
 The SuperDuperDB `Model` wrapper is an extension of standard Python-AI-ecosystem models.
 `Model` adds preprocessing, postprocessing, and communication with the `DB`
 to the standard toolkit.
-```
+
+In order to use an AI model with SuperDuperDB, it's necessary to wrap it with 
+a class inheriting from `Model`
+:::
 
 In SuperDuperDB, the primary mode to integrating a new AI model, framework or API provider
 is via the `Model` abstraction. This maybe thought of in the following way:
@@ -16,7 +19,7 @@ is via the `Model` abstraction. This maybe thought of in the following way:
 - A wrapper around AI frameworks facilitating use of models with the database.
 - A self contained unit of functionality handling all communication with the database.
 - A unifying abstraction bringing all AI frameworks onto a single playing field.
-- An trainable, parametrizable extension of UDFs from traditional databasing.
+- A trainable, parametrizable extension of UDFs from traditional databases.
 
 The uniformity of the abstraction is inspired by the Sklearn `.fit`, `.predict` paradigm,
 but with additional features which are required in order to allow the models to read and
@@ -28,12 +31,13 @@ functionality.
 
 The following frameworks are supported natively by SuperDuperDB:
 
-- `sklearn`
-- `torch`
-- `transformers`
-- `openai`
+- [`sklearn`](https://scikit-learn.org/stable/)
+- [`torch`](https://pytorch.org/)
+- [`transformers`](https://huggingface.co/docs/transformers/index)
+- [`openai`](https://platform.openai.com/docs/api-reference?lang=python)
 
-The key class is located in `superduperdb.ext.<framework>.<Framework>Model`:
+The base class is `superduperdb.container.model.Model`.
+The key classes for frameworks are located in `superduperdb.ext.<framework>.<Framework>Model`:
 
 - `superduperdb.ext.sklearn.SklearnModel.`
 - `superduperdb.ext.torch.TorchModel.`
@@ -53,7 +57,7 @@ m = Model(
 )
 ```
 
-See [below](model-design) for an explanation of each of these parameters.
+See [below](#model-design) for an explanation of each of these parameters.
 Here are examples of each of these parameters in several frameworks and applications:
 
 | Application | Task | Framework(s) | `object` | `preprocess`               | `postprocess` | `encoder` |
@@ -64,9 +68,30 @@ Here are examples of each of these parameters in several frameworks and applicat
 | Risk | Fraud detection | `sklearn` | Estimator | `None` | `None` | `None` |
 | Search | Vector Search | `openai` | OpenAI Embedding | `None` | `None` | `None` |
 
+## Vanilla Usage
+
+The `Model` class supports models which are not natively integrated with SuperDuperDB
+for inference purposes.
+Here is, for instance, how to wrap a `sentence_transformers` model with the `Model`
+abstraction:
+
+```python
+import sentence_transformers
+from superduperdb.container.model import Model
+from superduperdb.ext.numpy.array import array
+
+model = Model(
+    identifier='all-MiniLM-L6-v2',
+    object=sentence_transformers.SentenceTransformer('all-MiniLM-L6-v2'),
+    encoder=array('float32', shape=(384,)),
+    predict_method='encode',
+    batch_predict=True,
+)
+```
+
 ## PyTorch
 
-PyTorch is the most flexible framework we have integrated. It allows users
+PyTorch is a flexible framework which allows users
 to define arbitrary logic in the forward pass, and use backpropagation 
 training to calibrate models on the data.
 
@@ -81,7 +106,7 @@ m = TorchModel(
 )
 ```
 
-## Tranformers
+## Transformers
 
 Transformers provides a large compendium of pre-trained and pre-defined architectures and pipelines. Their `transformers.Pipeline` abstraction fits well with the `Model` framework:
 
@@ -89,8 +114,8 @@ Transformers provides a large compendium of pre-trained and pre-defined architec
 from superduperdb.ext.transformers import TransformersModel
 m = TransformersModel(
     '<model-id>',
-    object=Model,    # a `torch` model compatible with `transformers`
-    preprocess=my_preproces_function,     # tokenizer, processor or similar
+    object=my_pipeline,    # a `transformers` pipeline 
+    preprocess=my_preprocess_function,     # tokenizer, processor or similar
     postprocess=my_postprocess_function,      # a decoding function
     encoder=my_encoder                      # any `Encoder` instance
 )
@@ -147,11 +172,11 @@ pipeline = superduper(pipeline...)
 All of the models which we created in the previous step are now ready to be applied to the database:
 
 ```python
->>> from superduperdb.db.mongodb.query import Collection
->>> coll = Collection('my_data')
->>> svm.predict(X='x', db=db, select=coll.find())
+from superduperdb.db.mongodb.query import Collection
+coll = Collection('my_data')
+svm.predict(X='x', db=db, select=coll.find())
 # Wait a bit
->>> db.execute(coll.find_one())
+db.execute(coll.find_one())
 Document({
     "_id": ObjectId('64b6ba93f8af205501ca7748'),
     'x': Encodable(x=torch.tensor([...])),
@@ -166,7 +191,7 @@ A similar result may be obtained by replaced the `svm` by any of the other model
 Using the same analogy to `sklearn` above, SuperDuperDB supports "in-database" training of models:
 
 ```python
->>> svm.fit(
+svm.fit(
     X='x', y='y', db=db, select=coll.find({'_fold': 'train'})
 )
 # Lots of output corresponding to training here
@@ -224,17 +249,6 @@ each model takes the keyword `encoder`, allowing users to specify exactly
 how outputs are stored in the database as `bytes`, if not supported natively 
 by the database. Read more [here](encoders).
 
-## Supported frameworks
-
-SuperDuperDB has native support for:
-
-- PyTorch
-- Hugging-Face
-- Sklearn
-- OpenAI
-
-Other model frameworks may be used for inference only (`model.predict`).
-
 ## Daemonizing models with listeners
 
 Models can be configured so that, when new data is inserted through SuperDuperDB database, 
@@ -242,25 +256,24 @@ then the models spring into action, processing this new data, and repopulating o
 into the database.
 
 ```python
->>> model.predict(X='input_col', db=db, select=coll.find(), listen=True)
+model.predict(X='input_col', db=db, select=coll.find(), listen=True)
 ```
 
 An equivalent syntax is the following:
 
 ```python
->>> from superduperdb.container.listener import Listener
->>> db.add(
-...    Listener(
-...        model=model,
-...        select=coll.find(),
-...        key='input_col',
-...    )
-... )
+from superduperdb.container.listener import Listener
+db.add(
+   Listener(
+       model=model,
+       select=coll.find(),
+       key='input_col',
+   )
+)
 ```
 
 After setting up a `Listener`, whenever data is inserted or updated, jobs are created 
 which save the outputs of the model in the `"_outputs"` field.
 
-A `Listener` may also be configured in [cluster mode](/docs/category/cluster), to listen for changes coming in 
-from any sources - i.e. changes are not just detected through the SuperDuperDB system. 
+A `Listener` may also be configured in [cluster mode](/docs/category/cluster), to listen for changes coming in from any sources - i.e. changes are not just detected through the SuperDuperDB system. 
 Read more about that [here](/docs/docs/cluster/change_data_capture).

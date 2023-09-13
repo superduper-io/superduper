@@ -12,12 +12,17 @@ db = pymongo.MongoClient().documents
 db = superduper(db)
 ```
 
-***Do you provide integrations with other data-bases, -lakes or -warehouses?***
+***Which integrations do you have with data-bases, -lakes or -warehouses?***
 
-Not currently. We are currently discussing how to proceed here, in open source.
-We believe that there is sufficient developer pain and a large enough community 
-around MongoDB to start there.
-Please review our issue boards [on GitHub](https://github.com/SuperDuperDB/superduperdb) for more information.
+We currently have first class support for MongoDB and can connect to 
+the SQL databases which are supported by Ibis. This includes:
+
+- PostgreSQL
+- SQLite
+- DuckDB
+- Snowflake
+- ClickHouse
+- and many more...
 
 ***Why MongoDB and not another data store as you first data integration?***
 
@@ -39,10 +44,10 @@ That means focus on delivering ML and AI in conjunction with continuous integrat
 While SuperDuperDB can be used to great effect to reduce the complexity of MLOps, our starting point
 is a far simpler problem setting:
 
-```{important}
+:::info
 Given I have AI models built as Python objects, how do I apply these to my data deployment with
 zero overhead and no detours through traditional DevOps pipelines?
-```
+:::
 
 From this point of view, SuperDuperDB is an effort to **avoid MLOps** per se. That results in 
 MLOps becoming significantly simpler, the moment it becomes absolutely necessary.

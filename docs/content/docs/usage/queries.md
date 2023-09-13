@@ -4,10 +4,10 @@ sidebar_position: 4
 
 # Queries
 
-```{note}
+:::info
 SuperDuperDB wraps standard datastore query APIs. It augments
 these queries with support for vector-search and recall of complex data-types.
-```
+:::
 
 SuperDuperDB queries are based on the queries of the underlying database, upon which the 
 `DB` is based (see the [section on the `DB`](db)). 
@@ -37,7 +37,7 @@ With this collection standard query types may be executed. Whereas `pymongo` ret
 
 
 ```python
->>> db.execute(collection.find_one())
+db.execute(collection.find_one())
 Document({'_id': ObjectId('64b89e92c08139e1cedc11a4'), 'x': Encodable(x=tensor([ 0.2059,  0.5608,  ...]), encoder=Encoder(identifier='torch.float32[512]', decoder=<Artifact artifact=<superduperdb.encoders.torch.tensor.DecodeTensor object at 0x1785b5750> serializer=pickle>, encoder=<Artifact artifact=<superduperdb.encoders.torch.tensor.EncodeTensor object at 0x1786767d0> serializer=pickle>, shape=[512], version=0)), '_fold': 'train'})
 ```
 
@@ -46,7 +46,7 @@ is that the data may contain complex data-types such as images (see [the section
 
 ```python
 from superduperdb.core.document import Document as D
->>> db.execute(
+db.execute(
     collection.insert_many([
         D({'this': f'is a test {i}'})
         for i in range(10)
@@ -65,7 +65,7 @@ Supported MongoDB queries:
 - `update_many`
 - `delete_many`
 
-## Featurization
+### Featurization
 
 In some AI applications, for instance in [transfer learning](https://en.wikipedia.org/wiki/Transfer_learning), it is useful to "represent" data using some model-derived "features".
 We support featurization in combination with `find` and `find_one` queries:
@@ -81,7 +81,7 @@ cursor = db.execute(
 See the [model section](model) for information on how to compute and keep features (model outputs)
 up to date.
 
-## Vector Search queries
+### Vector Search queries
 
 If one or more `VectorIndex` instances have been configured together with the `DB`, these 
 may be used in hybrid queries together with standard databasing queries:
@@ -94,4 +94,63 @@ cursor_2 = db.execute(
 )
 ```
 
-See [here](/docs/docs/usage/vector_index) for more background on vector-search and `VectorIndex` functionality.
+## SQL data-backends (experimental)
+
+Using our integration via `ibis`, we support a number of SQL databases and more. See [here](db)
+for more information.
+
+Executing queries here is precisely analogous to vanilla `ibis` query application, 
+with the addition that vector-search queries may be built on top.
+
+As usual, the tables need to be set up with SuperDuperDB initiialy:
+
+```python
+from superduperdb.db.ibis.query import Table
+from sueprduperdb.db.ibis.schema import IbisSchema
+from superduperdb.db.ibis.field_types import dtype
+
+schema = IbisSchema(
+    identifier='my_schema',
+    fields={
+        'id': dtype('int64'),
+        'this': dtype('str'),
+        'label': dtype('int32'),
+    },
+)
+
+table = Table('my-table', schema=schema)
+t.create(db)
+db.add(t)
+```
+
+Once setup, we can insert data:
+
+```python
+from superduperdb.core.document import Document as D
+db.execute(
+    table.insert([
+        D({'this': f'is a test {i}', 'label': random.randrange(2)})
+        for i in range(10)
+    ])
+)
+```
+
+And also select data:
+
+```python
+db.execute(table.select('this').filter(table.label == 0))
+```
+
+If we've also added a [`VectorIndex`](/docs/docs/usage/vector_index), then 
+we can use this in a hybrid SQL + vector-search query:
+
+```python
+db.execute(
+    table
+        .like({'this': 'is another test'}, vector_index='my-index')
+        .select('this')
+        .filter(table.label == 0)
+)
+```
+
+

@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Configuration
 
-SuperDuperDB ships with configuration via `pydantic`. Read more about `pydantic` [here](https://docs.pydantic.dev/latest/). Using `pydantic`, SuperDuperDB comes with a full set of defaults in `superduperdb.base.config.py`.
+SuperDuperDB ships with configuration via `pydantic` (read more [here](https://docs.pydantic.dev/latest/)). Using `pydantic`, SuperDuperDB comes with a full set of defaults in `superduperdb.base.config.py`.
 
 These configurations may be overridden, prior to invoking SuperDuperDB classes or by setting environment 
 variables prior to starting the session:

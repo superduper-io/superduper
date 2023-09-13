@@ -4,9 +4,9 @@ sidebar_position: 1
 
 # DB
 
-```{note}
+:::info
 The `DB` is the primary interface from Python to your data+AI.
-```
+:::
 
 The central object for communicating with your datastore in SuperDuperDB is the `DB` class.
 
@@ -61,12 +61,24 @@ db = superduper(pymongo.MongoClient().test_db)
 
 ## Databackend
 
-Currently we support MongoDB as the data backend, with large data blobs on AWS s3.
+Currently we support:
+
+- [MongoDB](https://www.mongodb.com/)
+- (Experimental) Any databackend supported by the [Ibis project](https://ibis-project.org/), including:
+  - [SQLite](https://www.sqlite.org/index.html)
+  - [PostgreSQL](https://www.postgresql.org/)
+  - [Snowflake](https://www.snowflake.com/en/)
+  - [DuckDB](https://duckdb.org/)
+  - [Pandas](https://pandas.pydata.org/)
+  - ... many more
 
 ## Artifact Store
 
-Currently we support `gridfs` on MongoDB as the artifact store.
+Currently we support:
+- MongoDB via `gridfs`
+- Local filesystem
 
 ## Metadata Store
 
-Currently we support MongoDB as the metadata store.
+- MongoDB
+- Any SQL database supported by SQLAlchemy

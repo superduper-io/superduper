@@ -4,9 +4,9 @@ sidebar_position: 6
 
 # Datasets 
 
-```{note}
+:::info
 Datasets are immutable snapshots of the `DB`
-```
+:::
 
 When building AI models, in many cases, especially for validation, it's important that 
 immutable snapshots of data are maintained for posterity. The purpose of this practice is:

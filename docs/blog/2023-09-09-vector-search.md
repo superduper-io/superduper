@@ -1,6 +1,6 @@
 ---
-slug: connect-your-traditional-database-with-vector-search-using-superduperdb
-title: Connect your Traditional Database with Vector-Search using SuperDuperDB
+slug: introduce-vector-search-to-your-favourite-database-with-superduperdb
+title: Introduce vector search to your favourite database with SuperDuperDB
 authors: [blythed]
 tags: [AI, vector-search]
 ---

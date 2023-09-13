@@ -4,10 +4,10 @@ sidebar_position: 2
 
 # Encoders
 
-```{note}
+:::info
 The `Encoder` class allows SuperDuperDB to store Python objects in the `DB`,
 and to recall them in the same format in which they were stored.
-```
+:::
 
 SuperDuperDB supports insertion of any standard datatypes supported by the underlying database.
 However, in many AI use-cases, these data-types are not sufficient for the intended data.
@@ -48,14 +48,14 @@ db.execute(
 Encoders in use with the database may be displayed with `db.show`:
 
 ```python
->>> db.show('encoder')
+db.show('encoder')
 ['pil_image']
 ```
 
 Given that we have setup our encoders and data in this way, when we reload our data, using database queries, the data is reloaded in the same format we saved in:
 
 ```python
->>> db.execute(coll.find_one())['img']
+db.execute(coll.find_one())['img']
 <PIL.PngImagePlugin.PngImageFile image mode=RGBA size=1164x860>
 ```
 

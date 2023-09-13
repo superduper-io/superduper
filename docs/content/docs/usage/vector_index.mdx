@@ -4,10 +4,10 @@ sidebar_position: 5
 
 # Vector Indexes 
 
-```{note}
+:::info
 SuperDuperDB provides first-class support for Vector-Search, including 
 encoding of inputs by arbitrary AI models.
-```
+:::
 
 SuperDuperDB has support for vector-search via LanceDB using vector-indexes.
 We are working on support for vector-search via MongoDB enterprise search in parallel.
@@ -17,7 +17,7 @@ Vector-indexes build on top of the [DB](db), [models](models) and [listeners](li
 ## Creating vector indexes
 
 In order to build a vector index, one defines one or two models, and /docs/docs/usage/models#daemonizing-models-with-listenerss them with listeners.
-In the simples variant one does simply:
+In the simplest variant one does simply:
 
 ```python
 from superduperdb.container.vector_index import VectorIndex
@@ -47,7 +47,6 @@ class TextEmbedding:
     def __call__(self, x):
         return sum([self.lookup[y] for y in x.split()])
 
- for
 db.add(
     VectorIndex(
         identifier='my-index',
@@ -56,35 +55,91 @@ db.add(
                 preprocess=TextEmbedding(d),  # "d" should be loaded from disk
                 object=torch.nn.Linear(64, 512),
             )
+        ),
         key = '<key-to-search>',
     )
 )
 ```
 
-## Using vector indexes
+## Using vector indexes in queries
 
-### MongoDB
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-To use your vector index to search MongoDB, there are two possibilities:
+With SuperDuperDB there are 2 possibilities for applying vector-search. Either search
+for similar matches and then filter or vice-versa.
 
-Firstly, find similar matches and then filter the results:
+***Find similar matches and then filter the results:***
 
-```python
->>> from superduperdb.container.document import Document as D
->>> db.execute(
-...    Collection('my-coll')
-...       .like(D({'<key-to-search>': '<content' >}, vector_index='my-index')
-...       .find( < filter >, < projection >)
-...    )
-... )
+```mdx-code-block
+<Tabs>
+<TabItem value="mongodb" label="MongoDB">
 ```
 
-Secondly, filter the data and find similar matches within the results:
+```python
+from superduperdb.container.document import Document as D
+
+db.execute(
+   Collection('my-coll')
+      .like(D({'<key-to-search>': '<content' >}, vector_index='my-index')
+      .find( < filter >, < projection >)
+   )
+)
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="sql" label="SQL (experimental)">
+```
 
 ```python
->>> db.execute(
-...    Collection('my-coll')
-...        .like(D({'<key-to-search>': '<content'>}), vector_index='my-index')
-...        .find(<filter>, <projection>)
-... )
+from superduperdb.container.document import Document as D
+
+db.execute(
+    table
+        .like({'this': 'is another test'}, vector_index='my-index')
+        .filter(table.label == 0)
+)
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+***Filter the data and find similar matches within the results:***
+
+```mdx-code-block
+<Tabs>
+<TabItem value="mongodb1" label="MongoDB">
+```
+
+```python
+from superduperdb.container.document import Document as D
+
+db.execute(
+   Collection('my-coll')
+       .find(<filter>, <projection>)
+       .like(D({'<key-to-search>': '<content'>}), vector_index='my-index')
+)
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="sql1" label="SQL (experimental)">
+```
+
+```python
+from superduperdb.container.document import Document as D
+
+db.execute(
+    table
+        .filter(table.label == 0)
+        .like({'this': 'is another test'}, vector_index='my-index')
+)
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
 ```

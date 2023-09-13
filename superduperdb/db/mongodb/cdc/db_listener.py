@@ -12,6 +12,7 @@ from pymongo.change_stream import CollectionChangeStream
 from superduperdb import logging
 from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS, query
+from superduperdb.misc.runnable.runnable import Event
 
 from .base import BaseDatabaseListener, CachedTokens, DBEvent, Packet, TokenType
 from .handler import CDCHandler
@@ -37,8 +38,8 @@ class _DatabaseListenerThreadScheduler(threading.Thread):
     def __init__(
         self,
         listener: BaseDatabaseListener,
-        stop_event: threading.Event,
-        start_event: threading.Event,
+        stop_event: Event,
+        start_event: Event,
     ) -> None:
         threading.Thread.__init__(self, daemon=True)
         self.stop_event = stop_event
@@ -167,7 +168,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         self,
         db: DB,
         on: query.Collection,
-        stop_event: threading.Event,
+        stop_event: Event,
         identifier: 'str' = '',
         resume_token: t.Optional[TokenType] = None,
     ):
@@ -192,7 +193,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
 
         self._change_pipeline = None
         self._stop_event = stop_event
-        self._startup_event = threading.Event()
+        self._startup_event = Event()
         self._scheduler = None
         self.start_handler()
 

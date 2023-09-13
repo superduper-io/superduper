@@ -397,6 +397,9 @@ class Model(Component, PredictMixin):
     #: The method to use for prediction (optional)
     predict_method: t.Optional[str] = None
 
+    #: The method to transfer the model to a device
+    model_to_device_method: t.Optional[str] = None
+
     #: Whether to batch predict (optional)
     batch_predict: bool = False
 
@@ -413,6 +416,9 @@ class Model(Component, PredictMixin):
     future: t.Optional[Future] = None
     device: str = "cpu"
 
+    # TODO: handle situation with multiple GPUs
+    preferred_devices: t.Sequence[str] = ("cuda", "mps", "cpu")
+
     artifacts: t.ClassVar[t.Sequence[str]] = ['object']
 
     type_id: t.ClassVar[str] = 'model'
@@ -428,6 +434,21 @@ class Model(Component, PredictMixin):
             self.to_call = self.object.artifact
         else:
             self.to_call = getattr(self.object.artifact, self.predict_method)
+
+        self.artifact_to_method = None
+        if self.model_to_device_method is not None:
+            self.artifact_to_method = getattr(self, self.model_to_device_method)
+
+    def on_load(self, db: DB) -> None:
+        if self.artifact_to_method:
+            for i, device in enumerate(self.preferred_devices):
+                try:
+                    self.artifact_to_method(device)
+                    self.device = device
+                    return
+                except Exception:
+                    if i == len(self.preferred_devices) - 1:
+                        raise
 
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:

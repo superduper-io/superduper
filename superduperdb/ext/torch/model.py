@@ -364,6 +364,8 @@ class TorchModel(Base, Model):  # type: ignore[misc]
     train_forward_method: str = '__call__'
 
     def __post_init__(self):
+        self.model_to_device_method = 'move_to_device'
+
         super().__post_init__()
 
         self.object.serializer = 'torch'
@@ -403,6 +405,9 @@ class TorchModel(Base, Model):  # type: ignore[misc]
 
     def state_dict(self):
         return self.object.state_dict()
+
+    def move_to_device(self, device):
+        self.object.artifact.to(device)
 
     @contextmanager
     def saving(self):
@@ -476,6 +481,10 @@ class TorchModel(Base, Model):  # type: ignore[misc]
             return out
 
     def train_forward(self, X, y=None):
+        X = X.to(self.device)
+        if y is not None:
+            y = y.to(self.device)
+
         method = getattr(self.object.artifact, self.train_forward_method)
         if hasattr(self.object.artifact, 'train_forward'):
             if y is None:

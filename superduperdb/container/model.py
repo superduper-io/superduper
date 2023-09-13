@@ -416,7 +416,7 @@ class Model(Component, PredictMixin):
     version: t.Optional[int] = None
     future: t.Optional[Future] = None
     device: str = "cpu"
-    preferred_devices: t.ClassVar[t.Sequence[str]] = ["cuda", "mps", "cpu"]
+    preferred_devices: t.ClassVar[t.Sequence[str]] = ("cuda", "mps", "cpu")
 
     artifacts: t.ClassVar[t.Sequence[str]] = ['object']
 
@@ -434,14 +434,21 @@ class Model(Component, PredictMixin):
         else:
             self.to_call = getattr(self.object.artifact, self.predict_method)
 
+        if self.transfer_method_name is not None:
+            self.artifact_to_method = getattr(
+                self.object.artifact, self.transfer_method_name
+            )
+        else:
+            self.artifact_to_method = None
+
     @override
     def on_load(self, db: DB) -> None:
-        if not self.transfer_method_name:
+        if not self.artifact_to_method:
             return
 
         for device in self.preferred_devices:
             try:
-                getattr(self.object.artifact, self.transfer_method_name)(device)
+                self.artifact_to_method(device)
                 return
             except Exception as e:
                 logging.warning(e)

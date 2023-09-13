@@ -371,7 +371,7 @@ class TorchModel(Base, Model):  # type: ignore[misc]
         super().__post_init__()
 
         self.object.serializer = 'torch'
-        self.object.to_method = 'move_to_device'
+        self.object.transfer_method_name = 'move_to_device'
 
         if self.optimizer_state is not None:
             self.optimizer.load_state_dict(self.optimizer_state.artifact)

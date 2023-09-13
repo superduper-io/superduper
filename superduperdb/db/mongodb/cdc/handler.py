@@ -1,4 +1,3 @@
-import queue
 import threading
 import traceback
 import typing as t
@@ -8,10 +7,14 @@ from superduperdb.container.job import FunctionJob
 from superduperdb.container.serializable import Serializable
 from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.db.base.db import DB
+from superduperdb.misc.runnable.queue_chunker import QueueChunker
+from superduperdb.misc.runnable.runnable import Event
 
 from .base import DBEvent, Packet
 from .task_queue import cdc_queue
 from .vector_task_factory import vector_task_factory
+
+queue_chunker = QueueChunker(chunk_size=100, timeout=0.2)
 
 
 class CDCHandler(threading.Thread):
@@ -21,10 +24,7 @@ class CDCHandler(threading.Thread):
     does post model executiong jobs, i.e `copy_vectors`.
     """
 
-    _QUEUE_BATCH_SIZE: int = 100
-    _QUEUE_TIMEOUT: float = 0.01
-
-    def __init__(self, db: DB, stop_event: threading.Event):
+    def __init__(self, db: DB, stop_event: Event):
         """__init__.
 
         :param db: a superduperdb instance.
@@ -125,30 +125,11 @@ class CDCHandler(threading.Thread):
         elif packet.event_type == DBEvent.delete:
             self.on_delete(packet)
 
-    def get_batch_from_queue(self):
-        """
-        Get a batch of packets from task queue, with a timeout.
-        """
-        packets = []
-        try:
-            for _ in range(self._QUEUE_BATCH_SIZE):
-                packets.append(cdc_queue.get(block=True, timeout=self._QUEUE_TIMEOUT))
-                if self._stop_event.is_set():
-                    return 0
-
-        except queue.Empty:
-            if len(packets) == 0:
-                return None
-        return Packet.collate(packets)
-
     def run(self):
-        while not self._stop_event.is_set():
-            try:
-                packets = self.get_batch_from_queue()
-                if packets:
-                    self._handle(packets)
-                if packets == 0:
-                    break
-            except Exception as exc:
-                traceback.print_exc()
-                logging.info(f'Error while handling cdc batches :: reason {exc}')
+        try:
+            for c in queue_chunker(cdc_queue, self._stop_event):
+                self._handle(Packet.collate(c))
+
+        except Exception as exc:
+            traceback.print_exc()
+            logging.info(f'Error while handling cdc batches :: reason {exc}')

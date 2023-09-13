@@ -6,7 +6,7 @@ authors: [blythed]
 tags: [AI, data-store, Python]
 ---
 
-It's 2023, and unless you've been in cryo-sleep since mid-2022, you'll have heard about the explosion of powerful AI and LLMs. Leveraging these LLMs, developers conversant with the opportunities of connecting data with AI.
+It's 2023, and unless you've been in cryo-sleep since mid-2022, you'll have heard about the explosion of powerful AI and LLMs. Leveraging these LLMs, developers are now able to connect existing data with AI using vector search.
 
 <!--truncate-->
 

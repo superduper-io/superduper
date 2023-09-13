@@ -1,4 +1,4 @@
-name: test latest dependency versions
+name: test latest dependency versions and external web links
 
 on:
   schedule:
@@ -70,3 +70,9 @@ jobs:
 
             - name: Run tests
               run: make test
+
+    markdown-link-check:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@master
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1

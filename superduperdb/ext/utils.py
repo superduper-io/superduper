@@ -9,10 +9,10 @@ def str_shape(shape: t.Sequence[int]) -> str:
 
 
 def get_key(key_name: str) -> str:
-    if key_name not in os.environ:
-        raise ValueError(f'{key_name} not set')
-    else:
+    try:
         return os.environ[key_name]
+    except KeyError:
+        raise KeyError(f'Environment variable {key_name} is not set') from None
 
 
 def format_prompt(X: str, prompt: str, context: t.Optional[t.List[str]] = None) -> str:

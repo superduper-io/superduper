@@ -17,8 +17,11 @@ alabaster==0.7.13
     # via sphinx
 annotated-types==0.5.0
     # via pydantic
+anthropic==0.3.11
+    # via superduperdb
 anyio==3.7.1
     # via
+    #   anthropic
     #   fastapi
     #   httpcore
     #   starlette
@@ -118,6 +121,8 @@ dill==0.3.7
     #   superduperdb (pyproject.toml)
 distributed==2023.5.0
     # via dask
+distro==1.8.0
+    # via anthropic
 dnspython==2.4.2
     # via pymongo
 docutils==0.20.1
@@ -186,7 +191,9 @@ h11==0.14.0
 httpcore==0.18.0
     # via httpx
 httpx==0.25.0
-    # via superduperdb
+    # via
+    #   anthropic
+    #   superduperdb
 huggingface-hub==0.17.2
     # via
     #   accelerate
@@ -462,6 +469,7 @@ pyarrow==11.0.0
     #   pylance
 pydantic==2.3.0
     # via
+    #   anthropic
     #   fastapi
     #   lancedb
     #   superduperdb
@@ -654,7 +662,9 @@ threadpoolctl==3.2.0
 tinycss2==1.2.1
     # via nbconvert
 tokenizers==0.13.3
-    # via transformers
+    # via
+    #   anthropic
+    #   transformers
 toml==0.10.2
     # via interrogate
 tomli==2.0.1
@@ -723,6 +733,7 @@ types-urllib3==1.26.25.14
 typing-extensions==4.8.0
     # via
     #   annotated-types
+    #   anthropic
     #   black
     #   boto3-stubs
     #   botocore-stubs

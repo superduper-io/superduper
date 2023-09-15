@@ -69,6 +69,7 @@ dependencies = [
 [project.optional-dependencies]
 apis = [
     "cohere",
+    "anthropic",
     ]
 torch = [
     "torch>=2.0.0,!=2.0.1",

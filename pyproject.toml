@@ -67,6 +67,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+apis = [
+    "cohere",
+    ]
 torch = [
     "torch>=2.0.0,!=2.0.1",
     "accelerate>=0.20.1",
@@ -112,7 +115,7 @@ tests = [
     "vcrpy",
     "pytest-asyncio",
 ]
-dev = ["superduperdb[docs,lint,tests,typing,torch]"]
+dev = ["superduperdb[apis,docs,lint,tests,typing,torch]"]
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"

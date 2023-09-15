@@ -6,9 +6,13 @@ import re
 import typing as t
 import warnings
 
-from transformers import DataCollatorWithPadding, Trainer, TrainingArguments
-from transformers import Pipeline as BasePipeline
-from transformers import pipeline as _pipeline
+from transformers import (
+    DataCollatorWithPadding,
+    Pipeline as BasePipeline,
+    Trainer,
+    TrainingArguments,
+    pipeline as _pipeline,
+)
 
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.metric import Metric

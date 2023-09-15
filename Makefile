@@ -13,7 +13,6 @@ clean-test-containers:
 .PHONY: lint-and-type-check
 lint-and-type-check:
 	mypy superduperdb
-	isort --check $(DIRECTORIES)
 	black --check $(DIRECTORIES)
 	ruff check $(DIRECTORIES)
 	interrogate superduperdb
@@ -35,7 +34,6 @@ fix-and-test: test-containers
 test-and-fix: test-containers
 	mypy superduperdb
 	pytest $(PYTEST_ARGUMENTS)
-	isort $(DIRECTORIES)
 	black $(DIRECTORIES)
 	ruff check --fix $(DIRECTORIES)
 	interrogate superduperdb

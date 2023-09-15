@@ -1,10 +1,10 @@
 import typing as t
 
+from fastapi import APIRouter, Request
+
 from backend.ai.utils.github import repos
 from backend.config import settings
 from backend.documents.models import Answer, Query
-from fastapi import APIRouter, Request
-
 from superduperdb.db.mongodb.query import Collection
 
 documents_router = APIRouter(prefix='/documents', tags=['docs'])

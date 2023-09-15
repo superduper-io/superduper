@@ -1,8 +1,7 @@
 import dataclasses as dc
 import typing as t
 
-from ibis.expr.datatypes import DataType
-from ibis.expr.datatypes import dtype as _dtype
+from ibis.expr.datatypes import DataType, dtype as _dtype
 
 
 @dc.dataclass

@@ -1,0 +1,60 @@
+interactions:
+- request:
+    body: '{"model": "base-light", "prompt": "Hello, world!", "prompt_vars": {}, "preset":
+      null, "num_generations": null, "max_tokens": null, "temperature": null, "k":
+      null, "p": null, "frequency_penalty": null, "presence_penalty": null, "end_sequences":
+      null, "stop_sequences": null, "return_likelihoods": null, "truncate": null,
+      "logit_bias": {}, "stream": false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '354'
+      Content-Type:
+      - application/json
+      Request-Source:
+      - python-sdk-4.26.1
+      User-Agent:
+      - python-requests/2.31.0
+    method: POST
+    uri: https://api.cohere.ai/v1/generate
+  response:
+    body:
+      string: "{\"id\":\"c447607c-10e0-45c8-aa8d-2c36deb60efb\",\"generations\":[{\"id\":\"031fa534-331f-4ef0-b46e-31132b30c0f6\",\"text\":\"
+        I\u2019m back, with some new photos. This time, I\u2019ve got a\"}],\"prompt\":\"Hello,
+        world!\",\"meta\":{\"api_version\":{\"version\":\"1\"}}}"
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Via:
+      - 1.1 google
+      content-length:
+      - '239'
+      content-type:
+      - application/json
+      date:
+      - Fri, 15 Sep 2023 11:11:06 GMT
+      num_chars:
+      - '67'
+      vary:
+      - Origin
+      x-endpoint-monthly-call-limit:
+      - '5000'
+      x-ratelimit-limit:
+      - '10000000'
+      x-ratelimit-remaining:
+      - '9999992'
+      x-ratelimit-reset:
+      - '1694403260'
+      x-trial-endpoint-call-limit:
+      - '5'
+      x-trial-endpoint-call-remaining:
+      - '3'
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -12,38 +12,6 @@ from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 SKIP_PAID = os.environ.get('OPENAI_API_KEY') is None
 
 
-@pytest.mark.skipif(SKIP_PAID, reason='OPENAI_API_KEY not set')
-def test_open_ai_chat_completion():
-    m = OpenAIChatCompletion('gpt-3.5-turbo')
-
-    result = m.predict('Tell me about yourself?', one=True)
-
-    print(result)
-
-    assert 'openai' in result.lower()
-
-    context = ['Imagine you are a woman from Dallas.', 'You like to ride horses.']
-
-    m = OpenAIChatCompletion(
-        model='gpt-3.5-turbo',
-        prompt=(
-            'Use the following facts to answer this question\n'
-            '{context}\n\n'
-            'Here\'s the question:\n'
-        ),
-    )
-    result = m.predict(
-        'Tell me about yourself?',
-        context=context,
-        one=True,
-    )
-
-    assert 'horse' in result.lower()
-    assert 'dallas' in result.lower()
-
-    print(result)
-
-
 @pytest.fixture
 def open_ai_with_rhymes(empty):
     with open('test/material/data/rhymes.json') as f:

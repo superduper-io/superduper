@@ -95,29 +95,29 @@ class OpenAIEmbedding(OpenAI):
         return e['data'][0]['embedding']
 
     @retry
-    def _predict_a_batch(self, texts, **kwargs):
-        out = Embedding.create(input=texts, model=self.identifier, **kwargs)['data']
-        return [r['embedding'] for r in out]
+    def _predict_a_batch(self, texts: t.List[str], **kwargs):
+        out = Embedding.create(input=texts, model=self.identifier, **kwargs)
+        return [r['embedding'] for r in out['data']]
 
     @retry
-    async def _apredict_a_batch(self, texts, **kwargs):
-        out = await Embedding.acreate(input=texts, model=self.identifier, **kwargs)[
-            'data'
-        ]
-        return [r['embedding'] for r in out]
+    async def _apredict_a_batch(self, texts: t.List[str], **kwargs):
+        out = await Embedding.acreate(input=texts, model=self.identifier, **kwargs)
+        return [r['embedding'] for r in out['data']]
 
-    def _predict(self, X, batch_size=100, **predict_kwargs):
+    def _predict(self, X, one: bool = False, **kwargs):
         if isinstance(X, str):
             return self._predict_one(X)
         out = []
+        batch_size = kwargs.pop('batch_size', 100)
         for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **predict_kwargs))
+            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
         return out
 
-    async def _apredict(self, X, batch_size=100, **kwargs):
+    async def _apredict(self, X, one: bool = False, **kwargs):
         if isinstance(X, str):
             return await self._apredict_one(X)
         out = []
+        batch_size = kwargs.pop('batch_size', 100)
         for i in range(0, len(X), batch_size):
             out.extend(await self._apredict_a_batch(X[i : i + batch_size], **kwargs))
         return out
@@ -131,7 +131,7 @@ class OpenAIChatCompletion(OpenAI):
     takes_context: bool = True
 
     #: The prompt to use to seed the response.
-    prompt: t.Optional[str] = None
+    prompt: str = ''
 
     def _format_prompt(self, context, X):
         prompt = self.prompt.format(context='\n'.join(context))

@@ -4,7 +4,7 @@
 #
 #    pip-compile --extra=dev --output-file=.github/ci-pinned-requirements/dev.txt pyproject.toml
 #
-accelerate==0.22.0
+accelerate==0.23.0
     # via superduperdb
 aiohttp==3.8.5
     # via
@@ -21,8 +21,6 @@ anyio==3.7.1
     #   fastapi
     #   httpcore
     #   starlette
-appnope==0.1.3
-    # via ipython
 asttokens==2.4.0
     # via stack-data
 async-timeout==4.0.3
@@ -55,17 +53,17 @@ bleach==6.0.0
     # via nbconvert
 blinker==1.6.2
     # via flask
-boto3==1.28.44
+boto3==1.28.48
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-boto3-stubs==1.28.44
+boto3-stubs==1.28.48
     # via superduperdb
-botocore==1.31.44
+botocore==1.31.48
     # via
     #   boto3
     #   s3transfer
-botocore-stubs==1.31.44
+botocore-stubs==1.31.48
     # via boto3-stubs
 certifi==2023.7.22
     # via
@@ -88,6 +86,8 @@ cloudpickle==2.2.1
     # via
     #   dask
     #   distributed
+cmake==3.27.4.1
+    # via triton
 colorama==0.4.6
     # via interrogate
 coverage[toml]==7.3.1
@@ -142,11 +142,12 @@ fil==1.3.0
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-filelock==3.12.3
+filelock==3.12.4
     # via
     #   huggingface-hub
     #   torch
     #   transformers
+    #   triton
 flask==2.3.3
     # via
     #   flask-cors
@@ -171,14 +172,18 @@ fsspec==2023.9.0
     #   huggingface-hub
 furo==2023.9.10
     # via superduperdb
+greenlet==2.0.2
+    # via sqlalchemy
 h11==0.14.0
     # via httpcore
 httpcore==0.18.0
     # via httpx
 httpx==0.25.0
     # via superduperdb
-huggingface-hub==0.16.4
-    # via transformers
+huggingface-hub==0.17.1
+    # via
+    #   accelerate
+    #   transformers
 ibis-framework[duckdb,sqlite]==5.1.0
     # via
     #   superduperdb
@@ -254,6 +259,8 @@ lancedb==0.1.16
     #   superduperdb (pyproject.toml)
 libcst==1.0.1
     # via monkeytype
+lit==16.0.6
+    # via triton
 locket==1.0.0
     # via
     #   distributed
@@ -335,6 +342,31 @@ numpy==1.24.4
     #   superduperdb (pyproject.toml)
     #   torchvision
     #   transformers
+nvidia-cublas-cu11==11.10.3.66
+    # via
+    #   nvidia-cudnn-cu11
+    #   nvidia-cusolver-cu11
+    #   torch
+nvidia-cuda-cupti-cu11==11.7.101
+    # via torch
+nvidia-cuda-nvrtc-cu11==11.7.99
+    # via torch
+nvidia-cuda-runtime-cu11==11.7.99
+    # via torch
+nvidia-cudnn-cu11==8.5.0.96
+    # via torch
+nvidia-cufft-cu11==10.9.0.58
+    # via torch
+nvidia-curand-cu11==10.2.10.91
+    # via torch
+nvidia-cusolver-cu11==11.4.0.1
+    # via torch
+nvidia-cusparse-cu11==11.7.4.91
+    # via torch
+nvidia-nccl-cu11==2.14.3
+    # via torch
+nvidia-nvtx-cu11==11.7.91
+    # via torch
 openai==0.28.0
     # via
     #   superduperdb
@@ -438,9 +470,12 @@ pymongo==4.5.0
     #   superduperdb (pyproject.toml)
 pytest==7.4.2
     # via
+    #   pytest-asyncio
     #   pytest-cov
     #   pytest-xdist
     #   superduperdb
+pytest-asyncio==0.21.1
+    # via superduperdb
 pytest-cov==4.1.0
     # via superduperdb
 pytest-xdist==3.3.1
@@ -465,6 +500,7 @@ pyyaml==6.0.1
     #   libcst
     #   myst-parser
     #   transformers
+    #   vcrpy
 pyzmq==25.1.1
     # via jupyter-client
 ratelimiter==1.2.0.post0
@@ -495,7 +531,7 @@ retry==0.9.2
     # via lancedb
 rich==13.5.2
     # via ibis-framework
-rpds-py==0.10.2
+rpds-py==0.10.3
     # via
     #   jsonschema
     #   referencing
@@ -583,6 +619,7 @@ stack-data==0.6.2
     # via ipython
 starlette==0.27.0
     # via fastapi
+superduperdb[docs,lint,tests,torch,typing]
     # via superduperdb (pyproject.toml)
 sympy==1.12
     # via torch
@@ -621,6 +658,7 @@ torch==2.0.0
     #   accelerate
     #   superduperdb
     #   torchvision
+    #   triton
 torchvision==0.15.1
     # via superduperdb
 tornado==6.3.3
@@ -636,7 +674,7 @@ tqdm==4.66.1
     #   superduperdb
     #   superduperdb (pyproject.toml)
     #   transformers
-traitlets==5.9.0
+traitlets==5.10.0
     # via
     #   ipython
     #   jupyter-client
@@ -648,6 +686,8 @@ traitlets==5.9.0
     #   nbsphinx
 transformers==4.33.1
     # via superduperdb
+triton==2.0.0
+    # via torch
 typer==0.9.0
     # via
     #   superduperdb
@@ -671,7 +711,6 @@ typing-extensions==4.7.1
     #   boto3-stubs
     #   botocore-stubs
     #   fastapi
-    #   filelock
     #   huggingface-hub
     #   ibis-framework
     #   ipython
@@ -695,6 +734,9 @@ urllib3==1.26.16
     #   botocore
     #   distributed
     #   requests
+    #   vcrpy
+vcrpy==5.1.0
+    # via superduperdb
 wcwidth==0.2.6
     # via prompt-toolkit
 webencodings==0.5.1
@@ -706,6 +748,16 @@ werkzeug==2.3.7
     #   flask
     #   superduperdb
     #   superduperdb (pyproject.toml)
+wheel==0.41.2
+    # via
+    #   nvidia-cublas-cu11
+    #   nvidia-cuda-cupti-cu11
+    #   nvidia-cuda-runtime-cu11
+    #   nvidia-curand-cu11
+    #   nvidia-cusparse-cu11
+    #   nvidia-nvtx-cu11
+wrapt==1.15.0
+    # via vcrpy
 xmod==1.5.0
     # via
     #   dek
@@ -713,10 +765,15 @@ xmod==1.5.0
 xxhash==3.3.0
     # via pooch
 yarl==1.9.2
-    # via aiohttp
+    # via
+    #   aiohttp
+    #   vcrpy
 zict==3.0.0
     # via distributed
 zipp==3.16.2
     # via
     #   importlib-metadata
     #   importlib-resources
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools

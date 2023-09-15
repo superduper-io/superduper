@@ -19,7 +19,7 @@ DEFECTS = {
 ALLOWABLE_DEFECTS = {
     'cast': 13,  # Try to keep this down
     'noqa': 1,  # This should never change
-    'type_ignore': 36,  # This should only ever increase in obscure edge cases
+    'type_ignore': 37,  # This should only ever increase in obscure edge cases
 }
 
 

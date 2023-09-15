@@ -34,3 +34,4 @@ else:
     level = getattr(logging, CFG.logging.level.name)
     logging.basicConfig(level=level, **CFG.logging.kwargs)  # type: ignore[attr-defined]
     logging.getLogger('distributed').propagate = True  # type: ignore[attr-defined]
+    logging.getLogger('vcr').setLevel(logging.WARNING)  # type: ignore[attr-defined]

@@ -171,3 +171,6 @@ whitelist-regex = []
 extend-select = [
     "I", # Missing required import (auto-fixable)
 ]
+
+[tool.ruff.isort]
+combine-as-imports = true

@@ -1,5 +1,4 @@
 from backend.config import settings
-
 from superduperdb.container.listener import Listener
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.mongodb.query import Collection

@@ -3,8 +3,7 @@ import os
 import typing as t
 
 import tqdm
-from openai import ChatCompletion, Embedding
-from openai import Model as OpenAIModel
+from openai import ChatCompletion, Embedding, Model as OpenAIModel
 from openai.error import RateLimitError, ServiceUnavailableError, Timeout, TryAgain
 
 import superduperdb as s

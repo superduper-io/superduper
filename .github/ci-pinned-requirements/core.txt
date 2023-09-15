@@ -24,9 +24,9 @@ bidict==0.22.1
     # via ibis-framework
 blinker==1.6.2
     # via flask
-boto3==1.28.49
+boto3==1.28.50
     # via superduperdb (pyproject.toml)
-botocore==1.31.49
+botocore==1.31.50
     # via
     #   boto3
     #   s3transfer
@@ -213,7 +213,7 @@ requests==2.31.0
     #   superduperdb (pyproject.toml)
 retry==0.9.2
     # via lancedb
-rich==13.5.2
+rich==13.5.3
     # via ibis-framework
 s3transfer==0.6.2
     # via boto3
@@ -237,7 +237,7 @@ six==1.16.0
     #   python-dateutil
 sortedcontainers==2.4.0
     # via distributed
-sqlalchemy==2.0.20
+sqlalchemy==2.0.21
     # via
     #   duckdb-engine
     #   ibis-framework
@@ -268,7 +268,7 @@ tqdm==4.66.1
     #   superduperdb (pyproject.toml)
 typer==0.9.0
     # via superduperdb (pyproject.toml)
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   annotated-types
     #   ibis-framework
@@ -295,7 +295,7 @@ yarl==1.9.2
     # via aiohttp
 zict==3.0.0
     # via distributed
-zipp==3.16.2
+zipp==3.17.0
     # via
     #   importlib-metadata
     #   importlib-resources

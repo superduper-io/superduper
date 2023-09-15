@@ -58,11 +58,10 @@ A single scalable deployment of all your AI models which is automatically kept u
 No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2.5%"/>
 
 
-| Supported Data Stores: | AI Frameworks, Models and APIs: |
-|--------------------------|--------------------------|
-| - **MongoDB** <br> - **MongoDB Atlas** <br> - **S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - BigQuery (experimental) <br> - Snowflake (experimental) | - **PyTorch** <br> - **HuggingFace**<br> - **OpenAI**<br> - **Scikit-Learn**<br> - **Llama 2**<br> - **CLIP**<br> - TensorFlow (coming soon) |
-
-<hr>	
+| Supported Data Stores: | AI Frameworks & Models: | AI APIs: | 
+|--------------------------|--------------------------|--------------------------|
+| - **MongoDB** <br> - **MongoDB Atlas** <br> - **S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | - **PyTorch** <br> - **Scikit-Learn**<br> - **HuggingFace**<br> - **Llama 2**<br> - **CLIP**<br> - TensorFlow (coming soon) | - **OpenAI**: chat & embeddings <br> - OpenAI: images and audio (coming soon) <br> - **Cohere**: generate & embed <br> - Cohere: chat (coming soon) <br> - **Anthropic:** completions <br>
+<hr>
 
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a><br>
 - <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Example use cases</strong></a><br>

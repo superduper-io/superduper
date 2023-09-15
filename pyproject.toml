@@ -106,7 +106,9 @@ tests = [
     "pytest>=7.3.1",
     "pytest-cov>=2.12.1",
     "pytest-xdist>=3.3.1",
-    "tdir>=1.6"
+    "tdir>=1.6",
+    "vcrpy",
+    "pytest-asyncio",
 ]
 dev = ["superduperdb[docs,lint,tests,typing,torch]"]
 

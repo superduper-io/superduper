@@ -1,0 +1,83 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Hello, world!"}], "model": "gpt-3.5-turbo"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '86'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.28.0
+      X-OpenAI-Client-User-Agent:
+      - '{"bindings_version": "0.28.0", "httplib": "requests", "lang": "python", "lang_version":
+        "3.8.10", "platform": "Linux-6.2.0-32-generic-x86_64-with-glibc2.34", "publisher":
+        "openai", "uname": "Linux 6.2.0-32-generic #32~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
+        Fri Aug 18 10:40:13 UTC 2 x86_64 x86_64"}'
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA1SQzW7CMBCE73mK7Z4JShpKRC49cKE/qD23qpBxtsSt443ipTRCvHvlBIh68WFm
+        v9lZHyMANCUWgLpSouvGxnnXmezwZju3fFpT+/K4fF3bpOPn/Ged4yQQvP0iLRdqqrluLIlhN9i6
+        JSUUUtP5YpbP81mS9UbNJdmA7RqJs+ldLPt2y3EyT7MzWbHR5LGA9wgA4Ni/oaMr6RcLSCYXpSbv
+        1Y6wuA4BYMs2KKi8N16UE5yMpmYn5PraK7KWb2DFB9DKwQMMAHS8B+FSdfd45k7XhZ/GGV9tWlKe
+        XQjxws0wdooAPvoD9v86YdNy3chG+JtcuCpNhzgcv2w0F2dPWJQd5dskChtO0R8AAAD//wMAIWhn
+        0K0BAAA=
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 806f94ee0f234d3d-FRA
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Sep 2023 08:43:24 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-model:
+      - gpt-3.5-turbo-0613
+      openai-organization:
+      - user-ti2tgqzt0qeqptkx31pdg0qi
+      openai-processing-ms:
+      - '559'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '3500'
+      x-ratelimit-limit-tokens:
+      - '90000'
+      x-ratelimit-remaining-requests:
+      - '3499'
+      x-ratelimit-remaining-tokens:
+      - '89979'
+      x-ratelimit-reset-requests:
+      - 17ms
+      x-ratelimit-reset-tokens:
+      - 14ms
+      x-request-id:
+      - dd866ea452e8169a6b9acc4c2599df5f
+    status:
+      code: 200
+      message: OK
+version: 1

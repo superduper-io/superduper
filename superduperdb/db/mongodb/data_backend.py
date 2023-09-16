@@ -1,3 +1,4 @@
+import os
 import typing as t
 
 import click
@@ -35,6 +36,13 @@ class MongoDataBackend(BaseDataBackend):
         return MongoMetaDataStore(self.conn, self.name)
 
     def build_artifact_store(self):
+        from mongomock import MongoClient as MockClient
+
+        if isinstance(self.conn, MockClient):
+            from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
+
+            os.makedirs(f'/tmp/{self.name}', exist_ok=True)
+            return FileSystemArtifactStore(f'/tmp/{self.name}')
         return MongoArtifactStore(self.conn, f'_filesystem:{self.name}')
 
     def drop(self, force: bool = False):

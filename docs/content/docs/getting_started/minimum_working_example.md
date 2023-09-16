@@ -1,12 +1,10 @@
 # Minimum working example
 
 To check that everything is working correctly cut and paste this code into a Jupyter notebook.
-For this example to work, you should have a working local deployment of MongoDB 
-without security running on `27017`.
 
 ```python
 import numpy as np
-from pymongo import MongoClient
+from mongomock import MongoClient
 from superduperdb.container.document import Document as D
 from superduperdb.ext.numpy.array import array
 from superduperdb.db.mongodb.query import Collection

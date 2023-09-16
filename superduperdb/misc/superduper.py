@@ -1,7 +1,5 @@
 import typing as t
 
-from pymongo.database import Database
-
 __all__ = ('superduper',)
 
 
@@ -41,6 +39,9 @@ class MongoDbTyper(DuckTyper):
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
+        from mongomock.database import Database as MockDatabase
+        from pymongo.database import Database
+
         from superduperdb import CFG
         from superduperdb.db.base.build import build_vector_database
         from superduperdb.db.base.db import DB
@@ -48,8 +49,8 @@ class MongoDbTyper(DuckTyper):
 
         if kwargs:
             raise ValueError('MongoDb creator accepts no parameters')
-        if not isinstance(item, Database):
-            raise TypeError('Expected Database but got {type(item)}')
+        if not isinstance(item, (Database, MockDatabase)):
+            raise TypeError(f'Expected Database but got {type(item)}')
 
         databackend = MongoDataBackend(conn=item.client, name=item.name)
         return DB(

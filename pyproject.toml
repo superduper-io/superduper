@@ -61,6 +61,7 @@ dependencies = [
     "pillow>=9.4.0",
     "safer>=4.8.0",
     "semver>=3",
+    "mongomock>=4.1.2",
     "ibis-framework[sqlite]>=5.1.0",
     "ibis-framework[duckdb]>=5.1.0"
 ]
@@ -72,6 +73,7 @@ torch = [
     "transformers>=4.29.1",
     "torchvision",
 ]
+# TODO lots of these now unused
 docs = [
     "furo",
     "ipython",

@@ -1,3 +1,4 @@
+import mongomock
 import pymongo
 
 import superduperdb as s
@@ -42,6 +43,10 @@ def build_datalayer(cfg=None) -> DB:
             name = uri.split('/')[-1]
             uri = 'mongodb://' + uri.split('mongodb://')[-1].split('/')[0]
             conn = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000)
+            return mapping['mongodb'](conn, name)
+        elif uri.startswith('mongomock://'):
+            name = uri.split('/')[-1]
+            conn = mongomock.MongoClient()
             return mapping['mongodb'](conn, name)
         else:
             import ibis

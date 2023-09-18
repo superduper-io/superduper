@@ -84,7 +84,11 @@ class Packet:
     ids: t.List[t.Union[ObjectId, str]]
     query: t.Optional[Serializable]
 
-    event_type: str = DBEvent.insert
+    event_type: DBEvent = DBEvent.insert
+
+    @property
+    def is_delete(self) -> bool:
+        return self.event_type == DBEvent.delete
 
     @staticmethod
     def collate(packets: t.Sequence['Packet']) -> 'Packet':

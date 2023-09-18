@@ -40,8 +40,8 @@ class Job:
         args: t.Optional[t.Sequence] = None,
         kwargs: t.Optional[t.Dict] = None,
     ):
-        self.args = args
-        self.kwargs = kwargs
+        self.args = args or ()
+        self.kwargs = kwargs or {}
         self.identifier = str(uuid.uuid4())
         self.time = datetime.datetime.now()
         self.callable = None

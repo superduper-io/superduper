@@ -15,8 +15,7 @@ from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS, query
 from superduperdb.misc.runnable.runnable import Event
 
 from .base import BaseDatabaseListener, CachedTokens, DBEvent, Packet, TokenType
-from .handler import CDCHandler
-from .task_queue import cdc_queue
+from .handler import CDC_QUEUE, CDCHandler
 
 MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
 
@@ -105,7 +104,7 @@ class MongoEventMixin:
         ids = [document[self.DEFAULT_ID]]
         cdc_query = collection.find()
         packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
-        cdc_queue.put_nowait(packet)
+        CDC_QUEUE.put_nowait(packet)
 
     def on_update(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
         """on_update.
@@ -125,7 +124,7 @@ class MongoEventMixin:
         ids = [document[self.DEFAULT_ID]]
         cdc_query = collection.find()
         packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
-        cdc_queue.put_nowait(packet)
+        CDC_QUEUE.put_nowait(packet)
 
     def on_delete(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
         """on_delete.
@@ -144,7 +143,7 @@ class MongoEventMixin:
         document = change[CDCKeys.deleted_document_data_key]
         ids = [document[self.DEFAULT_ID]]
         packet = Packet(ids=ids, event_type=DBEvent.delete, query=None)
-        cdc_queue.put_nowait(packet)
+        CDC_QUEUE.put_nowait(packet)
 
 
 class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):

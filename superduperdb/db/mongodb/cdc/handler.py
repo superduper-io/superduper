@@ -1,3 +1,4 @@
+import queue
 import threading
 import traceback
 import typing as t
@@ -11,10 +12,10 @@ from superduperdb.misc.runnable.queue_chunker import QueueChunker
 from superduperdb.misc.runnable.runnable import Event
 
 from .base import DBEvent, Packet
-from .task_queue import cdc_queue
 from .vector_task_factory import vector_task_factory
 
 queue_chunker = QueueChunker(chunk_size=100, timeout=0.2)
+CDC_QUEUE: queue.Queue = queue.Queue()
 
 
 class CDCHandler(threading.Thread):
@@ -127,7 +128,7 @@ class CDCHandler(threading.Thread):
 
     def run(self):
         try:
-            for c in queue_chunker(cdc_queue, self._stop_event):
+            for c in queue_chunker(CDC_QUEUE, self._stop_event):
                 self._handle(Packet.collate(c))
 
         except Exception as exc:

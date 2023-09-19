@@ -98,7 +98,7 @@ from superduperdb.ext.pillow.image import pil_image as i
 # Encoders are first class SuperDuperDB objects which deal with serializing
 # "non-standard" data to the datastore 
 db.execute(
-    coll.insert_many([
+    collection.insert_many([
     {'img': i(PIL.image.open(path))} for path in images
     ])
 )

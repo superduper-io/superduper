@@ -32,6 +32,72 @@ const config = {
     locales: ['en'],
   },
 
+  scripts: [
+    {
+      src: "https://main.d1eg28j9pwrt0l.amplifyapp.com/widget.js",
+      id:'my-api',
+      "data-api-key":"superduperdb",
+      async: true,
+    },
+    {
+      src: "https://tag.clearbitscripts.com/v1/pk_0beed107418c6889a934fd8a58e1054e/tags.js",
+      referrerPolicy: "strict-origin-when-cross-origin",
+      async: true,
+    },
+    {
+      src: "https://www.googletagmanager.com/gtag/js?id=G-Q97F3ZHCQD",
+      strategy: "lazyOnload",
+      id: "gtag-script_2",
+      async: true,
+    },
+  ],
+
+  headTags: [
+    {
+      tagName: 'script',
+      attributes: {
+        id: "gtm-script_1",
+        strategy: "lazyOnload"
+      },
+      innerHTML: `
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-5BXCZJTF');
+              `
+    },
+    {
+      tagName: 'script',
+      attributes: {
+        id: "gtag-config",
+        strategy: "lazyOnload"
+      },
+      innerHTML: `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Q97F3ZHCQD'); `
+    },
+    {
+      tagName: 'script',
+      attributes: {
+      },
+      innerHTML: `
+      !function(t){if(window.ko)return;window.ko=[],["identify","track","removeListeners","open","on","off","qualify","ready"].forEach(function(t){ko[t] = function () { var n = [].slice.call(arguments); return n.unshift(t), ko.push(n), ko }});var n=document.createElement("script");n.async=!0,n.setAttribute("src","https://cdn.getkoala.com/v1/pk_92927e86e628c69d1ec3b7b4e887e6997bab/sdk.js"),(document.body || document.head).appendChild(n)}();
+              `
+    },
+    {
+      tagName: 'iframe',
+      attributes: {
+        src: "https://www.googletagmanager.com/ns.html?id=GTM-5BXCZJTF",
+        height: "0",
+        width: "0",
+        style: "display: none; visibility: hidden;",
+      },
+    },
+  ],
+
   presets: [
     [
       'classic',

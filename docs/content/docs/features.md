@@ -6,13 +6,12 @@ See [here](https://github.com/SuperDuperDB/superduperdb-stealth/wiki/Roadmap) fo
 
 ## Components
 
-- [DB](db)
-- [Models](models)
-- [Encoders](encoders)
-- [listeners](listeners)
-- [Metrics](metrics)
+- [DB](/docs/docs/usage/db)
+- [Models](/docs/docs/usage/models)
+- [Encoders](/docs/docs/usage/encoders)
+- [Listeners](/docs/docs/usage/models#daemonizing-models-with-listeners)
 - [Vector-Indexes](/docs/docs/usage/vector_index)
-- [Datasets](datasets)
+- [Datasets](/docs/docs/usage/datasets)
 
 ## AI Models
 

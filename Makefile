@@ -24,6 +24,15 @@ test: test-containers
 
 .PHONY: fix-and-test
 fix-and-test: test-containers
+	isort $(DIRECTORIES)
+	black $(DIRECTORIES)
+	ruff check --fix $(DIRECTORIES)
+	mypy superduperdb
+	pytest $(PYTEST_ARGUMENTS)
+	interrogate superduperdb
+
+.PHONY: test-and-fix
+test-and-fix: test-containers
 	mypy superduperdb
 	pytest $(PYTEST_ARGUMENTS)
 	isort $(DIRECTORIES)

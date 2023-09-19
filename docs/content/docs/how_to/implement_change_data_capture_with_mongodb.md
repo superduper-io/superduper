@@ -11,8 +11,7 @@ reacts to these changes, activating models which are configured to compute outpu
 
 In this notebook, we demonstrate how to use CDC with SuperDuperDB.
 
-The notebook requires that a MongoDB replica set has been set up. Read about how to do that [here](replicasetup).
-
+The notebook requires that a MongoDB replica set has been set up.
 
 ```python
 import pymongo

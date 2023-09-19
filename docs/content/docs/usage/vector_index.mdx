@@ -12,11 +12,14 @@ encoding of inputs by arbitrary AI models.
 SuperDuperDB has support for vector-search via LanceDB using vector-indexes.
 We are working on support for vector-search via MongoDB enterprise search in parallel.
 
-Vector-indexes build on top of the [DB](db), [models](models) and [listeners](listeners).
+Vector-indexes build on top of the [DB](db), [models](models) and 
+[listeners](/docs/docs/usage/models#daemonizing-models-with-listeners).
 
 ## Creating vector indexes
 
-In order to build a vector index, one defines one or two models, and /docs/docs/usage/models#daemonizing-models-with-listenerss them with listeners.
+In order to build a vector index, one defines one or two models,
+and daemonizes them with [listeners](/docs/docs/usage/models#daemonizing-models-with-listeners).
+
 In the simplest variant one does simply:
 
 ```python

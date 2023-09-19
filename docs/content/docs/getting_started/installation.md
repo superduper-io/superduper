@@ -24,7 +24,3 @@ For MongoDB here are instructions for 2 very popular systems:
 ## Installation using `pip`
 
 `pip install superduperdb`
-
-## Default configuration
-
-SuperDuperDB comes with basic default configurations `superduperdb.misc.config` sufficient for working locally with SuperDuperDB. For more complex configuration, read [here](configuration).

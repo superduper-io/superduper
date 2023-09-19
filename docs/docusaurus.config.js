@@ -160,7 +160,7 @@ const config = {
               },
               {
                 label: 'Youtube',
-                to: 'https://www.youtube.com/@SuperDuperDB',
+                href: 'https://www.youtube.com/@SuperDuperDB',
               },
             ],
           },

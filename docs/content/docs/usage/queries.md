@@ -14,7 +14,7 @@ SuperDuperDB queries are based on the queries of the underlying database, upon w
 
 Unlike some Python clients, in SuperDuperDB, queries are objects, rather then methods or functions.
 This allows SuperDuperDB to serialize these queries for use in diverse tasks, such as model 
-applications using the `Listener` paradigm (see [here](listeners)), model application, and management of vector-indices).
+applications using the `Listener` paradigm (see [here](/docs/docs/usage/models#daemonizing-models-with-listeners)), model application, and management of vector-indices).
 
 A query is executed as follows:
 

@@ -4,9 +4,9 @@ SuperDuperDB makes extensive use of various serialization techniques in Python,
 in order to save the following objects to the `DB`, which inherit
 from `superduperdb.container.base.Component`
 
-- [Models](models)
+- [Models](/docs/docs/usage/models)
 - [Vector Indexes](/docs/docs/usage/vector_index)
-- [Encoders](encoders)
+- [Encoders](/docs/docs/usage/encoders)
 
 Since these are compound objects consisting of multiple component parts, we utilize a hybrid 
 serialization scheme, in order to save these objects. The scheme is based on:

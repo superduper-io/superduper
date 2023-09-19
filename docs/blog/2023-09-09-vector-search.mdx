@@ -1,63 +1,73 @@
 ---
 slug: introduce-vector-search-to-your-favourite-database-with-superduperdb
-title: Introduce vector search to your favourite database with SuperDuperDB
+title: Enable Vector Search in MongoDB with SuperDuperDB
 authors: [blythed]
 tags: [AI, vector-search]
 ---
 
+*In this blog-post we show you how to easily operate vector-search in MongoDB
+Atlas using SuperDuperDB, leading to many savings and efficiencies in 
+your AI development.*
+
+---
+
 In 2023 vector-databases are hugely popular; they provide the opportunity for developers to connect LLMs, such as OpenAI’s GPT models, with their data, as well as providing the key to deploying “search-by-meaning” on troves of documents.
+
+<!--truncate-->
 
 However: a key unanswered question, for which there is no widely accepted answer, is:
 
+:::info
 How do the vectors in my vector-database get there in the first place?
-
-<!--truncate-->
+:::
 
 Vectors (arrays of numbers used in vector-search) differ from the content of most databases, since they need to be calculated on the basis of other data.
 
 Currently there are 2 approaches:
 
-** Possibility 1: models live together with the database to create vectors at insertion time **
+## Possibility 1: models live together with the database to create vectors at insertion time
 
 When data is inserted into a vector-database, the database may be configured to “calculate” or “compute” vectors on the basis of this data (generally text). This means that the database environment also has access to some compute and AI models, or access to APIs such as OpenAI, in order to obtain vectors.
 
 Examples of this approach are:
 
-- Weaviate (support for a range of pre-defined models, some support for bringing own model)
-- Chroma (support for OpenAI and sentence_transformers)
+- *Weaviate* (support for a range of pre-defined models, some support for bringing own model)
+- *Chroma* (support for OpenAI and sentence_transformers)
 
-Pros:
+**Pros**:
 
 - The data and compute live together, so developers don’t need to create an additional app in order to use the vector-database
 
-Cons:
+**Cons**:
 
 - Developers are limited by the models available in the vector-database and the compute resources on the vector-database server
 - Primary data needs to be stored in the vector-database; classic-database + external vector-search isn’t an expected pattern.
 - Training of models is generally not supported.
 
-** Possibility 2: the vector-database requires developers to provide their own vectors with their own models **
+## Possibility 2: the vector-database requires developers to provide their own vectors with their own models
 
 In this approach, developers are required to build an app which deploys model computations over data which is extracted from the datastore.
 
 Examples of this approach are:
 
-- LanceDB
-- Milvus
+- *LanceDB*
+- *Milvus*
 
-Pros:
+**Pros**:
 
 - By developing a vector-computation app, the user can use the full flexibility of the open-source landscape for computing these vectors, and can architect compute resources independently from vector-database resources
 - The vector-database “specializes” in vector-search and storage of vectors, giving better performance guarantees as a result
 
-Cons:
+**Cons**:
 
 - Huge overhead of building one’s own computation app.
 - All communication between app, vector-database and datastore (if using external datastore) must be managed by the developer
 
 ### Enter SuperDuperDB
 
+:::info
 SuperDuperDB is a middle path to scalability, flexiblity and ease-of-use in vector-search and far beyond.
+:::
 
 - SuperDuperDB is an open-source Python environment which wraps databases and AI models with additional functionality to make them “ready” to interface with one-another; developers are able to host their data in a “classical” database, but use this database as a vector-database.
 - SuperDuperDB allows users to integrate any model from the Python open source ecosystem (torch, sklearn, transformers, sentence_transformers as well as OpenAI’s API), with their datastore. It uses a flexible scheme, allowing new frameworks and code-bases to be integrated without requiring the developer to add additional classes or functionality.
@@ -92,7 +102,18 @@ db.execute(
 )
 ```
 
-### Set up vector-search with SuperDuperDB in one command
+### Set up vector-search with SuperDuperDB in one command!
+
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+
+
+```mdx-code-block
+<Tabs>
+<TabItem value="openai" label="OpenAI">
+```
 
 ```python
 from superduperdb.container.vector_index import VectorIndex
@@ -102,7 +123,7 @@ from superduperdb.ext.openai import OpenAIEmbedding
 
 db.add(
     VectorIndex(
-        identifier=f'wiki-index',
+        identifier=f'wiki-index-openai',
         indexing_listener=Listener(
             model=OpenAIEmbedding(model='text-embedding-ada-002'),
             key='abstract',
@@ -111,6 +132,43 @@ db.add(
         )
     )
 )
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="st" label="Sentence Transformers">
+```
+
+```python
+from superduperdb.container.vector_index import VectorIndex
+from superduperdb.container.listener import Listener
+from superduperdb.ext.numpy.array import array
+from sentence_transformers import Pipeline
+
+model = Model(
+    identifier='all-MiniLM-L6-v2',
+    object=sentence_transformers.SentenceTransformer('all-MiniLM-L6-v2'),
+    encoder=array('float32', shape=(384,)),
+    predict_method='encode',
+    batch_predict=True,
+)
+
+db.add(
+    VectorIndex(
+        identifier=f'wiki-index-sentence-transformers',
+        indexing_listener=Listener(
+            model=model,
+            key='abstract',
+            select=collection.find(),
+            predict_kwargs={'max_chunk_size': 1000},
+        )
+    )
+)
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
 ```
 
 This approach is simple enough to allow models from a vast range of libraries and sources to be implemented: open/ closed source, self-built or library based and much more.
@@ -144,3 +202,13 @@ for r in cur:
 ### SuperDuperDB is licensed under Apache 2.0 and is a community effort!
 
 We would like to encourage developers interested in the project to contribute in our discussion forums, issue boards and by making their own pull requests. We'll see you on GitHub!
+
+- [SuperDuperDB on GitHub](https://github.com/SuperDuperDB/superduperdb)
+- [Talk to us on Slack](https://superduperdb.slack.com/join/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA#/shared-invite/email)
+- [Take part in the discussion](https://github.com/SuperDuperDB/superduperdb/discussions)
+
+### Become a Design Partner!
+
+We are in the process of selecting a few visionary organizations to become our design partners. The aim is to identify and implement AI applications that could bring transformative benefits to their product offerings. We’re offering this at absolutely zero cost. If you would like to learn more about this opportunity please reach out to us via email: hello@superduperdb.com.
+
+We are offering free help to create and manage embeddings from different embedding models with SuperDuperDB to leverage vector search in the best possible way.

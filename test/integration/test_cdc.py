@@ -45,7 +45,7 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
     listener = DatabaseListener(
         db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
     )
-    listener._cdc_change_handler._QUEUE_BATCH_SIZE = 1
+    listener._cdc_handler._QUEUE_BATCH_SIZE = 1
 
     yield listener, collection_name
 
@@ -62,7 +62,7 @@ def listener_with_vector_database(database_with_default_encoders_and_model):
             db=database_with_default_encoders_and_model,
             on=Collection(name=collection_name),
         )
-        listener._cdc_change_handler._QUEUE_BATCH_SIZE = 1
+        listener._cdc_handler._QUEUE_BATCH_SIZE = 1
 
         yield listener, vector_db_client, collection_name
 
@@ -348,7 +348,7 @@ def test_cdc_stop(listener_and_collection_name):
 
     def state_check():
         assert not all(
-            [listener._scheduler.is_alive(), listener._cdc_change_handler.is_alive()]
+            [listener._scheduler.is_alive(), listener._cdc_handler.is_alive()]
         )
 
     retry_state_check(state_check)

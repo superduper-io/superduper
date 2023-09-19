@@ -25,8 +25,6 @@ Use this module like this::
 
 import typing as t
 
-from threa import Event
-
 from superduperdb.db.base import backends
 from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb.cdc.base import BaseDatabaseListener
@@ -35,31 +33,13 @@ from superduperdb.db.mongodb.query import Collection
 
 DBListenerType = t.TypeVar('DBListenerType')
 
-
-class DatabaseListenerFactory(t.Generic[DBListenerType]):
-    """A Factory class to create instance of DatabaseListener corresponding to the
-    `db_type`.
-    """
-
-    SUPPORTED_LISTENERS: t.List[str] = ['mongodb']
-
-    def __init__(self, db_type: str = 'mongodb'):
-        if db_type not in self.SUPPORTED_LISTENERS:
-            raise ValueError(f'{db_type} is not supported yet for CDC.')
-        self.listener = db_type
-
-    def create(self, *args, **kwargs) -> DBListenerType:
-        stop_event = Event()
-        kwargs['stop_event'] = stop_event
-        listener = MongoDatabaseListener(*args, **kwargs)
-        return t.cast(DBListenerType, listener)
+SUPPORTED_LISTENERS: t.List[str] = ['mongodb']
 
 
 def DatabaseListener(
     db: DB,
     on: Collection,
     identifier: str = '',
-    *args,
     **kwargs,
 ) -> BaseDatabaseListener:
     """
@@ -76,9 +56,7 @@ def DatabaseListener(
     else:
         raise ValueError('No backends found')
 
-    if db_type != 'mongodb':
-        raise NotImplementedError(f'Database {db_type} not supported yet!')
+    if db_type not in SUPPORTED_LISTENERS:
+        raise ValueError(f'{db_type} is not supported yet for CDC.')
 
-    factory_factory = DatabaseListenerFactory[MongoDatabaseListener]
-    db_factory = factory_factory(db_type=db_type)
-    return db_factory.create(db=db, on=on, identifier=identifier, *args, **kwargs)
+    return MongoDatabaseListener(db=db, on=on, identifier=identifier, **kwargs)

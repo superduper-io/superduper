@@ -1,10 +1,7 @@
 import queue
-import threading
-import traceback
 
-from threa import Event
+from threa import IsThread
 
-from superduperdb import logging
 from superduperdb.container.job import FunctionJob
 from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.db.base.db import DB
@@ -17,32 +14,20 @@ queue_chunker = QueueChunker(chunk_size=100, timeout=0.2)
 CDC_QUEUE: queue.Queue = queue.Queue()
 
 
-class CDCHandler(threading.Thread):
+class CDCHandler(IsThread):
     """
     This class is responsible for handling the change by executing the taskflow.
     This class also extends the task graph by adding funcation job node which
     does post model executiong jobs, i.e `copy_vectors`.
     """
 
-    def __init__(self, db: DB, stop_event: Event):
-        """__init__.
-
-        :param db: a superduperdb instance.
-        :param stop_event: A threading event flag to notify for stoppage.
-        """
+    def __init__(self, db: DB):
+        super().__init__()
         self.db = db
-        self._stop_event = stop_event
 
-        threading.Thread.__init__(self, daemon=False)
-
-    def run(self):
-        try:
-            for c in queue_chunker(CDC_QUEUE, self._stop_event):
-                _submit_task_workflow(self.db, Packet.collate(c))
-
-        except Exception as exc:
-            traceback.print_exc()
-            logging.info(f'Error while handling cdc batches :: reason {exc}')
+    def callback(self):
+        for c in queue_chunker(CDC_QUEUE, self.stopped):
+            _submit_task_workflow(self.db, Packet.collate(c))
 
 
 def _submit_task_workflow(db: DB, packet: Packet) -> None:

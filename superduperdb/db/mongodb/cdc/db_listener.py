@@ -6,8 +6,9 @@ import traceback
 import typing as t
 from collections import Counter
 from enum import Enum
+from functools import cached_property
 
-from pymongo.change_stream import CollectionChangeStream
+from pymongo.change_stream import ChangeStream, CollectionChangeStream
 from threa import Event
 
 from superduperdb import logging
@@ -167,7 +168,6 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         self,
         db: DB,
         on: query.Collection,
-        stop_event: Event,
         identifier: 'str' = '',
         resume_token: t.Optional[TokenType] = None,
     ):
@@ -191,7 +191,6 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             self.resume_token = resume_token
 
         self._change_pipeline = None
-        self._stop_event = stop_event
         self._startup_event = Event()
         self._scheduler = None
         self.start_handler()
@@ -202,9 +201,16 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
     def identity(self) -> str:
         return self._identifier
 
+    @cached_property
+    def _cdc_handler(self) -> CDCHandler:
+        return CDCHandler(db=self.db)
+
+    @cached_property
+    def _stop_event(self) -> Event:
+        return self._cdc_handler.stopped
+
     def start_handler(self):
-        self._cdc_change_handler = CDCHandler(db=self.db, stop_event=self._stop_event)
-        self._cdc_change_handler.start()
+        self._cdc_handler.start()
 
     @classmethod
     def _build_identifier(cls, identifiers) -> str:
@@ -308,7 +314,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         logging.info(f'Started listening database with identity {self.identity}...')
         return stream_iterator
 
-    def next_cdc(self, stream: CollectionChangeStream) -> None:
+    def next_cdc(self, stream: ChangeStream) -> None:
         """
         Get the next stream of change observed on the given `Collection`.
         """
@@ -385,8 +391,8 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
                         'Please stop the listener first.'
                     )
 
-            if not self._cdc_change_handler.is_alive():
-                del self._cdc_change_handler
+            if not self._cdc_handler.is_alive():
+                del self._cdc_handler
                 self.start_handler()
 
             scheduler = _DatabaseListenerThreadScheduler(
@@ -425,7 +431,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         CDC_COLLECTION_LOCKS.pop(self._on_component.name, None)
 
         self._stop_event.set()
-        self._cdc_change_handler.join()
+        self._cdc_handler.join()
         if self._scheduler:
             self._scheduler.join()
 

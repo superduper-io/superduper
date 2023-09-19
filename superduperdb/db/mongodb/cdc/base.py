@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 from bson import objectid
-from pymongo.change_stream import CollectionChangeStream
+from pymongo.change_stream import ChangeStream
 
 from superduperdb.container.serializable import Serializable
 
@@ -26,11 +26,11 @@ class BaseDatabaseListener(ABC):
         pass
 
     @abstractmethod
-    def setup_cdc(self) -> CollectionChangeStream:
+    def setup_cdc(self) -> ChangeStream:
         pass
 
     @abstractmethod
-    def next_cdc(self, stream: CollectionChangeStream) -> None:
+    def next_cdc(self, stream: ChangeStream) -> None:
         pass
 
 

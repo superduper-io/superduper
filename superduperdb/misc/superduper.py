@@ -3,39 +3,64 @@ import typing as t
 __all__ = ('superduper',)
 
 
-class DuckTyper:
-    attrs: t.Sequence[str]
-    count: int = 0
+def superduper(item: t.Any, **kwargs) -> t.Any:
+    """
+    Attempts to automatically wrap an item in a superduperdb container by
+    using duck typing to recognize it.
 
-    @classmethod
-    def run(cls, item: t.Any, **kwargs) -> t.Any:
-        dts = [dt for dt in _DUCK_TYPES if dt.accept(item)]
+    :param item: A database or model
+    """
+
+    return _DuckTyper.run(item, **kwargs)
+
+
+class _DuckTyper:
+    attrs: t.Sequence[str]
+    count: int
+
+    @staticmethod
+    def run(item: t.Any, **kwargs) -> t.Any:
+        dts = [dt for dt in _DuckTyper._DUCK_TYPES if dt.accept(item)]
+        if not dts:
+            raise NotImplementedError(
+                f'Couldn\'t auto-identify {item}, please wrap explicitly using '
+                '``superduperdb.container.*``'
+            )
+
         if len(dts) == 1:
             return dts[0].create(item, **kwargs)
-        raise NotImplementedError(
-            f'Couldn\'t auto-identify {item}, please wrap explicitly using '
-            '``superduperdb.container.*``'
-        )
+
+        raise ValueError(f'{item} matched more than one type: {dts}')
 
     @classmethod
     def accept(cls, item: t.Any) -> bool:
-        count = cls.count or len(cls.attrs)
-        return sum(hasattr(item, a) for a in cls.attrs) == count
+        """Does this item match the DuckType?
+
+        The default implementation returns True if the number of attrs that
+        the item has is exactly equal to self.count.
+
+        """
+        return sum(hasattr(item, a) for a in cls.attrs) == cls.count
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
+        """Create a superduperdb container for an item that has already been accepted"""
         raise NotImplementedError
 
+    _DUCK_TYPES: t.List[t.Type] = []
 
-class MongoDbTyper(DuckTyper):
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        _DuckTyper._DUCK_TYPES.append(cls)
+
+
+class MongoDbTyper(_DuckTyper):
     attrs = ('list_collection_names',)
+    count = len(attrs)
 
     @classmethod
     def accept(cls, item: t.Any) -> bool:
-        count = cls.count or len(cls.attrs)
-        test_one = sum(hasattr(item, a) for a in cls.attrs) == count
-        test_two = item.__class__.__name__ == 'Database'
-        return test_one and test_two
+        return super().accept(item) and item.__class__.__name__ == 'Database'
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
@@ -61,7 +86,7 @@ class MongoDbTyper(DuckTyper):
         )
 
 
-class SklearnTyper(DuckTyper):
+class SklearnTyper(_DuckTyper):
     attrs = '_predict', 'fit', 'score', 'transform'
     count = 2
 
@@ -74,12 +99,13 @@ class SklearnTyper(DuckTyper):
         if not isinstance(item, BaseEstimator):
             raise TypeError('Expected BaseEstimator but got {type(item)}')
 
-        kwargs['identifier'] = auto_identify(item)
+        kwargs['identifier'] = _auto_identify(item)
         return Estimator(object=item, **kwargs)
 
 
-class TorchTyper(DuckTyper):
+class TorchTyper(_DuckTyper):
     attrs = 'forward', 'parameters', 'state_dict', '_load_from_state_dict'
+    count = len(attrs)
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
@@ -88,14 +114,10 @@ class TorchTyper(DuckTyper):
         from superduperdb.ext.torch.model import TorchModel
 
         if isinstance(item, nn.Module) or isinstance(item, jit.ScriptModule):
-            return TorchModel(identifier=auto_identify(item), object=item, **kwargs)
+            return TorchModel(identifier=_auto_identify(item), object=item, **kwargs)
 
         raise TypeError('Expected a Module but got {type(item)}')
 
 
-def auto_identify(instance: t.Any) -> str:
+def _auto_identify(instance: t.Any) -> str:
     return instance.__class__.__name__.lower()
-
-
-_DUCK_TYPES = MongoDbTyper, SklearnTyper, TorchTyper
-superduper = DuckTyper.run

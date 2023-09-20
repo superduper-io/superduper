@@ -11,6 +11,7 @@ from torch.utils import data
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+import superduperdb as s
 from superduperdb import logging
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.document import Document
@@ -364,7 +365,10 @@ class TorchModel(Base, Model):  # type: ignore[misc]
     train_forward_method: str = '__call__'
 
     def __post_init__(self):
-        self.model_to_device_method = 'move_to_device'
+        if self.model_to_device_method:
+            s.log.warn(f'{self.model_to_device_method} will be overriden with `to`')
+
+        self.model_to_device_method = 'to'
 
         super().__post_init__()
 
@@ -405,9 +409,6 @@ class TorchModel(Base, Model):  # type: ignore[misc]
 
     def state_dict(self):
         return self.object.state_dict()
-
-    def move_to_device(self, device):
-        self.object.artifact.to(device)
 
     @contextmanager
     def saving(self):

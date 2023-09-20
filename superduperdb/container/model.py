@@ -435,15 +435,18 @@ class Model(Component, PredictMixin):
         else:
             self.to_call = getattr(self.object.artifact, self.predict_method)
 
-        self.artifact_to_method = None
+        self._artifact_method = None
+
         if self.model_to_device_method is not None:
-            self.artifact_to_method = getattr(self, self.model_to_device_method)
+            self._artifact_method = getattr(
+                self.object.artifact, self.model_to_device_method
+            )
 
     def on_load(self, db: DB) -> None:
-        if self.artifact_to_method:
+        if self._artifact_method:
             for i, device in enumerate(self.preferred_devices):
                 try:
-                    self.artifact_to_method(device)
+                    self._artifact_method(device)
                     self.device = device
                     return
                 except Exception:

@@ -79,75 +79,7 @@ class MongoChangePipeline:
         return [{'$match': {'operationType': {'$in': [*self.matching_operations]}}}]
 
 
-class MongoEventMixin:
-    """A Mixin class which defines helper fxns for `MongoDatabaseListener`
-    It define basic events handling methods like
-    `on_create`, `on_update`, etc.
-    """
-
-    DEFAULT_ID: str = '_id'
-    EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
-
-    def on_create(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
-        """on_create.
-        A helper on create event handler which handles inserted document in the
-        change stream.
-        It basically extracts the change document and build the taskflow graph to
-        execute.
-
-        :param change: The changed document.
-        :param db: a superduperdb instance.
-        :param collection: The collection on which change was observed.
-        """
-        logging.debug('Triggered `on_create` handler.')
-        # new document added!
-        document = change[CDCKeys.document_data_key]
-        ids = [document[self.DEFAULT_ID]]
-        cdc_query = collection.find()
-        packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
-        CDC_QUEUE.put_nowait(packet)
-
-    def on_update(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
-        """on_update.
-
-        A helper on update event handler which handles updated document in the
-        change stream.
-        It basically extracts the change document and build the taskflow graph to
-        execute.
-
-        :param change: The changed document.
-        :param db: a superduperdb instance.
-        :param collection: The collection on which change was observed.
-        """
-
-        # TODO: Handle removed fields and updated fields.
-        document = change[CDCKeys.document_key]
-        ids = [document[self.DEFAULT_ID]]
-        cdc_query = collection.find()
-        packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
-        CDC_QUEUE.put_nowait(packet)
-
-    def on_delete(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
-        """on_delete.
-
-        A helper on delete event handler which handles deleted document in the
-        change stream.
-        It basically extracts the change document and build the taskflow graph to
-        execute.
-
-        :param change: The changed document.
-        :param db: a superduperdb instance.
-        :param collection: The collection on which change was observed.
-        """
-        logging.debug('Triggered `on_delete` handler.')
-        # new document added!
-        document = change[CDCKeys.deleted_document_data_key]
-        ids = [document[self.DEFAULT_ID]]
-        packet = Packet(ids=ids, event_type=DBEvent.delete, query=None)
-        CDC_QUEUE.put_nowait(packet)
-
-
-class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
+class MongoDatabaseListener(BaseDatabaseListener):
     """
     It is a class which helps capture data from mongodb database and handle it
     accordingly.
@@ -159,9 +91,11 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
 
     """
 
+    DEFAULT_ID: str = '_id'
+    EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
     IDENTITY_SEP: str = '/'
-    _scheduler: t.Optional[threading.Thread]
 
+    _scheduler: t.Optional[threading.Thread]
     _change_pipeline: t.Union[str, t.Sequence[t.Dict], None] = None
 
     def __init__(
@@ -243,6 +177,64 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         except KeyError:
             return None
         return reference_id
+
+    def on_create(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+        """on_create.
+        A helper on create event handler which handles inserted document in the
+        change stream.
+        It basically extracts the change document and build the taskflow graph to
+        execute.
+
+        :param change: The changed document.
+        :param db: a superduperdb instance.
+        :param collection: The collection on which change was observed.
+        """
+        logging.debug('Triggered `on_create` handler.')
+        # new document added!
+        document = change[CDCKeys.document_data_key]
+        ids = [document[self.DEFAULT_ID]]
+        cdc_query = collection.find()
+        packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
+        CDC_QUEUE.put_nowait(packet)
+
+    def on_update(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+        """on_update.
+
+        A helper on update event handler which handles updated document in the
+        change stream.
+        It basically extracts the change document and build the taskflow graph to
+        execute.
+
+        :param change: The changed document.
+        :param db: a superduperdb instance.
+        :param collection: The collection on which change was observed.
+        """
+
+        # TODO: Handle removed fields and updated fields.
+        document = change[CDCKeys.document_key]
+        ids = [document[self.DEFAULT_ID]]
+        cdc_query = collection.find()
+        packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
+        CDC_QUEUE.put_nowait(packet)
+
+    def on_delete(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+        """on_delete.
+
+        A helper on delete event handler which handles deleted document in the
+        change stream.
+        It basically extracts the change document and build the taskflow graph to
+        execute.
+
+        :param change: The changed document.
+        :param db: a superduperdb instance.
+        :param collection: The collection on which change was observed.
+        """
+        logging.debug('Triggered `on_delete` handler.')
+        # new document added!
+        document = change[CDCKeys.deleted_document_data_key]
+        ids = [document[self.DEFAULT_ID]]
+        packet = Packet(ids=ids, event_type=DBEvent.delete, query=None)
+        CDC_QUEUE.put_nowait(packet)
 
     def event_handler(self, change: t.Dict) -> None:
         """event_handler.

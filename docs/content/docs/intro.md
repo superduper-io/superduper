@@ -47,7 +47,7 @@ SuperDuperDB includes wrappers for treating models from diverse AI frameworks ac
 from sklearn.svm import SVC
 import pymongo
 
-from superduperdb.db.mongodb import Collection
+from superduperdb.db.mongodb.query import Collection
 from superduperdb import superduper
 
 # Models and datastore clients can be converted to SuperDuperDB objects with a simple wrapper.
@@ -93,7 +93,7 @@ model.predict(
 SuperDuperDB includes tools for working with the datastore using the complex data types necessary for AI, such as vectors, tensors, images, audio etc. Native python types may be flexibly saved to the DB, to ease use in tricky AI use-cases, such as computer vision:
 
 ```python
-from superduperdb.ext.pillow import pil_image as i
+from superduperdb.ext.pillow.image import pil_image as i
 
 # Encoders are first class SuperDuperDB objects which deal with serializing
 # "non-standard" data to the datastore 
@@ -117,7 +117,9 @@ r['img'].x
 SuperDuperDB contains functionality allowing users to treat their standard datastore as a vector-search database, integrating your primary datastore with key-players in the open-source vector-search space.
 ```python
 # First a "listener" makes sure vectors stay up-to-date
-indexing_listener = listener(model=OpenAIEmbedding(), key='text', select=collection.find())
+from superduperdb.container.listener import Listener
+
+indexing_listener = Listener(model=OpenAIEmbedding(), key='text', select=collection.find())
 
 # This "listener" is linked with a "VectorIndex"
 db.add(VectorIndex('my-index', indexing_listener=indexing_listener))

@@ -64,6 +64,7 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
 <hr>
 
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a><br>
+- <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a><br>
 - <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Example use cases</strong></a><br>
 - <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
 - <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA

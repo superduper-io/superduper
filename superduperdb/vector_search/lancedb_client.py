@@ -68,15 +68,15 @@ VECTOR_FIELD_NAME = "vector"
 
 @dc.dataclass
 class LanceTable:
-    """A ``LanceTable`` within a ``LanceDBClient``."""
+    """A ``LanceTable`` within a ``LanceDBClient``.
 
-    #: ``LanceDBClient`` instance.
+    :param client: ``LanceDBClient`` instance.
+    :param table: ``LanceTable`` instance.
+    :param measure: Distance measure for vector search. Defaults to 'cosine'.
+    """
+
     client: lancedb.db.LanceDBConnection
-
-    #: ``LanceTable`` instance.
     table: lancedb.table.LanceTable
-
-    #: Distance measure for vector search. Defaults to 'cosine'.
     measure: str = "cosine"
 
     def get(self, identifier: str, limit: int = 1) -> t.List[t.Any]:

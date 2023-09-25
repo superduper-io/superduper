@@ -25,29 +25,26 @@ class Encoder(Component):
     """
     Storeable ``Component`` allowing byte encoding of primary data,
     i.e. data inserted using ``db.base.db.Datalayer.insert``
+
+    :param identifier: Unique identifier
+    :param decoder: callable converting a ``bytes`` string to a ``Encodable``
+                    of this ``Encoder``
+    :param encoder: Callable converting an ``Encodable`` of this ``Encoder``
+                    to ``bytes``
     """
 
     artifacts: t.ClassVar[t.Sequence[str]] = ['decoder', 'encoder']
-
-    #: Unique identifier
     identifier: str
-
-    #: callable converting a ``bytes`` string to a ``Encodable`` of this ``Encoder``
     decoder: t.Union[t.Callable, Artifact] = dc.field(
         default_factory=lambda: Artifact(artifact=_pickle_decoder)
     )
-
-    #: Callable converting an ``Encodable`` of this ``Encoder`` to ``bytes``
     encoder: t.Union[t.Callable, Artifact] = dc.field(
         default_factory=lambda: Artifact(artifact=_pickle_encoder)
     )
-
     shape: t.Optional[t.Sequence] = None
     version: t.Optional[int] = None
 
-    #: A unique name for the class
     type_id: t.ClassVar[str] = 'encoder'
-
     encoders: t.ClassVar[t.List] = []
 
     def __post_init__(self):
@@ -107,15 +104,14 @@ class Encodable:
     """
     Data variable wrapping encode-able item. Encoding is controlled by the referred
     to ``Encoder`` instance.
+
+    :param encoder: Instance of ``Encoder`` controlling encoding
+    :param x: Wrapped content
+    :param uri: URI of the content, if any
     """
 
-    #: Instance of ``Encoder`` controlling encoding
     encoder: t.Callable
-
-    #: Wrapped content
     x: t.Optional[t.Any] = None
-
-    #: URI of the content, if any
     uri: t.Optional[str] = None
 
     def encode(self) -> t.Dict[str, t.Any]:

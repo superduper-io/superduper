@@ -24,9 +24,11 @@ if t.TYPE_CHECKING:
 
 @dc.dataclass
 class Collection(Serializable):
-    """Collection wrapper"""
+    """Collection wrapper
 
-    #: The name of this Collection
+    :param name: The name of this Collection
+    """
+
     name: str
 
     @property
@@ -205,27 +207,23 @@ class Collection(Serializable):
 
 @dc.dataclass
 class ReplaceOne(Update):
-    """A query that replaces one record in a collection"""
+    """A query that replaces one record in a collection
 
-    #: The collection to perform the query on
+    :param collection: The collection to perform the query on
+    :param filter: Filter results by this dictionary
+    :param update: The update to apply
+    :param args: Positional query arguments to ``pymongo.Collection.replace_one``
+    :param kwargs: Named query arguments to ``pymongo.Collection.replace_one``
+    :param refresh: If true, refresh the model outputs
+    :param verbose: If true, print more logging
+    """
+
     collection: Collection
-
-    #: Filter results by this dictionary
     filter: t.Dict
-
-    #: The update to apply
     update: Document
-
-    #: Positional query arguments to ``pymongo.Collection.replace_one``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.replace_one``
     kwargs: t.Dict = dc.field(default_factory=dict)
-
-    #: If true, refresh the model outputs
     refresh: bool = True
-
-    #: If true, print more logging
     verbose: bool = True
 
     type_id: t.Literal['mongodb.ReplaceOne'] = 'mongodb.ReplaceOne'
@@ -250,18 +248,17 @@ class ReplaceOne(Update):
 
 @dc.dataclass
 class PreLike(Like):
-    """A query that returns documents like another document"""
+    """A query that returns documents like another document
 
-    #: The collection to perform the query on
+    :param collection: The collection to perform the query on
+    :param r: The document to match
+    :param vector_index: The name of the vector index to use
+    :param n: The number of documents to return
+    """
+
     collection: Collection
-
-    #: The document to match
     r: Document
-
-    #: The name of the vector index to use
     vector_index: str
-
-    #: The number of documents to return
     n: int = 100
 
     type_id: t.Literal['mongodb.PreLike'] = 'mongodb.PreLike'
@@ -332,20 +329,19 @@ class PreLike(Like):
 
 @dc.dataclass
 class Find(Select):
-    """A query to find documents"""
+    """A query to find documents
+
+    :param collection: The collection to perform the query on
+    :param like_parent: The parent query to use for the like query (if applicable)
+    :param args: Positional query arguments to ``pymongo.Collection.find``
+    :param kwargs: Named query arguments to ``pymongo.Collection.find``
+    """
 
     id_field: t.ClassVar[str] = '_id'
 
-    #: The collection to perform the query on
     collection: t.Optional[Collection] = None
-
-    #: The parent query to use for the like query (if applicable)
     like_parent: t.Optional[PreLike] = None
-
-    #: Positional query arguments to ``pymongo.Collection.find``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.find``
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.Find'] = 'mongodb.Find'
@@ -575,21 +571,18 @@ class Find(Select):
 class CountDocuments(Select):
     """
     A query to count documents
+
+    :param collection: The collection to perform the query on
+    :param like_parent: The parent query to use for the like query (if applicable)
+    :param args: Positional query arguments to ``pymongo.Collection.count_documents``
+    :param kwargs: Named query arguments to ``pymongo.Collection.count_documents``
     """
 
-    #: The collection to perform the query on
     collection: t.Optional[Collection] = None
-
-    #: The parent query to use for the like query (if applicable)
     like_parent: t.Optional[PreLike] = None
-
-    #: Positional query arguments to ``pymongo.Collection.count_documents``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.count_documents``
     kwargs: t.Dict = dc.field(default_factory=dict)
 
-    #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.CountDocuments'] = 'mongodb.CountDocuments'
 
     @override
@@ -600,12 +593,13 @@ class CountDocuments(Select):
 
 @dc.dataclass
 class FeaturizeOne(SelectOne):
-    """A query to feature just one document"""
+    """A query to feature just one document
 
-    #: The features to extract
+    :param features: The features to extract
+    :param parent_find_one: The parent query to use for the like query (if applicable)
+    """
+
     features: t.Dict[str, str]
-
-    #: The parent query to use for the like query (if applicable)
     parent_find_one: t.Any = None
 
     type_id: t.Literal['mongodb.FeaturizeOne'] = 'mongodb.FeaturizeOne'
@@ -619,21 +613,20 @@ class FeaturizeOne(SelectOne):
 
 @dc.dataclass
 class FindOne(SelectOne):
-    """A query to find one document."""
+    """A query to find one document.
+
+    :param collection: The collection to perform the query on
+    :param like_parent: The parent query to use for the like query (if applicable)
+    :param args: Positional query arguments to ``pymongo.Collection.find_one``
+    :param kwargs: Named query arguments to ``pymongo.Collection.find_one``
+    """
 
     # TODO add this to a base class (should be created)
     id_field: t.ClassVar[str] = '_id'
 
-    #: The collection to perform the query on
     collection: t.Optional[Collection] = None
-
-    #: The parent query to use for the like query (if applicable)
     like_parent: t.Optional[PreLike] = None
-
-    #: Positional query arguments to ``pymongo.Collection.find_one``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.find_one``
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.FindOne'] = 'mongodb.FindOne'
@@ -658,18 +651,17 @@ class FindOne(SelectOne):
 
 @dc.dataclass
 class Aggregate(Select):
-    """An aggregate query"""
+    """An aggregate query
 
-    #: The collection to perform the query on
+    :param collection: The collection to perform the query on
+    :param args: Positional query arguments to ``pymongo.Collection.aggregate``
+    :param kwargs: Named query arguments to ``pymongo.Collection.aggregate``
+    :param vector_index: The name of the vector index to use
+    """
+
     collection: Collection
-
-    #: Positional query arguments to ``pymongo.Collection.aggregate``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.aggregate``
     kwargs: t.Dict = dc.field(default_factory=dict)
-
-    #: The name of the vector index to use
     vector_index: t.Optional[str] = None
 
     type_id: t.Literal['mongodb.Aggregate'] = 'mongodb.Aggregate'
@@ -721,15 +713,15 @@ class Aggregate(Select):
 
 @dc.dataclass
 class DeleteOne(Delete):
-    """A query to delete a single document"""
+    """A query to delete a single document
 
-    #: The collection to perform the query on
+    :param collection: The collection to perform the query on
+    :param args: Positional query arguments to ``pymongo.Collection.delete_one``
+    :param kwargs: Named query arguments to ``pymongo.Collection.delete_one``
+    """
+
     collection: Collection
-
-    #: Positional query arguments to ``pymongo.Collection.delete_one``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.delete_one``
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.DeleteOne'] = 'mongodb.DeleteOne'
@@ -741,15 +733,15 @@ class DeleteOne(Delete):
 
 @dc.dataclass
 class DeleteMany(Delete):
-    """A query to delete many documents"""
+    """A query to delete many documents
 
-    #: The collection to perform the query on
+    :param collection: The collection to perform the query on
+    :param args: Positional query arguments to ``pymongo.Collection.delete_many``
+    :param kwargs: Named query arguments to ``pymongo.Collection.delete_many``
+    """
+
     collection: Collection
-
-    #: Positional query arguments to ``pymongo.Collection.delete_many``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.delete_many``
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     type_id: t.Literal['mongodb.DeleteMany'] = 'mongodb.DeleteMany'
@@ -761,30 +753,25 @@ class DeleteMany(Delete):
 
 @dc.dataclass
 class UpdateOne(Update):
-    """A query that updates one document"""
+    """A query that updates one document
 
-    #: The collection to perform the query on
+    :param collection: The collection to perform the query on
+    :param update: The update to apply
+    :param filter: Filter results by this dictionary
+    :param refresh: If true, refresh the underlying collection
+    :param verbose: If true, print more logging
+    :param args: Positional query arguments to ``pymongo.Collection.update_one``
+    :param kwargs: Named query arguments to ``pymongo.Collection.update_one``
+    """
+
     collection: Collection
-
-    #: The update to apply
     update: t.Any
-
-    #: Filter results by this dictionary
     filter: t.Dict
-
-    #: If true, refresh the underlying collection
     refresh: bool = True
-
-    #: If true, print more logging
     verbose: bool = True
-
-    #: Positional query arguments to ``pymongo.Collection.update_one``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.update_one``
     kwargs: t.Dict = dc.field(default_factory=dict)
 
-    #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.UpdateOne'] = 'mongodb.UpdateOne'
 
     @override
@@ -804,28 +791,24 @@ class UpdateOne(Update):
 
 @dc.dataclass
 class UpdateMany(Update):
-    """A query that updates one document"""
+    """A query that updates one document
 
-    #: The collection to perform the query on
+    :param collection: The collection to perform the query on
+    :param filter: Filter results by this dictionary
+    :param refresh: If true, refresh the underlying collection
+    :param verbose: If true, print more logging
+    :param args: Positional query arguments
+    :param kwargs: Named query arguments
+    """
+
     collection: Collection
-
-    #: Filter results by this dictionary
     filter: t.Dict
     update: Document
-
-    #: If true, refresh the underlying collection
     refresh: bool = True
-
-    #: If true, print more logging
     verbose: bool = True
-
-    #: Positional query arguments
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments
     kwargs: t.Dict = dc.field(default_factory=dict)
 
-    #: Uniquely identifies serialized elements of this class
     type_id: t.Literal['mongodb.UpdateMany'] = 'mongodb.UpdateMany'
 
     @override
@@ -860,27 +843,23 @@ class UpdateMany(Update):
 
 @dc.dataclass
 class InsertMany(Insert):
-    """A query that inserts many documents"""
+    """A query that inserts many documents
 
-    #: The collection to perform the query on
+    :param collection: The collection to perform the query on
+    :param documents: The documents to insert
+    :param refresh: If true, refresh the underlying collection
+    :param verbose: If true, print more logging
+    :param args: Positional query arguments to ``pymongo.Collection.insert_many``
+    :param kwargs: Named query arguments to ``pymongo.Collection.insert_many``
+    :param encoders: Encoders to use
+    """
+
     collection: Collection
-
-    #: The documents to insert
     documents: t.List[Document] = dc.field(default_factory=list)
-
-    #: If true, refresh the underlying collection
     refresh: bool = True
-
-    #: If true, print more logging
     verbose: bool = True
-
-    #: Positional query arguments to ``pymongo.Collection.insert_many``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.insert_many``
     kwargs: t.Dict = dc.field(default_factory=dict)
-
-    #: Encoders to use
     encoders: t.Sequence = dc.field(default_factory=list)
 
     type_id: t.Literal['mongodb.InsertMany'] = 'mongodb.InsertMany'
@@ -932,21 +911,19 @@ class InsertMany(Insert):
 
 @dc.dataclass
 class PostLike(Select):
-    """Find documents like this one"""
+    """Find documents like this one
 
-    #: The parent query to use for the like query (if applicable)
+    :param find_parent: The parent query to use for the like query (if applicable)
+    :param r: The document to match
+    :param vector_index: The name of the vector index to use
+    :param n: The number of documents to return
+    :param max_ids: The maximum number of ids to use for the like query
+    """
+
     find_parent: t.Optional[Find]
-
-    #: The document to match
     r: Document
-
-    #: The name of the vector index to use
     vector_index: str
-
-    #: The number of documents to return
     n: int = 100
-
-    #: The maximum number of ids to use for the like query
     max_ids: int = 1000
 
     type_id: t.Literal['mongodb.PostLike'] = 'mongodb.PostLike'
@@ -974,12 +951,13 @@ class PostLike(Select):
 
 @dc.dataclass
 class Featurize(Select):
-    """A feature-extraction query"""
+    """A feature-extraction query
 
-    #: The features to extract
+    :param features: The features to extract
+    :param parent: The parent query to use for the like query (if applicable)
+    """
+
     features: t.Dict[str, str]
-
-    #: The parent query to use for the like query (if applicable)
     parent: Find
 
     type_id: t.Literal['mongodb.Featurize'] = 'mongodb.Featurize'
@@ -1051,12 +1029,13 @@ class Featurize(Select):
 
 @dc.dataclass
 class Limit(Select):
-    """A query that limits the number of returned documents"""
+    """A query that limits the number of returned documents
 
-    #: The number of documents to return
+    :param n: The number of documents to return
+    :param parent: The parent query to use for the like query (if applicable)
+    """
+
     n: int
-
-    #: The parent query to use for the like query (if applicable)
     parent: t.Union[Featurize, Find, PreLike, PostLike]
 
     type_id: t.Literal['mongodb.Limit'] = 'mongodb.Limit'
@@ -1068,15 +1047,15 @@ class Limit(Select):
 
 @dc.dataclass
 class ChangeStream:
-    """Request a stream of changes from a db"""
+    """Request a stream of changes from a db
 
-    #: The collection to perform the query on
+    :param collection: The collection to perform the query on
+    :param args: Positional query arguments to ``pymongo.Collection.watch``
+    :param kwargs: Named query arguments to ``pymongo.Collection.watch``
+    """
+
     collection: Collection
-
-    #: Positional query arguments to ``pymongo.Collection.watch``
     args: t.Sequence = dc.field(default_factory=list)
-
-    #: Named query arguments to ``pymongo.Collection.watch``
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     @override

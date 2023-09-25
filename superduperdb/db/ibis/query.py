@@ -27,24 +27,21 @@ class QueryType(str, enum.Enum):
 
 @dc.dataclass
 class Table(Component):
-    """This is a representation of an SQL table in ibis."""
+    """This is a representation of an SQL table in ibis.
 
-    #: The name of the table
+    :param identifier: The name of the table
+    :param schema: The schema of the table
+    :param table: The table object
+    :param primary_id: Primary id of the table
+    """
+
     identifier: str
-
-    #: The schema of the table
     schema: t.Optional[IbisSchema] = None
-
-    #: The table object
     table: t.Any = None
-
-    #: Primary id of the table
     primary_id: str = 'id'
-
-    #: A unique name for the class
-    type_id: t.ClassVar[str] = 'table'
-
     version: t.Optional[int] = None
+
+    type_id: t.ClassVar[str] = 'table'
 
     def on_create(self, db: DB):
         self.create(db)
@@ -292,18 +289,17 @@ class QueryChain:
 
 @dc.dataclass
 class OutputTable:
-    """This is a representation of model output table in ibis"""
+    """This is a representation of model output table in ibis
 
-    #: The name of the table
+    :param model: The name of the table
+    :param primary_id: Primary id of the table
+    :param table: The table object
+    :param output_type: The schema of the table
+    """
+
     model: str
-
-    #: Primary id of the table
     primary_id: str = 'id'
-
-    #: The table object
     table: t.Any = None
-
-    #: The schema of the table
     output_type: t.Any = None
 
     def create(self, conn: t.Any):
@@ -337,15 +333,14 @@ class OutputTable:
 class InMemoryTable(Component):
     """
     This is a representation of a table in memory (memtable) in ibis.
+
+    :param identifier: The name of the table
+    :param table: The table object
+    :param primary_id: Primary id of the table
     """
 
-    #: The name of the table
     identifier: str
-
-    #: The table object
     table: t.Any = None
-
-    #: Primary id of the table
     primary_id: str = 'id'
 
     type_id: t.ClassVar[str] = 'inmemory_table'
@@ -559,9 +554,10 @@ class PlaceHolderQuery:
 
 @dc.dataclass
 class PostLike:
-    type_id: t.Literal['Ibis.PostLike'] = 'Ibis.PostLike'
     name: str = 'postlike'
     namespace: str = 'sddb'
+
+    type_id: t.Literal['Ibis.PostLike'] = 'Ibis.PostLike'
 
     def pre(self, db, **kwargs):
         pass
@@ -589,9 +585,10 @@ class PreLike:
     n: int = 10
     collection: str = 'collection'
     primary_id: str = 'id'
-    type_id: t.Literal['Ibis.PreLike'] = 'Ibis.PreLike'
     name: str = 'prelike'
     namespace: str = 'sddb'
+
+    type_id: t.Literal['Ibis.PreLike'] = 'Ibis.PreLike'
 
     def pre(self, db, **kwargs):
         pass
@@ -611,9 +608,10 @@ class Insert:
     verbose: bool = True
     kwargs: t.Dict = dc.field(default_factory=dict)
     encoders: t.Sequence = dc.field(default_factory=list)
-    type_id: t.Literal['Ibis.insert'] = 'Ibis.insert'
     name: str = 'insert'
     namespace: str = 'ibis'
+
+    type_id: t.Literal['Ibis.insert'] = 'Ibis.insert'
 
     def pre(self, db, table=None, **kwargs):
         # TODO: handle adding table later

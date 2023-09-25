@@ -19,28 +19,25 @@ KEY_NAME = 'ANTHROPIC_API_KEY'
 
 @dc.dataclass
 class Anthropic(Component, PredictMixin):
-    """Anthropic predictor."""
+    """Anthropic predictor.
 
-    #: The model to use, e.g. ``'claude-2'``.
+    :param model: The model to use, e.g. ``'claude-2'``.
+    :param identifier: The identifier to use, e.g. ``'my-model'``.
+    :param version: The version to use, e.g. ``0`` (leave empty)
+    :param takes_context: Whether the model takes context into account.
+    :param encoder: The encoder identifier.
+    :param type_id: A unique name for the class
+    :param client_kwargs: Keyword arguments to pass to the client
+    """
+
     model: str
-
-    #: The identifier to use, e.g. ``'my-model'``.
     identifier: str = ''
-
-    #: The version to use, e.g. ``0`` (leave empty)
     version: t.Optional[int] = None
-
-    #: Whether the model takes context into account.
     takes_context: bool = False
-
-    #: The encoder identifier.
     encoder: t.Union[Encoder, str, None] = None
-
-    #: A unique name for the class
-    type_id: t.ClassVar[str] = 'model'
-
-    #: Keyword arguments to pass to the client
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
+
+    type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self):
         self.identifier = self.identifier or self.model
@@ -54,12 +51,13 @@ class Anthropic(Component, PredictMixin):
 
 @dc.dataclass
 class AnthropicCompletions(Anthropic):
-    """Cohere completions (chat) predictor."""
+    """Cohere completions (chat) predictor.
 
-    #: Whether the model takes context into account.
+    :param takes_context: Whether the model takes context into account.
+    :param prompt: The prompt to use to seed the response.
+    """
+
     takes_context: bool = True
-
-    #: The prompt to use to seed the response.
     prompt: str = ''
 
     @retry

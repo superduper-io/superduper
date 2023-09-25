@@ -19,28 +19,23 @@ KEY_NAME = 'COHERE_API_KEY'
 
 @dc.dataclass
 class Cohere(Component, PredictMixin):
-    """Cohere predictor."""
+    """Cohere predictor
 
-    #: The model to use, e.g. ``'base-light'``.
+    :param model: The model to use, e.g. ``'base-light'``.
+    :param identifier: The identifier to use, e.g. ``'my-model'``.
+    :param version: The version to use, e.g. ``0`` (leave empty)
+    :param takes_context: Whether the model takes context into account.
+    :param encoder: The encoder identifier.
+    :param client_kwargs: Keyword arguments to pass to the client"""
+
     model: str
-
-    #: The identifier to use, e.g. ``'my-model'``.
     identifier: str = ''
-
-    #: The version to use, e.g. ``0`` (leave empty)
     version: t.Optional[int] = None
-
-    #: Whether the model takes context into account.
     takes_context: bool = False
-
-    #: The encoder identifier.
     encoder: t.Union[Encoder, str, None] = None
-
-    #: A unique name for the class
-    type_id: t.ClassVar[str] = 'model'
-
-    #: Keyword arguments to pass to the client
     client_kwargs: t.Dict[str, t.Any] = dc.field(default_factory=dict)
+
+    type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self):
         self.identifier = self.identifier or self.model
@@ -54,11 +49,12 @@ class Cohere(Component, PredictMixin):
 
 @dc.dataclass
 class CohereEmbed(Cohere):
-    """Cohere embedding predictor"""
+    """Cohere embedding predictor
+
+    :param shape: The shape as ``tuple`` of the embedding.
+    """
 
     shapes: t.ClassVar[t.Dict] = {'embed-english-v2.0': (4096,)}
-
-    #: The shape as ``tuple`` of the embedding.
     shape: t.Optional[t.Sequence[int]] = None
 
     def __post_init__(self):
@@ -114,12 +110,13 @@ class CohereEmbed(Cohere):
 
 @dc.dataclass
 class CohereGenerate(Cohere):
-    """Cohere realistic text generator (chat predictor)."""
+    """Cohere realistic text generator (chat predictor)
 
-    #: Whether the model takes context into account.
+    :param takes_context: Whether the model takes context into account.
+    :param prompt: The prompt to use to seed the response.
+    """
+
     takes_context: bool = True
-
-    #: The prompt to use to seed the response.
     prompt: str = ''
 
     @retry

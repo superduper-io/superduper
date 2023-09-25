@@ -24,28 +24,13 @@ class Artifact:
     :param hash: in case the object isn't hashable (deduplication not possible)
     """
 
-    #: The computed artifact, which may be of any type
     artifact: t.Any = None
-
-    #: A file_id is a key used to identify the file in the ``ArtifactStore``
     file_id: t.Optional[str] = None
-
-    #: The ``info`` dictionary is passed into ``ArtifactStore.create_artifact()``
     info: Info = None
-
-    #: The Python ``id()`` of the artifact
     object_id: int = 0
-
-    #: The name of the finalization method on the artifact to call before saving
     save_method: t.Optional[str] = None
-
-    #: The name of the serializer
     serializer: str = 'dill'
-
-    #: The sha1 hash of the artifact
     sha1: str = ''
-
-    # In case the object isn't hashable (deduplication not possible)
     hash: t.Optional[int] = None
 
     def __init__(
@@ -98,15 +83,15 @@ class Artifact:
 
 
 class ArtifactDesc(te.TypedDict):
-    """A description of an artifact in an artifact store"""
+    """A description of an artifact in an artifact store
 
-    #: A string identifying the artifact in the artifact store
+    :param file_id: A string identifying the artifact in the artifact store
+    :param info: An optional dictionary used to create the artifact
+    :param serializer: The name of the serializer used for the artifact store
+    """
+
     file_id: str
-
-    #: An optional dictionary used to create the artifact
     info: Info
-
-    #: The name of the serializer used for the artifact store
     serializer: str
 
 

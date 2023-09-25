@@ -57,39 +57,32 @@ class BasicDataset(data.Dataset):
 class TorchTrainerConfiguration(_TrainingConfiguration):
     """
     Configuration for the PyTorch trainer.
+
+    :param objective: Objective function
+    :param loader_kwargs: Kwargs for the dataloader
+    :param max_iterations: Maximum number of iterations
+    :param no_improve_then_stop: Number of iterations to wait for improvement
+                                 before stopping
+    :param splitter: Splitter for the data
+    :param download: Whether to download the data
+    :param validation_interval: How often to validate
+    :param listen: Which metric to listen to for early stopping
+    :param optimizer_cls: Optimizer class
+    :param optimizer_kwargs: Kwargs for the optimizer
+    :param target_preprocessors: Preprocessors for the target
+
     """
 
-    #: Objective function
     objective: t.Optional[t.Union[Artifact, t.Callable]] = None
-
-    #: Kwargs for the dataloader
     loader_kwargs: t.Dict = dc.field(default_factory=dict)
-
-    #: Maximum number of iterations
     max_iterations: int = 10**100
-
-    #: Number of iterations to wait for improvement before stopping
     no_improve_then_stop: int = 5
-
-    #: Splitter for the data
     splitter: t.Optional[Artifact] = None
-
-    #: Whether to download the data
     download: bool = False
-
-    #: How often to validate
     validation_interval: int = 100
-
-    #: Which metric to listen to for early stopping
     listen: str = 'objective'
-
-    #: Optimizer class
     optimizer_cls: Artifact = Artifact(torch.optim.Adam, serializer='pickle')
-
-    #: Kwargs for the optimizer
     optimizer_kwargs: t.Dict = dc.field(default_factory=dict)
-
-    #: Preprocessors for the target
     target_preprocessors: t.Optional[t.Union[Artifact, t.Dict]] = None
 
     def __post_init__(self):
@@ -355,13 +348,14 @@ class Base:
 
 @dc.dataclass
 class TorchModel(Base, Model):  # type: ignore[misc]
-    #: optional optimizer state, populated automatically on reload
+    """
+    :param optimizer_state: optional optimizer state, populated automatically on reload
+    :param forward_method: method to call for prediction, defaults to __call__
+    :param train_forward_method: method to call for training, defaults to __call__
+    """
+
     optimizer_state: t.Optional[Artifact] = None
-
-    #: method to call for prediction, defaults to __call__
     forward_method: str = '__call__'
-
-    #: method to call for training, defaults to __call__
     train_forward_method: str = '__call__'
 
     def __post_init__(self):

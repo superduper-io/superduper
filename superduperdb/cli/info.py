@@ -16,13 +16,16 @@ PYPROJECT = ROOT / 'pyproject.toml'
 
 @command(help='Print information about the current machine and installation')
 def info():
+    print('```')
     print(json.dumps(_get_info(), default=str, indent=2))
+    print('```')
 
 
 def _get_info():
     return {
         'cfg': _cfg(),
         'cwd': Path.cwd(),
+        'freeze': _freeze(),
         'git': _git(),
         'hostname': socket.gethostname(),
         'os_uname': list(os.uname()),
@@ -41,6 +44,15 @@ def _cfg():
         return CFG.dict()
     except Exception:
         return '(CFG not yet commited)'
+
+
+def _freeze():
+    try:
+        from pip._internal.operations.freeze import freeze
+
+        return list(freeze())
+    except Exception as e:
+        return [f'Freeze failed with {e}']
 
 
 def _git():

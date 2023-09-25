@@ -21,7 +21,6 @@ class Component(Serializable):
     Base component which model, listeners, learning tasks etc. inherit from.
     """
 
-    #: A unique name for the class
     type_id: t.ClassVar[str]
 
     if t.TYPE_CHECKING:

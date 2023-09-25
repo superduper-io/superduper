@@ -14,12 +14,11 @@ class Retry:
     Retry a function until it succeeds.
 
     This is a thin wrapper around the tenacity retry library, using our configs.
+    :param exception_types: The exception types to retry on.
+    :param cfg: The retry config.
     """
 
-    #: The exception types to retry on.
     exception_types: ExceptionTypes
-
-    #: The retry config.
     cfg: t.Optional[s.config.Retry] = None
 
     def __call__(self, f: t.Callable) -> t.Any:

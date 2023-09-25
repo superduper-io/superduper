@@ -16,33 +16,26 @@ class Listener(Component):
     """
     Listener object which is used to process a column/ key of a collection or table,
     and store the outputs.
+
+    :param key: Key to be bound to model
+    :param model: Model for processing data
+    :param select: Object for selecting which data is processed
+    :param active: Toggle to ``False`` to deactivate change data triggering
+    :param features: Dictionary of mappings from keys to model
+    :param identifier: A string used to identify the model.
+    :param predict_kwargs: Keyword arguments to self.model.predict
+    :param version: Version number of the model(?)
     """
 
-    #: Key to be bound to model
     key: str
-
-    #: Model for processing data
     model: t.Union[str, Model]
-
-    #: Object for selecting which data is processed
     select: Select
-
-    #: Toggle to ``False`` to deactivate change data triggering
     active: bool = True
-
-    #: Dictionary of mappings from keys to model
     features: t.Optional[t.Dict] = None
-
-    #: A string used to identify the model.
     identifier: t.Optional[str] = None
-
-    #: Keyword arguments to self.model.predict
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
-
-    #: Version number of the model(?)
     version: t.Optional[int] = None
 
-    #: A unique name for the class
     type_id: t.ClassVar[str] = 'listener'
 
     @property

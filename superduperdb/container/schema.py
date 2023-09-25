@@ -8,9 +8,10 @@ from superduperdb.container.encoder import Encoder
 
 @dc.dataclass
 class Schema(Component):
-    type_id: t.ClassVar[str] = 'schema'
     identifier: str
     fields: t.Mapping[str, t.Union[Encoder, str]]
+
+    type_id: t.ClassVar[str] = 'schema'
 
     @cached_property
     def encoded_types(self):

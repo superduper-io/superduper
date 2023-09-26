@@ -3,7 +3,7 @@ import time
 import typing as t
 from queue import Empty, Queue
 
-from .runnable import Event
+from superduperdb.misc.runnable.runnable import Event
 
 
 @dc.dataclass

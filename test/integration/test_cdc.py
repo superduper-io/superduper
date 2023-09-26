@@ -15,7 +15,8 @@ from superduperdb.container.listener import Listener
 from superduperdb.db.base.cdc import DatabaseListener
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.vector_search.base import VectorCollectionConfig
-from superduperdb.vector_search.lancedb_client import LanceVectorIndex
+#from superduperdb.vector_search.lancedb_client import LanceVectorIndex
+#from superduperdb.vector_search.lance import LanceVectorDatabase
 
 RETRY_TIMEOUT = 1
 LISTEN_TIMEOUT = 0.1

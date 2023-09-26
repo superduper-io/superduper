@@ -8,7 +8,7 @@ from superduperdb.db.mongodb.data_backend import MongoDataBackend
 from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 from superduperdb.db.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.vector_search.inmemory import InMemoryVectorDatabase
-from superduperdb.vector_search.lancedb_client import LanceVectorIndex
+from superduperdb.vector_search.lance import LanceVectorDatabase
 
 data_backends = {'mongodb': MongoDataBackend, 'ibis': IbisDataBackend}
 
@@ -17,13 +17,13 @@ artifact_stores = {'mongodb': MongoArtifactStore, 'filesystem': FileSystemArtifa
 metadata_stores = {'mongodb': MongoMetaDataStore, 'sqlalchemy': SQLAlchemyMetadata}
 
 vector_data_stores = {
-    'lancedb': LanceVectorIndex,
+    'lance': LanceVectorDatabase,
     'inmemory': InMemoryVectorDatabase,
 }
 
 CONNECTIONS = {
     'pymongo': MongoClient,
     'ibis': BaseBackend,
-    'lancedb': LanceVectorIndex,
+    'lance': LanceVectorDatabase,
     'inmemory': InMemoryVectorDatabase,
 }

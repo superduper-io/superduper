@@ -44,9 +44,8 @@ dependencies = [
     "requests>=2.22",  # lower bound from openai and boto3
     "tqdm>=4.64.1",
     "typer>=0.7.0",
-    "lancedb<0.2",  # TODO: Find a solution and unpin
+    "pylance>=0.6.1",
     "readerwriterlock>=1.0.9",
-    "pandas>=2.0.2",
     "flask>=2.2.3",
     "flask-cors>=3.0.10",
     "flask-httpauth>=4.7.0",

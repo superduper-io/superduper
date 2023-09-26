@@ -57,7 +57,7 @@ This script will:
 
 Build the application for production.
 Serve the production build on port 8080 using the serve command.
-Use this script when you want to test your production-ready application locally.
+Use this script when you want to test your production-ready application.
 
 
 ### Start in Development Mode

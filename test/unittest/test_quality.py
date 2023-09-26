@@ -4,6 +4,10 @@ import superduperdb as s
 
 CODE_ROOTS = s.ROOT / 'superduperdb', s.ROOT / 'test'
 
+# EDITOR_CHARS are characters that text editors like vi* or *macs use
+# in their temporary or backup file names
+EDITOR_CHARS = set('#~')
+
 # DEFECTS maps defect names to functions that match a defect in a line of code.
 # The last two patterns match their own definitions :-D so 1 is the lowest possible
 # defect count for them.
@@ -25,6 +29,8 @@ ALLOWABLE_DEFECTS = {
 
 def test_quality():
     files = (f for root in CODE_ROOTS for f in sorted(root.glob('**/*.py')))
+    files = (f for f in files if not EDITOR_CHARS.intersection(f.name))
+
     lines = [line for f in files for line in f.read_text().splitlines()]
     defects = {k: sum(bool(v(line)) for line in lines) for k, v in DEFECTS.items()}
 

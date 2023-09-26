@@ -53,14 +53,14 @@ def database_with_default_encoders_and_model(test_db):
     )
     test_db.add(
         Listener(
-            select=Collection(name='documents').find(),
+            select=Collection(identifier='documents').find(),
             key='x',
             model='model_linear_a',
         )
     )
     test_db.add(
         Listener(
-            select=Collection(name='documents').find(),
+            select=Collection(identifier='documents').find(),
             key='z',
             model='model_linear_a',
         )

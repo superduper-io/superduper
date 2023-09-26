@@ -30,7 +30,7 @@ def local_cluster(on: t.List[str] = []):
     for collection in on:
         w = DatabaseListener(
             db=db,
-            on=Collection(name=collection),
+            on=Collection(identifier=collection),
         )
         w.listen()
     serve(db)

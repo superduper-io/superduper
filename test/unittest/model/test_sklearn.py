@@ -45,7 +45,7 @@ class TestPipeline:
     @pytest.fixture()
     def data_in_db(self, empty, X, y):
         empty.execute(
-            Collection(name='documents').insert_many(
+            Collection('documents').insert_many(
                 [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
             )
         )
@@ -65,5 +65,5 @@ class TestPipeline:
             X='X',
             y='y',
             db=data_in_db,
-            select=Collection(name='documents').find(),
+            select=Collection('documents').find(),
         )

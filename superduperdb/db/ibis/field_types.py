@@ -3,14 +3,16 @@ import typing as t
 
 from ibis.expr.datatypes import DataType, dtype as _dtype
 
+from superduperdb.container.serializable import Serializable
+
 
 @dc.dataclass
-class FieldType:
-    type: t.Union[str, DataType]
+class FieldType(Serializable):
+    identifier: t.Union[str, DataType]
 
     def __post_init__(self):
-        if isinstance(self.type, DataType):
-            self.type = self.type.name
+        if isinstance(self.identifier, DataType):
+            self.identifier = self.identifier.name
 
 
 def dtype(x):

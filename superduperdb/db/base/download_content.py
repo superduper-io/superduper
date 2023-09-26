@@ -59,10 +59,11 @@ def download_content(
             documents = list(db.execute(select))
     else:
         assert isinstance(query, Insert)
-        documents = query.documents
+        documents = t.cast(t.List[Document], query.documents)
 
     uris, keys, place_ids = gather_uris([d.encode() for d in documents])
-    logging.info(f'found {len(uris)} uris')
+    if uris:
+        logging.info(f'found {len(uris)} uris')
     if not uris:
         return None
 

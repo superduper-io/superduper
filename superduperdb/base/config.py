@@ -50,6 +50,7 @@ class Cluster(JSONable):
     dask_scheduler: str = 'tcp://localhost:8786'
     local: bool = True
     backfill_batch_size: int = 100
+    cdc: bool = False
 
 
 class LogLevel(str, Enum):
@@ -138,6 +139,9 @@ class Config(JSONable):
     logging: Logging = Factory(Logging)
     server: Server = Factory(Server)
     downloads: Downloads = Factory(Downloads)
+
+    #: Probability of validation fold
+    fold_probability: float = 0.05
 
     class Config(JSONable.Config):
         protected_namespaces = ()

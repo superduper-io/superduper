@@ -8,11 +8,11 @@ import click
 import requests
 
 from superduperdb.container.component import Component
-from superduperdb.container.document import Document, dump_bsons, load_bson, load_bsons
+from superduperdb.container.document import dump_bsons, load_bsons
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.db.base.db import ExecuteQuery
-from superduperdb.db.base.query import Delete, Insert, Like, Select, SelectOne, Update
+from superduperdb.db.base.query import Delete, Insert, Like, Select, Update
 from superduperdb.misc.serialization import serializers
 
 
@@ -52,8 +52,6 @@ class Client:
             return self.select(query)
         if isinstance(query, Like):
             return self.like(query)
-        if isinstance(query, SelectOne):
-            return self.select_one(query)
         if isinstance(query, Update):
             return self.update(query)
         raise TypeError(
@@ -98,8 +96,6 @@ class Client:
 
     def insert(self, query: Insert):
         """
-        Dump a sequence of documents into BSON and send to the server.
-
         The request is split into two parts:
         1. Send serialized documents to the server in a single request
         2. Send serialized metadata to the server, including the query type
@@ -305,29 +301,6 @@ class Client:
             d, cache={}, getter=lambda x: self._get(request_id=request_id, file_id=x)
         )
         return Serializable.deserialize(d)
-
-    def select_one(self, query: SelectOne) -> Document:
-        """
-        Send a select query to the server and return a the result.
-
-        This endpoint sends a request to the server to execute a single select
-        statement in the database. It receives an ID for the result from the
-        server, and then uses this ID to retrieve the result from the server.
-        Finally it deserializes the result and returns it. It generates a random
-        ID value for communicating with the server.
-
-        :param query: serialized query
-        """
-        request_id = str(uuid.uuid4())
-        response = self._make_get_request(
-            'select_one',
-            json={
-                'query': query.serialize(),
-                'request_id': request_id,
-            },
-        ).json()
-        result = self._get(request_id=request_id, file_id=response['file_id'])
-        return load_bson(result, encoders=self.encoders)
 
     def like(self, query: Like):
         # TODO: Implement server functionality for this endpoint.

@@ -62,12 +62,12 @@ class QueryDataset:
         else:
             if ids is None:
                 self._ids = [
-                    r[self.select.id_field]  # type: ignore[attr-defined]
+                    r[self.select.id_field]
                     for r in self.database.execute(self.select.select_ids)
                 ]
             else:
                 self._ids = ids
-            self.select_one = self.select.select_single_id  # type: ignore[attr-defined]
+            self.select_one = self.select.select_single_id
         self.suppress = suppress
         self.features = features or {}
         self.extract = extract

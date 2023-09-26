@@ -50,6 +50,10 @@ def _serialize(item: t.Any) -> t.Dict[str, t.Any]:
                 if isinstance(sc, Serializable):
                     v[i] = _serialize(sc)
 
+        if isinstance(attr, dict):
+            for key, value in attr.items():
+                if isinstance(value, Serializable):
+                    v[key] = _serialize(value)
         return v
 
     d = {k: unpack(k, v) for k, v in item.dict().items()}

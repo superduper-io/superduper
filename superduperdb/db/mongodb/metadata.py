@@ -4,6 +4,7 @@ import click
 import tenacity
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
+from superduperdb.base.logger import logging
 from superduperdb.container.component import Component
 from superduperdb.db.base.metadata import MetaDataStore
 from superduperdb.misc.colors import Colors
@@ -37,7 +38,7 @@ class MongoMetaDataStore(MetaDataStore):
                 'Are you sure you want to drop all meta-data? ',
                 default=False,
             ):
-                print('Aborting...')
+                logging.warn('Aborting...')
         self.db.drop_collection(self.meta_collection.name)
         self.db.drop_collection(self.component_collection.name)
         self.db.drop_collection(self.job_collection.name)

@@ -51,7 +51,7 @@ def client(database_with_default_encoders_and_model):
 @pytest.fixture
 def test_collection():
     collection_name = str(uuid.uuid4())
-    return Collection(name=collection_name)
+    return Collection(identifier=collection_name)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -73,18 +73,6 @@ def test_add_load(client, test_db, test_collection):
 def test_show(client, database_with_default_encoders_and_model):
     encoders = client.show('encoder')
     assert encoders == ['torch.float32[16]', 'torch.float32[32]']
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_select_one(
-    client, database_with_default_encoders_and_model, test_collection, fake_inserts
-):
-    database_with_default_encoders_and_model.execute(
-        test_collection.insert_many([fake_inserts[0]])
-    )
-    r = database_with_default_encoders_and_model.execute(test_collection.find_one())
-    s = client.execute(test_collection.find_one())
-    assert r['_id'] == s['_id']
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

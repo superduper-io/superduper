@@ -1,6 +1,7 @@
 import click
 import gridfs
 
+from superduperdb.base.logger import logging
 from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.misc.colors import Colors
 
@@ -26,7 +27,7 @@ class MongoArtifactStore(ArtifactStore):
                 'Are you sure you want to drop all artifacts? ',
                 default=False,
             ):
-                print('Aborting...')
+                logging.warn('Aborting...')
         return self.db.client.drop_database(self.db.name)
 
     def delete(self, file_id: str):

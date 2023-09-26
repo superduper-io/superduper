@@ -43,7 +43,7 @@ LISTEN_TIMEOUT = 0.1
 def listener_and_collection_name(database_with_default_encoders_and_model):
     collection_name = str(uuid.uuid4())
     listener = DatabaseListener(
-        db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
+        db=database_with_default_encoders_and_model, on=Collection(collection_name)
     )
     listener._cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
@@ -60,7 +60,7 @@ def listener_with_vector_database(database_with_default_encoders_and_model):
         database_with_default_encoders_and_model.vector_database = vector_db_client
         listener = DatabaseListener(
             db=database_with_default_encoders_and_model,
-            on=Collection(name=collection_name),
+            on=Collection(collection_name),
         )
         listener._cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
@@ -75,7 +75,7 @@ def listener_without_cdc_handler_and_collection_name(
 ):
     collection_name = str(uuid.uuid4())
     listener = DatabaseListener(
-        db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
+        db=database_with_default_encoders_and_model, on=Collection(collection_name)
     )
     yield listener, collection_name
     listener.stop()
@@ -84,12 +84,15 @@ def listener_without_cdc_handler_and_collection_name(
 def retry_state_check(state_check):
     start = time.time()
 
+    exc = None
     while (time.time() - start) < RETRY_TIMEOUT:
         try:
             return state_check()
-        except Exception:
+        except Exception as e:
+            exc = e
             time.sleep(0.1)
-    raise ValueError('state_check() never succeeded')
+
+    raise Exception(exc)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -124,14 +127,15 @@ def test_task_workflow(
         elif op_type == 'update':
             data = fake_updates
 
-        output_id, _ = database_with_listeners.execute(
-            Collection(name=name).insert_many([data[0]], refresh=False)
+        inserted_ids, _ = database_with_listeners.execute(
+            Collection(name).insert_many([data[0]]),
+            refresh=False,
         )
 
         def state_check():
-            doc = database_with_listeners.db[name].find_one(
-                {'_id': output_id.inserted_ids[0]}
-            )
+            doc = database_with_listeners.databackend.get_table_or_collection(
+                name
+            ).find_one({'_id': inserted_ids[0]})
             assert '_outputs' in list(doc.keys())
 
         retry_state_check(state_check)
@@ -139,9 +143,9 @@ def test_task_workflow(
         # state_check_2 can't be merged with state_check because the
         # '_outputs' key needs to be present in 'doc'
         def state_check_2():
-            doc = database_with_listeners.db[name].find_one(
-                {'_id': output_id.inserted_ids[0]}
-            )
+            doc = database_with_listeners.databackend.get_table_or_collection(
+                name
+            ).find_one({'_id': inserted_ids[0]})
             state = []
             state.append('model_linear_a' in doc['_outputs']['x'].keys())
             state.append('model_linear_a' in doc['_outputs']['z'].keys())
@@ -162,8 +166,9 @@ def test_vector_database_sync_with_delete(
     with add_and_cleanup_listeners(
         database_with_default_encoders_and_model, name
     ) as database_with_listeners:
-        output, _ = database_with_listeners.execute(
-            Collection(name=name).insert_many([fake_inserts[0]], refresh=False)
+        inserted_ids, _ = database_with_listeners.execute(
+            Collection(name).insert_many([fake_inserts[0]]),
+            refresh=False,
         )
 
         def state_check():
@@ -174,7 +179,7 @@ def test_vector_database_sync_with_delete(
 
         retry_state_check(state_check)
         database_with_listeners.execute(
-            Collection(name=name).delete_one({'_id': output.inserted_ids[0]})
+            Collection(name).delete_one({'_id': inserted_ids[0]})
         )
 
         # check if vector database is in sync with the model outputs
@@ -200,7 +205,8 @@ def test_vector_database_sync(
         database_with_default_encoders_and_model, name
     ) as database_with_listeners:
         database_with_listeners.execute(
-            Collection(name=name).insert_many([fake_inserts[0]], refresh=False)
+            Collection(name).insert_many([fake_inserts[0]]),
+            refresh=False,
         )
 
         # Check if vector database is in sync with the model outputs
@@ -222,7 +228,8 @@ def test_single_insert(
     listener, name = listener_without_cdc_handler_and_collection_name
     listener.listen(timeout=LISTEN_TIMEOUT)
     database_with_default_encoders_and_model.execute(
-        Collection(name=name).insert_many([fake_inserts[0]])
+        Collection(name).insert_many([fake_inserts[0]]),
+        refresh=False,
     )
 
     def state_check():
@@ -240,7 +247,8 @@ def test_many_insert(
     listener, name = listener_without_cdc_handler_and_collection_name
     listener.listen(timeout=LISTEN_TIMEOUT)
     database_with_default_encoders_and_model.execute(
-        Collection(name=name).insert_many(fake_inserts)
+        Collection(name).insert_many(fake_inserts),
+        refresh=False,
     )
 
     def state_check():
@@ -257,12 +265,13 @@ def test_delete_one(
 ):
     listener, name = listener_without_cdc_handler_and_collection_name
     listener.listen(timeout=LISTEN_TIMEOUT)
-    output, _ = database_with_default_encoders_and_model.execute(
-        Collection(name=name).insert_many(fake_inserts)
+    inserted_ids, _ = database_with_default_encoders_and_model.execute(
+        Collection(name).insert_many(fake_inserts),
+        refresh=False,
     )
 
     database_with_default_encoders_and_model.execute(
-        Collection(name=name).delete_one({'_id': output.inserted_ids[0]})
+        Collection(name).delete_one({'_id': inserted_ids[0]})
     )
 
     def state_check():
@@ -279,13 +288,14 @@ def test_single_update(
 ):
     listener, name = listener_without_cdc_handler_and_collection_name
     listener.listen(timeout=LISTEN_TIMEOUT)
-    output_id, _ = database_with_default_encoders_and_model.execute(
-        Collection(name=name).insert_many(fake_updates)
+    inserted_ids, _ = database_with_default_encoders_and_model.execute(
+        Collection(name).insert_many(fake_updates),
+        refresh=False,
     )
     encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
     database_with_default_encoders_and_model.execute(
-        Collection(name=name).update_many(
-            {"_id": output_id.inserted_ids[0]},
+        Collection(name).update_many(
+            {"_id": inserted_ids[0]},
             Document({'$set': {'x': encoder(torch.randn(32))}}),
         )
     )
@@ -304,13 +314,13 @@ def test_many_update(
 ):
     listener, name = listener_without_cdc_handler_and_collection_name
     listener.listen(timeout=LISTEN_TIMEOUT)
-    output_id, _ = database_with_default_encoders_and_model.execute(
-        Collection(name=name).insert_many(fake_updates)
+    inserted_ids, _ = database_with_default_encoders_and_model.execute(
+        Collection(name).insert_many(fake_updates), refresh=False
     )
     encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
     database_with_default_encoders_and_model.execute(
-        Collection(name=name).update_many(
-            {"_id": {"$in": output_id.inserted_ids[:5]}},
+        Collection(name).update_many(
+            {"_id": {"$in": inserted_ids[:5]}},
             Document({'$set': {'x': encoder(torch.randn(32))}}),
         )
     )
@@ -330,13 +340,13 @@ def test_insert_without_cdc_handler(
     """Test that `insert` without CDC handler does not execute task graph"""
     listener, name = listener_without_cdc_handler_and_collection_name
     listener.listen(timeout=LISTEN_TIMEOUT)
-    output_id, _ = database_with_default_encoders_and_model.execute(
-        Collection(name=name).insert_many(fake_inserts, refresh=True)
+    inserted_ids, _ = database_with_default_encoders_and_model.execute(
+        Collection(name).insert_many(fake_inserts),
+        refresh=False,
     )
-    doc = database_with_default_encoders_and_model.db[name].find_one(
-        {'_id': output_id.inserted_ids[0]}
-    )
-    assert '_outputs' not in doc.keys()
+    db = database_with_default_encoders_and_model
+    doc = db.execute(Collection(name).find_one({'_id': inserted_ids[0]}))
+    assert '_outputs' not in doc.content.keys()
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -360,13 +370,13 @@ def add_and_cleanup_listeners(database, collection_name):
     listener_x = Listener(
         key='x',
         model='model_linear_a',
-        select=Collection(name=collection_name).find(),
+        select=Collection(collection_name).find(),
     )
 
     listener_z = Listener(
         key='z',
         model='model_linear_a',
-        select=Collection(name=collection_name).find(),
+        select=Collection(collection_name).find(),
     )
 
     database.add(listener_x)

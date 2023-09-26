@@ -22,7 +22,7 @@ def add_and_cleanup_listener(database, collection_name):
     listener_x = Listener(
         key='x',
         model='model_linear_a',
-        select=Collection(name=collection_name).find(),
+        select=Collection(identifier=collection_name).find(),
     )
 
     database.add(listener_x)
@@ -41,12 +41,12 @@ def test_taskgraph_futures_with_dask(
         database_with_default_encoders_and_model.distributed = True
         database_with_default_encoders_and_model._distributed_client = local_dask_client
         _, graph = database_with_default_encoders_and_model.execute(
-            Collection(name=collection_name).insert_many(fake_updates)
+            Collection(identifier=collection_name).insert_many(fake_updates)
         )
 
     next(
         database_with_default_encoders_and_model.execute(
-            Collection(name=collection_name).find({'update': True})
+            Collection(identifier=collection_name).find({'update': True})
         )
     )
     local_dask_client.wait_all_pending_tasks()
@@ -69,9 +69,9 @@ def test_insert_with_dask(
         ) as db:
             db.distributed = True
             db._distributed_client = local_dask_client
-            db.execute(Collection(name=collection_name).insert_many(fake_updates))
+            db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
             local_dask_client.wait_all_pending_tasks()
-            q = Collection(name=collection_name).find({'update': True})
+            q = Collection(identifier=collection_name).find({'update': True})
             r = next(db.execute(q))
             assert 'model_linear_a' in r['_outputs']['x']
 

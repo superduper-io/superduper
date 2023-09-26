@@ -65,7 +65,7 @@ def test_fit(random_data, si_validation):
         X='x',
         y='y',
         db=random_data,
-        select=Collection(name='documents').find(),
+        select=Collection('documents').find(),
         metrics=[Metric(identifier='acc', object=acc)],
         validation_sets=['my_valid'],
     )

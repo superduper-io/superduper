@@ -27,6 +27,17 @@ class SuperDuperCursor:
     features: t.Optional[t.Dict[str, str]] = None
     scores: t.Optional[t.Dict[str, float]] = None
 
+    _it: int = 0
+
+    def featurize(self, features: t.Dict):
+        return SuperDuperCursor(
+            raw_cursor=self.raw_cursor,
+            id_field=self.id_field,
+            encoders=self.encoders,
+            features=features,
+            scores=self.scores,
+        )
+
     @staticmethod
     def add_features(r, features):
         """
@@ -57,6 +68,12 @@ class SuperDuperCursor:
         )
 
     def cursor_next(self):
+        if isinstance(self.raw_cursor, list):
+            if self._it >= len(self.raw_cursor):
+                raise StopIteration
+            r = self.raw_cursor[self._it]
+            self._it += 1
+            return r
         return self.raw_cursor.next()
 
     @staticmethod

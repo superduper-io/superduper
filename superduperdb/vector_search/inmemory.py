@@ -83,8 +83,8 @@ class InMemoryVectorCollection(VectorCollection):
             try:
                 index = self._index if not within_ids else self._index[within_ids]
                 ids, scores = index.find_nearest_from_id(identifier, n=limit + offset)
-            except KeyError:
-                raise VectorCollectionItemNotFound()
+            except KeyError as e:
+                raise VectorCollectionItemNotFound() from e
             return self._convert_ids_scores_to_results(ids[offset:], scores[offset:])
 
     def find_nearest_from_array(

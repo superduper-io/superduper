@@ -20,14 +20,15 @@ from superduperdb.container.job import ComponentJob, Job
 from superduperdb.container.metric import Metric
 from superduperdb.container.schema import Schema
 from superduperdb.container.serializable import Serializable
-from superduperdb.db.base.query import Select
+from superduperdb.db.base.query import CompoundSelect, Select
+from superduperdb.db.ibis.field_types import FieldType
 from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
 
-EncoderArg = t.Union[Encoder, str, None]
+EncoderArg = t.Union[Encoder, FieldType, str, None]
 ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
 
 
@@ -80,7 +81,7 @@ class PredictMixin:
     batch_predict: bool
     takes_context: bool
     to_call: t.Callable
-    model_update_kwargs: dict
+    model_update_kwargs: t.Dict
 
     def create_predict_job(
         self,
@@ -255,7 +256,7 @@ class PredictMixin:
     def _predict_and_listen(
         self,
         X: t.Any,
-        select: Select,
+        select: CompoundSelect,
         db: DB,
         in_memory: bool = True,
         max_chunk_size: t.Optional[int] = None,
@@ -320,7 +321,7 @@ class PredictMixin:
         if max_chunk_size is not None:
             it = 0
             for i in range(0, len(ids), max_chunk_size):
-                print(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
+                logging.info(f'Computing chunk {it}/{int(len(ids) / max_chunk_size)}')
                 self._predict_with_select_and_ids(
                     X=X,
                     db=db,
@@ -354,9 +355,6 @@ class PredictMixin:
 
         outputs = self.predict(X=X_data, one=False, distributed=False, **kwargs)
 
-        if self.flatten:
-            assert all([isinstance(x, (list, tuple)) for x in outputs])
-
         if isinstance(self.encoder, Encoder):
             if self.flatten:
                 outputs = [
@@ -380,8 +378,8 @@ class PredictMixin:
             outputs=outputs,
             key=X,
             ids=ids,
-            document_embedded=self.model_update_kwargs.get('document_embedded', True),
             flatten=self.flatten,
+            **self.model_update_kwargs,
         )
         return
 
@@ -406,9 +404,9 @@ class Model(Component, PredictMixin):
 
     identifier: str
     object: t.Union[Artifact, t.Any]
-    encoder: t.Any = None
     flatten: bool = False
     output_schema: t.Optional[t.Union[Schema, dict]] = None
+    encoder: EncoderArg = None
     preprocess: t.Union[t.Callable, Artifact, None] = None
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
@@ -510,9 +508,11 @@ class Model(Component, PredictMixin):
 
     def on_create(self, db: DB):
         if isinstance(self.encoder, str):
-            self.encoder = db.load('encoder', self.encoder)
+            self.encoder = db.load('encoder', self.encoder)  # type: ignore[assignment]
         # TODO: check if output table should be created
-        db.create_output_table(self)
+        output_component = db.databackend.create_model_table_or_collection(self)
+        if output_component is not None:
+            db.add(output_component)
 
     def _validate(
         self, db: DB, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]

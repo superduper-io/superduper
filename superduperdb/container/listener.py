@@ -4,7 +4,7 @@ import typing as t
 from overrides import override
 
 from superduperdb.db.base.db import DB
-from superduperdb.db.base.query import Select
+from superduperdb.db.base.query import CompoundSelect
 
 from .component import Component
 from .job import Job
@@ -29,7 +29,7 @@ class Listener(Component):
 
     key: str
     model: t.Union[str, Model]
-    select: Select
+    select: CompoundSelect
     active: bool = True
     features: t.Optional[t.Dict] = None
     identifier: t.Optional[str] = None

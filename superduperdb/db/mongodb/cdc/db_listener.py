@@ -182,7 +182,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         """
         self.db = db
         self._on_component = on
-        self._identifier = self._build_identifier([identifier, on.name])
+        self._identifier = self._build_identifier([identifier, on.identifier])
         self.tokens = CachedTokens()
         self._change_counters = Counter(inserts=0, updates=0, deletes=0)
         self.resume_token = None
@@ -336,7 +336,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
                 'deletes': self._change_counters['deletes'],
             }
         )
-        print(json.dumps(info, indent=2))
+        logging.info(json.dumps(info, indent=2))
         return info
 
     def set_resume_token(self, token: TokenType) -> None:
@@ -375,7 +375,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         for more fine grained listening.
         """
         try:
-            CDC_COLLECTION_LOCKS[self._on_component.name] = True
+            CDC_COLLECTION_LOCKS[self._on_component.identifier] = True
 
             self._stop_event.clear()
             if self._scheduler:
@@ -400,7 +400,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             self._startup_event.wait(timeout=timeout)
         except Exception:
             logging.error('Listening service stopped!')
-            CDC_COLLECTION_LOCKS.pop(self._on_component.name, None)
+            CDC_COLLECTION_LOCKS.pop(self._on_component.identifier, None)
 
             self.stop()
             raise
@@ -422,7 +422,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         Stop listening cdc changes.
         This stops the corresponding services as well.
         """
-        CDC_COLLECTION_LOCKS.pop(self._on_component.name, None)
+        CDC_COLLECTION_LOCKS.pop(self._on_component.identifier, None)
 
         self._stop_event.set()
         self._cdc_change_handler.join()

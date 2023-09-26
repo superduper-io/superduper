@@ -127,19 +127,18 @@ def _encode(r: t.Any) -> t.Any:
         return {k: _encode(v) for k, v in r.items()}
     if isinstance(r, Encodable):
         return r.encode()
-    if isinstance(r, (bool, int, str, ObjectId)):
-        return r
     return r
 
 
 def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
     if isinstance(r, dict):
-        return {
+        out = {
             k: schema.fields[k].encode(v, wrap=False)  # type: ignore[call-arg]
             if isinstance(schema.fields[k], Encoder)
             else _encode_with_schema(v, schema)
             for k, v in r.items()
         }
+        return out
     if isinstance(r, Encodable):
         return r.encode()
     return r

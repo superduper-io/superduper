@@ -34,7 +34,7 @@ class BaseDatabaseListener(ABC):
         pass
 
 
-class CachedTokens:
+class Tokens:
     token_path = '.cdc.tokens'
     separate = '\n'
 
@@ -43,13 +43,13 @@ class CachedTokens:
         self._current_tokens = []
 
     def append(self, token: TokenType) -> None:
-        with open(CachedTokens.token_path, 'a') as fp:
+        with open(Tokens.token_path, 'a') as fp:
             stoken = json.dumps(token)
             stoken = stoken + self.separate
             fp.write(stoken)
 
     def load(self) -> t.Sequence[TokenType]:
-        with open(CachedTokens.token_path) as fp:
+        with open(Tokens.token_path) as fp:
             tokens = fp.read().split(self.separate)[:-1]
             self._current_tokens = [TokenType(json.loads(t)) for t in tokens]
         return self._current_tokens
@@ -61,6 +61,19 @@ class DBEvent(str, Enum):
     delete = 'delete'
     insert = 'insert'
     update = 'update'
+
+
+class CDCKeys(str, Enum):
+    """
+    A enum to represent mongo change document keys.
+    """
+
+    operation_type = 'operationType'
+    document_key = 'documentKey'
+    update_descriptions_key = 'updateDescription'
+    update_field_key = 'updatedFields'
+    document_data_key = 'fullDocument'
+    deleted_document_data_key = 'documentKey'
 
 
 class ObjectId(objectid.ObjectId):

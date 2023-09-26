@@ -20,12 +20,12 @@ class QueueChunker:
     timeout: float
     accumulate_timeouts: bool = False
 
-    def __call__(self, queue: Queue, stop_event: Event) -> t.Iterator[t.List]:
+    def __call__(self, queue: Queue, stopped: Event) -> t.Iterator[t.List]:
         def chunk():
             start = self.accumulate_timeouts and time.time()
 
             for i in range(self.chunk_size):
-                if stop_event:
+                if stopped:
                     return
 
                 elapsed = self.accumulate_timeouts and time.time() - start
@@ -38,6 +38,6 @@ class QueueChunker:
                 else:
                     yield item
 
-        while not stop_event:
+        while not stopped:
             if c := list(chunk()):
                 yield c

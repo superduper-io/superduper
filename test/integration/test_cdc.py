@@ -13,6 +13,7 @@ except ImportError:
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.db.base.cdc import DatabaseListener
+from superduperdb.db.mongodb.cdc.base import DBEvent
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.vector_search.base import VectorCollectionConfig
 from superduperdb.vector_search.lancedb_client import LanceVectorIndex
@@ -226,7 +227,7 @@ def test_single_insert(
     )
 
     def state_check():
-        assert listener.info()["inserts"] == 1
+        assert listener.info[DBEvent.insert] == 1
 
     retry_state_check(state_check)
 
@@ -244,7 +245,7 @@ def test_many_insert(
     )
 
     def state_check():
-        assert listener.info()["inserts"] == len(fake_inserts)
+        assert listener.info[DBEvent.insert] == len(fake_inserts)
 
     retry_state_check(state_check)
 
@@ -266,7 +267,7 @@ def test_delete_one(
     )
 
     def state_check():
-        assert listener.info()["deletes"] == 1
+        assert listener.info[DBEvent.delete] == 1
 
     retry_state_check(state_check)
 
@@ -291,7 +292,7 @@ def test_single_update(
     )
 
     def state_check():
-        assert listener.info()["updates"] == 1
+        assert listener.info[DBEvent.update] == 1
 
     retry_state_check(state_check)
 
@@ -316,7 +317,7 @@ def test_many_update(
     )
 
     def state_check():
-        assert listener.info()["updates"] == 5
+        assert listener.info[DBEvent.update] == 5
 
     retry_state_check(state_check)
 

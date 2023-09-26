@@ -14,6 +14,8 @@ alabaster==0.7.13
     # via sphinx
 annotated-types==0.5.0
     # via pydantic
+appnope==0.1.3
+    # via ipython
 asttokens==2.4.0
     # via stack-data
 async-timeout==4.0.3
@@ -41,9 +43,9 @@ bleach==6.0.0
     # via nbconvert
 blinker==1.6.2
     # via flask
-boto3==1.28.50
+boto3==1.28.54
     # via superduperdb (pyproject.toml)
-botocore==1.31.50
+botocore==1.31.54
     # via
     #   boto3
     #   s3transfer
@@ -84,7 +86,7 @@ docutils==0.20.1
     #   myst-parser
     #   nbsphinx
     #   sphinx
-duckdb==0.8.1
+duckdb==0.9.0
     # via
     #   duckdb-engine
     #   ibis-framework
@@ -109,12 +111,10 @@ frozenlist==1.4.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2023.9.1
+fsspec==2023.9.2
     # via dask
 furo==2023.9.10
     # via superduperdb (pyproject.toml)
-greenlet==2.0.2
-    # via sqlalchemy
 ibis-framework[duckdb,sqlite]==5.1.0
     # via superduperdb (pyproject.toml)
 idna==3.4
@@ -155,7 +155,7 @@ jmespath==1.0.1
     #   botocore
 joblib==1.3.2
     # via scikit-learn
-jsonschema==4.19.0
+jsonschema==4.19.1
     # via nbformat
 jsonschema-specifications==2023.7.1
     # via jsonschema
@@ -195,7 +195,7 @@ mistune==3.0.1
     # via nbconvert
 mongomock==4.1.2
     # via superduperdb (pyproject.toml)
-msgpack==1.0.5
+msgpack==1.0.6
     # via distributed
 multidict==6.0.4
     # via
@@ -231,7 +231,7 @@ numpy==1.24.4
     #   scikit-learn
     #   scipy
     #   superduperdb (pyproject.toml)
-openai==0.28.0
+openai==0.28.1
     # via superduperdb (pyproject.toml)
 overrides==7.4.0
     # via superduperdb (pyproject.toml)
@@ -256,7 +256,7 @@ parso==0.8.3
     # via jedi
 parsy==2.1
     # via ibis-framework
-partd==1.4.0
+partd==1.4.1
     # via dask
 pexpect==4.8.0
     # via ipython
@@ -290,11 +290,11 @@ pyarrow==11.0.0
     # via
     #   ibis-framework
     #   pylance
-pydantic==2.3.0
+pydantic==2.4.0
     # via
     #   lancedb
     #   superduperdb (pyproject.toml)
-pydantic-core==2.6.3
+pydantic-core==2.10.0
     # via pydantic
 pygments==2.16.1
     # via
@@ -355,7 +355,7 @@ safer==4.8.0
     # via
     #   fil
     #   superduperdb (pyproject.toml)
-scikit-learn==1.3.0
+scikit-learn==1.3.1
     # via superduperdb (pyproject.toml)
 scipy==1.10.1
     # via scikit-learn
@@ -421,6 +421,8 @@ stack-data==0.6.2
 tblib==2.0.0
     # via distributed
 tenacity==8.2.3
+    # via superduperdb (pyproject.toml)
+threa==0.6.0
     # via superduperdb (pyproject.toml)
 threadpoolctl==3.2.0
     # via scikit-learn

@@ -63,7 +63,8 @@ dependencies = [
     "semver>=3",
     "mongomock>=4.1.2",
     "ibis-framework[sqlite]>=5.1.0",
-    "ibis-framework[duckdb]>=5.1.0"
+    "ibis-framework[duckdb]>=5.1.0",
+    "threa>=0.6.0",
 ]
 
 [project.optional-dependencies]

@@ -421,9 +421,7 @@ class Model(Component, PredictMixin):
         self._artifact_method = None
 
         if self.model_to_device_method is not None:
-            self._artifact_method = getattr(
-                self.object.artifact, self.model_to_device_method
-            )
+            self._artifact_method = getattr(self.object, self.model_to_device_method)
 
     def on_load(self, db: DB) -> None:
         if self._artifact_method:

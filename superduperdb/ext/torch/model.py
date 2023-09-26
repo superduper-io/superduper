@@ -373,6 +373,9 @@ class TorchModel(Base, Model):  # type: ignore[misc]
 
         self._validation_set_cache = {}
 
+    def to(self, device):
+        self.object.artifact.to(device)
+
     @cached_property
     def optimizer(self):
         return self.training_configuration.optimizer_cls.artifact(

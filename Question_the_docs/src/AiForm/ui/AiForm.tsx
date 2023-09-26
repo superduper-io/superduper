@@ -18,6 +18,9 @@ const Container = styled.div`
       Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
       sans-serif !important;
   }
+  @media (max-width: 768px) {
+    justify-content: center !important;
+  }
 `;
 
 const Card = styled.div`

@@ -95,10 +95,11 @@ class VectorIndex(Component):
                 create=True,  # type: ignore[call-arg]
             )
 
-            assert hasattr(self.indexing_listener.select, 'collection')
-            clt = self.indexing_listener.select.collection
+            clt = self.indexing_listener.select.table_or_collection
 
-            if not CDC_COLLECTION_LOCKS.get(clt.name, False):
+            assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
+
+            if not CDC_COLLECTION_LOCKS.get(clt.identifier, False):
                 self._initialize_vector_database(db)
 
     @property
@@ -156,6 +157,7 @@ class VectorIndex(Component):
         self,
         like: Document,
         db: t.Any = None,
+        id_field: str = '_id',
         outputs: t.Optional[t.Dict] = None,
         featurize: bool = True,
         ids: t.Optional[t.Sequence[str]] = None,
@@ -177,9 +179,9 @@ class VectorIndex(Component):
             raise ValueError(f'len(model={models}) != len(keys={keys})')
         within_ids = ids or ()
 
-        if isinstance(like.content, dict) and db.db.id_field in like.content:
+        if isinstance(like.content, dict) and id_field in like.content:
             nearest = self.vector_table.find_nearest_from_id(
-                str(like[db.db.id_field]), within_ids=within_ids, limit=n
+                str(like[id_field]), within_ids=within_ids, limit=n
             )
             return (
                 [result.id for result in nearest],

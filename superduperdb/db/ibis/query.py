@@ -1,18 +1,31 @@
+"""
+TODO:
+- select_ids_of_missing_outputs
+"""
+
 import dataclasses as dc
 import enum
+import re
 import typing as t
 
 import ibis
-from ibis.expr.types.relations import Table as IbisTable
 
+from superduperdb.base.logger import logging
 from superduperdb.container.component import Component
-from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encoder
-from superduperdb.container.serializable import Serializable
+from superduperdb.container.schema import Schema
+from superduperdb.db.base.cursor import SuperDuperCursor
 from superduperdb.db.base.db import DB
-from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
-from superduperdb.db.ibis.field_types import FieldType
-from superduperdb.db.ibis.schema import IbisSchema
+from superduperdb.db.base.query import (
+    CompoundSelect,
+    Insert,
+    Like,
+    QueryComponent,
+    QueryLinker,
+    Select,
+    TableOrCollection,
+    _ReprMixin,
+)
 
 PRIMARY_ID: str = 'id'
 
@@ -20,620 +33,541 @@ IbisTableType = t.TypeVar('IbisTableType')
 ParentType = t.TypeVar('ParentType')
 
 
+@dc.dataclass(repr=False)
+class IbisCompoundSelect(CompoundSelect):
+    """
+    A query incorporating vector-search and a standard ``ibis`` query
+    """
+
+    __doc__ = __doc__ + CompoundSelect.__doc__  # type: ignore[operator]
+
+    def __eq__(self, __value: object) -> bool:
+        assert self.query_linker is not None
+        return self.query_linker.__eq__(__value)
+
+    def __lt__(self, __value: object) -> bool:
+        assert self.query_linker is not None
+        return self.query_linker.__lt__(__value)
+
+    def __gt__(self, __value: object) -> bool:
+        assert self.query_linker is not None
+        return self.query_linker.__gt__(__value)
+
+    def __and__(self, __value: object) -> bool:
+        assert self.query_linker is not None
+        return self.query_linker.__and__(__value)
+
+    def __or__(self, __value: object) -> bool:
+        assert self.query_linker is not None
+        return self.query_linker.__or__(__value)
+
+    def __not__(self) -> bool:
+        assert self.query_linker is not None
+        return self.query_linker.__not__()
+
+    def __getitem__(self, item) -> bool:
+        assert self.query_linker is not None
+        return self.query_linker.__getitem__(item)
+
+    def _get_query_linker(cls, table_or_collection, members) -> 'IbisQueryLinker':
+        return IbisQueryLinker(table_or_collection=table_or_collection, members=members)
+
+    def _get_query_component(
+        self,
+        name: str,
+        type: str,
+        args: t.Optional[t.Sequence] = None,
+        kwargs: t.Optional[t.Dict] = None,
+    ):
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
+        return IbisQueryComponent(name, type=type, args=args, kwargs=kwargs)
+
+    def outputs(self, model: str):
+        """
+        This method returns a query which joins a query with the outputs
+        for a table.
+
+        :param model: The model identifier for which to get the outputs
+
+        >>> q = t.filter(t.age > 25).outputs('model_name', db)
+
+        The above query will return the outputs of the `model_name` model
+        with t.filter() ids.
+        """
+        assert self.query_linker is not None
+        return IbisCompoundSelect(
+            table_or_collection=self.table_or_collection,
+            pre_like=self.pre_like,
+            query_linker=self.query_linker.outputs(model),
+            post_like=self.post_like,
+        )
+
+    def compile(self, db: DB, tables: t.Optional[t.Dict] = None):
+        """
+        Convert the current query to an ``ibis`` native query.
+
+        :param db: The superduperdb connection
+        :param tables: A dictionary of ``ibis`` tables to use for the query
+        """
+        assert self.pre_like is None, "pre_like must be None"
+        assert self.post_like is None, "post_like must be None"
+        assert self.query_linker is not None, "query_linker must be set"
+
+        table_id = self.table_or_collection.identifier
+        if tables is None:
+            tables = {}
+        if table_id not in tables:
+            tables[table_id] = db.databackend.conn.table(table_id)
+        return self.query_linker.compile(db, tables=tables)
+
+    def get_all_tables(self):
+        tables = [self.table_or_collection.identifier]
+        tmp = self.query_linker.get_all_tables()
+        tables.extend(tmp)
+        tables = list(set(tables))
+        return tables
+
+    def _get_all_fields(self, db):
+        tables = self.get_all_tables()
+        component_tables = []
+        for tab in tables:
+            component_tables.append(db.load('table', tab))
+        fields = {}
+        for tab in component_tables:
+            fields.update(tab.schema.fields)
+        return fields
+
+    @property
+    def select_table(self):
+        return self.table_or_collection
+
+    def execute(self, db):
+        output, scores = super().execute(db)
+        fields = self._get_all_fields(db)
+        for column in output.columns:
+            try:
+                type = fields[column]
+            except KeyError:
+                logging.warn(f'Disambiguation not yet supported of {column}: TODO!')
+                continue
+            if isinstance(type, Encoder):
+                output[column] = output[column].map(type.decode)
+        if scores is not None:
+            output['scores'] = list(
+                map(scores, output[self.table_or_collection.primary_id].tolist())
+            )
+        output = output.to_dict(orient='records')
+        return SuperDuperCursor(output, id_field=self.table_or_collection.primary_id)
+
+
+class _LogicalExprMixin:
+    def _logical_expr(self, members, collection, k, other: t.Optional[t.Any] = None):
+        if other:
+            args = [other]
+        else:
+            args = []
+        members.append(
+            IbisQueryComponent(k, args=args, kwargs={}, type=QueryType.QUERY)
+        )
+        return IbisQueryLinker(collection, members=members)
+
+    def eq(self, other, members, collection):
+        k = '__eq__'
+        return self._logical_expr(members, collection, k, other=other)
+
+    def or_(self, other, members, collection):
+        k = '__or__'
+        return self._logical_expr(members, collection, k, other=other)
+
+    def not_(self, members, collection):
+        k = '__not__'
+        return self._logical_expr(members, collection, k)
+
+    def and_(self, other, members, collection):
+        k = '__and__'
+        return self._logical_expr(members, collection, k, other=other)
+
+    def gt(self, other, members, collection):
+        k = '__gt__'
+        return self._logical_expr(members, collection, k, other=other)
+
+    def lt(self, other, members, collection):
+        k = '__lt__'
+        return self._logical_expr(other, members, collection, k, other=other)
+
+    def getitem(self, other, members, collection):
+        k = '__getitem__'
+        return self._logical_expr(members, collection, k, other=other)
+
+
+@dc.dataclass(repr=False)
+class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
+    def repr_(self) -> str:
+        out = super().repr_()
+        out = re.sub('\. ', ' ', out)
+        return out
+
+    def __eq__(self, other):
+        return self.eq(other, members=self.members, collection=self.table_or_collection)
+
+    def __lt__(self, other):
+        return self.lt(other, members=self.members, collection=self.table_or_collection)
+
+    def __gt__(self, other):
+        return self.gt(other, members=self.members, collection=self.table_or_collection)
+
+    def __or__(self, other):
+        return self.or_(
+            other, members=self.members, collection=self.table_or_collection
+        )
+
+    def __and__(self, other):
+        return self.and_(
+            other, members=self.members, collection=self.table_or_collection
+        )
+
+    def __not__(self, other):
+        return self.not_(
+            other, members=self.members, collection=self.table_or_collection
+        )
+
+    def __getitem__(self, other):
+        return self.getitem(
+            other, members=self.members, collection=self.table_or_collection
+        )
+
+    def _get_query_component(self, k):
+        return IbisQueryComponent(name=k, type=QueryType.ATTR)
+
+    @property
+    def select_ids(self):
+        return self.select(self.table_or_collection.primary_id)
+
+    def select_single_id(self, id):
+        return self.filter(
+            self.table_or_collection.__getattr__(self.table_or_collection.primary_id)
+            == id
+        )
+
+    def select_using_ids(self, ids):
+        return self.filter(
+            self.table_or_collection.__getattr__(
+                self.table_or_collection.primary_id
+            ).isin(ids)
+        )
+
+    def select_ids_of_missing_outputs(self, key: str, model: str):
+        raise NotImplementedError
+
+    def get_all_tables(self):
+        out = []
+        for member in self.members:
+            out.extend(member.get_all_tables())
+        return list(set(out))
+
+    def outputs(self, model: str):
+        symbol_table = IbisQueryTable(
+            identifier=f'_outputs/{model}',
+            primary_id='id',
+        )
+        attr = getattr(  # type: ignore[call-overload]
+            self, self.table_or_collection.primary_id
+        )
+        other_query = self.join(
+            symbol_table,
+            [
+                symbol_table.input_id == attr,
+                symbol_table.query_id == self.table_or_collection.identifier,
+            ],
+        )
+        return other_query
+
+    def compile(self, db: DB, tables: t.Optional[t.Dict] = None):
+        table_id = self.table_or_collection.identifier
+        if tables is None:
+            tables = {}
+        if table_id not in tables:
+            tables = {table_id: db.databackend.conn.table(table_id)}
+        result = tables[table_id]
+        for member in self.members:
+            result, tables = member.compile(parent=result, db=db, tables=tables)
+        return result, tables
+
+    def execute(self, db):
+        native_query, _ = self.compile(db)
+        result = native_query.execute()
+        return result
+
+
 class QueryType(str, enum.Enum):
     QUERY = 'query'
     ATTR = 'attr'
 
 
-@dc.dataclass
-class Table(Component):
-    """This is a representation of an SQL table in ibis.
+@dc.dataclass(repr=False)
+class IbisTable(Component):
+    """
+    This is a representation of an SQL table in ibis,
+    saving the important meta-data associated with the table
+    in the ``superduperdb`` meta-data store.
 
     :param identifier: The name of the table
     :param schema: The schema of the table
-    :param table: The table object
-    :param primary_id: Primary id of the table
+    :param primary_id: The primary id of the table
+    :param version: The version of the table
     """
 
     identifier: str
-    schema: t.Optional[IbisSchema] = None
-    table: t.Any = None
+    schema: Schema
     primary_id: str = 'id'
     version: t.Optional[int] = None
-
     type_id: t.ClassVar[str] = 'table'
 
     def on_create(self, db: DB):
-        self.create(db)
-
-    def create(self, db: DB):
         assert self.schema is not None, "Schema must be set"
         for e in self.schema.encoders:
             db.add(e)
+        if db.databackend.in_memory:
+            logging.info(f'Using in-memory tables "{self.identifier}" so doing nothing')
+            return
+
         try:
-            db.db.create_table(self.identifier, schema=self.schema.map())
+            db.databackend.create_ibis_table(  # type: ignore[attr-defined]
+                self.identifier, schema=ibis.schema(self.schema.raw)
+            )
         except Exception as e:
             if 'already exists' in str(e):
                 pass
             else:
                 raise e
 
-    def get_table(self, conn: t.Any) -> t.Any:
-        if self.table is None:
-            self.table = conn.table(self.identifier)
-        return self.table
+    def insert(self, documents, **kwargs):
+        return IbisQueryTable(
+            identifier=self.identifier, primary_id=self.primary_id
+        ).insert(documents, **kwargs)
 
-    @property
-    def name(self) -> str:
-        return self.identifier
+    def __getattr__(self, item):
+        return IbisQueryTable(
+            identifier=self.identifier, primary_id=self.primary_id
+        ).__getattr__(item)
 
-    def mutate_args(self, args: t.Sequence) -> t.Sequence:
-        mutated_args = []
-        assert self.schema is not None, "Schema must be set"
-        for attr in args:
-            if isinstance(attr, str):
-                if attr in self.schema.fields:
-                    mutated_args.append(self.schema.mutate_column(attr))
-                else:
-                    mutated_args.append(attr)
-            elif isinstance(attr, QueryLinker):
-                attr_query = attr.get_latest_query()
-                if attr_query.type == QueryType.ATTR:
-                    mutated_args.append(self.schema.mutate_column(attr.query_type))
-                else:
-                    mutated_args.append(attr)
-            else:
-                mutated_args.append(attr)
-
-        return mutated_args
-
-    def __getattr__(self, k: str) -> 'QueryLinker':
-        """
-        This method is responsible for dynamically creating a query chain,
-        which can be executed on a database. This is done by creating a
-        QueryLinker object, which is a representation of a query chain.
-        Under the hood, this is done by creating a QueryChain object, which
-        is a representation of a query chain.
-        """
-
-        if k in self.__dict__:
-            return self.__getattr__(k)
-
-        assert self.schema is not None, "Schema must be set"
-        if not (hasattr(IbisTable, k) or k in self.schema.fields):
-            raise AttributeError(k)
-
-        return QueryLinker(
-            self, query_type=k, members=QueryChain(k, type=QueryType.ATTR)
-        )
-
-    def like(self, r: t.Any = None, n: int = 10, vector_index: t.Optional[str] = None):
-        """
-        This appends a query to the query chain where the query is repsonsible
-        for performing a vector search on the parent query chain inputs.
-
-        :param r: The vector to search for
-        :param n: The number of results to return
-        :param vector_index: The vector index to use
-        """
-        k = 'prelike'
-        kwargs = {'r': r, 'n': n, 'vector_index': vector_index}
-        query = Query(k, args=[], sddb_kwargs=kwargs)
-        return QueryLinker(self, query_type=k, members=QueryChain(query))
-
-    def insert(
-        self,
-        *args,
-        refresh: bool = True,
-        verbose: bool = True,
-        encoders: t.Sequence = [],
-        valid_prob: float = 0.05,
-        **kwargs,
-    ):
-        """
-        This appends a query to the query chain where the query is repsonsible
-        for inserting data into the table.
-
-        :param args: The data to insert
-        :param refresh: Whether to refresh the table after inserting
-        :param verbose: Whether to print the progress of the insert
-        :param encoders: The encoders to use
-        :param valid_prob: The probability of validating the data
-        """
-        sddb_kwargs = {
-            'refresh': refresh,
-            'verbose': verbose,
-            'encoders': encoders,
-            'kwargs': {'valid_prob': valid_prob},
-            'documents': args[0],
-        }
-        kwargs.update({'table_name': self.identifier})
-        args = args[1:]
-
-        insert = Query(
-            'insert',
-            type=QueryType.QUERY,
-            args=t.cast(t.Sequence, args),
-            kwargs=kwargs,
-            sddb_kwargs=sddb_kwargs,
-            connection_parent=True,
-        )
-
-        qc = QueryChain(insert)
-        return QueryLinker(self, query_type='insert', members=qc)
+    def __getitem__(self, item):
+        return IbisQueryTable(
+            identifier=self.identifier, primary_id=self.primary_id
+        ).__getitem__(item)
 
 
-class Query:
+@dc.dataclass(repr=False)
+class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
     """
-    This is a representation of a single query object in ibis query chain.
-    This is used to build a query chain that can be executed on a database.
-    Query will be executed in the order they are added to the chain.
-
-    If we have a query chain like this:
-        query = t.select(['id', 'name']).limit(10)
-    here we have 2 query objects, `select` and `limit`.
-
-    `select` will be wrapped with this class and added to the chain.
-
-    :param name: The name of the query
-    :param type: The type of the query, either `query` or `attr`
-    :param args: The arguments to pass to the query
-    :param kwargs: The keyword arguments to pass to the query
-    :param sddb_kwargs: The keyword arguments from sddb to pass to the query
-    :param connection_parent: If True, the parent of the query will be the connection
-    """
-
-    def __init__(
-        self,
-        name: str,
-        type: str = QueryType.QUERY,
-        args: t.Sequence = [],
-        kwargs: t.Dict = {},
-        sddb_kwargs: t.Dict = {},
-        connection_parent: bool = False,
-    ):
-        self.name = name
-        query = query_lookup.get(name, None)
-        if query is None:
-            self.query = PlaceHolderQuery(name)
-        else:
-            self.query = query(**sddb_kwargs)
-        self.type = type
-        self.args = args
-        self.kwargs = kwargs
-        self.connection_parent = connection_parent
-
-    def execute(
-        self,
-        db: DB,
-        parent: ParentType,
-        table: Table,
-        ibis_table: t.Optional[IbisTableType] = None,
-    ):
-        if self.type == QueryType.ATTR:
-            return getattr(parent, self.query.name)
-
-        pre_output = self.query.pre(db, table=table, kwargs=self.kwargs)
-        if len(self.args) == 1 and isinstance(self.args[0], QueryLinker):
-            self.args = [self.args[0].execute(db, parent, ibis_table)]
-
-        if self.query.namespace == 'ibis':
-            if self.connection_parent:
-                parent = getattr(db.db, self.query.name)(*self.args, **self.kwargs)
-            else:
-                parent = getattr(parent, self.query.name)(*self.args, **self.kwargs)
-
-        parent = self.query.post(
-            db,
-            parent,
-            table=table,
-            ibis_table=ibis_table,
-            args=self.args,
-            kwargs=self.kwargs,
-            pre_output=pre_output,
-        )
-        return parent
-
-
-class QueryChain:
-    """
-    This is a representation of a query chain. This is used to build a query chain
-    that can be executed on a database. Query will be executed in the order they are
-    added to the chain.
-
-    :param seed: The seed to start the chain with
-    :param type: The type of the seed, either `query` or `attr`
-    """
-
-    def __init__(
-        self,
-        seed: t.Optional[t.Union[str, Query]] = None,
-        type: str = QueryType.QUERY,
-    ):
-        if isinstance(seed, str):
-            query = Query(seed, type=type)
-        elif isinstance(seed, Query):
-            query = seed
-        else:
-            query = None
-
-        self.chain = [query]
-
-    def append(self, data, type=QueryType.QUERY):
-        query = Query(data, type=type)
-        self.chain.append(query)
-
-    def append_query(self, query, create=False):
-        if create:
-            return self.chain + [query]
-
-        self.chain.append(query)
-
-    def get(self, ix):
-        return self.chain[ix]
-
-    def update_last_query(self, args, kwargs, type=None):
-        self.chain[-1].args = args
-        self.chain[-1].kwargs = kwargs
-        if type:
-            self.chain[-1].type = type
-
-    def __iter__(self):
-        for query in self.chain:
-            if query.type in [QueryType.QUERY, QueryType.ATTR]:
-                yield query
-
-    def __repr__(self):
-        return str(self.chain)
-
-
-@dc.dataclass
-class OutputTable:
-    """This is a representation of model output table in ibis
-
-    :param model: The name of the table
-    :param primary_id: Primary id of the table
-    :param table: The table object
-    :param output_type: The schema of the table
-    """
-
-    model: str
-    primary_id: str = 'id'
-    table: t.Any = None
-    output_type: t.Any = None
-
-    def create(self, conn: t.Any):
-        """
-        Create the table in the database
-        """
-        self.table = conn.create_table(self.model, schema=self.schema)
-        return self.table
-
-    @property
-    def schema(self):
-        assert self.output_type is not None, "Output type must be set"
-
-        if isinstance(self.output_type, Encoder):
-            output_type = 'binary'
-        else:
-            assert isinstance(self.output_type, FieldType)
-            output_type = self.output_type.type
-
-        schema = {
-            'id': 'int32',
-            'input_id': 'int32',
-            'query_id': 'string',
-            'output': output_type,
-            'key': 'string',
-        }
-        return ibis.schema(schema)
-
-
-@dc.dataclass
-class InMemoryTable(Component):
-    """
-    This is a representation of a table in memory (memtable) in ibis.
+    This is a symbolic representation of a table
+    for building ``IbisCompoundSelect`` queries.
 
     :param identifier: The name of the table
-    :param table: The table object
-    :param primary_id: Primary id of the table
+    :param primary_id: The primary id of the table
+    :param version: The version of the table
     """
 
-    identifier: str
-    table: t.Any = None
     primary_id: str = 'id'
 
-    type_id: t.ClassVar[str] = 'inmemory_table'
+    def compile(self, db: DB, tables: t.Optional[t.Dict] = None):
+        if tables is None:
+            tables = {}
+        if self.identifier not in tables:
+            tables[self.identifier] = db.databackend.conn.table(self.identifier)
+        return tables[self.identifier], tables
 
-    def mutate_args(self, args):
-        return args
+    def repr_(self):
+        return self.identifier
 
-    def __getattr__(self, k):
-        """
-        This method is responsible for dynamically creating a query chain,
-        which can be executed on a database. This is done by creating a
-        QueryLinker object, which is a representation of a query chain.
-        Under the hood, this is done by creating a QueryChain object, which
-        is a representation of a query chain.
-        """
-        if k in self.__dict__:
-            return self.__getattr__(k)
-
-        if not hasattr(self.table, k):
-            raise AttributeError(k)
-
-        return QueryLinker(
-            self, query_type=k, members=QueryChain(k, type=QueryType.ATTR)
-        )
-
-
-class _LogicalExprMixin:
-    def _logical_expr(self, other, members, collection, k):
-        args = [other]
-        members.append_query(Query(k, args=args, kwargs={}))
-        return QueryLinker(collection, query_type=k, members=members)
-
-    def eq(self, other, members, collection):
-        k = '__eq__'
-        return self._logical_expr(other, members, collection, k)
-
-    def gt(self, other, members, collection):
-        k = '__gt__'
-        return self._logical_expr(other, members, collection, k)
-
-    def lt(self, other, members, collection):
-        k = '__lt__'
-        return self._logical_expr(other, members, collection, k)
-
-
-@dc.dataclass
-class QueryLinker(Serializable, _LogicalExprMixin):
-    """
-    This class is responsible for linking together a query chain. It is
-    responsible for creating a query chain, which is a representation of a
-    ibis query. This is done by creating a QueryChain object, which creates
-    a list of `Query` objects. Each `Query` object is a representation of
-    a query in the query chain.
-    """
-
-    # The table that this query chain is linked.
-    # This table is the parent ibis table.
-    collection: Table
-
-    # The type of query that this query chain is linked.
-    query_type: str = 'find'
-
-    args: t.Sequence = dc.field(default_factory=list)
-    kwargs: t.Dict = dc.field(default_factory=dict)
-    members: QueryChain = dc.field(default_factory=QueryChain)
-
-    def get_latest_query(self):
-        return self.members.get(-1)
-
-    def __getattr__(self, k):
-        if k in self.__dict__:
-            return self.__getattr__(k)
-        self.members.append(k)
-        return QueryLinker(self.collection, query_type=k, members=self.members)
-
-    def __eq__(self, other):
-        return self.eq(other, members=self.members, collection=self.collection)
-
-    def __lt__(self, other):
-        return self.lt(other, members=self.members, collection=self.collection)
-
-    def __gt__(self, other):
-        return self.gt(other, members=self.members, collection=self.collection)
+    def add_fold(self, fold: str) -> Select:
+        return self.filter(self.fold == fold)
 
     @property
-    def select_ids(self):
-        k = 'select'
-        args = [self.collection.primary_id]
-        members = self.members.append_query(Query(k, args=args, kwargs={}), create=True)
-        return QueryLinker(self.collection, query_type='select', members=members)
+    def id_field(self):
+        return self.primary_id
 
-    def select_using_ids(self, ids):
-        isin_query = self.collection.__getattr__(self.collection.primary_id).isin(ids)
-        k = 'filter'
-        args = [isin_query]
-        members = self.members.append_query(Query(k, args=args, kwargs={}), create=True)
+    @property
+    def select_table(self) -> Select:
+        return self
 
-        return QueryLinker(self.collection, query_type='filter', members=members)
+    @property
+    def select_ids(self) -> Select:
+        return self.select(self.primary_id)
 
-    def build(self, db: DB):
-        table = parent = self.collection.table
-        for member in self.members:
-            parent = member.execute(db, parent, self.collection, table)
-        return parent
+    def select_using_ids(self, ids: t.Sequence[t.Any]) -> Select:
+        return self.filter(self[self.primary_id].isin(ids))
 
-    def outputs(self, model: str, db: DB):
-        """
-        This method is responsible for returning the outputs of a model.
-        It is used to get the outputs of a model from a ibis query chain.
-        Example:
-            q = t.filter(t.age > 25).outputs('model_name', db)
-        The above query will return the outputs of the `model_name` model
-        with t.filter() ids.
+    def select_ids_of_missing_outputs(self, key: str, model: str) -> Select:
+        raise NotImplementedError
 
-        """
-        curr_query = self.build(db)
-        model_table = db.db.table(model)
-        query = curr_query.join(
-            model_table,
-            [
-                model_table.id == curr_query.id,
-                model_table.query_id == self.collection.identifier,
-            ],
-        )
-        cursor = SuperDuperIbisCursor(
-            query, self.collection.primary_id, encoders=db.encoders
-        )
-        return cursor
+    def select_single_id(self, id):
+        return self.filter(getattr(self, self.primary_id) == id)
 
-    def model_update(
+    def __getitem__(self, item):
+        return IbisCompoundSelect(
+            table_or_collection=self,
+            query_linker=self._get_query_linker(
+                members=[IbisQueryComponent('__getitem__', type=QueryType.ATTR)]
+            ),
+        )(item)
+
+    def _insert(self, documents, **kwargs):
+        return IbisInsert(documents=documents, kwargs=kwargs, table_or_collection=self)
+
+    def _get_query(
         self,
-        db: DB,
+        pre_like: t.Optional[Like] = None,
+        query_linker: t.Optional[QueryLinker] = None,
+        post_like: t.Optional[Like] = None,
+    ) -> IbisCompoundSelect:
+        return IbisCompoundSelect(
+            pre_like=pre_like,
+            query_linker=query_linker,
+            post_like=post_like,
+            table_or_collection=self,
+        )
+
+    def _get_query_component(
+        self,
+        k,
+    ):
+        return IbisQueryComponent(name=k, type=QueryType.ATTR)
+
+    def _get_query_linker(self, members) -> IbisQueryLinker:
+        return IbisQueryLinker(table_or_collection=self, members=members)
+
+    def model_update(  # type: ignore[override]
+        self,
+        db,
         ids: t.Sequence[t.Any],
         key: str,
         model: str,
         outputs: t.Sequence[t.Any],
-        **kargs,
+        flatten: bool = False,
     ):
+        if flatten:
+            raise NotImplementedError('Flatten not yet supported for ibis')
+
         if key.startswith('_outputs'):
             key = key.split('.')[1]
+
         if not outputs:
             return
 
-        input_table = self.collection.identifier
-
-        table_record = []
+        # TODO generalize this to multiple queries per table/ model
+        table_records = []
         for ix in range(len(outputs)):
-            d = Document(
-                {
-                    'id': int(ids[ix]),
-                    'input_id': int(ids[ix]),
-                    'query_id': input_table,
-                    'output': outputs[ix],
-                    'key': key,
-                }
-            )
-            table_record.append(d)
-        db.execute(Table(model).insert(table_record))
+            d = {
+                'id': str(ids[ix]),
+                'input_id': str(ids[ix]),
+                'query_id': self.identifier,
+                'output': outputs[ix],
+                'key': key,
+            }
+            table_records.append(d)
 
-    def __call__(self, *args, **kwargs):
-        """
-        This method is responsible to mutate the arguments of a query and
-        return a new QueryLinker object with updated members.
-        The last member of the query chain is updated with theses mutated arguments.
-        It also updates the query type of last member.
+        for r in table_records:
+            if isinstance(r['output'], dict) and '_content' in r['output']:
+                r['output'] = r['output']['_content']['bytes']
 
-        The mutation of arguments means if the query is `select` and args are,
-        `['name', 'age', 'image']`.
-        The above args contains a column `image` which is of type `pil_image`.
-        We can get the informantion from the `collection` schema fields.
+        db.databackend.insert(f'_outputs/{model}', table_records)
 
-        because `image` is a `pil_image` type, it was stored in ibis table as
-        `image::encodable::pil_image`. So, we need to mutate the args to
-        `['name', 'age', 'image::encodable::pil_image']`.
+    def insert(
+        self,
+        *args,
+        **kwargs,
+    ):
+        return self._insert(*args, **kwargs)
 
-        """
-        args = self.collection.mutate_args(args)
+    def _delete(self, *args, **kwargs):
+        return super()._delete(*args, **kwargs)
 
-        # TODO: handle kwargs
-        self.members.update_last_query(args, kwargs, type=QueryType.QUERY)
-
-        return QueryLinker(
-            collection=self.collection,
-            query_type=self.query_type,
-            members=self.members,
-            args=args,
-            kwargs=kwargs,
-        )
-
-    def execute(self, db: DB, parent: t.Any, ibis_table: t.Any) -> t.Any:
-        for member in self.members:
-            parent = member.execute(db, parent, self.collection, ibis_table=ibis_table)
-        return parent
+    def execute(self, db):
+        return db.databackend.conn.table(self.identifier).execute()
 
 
-class PlaceHolderQuery:
-    type_id: t.Literal['query'] = 'query'
+def _compile_item(item, db, tables):
+    if isinstance(item, (IbisQueryLinker, IbisCompoundSelect, IbisQueryTable)):
+        return item.compile(db, tables=tables)
+    if isinstance(item, list) or isinstance(item, tuple):
+        compiled = []
+        for x in item:
+            c, tables = _compile_item(x, db, tables=tables)
+            compiled.append(c)
+        return compiled, tables
+    elif isinstance(item, dict):
+        c = {}
+        for k, v in item.items():
+            c[k], tables = _compile_item(v, db, tables=tables)
+        return c, tables
+    return item, tables
 
-    def __init__(self, name, *args, **kwargs):
-        self.name = name
-        self.args = args
-        self.kwargs = kwargs
 
-        self.namespace = 'ibis'
-
-    def pre(self, db, **kwargs):
-        ...
-
-    def post(self, db, output, *args, **kwargs):
-        return output
+def _get_all_tables(item):
+    if isinstance(item, (IbisQueryLinker, IbisCompoundSelect)):
+        return item.get_all_tables()
+    elif isinstance(item, IbisQueryTable):
+        return [item.identifier]
+    elif isinstance(item, list) or isinstance(item, tuple):
+        return sum([_get_all_tables(x) for x in item], [])
+    elif isinstance(item, dict):
+        return sum([_get_all_tables(x) for x in item.values()], [])
+    else:
+        return []
 
 
 @dc.dataclass
-class PostLike:
-    name: str = 'postlike'
-    namespace: str = 'sddb'
+class IbisQueryComponent(QueryComponent):
+    """
+    This class represents a component of an ``ibis`` query.
+    For example ``filter`` in ``t.filter(t.age > 25)``.
+    """
 
-    type_id: t.Literal['Ibis.PostLike'] = 'Ibis.PostLike'
+    __doc__ = __doc__ + QueryComponent.__doc__  # type: ignore[operator]
 
-    def pre(self, db, **kwargs):
-        pass
+    def repr_(self) -> str:
+        out = super().repr_()
+        match = re.match('.*__([a-z]{2,2})__\(([a-z0-9_\.\']+)\)', out)
+        lookup = {'gt': '>', 'lt': '<', 'eq': '=='}
+        if match is not None and match.groups()[0] in lookup:
+            out = f' {lookup[match.groups()[0]]} {match.groups()[1]}'
+        return out
 
-    def post(self, db, output, table=None, ibis_table=None, args=[], kwargs={}):
-        r = kwargs.get('r', None)
-        assert r is not None, 'r must be provided'
-        n = kwargs.get('n', 10)
+    def compile(self, parent: t.Any, db: DB, tables: t.Optional[t.Dict] = None):
+        if self.type == QueryType.ATTR:
+            return getattr(parent, self.name), tables
+        args, tables = _compile_item(self.args, db, tables=tables)
+        kwargs, tables = _compile_item(self.kwargs, db, tables=tables)
+        return getattr(parent, self.name)(*args, **kwargs), tables
 
-        vector_index = kwargs.get('vector_index', 'vector_index')
-        ids = output.select(table.primary_id)
-        ids, scores = db._select_nearest(
-            like=r,
-            vector_index=vector_index,
-            n=n,
-            ids=ids,
-        )
-        return output.filter(ibis_table.__getattr__(table.primary_id).isin(ids))
-
-
-@dc.dataclass
-class PreLike:
-    r: t.Any
-    vector_index: str = 'vector_index'
-    n: int = 10
-    collection: str = 'collection'
-    primary_id: str = 'id'
-    name: str = 'prelike'
-    namespace: str = 'sddb'
-
-    type_id: t.Literal['Ibis.PreLike'] = 'Ibis.PreLike'
-
-    def pre(self, db, **kwargs):
-        pass
-
-    def post(self, db, output, table=None, ibis_table=None, args=[], kwargs={}):
-        ids, _ = db._select_nearest(
-            like=self.r, vector_index=self.vector_index, n=self.n
-        )
-        f = output.filter(ibis_table.__getattr__(self.primary_id).isin(ids))
-        return f
+    def get_all_tables(self):
+        out = []
+        out.extend(_get_all_tables(self.args))
+        out.extend(_get_all_tables(self.kwargs))
+        return list(set(out))
 
 
 @dc.dataclass
-class Insert:
-    documents: t.Sequence['Document'] = dc.field(default_factory=list)
-    refresh: bool = True
-    verbose: bool = True
-    kwargs: t.Dict = dc.field(default_factory=dict)
-    encoders: t.Sequence = dc.field(default_factory=list)
-    name: str = 'insert'
-    namespace: str = 'ibis'
+class IbisInsert(Insert):
+    def _encode_documents(self, table: IbisTable) -> t.List[t.Dict]:
+        return [r.encode(table.schema) for r in self.documents]
 
-    type_id: t.Literal['Ibis.insert'] = 'Ibis.insert'
+    def execute(self, db):
+        table = db.load(
+            'table',
+            self.table_or_collection.identifier,
+        )
+        encoded_documents = self._encode_documents(table=table)
+        ids = [r[table.primary_id] for r in encoded_documents]
+        db.databackend.insert(
+            self.table_or_collection.identifier, raw_documents=encoded_documents
+        )
+        return ids
 
-    def pre(self, db, table=None, **kwargs):
-        # TODO: handle adding table later
-        for e in self.encoders:
-            db.add(e)
-
-        documents = [r.encode(table.schema) for r in self.documents]
-
-        # TODO: handle _fold
-        # mutate kwargs with documents
-        ids = [d[PRIMARY_ID] for d in documents]
-        documents = [tuple(d.values()) for d in documents]
-        kwargs['kwargs']['obj'] = documents
-        return {'ids': ids}
-
-    def post(self, db, output, *args, **kwargs):
-        graph = None
-        [_id for _id in kwargs['pre_output']['ids']]
-        # TODO: add refresh functionality
-
-        return graph, output
-
-
-query_lookup = {'insert': Insert, 'prelike': PreLike, 'like': PostLike}
+    @property
+    def select_table(self):
+        return self.table_or_collection

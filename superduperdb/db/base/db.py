@@ -1,5 +1,6 @@
 import dataclasses as dc
 import math
+import random
 import typing as t
 import warnings
 from collections import defaultdict
@@ -9,9 +10,11 @@ import networkx
 from dask.distributed import Future
 
 import superduperdb as s
+from superduperdb.base.logger import logging
 from superduperdb.container import serializable
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
+from superduperdb.container.encoder import Encoder
 from superduperdb.container.job import ComponentJob, FunctionJob, Job
 from superduperdb.container.model import Model
 from superduperdb.container.task_workflow import TaskWorkflow
@@ -26,7 +29,7 @@ from .data_backend import BaseDataBackend
 from .download_content import download_content
 from .exceptions import ComponentInUseError, ComponentInUseWarning
 from .metadata import MetaDataStore
-from .query import Delete, Insert, Like, Select, SelectOne, Update
+from .query import Delete, Insert, Select, Update
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -36,10 +39,10 @@ InsertResult = t.Tuple[DBResult, t.Optional[TaskGraph]]
 SelectResult = SuperDuperCursor
 UpdateResult = t.Any
 
-ExecuteQuery = t.Union[Select, SelectOne, Delete, Update, Insert]
+ExecuteQuery = t.Union[Select, Delete, Update, Insert]
 ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 
-ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'select_one', 'update'
+ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'update'
 
 
 class DB:
@@ -84,10 +87,6 @@ class DB:
         self._distributed_client = distributed_client
 
     @property
-    def db(self):
-        return self.databackend.db
-
-    @property
     def distributed_client(self):
         return self._distributed_client
 
@@ -108,7 +107,7 @@ class DB:
             'Are you sure you want to drop the database? ',
             default=False,
         ):
-            print('Aborting...')
+            logging.warn('Aborting...')
 
         self.databackend.drop(force=True)
         self.metadata.drop(force=True)
@@ -254,24 +253,20 @@ class DB:
             return Document(out), [Document(x) for x in context]
         return Document(out), []
 
-    def execute(self, query: ExecuteQuery) -> ExecuteResult:
+    def execute(self, query: ExecuteQuery, *args, **kwargs) -> ExecuteResult:
         """
         Execute a query on the db.
 
         :param query: select, insert, delete, update,
         """
         if isinstance(query, Delete):
-            return self.delete(query)
+            return self.delete(query, *args, **kwargs)
         if isinstance(query, Insert):
-            return self.insert(query)
+            return self.insert(query, *args, **kwargs)
         if isinstance(query, Select):
-            return self.select(query)
-        if isinstance(query, Like):
-            return self.like(query)
-        if isinstance(query, SelectOne):
-            return self.select_one(query)
+            return self.select(query, *args, **kwargs)
         if isinstance(query, Update):
-            return self.update(query)
+            return self.update(query, *args, **kwargs)
         raise TypeError(
             f'Wrong type of {query}; '
             f'Expected object of type {t.Union[Select, Delete, Update, Insert]}; '
@@ -284,15 +279,31 @@ class DB:
 
         :param delete: delete query object
         """
-        return delete(self)
+        return delete.execute(self)
 
-    def insert(self, insert: Insert) -> InsertResult:
+    def insert(
+        self, insert: Insert, refresh: bool = True, encoders: t.Sequence[Encoder] = ()
+    ) -> InsertResult:
         """
         Insert data.
 
         :param insert: insert query object
         """
-        return insert(self)
+        for e in encoders:
+            self.add(e)
+        for r in insert.documents:
+            r['_fold'] = 'train'  # type: ignore[assignment]
+            if random.random() < s.CFG.fold_probability:
+                r['_fold'] = 'valid'  # type: ignore[assignment]
+        inserted_ids = insert.execute(self)
+        if refresh and s.CFG.cluster.cdc:
+            raise Exception('CFG.cluster.cdc cannot be activated and refresh=True')
+
+        if not s.CFG.cluster.cdc and refresh:
+            return inserted_ids, self.refresh_after_update_or_insert(
+                insert, ids=inserted_ids, verbose=False
+            )
+        return inserted_ids, None
 
     def run(
         self,
@@ -317,23 +328,7 @@ class DB:
 
         :param select: select query object
         """
-        return select(self)
-
-    def like(self, like: Like) -> SelectResult:
-        """
-        Perform vector search over data.
-
-        :param like: like query object
-        """
-        return like(self)
-
-    def select_one(self, select_one: SelectOne) -> SelectResult:
-        """
-        Select data and return a single result.
-
-        :param select_one: select-a-single document query object
-        """
-        return select_one(self)
+        return select.execute(self)
 
     def refresh_after_update_or_insert(
         self,
@@ -349,20 +344,28 @@ class DB:
         :param verbose: Toggle to ``True`` to get more output
         """
         task_workflow: TaskWorkflow = self._build_task_workflow(
-            query.select_table,
+            query.select_table,  # TODO can be replaced by select_using_ids
             ids=ids,
             verbose=verbose,
         )
         task_workflow.run_jobs(distributed=self.distributed)
         return task_workflow
 
-    def update(self, update: Update) -> UpdateResult:
+    def update(self, update: Update, refresh: bool = True) -> UpdateResult:
         """
         Update data.
 
         :param update: update query object
         """
-        return update(self)
+        updated_ids = update.execute(self)
+
+        if refresh and s.CFG.cluster.cdc:
+            raise Exception('CFG.cluster.cdc cannot be activated and refresh=True')
+        if not s.CFG.cluster.cdc and refresh:
+            return updated_ids, self.refresh_after_update_or_insert(
+                query=update, ids=updated_ids, verbose=False
+            )
+        return updated_ids, None
 
     def add(
         self,
@@ -447,7 +450,7 @@ class DB:
             for v in sorted(versions_in_use):
                 self.metadata.hide_component_version(type_id, identifier, v)
         else:
-            print('aborting.')
+            logging.warn('aborting.')
 
     def load(
         self,
@@ -680,7 +683,7 @@ class DB:
         return G
 
     def _delete(self, delete: Delete):
-        return self.db.delete(delete)
+        delete.execute(self)
 
     def _remove_component_version(
         self,
@@ -786,7 +789,7 @@ class DB:
         if update_db:
             return
         for id_, key in zip(place_ids, keys):
-            documents[id_] = self.db.set_content_bytes(
+            documents[id_] = self.databackend.set_content_bytes(
                 documents[id_], key, downloader.results[id_]  # type: ignore[index]
             )
         return documents
@@ -802,6 +805,8 @@ class DB:
                 query=None, documents=[filter.content], timeout=None, raises=True
             )[0]
             filter = Document(Document.decode(output, encoders=self.encoders))
+        if not filter['_id']:
+            del filter.content['_id']
         return filter
 
     def _get_dependencies_for_listener(self, identifier):

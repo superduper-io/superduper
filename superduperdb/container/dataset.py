@@ -10,7 +10,7 @@ from overrides import override
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
-from superduperdb.db.mongodb.query import Find
+from superduperdb.db.mongodb.query import Select
 
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
@@ -30,7 +30,7 @@ class Dataset(Component):
     """
 
     identifier: str
-    select: t.Optional[Find] = None
+    select: t.Optional[Select] = None
     sample_size: t.Optional[int] = None
     random_seed: t.Optional[int] = None
     creation_date: t.Optional[str] = None

@@ -72,7 +72,7 @@ def test_tranformers_fit(transformers_model, random_data):
         validation_sets=[
             Dataset(
                 identifier='my-eval',
-                select=Collection(name='train_documents').find({'_fold': 'valid'}),
+                select=Collection('train_documents').find({'_fold': 'valid'}),
             )
         ],
         data_prefetch=False,

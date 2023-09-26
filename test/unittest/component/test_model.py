@@ -20,7 +20,7 @@ def test_predict(random_data, float_tensors_32):
         encoder=encoder,
     )
 
-    X = [r['x'] for r in random_data.execute(Collection(name='documents').find())]
+    X = [r['x'] for r in random_data.execute(Collection('documents').find())]
 
     out = m.predict(X=X, distributed=False)
 
@@ -29,7 +29,7 @@ def test_predict(random_data, float_tensors_32):
     m.predict(
         X='x',
         db=random_data,
-        select=Collection(name='documents').find(),
+        select=Collection('documents').find(),
         distributed=False,
         listen=True,
     )

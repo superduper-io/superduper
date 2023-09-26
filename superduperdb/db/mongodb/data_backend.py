@@ -54,8 +54,11 @@ class MongoDataBackend(BaseDataBackend):
                 'Are you sure you want to drop the data-backend? ',
                 default=False,
             ):
-                print('Aborting...')
+                logging.warn('Aborting...')
         return self.db.client.drop_database(self.db.name)
+
+    def get_table_or_collection(self, identifier):
+        return self._db[identifier]
 
     def set_content_bytes(self, r, key, bytes_):
         if not isinstance(r, MongoStyleDict):
@@ -94,10 +97,9 @@ class MongoDataBackend(BaseDataBackend):
         select = vector_index.indexing_listener.select
 
         # TODO: probably MongoDB queries should all have a common base class
-        collection = select.collection  # type: ignore[attr-defined]
         self.db.command(
             {
-                "dropSearchIndex": collection.name,
+                "dropSearchIndex": select.table_or_collection.identifier,
                 "name": vector_index.identifier,
             }
         )
@@ -108,7 +110,7 @@ class MongoDataBackend(BaseDataBackend):
 
         :param vector_index: vector index to create
         """
-        collection = vector_index.indexing_listener.select.collection.name
+        collection = vector_index.indexing_listener.select.collection.identifier
         key = vector_index.indexing_listener.key
         if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+$', key):
             key = key.split('.')[1]

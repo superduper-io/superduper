@@ -90,17 +90,21 @@ def test_compound_component(empty):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_select_vanilla(random_data):
-    r = random_data.execute(Collection(name='documents').find_one())
+    r = random_data.execute(Collection('documents').find_one())
     print(r)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_select(with_vector_index):
     db = with_vector_index
-    r = db.execute(Collection(name='documents').find_one())
-    query = Collection(name='documents').like(
-        r=Document({'x': r['x']}),
-        vector_index='test_vector_search',
+    r = db.execute(Collection('documents').find_one())
+    query = (
+        Collection('documents')
+        .like(
+            r=Document({'x': r['x']}),
+            vector_index='test_vector_search',
+        )
+        .find()
     )
     s = next(db.execute(query))
     assert r['_id'] == s['_id']
@@ -113,11 +117,11 @@ def test_reload_dataset(si_validation):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert(random_data, a_listener, an_update):
-    random_data.execute(Collection(name='documents').insert_many(an_update))
-    r = next(random_data.execute(Collection(name='documents').find({'update': True})))
+    random_data.execute(Collection('documents').insert_many(an_update))
+    r = next(random_data.execute(Collection('documents').find({'update': True})))
     assert 'linear_a' in r['_outputs']['x']
     assert (
-        len(list(random_data.execute(Collection(name='documents').find())))
+        len(list(random_data.execute(Collection('documents').find())))
         == n_data_points + 10
     )
 
@@ -145,8 +149,8 @@ def test_insert_from_uris(empty, image_type):
         )
         for _ in range(2)
     ]
-    empty.execute(Collection(name='documents').insert_many(to_insert))
-    r = empty.execute(Collection(name='documents').find_one())
+    empty.execute(Collection('documents').insert_many(to_insert))
+    r = empty.execute(Collection('documents').find_one())
     assert isinstance(r['item'].x, PIL.Image.Image)
     assert isinstance(r['other']['item'].x, PIL.Image.Image)
 
@@ -156,11 +160,9 @@ def test_update(random_data, a_listener):
     to_update = torch.randn(32)
     t = random_data.encoders['torch.float32[32]']
     random_data.execute(
-        Collection(name='documents').update_many(
-            {}, Document({'$set': {'x': t(to_update)}})
-        )
+        Collection('documents').update_many({}, Document({'$set': {'x': t(to_update)}}))
     )
-    cur = random_data.execute(Collection(name='documents').find())
+    cur = random_data.execute(Collection('documents').find())
     r = next(cur)
     s = next(cur)
 
@@ -177,32 +179,32 @@ def test_listener(random_data, a_model, b_model):
     random_data.add(
         Listener(
             model='linear_a',
-            select=Collection(name='documents').find(),
+            select=Collection('documents').find(),
             key='x',
         ),
     )
-    r = random_data.execute(Collection(name='documents').find_one())
+    r = random_data.execute(Collection('documents').find_one())
     assert 'linear_a' in r['_outputs']['x']
 
     t = random_data.encoders['torch.float32[32]']
 
     random_data.execute(
-        Collection(name='documents').insert_many(
+        Collection('documents').insert_many(
             [Document({'x': t(torch.randn(32)), 'update': True}) for _ in range(5)]
         )
     )
 
-    r = random_data.execute(Collection(name='documents').find_one({'update': True}))
+    r = random_data.execute(Collection('documents').find_one({'update': True}))
     assert 'linear_a' in r['_outputs']['x']
 
     random_data.add(
         Listener(
             model='linear_b',
-            select=Collection(name='documents').find().featurize({'x': 'linear_a'}),
+            select=Collection('documents').find().featurize({'x': 'linear_a'}),
             key='x',
         )
     )
-    r = random_data.execute(Collection(name='documents').find_one())
+    r = random_data.execute(Collection('documents').find_one())
     assert 'linear_b' in r['_outputs']['x']
 
 
@@ -214,20 +216,20 @@ def test_predict(a_model, float_tensors_32, float_tensors_16):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_delete(random_data):
-    r = random_data.execute(Collection(name='documents').find_one())
-    random_data.execute(Collection(name='documents').delete_many({'_id': r['_id']}))
+    r = random_data.execute(Collection('documents').find_one())
+    random_data.execute(Collection('documents').delete_many({'_id': r['_id']}))
     with pytest.raises(StopIteration):
-        next(random_data.execute(Collection(name='documents').find({'_id': r['_id']})))
+        next(random_data.execute(Collection('documents').find({'_id': r['_id']})))
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_replace(random_data):
-    r = next(random_data.execute(Collection(name='documents').find()))
+    r = next(random_data.execute(Collection('documents').find()))
     x = torch.randn(32)
     t = random_data.encoders['torch.float32[32]']
     r['x'] = t(x)
     random_data.execute(
-        Collection(name='documents').replace_one(
+        Collection('documents').replace_one(
             {'_id': r['_id']},
             r,
         )
@@ -238,7 +240,7 @@ def test_replace(random_data):
 def test_dataset(random_data):
     d = Dataset(
         identifier='test_dataset',
-        select=Collection(name='documents').find({'_fold': 'valid'}),
+        select=Collection('documents').find({'_fold': 'valid'}),
     )
     random_data.add(d)
     assert random_data.show('dataset') == ['test_dataset']

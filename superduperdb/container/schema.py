@@ -4,6 +4,7 @@ from functools import cached_property
 
 from superduperdb.container.component import Component
 from superduperdb.container.encoder import Encoder
+from superduperdb.db.ibis.field_types import dtype
 
 
 @dc.dataclass
@@ -19,6 +20,18 @@ class Schema(Component):
             if isinstance(v, Encoder):
                 db.add(v)
         return super().on_create(db)
+
+    def __post_init__(self):
+        assert self.identifier is not None, 'Schema must have an identifier'
+        assert self.fields is not None, 'Schema must have fields'
+        self.fields['_fold'] = dtype('String')
+
+    @property
+    def raw(self):
+        return {
+            k: (v.identifier if not isinstance(v, Encoder) else 'Bytes')
+            for k, v in self.fields.items()
+        }
 
     @cached_property
     def encoded_types(self):

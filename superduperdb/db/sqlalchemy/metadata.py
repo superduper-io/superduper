@@ -2,19 +2,11 @@ import typing as t
 from contextlib import contextmanager
 
 import click
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
-    Table,
-)
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
+from superduperdb.base.logger import logging
 from superduperdb.db.base.metadata import MetaDataStore
 from superduperdb.misc.colors import Colors
 
@@ -35,14 +27,16 @@ class Job(Base, DictMixin):  # type: ignore[valid-type, misc]
     status = Column(String)
     args = Column(JSON)
     kwargs = Column(JSON)
+    stdout = Column(JSON)
+    stderr = Column(JSON)
+    cls = Column(String)
 
 
-parent_child_association = Table(
-    'parent_child_association',
-    Base.metadata,
-    Column('parent_id', String, ForeignKey('component.id')),
-    Column('child_id', String, ForeignKey('component.id')),
-)
+class ParentChildAssociation(Base):  # type: ignore[valid-type, misc]
+    __tablename__ = 'parent_child_association'
+
+    parent_id = Column(String, ForeignKey('component.id'), primary_key=True)
+    child_id = Column(String, ForeignKey('component.id'), primary_key=True)
 
 
 class Component(Base, DictMixin):  # type: ignore[valid-type, misc]
@@ -60,9 +54,9 @@ class Component(Base, DictMixin):  # type: ignore[valid-type, misc]
     # Define the parent-child relationship
     parents = relationship(
         "Component",
-        secondary=parent_child_association,
-        primaryjoin=id == parent_child_association.c.child_id,
-        secondaryjoin=id == parent_child_association.c.parent_id,
+        secondary=ParentChildAssociation.__table__,
+        primaryjoin=id == ParentChildAssociation.parent_id,
+        secondaryjoin=id == ParentChildAssociation.child_id,
         backref="children",
         cascade="all, delete",
     )
@@ -103,7 +97,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 'Are you sure you want to drop all meta-data? ',
                 default=False,
             ):
-                print('Aborting...')
+                logging.warn('Aborting...')
         Base.metadata.drop_all(self.conn)
 
     @contextmanager
@@ -146,11 +140,8 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     def create_parent_child(self, parent_id: str, child_id: str):
         with self.session_context() as session:
-            session.add(
-                parent_child_association.insert().values(
-                    parent_id=parent_id, child_id=child_id
-                )
-            )
+            association = ParentChildAssociation(parent_id=parent_id, child_id=child_id)
+            session.add(association)
 
     def delete_component_version(self, type_id: str, identifier: str, version: int):
         with self.session_context() as session:
@@ -257,14 +248,18 @@ class SQLAlchemyMetadata(MetaDataStore):
             version=version,
         )
 
-    def show_components(self, type_id: str, **kwargs):
-        with self.session_context() as session:
-            return [
-                c.identifier
-                for c in session.query(Component)
-                .filter(Component.type_id == type_id)
-                .all()
-            ]
+    def show_components(self, type_id: t.Optional[str] = None, **kwargs):
+        if type_id is not None:
+            with self.session_context() as session:
+                return [
+                    c.identifier
+                    for c in session.query(Component)
+                    .filter(Component.type_id == type_id)
+                    .all()
+                ]
+        else:
+            with self.session_context() as session:
+                return [c.identifier for c in session.query(Component).all()]
 
     def show_component_versions(self, type_id: str, identifier: str):
         with self.session_context() as session:

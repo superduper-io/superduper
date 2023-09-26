@@ -16,7 +16,7 @@ def Factory(factory: t.Callable, **ka) -> t.Any:
 
 class JSONable(pydantic.BaseModel):
     """
-    JSONable is the base class for all superduperdb classes that can be
+    A base class for classes that can be
     converted to and from JSON
     """
 

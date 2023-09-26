@@ -61,7 +61,8 @@ def random_data_factory(float_tensors_32):
                 )
             )
         float_tensors_32.execute(
-            Collection(name='documents').insert_many(data, refresh=False)
+            Collection('documents').insert_many(data),
+            refresh=False,
         )
         return float_tensors_32
 
@@ -82,9 +83,9 @@ def random_arrays(arrays):
         y = int(random.random() > 0.5)
         data.append(Document({'x': float_array(x), 'y': y}))
 
-    arrays.execute(Collection(name='documents').insert_many(data, refresh=False))
+    arrays.execute(Collection('documents').insert_many(data, refresh=False))
     yield arrays
-    arrays.execute(Collection(name='documents').delete_many({}))
+    arrays.execute(Collection('documents').delete_many({}))
 
 
 @pytest.fixture()
@@ -150,14 +151,14 @@ def vector_index_factory(a_model):
     def _factory(db, identifier, **kwargs) -> VectorIndex:
         db.add(
             Listener(
-                select=Collection(name='documents').find(),
+                select=Collection('documents').find(),
                 key='x',
                 model='linear_a',
             )
         )
         db.add(
             Listener(
-                select=Collection(name='documents').find(),
+                select=Collection('documents').find(),
                 key='z',
                 model='linear_a',
             )
@@ -184,7 +185,7 @@ def with_vector_index(random_data, vector_index_factory):
 def si_validation(random_data):
     d = Dataset(
         identifier='my_valid',
-        select=Collection(name='documents').find({'_fold': 'valid'}),
+        select=Collection('documents').find({'_fold': 'valid'}),
         sample_size=100,
     )
     random_data.add(d)
@@ -224,7 +225,7 @@ def sentences(empty):
     data = []
     for _ in range(100):
         data.append(Document({'text': lorem.sentence()}))
-    empty.execute(Collection(name='documents').insert_many(data))
+    empty.execute(Collection('documents').insert_many(data))
     yield empty
 
 
@@ -234,7 +235,7 @@ def nursery_rhymes(empty):
         data = json.load(f)
     for i in range(len(data)):
         data[i] = Document({'text': data[i]})
-    empty.execute(Collection(name='documents').insert_many(data))
+    empty.execute(Collection('documents').insert_many(data))
     yield empty
 
 
@@ -288,7 +289,7 @@ def a_listener(a_model):
     a_model.add(
         Listener(
             model='linear_a',
-            select=Collection(name='documents').find(),
+            select=Collection('documents').find(),
             key='x',
         )
     )
@@ -301,7 +302,7 @@ def a_listener_base(a_model_base):
     a_model_base.add(
         Listener(
             model='linear_a_base',
-            select=Collection(name='documents').find({}, {'_id': 0}),
+            select=Collection('documents').find({}, {'_id': 0}),
             key='_base',
         )
     )

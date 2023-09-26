@@ -49,6 +49,6 @@ def test_file_blobs(empty, patch_cfg_downloads):
         for _ in range(2)
     ]
 
-    empty.execute(Collection('documents').insert_many(to_insert, encoders=(pil_image,)))
+    empty.execute(Collection('documents').insert_many(to_insert), encoders=(pil_image,))
     empty.execute(Collection('documents').find_one())
     assert list(CFG.downloads.root.iterdir())

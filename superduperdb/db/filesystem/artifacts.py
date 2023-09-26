@@ -5,6 +5,7 @@ import uuid
 
 import click
 
+from superduperdb.base.logger import logging
 from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.misc.colors import Colors
 
@@ -25,7 +26,7 @@ class FileSystemArtifactStore(ArtifactStore):
         self.name = name
         self.conn = conn
         if not os.path.exists(self.conn):
-            print('Creating artifact store directory')
+            logging.info('Creating artifact store directory')
             os.makedirs(self.conn, exist_ok=True)
 
     def delete(self, file_id: str):
@@ -46,7 +47,7 @@ class FileSystemArtifactStore(ArtifactStore):
                 'Are you sure you want to drop all artifacts? ',
                 default=False,
             ):
-                print('Aborting...')
+                logging.warn('Aborting...')
         shutil.rmtree(self.conn, ignore_errors=force)
 
     def save_artifact(self, serialized: bytes) -> t.Any:

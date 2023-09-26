@@ -25,12 +25,13 @@ Use this module like this::
 
 import typing as t
 
+from threa import Event
+
 from superduperdb.db.base import backends
 from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb.cdc.base import BaseDatabaseListener
 from superduperdb.db.mongodb.cdc.db_listener import MongoDatabaseListener
 from superduperdb.db.mongodb.query import Collection
-from superduperdb.misc.runnable.runnable import Event
 
 DBListenerType = t.TypeVar('DBListenerType')
 

@@ -2,12 +2,13 @@ import queue
 import threading
 import traceback
 
+from threa import Event
+
 from superduperdb import logging
 from superduperdb.container.job import FunctionJob
 from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.db.base.db import DB
 from superduperdb.misc.queue_chunker import QueueChunker
-from superduperdb.misc.runnable.runnable import Event
 
 from .base import Packet
 from .vector_task_factory import vector_task_factory

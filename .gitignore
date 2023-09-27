@@ -187,3 +187,5 @@ test/sleep.json
 
 # editors
 .vscode
+
+/tmp

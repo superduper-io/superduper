@@ -647,53 +647,28 @@ class DB:
         jobs = object.schedule_jobs(self, dependencies=dependencies)
         return jobs
 
-    def _create_children(self, object: Component, serialized: t.Dict):
-        # TODO abbreviate this code
-        for item in object.child_components:
-            if isinstance(item[0], str):
-                k, child_type_id = item
-                child = getattr(object, k)
-                if isinstance(child, str):
-                    serialized['dict'][k] = {
-                        'type_id': child_type_id,
-                        'identifier': child,
-                    }
-                    serialized['dict'][k]['version'] = self.metadata.get_latest_version(
-                        child_type_id, child
-                    )
-                else:
-                    self._add(
-                        child,
-                        serialized=serialized['dict'][k],
-                        parent=object.unique_id,
-                    )
-                    serialized['dict'][k] = {
-                        'type_id': child.type_id,
-                        'identifier': child.identifier,
-                        'version': child.version,
-                    }
-            elif isinstance(item[0], tuple):
-                (k, ix), child_type_id = item
-                child = getattr(object, k)[ix]
-                if isinstance(child, str):
-                    serialized['dict'][k][ix] = {
-                        'type_id': child_type_id,
-                        'identifier': child,
-                    }
-                    serialized['dict'][k]['version'] = self.metadata.get_latest_version(
-                        child_type_id, child
-                    )
-                else:
-                    self._add(
-                        child,
-                        serialized=serialized['dict'][k][ix],
-                        parent=object.unique_id,
-                    )
-                    serialized['dict'][k][ix] = {
-                        'type_id': child.type_id,
-                        'identifier': child.identifier,
-                        'version': child.version,
-                    }
+    def _create_children(self, component: Component, serialized: t.Dict):
+        for k, child_type_id in component.child_components:
+            assert isinstance(k, str)
+            child = getattr(component, k)
+            if isinstance(child, str):
+                serialized_dict = {
+                    'type_id': child_type_id,
+                    'identifier': child,
+                    'version': self.metadata.get_latest_version(child_type_id, child),
+                }
+            else:
+                self._add(
+                    child,
+                    serialized=serialized['dict'][k],
+                    parent=component.unique_id,
+                )
+                serialized_dict = {
+                    'type_id': child.type_id,
+                    'identifier': child.identifier,
+                    'version': child.version,
+                }
+            serialized['dict'][k] = serialized_dict
 
     def _create_plan(self):
         G = networkx.DiGraph()

@@ -79,7 +79,7 @@ class VectorCollectionItemNotFound(Exception):
 class VectorCollectionConfig:
     id: VectorCollectionId
     dimensions: int
-    measure: VectorIndexMeasure = VectorIndexMeasureType.l2
+    measure: VectorIndexMeasure = VectorIndexMeasureType.cosine
     parameters: t.Mapping[str, t.Any] = field(default_factory=dict)
 
 

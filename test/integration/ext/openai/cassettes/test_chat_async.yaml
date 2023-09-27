@@ -5,18 +5,18 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.28.0
+      - OpenAI/v1 PythonBindings/0.28.1
       X-OpenAI-Client-User-Agent:
-      - '{"bindings_version": "0.28.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.8.10", "platform": "Linux-6.2.0-32-generic-x86_64-with-glibc2.34", "publisher":
-        "openai", "uname": "Linux 6.2.0-32-generic #32~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
-        Fri Aug 18 10:40:13 UTC 2 x86_64 x86_64"}'
+      - '{"bindings_version": "0.28.1", "httplib": "requests", "lang": "python", "lang_version":
+        "3.8.10", "platform": "Linux-6.2.0-33-generic-x86_64-with-glibc2.34", "publisher":
+        "openai", "uname": "Linux 6.2.0-33-generic #33~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
+        Thu Sep  7 10:33:52 UTC 2 x86_64 x86_64"}'
     method: post
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\n  \"id\": \"chatcmpl-7yyi4nx4LvOhG3qq6fogh9XA6VEMt\",\n  \"object\":
-        \"chat.completion\",\n  \"created\": 1694767404,\n  \"model\": \"gpt-3.5-turbo-0613\",\n
+      string: "{\n  \"id\": \"chatcmpl-83QDzzktLEgLnM9CYXjz4cYtO0q86\",\n  \"object\":
+        \"chat.completion\",\n  \"created\": 1695826483,\n  \"model\": \"gpt-3.5-turbo-0613\",\n
         \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
         \"assistant\",\n        \"content\": \"Hello! How can I assist you today?\"\n
         \     },\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n
@@ -28,7 +28,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 806f94f53f724dca-FRA
+      - 80d4955d5b889256-FRA
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -38,7 +38,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 15 Sep 2023 08:43:25 GMT
+      - Wed, 27 Sep 2023 14:54:44 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -48,9 +48,9 @@ interactions:
       openai-model:
       - gpt-3.5-turbo-0613
       openai-organization:
-      - user-ti2tgqzt0qeqptkx31pdg0qi
+      - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '561'
+      - '1126'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -68,7 +68,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 14ms
       x-request-id:
-      - b85cd4814fda39bf24dd2f462c9b881f
+      - a6de8fe3014da8776003e24d92125301
     status:
       code: 200
       message: OK

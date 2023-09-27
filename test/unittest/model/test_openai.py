@@ -1,7 +1,8 @@
 import json
-import os
 
+import openai
 import pytest
+import vcr
 
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
@@ -9,22 +10,27 @@ from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 
-SKIP_PAID = os.environ.get('OPENAI_API_KEY') is None
+CASSETTE_DIR = 'test/unittest/model/cassettes'
 
 
 @pytest.fixture
-def open_ai_with_rhymes(empty):
+def open_ai_with_rhymes(empty, monkeypatch):
     with open('test/material/data/rhymes.json') as f:
         data = json.load(f)
     for i, r in enumerate(data):
         data[i] = Document({'story': r.replace('\n', ' ')})
+    monkeypatch.setattr(openai, 'api_key', 'sk-TopSecret')
+    monkeypatch.setenv('OPENAI_API_KEY', 'sk-TopSecret')
     empty.execute(Collection('openai').insert_many(data))
     yield empty
     empty.remove('model', 'gpt-3.5-turbo', force=True)
     empty.remove('model', 'text-embedding-ada-002', force=True)
 
 
-@pytest.mark.skipif(SKIP_PAID, reason='OPENAI_API_KEY not set')
+@vcr.use_cassette(
+    f'{CASSETTE_DIR}/test_retrieve_with_similar_context.yaml',
+    filter_headers=['authorization'],
+)
 def test_retrieve_with_similar_context(open_ai_with_rhymes):
     db = open_ai_with_rhymes
     m = OpenAIChatCompletion(
@@ -56,7 +62,7 @@ def test_retrieve_with_similar_context(open_ai_with_rhymes):
     input = 'Is covid a hoax?'
 
     prediction = db.predict(
-        model='gpt-3.5-turbo',
+        model_name='gpt-3.5-turbo',
         input=input,
         context_select=Collection('openai')
         .like({'story': input}, n=1, vector_index='openai-index')
@@ -64,8 +70,8 @@ def test_retrieve_with_similar_context(open_ai_with_rhymes):
         context_key='story',
     )
 
-    print('PREDICTION IS:\n')
-    print(prediction[0])
+    assert isinstance(prediction[0], Document)
+    assert 'hoax' in prediction[0].content
 
-    print('\nCONTEXT IS:\n')
-    print(prediction[1])
+    assert isinstance(prediction[1][0], Document)
+    assert isinstance(prediction[1][0].content, str)

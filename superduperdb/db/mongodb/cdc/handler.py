@@ -26,7 +26,7 @@ class CDCHandler(IsThread):
         self.db = db
 
     def callback(self):
-        for c in queue_chunker(CDC_QUEUE, self.stopped):
+        for c in queue_chunker(CDC_QUEUE, self.running):
             _submit_task_workflow(self.db, Packet.collate(c))
 
 

@@ -6,7 +6,7 @@ from functools import cached_property
 
 from overrides import override
 from pymongo.change_stream import ChangeStream, CollectionChangeStream
-from threa import Event
+from threa import Event, IsThread
 
 from superduperdb import logging
 from superduperdb.db.base.db import DB
@@ -23,28 +23,20 @@ EVENT_TO_KEY = {
 }
 
 
-class _DatabaseListenerThreadScheduler(threading.Thread):
-    def __init__(
-        self,
-        listener: BaseDatabaseListener,
-        stopped: Event,
-        running: Event,
-    ) -> None:
-        threading.Thread.__init__(self, daemon=True)
-        self.stopped = stopped
-        self.running = running
+class _DatabaseListenerThread(IsThread):
+    looping = True
+
+    def __init__(self, listener: BaseDatabaseListener):
+        super().__init__()
         self.listener = listener
 
     @override
-    def run(self) -> None:
-        try:
-            cdc_stream = self.listener.setup_cdc()
-            self.running.set()
-            while not self.stopped.is_set():
-                self.listener.next_cdc(cdc_stream)
-        except Exception:
-            logging.error('In _DatabaseListenerThreadScheduler')
-            traceback.print_exc()
+    def pre_run(self):
+        self.cdc_stream = self.listener.setup_cdc()
+
+    @override
+    def callback(self) -> None:
+        self.listener.next_cdc(self.cdc_stream)
 
 
 class MongoDatabaseListener(BaseDatabaseListener):
@@ -63,7 +55,7 @@ class MongoDatabaseListener(BaseDatabaseListener):
     EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
     IDENTITY_SEP: str = '/'
 
-    _scheduler: t.Optional[threading.Thread]
+    _listener_thread: t.Optional[threading.Thread]
     _change_pipeline: t.Union[str, t.Sequence[t.Dict], None] = None
 
     def __init__(
@@ -90,13 +82,16 @@ class MongoDatabaseListener(BaseDatabaseListener):
         self.resume_token = resume_token
 
         self._change_pipeline = None
-        self.running = Event()
-        self._scheduler = None
+        self._listener_thread = None
         self._cdc_handler.start()
 
     @cached_property
     def _cdc_handler(self) -> CDCHandler:
         return CDCHandler(db=self.db)
+
+    @property
+    def running(self) -> Event:
+        return self._listener_thread.running
 
     def event_handler(self, change: t.Dict) -> None:
         """event_handler.
@@ -180,26 +175,19 @@ class MongoDatabaseListener(BaseDatabaseListener):
         try:
             CDC_COLLECTION_LOCKS[self._on_component.name] = True
 
-            self._cdc_handler.stopped.clear()
-            if self._scheduler and self._scheduler.is_alive():
+            if self._listener_thread and self._listener_thread.is_alive():
                 raise RuntimeError('CDC Listener thread is already running!')
 
-            if not self._cdc_handler.is_alive():
-                del self._cdc_handler
-                self._cdc_handler.start()
-
-            self._scheduler = _DatabaseListenerThreadScheduler(
-                self, stopped=self._cdc_handler.stopped, running=self.running
-            )
+            self._listener_thread = _DatabaseListenerThread(self)
 
             if change_pipeline is None:
                 self._change_pipeline = MONGO_CHANGE_PIPELINES.get('generic')
             else:
                 self._change_pipeline = change_pipeline
 
-            assert self._scheduler is not None
-            self._scheduler.start()
+            self._listener_thread.start()
             self.running.wait(timeout=timeout)
+
         except Exception:
             logging.error('Listening service stopped!')
             CDC_COLLECTION_LOCKS.pop(self._on_component.name, None)
@@ -215,7 +203,8 @@ class MongoDatabaseListener(BaseDatabaseListener):
         """
         CDC_COLLECTION_LOCKS.pop(self._on_component.name, None)
 
-        self._cdc_handler.stopped.set()
+        self._cdc_handler.stop()
         self._cdc_handler.join()
-        if self._scheduler:
-            self._scheduler.join()
+
+        self._listener_thread.stop()
+        self._listener_thread.join()

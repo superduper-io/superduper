@@ -1,9 +1,11 @@
+import asyncio
 import dataclasses as dc
+import itertools
 import os
 import typing as t
 
 import tqdm
-from openai import ChatCompletion, Embedding, Model as OpenAIModel
+from openai import Audio, ChatCompletion, Embedding, Model as OpenAIModel
 from openai.error import RateLimitError, ServiceUnavailableError, Timeout, TryAgain
 
 import superduperdb as s
@@ -117,6 +119,7 @@ class OpenAIEmbedding(OpenAI):
             return await self._apredict_one(X)
         out = []
         batch_size = kwargs.pop('batch_size', 100)
+        # Note: we submit the async requests in serial to avoid rate-limiting
         for i in range(0, len(X), batch_size):
             out.extend(await self._apredict_a_batch(X[i : i + batch_size], **kwargs))
         return out
@@ -176,3 +179,189 @@ class OpenAIChatCompletion(OpenAI):
         if one:
             return await self._apredict_one(X, context=context, **kwargs)
         return [await self._apredict_one(msg) for msg in X]
+
+
+@dc.dataclass
+class OpenAIAudioTranscription(OpenAI):
+    """OpenAI audio transcription predictor.
+
+    :param takes_context: Whether the model takes context into account.
+    :param prompt: The prompt to guide the model's style. Should contain ``{context}``.
+    """
+
+    takes_context: bool = True
+    prompt: str = ''
+
+    @retry
+    def _predict_one(
+        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        "Converts a file-like Audio recording to text."
+        if context is not None:
+            self.prompt = self.prompt.format(context='\n'.join(context))
+        return (
+            Audio.transcribe(
+                file=file,
+                model=self.identifier,
+                prompt=self.prompt,
+                **kwargs,
+            )
+        )['text']
+
+    @retry
+    async def _apredict_one(
+        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        "Converts a file-like Audio recording to text."
+        if context is not None:
+            self.prompt = self.prompt.format(context='\n'.join(context))
+        return (
+            await Audio.atranscribe(
+                file=file,
+                model=self.identifier,
+                prompt=self.prompt,
+                **kwargs,
+            )
+        )['text']
+
+    @retry
+    def _predict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
+        "Converts multiple file-like Audio recordings to text."
+        resps = [
+            Audio.transcribe(file=file, model=self.identifier, **kwargs)
+            for file in files
+        ]
+        return [resp['text'] for resp in resps]
+
+    @retry
+    async def _apredict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
+        "Converts multiple file-like Audio recordings to text."
+        resps = await asyncio.gather(
+            *[
+                Audio.atranscribe(file=file, model=self.identifier, **kwargs)
+                for file in files
+            ]
+        )
+        return [resp['text'] for resp in resps]
+
+    def _predict(
+        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        if context:
+            assert one, 'context only works with ``one=True``'
+        if one:
+            return self._predict_one(X, context=context, **kwargs)
+        out = []
+        batch_size = kwargs.pop('batch_size', 10)
+        for i in tqdm.tqdm(range(0, len(X), batch_size)):
+            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
+        return out
+
+    async def _apredict(
+        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        if context:
+            assert one, 'context only works with ``one=True``'
+        if one:
+            return await self._apredict_one(X, context=context, **kwargs)
+        batch_size = kwargs.pop('batch_size', 10)
+        list_of_lists = await asyncio.gather(
+            *[
+                self._apredict_a_batch(X[i : i + batch_size], **kwargs)
+                for i in range(0, len(X), batch_size)
+            ]
+        )
+        return list(itertools.chain(*list_of_lists))
+
+
+@dc.dataclass
+class OpenAIAudioTranslation(OpenAI):
+    """OpenAI audio translation predictor.
+
+    :param takes_context: Whether the model takes context into account.
+    :param prompt: The prompt to guide the model's style. Should contain ``{context}``.
+    """
+
+    takes_context: bool = True
+    prompt: str = ''
+
+    @retry
+    def _predict_one(
+        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        "Translates a file-like Audio recording to English."
+        if context is not None:
+            self.prompt = self.prompt.format(context='\n'.join(context))
+        return (
+            Audio.translate(
+                file=file,
+                model=self.identifier,
+                prompt=self.prompt,
+                **kwargs,
+            )
+        )['text']
+
+    @retry
+    async def _apredict_one(
+        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        "Translates a file-like Audio recording to English."
+        if context is not None:
+            self.prompt = self.prompt.format(context='\n'.join(context))
+        return (
+            await Audio.atranslate(
+                file=file,
+                model=self.identifier,
+                prompt=self.prompt,
+                **kwargs,
+            )
+        )['text']
+
+    @retry
+    def _predict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
+        "Translates multiple file-like Audio recordings to English."
+        resps = [
+            Audio.translate(file=file, model=self.identifier, **kwargs)
+            for file in files
+        ]
+        return [resp['text'] for resp in resps]
+
+    @retry
+    async def _apredict_a_batch(self, files: t.List[t.BinaryIO], **kwargs):
+        "Translates multiple file-like Audio recordings to English."
+        resps = await asyncio.gather(
+            *[
+                Audio.atranslate(file=file, model=self.identifier, **kwargs)
+                for file in files
+            ]
+        )
+        return [resp['text'] for resp in resps]
+
+    def _predict(
+        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        if context:
+            assert one, 'context only works with ``one=True``'
+        if one:
+            return self._predict_one(X, context=context, **kwargs)
+        out = []
+        batch_size = kwargs.pop('batch_size', 10)
+        for i in tqdm.tqdm(range(0, len(X), batch_size)):
+            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
+        return out
+
+    async def _apredict(
+        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        if context:
+            assert one, 'context only works with ``one=True``'
+        if one:
+            return await self._apredict_one(X, context=context, **kwargs)
+        batch_size = kwargs.pop('batch_size', 10)
+        list_of_lists = await asyncio.gather(
+            *[
+                self._apredict_a_batch(X[i : i + batch_size], **kwargs)
+                for i in range(0, len(X), batch_size)
+            ]
+        )
+        return list(itertools.chain(*list_of_lists))

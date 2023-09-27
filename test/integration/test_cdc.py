@@ -48,9 +48,10 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
     )
     listener._cdc_handler._QUEUE_BATCH_SIZE = 1
 
-    yield listener, collection_name
-
-    listener.stop()
+    try:
+        yield listener, collection_name
+    finally:
+        listener.stop()
 
 
 @pytest.fixture
@@ -65,9 +66,10 @@ def listener_with_vector_database(database_with_default_encoders_and_model):
         )
         listener._cdc_handler._QUEUE_BATCH_SIZE = 1
 
-        yield listener, vector_db_client, collection_name
-
-        listener.stop()
+        try:
+            yield listener, vector_db_client, collection_name
+        finally:
+            listener.stop()
 
 
 @pytest.fixture
@@ -78,8 +80,10 @@ def listener_without_cdc_handler_and_collection_name(
     listener = DatabaseListener(
         db=database_with_default_encoders_and_model, on=Collection(name=collection_name)
     )
-    yield listener, collection_name
-    listener.stop()
+    try:
+        yield listener, collection_name
+    finally:
+        listener.stop()
 
 
 def retry_state_check(state_check):
@@ -349,7 +353,7 @@ def test_cdc_stop(listener_and_collection_name):
 
     def state_check():
         assert not all(
-            [listener._scheduler.is_alive(), listener._cdc_handler.is_alive()]
+            [listener._listener_thread.is_alive(), listener._cdc_handler.is_alive()]
         )
 
     retry_state_check(state_check)

@@ -13,28 +13,28 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.28.0
+      - OpenAI/v1 PythonBindings/0.28.1
       X-OpenAI-Client-User-Agent:
-      - '{"bindings_version": "0.28.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.8.10", "platform": "Linux-6.2.0-32-generic-x86_64-with-glibc2.34", "publisher":
-        "openai", "uname": "Linux 6.2.0-32-generic #32~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
-        Fri Aug 18 10:40:13 UTC 2 x86_64 x86_64"}'
+      - '{"bindings_version": "0.28.1", "httplib": "requests", "lang": "python", "lang_version":
+        "3.8.10", "platform": "Linux-6.2.0-33-generic-x86_64-with-glibc2.34", "publisher":
+        "openai", "uname": "Linux 6.2.0-33-generic #33~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
+        Thu Sep  7 10:33:52 UTC 2 x86_64 x86_64"}'
     method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAAA1SQzW7CMBCE73mK7Z4JShpKRC49cKE/qD23qpBxtsSt443ipTRCvHvlBIh68WFm
-        v9lZHyMANCUWgLpSouvGxnnXmezwZju3fFpT+/K4fF3bpOPn/Ged4yQQvP0iLRdqqrluLIlhN9i6
-        JSUUUtP5YpbP81mS9UbNJdmA7RqJs+ldLPt2y3EyT7MzWbHR5LGA9wgA4Ni/oaMr6RcLSCYXpSbv
-        1Y6wuA4BYMs2KKi8N16UE5yMpmYn5PraK7KWb2DFB9DKwQMMAHS8B+FSdfd45k7XhZ/GGV9tWlKe
-        XQjxws0wdooAPvoD9v86YdNy3chG+JtcuCpNhzgcv2w0F2dPWJQd5dskChtO0R8AAAD//wMAIWhn
-        0K0BAAA=
+        H4sIAAAAAAAAA1SQS2vDMBCE7/4V2z3Hxc6LxJfSB8W5FHoopZQSFHkbu5G1qrUmCSH/vch5mF50
+        mG9ndlaHCACrAjNAXSrRtTPxbPT6tFus3fN2lb+NPzY+t/cv2/Yx+Z2/P+AgOHj1Q1ourlvNtTMk
+        FdsT1g0poZCaTueT2XA6nqUdqLkgE2xrJ/HodhJL26w4Tqbp6OwsudLkMYPPCADg0L2hoy1ohxkk
+        g4tSk/dqTZhdhwCwYRMUVN5XXpQVHPRQsxWyXe2cjOEbyHkLWllYQEnGwZ5bEC7U/g7PruN13Xdl
+        K18uG1KebYjwwu40dowAvrr67b9G6BqunSyFN2TDTWl6isP+w3o4PzNhUaaXh0kUNhyjPwAAAP//
+        AwDswQ8/qwEAAA==
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 806f94ee0f234d3d-FRA
+      - 80d49556a9be30e4-FRA
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -44,7 +44,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 15 Sep 2023 08:43:24 GMT
+      - Wed, 27 Sep 2023 14:54:42 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -56,9 +56,9 @@ interactions:
       openai-model:
       - gpt-3.5-turbo-0613
       openai-organization:
-      - user-ti2tgqzt0qeqptkx31pdg0qi
+      - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '559'
+      - '769'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -76,7 +76,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 14ms
       x-request-id:
-      - dd866ea452e8169a6b9acc4c2599df5f
+      - 0c11eebe430b3bb33b50ef7c1c86c36e
     status:
       code: 200
       message: OK

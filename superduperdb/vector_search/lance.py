@@ -8,7 +8,6 @@ import pyarrow as pa
 from superduperdb.vector_search.base import (
     VectorCollection,
     VectorCollectionConfig,
-    VectorCollectionId,
     VectorCollectionItem,
     VectorCollectionItemId,
     VectorCollectionResult,
@@ -26,9 +25,8 @@ class LanceVectorDatabase(VectorDatabase):
         """
         :param root_dir: root directory that contains all Lance datasets
         """
-
-        self.root_dir = root_dir
-        self._collections: t.Dict[VectorCollectionId, VectorCollection] = {}
+        assert root_dir.startswith('lance://')
+        self.root_dir = root_dir.split('lance://')[1]
 
     # TODO: ``create`` kwarg is not included in the ABC interface but it is assumed part
     # of the interface in ``superduperdb/container/vector_index.py``! Short-term fix
@@ -37,35 +35,24 @@ class LanceVectorDatabase(VectorDatabase):
         self, config: VectorCollectionConfig, create: bool = False
     ) -> VectorCollection:
         """Retrieve a managed Lance dataset according to the given config."""
-
-        assert config.id.startswith('lance://')
-        uri = config.id.split('lance://')[1]
-        assert uri.startswith(self.root_dir)
-
-        collection = self._collections.get(config.id)
-
-        # TODO: Add support for lance ``version`` parameter
-        if not collection:
-            collection = self._collections[config.id] = LanceVectorCollection(
-                uri=uri, dimensions=config.dimensions
-            )
-        return collection
+        uri = os.path.join(self.root_dir, config.id)
+        return LanceVectorCollection(
+            uri=uri, dimensions=config.dimensions, measure=config.measure
+        )
 
 
 class LanceVectorCollection(VectorCollection):
     """A class for managing a lance dataset."""
 
-    def __init__(
-        self,
-        uri: str,
-        dimensions: int,
-    ) -> None:
+    def __init__(self, uri: str, dimensions: int, measure: str) -> None:
         """
         :param uri: URI of the Lance dataset
         :param dimensions: dimension of the vector embeddings in the Lance dataset
+        :param measure: measure which defines strategy to use for vector search.
         """
         self.uri = uri
         self.dimensions = dimensions
+        self.measure = measure
 
     @property
     def _dataset(self) -> lance.LanceDataset:
@@ -77,6 +64,21 @@ class LanceVectorCollection(VectorCollection):
     # TODO: ``upsert`` kwarg is not included in the ABC interface but it is assumed part
     # of the interface in ``superduperdb/db/mongodb/cdc/vector_task_factory.py``!
     # Short-term fix is to include it here, long-term fix is to tidy up ABC interface.
+
+    def size(self) -> int:
+        """
+        Get the number of rows in lance dataset.
+        """
+        return self._dataset.count_rows()
+
+    def delete_from_ids(self, ids: t.Sequence[str]) -> None:
+        """
+        Delete vectors from the lance dataset.
+        :param ids: t.Sequence of identifiers.
+        """
+        to_remove = ", ".join(f"'{str(id)}'" for id in ids)
+        self._dataset.delete(f"id IN ({to_remove})")
+
     def add(self, data: t.Sequence[VectorCollectionItem], upsert: bool = False) -> None:
         """
         Add vectors to existing Lance dataset or create a new one if it doesn't exist.
@@ -84,15 +86,27 @@ class LanceVectorCollection(VectorCollection):
         :param data: t.Sequence of ``VectorCollectionItem`` objects.
         """
 
+        # TODO: Handle floating point bits
         typ = pa.list_(
             pa.field('values', pa.float32(), nullable=False), self.dimensions
         )
-        _vecs = pa.array([item.vector for item in data], type=typ)
+
+        vectors = []
+        for d in data:
+            vector = d.vector
+            if hasattr(vector, 'numpy'):
+                vector = vector.numpy()
+            vectors.append(vector)
+
+        _vecs = pa.array([vector for vector in vectors], type=typ)
         _ids = pa.array([item.id for item in data], type=pa.string())
         _table = pa.Table.from_arrays([_ids, _vecs], names=['id', 'vector'])
 
         if not os.path.exists(self.uri):
-            lance.write_dataset(_table, self.uri, mode='create')
+            if upsert:
+                lance.write_dataset(_table, self.uri, mode='create')
+            else:
+                raise FileNotFoundError('URI is either invalid or does not exists')
         else:
             lance.write_dataset(_table, self.uri, mode='append')
 
@@ -140,6 +154,7 @@ class LanceVectorCollection(VectorCollection):
         within_ids: t.Sequence[VectorCollectionItemId] = (),
         limit: int = 100,
         offset: int = 0,
+        measure: t.Optional[str] = None,
     ) -> t.List[VectorCollectionResult]:
         """
         Find items that are nearest to the given vector.
@@ -158,7 +173,12 @@ class LanceVectorCollection(VectorCollection):
             ), 'within_ids must be a tuple for lance sql parser'
             result = self._dataset.to_table(
                 columns=['id'],
-                nearest={"column": 'vector', "q": array, "k": limit},
+                nearest={
+                    'column': 'vector',
+                    'q': array,
+                    'k': limit,
+                    'measure': measure if measure else self.measure,
+                },
                 filter=f"id in {within_ids}",
                 offset=offset,
             )

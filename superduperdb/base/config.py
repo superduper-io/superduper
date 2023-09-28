@@ -126,7 +126,11 @@ class Config(JSONable):
     # 4 main components are URI strings
 
     data_backend: str = 'mongodb://localhost:27017'
-    vector_search: 'str' = 'inmemory://'  # 'lancedb://./.lancedb'
+
+    #: The URI for the vector search
+    vector_search: 'str' = 'inmemory://'  # 'lance://foo/bar/baz.lance'
+
+    #: The URI for the artifact store
     artifact_store: t.Optional[str] = None
     metadata_store: t.Optional[str] = None
     cluster: Cluster = Factory(Cluster)

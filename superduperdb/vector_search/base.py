@@ -166,24 +166,20 @@ class VectorCollection(ABC):
 
 
 class VectorDatabase(ABC):
-    """A manager for vector indexes within a vector database.
-    A vector database that manages indexed vector collections.
+    """
+    A vector database that manages vector collections.
 
     Concrete implementations of this class are responsible for lifecycle management of
     vector collections within a specific vector database.
 
-    Clients of this class retrieve vector collections by their identifier for subsequent
-    operations.
+    Implementations of this abstract base class retrieve vector collections by their
+    identifier for subsequent operations.
     """
-
-    def __init__(self, *, config: str) -> None:
-        self._config = config
 
     @abstractmethod
     def get_table(self, config: VectorCollectionConfig) -> VectorCollection:
         """Get a vector collection by its identifier.
 
         :param config: configuration for the vector database
-        :param create: create the table if it does not exist
         """
         pass

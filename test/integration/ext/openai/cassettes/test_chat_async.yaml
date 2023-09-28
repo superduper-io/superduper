@@ -15,20 +15,20 @@ interactions:
     uri: https://api.openai.com/v1/chat/completions
   response:
     body:
-      string: "{\n  \"id\": \"chatcmpl-83QDzzktLEgLnM9CYXjz4cYtO0q86\",\n  \"object\":
-        \"chat.completion\",\n  \"created\": 1695826483,\n  \"model\": \"gpt-3.5-turbo-0613\",\n
+      string: "{\n  \"id\": \"chatcmpl-846SQrNoEsSdA41flpXGHTdxFp1qX\",\n  \"object\":
+        \"chat.completion\",\n  \"created\": 1695988826,\n  \"model\": \"gpt-3.5-turbo-0613\",\n
         \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
-        \"assistant\",\n        \"content\": \"Hello! How can I assist you today?\"\n
+        \"assistant\",\n        \"content\": \"Hello there! How can I assist you today?\"\n
         \     },\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n
-        \   \"prompt_tokens\": 11,\n    \"completion_tokens\": 9,\n    \"total_tokens\":
-        20\n  }\n}\n"
+        \   \"prompt_tokens\": 11,\n    \"completion_tokens\": 10,\n    \"total_tokens\":
+        21\n  }\n}\n"
     headers:
       Access-Control-Allow-Origin:
       - '*'
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80d4955d5b889256-FRA
+      - 80e410d4cb4a4d56-FRA
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -38,7 +38,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 27 Sep 2023 14:54:44 GMT
+      - Fri, 29 Sep 2023 12:00:27 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -50,7 +50,7 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '1126'
+      - '592'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -68,7 +68,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 14ms
       x-request-id:
-      - a6de8fe3014da8776003e24d92125301
+      - 3fe58ec32122597c5284b11be25d2616
     status:
       code: 200
       message: OK

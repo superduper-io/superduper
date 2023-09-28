@@ -1,0 +1,55 @@
+interactions:
+- request:
+    body: '{"prompt": "a close up, studio photographic portrait of a cat", "n": 1,
+      "response_format": "b64_json"}'
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.28.1
+      X-OpenAI-Client-User-Agent:
+      - '{"bindings_version": "0.28.1", "httplib": "requests", "lang": "python", "lang_version":
+        "3.8.10", "platform": "Linux-6.2.0-33-generic-x86_64-with-glibc2.34", "publisher":
+        "openai", "uname": "Linux 6.2.0-33-generic #33~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
+        Thu Sep  7 10:33:52 UTC 2 x86_64 x86_64"}'
+    method: post
+    uri: https://api.openai.com/v1/images/generations
+  response:
+    body:
+      string: "{\n  \"created\": 1695982982,\n  \"data\": [\n    {\n      \"b64_json\":
+        \"iVBORw0KGgoAAAANSUhEUg==\" } ]}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 80e420d1cc293801-FRA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 29 Sep 2023 12:11:29 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - user-vp5fxwabufahnpgnwgptlchk
+      openai-processing-ms:
+      - '8216'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-request-id:
+      - 216cfc84613dffbfd89a1cfa1746e2cd
+    status:
+      code: 200
+      message: OK
+version: 1

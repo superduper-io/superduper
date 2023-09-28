@@ -1,11 +1,14 @@
 import asyncio
+import base64
 import dataclasses as dc
 import itertools
 import os
 import typing as t
 
+import aiohttp
+import requests
 import tqdm
-from openai import Audio, ChatCompletion, Embedding, Model as OpenAIModel
+from openai import Audio, ChatCompletion, Embedding, Image, Model as OpenAIModel
 from openai.error import RateLimitError, ServiceUnavailableError, Timeout, TryAgain
 
 import superduperdb as s
@@ -58,7 +61,10 @@ class OpenAI(Component, PredictMixin):
         return []
 
     def __post_init__(self):
-        if self.model not in (mo := _available_models()):
+        # dall-e is not currently included in list returned by OpenAI model endpoint
+        if self.model not in (mo := _available_models()) and self.model not in (
+            'dall-e'
+        ):
             msg = f'model {self.model} not in OpenAI available models, {mo}'
             raise ValueError(msg)
 
@@ -179,6 +185,217 @@ class OpenAIChatCompletion(OpenAI):
         if one:
             return await self._apredict_one(X, context=context, **kwargs)
         return [await self._apredict_one(msg) for msg in X]
+
+
+@dc.dataclass
+class OpenAIImageCreation(OpenAI):
+    """OpenAI image creation predictor.
+
+    :param takes_context: Whether the model takes context into account.
+    :param prompt: The prompt to use to seed the response.
+    """
+
+    takes_context: bool = True
+    prompt: str = ''
+
+    def _format_prompt(self, context, X):
+        prompt = self.prompt.format(context='\n'.join(context))
+        return prompt + X
+
+    @retry
+    def _predict_one(
+        self,
+        X,
+        n: int,
+        response_format: str,
+        context: t.Optional[t.List[str]] = None,
+        **kwargs,
+    ):
+        if context is not None:
+            X = self._format_prompt(context, X)
+        if response_format == 'b64_json':
+            b64_json = Image.create(prompt=X, n=n, response_format='b64_json')['data'][
+                0
+            ]['b64_json']
+            return base64.b64decode(b64_json)
+        else:
+            url = Image.create(prompt=X, n=n, **kwargs)['data'][0]['url']
+            return requests.get(url).content
+
+    @retry
+    async def _apredict_one(
+        self,
+        X,
+        n: int,
+        response_format: str,
+        context: t.Optional[t.List[str]] = None,
+        **kwargs,
+    ):
+        if context is not None:
+            X = self._format_prompt(context, X)
+        if response_format == 'b64_json':
+            b64_json = (await Image.acreate(prompt=X, n=n, response_format='b64_json'))[
+                'data'
+            ][0]['b64_json']
+            return base64.b64decode(b64_json)
+        else:
+            url = (await Image.acreate(prompt=X, n=n, **kwargs))['data'][0]['url']
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    return await resp.read()
+
+    def _predict(
+        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        response_format = kwargs.pop('response_format', 'b64_json')
+        if context:
+            assert one, 'context only works with ``one=True``'
+        if one:
+            return self._predict_one(
+                X, n=1, response_format=response_format, context=context, **kwargs
+            )
+        return [
+            self._predict_one(msg, n=1, response_format=response_format) for msg in X
+        ]
+
+    async def _apredict(
+        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        response_format = kwargs.pop('response_format', 'b64_json')
+        if context:
+            assert one, 'context only works with ``one=True``'
+        if one:
+            return await self._apredict_one(
+                X, context=context, n=1, response_format=response_format, **kwargs
+            )
+        return [
+            await self._apredict_one(msg, n=1, response_format=response_format)
+            for msg in X
+        ]
+
+
+@dc.dataclass
+class OpenAIImageEdit(OpenAI):
+    """OpenAI image edit predictor.
+
+    :param takes_context: Whether the model takes context into account.
+    :param prompt: The prompt to use to seed the response.
+    """
+
+    takes_context: bool = True
+    prompt: str = ''
+
+    def _format_prompt(self, context):
+        prompt = self.prompt.format(context='\n'.join(context))
+        return prompt
+
+    @retry
+    def _predict_one(
+        self,
+        image: t.BinaryIO,
+        n: int,
+        response_format: str,
+        context: t.Optional[t.List[str]] = None,
+        mask_png_path: t.Optional[str] = None,
+        **kwargs,
+    ):
+        if context is not None:
+            self.prompt = self._format_prompt(context)
+
+        if mask_png_path is not None:
+            with open(mask_png_path, 'rb') as f:
+                mask = f.read()
+        else:
+            mask = None
+
+        if response_format == 'b64_json':
+            b64_json = Image.create_edit(
+                image=image,
+                mask=mask,
+                prompt=self.prompt,
+                n=n,
+                response_format='b64_json',
+            )['data'][0]['b64_json']
+            return base64.b64decode(b64_json)
+        else:
+            url = Image.create_edit(
+                image=image, mask=mask, prompt=self.prompt, n=n, **kwargs
+            )['data'][0]['url']
+            return requests.get(url).content
+
+    @retry
+    async def _apredict_one(
+        self,
+        image: t.BinaryIO,
+        n: int,
+        response_format: str,
+        context: t.Optional[t.List[str]] = None,
+        mask_png_path: t.Optional[str] = None,
+        **kwargs,
+    ):
+        if context is not None:
+            self.prompt = self._format_prompt(context)
+
+        if mask_png_path is not None:
+            with open(mask_png_path, 'rb') as f:
+                mask = f.read()
+        else:
+            mask = None
+
+        if response_format == 'b64_json':
+            b64_json = (
+                await Image.acreate_edit(
+                    image=image,
+                    mask=mask,
+                    prompt=self.prompt,
+                    n=n,
+                    response_format='b64_json',
+                )
+            )['data'][0]['b64_json']
+            return base64.b64decode(b64_json)
+        else:
+            url = (
+                await Image.acreate_edit(
+                    image=image, mask=mask, prompt=self.prompt, n=n, **kwargs
+                )
+            )['data'][0]['url']
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    return await resp.read()
+
+    def _predict(
+        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        response_format = kwargs.pop('response_format', 'b64_json')
+        if context:
+            assert one, 'context only works with ``one=True``'
+        if one:
+            return self._predict_one(
+                image=X, n=1, response_format=response_format, context=context, **kwargs
+            )
+        return [
+            self._predict_one(
+                image=image, n=1, response_format=response_format, **kwargs
+            )
+            for image in X
+        ]
+
+    async def _apredict(
+        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+    ):
+        response_format = kwargs.pop('response_format', 'b64_json')
+        if context:
+            assert one, 'context only works with ``one=True``'
+        if one:
+            return await self._apredict_one(
+                image=X, context=context, n=1, response_format=response_format, **kwargs
+            )
+        return [
+            await self._apredict_one(
+                image=image, n=1, response_format=response_format, **kwargs
+            )
+            for image in X
+        ]
 
 
 @dc.dataclass

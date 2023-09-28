@@ -1,9 +1,9 @@
 interactions:
 - request:
     body: !!binary |
-      LS05MjY2MmE1N2FiMzY0NTE0NmEzZWNhMjdjNWNiMDNjOQ0KQ29udGVudC1EaXNwb3NpdGlvbjog
-      Zm9ybS1kYXRhOyBuYW1lPSJtb2RlbCINCg0Kd2hpc3Blci0xDQotLTkyNjYyYTU3YWIzNjQ1MTQ2
-      YTNlY2EyN2M1Y2IwM2M5DQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZp
+      LS02MmUzYzgxNjE0ZWQyNGY3Y2NjNjU2ZDZhMDU0N2JiZA0KQ29udGVudC1EaXNwb3NpdGlvbjog
+      Zm9ybS1kYXRhOyBuYW1lPSJtb2RlbCINCg0Kd2hpc3Blci0xDQotLTYyZTNjODE2MTRlZDI0Zjdj
+      Y2M2NTZkNmEwNTQ3YmJkDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZp
       bGUiOyBmaWxlbmFtZT0idGVzdDEud2F2Ig0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9vY3Rl
       dC1zdHJlYW0NCg0KUklGRiQYAwBXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAYAwD/
       /////P/9//z/+//9//r/+P/3//r/+f/4//j/+P/5//n//P/2//j/+P/7//j/9v/0//f/+P/4//b/
@@ -3563,10 +3563,10 @@ interactions:
       /wAAAAACAAEAAAD+//v/9//1//X/8f/0//L/8P/u/+7/5//g/97/2//g/+3/9P/u/+j/4//e/9//
       4f/i/+f/6P/k/+T/5v/m/+b/5P/j/+T/5f/k/+T/4v/l/+3/7//r//H/8v/m/93/4//o/+j/7f/s
       /+z/6v/v/+7/8P/x//D/9P/x//D/7f/n/+T/5P/l//H/9P/y//n/+P/0//f/+f/8//z/+v/8//v/
-      +f8NCi0tOTI2NjJhNTdhYjM2NDUxNDZhM2VjYTI3YzVjYjAzYzktLQ0K
+      +f8NCi0tNjJlM2M4MTYxNGVkMjRmN2NjYzY1NmQ2YTA1NDdiYmQtLQ0K
     headers:
       Content-Type:
-      - multipart/form-data; boundary=92662a57ab3645146a3eca27c5cb03c9
+      - multipart/form-data; boundary=62e3c81614ed24f7ccc656d6a0547bbd
       User-Agent:
       - OpenAI/v1 PythonBindings/0.28.1
       X-OpenAI-Client-User-Agent:
@@ -3583,7 +3583,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80d495d30a8337f2-FRA
+      - 80e415c498ff373e-FRA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -3591,7 +3591,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 27 Sep 2023 14:55:02 GMT
+      - Fri, 29 Sep 2023 12:03:52 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -3601,7 +3601,7 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '410'
+      - '470'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -3609,19 +3609,19 @@ interactions:
       x-ratelimit-limit-requests:
       - '50'
       x-ratelimit-remaining-requests:
-      - '47'
+      - '49'
       x-ratelimit-reset-requests:
-      - 2.604s
+      - 1.2s
       x-request-id:
-      - dd2baf8d0bbb228fbc513e4712ab444f
+      - c55bb1797ecb43b79a90716a3fc8edb2
     status:
       code: 200
       message: OK
 - request:
     body: !!binary |
-      LS0wODk1MDkxMjBmZWRhZjQ0ZTgxOWM4OTkzYmZlYzM2OA0KQ29udGVudC1EaXNwb3NpdGlvbjog
-      Zm9ybS1kYXRhOyBuYW1lPSJtb2RlbCINCg0Kd2hpc3Blci0xDQotLTA4OTUwOTEyMGZlZGFmNDRl
-      ODE5Yzg5OTNiZmVjMzY4DQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZp
+      LS00YmI5YjNkODRkNmRmYjM4MzA2OWRhZDk4MmI3NmNjNw0KQ29udGVudC1EaXNwb3NpdGlvbjog
+      Zm9ybS1kYXRhOyBuYW1lPSJtb2RlbCINCg0Kd2hpc3Blci0xDQotLTRiYjliM2Q4NGQ2ZGZiMzgz
+      MDY5ZGFkOTgyYjc2Y2M3DQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZp
       bGUiOyBmaWxlbmFtZT0idGVzdDEud2F2Ig0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9vY3Rl
       dC1zdHJlYW0NCg0KUklGRiQYAwBXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAYAwD/
       /////P/9//z/+//9//r/+P/3//r/+f/4//j/+P/5//n//P/2//j/+P/7//j/9v/0//f/+P/4//b/
@@ -7181,10 +7181,10 @@ interactions:
       /wAAAAACAAEAAAD+//v/9//1//X/8f/0//L/8P/u/+7/5//g/97/2//g/+3/9P/u/+j/4//e/9//
       4f/i/+f/6P/k/+T/5v/m/+b/5P/j/+T/5f/k/+T/4v/l/+3/7//r//H/8v/m/93/4//o/+j/7f/s
       /+z/6v/v/+7/8P/x//D/9P/x//D/7f/n/+T/5P/l//H/9P/y//n/+P/0//f/+f/8//z/+v/8//v/
-      +f8NCi0tMDg5NTA5MTIwZmVkYWY0NGU4MTljODk5M2JmZWMzNjgtLQ0K
+      +f8NCi0tNGJiOWIzZDg0ZDZkZmIzODMwNjlkYWQ5ODJiNzZjYzctLQ0K
     headers:
       Content-Type:
-      - multipart/form-data; boundary=089509120fedaf44e819c8993bfec368
+      - multipart/form-data; boundary=4bb9b3d84d6dfb383069dad982b76cc7
       User-Agent:
       - OpenAI/v1 PythonBindings/0.28.1
       X-OpenAI-Client-User-Agent:
@@ -7201,7 +7201,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80d495d31a839232-FRA
+      - 80e415c49ece9bb0-FRA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -7209,7 +7209,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 27 Sep 2023 14:55:03 GMT
+      - Fri, 29 Sep 2023 12:03:53 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -7219,7 +7219,7 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '798'
+      - '1478'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -7229,9 +7229,9 @@ interactions:
       x-ratelimit-remaining-requests:
       - '48'
       x-ratelimit-reset-requests:
-      - 1.418s
+      - 2.276s
       x-request-id:
-      - 3ef13afb12be5faeee87732d12192542
+      - 0d4b730a34cdd4a5db549cbd533e68b7
     status:
       code: 200
       message: OK

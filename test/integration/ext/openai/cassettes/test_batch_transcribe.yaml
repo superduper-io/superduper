@@ -1,9 +1,9 @@
 interactions:
 - request:
     body: !!binary |
-      LS02MzliYTVhNjRmZTg1OWU1YzZmMzhmNDk2OTM3YTk0Mw0KQ29udGVudC1EaXNwb3NpdGlvbjog
-      Zm9ybS1kYXRhOyBuYW1lPSJtb2RlbCINCg0Kd2hpc3Blci0xDQotLTYzOWJhNWE2NGZlODU5ZTVj
-      NmYzOGY0OTY5MzdhOTQzDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZp
+      LS0xNmY5MWM2MjMwN2NiNWE2NzhhY2EwMjU0NjBkMzIzNA0KQ29udGVudC1EaXNwb3NpdGlvbjog
+      Zm9ybS1kYXRhOyBuYW1lPSJtb2RlbCINCg0Kd2hpc3Blci0xDQotLTE2ZjkxYzYyMzA3Y2I1YTY3
+      OGFjYTAyNTQ2MGQzMjM0DQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZp
       bGUiOyBmaWxlbmFtZT0idGVzdC53YXYiDQpDb250ZW50LVR5cGU6IGFwcGxpY2F0aW9uL29jdGV0
       LXN0cmVhbQ0KDQpSSUZGvHUGAFdBVkVmbXQgEAAAAAEAAQAiVgAARKwAAAIAEABkYXRhmHUGACQA
       HQAWABIACgAfACIAIgAoAC0ALgArADgAPAAuACgAJwAWABQAGwAiACAABgD3/93/4v/z/+L/5v/h
@@ -7432,8 +7432,8 @@ interactions:
       /+b/0P+w/7f/wP/G/8r/uf+//9r/wf+e/5f/pv/A/8f/t/+3/9H/0f/B/5H/c/+K/5L/o//D/6v/
       hP+L/5r/qv+1/8L/0v/X/9//1//N/8X/p/+r/8L/wf+2/7D/rf+9/8z/3P/Z/97/0/++/8H/t/+7
       /8D/sf/J/+T/3f/Y/9T/0P++/7P/r/+z/7T/yP/I/73/vf+t/7X/xP/O/83/tf+7/8P/yv+9/7b/
-      tf/O/+H/7f/3//7/AwDu/9P/zv/P/7r/0v/i//X/EwD///L/DQotLTYzOWJhNWE2NGZlODU5ZTVj
-      NmYzOGY0OTY5MzdhOTQzLS0NCg==
+      tf/O/+H/7f/3//7/AwDu/9P/zv/P/7r/0v/i//X/EwD///L/DQotLTE2ZjkxYzYyMzA3Y2I1YTY3
+      OGFjYTAyNTQ2MGQzMjM0LS0NCg==
     headers:
       Accept:
       - '*/*'
@@ -7444,7 +7444,7 @@ interactions:
       Content-Length:
       - '423643'
       Content-Type:
-      - multipart/form-data; boundary=639ba5a64fe859e5c6f38f496937a943
+      - multipart/form-data; boundary=16f91c62307cb5a678aca025460d3234
       User-Agent:
       - OpenAI/v1 PythonBindings/0.28.1
       X-OpenAI-Client-User-Agent:
@@ -7464,7 +7464,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80d49577ef5d1cc5-FRA
+      - 80e4156d38ec8fe6-FRA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -7472,7 +7472,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 27 Sep 2023 14:54:48 GMT
+      - Fri, 29 Sep 2023 12:03:36 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -7482,7 +7482,7 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '743'
+      - '647'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -7494,15 +7494,15 @@ interactions:
       x-ratelimit-reset-requests:
       - 1.2s
       x-request-id:
-      - 070f7f47ac1bc76475c9f755835d8c6f
+      - 8c4c79be897610d55d3a8c372faa5f0e
     status:
       code: 200
       message: OK
 - request:
     body: !!binary |
-      LS0wN2MwODBlNzUyNDNmYWZlMzE0ZGE0YzM2MDdlMTYxOA0KQ29udGVudC1EaXNwb3NpdGlvbjog
-      Zm9ybS1kYXRhOyBuYW1lPSJtb2RlbCINCg0Kd2hpc3Blci0xDQotLTA3YzA4MGU3NTI0M2ZhZmUz
-      MTRkYTRjMzYwN2UxNjE4DQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZp
+      LS01YzNjYmJhNjQxN2U1OTNhYTlmYjNiMzFjODc2NzM2Mw0KQ29udGVudC1EaXNwb3NpdGlvbjog
+      Zm9ybS1kYXRhOyBuYW1lPSJtb2RlbCINCg0Kd2hpc3Blci0xDQotLTVjM2NiYmE2NDE3ZTU5M2Fh
+      OWZiM2IzMWM4NzY3MzYzDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZp
       bGUiOyBmaWxlbmFtZT0idGVzdC53YXYiDQpDb250ZW50LVR5cGU6IGFwcGxpY2F0aW9uL29jdGV0
       LXN0cmVhbQ0KDQpSSUZGvHUGAFdBVkVmbXQgEAAAAAEAAQAiVgAARKwAAAIAEABkYXRhmHUGACQA
       HQAWABIACgAfACIAIgAoAC0ALgArADgAPAAuACgAJwAWABQAGwAiACAABgD3/93/4v/z/+L/5v/h
@@ -14931,8 +14931,8 @@ interactions:
       /+b/0P+w/7f/wP/G/8r/uf+//9r/wf+e/5f/pv/A/8f/t/+3/9H/0f/B/5H/c/+K/5L/o//D/6v/
       hP+L/5r/qv+1/8L/0v/X/9//1//N/8X/p/+r/8L/wf+2/7D/rf+9/8z/3P/Z/97/0/++/8H/t/+7
       /8D/sf/J/+T/3f/Y/9T/0P++/7P/r/+z/7T/yP/I/73/vf+t/7X/xP/O/83/tf+7/8P/yv+9/7b/
-      tf/O/+H/7f/3//7/AwDu/9P/zv/P/7r/0v/i//X/EwD///L/DQotLTA3YzA4MGU3NTI0M2ZhZmUz
-      MTRkYTRjMzYwN2UxNjE4LS0NCg==
+      tf/O/+H/7f/3//7/AwDu/9P/zv/P/7r/0v/i//X/EwD///L/DQotLTVjM2NiYmE2NDE3ZTU5M2Fh
+      OWZiM2IzMWM4NzY3MzYzLS0NCg==
     headers:
       Accept:
       - '*/*'
@@ -14943,7 +14943,7 @@ interactions:
       Content-Length:
       - '423643'
       Content-Type:
-      - multipart/form-data; boundary=07c080e75243fafe314da4c3607e1618
+      - multipart/form-data; boundary=5c3cbba6417e593aa9fb3b31c8767363
       User-Agent:
       - OpenAI/v1 PythonBindings/0.28.1
       X-OpenAI-Client-User-Agent:
@@ -14963,7 +14963,7 @@ interactions:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80d4958208d01cc5-FRA
+      - 80e4157b3e1c8fe6-FRA
       Connection:
       - keep-alive
       Content-Encoding:
@@ -14971,7 +14971,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 27 Sep 2023 14:54:52 GMT
+      - Fri, 29 Sep 2023 12:03:38 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -14981,7 +14981,7 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '3483'
+      - '773'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -14993,7 +14993,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 1.2s
       x-request-id:
-      - 690ac1a0da3fffd85225ae7352eb3b6a
+      - 2fd6dc5e6f46ed5535e664725610839d
     status:
       code: 200
       message: OK

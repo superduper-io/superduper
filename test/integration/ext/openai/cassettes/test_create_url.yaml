@@ -1,0 +1,122 @@
+interactions:
+- request:
+    body: '{"prompt": "a close up, studio photographic portrait of a cat", "n": 1}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '71'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.28.1
+      X-OpenAI-Client-User-Agent:
+      - '{"bindings_version": "0.28.1", "httplib": "requests", "lang": "python", "lang_version":
+        "3.8.10", "platform": "Linux-6.2.0-33-generic-x86_64-with-glibc2.34", "publisher":
+        "openai", "uname": "Linux 6.2.0-33-generic #33~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
+        Thu Sep  7 10:33:52 UTC 2 x86_64 x86_64"}'
+    method: POST
+    uri: https://api.openai.com/v1/images/generations
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA2SRT2+bMADF73wKCwlOM/9sjImEpoSpTdMunZpUWTLtYGzDXCg4mIQtVb/7RC9T
+        tMvTk37v8J7emwWAzXvJBinsGQhJGqeUUhR/moBgA7Nn4IcFAABvHwqAfeobewbsX8Ogzcz3O6YE
+        axrJtNJ9Jww/Ga9ousLjXS+9UbWiG43XysHXvTqzQfpdX8E91cnqvHo6Pu+6+1Q+bdSKVY8PG/9k
+        ZA/POr75Pc6L55ItW327Hm/19iFf1r56reA+H493l+/4cVGvCc/vNq004Sm5eLqtPpshi4IIwSCF
+        UboNQwfNg8BBcxQfXCOvGLpiOutdc54CIQwoDIhr+qxwe8NFptpGtXLyQ6ZeWSV93VauqTslMsIY
+        E1JIiMsCQUxSChktCSQUiyShpAhI4pp6UCJjmHLOYgIlEQxiiiVkNMQw5RSnJI4KXqApetVyKojx
+        JOjgmvrfBBT8B01WuKa+HqGqzIkW+X27HVcL2QS03bPdMV9vq6A+ONHihe/2Lzfhn/Jb1Cy/+peS
+        O+iL/fH1uwXAT+vd+gsAAP//AwBY1gn1JQIAAA==
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 80e410e03baf35f8-FRA
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 29 Sep 2023 12:00:35 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-origin:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - user-vp5fxwabufahnpgnwgptlchk
+      openai-processing-ms:
+      - '7628'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-request-id:
+      - ed444fc321fd235bfd2746138d23f7f5
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.31.0
+    method: GET
+    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-YCwqIzX4OBkN6cCISnes1u7z.png?st=2023-09-29T11%3A00%3A35Z&se=2023-09-29T13%3A00%3A35Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-09-29T10%3A44%3A43Z&ske=2023-09-30T10%3A44%3A43Z&sks=b&skv=2021-08-06&sig=%2BCKnTwJBel08nYaWqCNTg0kZ%2BjcWYjF1yfP2lHM/zfc%3D
+  response:
+    body:
+      string: !!binary |
+        iVBORw0KGgoAAAANSUhEUg==
+    headers:
+      Accept-Ranges:
+      - bytes
+      Content-Disposition:
+      - inline
+      Content-Length:
+      - '3147977'
+      Content-MD5:
+      - lz9mqiPv+AC6oZ8RJfPySg==
+      Content-Type:
+      - image/png
+      Date:
+      - Fri, 29 Sep 2023 12:00:36 GMT
+      ETag:
+      - '"0x8DBC0E3B0C61D51"'
+      Last-Modified:
+      - Fri, 29 Sep 2023 12:00:35 GMT
+      Server:
+      - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
+      x-ms-blob-type:
+      - BlockBlob
+      x-ms-creation-time:
+      - Fri, 29 Sep 2023 12:00:35 GMT
+      x-ms-lease-state:
+      - available
+      x-ms-lease-status:
+      - unlocked
+      x-ms-request-id:
+      - d006734e-e01e-002a-62cc-f2b435000000
+      x-ms-server-encrypted:
+      - 'true'
+      x-ms-version:
+      - '2021-08-06'
+    status:
+      code: 200
+      message: OK
+version: 1

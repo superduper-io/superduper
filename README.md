@@ -32,24 +32,6 @@
 </a> 
 </p>
 
-<h3 align="center">
-	<a href="#how-to">How To</a>
-	<span> | </span>
-	<a href="#installation">Installation</a>
-	<span> | </span>
-	<a href="#quickstart">Quickstart</a>
-	<span> | </span>
-	<a href="#community--getting-help">Get Help & Community</a>
-	<span> | </span>
-	<a href="#contributing">Contributing</a>
-	<span> | </span>
-	<a href="#feedback">Feedback</a>
-	<span> | </span>
-	<a href="#license">License</a>
-	<span> | </span>
-	<a href="#join-us">Join Us</a>
-</h3>
-<hr>
 
 SuperDuperDB allows you to easily deploy, train and operate any AI models and APIs on your datastore: from LLM based Q&A and vector search, image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc. to highly custom machine learning models, use-cases and workflows.
 
@@ -57,10 +39,12 @@ A single scalable deployment of all your AI models which is automatically kept u
 
 No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2.5%"/>
 
+<hr> 
 
-| Supported Data Stores: | AI Frameworks & Models: | AI APIs: | 
+#### Currently supported (more coming soon):
+| Data Stores | AI Frameworks & Models | AI APIs | 
 |--------------------------|--------------------------|--------------------------|
-| - **MongoDB** <br> - **MongoDB Atlas** <br> - **S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | - **PyTorch** <br> - **Scikit-Learn**<br> - **HuggingFace**<br> - **Llama 2**<br> - **CLIP**<br> - TensorFlow (coming soon) | - **OpenAI**: chat & embeddings <br> - OpenAI: images and audio (coming soon) <br> - **Cohere**: generate & embed <br> - Cohere: chat (coming soon) <br> - **Anthropic:** completions <br>
+| - **MongoDB** <br> - **MongoDB Atlas** <br> - **S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | - **PyTorch** <br> - **Scikit-Learn**<br> - **HuggingFace Transformers** | - **OpenAI** <br> - **Cohere** <br> - **Anthropic** <br>
 <hr>
 
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a><br>

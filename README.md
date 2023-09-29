@@ -6,7 +6,9 @@
 
 <div align="center">
 
-# Build and deploy AI on your datastore!
+# 🔮 Bring AI to your favourite datastore!
+
+
 
 </div>
 
@@ -35,7 +37,7 @@
 
 SuperDuperDB allows you to easily integrate and train any AI models and APIs with your datastore to build AI applications: from LLM based chatbots and vector search, image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc. to highly custom machine learning use-cases and workflows.
 
-A single scalable deployment of all your AI models which is automatically kept up-to-date as new data is handled automatically and immediately.
+A single scalable deployment of all your AI models which is automatically kept up-to-date as changing data in your datastore is handled automatically and immediately.
 
 No data duplication, no pipelines, no duplicate infrastructure — just Python!<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2.5%"/>
 
@@ -49,8 +51,7 @@ No data duplication, no pipelines, no duplicate infrastructure — just Python!<
 
 - <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a><br>
 - <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a><br>
-- <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Example use cases</strong></a><br>
-- <a href="https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb"><strong>Quickstart with Binder!</strong></a><br>
+- <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Example Use-Cases & Applications</strong></a><br>
 - <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA
 "><strong>Join our Slack!</strong></a><br>
 
@@ -233,16 +234,6 @@ pip install superduperdb
 #### 3. Try one of our example use cases/notebooks <a href="https://superduperdb.github.io/superduperdb/docs/category/use-cases/">found here</a> (~as many minutes you enjoy)!
 <br>
 
-# Quickstart
-
-#### Try SuperDuperDB on Binder: 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/SuperDuperDB/superduperdb/main?urlpath=lab/tree/docs/how_to/playground.ipynb)
-
-This will set up a playground environment that includes:
-- an installation of SuperDuperDB
-- an installation of a MongoDB instance containing image data and `torch` models
-
-Have fun!
 
 # Community & Getting Help 
 

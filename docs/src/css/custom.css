@@ -41,3 +41,111 @@ main-wrapper {
     grid-area: 1 / 1 / 2 / 2;
     /* height: 100%; */
 }
+
+@media (max-width: 425px) {
+  .pre_header {
+    background: none !important;
+    display: none !important;
+  }
+}
+
+
+.pre_head {
+  background: #7628f8;
+  height: 41px;
+  text-align: center;
+  width: 100%;
+  position: sticky;
+  z-index: 999;
+  top: 0;
+  display: flex;
+  padding-inline: 30px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: white;
+}
+
+.git_star {
+  display: flex;
+  color: black;
+  font-weight: 600;
+}
+
+.git_text {
+
+  height: 26px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  padding: 0 8px;
+  background-color: #ebf0f4;
+  border-radius: 3px 0 0 3px;
+}
+
+.git_number {
+  color: #7628f8;
+  font-weight: 600;
+  height: 26px;
+  border: none;
+  font-size: 12px !important;
+  padding: 0 8px;
+  background-color: white;
+  border-radius: 0 3px 3px 0;
+  border-left: 1px solid #bfc5ca;
+}
+
+.pre_head_text {
+  font-weight: 900;
+  margin-bottom: 0;
+  font-family: 'Roboto Mono', monospace;
+}
+
+
+@media (max-width :900px) {
+  .pre_head_text {
+    display: none;
+  }
+}
+
+.pre_head::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  height: 41px;
+  background-color: #7628f8;
+  left: 0;
+}
+
+
+@media (max-width: 425px) {
+  .pre_head{
+    display: none;
+  }
+}
+
+.pre_head_stars {
+  vertical-align: sub;
+}
+
+.socialIcons {
+  text-decoration: none;
+  transition-duration: 0.2s !important;
+  transition-timing-function: linear;
+}
+.socialIcons svg:hover {
+    fill: black !important;
+  }
+
+
+
+.navbar--fixed-top {
+  top: 41px;
+}
+
+
+@media (max-width: 425px) {
+  .navbar--fixed-top {
+    top: 0;
+  }
+}

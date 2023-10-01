@@ -20,7 +20,8 @@ extensions =[
     'nbsphinx_link',
     'myst_parser',
     'sphinx_copybutton',
-    'sphinxcontrib.mermaid'
+    'sphinxcontrib.mermaid',
+    'sphinx_markdown_builder'
 ]
 
 autoclass_content = "both"

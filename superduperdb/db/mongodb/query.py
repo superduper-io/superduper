@@ -550,9 +550,11 @@ class Find(Select):
         if isinstance(self.parent, Collection):
             assert self.collection, "Please set a valid collection name"
             cursor = db.db[self.collection.name].find(*self.args, **self.kwargs)
+            scores = None
         elif isinstance(self.parent, Like):
             intermediate = self.parent(db)
             ids = [ObjectId(r['_id']) for r in intermediate]
+            scores = intermediate.scores
             try:
                 filter = self.args[0]
             except IndexError:
@@ -564,7 +566,9 @@ class Find(Select):
             )
         else:
             raise NotImplementedError
-        return SuperDuperCursor(raw_cursor=cursor, id_field='_id', encoders=db.encoders)
+        return SuperDuperCursor(
+            raw_cursor=cursor, id_field='_id', encoders=db.encoders, scores=scores
+        )
 
 
 @dc.dataclass
@@ -943,10 +947,17 @@ class PostLike(Select):
             ids=[str(_id) for _id in ids],
         )
         ids = [ObjectId(_id) for _id in ids]
-        return Find(
+        out = Find(
             collection=self.find_parent.collection,
             args=[{'_id': {'$in': ids}}],
         )(db)
+        return SuperDuperCursor(
+            raw_cursor=out.raw_cursor,
+            scores=dict(zip(ids, scores)),
+            encoders=out.encoders,
+            features=out.features,
+            id_field=out.id_field,
+        )
 
 
 @dc.dataclass

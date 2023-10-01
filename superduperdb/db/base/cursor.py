@@ -1,6 +1,5 @@
 import dataclasses as dc
 import typing as t
-from functools import cached_property
 
 from superduperdb import CFG
 from superduperdb.container.document import Document
@@ -27,14 +26,6 @@ class SuperDuperCursor:
     encoders: t.Dict[str, Encoder] = dc.field(default_factory=dict)
     features: t.Optional[t.Dict[str, str]] = None
     scores: t.Optional[t.Dict[str, float]] = None
-    _it: int = 0
-
-    @cached_property
-    def _results(self) -> t.Optional[t.List[t.Dict]]:
-        def key(r):
-            return -self.scores[str(r[self.id_field])]
-
-        return None if self.scores is None else sorted(self.raw_cursor, key=key)
 
     @staticmethod
     def add_features(r, features):
@@ -53,15 +44,9 @@ class SuperDuperCursor:
                     r['_other'][k] = r['_outputs'][k][features[k]]
         return r
 
-    def count(self):
+    def limit(self, *args, **kwargs) -> 'SuperDuperCursor':
         """
-        Count the number of documents in the cursor.
-        """
-        return len(list(self.raw_cursor.clone()))
-
-    def limit(self, *args, **kwargs):
-        """
-        Limit the number of documents in the cursor.
+        Limit the number of results returned by the cursor.
         """
         return SuperDuperCursor(
             raw_cursor=self.raw_cursor.limit(*args, **kwargs),
@@ -70,6 +55,9 @@ class SuperDuperCursor:
             features=self.features,
             scores=self.scores,
         )
+
+    def cursor_next(self):
+        return self.raw_cursor.next()
 
     @staticmethod
     def wrap_document(r, encoders):
@@ -81,19 +69,10 @@ class SuperDuperCursor:
     def __iter__(self):
         return self
 
-    def cursor_next(self):
-        return self.raw_cursor.next()
-
     def __next__(self):
+        r = self.cursor_next()
         if self.scores is not None:
-            try:
-                r = self._results[self._it]
-            except IndexError:
-                raise StopIteration
-            self._it += 1
-        else:
-            r = self.cursor_next()
-        if self.scores is not None:
+            print('adding score')
             r['_score'] = self.scores[str(r[self.id_field])]
         if self.features is not None and self.features:
             r = self.add_features(r, features=self.features)

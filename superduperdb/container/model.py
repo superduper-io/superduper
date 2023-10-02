@@ -163,6 +163,83 @@ class PredictMixin:
 
         return outputs
 
+    def predict(
+        self,
+        X: t.Any,
+        db: t.Optional[DB] = None,
+        select: t.Optional[Select] = None,
+        distributed: t.Optional[bool] = None,
+        ids: t.Optional[t.List[str]] = None,
+        max_chunk_size: t.Optional[int] = None,
+        dependencies: t.Sequence[Job] = (),
+        listen: bool = False,
+        one: bool = False,
+        context: t.Optional[t.Dict] = None,
+        in_memory: bool = True,
+        overwrite: bool = False,
+        **kwargs,
+    ) -> t.Any:
+        if one:
+            assert db is None, 'db must be None when ``one=True`` (direct call)'
+
+        if isinstance(select, dict):
+            select = Serializable.deserialize(select)
+
+        if db is not None:
+            logging.info(f'Adding model {self.identifier} to db')
+            assert isinstance(self, Component)
+            db.add(self)
+            logging.info('Done.')
+
+        if distributed is None:
+            distributed = s.CFG.cluster.distributed
+
+        if listen:
+            assert db is not None
+            assert select is not None
+            return self._predict_and_listen(X=X, db=db, select=select, **kwargs)
+
+        model_update_kwargs = self.model_update_kwargs  # type: ignore [attr-defined]
+
+        if distributed:
+            return self.create_predict_job(
+                X,
+                select=select,
+                ids=ids,
+                max_chunk_size=max_chunk_size,
+                overwrite=overwrite,
+                **kwargs,
+            )(db=db, distributed=distributed, dependencies=dependencies)
+        else:
+            if select is not None and ids is None:
+                assert db is not None
+                return self._predict_with_select(
+                    X=X,
+                    select=select,
+                    db=db,
+                    in_memory=in_memory,
+                    max_chunk_size=max_chunk_size,
+                    overwrite=overwrite,
+                    model_update_kwargs=model_update_kwargs,
+                    **kwargs,
+                )
+            elif select is not None and ids is not None:
+                assert db is not None
+                return self._predict_with_select_and_ids(
+                    X=X,
+                    select=select,
+                    ids=ids,
+                    db=db,
+                    max_chunk_size=max_chunk_size,
+                    in_memory=in_memory,
+                    model_update_kwargs=model_update_kwargs,
+                    **kwargs,
+                )
+            else:
+                if self.takes_context:
+                    kwargs['context'] = context
+                return self._predict(X, one=one, **kwargs)
+
     async def apredict(
         self,
         X: t.Any,
@@ -208,6 +285,7 @@ class PredictMixin:
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
         overwrite: bool = False,
+        model_update_kwargs: t.Dict[str, t.Any] = {},
         **kwargs,
     ):
         ids = []
@@ -226,6 +304,7 @@ class PredictMixin:
             select=select,
             max_chunk_size=max_chunk_size,
             in_memory=in_memory,
+            model_update_kwargs=model_update_kwargs,
             **kwargs,
         )
 
@@ -237,6 +316,7 @@ class PredictMixin:
         ids: t.List[str],
         in_memory: bool = True,
         max_chunk_size: t.Optional[int] = None,
+        model_update_kwargs: t.Dict[str, t.Any] = {},
         **kwargs,
     ):
         if max_chunk_size is not None:
@@ -250,6 +330,7 @@ class PredictMixin:
                     select=select,
                     max_chunk_size=None,
                     in_memory=in_memory,
+                    model_update_kwargs=model_update_kwargs,
                     **kwargs,
                 )
                 it += 1
@@ -279,87 +360,24 @@ class PredictMixin:
         if isinstance(self.encoder, Encoder):
             outputs = [self.encoder(x).encode() for x in outputs]
 
+        collection = None
+        if not model_update_kwargs.get('document_embedded', True):
+            collection = f'_outputs.{X}.{self.identifier}'
+
         select.model_update(
             db=db,
             model=self.identifier,
             outputs=outputs,
             key=X,
             ids=ids,
+            collection=collection,
         )
         return
 
-    def predict(
-        self,
-        X: t.Any,
-        db: t.Optional[DB] = None,
-        select: t.Optional[Select] = None,
-        distributed: t.Optional[bool] = None,
-        ids: t.Optional[t.List[str]] = None,
-        max_chunk_size: t.Optional[int] = None,
-        dependencies: t.Sequence[Job] = (),
-        listen: bool = False,
-        one: bool = False,
-        context: t.Optional[t.Dict] = None,
-        in_memory: bool = True,
-        overwrite: bool = False,
-        **kwargs,
-    ) -> t.Any:
-        if one:
-            assert db is None, 'db must be None when ``one=True`` (direct call)'
 
-        if isinstance(select, dict):
-            select = Serializable.deserialize(select)
-
-        if db is not None:
-            logging.info(f'Adding model {self.identifier} to db')
-            assert isinstance(self, Component)
-            db.add(self)
-            logging.info('Done.')
-
-        if distributed is None:
-            distributed = s.CFG.cluster.distributed
-
-        if listen:
-            assert db is not None
-            assert select is not None
-            return self._predict_and_listen(X=X, db=db, select=select, **kwargs)
-
-        if distributed:
-            return self.create_predict_job(
-                X,
-                select=select,
-                ids=ids,
-                max_chunk_size=max_chunk_size,
-                overwrite=overwrite,
-                **kwargs,
-            )(db=db, distributed=distributed, dependencies=dependencies)
-        else:
-            if select is not None and ids is None:
-                assert db is not None
-                return self._predict_with_select(
-                    X=X,
-                    select=select,
-                    db=db,
-                    in_memory=in_memory,
-                    max_chunk_size=max_chunk_size,
-                    overwrite=overwrite,
-                    **kwargs,
-                )
-            elif select is not None and ids is not None:
-                assert db is not None
-                return self._predict_with_select_and_ids(
-                    X=X,
-                    select=select,
-                    ids=ids,
-                    db=db,
-                    max_chunk_size=max_chunk_size,
-                    in_memory=in_memory,
-                    **kwargs,
-                )
-            else:
-                if self.takes_context:
-                    kwargs['context'] = context
-                return self._predict(X, one=one, **kwargs)
+@dc.dataclass
+class DefaultModelUpdateKwargs(dict):
+    document_embedded: bool = True
 
 
 @dc.dataclass
@@ -394,6 +412,7 @@ class Model(Component, PredictMixin):
     training_select: t.Union[Select, None] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
+    model_update_kwargs: dict = dc.field(default_factory=DefaultModelUpdateKwargs)
 
     version: t.Optional[int] = None
     future: t.Optional[Future] = None

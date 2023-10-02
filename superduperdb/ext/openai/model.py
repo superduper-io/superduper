@@ -14,7 +14,7 @@ from openai.error import RateLimitError, ServiceUnavailableError, Timeout, TryAg
 import superduperdb as s
 from superduperdb.container.component import Component
 from superduperdb.container.encoder import Encoder
-from superduperdb.container.model import PredictMixin
+from superduperdb.container.model import DefaultModelUpdateKwargs, PredictMixin
 from superduperdb.ext.vector.encoder import vector
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
@@ -50,6 +50,7 @@ class OpenAI(Component, PredictMixin):
     version: t.Optional[int] = None
     takes_context: bool = False
     encoder: t.Union[Encoder, str, None] = None
+    model_update_kwargs: dict = dc.field(default_factory=DefaultModelUpdateKwargs)
 
     #: A unique name for the class
     type_id: t.ClassVar[str] = 'model'

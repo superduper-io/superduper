@@ -477,6 +477,7 @@ class QueryLinker(Serializable, _LogicalExprMixin):
         key: str,
         model: str,
         outputs: t.Sequence[t.Any],
+        **kargs,
     ):
         if key.startswith('_outputs'):
             key = key.split('.')[1]

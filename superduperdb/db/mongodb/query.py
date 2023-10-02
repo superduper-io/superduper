@@ -481,7 +481,8 @@ class Find(Select):
         key: str,
         model: str,
         outputs: t.Sequence[t.Any],
-        collection: t.Optional[str],
+        document_embedded: bool = True,
+        flatten: bool = False,
     ) -> None:
         """
         Add the outputs of a model to the database
@@ -491,14 +492,19 @@ class Find(Select):
         :param key: The key to update
         :param model: The model to update
         :param outputs: The outputs to add
-        :param collection: The collection where outputs should be stored
+        :param document_embedded: If True outputs will be saved along with documents
+        :param flatten: If True flatten the outputs and store
         """
 
         if key.startswith('_outputs'):
             key = key.split('.')[1]
         if not outputs:
             return
-        if not collection:
+        if document_embedded:
+            if flatten:
+                raise AttributeError(
+                    'Flattened outputs cannot be stored along with input documents.'
+                )
             assert self.collection is not None
             db.db[self.collection.name].bulk_write(
                 [
@@ -510,12 +516,40 @@ class Find(Select):
                 ]
             )
         else:
-            db.db[collection].bulk_write(
-                [
+            if flatten:
+                bulk_docs = []
+                for i, id in enumerate(ids):
+                    _outputs = outputs[i]
+                    if isinstance(_outputs, (list, tuple)):
+                        for offset, output in enumerate(_outputs):
+                            bulk_docs.append(
+                                _InsertOne(
+                                    {
+                                        '_outputs': output,
+                                        '_source': ObjectId(id),
+                                        '_offset': offset,
+                                    }
+                                )
+                            )
+                    else:
+                        bulk_docs.append(
+                            _InsertOne(
+                                {
+                                    '_outputs': _outputs,
+                                    '_source': ObjectId(id),
+                                    '_offset': 0,
+                                }
+                            )
+                        )
+
+            else:
+                bulk_docs = [
                     _InsertOne({'_id': ObjectId(id), '_outputs': outputs[i]})
                     for i, id in enumerate(ids)
                 ]
-            )
+
+            collection = f'_outputs.{key}.{model}'
+            db.db[collection].bulk_write(bulk_docs)
 
     def model_cleanup(self, db: DB, model: Model, key: str) -> None:
         """Clean up a model after the computation is done
@@ -1032,10 +1066,17 @@ class Featurize(Select):
         key: str,
         model: str,
         outputs: t.Sequence[t.Any],
-        collection: t.Optional[str],
+        document_embedded: bool,
+        flatten: bool = False,
     ) -> None:
         self.parent.model_update(
-            db=db, ids=ids, key=key, model=model, outputs=outputs, collection=collection
+            db=db,
+            ids=ids,
+            key=key,
+            model=model,
+            outputs=outputs,
+            document_embedded=document_embedded,
+            flatten=flatten,
         )
 
     @override

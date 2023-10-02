@@ -7,7 +7,7 @@ import typing as t
 
 from bson import ObjectId
 from overrides import override
-from pymongo import UpdateOne as _UpdateOne
+from pymongo import InsertOne as _InsertOne, UpdateOne as _UpdateOne
 
 import superduperdb as s
 from superduperdb.container.document import Document
@@ -481,6 +481,7 @@ class Find(Select):
         key: str,
         model: str,
         outputs: t.Sequence[t.Any],
+        collection: t.Optional[str],
     ) -> None:
         """
         Add the outputs of a model to the database
@@ -490,22 +491,31 @@ class Find(Select):
         :param key: The key to update
         :param model: The model to update
         :param outputs: The outputs to add
+        :param collection: The collection where outputs should be stored
         """
 
         if key.startswith('_outputs'):
             key = key.split('.')[1]
         if not outputs:
             return
-        assert self.collection is not None
-        db.db[self.collection.name].bulk_write(
-            [
-                _UpdateOne(
-                    {'_id': ObjectId(id)},
-                    {'$set': {f'_outputs.{key}.{model}': outputs[i]}},
-                )
-                for i, id in enumerate(ids)
-            ]
-        )
+        if not collection:
+            assert self.collection is not None
+            db.db[self.collection.name].bulk_write(
+                [
+                    _UpdateOne(
+                        {'_id': ObjectId(id)},
+                        {'$set': {f'_outputs.{key}.{model}': outputs[i]}},
+                    )
+                    for i, id in enumerate(ids)
+                ]
+            )
+        else:
+            db.db[collection].bulk_write(
+                [
+                    _InsertOne({'_id': ObjectId(id), '_outputs': outputs[i]})
+                    for i, id in enumerate(ids)
+                ]
+            )
 
     def model_cleanup(self, db: DB, model: Model, key: str) -> None:
         """Clean up a model after the computation is done
@@ -1022,8 +1032,11 @@ class Featurize(Select):
         key: str,
         model: str,
         outputs: t.Sequence[t.Any],
+        collection: t.Optional[str],
     ) -> None:
-        self.parent.model_update(db=db, ids=ids, key=key, model=model, outputs=outputs)
+        self.parent.model_update(
+            db=db, ids=ids, key=key, model=model, outputs=outputs, collection=collection
+        )
 
     @override
     def __call__(self, db: DB) -> t.Any:

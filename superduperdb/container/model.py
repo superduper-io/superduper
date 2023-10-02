@@ -78,6 +78,7 @@ class PredictMixin:
     batch_predict: bool
     takes_context: bool
     to_call: t.Callable
+    model_update_kwargs: dict
 
     def create_predict_job(
         self,
@@ -199,7 +200,7 @@ class PredictMixin:
             assert select is not None
             return self._predict_and_listen(X=X, db=db, select=select, **kwargs)
 
-        model_update_kwargs = self.model_update_kwargs  # type: ignore [attr-defined]
+        model_update_kwargs = self.model_update_kwargs
 
         if distributed:
             return self.create_predict_job(
@@ -330,7 +331,7 @@ class PredictMixin:
                     select=select,
                     max_chunk_size=None,
                     in_memory=in_memory,
-                    model_update_kwargs=model_update_kwargs,
+                    model_update_kwargs=self.model_update_kwargs,
                     **kwargs,
                 )
                 it += 1
@@ -360,24 +361,16 @@ class PredictMixin:
         if isinstance(self.encoder, Encoder):
             outputs = [self.encoder(x).encode() for x in outputs]
 
-        collection = None
-        if not model_update_kwargs.get('document_embedded', True):
-            collection = f'_outputs.{X}.{self.identifier}'
-
         select.model_update(
             db=db,
             model=self.identifier,
             outputs=outputs,
             key=X,
             ids=ids,
-            collection=collection,
+            document_embedded=self.model_update_kwargs.get('document_embedded', True),
+            flatten=self.model_update_kwargs.get('flatten', False),
         )
         return
-
-
-@dc.dataclass
-class DefaultModelUpdateKwargs(dict):
-    document_embedded: bool = True
 
 
 @dc.dataclass
@@ -412,7 +405,7 @@ class Model(Component, PredictMixin):
     training_select: t.Union[Select, None] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
-    model_update_kwargs: dict = dc.field(default_factory=DefaultModelUpdateKwargs)
+    model_update_kwargs: dict = dc.field(default_factory=dict)
 
     version: t.Optional[int] = None
     future: t.Optional[Future] = None

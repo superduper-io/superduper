@@ -43,3 +43,46 @@ def test_function_predict_without_document_embedded(data_in_db):
     function.predict(X='X', db=data_in_db, select=Collection(name='documents').find())
     out = data_in_db.execute(Collection(name='documents').find({}))
     assert [o['_outputs']['X']['test'] for o in out] == [1, 2, 3, 4, 5]
+
+
+def test_function_predict_with_flatten_outputs(data_in_db):
+    function = Model(
+        object=lambda x: [x, x, x] if x > 2 else [x, x],
+        identifier='test',
+        model_update_kwargs={'document_embedded': False, 'flatten': True},
+    )
+    function.predict(X='X', db=data_in_db, select=Collection(name='documents').find())
+    out = data_in_db.execute(Collection(name='_outputs.X.test').find({}))
+    out = [o for o in out]
+    input_ids = [
+        c['_id'] for c in data_in_db.execute(Collection(name='documents').find())
+    ]
+    source_ids = []
+    for i, id in enumerate(input_ids):
+        ix = 3 if i + 1 > 2 else 2
+        source_ids.append([id] * ix)
+    source_ids = sum(source_ids, [])
+
+    assert [o['_outputs'] for o in out] == [1, 1, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5]
+    assert [o['_source'] for o in out] == source_ids
+
+
+def test_function_predict_with_mix_flatten_outputs(data_in_db):
+    function = Model(
+        object=lambda x: x if x < 2 else [x, x, x],
+        identifier='test',
+        model_update_kwargs={'document_embedded': False, 'flatten': True},
+    )
+    function.predict(X='X', db=data_in_db, select=Collection(name='documents').find())
+    out = data_in_db.execute(Collection(name='_outputs.X.test').find({}))
+    out = [o for o in out]
+    input_ids = [
+        c['_id'] for c in data_in_db.execute(Collection(name='documents').find())
+    ]
+    source_ids = []
+    for i, id in enumerate(input_ids):
+        source_ids.append(id if i + 1 < 2 else [id] * 3)
+    source_ids = source_ids[:1] + sum(source_ids[1:], [])
+
+    assert [o['_outputs'] for o in out] == [1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5]
+    assert [o['_source'] for o in out] == source_ids

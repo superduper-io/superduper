@@ -1,6 +1,6 @@
 # A walkthrough of vector-search on MongoDB Atlas with SuperDuperDB
 
-*In this tutorial we show developers how to execute searches leveraging MongoDB Atlas vector-search
+*In this tutorial we will show developers how to execute searches leveraging MongoDB Atlas vector-search
 via SuperDuperDB*
 
 **Install `superduperdb` Python package**

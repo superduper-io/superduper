@@ -21,7 +21,6 @@ extensions =[
     'myst_parser',
     'sphinx_copybutton',
     'sphinxcontrib.mermaid',
-    'sphinx_markdown_builder'
 ]
 
 autoclass_content = "both"

@@ -89,7 +89,8 @@ class Select(ABC, Serializable):
         key: str,
         model: str,
         outputs: t.Sequence[t.Any],
-        collection: t.Optional[str],
+        document_embedded: bool,
+        flatten: bool,
     ) -> None:
         """
         Add outputs of ``model`` to the db ``db``.
@@ -99,7 +100,8 @@ class Select(ABC, Serializable):
         :param key: key on which model was applied
         :param outputs: (encoded) outputs to be added
         :param ids: ids of input documents corresponding to each output
-        :param collection: Collection name where model outputs will be stored
+        :param document_embedded: If True outputs will be saved along with documents
+        :param flatten: If True flatten the outputs and store
         """
         raise NotImplementedError
 

@@ -6,7 +6,8 @@
 
 <div align="center">
 	
-# Bring AI to your favourite database!
+# Bring AI to your favourite database! 
+## Integrate, train and manage any AI models and APIs directly with your database with your data. 
 
 </div>
 
@@ -41,7 +42,7 @@
  `🔮 SuperDuperDB is open-source: Leave a star ⭐️ to support the project!`
  </div>
 
-#### Integrate, train and manage any AI models and APIs directly with your database with your data. Build next-gen AI applications just using Python — without the need for complex MLOps pipelines and infrastructure nor data duplication and migration to specialized vector databases:
+### SuperDuperDB allows you to build next-gen AI applications just using Python — without the need for complex MLOps pipelines and infrastructure nor data duplication and migration to specialized vector databases:
 - from LLM based (RAG) chatbots and vector search
 - image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc.
 - to highly custom machine learning use-cases and workflows

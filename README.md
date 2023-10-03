@@ -73,9 +73,12 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
   <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_diagram.svg">
 </p>
 
+# Example Use-Cases & Apps
+#### Check out the example use-cases and applications we have already implemented with SuperDuperDB <a href="https://docs.superduperdb.com/docs/category/use-cases">in our docs here</a>. 
+
+
 # How To
 ### The following are examples of how to use SuperDuperDB with Python (find all how-tos and examples <a href="https://docs.superduperdb.com/docs/docs/intro">in the docs</a>): 
-
 #### - Add a ML/AI model to your database <a href="https://docs.superduperdb.com/docs/docs/intro">(read more in the docs)</a>:
 
 ```python
@@ -205,12 +208,6 @@ pip install superduperdb
    - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>.
 
 #### 3. Try one of our example use cases/notebooks <a href="https://superduperdb.github.io/superduperdb/docs/category/use-cases/">found here</a> (~as many minutes you enjoy)!
-
-
-# Example Use-Cases & Apps
-
-#### Check out the example use-cases and applications we have already implemented with SuperDuperDB <a href="https://docs.superduperdb.com/docs/category/use-cases">in our docs here</a>. 
-
 
 # Community & Getting Help 
 

@@ -47,7 +47,7 @@
 - to highly custom machine learning use-cases and workflows
 
 ### SuperDuperDB is not another database, it transforms your existing one into an AI powerhouse:
-- **A single scalable AI deployment** which includes **a model repository**, **a model registry**,and **inference** (computation of outputs) — automatically kept up-to-date as changing data in your database is handled automatically and immediately.
+- **A single scalable AI deployment** of all your models and AI APIs including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
 - **A model trainer** allowing you to easily train and fine-tune models simply by querying your database.
 - **A feature store** in which the model outputs are stored alongside the inputs in any data format.
 - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with your database (and/ or) vector database.

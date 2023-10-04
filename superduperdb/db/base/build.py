@@ -1,3 +1,5 @@
+import re
+
 import mongomock
 import pymongo
 
@@ -39,9 +41,9 @@ def build_datalayer(cfg=None) -> DB:
     cfg = cfg or s.CFG
 
     def build(uri, mapping):
-        if uri.startswith('mongodb://'):
+        if re.match('^mongodb:\/\/|^mongodb\+srv:\/\/', uri) is not None:
             name = uri.split('/')[-1]
-            uri = 'mongodb://' + uri.split('mongodb://')[-1].split('/')[0]
+            uri = '/'.join(uri.split('/')[:-1])
             conn = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000)
             return mapping['mongodb'](conn, name)
         elif uri.startswith('mongomock://'):

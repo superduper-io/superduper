@@ -2,7 +2,7 @@
 
 *Despite the huge surge in popularity in building AI applications with LLMs and vector-search,
 we haven't seen any walkthroughs boil this down to a super-simple, few-command process.
-With SuperDuperDB on MongoDB Atlas, it's easier and more flexible than ever before.*
+With SuperDuperDB together with MongoDB Atlas, it's easier and more flexible than ever before.*
 
 ---
 
@@ -22,6 +22,11 @@ There are several steps involved in doing this:
 
 This process can be tedious and complex, involving several pieces of infrastructure, especially
 if developers would like to use other models than those hosted behind OpenAI's API.
+
+What if we told you that with SuperDuperDB together with MongoDB Atlas, these challenges are a thing of the past, 
+and can be done more simply than with any other solution available?
+
+Let's dive straight into the solution:
 
 **Connect to MongoDB Atlas with SuperDuperDB**
 

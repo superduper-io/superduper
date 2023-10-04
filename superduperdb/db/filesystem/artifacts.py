@@ -1,4 +1,4 @@
-import hashlib
+import uuid
 import os
 import shutil
 import typing as t
@@ -50,11 +50,11 @@ class FileSystemArtifactStore(ArtifactStore):
         shutil.rmtree(self.conn, ignore_errors=force)
 
     def _save_artifact(self, serialized: bytes) -> t.Any:
-        h = hashlib.sha1(serialized).hexdigest()
-        with open(f'{self.conn}/{h}', 'wb') as f:
+        h = uuid.uuid4().hex
+        with open(os.path.join(self.conn, h), 'wb') as f:
             f.write(serialized)
         return h
 
     def _load_bytes(self, file_id: str) -> bytes:
-        with open(f'{self.conn}/{file_id}', 'rb') as f:
+        with open(os.path.join(self.conn, file_id), 'rb') as f:
             return f.read()

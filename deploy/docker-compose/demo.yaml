@@ -4,8 +4,6 @@ services:
   # ------------------------------
   mongodb:
     image: mongo:7
-    ports:
-      - "27017:27017"
     environment:
       # create root account in `admin` database
       MONGO_INITDB_ROOT_USERNAME: root
@@ -26,5 +24,6 @@ services:
     image: superduperdb/superduperdb
     ports:
       - "8888:8888"
+    command: ["jupyter", "lab", "--ip='*'", "--LabApp.token=''"]
     environment:
         MONGODB_URI: "mongodb://${SDDB_USER}:${SDDB_PASS}@mongodb"

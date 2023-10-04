@@ -25,13 +25,17 @@ the MongoDB instance and also to define, save and apply a flexible range
 of AI models for vector-search.
 
 ```python
-from superduperdb import CFG
 from superduperdb.db.base.build import build_datalayer
+from superduperdb import CFG
+import os
 
-URI = 'mongodb://<your-atlas-connection-string-here>'
+ATLAS_URI = "mongodb+srv://<user>@<atlas-server>/<database_name>"
+OPENAI_API_KEY = "<your-open-ai-api-key>"
 
-CFG.vector_search = URI
-CFG.databackend = URI
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+
+CFG.data_backend = ATLAS_URI
+CFG.vector_search = ATLAS_URI
 
 db = build_datalayer()
 ```

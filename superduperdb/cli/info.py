@@ -56,7 +56,7 @@ def _freeze():
 
 
 def _git():
-    def run_out(key, *cmd):
+    def run_out(*cmd):
         try:
             return run.out(cmd, cwd=ROOT)
         except Exception as e:

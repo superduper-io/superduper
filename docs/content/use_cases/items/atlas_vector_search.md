@@ -10,11 +10,6 @@
 !curl -O https://superduperdb-public.s3.eu-west-1.amazonaws.com/pymongo.json
 ```
 
-      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                     Dload  Upload   Total   Spent    Left  Speed
-    100  120k  100  120k    0     0   387k      0 --:--:-- --:--:-- --:--:--  392k
-
-
 
 ```python
 import os

@@ -727,6 +727,7 @@ class Aggregate(Select):
             db=db,
         )
         step['$search']['knnBeta']['path'] = f'_outputs.{key}.{model}'
+        step['$search']['index'] = vector_index.identifier
         del step['$search']['knnBeta']['like']
         return step
 
@@ -743,6 +744,9 @@ class Aggregate(Select):
             search_step[1], vector_index, db
         )
         return pipeline
+
+    def create_pipeline(self, db):
+        return self._prepare_pipeline(self.args[0], db, self.vector_index)
 
     @override
     def __call__(self, db: DB) -> SuperDuperCursor:

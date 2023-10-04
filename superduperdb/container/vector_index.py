@@ -95,11 +95,11 @@ class VectorIndex(Component):
                 create=True,  # type: ignore[call-arg]
             )
 
-        assert hasattr(self.indexing_listener.select, 'collection')
-        clt = self.indexing_listener.select.collection
+            assert hasattr(self.indexing_listener.select, 'collection')
+            clt = self.indexing_listener.select.collection
 
-        if not CDC_COLLECTION_LOCKS.get(clt.name, False):
-            self._initialize_vector_database(db)
+            if not CDC_COLLECTION_LOCKS.get(clt.name, False):
+                self._initialize_vector_database(db)
 
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:

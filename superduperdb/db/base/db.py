@@ -918,11 +918,12 @@ class DB:
             raise e
 
         new_info = object.serialize()
-        all_artifacts = list(set(get_artifacts(new_info)))
+        all_artifacts = tuple(set(get_artifacts(new_info)))
         artifact_details = dict()
         for a in all_artifacts:
             artifact_details[hash(a)] = a.save(self.artifact_store)
-        old_artifacts = list(set(infer_artifacts(info)))
+
+        old_artifacts = tuple(set(infer_artifacts(info)))
         for oa in old_artifacts:
             self.artifact_store.delete_artifact(oa)
 

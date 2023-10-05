@@ -80,7 +80,7 @@ docker-run: docker-build ## Run a SuperDuperDB deployment locally
 	# TODO: make it take as argument the TAG of desired image.
 	docker compose -f ./deploy/docker-compose up
 
-docker-push: docker-build ## Push the latest SuperDuperDB image
+docker-push: ## Push the latest SuperDuperDB image
 	@echo "===> Set SuperDuperDB:${TAG} as the latest <==="
 	docker tag superduperdb/superduperdb:${TAG} superduperdb/superduperdb::latest
 

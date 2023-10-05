@@ -1,4 +1,4 @@
-name: Commit Validation
+name: Validate code changes
 
 on:  # rules for when this action will be triggered
   push:

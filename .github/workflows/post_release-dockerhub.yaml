@@ -2,9 +2,10 @@ name: Release Image in Dockerhub
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "main" ]
-    tags: [ 'v*.*.*' ]
+  release:
+    # Runs your workflow when release activity in your repository occurs.
+    # That gives priority to release pypi before building the container.
+    types: [published]
 
 jobs:
   release-docker-image:
@@ -30,4 +31,5 @@ jobs:
 
       - name: Push Docker image
         run: |
+          make docker-build
           make docker-push

@@ -1,4 +1,4 @@
-name: test latest dependency versions and external web links
+name: Dependency and link scanner
 
 on:
   schedule:
@@ -8,7 +8,7 @@ on:
 
 jobs:
     # Checks imports using latest versions of dependencies for the core package.
-    check-imports-latest-core-deps:
+    check-imports:
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false

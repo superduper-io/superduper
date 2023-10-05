@@ -40,7 +40,7 @@ docker-build: ## Build SuperDuperDB images
 
 docker-push: ## Push the latest SuperDuperDB image
 	@echo "===> Set SuperDuperDB:${TAG} as the latest <==="
-	docker tag superduperdb/superduperdb:${TAG} superduperdb/superduperdb::latest
+	docker tag superduperdb/superduperdb:${TAG} superduperdb/superduperdb:latest
 
 	@echo "===> Release SuperDuperDB:${TAG} Container <==="
 	docker push superduperdb/superduperdb:${TAG}

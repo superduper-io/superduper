@@ -27,4 +27,4 @@ def release(update: Release):
             if line.startswith('__version__'):
                 line = f"__version__ = '{new}'\n"
             fp_out.write(line)
-    run.run(('git', 'commit', INIT, '-m', f'Update to version v{new}'))
+    run.run(('git', 'commit', INIT, '-m', f'Bump Version v{new}'))

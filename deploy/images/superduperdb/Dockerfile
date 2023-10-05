@@ -11,10 +11,11 @@ RUN apt-get update \
  && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
         wget \
+        curl \
+        unzip \
         # requirement for nbgitpuller
         git \
  && rm -rf /var/lib/apt/lists/*
-
 
 # Replace the default Jupyter user with a SuperDuper user
 # ---------------
@@ -32,19 +33,16 @@ RUN deluser jovyan && adduser \
 WORKDIR ${HOME}
 USER ${NB_USER}
 
-
 # Install the SuperDuper framework
 # ---------------
 RUN pip install superduperdb
-
 
 # Pre-Install SuperDuper examples
 # ---------------
 COPY ./download-examples.sh ./
 RUN ./download-examples.sh && rm ./download-examples.sh
 
-
-# Rejoin jupyter's wrappers
+# Replay Jupyter's entrypoint
 # ---------------
 EXPOSE 8888
 ENTRYPOINT ["tini", "--"]

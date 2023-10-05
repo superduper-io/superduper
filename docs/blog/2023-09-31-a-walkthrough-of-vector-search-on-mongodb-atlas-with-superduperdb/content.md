@@ -159,3 +159,23 @@ for r in result:
     display(Markdown(f'### `{r["parent"] + "." if r["parent"] else ""}{r["res"]}`'))
     display(Markdown(r['value']))
 ```
+
+### Useful Links
+
+- **[Website](https://superduperdb.com/)**
+- **[GitHub](https://github.com/SuperDuperDB/superduperdb)**
+- **[Documentation](https://docs.superduperdb.com/docs/docs/intro.html)**
+- **[Blog](https://docs.superduperdb.com/blog)**
+- **[Example Use-Cases & Apps](https://docs.superduperdb.com/docs/category/use-cases)**
+- **[Slack Community](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA)**
+- **[LinkedIn](https://www.linkedin.com/company/superduperdb/)**
+- **[Twitter](https://twitter.com/superduperdb)**
+- **[Youtube](https://www.youtube.com/@superduperdb)**
+
+### Contributors are welcome!
+
+SuperDuperDB is open-source and permissively licensed under the [Apache 2.0 license](https://github.com/SuperDuperDB/superduperdb/blob/main/LICENSE). We would like to encourage developers interested in open-source development to contribute in our discussion forums, issue boards and by making their own pull requests. We'll see you on [GitHub](https://github.com/SuperDuperDB/superduperdb)!
+
+### Become a Design Partner!
+
+We are looking for visionary organizations which we can help to identify and implement transformative AI applications for their business and products. We're offering this absolutely for free. If you would like to learn more about this opportunity please reach out to us via email: partnerships@superduperdb.com

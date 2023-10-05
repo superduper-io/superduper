@@ -1,4 +1,4 @@
-name: Update docs to website
+name: Publish Doc Changes
 on:
   push:
     branches:
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 jobs:
-  build-and-push:
+  build-and-release-docs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository

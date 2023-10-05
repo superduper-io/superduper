@@ -33,21 +33,6 @@ VERSION := $(TAG:v%=%)
 
 ##@ Release Management
 
-docker-build: ## Build SuperDuperDB images
-	@echo "===> Build SuperDuperDB:${TAG} Container <==="
-	docker build ./deploy/images/superduperdb  -t superduperdb/superduperdb:${TAG}  --progress=plain
-
-
-docker-push: ## Push the latest SuperDuperDB image
-	@echo "===> Set SuperDuperDB:${TAG} as the latest <==="
-	docker tag superduperdb/superduperdb:${TAG} superduperdb/superduperdb:latest
-
-	@echo "===> Release SuperDuperDB:${TAG} Container <==="
-	docker push superduperdb/superduperdb:${TAG}
-
-	@echo "===> Release SuperDuperDB:latest Container <==="
-	docker push superduperdb/superduperdb:latest
-
 new-release: ## Release a new SuperDuperDB version
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
 	@ if [[ "${RELEASE_VERSION}" == "${TAG}" ]]; then echo "no new release version. Please update VERSION file."; exit 1; fi
@@ -62,16 +47,31 @@ new-release: ## Release a new SuperDuperDB version
 	@echo "** Push tag for version $(RELEASE_VERSION:v%=%)"
 	@git tag ${RELEASE_VERSION}
 
+docker-build: ## Build SuperDuperDB images
+	@echo "===> Build SuperDuperDB:${TAG} Container <==="
+	docker build ./deploy/images/superduperdb  -t superduperdb/superduperdb:${TAG}  --progress=plain
 
-##@ Development
+docker-push: ## Push the latest SuperDuperDB image
+	@echo "===> Set SuperDuperDB:${TAG} as the latest <==="
+	docker tag superduperdb/superduperdb:${TAG} superduperdb/superduperdb:latest
 
-lint-and-type-check: ## Apply lint and type checking
+	@echo "===> Release SuperDuperDB:${TAG} Container <==="
+	docker push superduperdb/superduperdb:${TAG}
+
+	@echo "===> Release SuperDuperDB:latest Container <==="
+	docker push superduperdb/superduperdb:latest
+
+
+
+##@ DevOps Functions
+
+lint: ## Lint your local copy
 	mypy superduperdb
 	black --check $(DIRECTORIES)
 	ruff check $(DIRECTORIES)
 	interrogate superduperdb
 
-fix-and-test: local_mongo_init ## Lint before testing
+fix-and-test: mongo_init ## Lint before testing
 	isort $(DIRECTORIES)
 	black $(DIRECTORIES)
 	ruff check --fix $(DIRECTORIES)
@@ -79,16 +79,25 @@ fix-and-test: local_mongo_init ## Lint before testing
 	pytest $(PYTEST_ARGUMENTS)
 	interrogate superduperdb
 
-local_mongo_init: ## Initialize a local MongoDB setup
+test_pr:  ## Run PR into a testenv (make test_pr PR_NUMBER=555)
+	# clone only the latest of all branches
+	git clone --depth 1 --single-branch git@github.com:SuperDuperDB/superduperdb.git /tmp/superduperdb_pr_$(PR_NUMBER)
+
+	cd /tmp/superduperdb_pr_$(PR_NUMBER) && \
+	git fetch --depth 1 origin pull/$(PR_NUMBER)/head:pr_branch && \
+	git checkout pr_branch
+
+	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/pr_$(PR_NUMBER) superduperdb/superduperdb:latest
+	# todo remove temporary directory
+
+
+##@ Demo Environment
+
+mongo_init: ## Initialize a local MongoDB setup
 	docker compose -f test/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
 
-local_mongo_shutdown: ## Terminate the local MongoDB setup
+mongo_shutdown: ## Terminate the local MongoDB setup
 	docker compose -f test/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
-
-debug_env:  ## Run Jupyter with the local version of SuperDuper
-	docker run -p 8888:8888 -v ./superduperdb:/home/superduper/superduperdb superduperdb/superduperdb:latest
-
-##@ Demo
 
 demo-run: ## Run a SuperDuperDB demo locally
 	@echo "===> Run SuperDuperDB Locally <==="

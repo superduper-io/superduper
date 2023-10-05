@@ -1,4 +1,4 @@
-name: Release Image in Dockerhub
+name: Release Docker Image
 
 on:
   workflow_dispatch:
@@ -9,7 +9,6 @@ on:
 
 jobs:
   release-docker-image:
-    name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo

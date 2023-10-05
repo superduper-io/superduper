@@ -46,6 +46,7 @@ new-release: ## Release a new SuperDuperDB version
 
 	@echo "** Push tag for version $(RELEASE_VERSION:v%=%)"
 	@git tag ${RELEASE_VERSION}
+	git push origin ${RELEASE_VERSION}
 
 docker-build: ## Build SuperDuperDB images
 	@echo "===> Build SuperDuperDB:${TAG} Container <==="

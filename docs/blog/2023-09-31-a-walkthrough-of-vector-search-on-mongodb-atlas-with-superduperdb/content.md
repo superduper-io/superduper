@@ -1,7 +1,13 @@
-# A walkthrough of vector-search on MongoDB Atlas with SuperDuperDB
+# Walkthrough: How to enable and manage MongoDB Atlas Vector Search with SuperDuperDB
 
-*In this tutorial we will show developers how to execute searches leveraging MongoDB Atlas vector-search
-via SuperDuperDB*
+*In step-by-step tutorial we will show how to leverage MongoDB Atlas Vector Search
+with SuperDuperDB, including the generation of vector embeddings. Learn how to connect embedding APIs such as OpenAI or use embedding models for example from HuggingFace with MongoDB Atlas with simple Python commands.*
+
+:::info
+SuperDuperDB makes it very easy to set up multimodal vector search with different file types (text, image, audio, video, and more). 
+:::
+
+
 
 **Install `superduperdb` Python package**
 

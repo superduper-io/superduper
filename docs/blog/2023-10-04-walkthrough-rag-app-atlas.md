@@ -1,14 +1,14 @@
-# The easiest way to implement question-your documents we know
+# How to efficiently build AI chat applications for your own documents with MongoDB Atlas 
 
-*Despite the huge surge in popularity in building AI applications with LLMs and vector-search,
+*Despite the huge surge in popularity in building AI applications with LLMs and vector search,
 we haven't seen any walkthroughs boil this down to a super-simple, few-command process.
 With SuperDuperDB together with MongoDB Atlas, it's easier and more flexible than ever before.*
 
----
+:::info
+We have built and deployed an AI chatbot for questioning technical documentation to showcase how efficiently and flexibly you can build end-to-end Gen-AI applications on top of MongoDB with SuperDuperDB: https://www.question-the-docs.superduperdb.com/ 
+:::
 
-Setting up a question-your-documents service can be a complex process.
-
-There are several steps involved in doing this:
+Implementing a (RAG) chat application like a question-your-documents service can be a tedious and complex process. There are several steps involved in doing this:
 
 <!--truncate-->
 

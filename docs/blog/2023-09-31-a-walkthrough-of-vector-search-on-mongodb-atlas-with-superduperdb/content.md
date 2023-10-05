@@ -7,6 +7,8 @@ via SuperDuperDB*
 
 Using vector-search with SuperDuperDB on MongoDB requires only one simple python package install:
 
+<!--truncate-->
+
 ```bash
 pip install superduperdb
 ```
@@ -124,6 +126,15 @@ After issuing this command, SuperDuperDB does these things:
 - Saves the `model` object in the SuperDuperDB model store hosted on `gridfs`
 - Applies `model` to all data in the `"documents"` collection, and saves the vectors in the documents
 - Saves the fact that `model` is connected to the `"pymongo-docs"` vector-index
+
+You can confirm that the index has been created and view the index's settings 
+in the [Atlas UI](https://cloud.mongodb.com/). It should look like this:
+
+![](atlas_screen.png)
+
+The nesting of the index signifies the fact that the index created looks 
+into the `_outputs.<key>.<model-name>` path, which is where the model's vector outputs are stored
+automatically by SuperDuperDB.
 
 **Use vector-search in a super-duper query**
 

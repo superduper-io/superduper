@@ -1,7 +1,7 @@
-import uuid
 import os
 import shutil
 import typing as t
+import uuid
 
 import click
 

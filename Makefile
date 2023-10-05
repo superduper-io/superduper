@@ -31,9 +31,15 @@ new-release: ## Release a new SuperDuperDB version
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
 	@ if [[ "${RELEASE_VERSION}" == "${TAG}" ]]; then echo "no new release version. Please update VERSION file."; exit 1; fi
 
+	@echo "** Change superduperdb/__init__.py to version $(RELEASE_VERSION:v%=%)"
+	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
+
+	@echo "** Commit Changes"
 	@git add VERSION
 	git commit -m "Bump version"
-	git tag ${RELEASE_VERSION}
+
+	@echo "** Push tag for version $(RELEASE_VERSION:v%=%)"
+	@git tag ${RELEASE_VERSION}
 
 ##@ Development
 

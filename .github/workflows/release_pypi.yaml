@@ -6,10 +6,10 @@ on:
 
 jobs:
   build:
-    # Any commit message that contains the phrase 'Update to version' will trigger the release process.
+    # Any commit message that contains the phrase 'Bump Version' will trigger the release process.
     # We have an additional safety mechanism in the upload to PyPI step that requires manual approval.
     # This is to prevent accidental releases. All other steps (eg build, upload to GitHub) are reversible
-    if: ${{ startsWith(github.event.head_commit.message, 'Update to version') }}
+    if: ${{ startsWith(github.event.head_commit.message, 'Bump Version') }}
     runs-on: ubuntu-latest
     defaults:
         run:

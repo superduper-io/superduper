@@ -1,9 +1,9 @@
-name: Release docs to website
+name: Update docs to website
 on:
   push:
     branches:
       - main
-    paths:  # only run this action when the newdocs folder is changed
+    paths:  # run this action only when the docs folder is changed
       - 'docs/content/**'
       - 'docs/blog/**'
 

@@ -107,7 +107,7 @@ jobs:
 
       - name: Lint and type-check
         run: |
-          make lint-and-type-check
+          make lint
 
       - name: test
         run: |

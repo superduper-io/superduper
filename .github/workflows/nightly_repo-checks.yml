@@ -1,4 +1,4 @@
-name: Dependency and link scanner
+name: Nightly Repo Checks
 
 on:
   schedule:
@@ -7,15 +7,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Repo usage stats
-  calculate-stats:
-    runs-on: ubuntu-22.04
-    environment: "analytics"
-    steps:
-      - uses: jgehrcke/github-repo-stats@HEAD
-        with:
-          ghtoken: ${{ secrets.GH_TOKEN_ANALYTICS }}
-
+    # Repo usage stats
+    calculate-stats:
+      runs-on: ubuntu-22.04
+      environment: "analytics"
+      steps:
+        - uses: jgehrcke/github-repo-stats@HEAD
+          with:
+            ghtoken: ${{ secrets.GH_TOKEN_ANALYTICS }}
 
 
     # Checks imports using latest versions of dependencies for the core package.

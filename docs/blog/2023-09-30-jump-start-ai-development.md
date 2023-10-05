@@ -1,13 +1,17 @@
 # Jumpstart AI development on MongoDB with SuperDuperDB
 
+MongoDB now supports vector-search on Atlas! That makes building AI applications on MongoDB a tantalising prospect.
 
+SuperDuperDB is an open-source (Apache 2.0 license) Python project enabling users to bring AI to their datastore with as little pain as possible. This includes first-class support for MongoDB.
 
-MongoDB now supports vector-search on Atlas! With vector-search developers can easily build these types of AI applications:
+Using SuperDuperDB in combination with MongoDB Atlas vector-search developers can easily build these types of AI applications:
 
 - **semantic-search** (search by meaning)
-- **chat applications** on documents hosted in MongoDB Atlas clusters
-
-SuperDuperDB is an open-source (Apache 2.0 license) python project enabling users to bring AI to their datastore with as little pain as possible. This includes first-class support for MongoDB.
+- **chat applications** on documents hosted in MongoDB Atlas
+- **image similarity** on images hosted in or referred to on MongoDB Atlas
+- **video search** including search *within* videos for key content
+- **content based recommendation** based on content hosted in MongoDB Atlas
+- ...and much, much more!
 
 <!--truncate-->
 

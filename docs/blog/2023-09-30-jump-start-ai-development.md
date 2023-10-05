@@ -10,7 +10,6 @@ Build next-gen AI applications - without the need of complex MLOps pipelines and
 - **video search** including search *within* videos for key content
 - **content based recommendation** based on content hosted in MongoDB Atlas
 - **...and much, much more!**
-!
 
 <!--truncate-->
 

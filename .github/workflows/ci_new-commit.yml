@@ -1,4 +1,4 @@
-name: ci
+name: Commit Validation
 
 on:  # rules for when this action will be triggered
   push:

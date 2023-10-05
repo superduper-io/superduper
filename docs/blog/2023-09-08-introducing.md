@@ -76,10 +76,22 @@ In the weeks and months to come we’ll be:
 - Building bridges to more AI frameworks, libraries, models and API services
 - Creating tools to manage a SuperDuperDB deployment in production
 
+### Useful Links
+
+- **[Website](https://superduperdb.com/)**
+- **[GitHub](https://github.com/SuperDuperDB/superduperdb)**
+- **[Documentation](https://docs.superduperdb.com/docs/docs/intro.html)**
+- **[Blog](https://docs.superduperdb.com/blog)**
+- **[Example Use-Cases & Apps](https://docs.superduperdb.com/docs/category/use-cases)**
+- **[Slack Community](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA)**
+- **[LinkedIn](https://www.linkedin.com/company/superduperdb/)**
+- **[Twitter](https://twitter.com/superduperdb)**
+- **[Youtube](https://www.youtube.com/@superduperdb)**
+
 ### Contributors are welcome!
 
-SuperDuperDB comes with the Apache 2.0 license. We would like to encourage developers interested in open-source development to contribute in our discussion forums, issue boards and by making their own pull requests. We'll see you on GitHub!
+SuperDuperDB is open-source and permissively licensed under the [Apache 2.0 license](https://github.com/SuperDuperDB/superduperdb/blob/main/LICENSE). We would like to encourage developers interested in open-source development to contribute in our discussion forums, issue boards and by making their own pull requests. We'll see you on [GitHub](https://github.com/SuperDuperDB/superduperdb)!
 
 ### Become a Design Partner!
 
-We are in the process of selecting a few visionary organizations to become our design partners. The aim is to identify and implement AI applications that could bring transformative benefits to their product offerings. We're offering this at absolutely zero cost. If you would like to learn more about this opportunity please reach out to us via email: hello@superduperdb.com. 
+We are looking for visionary organizations which we can help to identify and implement transformative AI applications for their business and products. We're offering this absolutely for free. If you would like to learn more about this opportunity please reach out to us via email: partnerships@superduperdb.com

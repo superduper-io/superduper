@@ -39,15 +39,15 @@ class Schema(Component):
             decoded[k] = v
         return decoded
 
-    def encode(self, data):
+    def encode(self, data: t.Mapping[str, t.Any]):
         if self.trivial:
             return data
-
-        return {
-            k: (
-                self.fields[k].encode.artifact(v)
-                if isinstance(self.fields[k], Encoder)
-                else v
-            )
-            for k, v in data.items()
-        }
+        encoded_data = {}
+        for k, v in data.items():
+            if k in self.fields and isinstance(self.fields[k], Encoder):
+                field_encoder = self.fields[k]
+                assert callable(field_encoder)
+                encoded_data.update({k: field_encoder(v).encode()})
+            else:
+                encoded_data.update({k: v})
+        return encoded_data

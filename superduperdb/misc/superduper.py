@@ -1,4 +1,3 @@
-import copy
 import typing as t
 
 from superduperdb.base.configs import CFG
@@ -23,20 +22,20 @@ def superduper(item: t.Any, **kwargs) -> t.Any:
 def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
     from superduperdb.db.base.build import build_datalayer
 
-    cfg = copy.deepcopy(CFG)
+    # cfg = copy.deepcopy(CFG)
     if item.startswith('mongomock://'):
-        cfg.data_backend = item
+        CFG.data_backend = item
 
     elif item.startswith('mongodb://'):
-        cfg.data_backend = item
+        CFG.data_backend = item
 
-    elif item.startswith('mongodb+srv://'):
-        cfg.data_backend = item
-        cfg.vector_search = item
+    elif item.startswith('mongodb+srv://') and 'mongodb.net' in item:
+        CFG.data_backend = item
+        CFG.vector_search = item
 
     else:
         raise NotImplementedError(f'Can\'t auto-identify connection string {item}')
-    return build_datalayer(cfg)
+    return build_datalayer(CFG)
 
 
 class _DuckTyper:

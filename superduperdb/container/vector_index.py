@@ -142,7 +142,12 @@ class VectorIndex(Component):
                 f'Keys in provided {like} don\'t match'
                 f'VectorIndex keys: {keys}, with model: {models}'
             )
-        model_input = document[key] if key != '_base' else document
+        if key == '_base' and key in document:
+            model_input = document[key]
+        elif key != '_base':
+            model_input = document[key]
+        else:
+            model_input == document
         model = db.models[model_name]
         return model.predict(model_input, one=True), model.identifier, key
 

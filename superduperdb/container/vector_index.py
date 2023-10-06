@@ -140,7 +140,7 @@ class VectorIndex(Component):
         except StopIteration:
             raise Exception(
                 f'Keys in provided {like} don\'t match'
-                f' VectorIndex keys: {keys}, with model: {models}'
+                f'VectorIndex keys: {keys}, with model: {models}'
             )
         model_input = document[key] if key != '_base' else document
         model = db.models[model_name]
@@ -165,6 +165,7 @@ class VectorIndex(Component):
         :param ids: A list of ids to match
         :param n: Number of items to return
         """
+
         models, keys = self.models_keys
         if len(models) != len(keys):
             raise ValueError(f'len(model={models}) != len(keys={keys})')

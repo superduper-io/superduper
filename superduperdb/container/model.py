@@ -18,6 +18,7 @@ from superduperdb.container.dataset import Dataset
 from superduperdb.container.encoder import Encoder
 from superduperdb.container.job import ComponentJob, Job
 from superduperdb.container.metric import Metric
+from superduperdb.container.schema import Schema
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
@@ -72,6 +73,8 @@ class PredictMixin:
 
     identifier: str
     encoder: EncoderArg
+    output_schema: t.Optional[t.Union[Schema, dict]] = None
+    flatten: bool = False
     preprocess: t.Union[t.Callable, Artifact, None] = None
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
@@ -200,8 +203,6 @@ class PredictMixin:
             assert select is not None
             return self._predict_and_listen(X=X, db=db, select=select, **kwargs)
 
-        model_update_kwargs = self.model_update_kwargs
-
         if distributed:
             return self.create_predict_job(
                 X,
@@ -221,7 +222,6 @@ class PredictMixin:
                     in_memory=in_memory,
                     max_chunk_size=max_chunk_size,
                     overwrite=overwrite,
-                    model_update_kwargs=model_update_kwargs,
                     **kwargs,
                 )
             elif select is not None and ids is not None:
@@ -233,7 +233,6 @@ class PredictMixin:
                     db=db,
                     max_chunk_size=max_chunk_size,
                     in_memory=in_memory,
-                    model_update_kwargs=model_update_kwargs,
                     **kwargs,
                 )
             else:
@@ -286,7 +285,6 @@ class PredictMixin:
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
         overwrite: bool = False,
-        model_update_kwargs: t.Dict[str, t.Any] = {},
         **kwargs,
     ):
         ids = []
@@ -305,7 +303,6 @@ class PredictMixin:
             select=select,
             max_chunk_size=max_chunk_size,
             in_memory=in_memory,
-            model_update_kwargs=model_update_kwargs,
             **kwargs,
         )
 
@@ -317,7 +314,6 @@ class PredictMixin:
         ids: t.List[str],
         in_memory: bool = True,
         max_chunk_size: t.Optional[int] = None,
-        model_update_kwargs: t.Dict[str, t.Any] = {},
         **kwargs,
     ):
         if max_chunk_size is not None:
@@ -331,7 +327,6 @@ class PredictMixin:
                     select=select,
                     max_chunk_size=None,
                     in_memory=in_memory,
-                    model_update_kwargs=self.model_update_kwargs,
                     **kwargs,
                 )
                 it += 1
@@ -358,8 +353,25 @@ class PredictMixin:
 
         outputs = self.predict(X=X_data, one=False, distributed=False, **kwargs)
 
+        if self.flatten:
+            assert all([isinstance(x, (list, tuple)) for x in outputs])
+
         if isinstance(self.encoder, Encoder):
-            outputs = [self.encoder(x).encode() for x in outputs]
+            if self.flatten:
+                outputs = [
+                    [self.encoder(x).encode() for x in output] for output in outputs
+                ]
+            else:
+                outputs = [self.encoder(x).encode() for x in outputs]
+        elif isinstance(self.output_schema, Schema):
+            encoded_ouputs = []
+            for output in outputs:
+                if isinstance(output, dict):
+                    encoded_ouputs.append(self.output_schema.encode(output))
+                elif self.flatten:
+                    encoded_output = [self.output_schema.encode(x) for x in output]
+                    encoded_ouputs.append(encoded_output)
+            outputs = encoded_ouputs if encoded_ouputs else outputs
 
         select.model_update(
             db=db,
@@ -368,7 +380,7 @@ class PredictMixin:
             key=X,
             ids=ids,
             document_embedded=self.model_update_kwargs.get('document_embedded', True),
-            flatten=self.model_update_kwargs.get('flatten', False),
+            flatten=self.flatten,
         )
         return
 
@@ -380,6 +392,8 @@ class Model(Component, PredictMixin):
     :param identifier: Unique identifier of model
     :param object: Model object, e.g. sklearn model, etc..
     :param encoder: Encoder instance (optional)
+    :param flatten: Flatten the model outputs
+    :param output_schema: Output schema (mapping of encoders) (optional)
     :param preprocess: Preprocess function (optional)
     :param postprocess: Postprocess function (optional)
     :param collate_fn: Collate function (optional)
@@ -392,6 +406,8 @@ class Model(Component, PredictMixin):
     identifier: str
     object: t.Union[Artifact, t.Any]
     encoder: t.Any = None
+    flatten: bool = False
+    output_schema: t.Optional[t.Union[Schema, dict]] = None
     preprocess: t.Union[t.Callable, Artifact, None] = None
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
@@ -412,7 +428,7 @@ class Model(Component, PredictMixin):
     device: str = "cpu"
 
     # TODO: handle situation with multiple GPUs
-    preferred_devices: t.Sequence[str] = ("cuda", "mps", "cpu")
+    preferred_devices: t.Union[None, t.Sequence[str]] = ("cuda", "mps", "cpu")
 
     artifacts: t.ClassVar[t.Sequence[str]] = ['object']
 
@@ -436,7 +452,7 @@ class Model(Component, PredictMixin):
             self._artifact_method = getattr(self, self.model_to_device_method)
 
     def on_load(self, db: DB) -> None:
-        if self._artifact_method:
+        if self._artifact_method and self.preferred_devices:
             for i, device in enumerate(self.preferred_devices):
                 try:
                     self._artifact_method(device)
@@ -445,6 +461,8 @@ class Model(Component, PredictMixin):
                 except Exception:
                     if i == len(self.preferred_devices) - 1:
                         raise
+        if isinstance(self.output_schema, Schema):
+            db.add(self.output_schema)
 
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:

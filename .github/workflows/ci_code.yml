@@ -1,11 +1,6 @@
 name: Validate code changes
 
 on:  # rules for when this action will be triggered
-  push:
-    paths-ignore:  # ignore docs in this action - handled in a separate action
-      - 'docs/**'
-      - '*.md'
-      - '*.rst'
   pull_request:
     branches:
       - main

@@ -37,16 +37,21 @@ new-release: ## Release a new SuperDuperDB version
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
 	@ if [[ "${RELEASE_VERSION}" == "${TAG}" ]]; then echo "no new release version. Please update VERSION file."; exit 1; fi
 
+	@echo "** Switching to branch release-${RELEASE_VERSION}"
+	@git checkout -b release-${RELEASE_VERSION}
+
 	@echo "** Change superduperdb/__init__.py to version $(RELEASE_VERSION:v%=%)"
 	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
+	@git add superduperdb/__init__.py
 
-	@echo "** Commit Changes"
+	@echo "** Commit Bump Version and Tags"
 	@git add VERSION
-	git commit -m "Bump Version $(RELEASE_VERSION)"
-
-	@echo "** Push tag for version $(RELEASE_VERSION:v%=%)"
+	@git commit -m "Bump Version $(RELEASE_VERSION)"
 	@git tag ${RELEASE_VERSION}
-	git push origin ${RELEASE_VERSION}
+
+	@echo "** Push release-${RELEASE_VERSION}"
+	git push --set-upstream origin release-${RELEASE_VERSION} --tags
+
 
 docker-build: ## Build SuperDuperDB images
 	@echo "===> Build SuperDuperDB:${TAG} Container <==="

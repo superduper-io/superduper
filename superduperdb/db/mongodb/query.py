@@ -504,6 +504,7 @@ class Find(Select):
             if flatten:
                 raise AttributeError(
                     'Flattened outputs cannot be stored along with input documents.'
+                    'Please use `document_embedded = False` option with flatten = True'
                 )
             assert self.collection is not None
             db.db[self.collection.name].bulk_write(
@@ -525,7 +526,7 @@ class Find(Select):
                             bulk_docs.append(
                                 _InsertOne(
                                     {
-                                        '_outputs': output,
+                                        '_outputs': {key: {model: output}},
                                         '_source': ObjectId(id),
                                         '_offset': offset,
                                     }
@@ -535,7 +536,7 @@ class Find(Select):
                         bulk_docs.append(
                             _InsertOne(
                                 {
-                                    '_outputs': _outputs,
+                                    '_outputs': {key: {model: _outputs}},
                                     '_source': ObjectId(id),
                                     '_offset': 0,
                                 }
@@ -544,7 +545,9 @@ class Find(Select):
 
             else:
                 bulk_docs = [
-                    _InsertOne({'_id': ObjectId(id), '_outputs': outputs[i]})
+                    _InsertOne(
+                        {'_id': ObjectId(id), '_outputs': {key: {model: outputs[i]}}}
+                    )
                     for i, id in enumerate(ids)
                 ]
 

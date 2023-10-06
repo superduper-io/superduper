@@ -44,6 +44,8 @@ new-release: ## Release a new SuperDuperDB version
 	@git add VERSION
 	git commit -m "Bump Version $(RELEASE_VERSION)"
 
+	git push
+
 	@echo "** Push tag for version $(RELEASE_VERSION:v%=%)"
 	@git tag ${RELEASE_VERSION}
 	git push origin ${RELEASE_VERSION}

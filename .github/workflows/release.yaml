@@ -85,7 +85,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      
         # Artifacts located in artifact/
       - name: Download artifact
         uses: actions/download-artifact@v3
@@ -98,6 +97,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+  ####################################
+  # Publish SuperDuperDB in Pypi
+  ####################################
   publish-pypi:
     needs: ['create-release']
     # Environment waits for approval before attempting to upload to PyPI.
@@ -116,3 +118,32 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: artifact/
+
+
+  ####################################
+  # Publish SuperDuperDB in DockerHub
+  ####################################
+  publish-docker:
+    needs: ['publish-pypi']
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker Cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Push Docker image
+        run: |
+          make docker-build
+          make docker-push

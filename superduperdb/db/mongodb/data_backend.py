@@ -1,4 +1,5 @@
 import os
+import re
 import typing as t
 
 import click
@@ -109,6 +110,8 @@ class MongoDataBackend(BaseDataBackend):
         """
         collection = vector_index.indexing_listener.select.collection.name
         key = vector_index.indexing_listener.key
+        if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+$', key):
+            key = key.split('.')[1]
         model = vector_index.indexing_listener.model.identifier
         fields = {
             model: [

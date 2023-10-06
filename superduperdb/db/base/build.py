@@ -52,13 +52,10 @@ def build_datalayer(cfg=None) -> DB:
             return mapping['mongodb'](conn, name)
         else:
             import ibis
-
             conn = ibis.connect(uri)
             return mapping['ibis'](conn, uri.split('//')[0])
 
     databackend = build(cfg.data_backend, data_backends)
-
-    logging.warn(cfg.data_backend)
 
     db = DB(
         databackend=databackend,

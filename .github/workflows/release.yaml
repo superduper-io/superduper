@@ -1,4 +1,4 @@
-name: Release pip in pypi
+name: Release new version
 on:
   push:
     branches:
@@ -143,6 +143,7 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
+
       - name: Push Docker image
         run: |
           make docker-build

@@ -54,15 +54,15 @@ new-release: ## Release a new SuperDuperDB version
 
 
 docker-build: ## Build SuperDuperDB images
-	@echo "===> Build SuperDuperDB:${TAG} Container <==="
-	docker build ./deploy/images/superduperdb  -t superduperdb/superduperdb:${TAG}  --progress=plain
+	@echo "===> Build SuperDuperDB:${VERSION} Container <==="
+	docker build ./deploy/images/superduperdb  -t superduperdb/superduperdb:${VERSION}  --progress=plain
 
 docker-push: ## Push the latest SuperDuperDB image
-	@echo "===> Set SuperDuperDB:${TAG} as the latest <==="
-	docker tag superduperdb/superduperdb:${TAG} superduperdb/superduperdb:latest
+	@echo "===> Set SuperDuperDB:${VERSION} as the latest <==="
+	docker tag superduperdb/superduperdb:${VERSION} superduperdb/superduperdb:latest
 
-	@echo "===> Release SuperDuperDB:${TAG} Container <==="
-	docker push superduperdb/superduperdb:${TAG}
+	@echo "===> Release SuperDuperDB:${VERSION} Container <==="
+	docker push superduperdb/superduperdb:${VERSION}
 
 	@echo "===> Release SuperDuperDB:latest Container <==="
 	docker push superduperdb/superduperdb:latest

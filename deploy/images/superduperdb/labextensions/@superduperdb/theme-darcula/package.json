@@ -1,7 +1,7 @@
 {
   "name": "@superduperdb/theme-darcula",
   "version": "4.0.0",
-  "description": "SuperDuperDB theme for JupyterLab. Modelled after the Darcula theme.",
+  "description": "Custom SuperDuperDB branding extension for JupyterLab and RetroLab. Modelled after the Darcula theme.",
   "keywords": [
     "jupyter",
     "jupyterlab",
@@ -12,7 +12,10 @@
     "url": "https://github.com/telamonian/theme-darcula/issues"
   },
   "license": "BSD-3-Clause",
-  "author": "Fotis Nikolaidis",
+  "author": {
+    "name": "Fotis Nikolaidis",
+    "email": "fotis@superduperdb.com"
+  },
   "files": [
     "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
     "style/**/*.{css,eot,gif,html,jpg,json,png,svg,woff2,ttf}"

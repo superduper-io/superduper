@@ -6,5 +6,8 @@
 
     // Selected Theme
     // Application-level visual styling theme
-    "theme": "Darcula"
+    "theme": "Darcula",
+
+    // Provide custom styles for scrollbars, typically to match the overall visual style of the theme.
+    "theme-scrollbars": true
 }

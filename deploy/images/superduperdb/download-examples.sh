@@ -19,7 +19,7 @@ awk -v RS=',' -F'"' '/"path":/ {print $4}' index.html | grep ipynb &> ./file_lis
 # Download the notebook files to ./examples
 for file in $(cat ./file_list); do
   echo "Downloading: ${BLOB_REPO}/${file}"
-  wget  --directory-prefix ./examples  -q --no-check-certificate ${BLOB_REPO}/${file}
+  wget  --directory-prefix ./examples  -q --no-check-certificate "${BLOB_REPO}/${file}"
 done
 
 

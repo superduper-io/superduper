@@ -567,49 +567,35 @@ pre {
   line-height: var(--jp-code-line-height);
 }
 
+
 /*-----------------------------------------------------------------------------
-| Copyright (c) Fotis Nikolaidis.
+| Copyright (c) Fotis Mikolaidis
 | Distributed under the terms of the Modified BSD License.
 |----------------------------------------------------------------------------*/
-
 /* customise the logos */
 #jp-MainLogo {
-  background-image: url(logo/SDDB-logo-36x28.png);
+  background-image: url(images/SDDB-logo-36x28.png);
   background-repeat: no-repeat;
 }
 
-#jp-MainLogo > svg {
+#jp-MainLogo>svg {
   visibility: hidden;
 }
 
 #jp-RetroLogo {
-  background-image: url(logo/SDDB-logo-53x42.png);
+  background-image: url(images/SDDB-logo-53x42.png);
   background-repeat: no-repeat;
 }
 
-#jp-RetroLogo > svg {
+#jp-RetroLogo>svg {
   visibility: hidden;
 }
 
-/* Inside your CSS files (light-extension.css and dark-extension.css) */
-/* Set the favicon for the light theme */
-#favicon-light {
-  background-image: url(logo/favicon.ico); /* Path to the light theme favicon */
+#jp-NotebookLogo {
+  background-image: url(images/SDDB-logo-53x42.png);
+  background-repeat: no-repeat;
 }
 
-
-/* Set the favicon for the dark theme */
-#favicon-dark {
-  background-image: url(logo/favicon.ico); /* Path to the dark theme favicon */
-}
-
-
-/* Set the favicon for the dark theme */
-#favicon {
-  background-image: url(logo/favicon.ico); /* Path to the dark theme favicon */
-}
-
-/* Set the favicon for the dark theme */
-#jp-favicon {
-  background-image: url(logo/favicon.ico); /* Path to the dark theme favicon */
+#jp-NotebookLogo>svg {
+  visibility: hidden;
 }

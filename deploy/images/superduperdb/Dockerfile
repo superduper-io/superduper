@@ -13,6 +13,7 @@ RUN apt-get update \
         wget \
         curl \
         unzip \
+        vim \
         # requirement for nbgitpuller
         git \
  && rm -rf /var/lib/apt/lists/*
@@ -40,7 +41,13 @@ RUN pip install superduperdb
 # Pre-Install SuperDuper examples
 # ---------------
 COPY ./download-examples.sh ./
-RUN ./download-examples.sh && rm ./download-examples.sh
+RUN ./download-examples.sh && \
+    rm ./download-examples.sh
+
+# Set SuperDuperDB theme on Jupyter
+# ---------------
+COPY --chown=superduper ./labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
+COPY --chown=superduper ./apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
 
 # Replay Jupyter's entrypoint
 # ---------------

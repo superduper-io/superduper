@@ -69,13 +69,18 @@ docker-push: ## Push the latest SuperDuperDB image
 
 
 
-##@ DevOps Functions
+##@ CI Functions
 
-lint: ## Lint your local copy
-	mypy superduperdb
-	black --check $(DIRECTORIES)
-	ruff check $(DIRECTORIES)
-	interrogate superduperdb
+mongo_init: ## Initialize a local MongoDB setup
+	docker compose -f test/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
+
+mongo_shutdown: ## Terminate the local MongoDB setup
+	docker compose -f test/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
+
+test: mongo_init ## Alias to test-containers
+	pytest $(PYTEST_ARGUMENTS)
+
+clean-test: mongo_shutdown	## Alias to clean-test-containers
 
 fix-and-test: mongo_init ## Lint before testing
 	isort $(DIRECTORIES)
@@ -84,6 +89,22 @@ fix-and-test: mongo_init ## Lint before testing
 	mypy superduperdb
 	pytest $(PYTEST_ARGUMENTS)
 	interrogate superduperdb
+
+test-and-fix: mongo_init ## Test before linting.
+	mypy superduperdb
+	pytest $(PYTEST_ARGUMENTS)
+	black $(DIRECTORIES)
+	ruff check --fix $(DIRECTORIES)
+	interrogate superduperdb
+
+lint-and-type-check: ## Lint your code
+	mypy superduperdb
+	black --check $(DIRECTORIES)
+	ruff check $(DIRECTORIES)
+	interrogate superduperdb
+
+
+##@ Demo Environment
 
 test_pr:  ## Run PR into a testenv (make test_pr PR_NUMBER=555)
 	# clone only the latest of all branches
@@ -96,14 +117,6 @@ test_pr:  ## Run PR into a testenv (make test_pr PR_NUMBER=555)
 	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/pr_$(PR_NUMBER) superduperdb/superduperdb:latest
 	# todo remove temporary directory
 
-
-##@ Demo Environment
-
-mongo_init: ## Initialize a local MongoDB setup
-	docker compose -f test/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
-
-mongo_shutdown: ## Terminate the local MongoDB setup
-	docker compose -f test/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
 
 demo-run: ## Run a SuperDuperDB demo locally
 	@echo "===> Run SuperDuperDB Locally <==="

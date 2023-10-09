@@ -49,6 +49,13 @@ RUN ./download-examples.sh && \
 COPY --chown=superduper ./labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
 COPY --chown=superduper ./apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
 
+# Install Jupyter Extension
+# ---------------
+#RUN export PATH=${HOME}/.local/bin:$PATH && \
+#    pip install 'jupyterlab>=4.0.0,<5.0.0a0' jupyterlab-lsp &&\
+#    pip install 'python-lsp-server[all]'
+
+
 # Replay Jupyter's entrypoint
 # ---------------
 EXPOSE 8888

@@ -14,7 +14,7 @@
 
 <div align="center">
 	
-### <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Example Use-Cases & Apps</strong></a>
+### <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Example Use-Cases & Apps</strong></a> | <a href="http://demo.superduperdb.com"><strong>Jupyter Demo</strong></a>
 
 </div>
 
@@ -54,7 +54,7 @@
 - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with your database (and/ or) vector database.
 
 ### Currently supported (*more coming soon*):
-| Databases | AI Frameworks | Models & AI APIs | 
+| Databases | AI Frameworks | Models & AI APIs |
 |-|-------------------------------------|-|
 | **- MongoDB** <br> **- MongoDB Atlas** <br> **- S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | **- PyTorch** <br> **- Scikit-Learn**<br> - **HuggingFace Transformers** | **- OpenAI** <br> **- Cohere** <br> **- Anthropic** 
 

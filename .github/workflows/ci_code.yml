@@ -93,7 +93,7 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          pip install -U pip
+          pip install pip 'setuptools>=64' --upgrade
           pip install -r .github/ci-pinned-requirements/dev.txt
 
       - name: Basic health check

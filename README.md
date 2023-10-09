@@ -198,6 +198,8 @@ model.predict(
     listen=True,
 )
 ```
+# Quickstart
+#### Now you can start using SuperDuperDB with oneclick: Try out this jupyter demo at [Jupyter Demo](http://demo.superduperdb.com)!
 
 # Installation
 #### 1. Install SuperDuperDB via `pip` *(~1 minute)*

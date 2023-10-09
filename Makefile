@@ -77,10 +77,10 @@ mongo_init: ## Initialize a local MongoDB setup
 mongo_shutdown: ## Terminate the local MongoDB setup
 	docker compose -f test/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
 
-test: mongo_init ## Alias to test-containers
+test: mongo_init ## Perform unit testing
 	pytest $(PYTEST_ARGUMENTS)
 
-clean-test: mongo_shutdown	## Alias to clean-test-containers
+clean-test: mongo_shutdown	## Clean-up unit testing environment
 
 fix-and-test: mongo_init ## Lint before testing
 	isort $(DIRECTORIES)

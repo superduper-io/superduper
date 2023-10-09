@@ -1,9 +1,16 @@
+import os
+
 import pytest
 import vcr
 
 from superduperdb.ext.cohere import CohereEmbed, CohereGenerate
 
 CASSETTE_DIR = 'test/integration/ext/cohere/cassettes'
+
+
+if os.getenv('COHERE_API_KEY') is None:
+    mp = pytest.MonkeyPatch()
+    mp.setenv('COHERE_API_KEY', 'sk-TopSecret')
 
 
 @vcr.use_cassette(

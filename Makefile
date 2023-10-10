@@ -44,6 +44,10 @@ new-release: ## Release a new SuperDuperDB version
 	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
 	@git add superduperdb/__init__.py
 
+	@echo "** Change deploy/docker-compose/demo to version $(RELEASE_VERSION:v%=%)"
+	sed -ie "s/superduperdb\/superduperdb:.*/superduperdb\/superduperdb:$(RELEASE_VERSION:v%=%)/" deploy/docker-compose/demo.yaml
+	@git add deploy/docker-compose/demo
+
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION
 	@git commit -m "Bump Version $(RELEASE_VERSION)"

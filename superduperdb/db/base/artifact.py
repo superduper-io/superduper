@@ -63,3 +63,14 @@ class ArtifactStore(ABC):
         bytes = self._load_bytes(file_id)
         serializer_function = serializers[serializer]
         return serializer_function.decode(bytes, info)
+
+    def save_artifacts(self, artifacts: t.List) -> t.Dict:
+        """
+        Save list of artifacts and replace the artifacts with file reference
+        :param artifacts: List of artifacts to store
+        """
+
+        artifact_details = dict()
+        for a in artifacts:
+            artifact_details[hash(a)] = a.save(self)
+        return artifact_details

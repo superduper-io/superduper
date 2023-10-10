@@ -8,7 +8,6 @@ import click
 import requests
 
 from superduperdb.container.artifact_tree import (
-    get_artifacts,
     load_artifacts,
     replace_artifacts_with_dict,
 )
@@ -198,12 +197,10 @@ class Client:
         :param component: component to be serialized and sent to the server
         """
         request_id = str(uuid.uuid4())
-        d = component.serialize()
-        artifacts = set(get_artifacts(d))
-        lookup = {a: str(uuid.uuid4()) for a in artifacts}
-        serializers = {lookup[a]: a.serializer for a in artifacts}
-        d = replace_artifacts_with_dict(d, lookup)
-        for a in artifacts:
+        lookup = {a: str(uuid.uuid4()) for a in component.artifacts}
+        serializers = {lookup[a]: a.serializer for a in component.artifacts}
+        d = replace_artifacts_with_dict(component.serialized, lookup)
+        for a in component.artifacts:
             self._put(
                 request_id=request_id,
                 file_id=lookup[a],

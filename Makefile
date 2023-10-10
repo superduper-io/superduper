@@ -39,7 +39,7 @@ new-release: ## Release a new SuperDuperDB version
 
 	@echo "** Change deploy/docker-compose/demo to version $(RELEASE_VERSION:v%=%)"
 	sed -ie "s/superduperdb\/superduperdb:.*/superduperdb\/superduperdb:$(RELEASE_VERSION:v%=%)/" deploy/docker-compose/demo.yaml
-	@git add deploy/docker-compose/demo
+	@git add deploy/docker-compose/demo.yaml
 
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION

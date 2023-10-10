@@ -33,7 +33,7 @@
     <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
 </a>    
 <a href="https://en.wikipedia.org/wiki/Apache_License#Apache_License_2.0">
-    <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg", alt="launch binder">
+    <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg", alt="Apache License">
 </a> 
 </p>
 

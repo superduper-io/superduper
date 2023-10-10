@@ -14,6 +14,7 @@ RUN apt-get update \
         curl \
         unzip \
         vim \
+        procps \
         # requirement for nbgitpuller
         git \
  && rm -rf /var/lib/apt/lists/*
@@ -51,7 +52,7 @@ COPY --chown=superduper ./apputils-extension/themes.jupyterlab-settings ${HOME}/
 
 # Install Jupyter Extension
 # ---------------
-#RUN export PATH=${HOME}/.local/bin:$PATH && \
+RUN export PATH=${HOME}/.local/bin:$PATH #&& \
 #    pip install 'jupyterlab>=4.0.0,<5.0.0a0' jupyterlab-lsp &&\
 #    pip install 'python-lsp-server[all]'
 

@@ -23,13 +23,6 @@ help: ## Display this help
 # The general flow is VERSION -> make new-release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 
-# All these variables are populated after the pushed tag from action "new-release".
-TAG_COMMIT := $(shell git rev-list --abbrev-commit --tags --max-count=1)
-TAG := $(shell git describe --abbrev=0 --tags ${TAG_COMMIT} 2>/dev/null || true)
-COMMIT := $(shell git rev-parse --short HEAD)
-DATE := $(shell git log -1 --format=%cd --date=format:"%Y%m%d")
-VERSION := $(TAG:v%=%)
-
 
 ##@ Release Management
 
@@ -50,7 +43,7 @@ new-release: ## Release a new SuperDuperDB version
 
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION
-	@git commit -m "Bump Version $(RELEASE_VERSION)"
+	@git commit -m "Bump Version $(RELEASE_VERSION:v%=%)"
 	@git tag ${RELEASE_VERSION}
 
 	@echo "** Push release-${RELEASE_VERSION}"
@@ -58,15 +51,15 @@ new-release: ## Release a new SuperDuperDB version
 
 
 docker-build: ## Build SuperDuperDB images
-	@echo "===> Build SuperDuperDB:${VERSION} Container <==="
-	docker build ./deploy/images/superduperdb  -t superduperdb/superduperdb:${VERSION}  --progress=plain --no-cache
+	@echo "===> Build SuperDuperDB:$(RELEASE_VERSION:v%=%) Container <==="
+	docker build ./deploy/images/superduperdb  -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)  --progress=plain --no-cache
 
 docker-push: ## Push the latest SuperDuperDB image
-	@echo "===> Set SuperDuperDB:${VERSION} as the latest <==="
-	docker tag superduperdb/superduperdb:${VERSION} superduperdb/superduperdb:latest
+	@echo "===> Set SuperDuperDB:$(RELEASE_VERSION:v%=%) as the latest <==="
+	docker tag superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) superduperdb/superduperdb:latest
 
-	@echo "===> Release SuperDuperDB:${VERSION} Container <==="
-	docker push superduperdb/superduperdb:${VERSION}
+	@echo "===> Release SuperDuperDB:$(RELEASE_VERSION:v%=%) Container <==="
+	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
 
 	@echo "===> Release SuperDuperDB:latest Container <==="
 	docker push superduperdb/superduperdb:latest

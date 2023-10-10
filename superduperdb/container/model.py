@@ -430,7 +430,7 @@ class Model(Component, PredictMixin):
     # TODO: handle situation with multiple GPUs
     preferred_devices: t.Union[None, t.Sequence[str]] = ("cuda", "mps", "cpu")
 
-    artifacts: t.ClassVar[t.Sequence[str]] = ['object']
+    artifact_attributes: t.ClassVar[t.Sequence[str]] = ['object']
 
     type_id: t.ClassVar[str] = 'model'
 

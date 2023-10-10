@@ -12,6 +12,8 @@ from superduperdb.db.base.backends import (
     vector_data_stores,
 )
 from superduperdb.db.base.db import DB
+from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
+from superduperdb.db.mongodb.artifacts import MongoArtifactStore
 from superduperdb.server.dask_client import dask_client
 
 
@@ -30,6 +32,20 @@ def build_vector_database(cfg):
         return
     cls = vector_data_stores[cfg.vector_search.split('://')[0]]
     return cls(cfg.vector_search)
+
+
+def build_artifact_store(cfg):
+    if cfg.artifact_store is None:
+        raise ValueError('No artifact store specified')
+    elif cfg.artifact_store.startswith('mongodb://'):
+        conn = pymongo.MongoClient('/'.join(cfg.artifact_store.split('/')[:-1]))
+        name = cfg.artifact_store.split('/')[-1]
+        return MongoArtifactStore(conn, name)
+    elif cfg.artifact_store.startswith('filesystem://'):
+        directory = cfg.artifact_store.split('://')[1]
+        return FileSystemArtifactStore(directory)
+    else:
+        raise ValueError(f'Unknown artifact store: {cfg.artifact_store}')
 
 
 def build_datalayer(cfg=None) -> DB:
@@ -65,7 +81,7 @@ def build_datalayer(cfg=None) -> DB:
             else databackend.build_metadata()
         ),
         artifact_store=(
-            build(cfg.artifact_store, artifact_stores)
+            build_artifact_store(cfg)
             if cfg.artifact_store is not None
             else databackend.build_artifact_store()
         ),

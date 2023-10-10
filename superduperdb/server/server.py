@@ -6,7 +6,6 @@ from flask import Flask, jsonify, make_response, request
 
 from superduperdb import CFG
 from superduperdb.container.artifact_tree import (
-    get_artifacts,
     load_artifacts_from_store,
     replace_artifacts_with_dict,
 )
@@ -198,12 +197,10 @@ def make_endpoints(app, db):
         if version:
             version = int(version)
         m = db.load(type_id=d['type_id'], identifier=d['identifier'], version=version)
-        to_send = m.serialize()
-        artifacts = list(get_artifacts(to_send))
-        lookup = {a: str(uuid.uuid4()) for a in artifacts}
-        s_lookup = {lookup[a]: a.serializer for a in artifacts}
-        to_send = replace_artifacts_with_dict(to_send, lookup)
-        for a in artifacts:
+        lookup = {a: str(uuid.uuid4()) for a in m.artifacts}
+        s_lookup = {lookup[a]: a.serializer for a in m.artifacts}
+        to_send = replace_artifacts_with_dict(m.serialized, lookup)
+        for a in m.artifacts:
             cache[request_id][lookup[a]] = serializers[s_lookup[lookup[a]]].encode(
                 a.artifact
             )

@@ -33,7 +33,7 @@ class Encoder(Component):
                     to ``bytes``
     """
 
-    artifacts: t.ClassVar[t.Sequence[str]] = ['decoder', 'encoder']
+    artifact_artibutes: t.ClassVar[t.Sequence[str]] = ['decoder', 'encoder']
     identifier: str
     decoder: t.Union[t.Callable, Artifact] = dc.field(
         default_factory=lambda: Artifact(artifact=_pickle_decoder)

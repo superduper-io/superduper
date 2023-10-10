@@ -10,7 +10,6 @@ from dask.distributed import Future
 
 import superduperdb as s
 from superduperdb.container.artifact_tree import (
-    get_artifacts,
     infer_artifacts,
     load_artifacts_from_store,
     replace_artifacts,
@@ -384,7 +383,6 @@ class DB:
         :param dependencies: list of jobs which should execute before component
                              init begins
         """
-        # TODO why this helper function?
         return self._add(
             object=object,
             dependencies=dependencies,
@@ -625,12 +623,12 @@ class DB:
             object.version = 0
 
         if serialized is None:
-            serialized = object.serialize()
-            artifacts = list(set(get_artifacts(serialized)))
             artifact_info = {}
-            for a in artifacts:
+            for a in object.artifacts:
                 artifact_info[hash(a)] = a.save(self.artifact_store)
-            serialized = t.cast(t.Dict, replace_artifacts(serialized, artifact_info))
+            serialized = t.cast(
+                t.Dict, replace_artifacts(object.serialized, artifact_info)
+            )
 
         else:
             serialized['version'] = object.version
@@ -713,8 +711,8 @@ class DB:
                 except KeyError:
                     pass
 
-            if hasattr(component, 'artifacts'):
-                for a in component.artifacts:
+            if hasattr(component, 'artifact_attributes'):
+                for a in component.artifact_attributes:
                     self.artifact_store.delete_artifact(info['dict'][a]['file_id'])
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
@@ -917,17 +915,15 @@ class DB:
                 )
             raise e
 
-        new_info = object.serialize()
-        all_artifacts = tuple(set(get_artifacts(new_info)))
         artifact_details = dict()
-        for a in all_artifacts:
+        for a in object.artifacts:
             artifact_details[hash(a)] = a.save(self.artifact_store)
 
         old_artifacts = tuple(set(infer_artifacts(info)))
         for oa in old_artifacts:
             self.artifact_store.delete_artifact(oa)
 
-        new_info = replace_artifacts(new_info, artifact_details)
+        new_info = replace_artifacts(object.serialized, artifact_details)
 
         self.metadata.replace_object(
             new_info,

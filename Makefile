@@ -108,7 +108,7 @@ test-notebooks: ## Test notebooks (arg: NOTEBOOKS=<path_to_files>)
 ##@ Local Testing
 
 # sandbox is a bloated image that contains everything we will need.
-# we don't need to expose this one to the tuser.
+# we don't need to expose this one to the user.
 build-sandbox: ## Build a SuperDuperDB image with all the extras.
 	echo "===> Build superduper-full:$(RELEASE_VERSION:v%=%)"
 	docker build ./deploy/images/superduperdb -t superduperdb/sandbox:$(RELEASE_VERSION:v%=%) --progress=plain --build-arg SUPERDUPERDB_EXTRAS="apis,docs,lint,tests,typing,torch"

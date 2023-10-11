@@ -7,11 +7,10 @@ from __future__ import annotations
 
 import dataclasses as dc
 import typing as t
-from functools import cached_property
 
-from superduperdb.container.artifact_tree import get_artifacts
 from superduperdb.container.job import ComponentJob, Job
 from superduperdb.container.serializable import Serializable
+from superduperdb.db.base.artifact import ArtifactStore
 
 if t.TYPE_CHECKING:
     from superduperdb.container.dataset import Dataset
@@ -47,13 +46,11 @@ class Component(Serializable):
     def child_components(self) -> t.Sequence[t.Any]:
         return []
 
-    @cached_property
+    @property
     def serialized(self):
-        return self.serialize()
-
-    @cached_property
-    def artifacts(self) -> t.Sequence[t.Any]:
-        return list(set(get_artifacts(self.serialized)))
+        serialized = self.serialize()
+        artifacts = tuple(set(ArtifactStore.get_artifacts(serialized)))
+        return serialized, artifacts
 
     @property
     def unique_id(self) -> str:

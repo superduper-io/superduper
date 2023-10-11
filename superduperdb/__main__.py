@@ -2,10 +2,10 @@ import sys
 
 import click
 
-from .cli import app, config, docs, info, release
+from .cli import app, config, info
 from .cli.serve import local_cluster, serve
 
-__all__ = 'config', 'docs', 'info', 'local_cluster', 'release', 'serve'
+__all__ = 'config', 'info', 'local_cluster', 'serve'
 
 
 def run():

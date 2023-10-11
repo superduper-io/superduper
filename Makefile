@@ -65,7 +65,6 @@ docker-push: ## Push the latest SuperDuperDB image
 	docker push superduperdb/superduperdb:latest
 
 
-
 ##@ CI Functions
 
 mongo_init: ## Initialize a local MongoDB setup
@@ -120,4 +119,15 @@ demo-run: ## Run a SuperDuperDB demo locally
 
 	# TODO: make it take as argument the TAG of desired image.
 	docker compose -f ./deploy/docker-compose/demo.yaml up
+
+
+##@ Documentation
+
+documentation: ## Generate Sphinx inline-API HTML documentation, including API docs
+	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
+	rm -rf apidocs/source/
+	rm -rf docs/build/apidocs
+	sphinx-apidoc -f -o apidocs/source superduperdb
+	sphinx-build -a apidocs docs/build/apidocs
+	@echo "Build finished. The HTML pages are in docs/build/apidocs"
 

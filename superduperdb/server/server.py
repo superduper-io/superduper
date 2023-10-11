@@ -5,12 +5,9 @@ import uuid
 from flask import Flask, jsonify, make_response, request
 
 from superduperdb import CFG
-from superduperdb.container.artifact_tree import (
-    load_artifacts_from_store,
-    replace_artifacts_with_dict,
-)
 from superduperdb.container.document import load_bson, load_bsons
 from superduperdb.container.serializable import Serializable
+from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.db.base.build import build_datalayer
 from superduperdb.misc.serialization import serializers
 
@@ -137,7 +134,8 @@ def make_endpoints(app, db):
             artifact_cache[a] = serializers[d['serializers'][a]].decode(
                 artifact_cache[a]
             )
-        d = load_artifacts_from_store(d, cache=artifact_cache)
+        d = ArtifactStore.load_from_cache(d, cache=artifact_cache)
+
         object = Serializable.deserialize(d['component'])
         db.add(object)
         del cache[d['request_id']]
@@ -197,13 +195,14 @@ def make_endpoints(app, db):
         if version:
             version = int(version)
         m = db.load(type_id=d['type_id'], identifier=d['identifier'], version=version)
-        lookup = {a: str(uuid.uuid4()) for a in m.artifacts}
-        s_lookup = {lookup[a]: a.serializer for a in m.artifacts}
-        to_send = replace_artifacts_with_dict(m.serialized, lookup)
-        for a in m.artifacts:
-            cache[request_id][lookup[a]] = serializers[s_lookup[lookup[a]]].encode(
-                a.artifact
-            )
+        serialized, artifacts = m.serialized
+        lookup = {a.sha1: str(uuid.uuid4()) for a in artifacts}
+        s_lookup = {lookup[a.sha1]: a.serializer for a in artifacts}
+        to_send = ArtifactStore.replace_artifacts_with_dict(serialized, lookup)
+        for a in artifacts:
+            cache[request_id][lookup[a.sha1]] = serializers[
+                s_lookup[lookup[a.sha1]]
+            ].encode(a.artifact)
         return jsonify(to_send)
 
     @app.route('/remove', methods=['POST'])

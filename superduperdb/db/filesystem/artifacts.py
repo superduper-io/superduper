@@ -28,7 +28,7 @@ class FileSystemArtifactStore(ArtifactStore):
             print('Creating artifact store directory')
             os.makedirs(self.conn, exist_ok=True)
 
-    def delete_artifact(self, file_id: str):
+    def delete(self, file_id: str):
         """
         Delete artifact from artifact store
         :param file_id: File id uses to identify artifact in store
@@ -49,12 +49,12 @@ class FileSystemArtifactStore(ArtifactStore):
                 print('Aborting...')
         shutil.rmtree(self.conn, ignore_errors=force)
 
-    def _save_artifact(self, serialized: bytes) -> t.Any:
+    def save_artifact(self, serialized: bytes) -> t.Any:
         h = uuid.uuid4().hex
         with open(os.path.join(self.conn, h), 'wb') as f:
             f.write(serialized)
         return h
 
-    def _load_bytes(self, file_id: str) -> bytes:
+    def load_bytes(self, file_id: str) -> bytes:
         with open(os.path.join(self.conn, file_id), 'rb') as f:
             return f.read()

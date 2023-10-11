@@ -9,16 +9,11 @@ import networkx
 from dask.distributed import Future
 
 import superduperdb as s
-from superduperdb.container.artifact_tree import (
-    infer_artifacts,
-    load_artifacts_from_store,
-    replace_artifacts,
-)
+from superduperdb.container import serializable
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
 from superduperdb.container.job import ComponentJob, FunctionJob, Job
 from superduperdb.container.model import Model
-from superduperdb.container.serializable import Serializable
 from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.db.base.download import Downloader, gather_uris
 from superduperdb.misc.colors import Colors
@@ -483,8 +478,7 @@ class DB:
             return {
                 k: v
                 for k, v in info['dict'].items()
-                if isinstance(v, dict)
-                and set(v.keys()) == {'type_id', 'identifier', 'version'}
+                if isinstance(v, dict) and serializable.is_component_metadata(v)
             }
 
         def replace_children(r):
@@ -497,9 +491,7 @@ class DB:
             return r
 
         info = replace_children(info)
-        info = load_artifacts_from_store(
-            info, cache={}, artifact_store=self.artifact_store
-        )
+        info = self.artifact_store.load(info)
 
         m = Component.deserialize(info)
         m.on_load(self)
@@ -623,12 +615,9 @@ class DB:
             object.version = 0
 
         if serialized is None:
-            artifact_info = {}
-            for a in object.artifacts:
-                artifact_info[hash(a)] = a.save(self.artifact_store)
-            serialized = t.cast(
-                t.Dict, replace_artifacts(object.serialized, artifact_info)
-            )
+            serialized, artifacts = object.serialized
+            artifact_info = self.artifact_store.save(artifacts)
+            serialized = self.artifact_store.replace(serialized, artifact_info)
 
         else:
             serialized['version'] = object.version
@@ -713,7 +702,7 @@ class DB:
 
             if hasattr(component, 'artifact_attributes'):
                 for a in component.artifact_attributes:
-                    self.artifact_store.delete_artifact(info['dict'][a]['file_id'])
+                    self.artifact_store.delete(info['dict'][a]['file_id'])
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
     def _download_content(  # TODO: duplicated function
@@ -842,7 +831,7 @@ class DB:
         if listener_info is None:
             listener_info = self.metadata.get_component('listener', identifier)
 
-        select = Serializable.deserialize(listener_info['select'])
+        select = serializable.Serializable.deserialize(listener_info['select'])
         if ids is None:
             ids = select.get_ids(self)
         else:
@@ -914,17 +903,7 @@ class DB:
                     object,
                 )
             raise e
-
-        artifact_details = dict()
-        for a in object.artifacts:
-            artifact_details[hash(a)] = a.save(self.artifact_store)
-
-        old_artifacts = tuple(set(infer_artifacts(info)))
-        for oa in old_artifacts:
-            self.artifact_store.delete_artifact(oa)
-
-        new_info = replace_artifacts(object.serialized, artifact_details)
-
+        new_info = self.artifact_store.update(object, metadata_info=info)
         self.metadata.replace_object(
             new_info,
             identifier=object.identifier,

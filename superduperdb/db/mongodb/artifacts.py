@@ -29,11 +29,11 @@ class MongoArtifactStore(ArtifactStore):
                 print('Aborting...')
         return self.db.client.drop_database(self.db.name)
 
-    def delete_artifact(self, file_id: str):
+    def delete(self, file_id: str):
         return self.filesystem.delete(file_id)
 
-    def _load_bytes(self, file_id: str):
+    def load_bytes(self, file_id: str):
         return self.filesystem.get(file_id).read()
 
-    def _save_artifact(self, serialized: bytes):
+    def save_artifact(self, serialized: bytes):
         return self.filesystem.put(serialized)

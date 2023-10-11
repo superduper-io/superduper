@@ -1,9 +1,12 @@
+import hashlib
 import typing as t
 
 import typing_extensions as te
 
-from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.misc.serialization import Info, serializers
+
+if t.TYPE_CHECKING:
+    from superduperdb.db.base.artifact import ArtifactStore
 
 ArtifactCache = t.Dict[int, t.Any]
 
@@ -30,7 +33,6 @@ class Artifact:
     object_id: int = 0
     save_method: t.Optional[str] = None
     serializer: str = 'dill'
-    sha1: str = ''
     hash: t.Optional[int] = None
 
     def __init__(
@@ -48,12 +50,21 @@ class Artifact:
         self.info = info
         self.object_id = object_id
         self.serializer = serializer
-        self.sha1 = sha1
         self.hash = hash
+        self._sha1 = sha1
+
+    @property
+    def sha1(self):
+        if not self._sha1:
+            b = self.serialize()
+            self._sha1 = hashlib.sha1(b).hexdigest()
+            return self._sha1
+        return self._sha1
 
     def __hash__(self):
         if self.hash is not None:
             return self.hash
+
         if isinstance(self.artifact, list):
             return hash(str(self.artifact[:100]))
         if isinstance(self.artifact, dict):
@@ -72,14 +83,14 @@ class Artifact:
         serializer = serializers[self.serializer]
         return serializer.encode(self.artifact, self.info)
 
-    def save(self, artifact_store: ArtifactStore) -> t.Dict[str, t.Any]:
+    def save(self, artifact_store: 'ArtifactStore') -> t.Dict[str, t.Any]:
         """Store this artifact, and return a dictionary of the results
 
         :param artifact_store: the store to save the Artifact in
         """
         b = self.serialize()
-        file_id, sha1 = artifact_store.create_artifact(bytes=b)
-        return {'file_id': file_id, 'sha1': sha1, 'serializer': self.serializer}
+        file_id = artifact_store.create(bytes=b)
+        return {'file_id': file_id, 'sha1': self.sha1, 'serializer': self.serializer}
 
 
 class ArtifactDesc(te.TypedDict):

@@ -7,13 +7,10 @@ import uuid
 import click
 import requests
 
-from superduperdb.container.artifact_tree import (
-    load_artifacts,
-    replace_artifacts_with_dict,
-)
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document, dump_bsons, load_bson, load_bsons
 from superduperdb.container.serializable import Serializable
+from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.db.base.db import ExecuteQuery
 from superduperdb.db.base.query import Delete, Insert, Like, Select, SelectOne, Update
 from superduperdb.misc.serialization import serializers
@@ -197,13 +194,14 @@ class Client:
         :param component: component to be serialized and sent to the server
         """
         request_id = str(uuid.uuid4())
-        lookup = {a: str(uuid.uuid4()) for a in component.artifacts}
-        serializers = {lookup[a]: a.serializer for a in component.artifacts}
-        d = replace_artifacts_with_dict(component.serialized, lookup)
-        for a in component.artifacts:
+        serialized, artifacts = component.serialized
+        lookup = {a.sha1: str(uuid.uuid4()) for a in artifacts}
+        serializers = {lookup[a.sha1]: a.serializer for a in artifacts}
+        d = ArtifactStore.replace_artifacts_with_dict(serialized, lookup)
+        for a in artifacts:
             self._put(
                 request_id=request_id,
-                file_id=lookup[a],
+                file_id=lookup[a.sha1],
                 data=a.serialize(),  # Do we need to serialize again?
             )
         self._make_post_or_put_request(
@@ -303,7 +301,7 @@ class Client:
                 'request_id': request_id,
             },
         ).json()
-        d = load_artifacts(
+        d = ArtifactStore.load_artifacts(
             d, cache={}, getter=lambda x: self._get(request_id=request_id, file_id=x)
         )
         return Serializable.deserialize(d)

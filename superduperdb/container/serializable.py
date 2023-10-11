@@ -3,8 +3,19 @@ import importlib
 import inspect
 import typing as t
 
-if t.TYPE_CHECKING:
-    pass
+
+def is_component_metadata(r: dict) -> bool:
+    COMPONENT_KEYS = {'type_id', 'identifier', 'version'}
+    if COMPONENT_KEYS == set(r):
+        return True
+    return False
+
+
+def is_component(r: dict) -> bool:
+    COMPONENT_KEYS = {'cls', 'dict', 'module'}
+    if COMPONENT_KEYS <= set(r):
+        return True
+    return False
 
 
 def _deserialize(r: t.Any, db: None = None) -> t.Any:
@@ -13,8 +24,7 @@ def _deserialize(r: t.Any, db: None = None) -> t.Any:
 
     if not isinstance(r, dict):
         return r
-
-    if not ({'cls', 'dict', 'module'} <= set(r)):
+    if not is_component(r):
         return {k: _deserialize(v, db=db) for k, v in r.items()}
 
     module = importlib.import_module(r['module'])
@@ -28,7 +38,7 @@ def _deserialize(r: t.Any, db: None = None) -> t.Any:
 
 
 def _serialize(item: t.Any) -> t.Dict[str, t.Any]:
-    def fix(k, v):
+    def unpack(k, v):
         attr = getattr(item, k)
         if isinstance(attr, Serializable):
             return _serialize(attr)
@@ -40,7 +50,7 @@ def _serialize(item: t.Any) -> t.Dict[str, t.Any]:
 
         return v
 
-    d = {k: fix(k, v) for k, v in item.dict().items()}
+    d = {k: unpack(k, v) for k, v in item.dict().items()}
 
     from superduperdb.container.component import Component
 

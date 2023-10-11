@@ -3,20 +3,34 @@
 In this notebook we'll be implementing a classic machine learning classification task: MNIST hand written digit
 recognition, using a convolution neural network, but with a twist: we'll be implementing the task *in database* using SuperDuperDB.
 
+
+```python
+!pip install matplotlib
+!pip install superduperdb[torch]
+```
+
 SuperDuperDB supports MongoDB as a databackend. Correspondingly, we'll import the python MongoDB client `pymongo`
 and "wrap" our database to convert it to a SuperDuper `Datalayer`:
 
 
 ```python
-import pymongo
 import torch
 import torchvision
 
+import os
+
+# Uncomment one of the following lines to use a bespoke MongoDB deployment
+# For testing the default connection is to mongomock
+
+mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
+# mongodb_uri = "mongodb://localhost:27017"
+# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
+# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
+# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
+
+# Super-Duper your Database!
 from superduperdb import superduper
-
-db = pymongo.MongoClient().documents
-
-db = superduper(db)
+db = superduper(mongodb_uri)
 ```
 
 Now that we've connected to SuperDuperDB, let's add some data. MNIST is a good show case for one of the 
@@ -38,10 +52,10 @@ collection = Collection(name='mnist')
 mnist_data = list(torchvision.datasets.MNIST(root='./data', download=True))
 data = [D({'img': i(x[0]), 'class': x[1]}) for x in mnist_data]
 random.shuffle(data)
-data = data[:11000]
+data = data[:1000]
 
 db.execute(
-    collection.insert_many(data[:-1000], encoders=[i])
+    collection.insert_many(data[:-100], encoders=[i])
 )
 ```
 
@@ -50,7 +64,7 @@ Now that we've inserted the images and their classes to the database, let's quer
 
 ```python
 r = db.execute(collection.find_one())
-r
+r.unpack()
 ```
 
 When we query the data, it's in exactly the format we inserted it. In particular, we can use the `PIL.Image` instances
@@ -58,7 +72,7 @@ to inspect the data:
 
 
 ```python
-r['img'].x
+r.unpack()['img']
 ```
 
 Now let's create our model. SuperDuperDB supports these frameworks, out-of-the-box:
@@ -124,6 +138,7 @@ We've created `postprocess` and `preprocess` functions to handle the communicati
 
 ```python
 model = superduper(LeNet5(10), preprocess=preprocess, postprocess=postprocess)
+db.add(model)
 ```
 
 The model predicts human readable outputs, directly from the `PIL.Image` objects. All 
@@ -140,7 +155,6 @@ with a `sklearn`-like `.fit` method:
 
 
 ```python
-# from torch.optim import Adam
 from torch.nn.functional import cross_entropy
 
 from superduperdb.container.metric import Metric
@@ -157,8 +171,8 @@ job = model.fit(
         identifier='my_configuration',
         objective=cross_entropy,
         loader_kwargs={'batch_size': 10},
-        max_iterations=100,
-        validation_interval=50,
+        max_iterations=10,
+        validation_interval=5,
     ),
     metrics=[Metric(identifier='acc', object=lambda x, y: sum([xx == yy for xx, yy in zip(x, y)]) / len(x))],
     validation_sets=[
@@ -188,14 +202,14 @@ The `listen` toggle "activates" the model:
 
 
 ```python
-model.predict(X='img', db=db, select=collection.find(), listen=True)
+model.predict(X='img', db=db, select=collection.find(), listen=True, max_chunk_size=100)
 ```
 
-We can see that predictions are available in `_outputs.img.lenet5`. The `.unpack()` method strips the document down to just the data.
+We can see that predictions are available in `_outputs.img.lenet5`.
 
 
 ```python
-db.execute(collection.find_one()).unpack()
+db.execute(collection.find_one({'_fold': 'valid'})).unpack()
 ```
 
 The models "activated" can be seen here:
@@ -209,10 +223,10 @@ We can verify that the model is activated, by inserting the rest of the data:
 
 
 ```python
-for r in data[-1000:]:
+for r in data[-100:]:
     r['update'] = True
 
-db.execute(collection.insert_many(data[-1000:]))
+db.execute(collection.insert_many(data[-100:]))
 ```
 
 You can see that the inserted data, are now also populated with predictions:

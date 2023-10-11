@@ -2,30 +2,56 @@
 
 
 ```python
-!pip install superduperdb
+!pip install superduperdb==0.0.12
+!pip install sentence_transformers
 ```
+
+Set your `openai` key if it's not already in your `.env` variables
+
+
+```python
+import os
+os.environ['OPENAI_API_KEY'] = '<YOUR-OPENAI-KEY>'
+```
+
+This line allows `superduperdb` to connect to MongoDB. Under the hood, `superduperdb` sets up configurations
+for where to store:
+- models
+- outputs
+- metadata
+In addition `superduperdb` configures how vector-search is to be performed.
+
+
+```python
+import os
+
+# Uncomment one of the following lines to use a bespoke MongoDB deployment
+# For testing the default connection is to mongomock
+
+mongodb_uri = os.getenv("MONGODB_URI", "mongomock://test")
+# mongodb_uri = "mongodb://localhost:27017"
+# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
+# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
+# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
+
+# Super-Duper your Database!
+from superduperdb import superduper
+db = superduper(mongodb_uri)
+```
+
+
+```python
+db
+```
+
+We've prepared some data - it's the inline documentation of the `pymongo` API!
 
 
 ```python
 !curl -O https://superduperdb-public.s3.eu-west-1.amazonaws.com/pymongo.json
 ```
 
-
-```python
-import os
-
-os.environ['OPENAI_API_KEY'] = '<YOUR-OPEN-AI-API-KEY-HERE>'
-```
-
-
-```python
-import pymongo
-from superduperdb import superduper
-
-db = pymongo.MongoClient().pymongo_docs
-    
-db = superduper(db)
-```
+We can insert this data to MongoDB using the `superduperdb` API, which supports `pymongo` commands.
 
 
 ```python
@@ -35,23 +61,63 @@ from superduperdb.container.document import Document as D
 
 with open('pymongo.json') as f:
     data = json.load(f)
-
-db.execute(Collection('documents').insert_many([D(r) for r in data]))
 ```
+
+
+```python
+data[0]
+```
+
+
+```python
+db.execute(
+    Collection('documents').insert_many([D(r) for r in data])
+)
+```
+
+In the remainder of the notebook you can choose between using `openai` or `sentence_transformers` to 
+perform vector-search. After instantiating the model wrappers, the rest of the notebook is identical.
+
+
+```python
+from superduperdb.ext.openai.model import OpenAIEmbedding
+
+model = OpenAIEmbedding(model='text-embedding-ada-002')
+```
+
+
+```python
+import sentence_transformers
+from superduperdb.container.model import Model
+from superduperdb.ext.vector.encoder import vector
+
+model = Model(
+    identifier='all-MiniLM-L6-v2',
+    object=sentence_transformers.SentenceTransformer('all-MiniLM-L6-v2'),
+    encoder=vector(shape=(384,)),
+    predict_method='encode',
+    postprocess=lambda x: list(x),
+    batch_predict=True,
+)
+```
+
+
+```python
+model.predict('This is a test', one=True)
+```
+
+Now we can configure the Atlas vector-search index. 
+This command saves and sets up a model to "listen" to a particular subfield (or whole document) for
+new text, and convert this on the fly to vectors which are then indexed by Atlas vector-search.
 
 
 ```python
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.container.listener import Listener
-from superduperdb.ext.numpy.array import array
-from superduperdb.ext.openai.model import OpenAIEmbedding
-
-
-model = OpenAIEmbedding(model='text-embedding-ada-002')
 
 db.add(
     VectorIndex(
-        identifier=f'pymongo-docs',
+        identifier='pymongo-docs',
         indexing_listener=Listener(
             model=model,
             key='value',
@@ -64,11 +130,20 @@ db.add(
 
 
 ```python
+db.show('vector_index')
+```
+
+Now the index is set up we can use it in a query. `superduperdb` provides some syntactic sugar for 
+the `aggregate` search pipelines, which can trip developers up. It also handles 
+all conversion of inputs to vectors under the hood
+
+
+```python
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.container.document import Document as D
 from IPython.display import *
 
-query = 'Find data'
+query = 'Query the database'
 
 result = db.execute(
     Collection('documents')
@@ -76,7 +151,10 @@ result = db.execute(
         .find()
 )
 
+display(Markdown('---'))
+
 for r in result:
     display(Markdown(f'### `{r["parent"] + "." if r["parent"] else ""}{r["res"]}`'))
     display(Markdown(r['value']))
+    display(Markdown('---'))
 ```

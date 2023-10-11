@@ -1,6 +1,5 @@
 # Run SuperDuperDB using Docker-Compose
 
-
 #### Build and run your app with Compose
 ```shell
  docker-compose -f demo.yaml up 

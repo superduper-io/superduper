@@ -1,5 +1,11 @@
 # Transfer learning using Sentence Transformers and Scikit-Learn
 
+
+```python
+!pip install superduperdb==0.0.12
+!pip install sentence-transformers
+```
+
 In this example, we'll be demonstrating how to simply implement transfer learning using SuperDuperDB.
 You'll find related examples on vector-search and simple training examples using scikit-learn in the 
 the notebooks directory of the project. Transfer learning leverages similar components, and may be used synergistically with vector-search. Vectors are, after all, simultaneously featurizations of 
@@ -12,11 +18,20 @@ the docs, and in the `notebooks/` directory.
 ```python
 from superduperdb import superduper
 from superduperdb.db.mongodb.query import Collection
-import pymongo
+import os
 
-db = superduper(
-    pymongo.MongoClient().documents
-)
+# Uncomment one of the following lines to use a bespoke MongoDB deployment
+# For testing the default connection is to mongomock
+
+mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
+# mongodb_uri = "mongodb://localhost:27017"
+# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
+# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
+# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
+
+# Super-Duper your Database!
+from superduperdb import superduper
+db = superduper(mongodb_uri)
 
 collection = Collection('transfer')
 ```
@@ -52,7 +67,7 @@ r
 Let's create a SuperDuperDB model based on a `sentence_transformers` model.
 You'll notice that we don't necessarily need a native SuperDuperDB integration to a model library 
 in order to leverage its power with SuperDuperDB. For example, in this case, we just need 
-to configure the `Model` wrapper to interoperate correctly with the `SentenceTransformer` class. After doing this, we can link the model to a collection, and /docs/docs/usage/models#daemonizing-models-with-listeners the model using the `listen=True` keyword:
+to configure the `Model` wrapper to interoperate correctly with the `SentenceTransformer` class. After doing this, we can link the model to a collection, and daemonize the model using the `listen=True` keyword:
 
 
 ```python

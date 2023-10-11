@@ -19,7 +19,9 @@ We accomplish this by:
 
 
 ```python
-!pip install torchaudio
+!pip install superduperdb==0.0.12
+!pip install torchaudio==2.1.0
+!pip install datasets==2.10.1   # 2.14 seems to be broken so rolling back version
 ```
 
 This functionality could be accomplised using any audio, in particular audio 
@@ -42,12 +44,21 @@ As usual we wrap our MongoDB connector, to connect to the `Datalayer`:
 
 
 ```python
-import pymongo
+import os
 from superduperdb import superduper
 
-db = pymongo.MongoClient().documents
+# Uncomment one of the following lines to use a bespoke MongoDB deployment
+# For testing the default connection is to mongomock
 
-db = superduper(db)
+mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
+# mongodb_uri = "mongodb://localhost:27017"
+# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
+# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
+# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
+
+# Super-Duper your Database!
+from superduperdb import superduper
+db = superduper(mongodb_uri)
 ```
 
 Using an `Encoder`, we may add the audio data directly to a MongoDB collection:
@@ -59,16 +70,11 @@ from superduperdb.ext.numpy.array import array
 from superduperdb.container.document import Document as D
 
 collection = Collection('voice-memos')
-enc = array('float64', shape=(None,))
+enc = array('float32', shape=(None,))
 
 db.execute(collection.insert_many([
     D({'audio': enc(r['audio']['array'])}) for r in data
 ], encoders=(enc,)))
-```
-
-
-```python
-db.execute(collection.find_one()).unpack()
 ```
 
 Now that we've done that, let's apply a pretrained `transformers` model to this data:

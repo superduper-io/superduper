@@ -9,7 +9,9 @@ To this end, we'll be using the [CLIP multimodal architecture](https://openai.co
 
 
 ```python
-!pip install https://github.com/openai/CLIP
+!pip install git+https://github.com/openai/CLIP
+!pip install datasets
+!pip install superduperdb
 ```
 
 So let's start. 
@@ -19,20 +21,24 @@ and "wrap" our database to convert it to a SuperDuper `Datalayer`:
 
 
 ```python
-import clip
-import pymongo
-from superduperdb.misc.superduper import superduper
-from superduperdb.ext.torch.model import TorchModel
-from superduperdb.ext.pillow.image import pil_image as i
+import os
+from superduperdb import CFG
+from superduperdb.db.base.build import build_datalayer
 from superduperdb.db.mongodb.query import Collection
-from superduperdb.container.document import Document as D
-from IPython.display import display
 
-pymongo.MongoClient().drop_database('documents')
-pymongo.MongoClient().drop_database('_filesystem:documents')
+# Uncomment one of the following lines to use a bespoke MongoDB deployment
+# For testing the default connection is to mongomock
 
-db = pymongo.MongoClient().documents
-db = superduper(db)
+mongodb_uri = os.getenv("MONGODB_URI", "mongomock://test")
+# mongodb_uri = "mongodb://localhost:27017/documents"
+# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
+
+# Super-Duper your Database!
+CFG.data_backend = mongodb_uri
+CFG.artifact_store = 'filesystem://./models'
+CFG.vector_search = mongodb_uri
+
+db = build_datalayer(CFG)
 
 collection = Collection(name='tiny-imagenet')
 ```
@@ -74,8 +80,8 @@ We can verify that the images are correctly stored:
 
 
 ```python
-x = db.execute(collection.find_one())['image'].x
-x
+x = db.execute(collection.find_one()).unpack()['image']
+display(x.resize((300, 300 * int(x.size[1] / x.size[0]))))
 ```
 
 We now can wrap the CLIP model, to ready it for multimodel search. It involves 2 components:
@@ -88,27 +94,28 @@ matching items:
 
 
 ```python
-from superduperdb.ext.torch.tensor import tensor
+import clip
+from superduperdb.ext.vector.encoder import vector
+from superduperdb.ext.torch.model import TorchModel
 import torch
 
-t = tensor(torch.float, shape=(512,))
+model, preprocess = clip.load("RN50", device='cpu')
 
-model, preprocess = clip.load("ViT-B/32", device='cpu')
+e = vector(shape=(1024,))
 
 text_model = TorchModel(
     identifier='clip_text',
     object=model,
     preprocess=lambda x: clip.tokenize(x)[0],
     forward_method='encode_text',
-    encoder=t
+    postprocess=lambda x: x.tolist(),
+    encoder=e,
 )
 ```
 
-Let's verify this works:
-
 
 ```python
-text_model.predict('this is a test', one=True)
+text_model.predict('This is a test', one=True)
 ```
 
 Similar procedure with the visual part, which takes `PIL.Image` instances as inputs.
@@ -119,7 +126,8 @@ visual_model = TorchModel(
     identifier='clip_image',
     preprocess=preprocess,
     object=model.visual,
-    encoder=t,
+    postprocess=lambda x: x.tolist(),
+    encoder=e,
 )
 ```
 
@@ -151,6 +159,7 @@ db.add(
             model=text_model,
             key='text',
             active=False,
+            select=None,
         )
     )
 )
@@ -160,9 +169,14 @@ We can now demonstrate searching by text for images:
 
 
 ```python
+import clip
+from IPython.display import display
+from superduperdb.container.document import Document as D
+
 out = db.execute(
     collection.like(D({'text': 'mushroom'}), vector_index='my-index', n=3).find({})
 )
 for r in out:
-    display(r['image'].x)
+    x = r['image'].x
+    display(x.resize((300, 300 * int(x.size[1] / x.size[0]))))
 ```

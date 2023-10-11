@@ -1,25 +1,24 @@
 # Sentiment analysis with transformers
 
-In this notebook we implement a classic NLP use-case using Hugging Face's `transformers` library.
-We show that this use-case may be implementing directly in the SuperDuperDB `Datalayer` using MongoDB as the
-data-backend. 
-
 
 ```python
+!pip install superduperdb==0.0.12
 !pip install datasets
 ```
+
+In this notebook we implement a classic NLP use-case using Hugging Face's `transformers` library.
+We show that this use-case may be implementing directly in SuperDuperDB using MongoDB as the
+data-backend. 
 
 
 ```python
 from datasets import load_dataset, load_metric
 import numpy
-import pymongo
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 import superduperdb
 from superduperdb.misc.superduper import superduper
 from superduperdb.container.document import Document as D
-from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.transformers.model import TransformersTrainerConfiguration, Pipeline
 from superduperdb.container.dataset import Dataset
 ```
@@ -30,8 +29,22 @@ to a SuperDuper Datalayer:
 
 
 ```python
-db = pymongo.MongoClient().documents
-db = superduper(db)
+import os
+from superduperdb.db.mongodb.query import Collection
+
+# Uncomment one of the following lines to use a bespoke MongoDB deployment
+# For testing the default connection is to mongomock
+
+os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
+mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
+# mongodb_uri = "mongodb://localhost:27017"
+# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
+# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
+# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
+
+# Super-Duper your Database!
+from superduperdb import superduper
+db = superduper(mongodb_uri)
 collection = Collection('imdb')
 ```
 
@@ -41,12 +54,15 @@ We use the IMDB dataset for training the model:
 ```python
 data = load_dataset("imdb")
 
+# increase this number to do serious training
+N_DATAPOINTS = 4
+
 db.execute(collection.insert_many([
-    D({'_fold': 'train', **data['train'][int(i)]}) for i in numpy.random.permutation(len(data['train']))[:4]
+    D({'_fold': 'train', **data['train'][int(i)]}) for i in numpy.random.permutation(len(data['train']))[:N_DATAPOINTS]
 ]))
 
 db.execute(collection.insert_many([
-    D({'_fold': 'valid', **data['test'][int(i)]}) for i in numpy.random.permutation(len(data['test']))[:4]
+    D({'_fold': 'valid', **data['test'][int(i)]}) for i in numpy.random.permutation(len(data['test']))[:N_DATAPOINTS]
 ]))
 ```
 
@@ -73,6 +89,11 @@ model = Pipeline(
 )
 ```
 
+
+```python
+model.predict('This is another test', one=True)
+```
+
 We'll evaluate the model using a simple accuracy metric. This metric gets logged in the
 model's metadata during training:
 
@@ -87,7 +108,7 @@ training_args = TransformersTrainerConfiguration(
     num_train_epochs=2,
     weight_decay=0.01,
     save_strategy="epoch",
-    use_mps_device=False,
+    use_cpu=True,
     evaluation_strategy='epoch',
     do_eval=True,
 )

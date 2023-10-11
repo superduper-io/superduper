@@ -24,11 +24,20 @@ This will transform the functionality of your database into a **super-duper** da
 
 
 ```python
-from superduperdb import superduper
-import pymongo
+import os
 
-db = pymongo.MongoClient().documents
-db = superduper(db)
+# Uncomment one of the following lines to use a bespoke MongoDB deployment
+# For testing the default connection is to mongomock
+
+mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
+# mongodb_uri = "mongodb://localhost:27017"
+# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
+# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
+# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
+
+# Super-Duper your Database!
+from superduperdb import superduper
+db = superduper(mongodb_uri)
 ```
 
 In this notebook we upload some wikipedia documents from a wikipedia dump. You can find this raw data here https://dumps.wikimedia.org/enwiki/.
@@ -37,10 +46,17 @@ We've preprocessed the data, extracting titles and abstracts from each document.
 
 
 ```python
+!curl -O https://superduperdb-public.s3.eu-west-1.amazonaws.com/wikipedia-sample.json
+```
+
+
+```python
 import json
 import random 
 
-with open(f'{os.environ["HOME"]}/data/wikipedia/abstracts.json') as f:
+#with open(f'{os.environ["HOME"]}/data/wikipedia/abstracts.json') as f:
+#    data = json.load(f)
+with open(f'wikipedia-sample.json') as f:
     data = json.load(f)
 data = random.sample(data, 1000)
 ```

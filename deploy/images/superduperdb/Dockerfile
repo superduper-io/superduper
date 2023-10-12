@@ -1,27 +1,25 @@
 # syntax = docker/dockerfile:1.3
 FROM jupyterhub/k8s-singleuser-sample:3.1.0
 
-# Temporarily switch to the root user for installing packages and accounts
-# ---------------
-USER root
+ARG SUPERDUPERDB_EXTRAS
 
 ENV NB_USER=superduper \
     NB_UID=1000 \
     HOME=/home/superduper
 
-# Install some basic packages
+# Temporarily switch to the root for privileged operations.
+# ---------------
+USER root
+
+# Install system packages
 # ---------------
 RUN apt-get update \
  && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
-        wget \
-        curl \
-        unzip \
-        vim \
-        procps \
-        make \
-        # requirement for nbgitpuller
-        git \
+        # Required for downloading code/data from the internet \
+        wget curl unzip git \
+        # DevOps
+        vim procps make \
    # Purge apt cache
    && apt-get clean \
    && rm -rf /var/lib/apt/lists/*
@@ -29,25 +27,28 @@ RUN apt-get update \
 
 # Replace the default Jupyter user with a SuperDuper user
 # ---------------
-RUN deluser jovyan && adduser \
+RUN deluser jovyan \
+    && adduser \
         --disabled-password \
         --gecos "SuperDuper User" \
         --uid ${NB_UID} \
         --home ${HOME} \
         --force-badname \
-        ${NB_USER} \
-    # Set path to support binaries from pip.
-    && export PATH=/home/superduper/.local/bin:$PATH
+        ${NB_USER}
 
+
+# Switch to SuperDuper user
+# ---------------
 WORKDIR ${HOME}
 USER ${NB_USER}
+ENV PATH="${HOME}/.local/bin:$PATH"
 
 
 # Install Python dependencies
 # ---------------
 RUN pip install --no-cache-dir \
     # SuperDuperDB
-    superduperdb \
+    superduperdb[${SUPERDUPERDB_EXTRAS}] \
     # JupyterLab extensions \
     theme-darcula \
     # jupyterlab-lsp \

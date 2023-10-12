@@ -1,5 +1,5 @@
 PYTEST_ARGUMENTS ?=
-DIRECTORIES = superduperdb test apps
+DIRECTORIES = superduperdb test 
 
 ##@ General
 

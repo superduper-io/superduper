@@ -119,7 +119,7 @@ dev = ["superduperdb[apis,docs,lint,tests,typing,torch]"]
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"
-documentation = "https://superduperdb.github.io/superduperdb/"
+documentation = "https://docs.superduperdb.com"
 source = "https://github.com/SuperDuperDB/superduperdb/"
 
 [tool.setuptools.packages.find]

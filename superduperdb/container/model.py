@@ -29,7 +29,6 @@ if t.TYPE_CHECKING:
 
 EncoderArg = t.Union[Encoder, str, None]
 ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
-DataArg = t.Optional[t.Union[str, t.Sequence[str]]]
 
 
 @dc.dataclass
@@ -201,7 +200,9 @@ class PredictMixin:
         if listen:
             assert db is not None
             assert select is not None
-            return self._predict_and_listen(X=X, db=db, select=select, **kwargs)
+            return self._predict_and_listen(
+                X=X, db=db, select=select, max_chunk_size=max_chunk_size, **kwargs
+            )
 
         if distributed:
             return self.create_predict_job(
@@ -416,8 +417,8 @@ class Model(Component, PredictMixin):
     model_to_device_method: t.Optional[str] = None
     batch_predict: bool = False
     takes_context: bool = False
-    train_X: DataArg = None
-    train_y: DataArg = None
+    train_X: t.Optional[str] = None
+    train_y: t.Optional[str] = None
     training_select: t.Union[Select, None] = None
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
@@ -520,20 +521,16 @@ class Model(Component, PredictMixin):
             validation_set = t.cast(Dataset, db.load('dataset', validation_set))
 
         mdicts = [MongoStyleDict(r.unpack()) for r in validation_set.data]
-        # TOOD: self.train_X, self.train_y are sequences of strings: this can't work
-        prediction_X = self._predict(
-            [d[self.train_X] for d in mdicts]  # type: ignore[index]
-        )
-        prediction_y = self._predict(
-            [d[self.train_X] for d in mdicts]  # type: ignore[index]
-        )
-        assert isinstance(prediction_X, list)
-        assert isinstance(prediction_y, list)
-        assert all(isinstance(i, int) for i in prediction_X + prediction_y)
+        assert self.train_X is not None
+        prediction = self._predict([d[self.train_X] for d in mdicts])
+        assert self.train_y is not None
+        target = [d[self.train_y] for d in mdicts]
+        assert isinstance(prediction, list)
+        assert isinstance(target, list)
         results = {}
 
         for m in metrics:
-            out = m(prediction_X, prediction_y)
+            out = m(prediction, target)
             results[f'{validation_set.identifier}/{m.identifier}'] = out
         return results
 

@@ -100,13 +100,17 @@ lint-and-type-check: ## Lint your code
 	ruff check $(DIRECTORIES)
 	interrogate superduperdb
 
-test-notebooks:	## Test notebooks on the local environment.
-	NB_TEST=1 pytest test/
+
+test-notebooks: ## Test notebooks (arg: NOTEBOOKS=<path_to_files>)
+	@if [ -n "${NOTEBOOKS}" ]; then	\
+		pytest --nbval ${NOTEBOOKS}; 	\
+	fi
+
 
 
 ##@ Executions Environments
 
-sandbox-pull-request: ## Run pull-request in a basic sandbox environment. (arg: PR_NUMBER=555)
+run-pull-request: ## Run PR in sandbox (arg: PR_NUMBER=555)
 	@if [[ -z "${PR_NUMBER}" ]]; then echo "Usage: make sandbox-pull-request PR_NUMBER=<pull-request-number>"; exit -1; fi
 
 	@echo "===> Prepare sandbox (superduperdb:latest) for pull-request "${PR_NUMBER}" <==="

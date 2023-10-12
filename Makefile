@@ -52,7 +52,8 @@ new-release: ## Release a new SuperDuperDB version
 
 docker-build: ## Build SuperDuperDB images
 	@echo "===> Build SuperDuperDB:$(RELEASE_VERSION:v%=%) Container <==="
-	docker build ./deploy/images/superduperdb  -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)  --progress=plain --no-cache
+	docker build ./deploy/images/superduperdb  -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)  --progress=plain --no-cache \
+	--build-arg SUPERDUPERDB_EXTRAS="" # apis,docs,lint,tests,typing,torch
 
 docker-push: ## Push the latest SuperDuperDB image
 	@echo "===> Set SuperDuperDB:$(RELEASE_VERSION:v%=%) as the latest <==="
@@ -99,23 +100,33 @@ lint-and-type-check: ## Lint your code
 	ruff check $(DIRECTORIES)
 	interrogate superduperdb
 
+test-notebooks:	## Test notebooks on the local environment.
+	NB_TEST=1 pytest test/
 
-##@ Demo Environment
 
-test_pr:  ## Run PR into a testenv (make test_pr PR_NUMBER=555)
-	# clone only the latest of all branches
+##@ Executions Environments
+
+sandbox-pull-request: ## Run pull-request in a basic sandbox environment. (arg: PR_NUMBER=555)
+	@if [[ -z "${PR_NUMBER}" ]]; then echo "Usage: make sandbox-pull-request PR_NUMBER=<pull-request-number>"; exit -1; fi
+
+	@echo "===> Prepare sandbox (superduperdb:latest) for pull-request "${PR_NUMBER}" <==="
+
+	# checkout the pull-request from remote repo.
 	git clone --depth 1 --single-branch git@github.com:SuperDuperDB/superduperdb.git /tmp/superduperdb_pr_$(PR_NUMBER)
 
 	cd /tmp/superduperdb_pr_$(PR_NUMBER) && \
 	git fetch --depth 1 origin pull/$(PR_NUMBER)/head:pr_branch && \
 	git checkout pr_branch
 
-	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/pr_$(PR_NUMBER) superduperdb/superduperdb:latest
-	# todo remove temporary directory
+	# mount pull-request to the sandbox environment
+	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/code superduperdb/superduperdb:latest
+
+	# clean up the tmp directory
+	rm -rf /tmp/superduperdb_pr_$(PR_NUMBER)
 
 
-demo-run: ## Run a SuperDuperDB demo locally
-	@echo "===> Run SuperDuperDB Locally <==="
+run-demo: ## Run SuperDuperDB demo on docker-compose
+	@echo "===> Run SuperDuperDB Demo <==="
 
 	# TODO: make it take as argument the TAG of desired image.
 	docker compose -f ./deploy/docker-compose/demo.yaml up

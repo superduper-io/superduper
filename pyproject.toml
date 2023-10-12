@@ -110,6 +110,7 @@ tests = [
     "pytest>=7.3.1",
     "pytest-cov>=2.12.1",
     "pytest-xdist>=3.3.1",
+    "nbval>=0.10.0",
     "tdir>=1.6",
     "vcrpy",
     "pytest-asyncio",

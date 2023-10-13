@@ -100,8 +100,7 @@ class Pipeline(Model):
     def _get_data(
         self,
         db,
-        valid_data=None,
-        data_prefetch: bool = False,
+            data_prefetch: bool = False,
         prefetch_size: int = 100,
         X: str = '',
     ):
@@ -158,13 +157,12 @@ class Pipeline(Model):
         if isinstance(X, str):
             train_data, valid_data = self._get_data(
                 db,
-                valid_data=validation_sets,
                 data_prefetch=data_prefetch,
                 prefetch_size=prefetch_size,
                 X=X,
             )
 
-        def compute_metrics(eval_pred):
+        def compute_metrics():
             output = {}
             for vs in validation_sets:
                 vs = db.load('dataset', vs)

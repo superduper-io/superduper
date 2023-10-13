@@ -256,7 +256,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             version=version,
         )
 
-    def show_components(self, type_id: str, **kwargs):
+    def show_components(self, type_id: str):
         with self.session_context() as session:
             return [
                 c.identifier

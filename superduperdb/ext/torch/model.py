@@ -165,7 +165,6 @@ class Base:
         X: t.Union[t.List[str], str],
         y: t.Optional[t.Union[t.List, t.Any]] = None,
         configuration: t.Optional[TorchTrainerConfiguration] = None,
-        data_prefetch: bool = False,
         db: t.Optional[DB] = None,
         metrics: t.Optional[t.List[Metric]] = None,
         select: t.Optional[t.Union[Select, t.Dict]] = None,

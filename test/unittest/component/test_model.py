@@ -11,7 +11,7 @@ from superduperdb.db.mongodb.query import Collection
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_predict(random_data, float_tensors_32):
+def test_predict(random_data):
     encoder = random_data.encoders['torch.float32[32]']
 
     m = TorchModel(

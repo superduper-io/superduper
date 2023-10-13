@@ -18,7 +18,6 @@ def download_content(
     n_download_workers: t.Optional[int] = None,
     headers: t.Optional[t.Dict] = None,
     download_update: t.Optional[t.Callable] = None,
-    **kwargs,
 ) -> t.Optional[t.Sequence[Document]]:
     """
     Download content contained in uploaded data. Items to be downloaded are identifier

@@ -223,12 +223,8 @@ class Query:
                 parent = getattr(parent, self.query.name)(*self.args, **self.kwargs)
 
         parent = self.query.post(
-            db,
             parent,
-            table=table,
             ibis_table=ibis_table,
-            args=self.args,
-            kwargs=self.kwargs,
             pre_output=pre_output,
         )
         return parent
@@ -476,7 +472,6 @@ class QueryLinker(Serializable, _LogicalExprMixin):
         key: str,
         model: str,
         outputs: t.Sequence[t.Any],
-        **kargs,
     ):
         if key.startswith('_outputs'):
             key = key.split('.')[1]
@@ -548,7 +543,7 @@ class PlaceHolderQuery:
     def pre(self, db, **kwargs):
         ...
 
-    def post(self, db, output, *args, **kwargs):
+    def post(self, output):
         return output
 
 
@@ -562,7 +557,7 @@ class PostLike:
     def pre(self, db, **kwargs):
         pass
 
-    def post(self, db, output, table=None, ibis_table=None, args=[], kwargs={}):
+    def post(self, db, output, table=None, ibis_table=None, kwargs={}):
         r = kwargs.get('r', None)
         assert r is not None, 'r must be provided'
         n = kwargs.get('n', 10)
@@ -593,7 +588,7 @@ class PreLike:
     def pre(self, db, **kwargs):
         pass
 
-    def post(self, db, output, table=None, ibis_table=None, args=[], kwargs={}):
+    def post(self, db, output, ibis_table=None):
         ids, _ = db._select_nearest(
             like=self.r, vector_index=self.vector_index, n=self.n
         )
@@ -627,7 +622,7 @@ class Insert:
         kwargs['kwargs']['obj'] = documents
         return {'ids': ids}
 
-    def post(self, db, output, *args, **kwargs):
+    def post(self, output, **kwargs):
         graph = None
         [_id for _id in kwargs['pre_output']['ids']]
         # TODO: add refresh functionality

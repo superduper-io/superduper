@@ -10,7 +10,7 @@ ENABLE = 'NB_TEST' in os.environ
 
 
 def run_python_file(file_path, tmp_dir):
-    completed_process = subprocess.run(
+    subprocess.run(
         ['jupyter', 'nbconvert', file_path, '--output-dir', tmp_dir, '--to', 'python'],
         capture_output=True,
         text=True,

@@ -86,7 +86,7 @@ class MongoEventMixin:
     DEFAULT_ID: str = '_id'
     EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
 
-    def on_create(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+    def on_create(self, change: t.Dict, collection: query.Collection) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
         change stream.
@@ -94,7 +94,6 @@ class MongoEventMixin:
         execute.
 
         :param change: The changed document.
-        :param db: a superduperdb instance.
         :param collection: The collection on which change was observed.
         """
         logging.debug('Triggered `on_create` handler.')
@@ -105,7 +104,7 @@ class MongoEventMixin:
         packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
         CDC_QUEUE.put_nowait(packet)
 
-    def on_update(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+    def on_update(self, change: t.Dict, collection: query.Collection) -> None:
         """on_update.
 
         A helper on update event handler which handles updated document in the
@@ -114,7 +113,6 @@ class MongoEventMixin:
         execute.
 
         :param change: The changed document.
-        :param db: a superduperdb instance.
         :param collection: The collection on which change was observed.
         """
 
@@ -125,7 +123,7 @@ class MongoEventMixin:
         packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
         CDC_QUEUE.put_nowait(packet)
 
-    def on_delete(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+    def on_delete(self, change: t.Dict) -> None:
         """on_delete.
 
         A helper on delete event handler which handles deleted document in the
@@ -134,8 +132,6 @@ class MongoEventMixin:
         execute.
 
         :param change: The changed document.
-        :param db: a superduperdb instance.
-        :param collection: The collection on which change was observed.
         """
         logging.debug('Triggered `on_delete` handler.')
         # new document added!
@@ -252,15 +248,15 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
 
         if event == DBEvent.insert:
             self._change_counters['inserts'] += 1
-            self.on_create(change, db=self.db, collection=self._on_component)
+            self.on_create(change, collection=self._on_component)
 
         elif event == DBEvent.update:
             self._change_counters['updates'] += 1
-            self.on_update(change, db=self.db, collection=self._on_component)
+            self.on_update(change, collection=self._on_component)
 
         elif event == DBEvent.delete:
             self._change_counters['deletes'] += 1
-            self.on_delete(change, db=self.db, collection=self._on_component)
+            self.on_delete(change)
 
     def dump_token(self, change: t.Dict) -> None:
         """dump_token.

@@ -24,7 +24,7 @@ IMAGE_URL = f'file://{Path(__file__).parent}/1x1.png'
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_create_component(empty, float_tensors_16, float_tensors_32):
+def test_create_component(empty):
     empty.add(TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module'))
     assert 'my-test-module' in empty.show('model')
     model = empty.models['my-test-module']
@@ -112,7 +112,7 @@ def test_reload_dataset(si_validation):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_insert(random_data, a_listener, an_update):
+def test_insert(random_data, an_update):
     random_data.execute(Collection(name='documents').insert_many(an_update))
     r = next(random_data.execute(Collection(name='documents').find({'update': True})))
     assert 'linear_a' in r['_outputs']['x']
@@ -123,7 +123,7 @@ def test_insert(random_data, a_listener, an_update):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_insert_from_uris(empty, image_type):
+def test_insert_from_uris(empty):
     to_insert = [
         Document(
             {
@@ -152,7 +152,7 @@ def test_insert_from_uris(empty, image_type):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_update(random_data, a_listener):
+def test_update(random_data):
     to_update = torch.randn(32)
     t = random_data.encoders['torch.float32[32]']
     random_data.execute(
@@ -173,7 +173,7 @@ def test_update(random_data, a_listener):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_listener(random_data, a_model, b_model):
+def test_listener(random_data):
     random_data.add(
         Listener(
             model='linear_a',
@@ -207,7 +207,7 @@ def test_listener(random_data, a_model, b_model):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_predict(a_model, float_tensors_32, float_tensors_16):
+def test_predict(a_model, float_tensors_32):
     t = float_tensors_32.encoders['torch.float32[32]']
     a_model.predict('linear_a', Document(t(torch.randn(32))))
 

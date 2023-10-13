@@ -33,7 +33,7 @@ class LanceVectorDatabase(VectorDatabase):
     # of the interface in ``superduperdb/container/vector_index.py``! Short-term fix
     # is to include it here but long-term fix is to tidy up the ABC interface.
     def get_table(
-        self, config: VectorCollectionConfig, create: bool = False
+        self, config: VectorCollectionConfig
     ) -> VectorCollection:
         """Retrieve a managed Lance dataset according to the given config."""
         uri = os.path.join(self.root_dir, config.id)

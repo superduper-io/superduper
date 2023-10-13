@@ -20,7 +20,7 @@ class TimeoutException(Exception):
     ...
 
 
-def timeout_handler(signum, frame):
+def timeout_handler():
     raise TimeoutException()
 
 

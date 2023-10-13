@@ -41,7 +41,6 @@ class QueryDataset:
         ids: t.Optional[t.List[str]] = None,
         in_memory: bool = True,
         extract: t.Optional[str] = None,
-        **kwargs,
     ):
         self._database = db
         self.keys = keys
@@ -218,4 +217,4 @@ class CachedQueryDataset:
 def query_dataset_factory(data_prefetch: bool = False, **kwargs):
     if data_prefetch:
         return CachedQueryDataset(**kwargs)
-    return QueryDataset(**kwargs)
+    return QueryDataset()

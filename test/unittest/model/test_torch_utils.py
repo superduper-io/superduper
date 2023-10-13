@@ -44,7 +44,7 @@ def test_set_device_context_manager(model):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_to_device_tensor(model):
+def test_to_device_tensor():
     tensor = torch.tensor([1, 2, 3])
     device = (
         torch.device('cuda', 0) if torch.cuda.is_available() else torch.device('cpu')
@@ -54,7 +54,7 @@ def test_to_device_tensor(model):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_to_device_nested_list(model):
+def test_to_device_nested_list():
     nested_list = [
         torch.tensor([1, 2, 3]),
         [torch.tensor([4, 5]), torch.tensor([6, 7])],
@@ -71,7 +71,7 @@ def test_to_device_nested_list(model):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_to_device_nested_dict(model):
+def test_to_device_nested_dict():
     nested_dict = {'a': torch.tensor([1, 2, 3]), 'b': {'c': torch.tensor([4, 5])}}
     device = (
         torch.device('cuda', 0) if torch.cuda.is_available() else torch.device('cpu')

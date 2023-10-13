@@ -14,12 +14,12 @@ def superduper(item: t.Any, **kwargs) -> t.Any:
     """
 
     if isinstance(item, str):
-        return _auto_identify_connection_string(item, **kwargs)
+        return _auto_identify_connection_string(item)
 
     return _DuckTyper.run(item, **kwargs)
 
 
-def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
+def _auto_identify_connection_string(item: str) -> t.Any:
     from superduperdb.db.base.build import build_datalayer
 
     # cfg = copy.deepcopy(CFG)

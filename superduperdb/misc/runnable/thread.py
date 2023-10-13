@@ -8,7 +8,7 @@ import superduperdb as s
 from .runnable import Callback, Runnable
 
 
-def none(x):
+def none():
     pass
 
 

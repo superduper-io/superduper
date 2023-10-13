@@ -48,7 +48,7 @@ def acc(x, y):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_fit(random_data, si_validation):
+def test_fit(random_data):
     m = TorchModel(
         object=torch.nn.Linear(32, 1),
         identifier='test',

@@ -84,7 +84,6 @@ class Estimator(Model):
         X,
         y=None,
         configuration: t.Optional[SklearnTrainingConfiguration] = None,
-        data_prefetch: bool = False,
         db: t.Optional[DB] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,
         select: t.Optional[Select] = None,

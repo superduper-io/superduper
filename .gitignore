@@ -185,7 +185,4 @@ monkeytype.sqlite3
 
 test/sleep.json
 
-# editors
-.vscode
-
 /tmp

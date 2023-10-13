@@ -61,7 +61,7 @@ def test_taskgraph_futures_with_dask(
 def test_insert_with_dask(
     local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
-    db = database_with_default_encoders_and_model
+    database_with_default_encoders_and_model
     collection_name = str(uuid.uuid4())
     with patch.object(CFG.cluster, "distributed", True):
         with add_and_cleanup_listener(
@@ -82,10 +82,10 @@ def test_dependencies_with_dask(
 ):
     database = database_with_default_encoders_and_model
 
-    def test_node_1(*args, **kwargs):
+    def test_node_1():
         return 1
 
-    def test_node_2(*args, **kwargs):
+    def test_node_2():
         return 2
 
     G = TaskWorkflow(database)

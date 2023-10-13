@@ -15,7 +15,7 @@ class Lookup(TransformerMixin):
         table = numpy.random.randn(len(dictionary), 32)
         self.dictionary = {d: table[i] for i, d in enumerate(dictionary)}
 
-    def fit(self, X, y=None):
+    def fit(self, X):
         return self
 
     def transform(self, X):

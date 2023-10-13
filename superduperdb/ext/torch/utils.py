@@ -10,7 +10,7 @@ if t.TYPE_CHECKING:
 
 def device_of(module: Module) -> t.Union[_device, str]:
     """
-    Get device of a model.
+    Get a device of a model.
 
     :param model: PyTorch model
     """

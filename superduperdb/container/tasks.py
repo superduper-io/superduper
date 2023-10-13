@@ -11,7 +11,6 @@ def method_job(
     args,
     kwargs,
     job_id,
-    dependencies=(),
 ):
     """
     Run a method on a component in the database.
@@ -23,7 +22,6 @@ def method_job(
     :param args: positional arguments to pass to the method
     :param kwargs: keyword arguments to pass to the method
     :param job_id: unique identifier for this job
-    :param dependencies: other jobs that this job depends on
     """
     from superduperdb.db.base.build import build_datalayer
 
@@ -79,14 +77,13 @@ def callable_job(
     args,
     kwargs,
     job_id,
-    dependencies=(),
 ):
     from superduperdb.db.base.build import build_datalayer
 
     cfg.cluster.distributed = False
     db = build_datalayer(cfg)
     db.metadata.update_job(job_id, 'status', 'running')
-    output = None
+    None
     if 'distributed' in inspect.signature(function_to_call).parameters:
         kwargs['distributed'] = False
     try:

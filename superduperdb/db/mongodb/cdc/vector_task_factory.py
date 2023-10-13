@@ -6,8 +6,7 @@ from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollec
 
 def delete_vectors(
     indexing_listener_identifier: str,
-    cdc_query: t.Optional[Serializable],
-    ids: t.Sequence[str],
+        ids: t.Sequence[str],
     db=None,
 ):
     """
@@ -18,7 +17,6 @@ def delete_vectors(
     `indexing_listener` in the defined listeners in db.
 
     :param indexing_listener_identifier: A identifier of indexing listener.
-    :param cdc_query: A query which will be used by `db._build_task_workflow` method
     :param ids: List of ids which were observed as changed documents.
     :param db: A ``DB`` instance.
     """

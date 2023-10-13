@@ -112,7 +112,7 @@ class OpenAIEmbedding(OpenAI):
         out = await Embedding.acreate(input=texts, model=self.identifier, **kwargs)
         return [r['embedding'] for r in out['data']]
 
-    def _predict(self, X, one: bool = False, **kwargs):
+    def _predict(self, X, **kwargs):
         if isinstance(X, str):
             return self._predict_one(X)
         out = []
@@ -121,7 +121,7 @@ class OpenAIEmbedding(OpenAI):
             out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
         return out
 
-    async def _apredict(self, X, one: bool = False, **kwargs):
+    async def _apredict(self, X, **kwargs):
         if isinstance(X, str):
             return await self._apredict_one(X)
         out = []

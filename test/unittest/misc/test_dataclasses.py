@@ -38,7 +38,7 @@ class Objet:
     def premier(self, un: Un) -> Deux:
         return Deux(**un.dict())
 
-    def second(self, un: Un, trois: Trois) -> Un:
+    def second(self, un: Un) -> Un:
         return un
 
 

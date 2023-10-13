@@ -55,7 +55,7 @@ def test_collection():
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_add_load(client, test_db, test_collection):
+def test_add_load(client, test_db):
     m = TorchModel(
         identifier='test-add-client',
         object=torch.nn.Linear(10, 20),
@@ -70,7 +70,7 @@ def test_add_load(client, test_db, test_collection):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_show(client, database_with_default_encoders_and_model):
+def test_show(client):
     encoders = client.show('encoder')
     assert encoders == ['torch.float32[16]', 'torch.float32[32]']
 

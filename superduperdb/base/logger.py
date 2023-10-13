@@ -13,7 +13,7 @@ if CFG.logging.type == 'stdout':
         debug = staticmethod(print)
         info = staticmethod(print)
 
-    def dont_print(*a, **ka):
+    def dont_print():
         pass
 
     level = CFG.logging.level

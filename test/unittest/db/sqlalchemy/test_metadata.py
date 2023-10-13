@@ -45,7 +45,7 @@ def test(metadata):
         }
     )
 
-    comps = metadata.show_components('model')
+    metadata.show_components('model')
 
     r = metadata.get_component(
         type_id='model',

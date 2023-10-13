@@ -17,7 +17,7 @@ from superduperdb import superduper
 ATLAS_VECTOR_URI = os.environ.get('ATLAS_VECTOR_URI')
 
 
-def random_vector_model(x):
+def random_vector_model():
     return [random.random() for _ in range(16)]
 
 
@@ -30,7 +30,7 @@ def atlas_search_config():
 
 
 @pytest.mark.skipif(ATLAS_VECTOR_URI is None, reason='Only atlas deployments relevant.')
-def test_setup_atlas_vector_search(atlas_search_config):
+def test_setup_atlas_vector_search():
     model = Model(
         identifier='test-model', object=random_vector_model, encoder=vector(shape=(16,))
     )
@@ -63,7 +63,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
 
 
 @pytest.mark.skipif(ATLAS_VECTOR_URI is None, reason='Only atlas deployments relevant.')
-def test_use_atlas_vector_search(atlas_search_config):
+def test_use_atlas_vector_search():
     client = pymongo.MongoClient(ATLAS_VECTOR_URI)
     db = superduper(client.test_atlas_vector_search)
     collection = Collection('docs')

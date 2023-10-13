@@ -26,7 +26,7 @@ def patch_cfg_downloads(monkeypatch):
         yield
 
 
-def test_file_blobs(empty, patch_cfg_downloads):
+def test_file_blobs(empty):
     to_insert = [
         Document(
             {

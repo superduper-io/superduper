@@ -122,9 +122,17 @@ const config = {
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+          filename: 'sitemap.xml',
+        },
       }),
     ],
   ],
+  
+  
+
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -237,7 +245,13 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
+      metadata: [
+        {property: 'og:title', content: 'SuperDuperDB: Build and deploy AI with your database!'},
+        {property: 'og:url', content: 'https://docs.superduperdb.com'},
+        {property: 'og:image', content: 'https://docs.superduperdb.com/img/superDuperDB_img.png'},
+      ],
     }),
+
 };
 
 module.exports = config;

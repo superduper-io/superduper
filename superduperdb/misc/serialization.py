@@ -103,11 +103,20 @@ class TorchSerializer(Serializer):
         return torch.load(io.BytesIO(b))
 
 
-serializers: t.Dict[str, t.Type] = {
-    'pickle': PickleSerializer,
-    'dill': DillSerializer,
-    'torch': TorchSerializer,
-}
+class Serializers:
+    serializers: t.Dict[str, t.Type] = {}
+
+    def add(self, name: str, serializer: t.Type):
+        self.serializers[name] = serializer
+
+    def __getitem__(self, serializer):
+        return self.serializers[serializer]
+
+
+serializers = Serializers()
+serializers.add('pickle', PickleSerializer)
+serializers.add('dill', DillSerializer)
+serializers.add('torch', TorchSerializer)
 
 
 class Method:

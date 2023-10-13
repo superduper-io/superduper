@@ -66,17 +66,21 @@ Build next-gen AI applications using Python without the need for complex MLOps p
 
 <div align="center">	
 
+| Databases               |         | AI Frameworks                |         | Models & AI APIs        |
+|-------------------------|---------|------------------------------|---------|-------------------------|
+| **NoSQL**               |         | **Machine Learning**         |         | **NLP**                 |
+| MongoDB                 |         | PyTorch                      |         | OpenAI                  |
+| MongoDB Atlas           |         | Scikit-Learn                 |         | Cohere                  |
+| **Object Storage**      |         | **Deep Learning**            |         | **AI Platforms**        |
+| AWS S3                  |         | HuggingFace Transformers     |         | Anthropic               |
+| **SQL**                 |         |                              |         |                         |
+| PostgreSQL              |         |                              |         |                         |
+| SQLite                  |         |                              |         |                         |
+| DuckDB                  |         |                              |         |                         |
+| MySQL                   |         |                              |         |                         |
+| Snowflake               |         |                              |         |                         |
 
-| Databases                 |             | AI Frameworks            |             | Models & AI APIs |
-|---------------------------|-------------|--------------------------|-------------|------------------|
-| MongoDB                   |             | PyTorch                  |             | OpenAI           |
-| MongoDB Atlas             |             | Scikit-Learn             |             | Cohere           |
-| AWS S3                    |             | HuggingFace Transformers |             | Anthropic        |
-| PostgreSQL (experimental) |             |                          |             |                  |
-| SQLite (experimental)     |             |                          |             |                  |
-| DuckDB (experimental)     |             |                          |             |                  |
-| MySQL (experimental)      |             |                          |             |                  |
-| Snowflake (experimental)  |             |                          |             |                  |
+
 
 </div>
 

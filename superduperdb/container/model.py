@@ -402,7 +402,9 @@ class Model(Component, PredictMixin):
     :param predict_method: The method to use for prediction (optional)
     :param model_to_device_method: The method to transfer the model to a device
     :param batch_predict: Whether to batch predict (optional)
-    :param takes_context: Whether the model takes context into account (optional)"""
+    :param takes_context: Whether the model takes context into account (optional)
+    :param serializer: Serializer to store model to artifact store(optional)
+    """
 
     identifier: str
     object: t.Union[Artifact, t.Any]
@@ -423,6 +425,7 @@ class Model(Component, PredictMixin):
     metric_values: t.Optional[t.Dict] = dc.field(default_factory=dict)
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
     model_update_kwargs: dict = dc.field(default_factory=dict)
+    serializer: str = 'dill'
 
     version: t.Optional[int] = None
     future: t.Optional[Future] = None
@@ -437,7 +440,7 @@ class Model(Component, PredictMixin):
 
     def __post_init__(self):
         if not isinstance(self.object, Artifact):
-            self.object = Artifact(artifact=self.object)
+            self.object = Artifact(artifact=self.object, serializer=self.serializer)
         if self.preprocess and not isinstance(self.preprocess, Artifact):
             self.preprocess = Artifact(artifact=self.preprocess)
         if self.postprocess and not isinstance(self.postprocess, Artifact):

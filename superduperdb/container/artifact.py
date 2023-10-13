@@ -78,8 +78,19 @@ class Artifact:
     def __repr__(self):
         return f'<Artifact artifact={str(self.artifact)} serializer={self.serializer}>'
 
+    @staticmethod
+    def _is_self_serializable(object):
+        if 'serialize' in dir(object) and 'deserialize' in dir(object):
+            return True
+        return False
+
     def serialize(self) -> bytes:
         """Serialize this artifact into bytes"""
+
+        if self._is_self_serializable(self.artifact):
+            assert hasattr(object, 'serialize')
+            return t.cast(bytes, object.serialize())
+
         serializer = serializers[self.serializer]
         return serializer.encode(self.artifact, self.info)
 

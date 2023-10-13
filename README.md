@@ -7,7 +7,7 @@
 <div align="center">
 	
 # Bring AI to your favourite database! 
-## Integrate, train and manage any AI models and APIs directly with your database with your data. 
+ 
 
 </div>
 
@@ -42,13 +42,9 @@
  `🔮 SuperDuperDB is open-source: Leave a star ⭐️ to support the project!`
  </div>
 
-### Build next-gen AI applications just using Python — without the need for complex MLOps pipelines and infrastructure nor data duplication and migration to specialized vector databases:
-- from LLM-based (RAG) chatbots and vector search
-- image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc.
-- to highly custom machine learning use-cases and workflows
-
 
 ### SuperDuperDB is not another database, it transforms your existing one into an AI powerhouse:
+
 - **A single scalable AI deployment** of all your models and AI APIs including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
 - **A model trainer** allowing you to easily train and fine-tune models simply by querying your database.
 - **A feature store** in which the model outputs are stored alongside the inputs in any data format.
@@ -60,10 +56,14 @@
 </p>
 
 
-
 ### Featured Examples
 
 Accelerate AI development and enable data symbiotic AI applications with a simple and familiar Python<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/> interface that can handle even the most complex AI use-cases.
+
+- from LLM-based (RAG) chatbots and vector search
+- image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc.
+- to highly custom machine learning use-cases and workflows
+
 
 <table>
   <tr>
@@ -125,18 +125,11 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
 </table>
 
 
-* **Text-2-Image:** Use text queries to find relevant images. For example, you might enter a text query like "a red apple," and the system will retrieve images that match that description. 
-
-* **Video search:** Search videos by quering a text against saved frames.
-
-* **Document search:** Search documents by the meaning of a word.
-
-* **Question your memo:** Blah ....
-
-
-
 
 ### Current Integrations (*more coming soon*):
+Build next-gen AI applications just using Python — without the need for complex MLOps pipelines and infrastructure nor data duplication and migration to specialized vector databases.
+
+
 | Databases                                                                                                                                                                                                   | AI Frameworks                                                            | Models & AI APIs                                    |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|-----------------------------------------------------|
 | **- MongoDB** <br> **- MongoDB Atlas** <br> **- S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | **- PyTorch** <br> **- Scikit-Learn**<br> - **HuggingFace Transformers** | **- OpenAI** <br> **- Cohere** <br> **- Anthropic** |
@@ -158,10 +151,9 @@ pip install superduperdb
 
 
 
-## How To
-The following are examples of how to use SuperDuperDB with Python. 
+## Tutorial
 
-Visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
+In this tutorial, you will learn how to Integrate, train and manage any AI models and APIs directly with your database with your data. You can visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
 
 
 #### - Deploy ML/AI models to your database:

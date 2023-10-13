@@ -43,9 +43,10 @@
  </div>
 
 ### Build next-gen AI applications just using Python — without the need for complex MLOps pipelines and infrastructure nor data duplication and migration to specialized vector databases:
-- from LLM based (RAG) chatbots and vector search
+- from LLM-based (RAG) chatbots and vector search
 - image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc.
 - to highly custom machine learning use-cases and workflows
+
 
 ### SuperDuperDB is not another database, it transforms your existing one into an AI powerhouse:
 - **A single scalable AI deployment** of all your models and AI APIs including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
@@ -53,11 +54,16 @@
 - **A feature store** in which the model outputs are stored alongside the inputs in any data format.
 - **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with your database (and/ or) vector database.
 
-### Currently supported (*more coming soon*):
-| Databases | AI Frameworks | Models & AI APIs |
-|-|-------------------------------------|-|
-| **- MongoDB** <br> **- MongoDB Atlas** <br> **- S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | **- PyTorch** <br> **- Scikit-Learn**<br> - **HuggingFace Transformers** | **- OpenAI** <br> **- Cohere** <br> **- Anthropic** 
 
+<p align="center">
+  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_diagram.svg">
+</p>
+
+
+### Currently supported (*more coming soon*):
+| Databases                                                                                                                                                                                                   | AI Frameworks                                                            | Models & AI APIs                                    |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|-----------------------------------------------------|
+| **- MongoDB** <br> **- MongoDB Atlas** <br> **- S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | **- PyTorch** <br> **- Scikit-Learn**<br> - **HuggingFace Transformers** | **- OpenAI** <br> **- Cohere** <br> **- Anthropic** |
 
 ### What can you do with SuperDuperDB?
 - **Deploy all your AI** models to automatically compute outputs (inference) with your database in a single environment.
@@ -65,17 +71,54 @@
 - **Integrate AI APIs** to work together with other models on your data effortlessly.
 - **Search your data** with vector search, including model management and serving.
 
-### Why choose SuperDuperDB?
+### Featured Examples
+
 Accelerate AI development and enable data symbiotic AI applications with a simple and familiar Python<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/> interface that can handle even the most complex AI use-cases.
 
 
+<table>
+  <tr>
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
+        <img src="./apidocs/img/image-search.png" />
+      </a>
+    </td>
+    <td width="30%">
+<a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
+<img src="./apidocs/img/video-search.png" />
+</a>
+    </td>
+    <td width="30%">
+<a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/openai.ipynb">
+<img src="./apidocs/img/document-search.png" />
+</a>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">Image search</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">Video search</a>
+    </th>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/openai.ipynb">Document search</a>
+    </th>
+  </tr>
+</table>
 
-<p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_diagram.svg">
-</p>
+#### Image Search
 
-# Example Use-Cases & Apps
-#### Check out the example use-cases and applications we have already implemented with SuperDuperDB <a href="https://docs.superduperdb.com/docs/category/use-cases">in our docs here</a>. 
+Use text queries to find relevant images. For example, you might enter a text query like "a red apple," and the system will retrieve images that match that description.
+
+#### Video Search
+
+Search videos by quering a text against saved frames. 
+
+
+#### Document Search
+
+Search documents by the meaning of a word.
 
 
 # How To

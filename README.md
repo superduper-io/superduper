@@ -56,24 +56,21 @@
 
 
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_diagram.svg">
+  <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_diagram.svg">
 </p>
 
 
-### Currently supported (*more coming soon*):
-| Databases                                                                                                                                                                                                   | AI Frameworks                                                            | Models & AI APIs                                    |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|-----------------------------------------------------|
-| **- MongoDB** <br> **- MongoDB Atlas** <br> **- S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | **- PyTorch** <br> **- Scikit-Learn**<br> - **HuggingFace Transformers** | **- OpenAI** <br> **- Cohere** <br> **- Anthropic** |
 
-### What can you do with SuperDuperDB?
+### Featured Examples
+
+Accelerate AI development and enable data symbiotic AI applications with a simple and familiar Python<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/> interface that can handle even the most complex AI use-cases.
+
+
 - **Deploy all your AI** models to automatically compute outputs (inference) with your database in a single environment.
 - **Train models** simply by querying without additional ingestion and pre-processing.
 - **Integrate AI APIs** to work together with other models on your data effortlessly.
 - **Search your data** with vector search, including model management and serving.
 
-### Featured Examples
-
-Accelerate AI development and enable data symbiotic AI applications with a simple and familiar Python<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/> interface that can handle even the most complex AI use-cases.
 
 
 <table>
@@ -84,19 +81,19 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
       </a>
     </td>
     <td width="30%">
-<a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
-<img src="./apidocs/img/video-search.png" />
-</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
+        <img src="./apidocs/img/video-search.png" />
+      </a>
     </td>
     <td width="30%">
-<a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/openai.ipynb">
-<img src="./apidocs/img/document-search.png" />
-</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/openai.ipynb">
+        <img src="./apidocs/img/document-search.png" />
+      </a>
     </td>
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">Image search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">Text-To-Image search </a>
     </th>
     <th>
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">Video search</a>
@@ -105,25 +102,73 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/openai.ipynb">Document search</a>
     </th>
   </tr>
+  <tr>     
+    <td width="30%">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/voice_memos.ipynb">
+        <img src="./apidocs/img/voice-search.png" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="URL_TO_FIFTH_CATEGORY">
+        <img src="IMAGE_URL_FOR_FIFTH_CATEGORY" />
+      </a>
+    </td>
+    <td width="30%">
+      <a href="URL_TO_SIXTH_CATEGORY">
+        <img src="IMAGE_URL_FOR_SIXTH_CATEGORY" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/voice_memos.ipynb">Question your memos</a>
+    </th>
+    <th>
+      <a href="URL_TO_FIFTH_CATEGORY">Fifth Category</a>
+    </th>
+    <th>
+      <a href="URL_TO_SIXTH_CATEGORY">Sixth Category</a>
+    </th>
+  </tr>
 </table>
 
-#### Image Search
 
-Use text queries to find relevant images. For example, you might enter a text query like "a red apple," and the system will retrieve images that match that description.
+* **Text-2-Image:** Use text queries to find relevant images. For example, you might enter a text query like "a red apple," and the system will retrieve images that match that description. 
 
-#### Video Search
+* **Video search:** Search videos by quering a text against saved frames.
 
-Search videos by quering a text against saved frames. 
+* **Document search:** Search documents by the meaning of a word.
 
-
-#### Document Search
-
-Search documents by the meaning of a word.
+* **Question your memo:** Blah ....
 
 
-# How To
-### The following are examples of how to use SuperDuperDB with Python (find all how-tos and examples <a href="https://docs.superduperdb.com/docs/docs/intro">in the docs</a>): 
-#### - Add a ML/AI model to your database <a href="https://docs.superduperdb.com/docs/docs/intro">(read more in the docs)</a>:
+
+
+### Current Integrations (*more coming soon*):
+| Databases                                                                                                                                                                                                   | AI Frameworks                                                            | Models & AI APIs                                    |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|-----------------------------------------------------|
+| **- MongoDB** <br> **- MongoDB Atlas** <br> **- S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | **- PyTorch** <br> **- Scikit-Learn**<br> - **HuggingFace Transformers** | **- OpenAI** <br> **- Cohere** <br> **- Anthropic** |
+
+
+# Quickstart
+
+
+## Installation
+#### 1. Install SuperDuperDB via `pip` *(~1 minute)*
+```
+pip install superduperdb
+```
+#### 2. Database installation (for MongoDB) *(~10-15 minutes)*:
+   - You already have MongoDB installed? Let's go!
+   - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>.
+
+#### 3. Now you can start using SuperDuperDB with oneclick: [Live Demo](https://demo.superduperdb.com)!
+
+
+
+## How To
+The following are examples of how to use SuperDuperDB with Python (find all how-tos and examples <a href="https://docs.superduperdb.com/docs/docs/intro">in the docs</a>): 
+#### - Add a ML/AI model to your database:
 
 ```python
 import pymongo
@@ -144,7 +189,7 @@ db.add(model)
 model.predict(X='input_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
 ```
 
-#### - Train/fine-tune a model using data from your database directly <a href="https://docs.superduperdb.com/docs/docs/intro">(read more in the docs)</a>:
+#### - Train/fine-tune a model using data from your database directly:
 
 ```python
 import pymongo
@@ -162,7 +207,7 @@ model = superduper(SVC())
 model.predict(X='input_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
 ```
 
-#### - Use your existing favorite database as a vector search database <a href="https://docs.superduperdb.com/docs/docs/intro">(read more in the docs)</a>:
+#### - Use your existing favorite database as a vector search database:
 ```python
 # First a "Listener" makes sure vectors stay up-to-date
 indexing_listener = Listener(model=OpenAIEmbedding(), key='text', select=collection.find())
@@ -176,7 +221,7 @@ db.add(VectorIndex('my-index', indexing_listener=indexing_listener))
 db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
 ```
 
-#### - Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search <a href="https://docs.superduperdb.com/docs/docs/intro">(read more in the docs)</a>:
+#### - Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search:
 ```python
 # Create a ``VectorIndex`` instance with indexing listener as OpenAIEmbedding and add it to the database.
 db.add(
@@ -199,7 +244,7 @@ cur = db.execute(
 ```
 
 
-#### - Add a Llama 2 model directly into your database! <a href="https://docs.superduperdb.com/docs/docs/intro">(read more in the docs)</a>:
+#### - Add a Llama 2 model directly into your database!:
 ```python
 model_id = "meta-llama/Llama-2-7b-chat-hf"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -231,7 +276,7 @@ model.predict(
 )
 ```
 
-#### - Use models outputs as inputs to downstream models <a href="https://docs.superduperdb.com/docs/docs/intro">(read more in the docs)</a>:
+#### - Use models outputs as inputs to downstream models:
 
 ```python
 model.predict(
@@ -241,19 +286,8 @@ model.predict(
     listen=True,
 )
 ```
-# Quickstart
-#### Now you can start using SuperDuperDB with oneclick: Try out this jupyter demo at [Jupyter Demo](http://demo.superduperdb.com)!
 
-# Installation
-#### 1. Install SuperDuperDB via `pip` *(~1 minute)*
-```
-pip install superduperdb
-```
-#### 2. Database installation (for MongoDB) *(~10-15 minutes)*:
-   - You already have MongoDB installed? Let's go!
-   - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>.
 
-#### 3. Try one of our example use cases/notebooks <a href="https://superduperdb.github.io/superduperdb/docs/category/use-cases/">found here</a> (~as many minutes you enjoy)!
 
 # Community & Getting Help 
 

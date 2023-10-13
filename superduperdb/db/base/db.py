@@ -637,7 +637,6 @@ class DB:
             serialized['dict']['version'] = object.version
 
         self._create_children(object, serialized)
-
         self.metadata.create_component(serialized)
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)

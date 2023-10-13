@@ -51,6 +51,7 @@ RUN pip install --no-cache-dir \
     superduperdb[${SUPERDUPERDB_EXTRAS}] \
     # JupyterLab extensions \
     theme-darcula \
+    ipywidgets \
     # jupyterlab-lsp \
     # 'python-lsp-server[all]' \
     # Purge pip cache

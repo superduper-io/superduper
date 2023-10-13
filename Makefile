@@ -49,11 +49,9 @@ new-release: ## Release a new SuperDuperDB version
 	@echo "** Push release-${RELEASE_VERSION}"
 	git push --set-upstream origin release-${RELEASE_VERSION} --tags
 
-
-docker-build: ## Build SuperDuperDB images
-	@echo "===> Build SuperDuperDB:$(RELEASE_VERSION:v%=%) Container <==="
-	docker build ./deploy/images/superduperdb  -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)  --progress=plain --no-cache \
-	--build-arg SUPERDUPERDB_EXTRAS="" # apis,docs,lint,tests,typing,torch
+docker-build: ## Build minimal SuperDuperDB image.
+	echo "===> Build superduper:$(RELEASE_VERSION:v%=%)"; \
+	docker build ./deploy/images/superduperdb -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache
 
 docker-push: ## Push the latest SuperDuperDB image
 	@echo "===> Set SuperDuperDB:$(RELEASE_VERSION:v%=%) as the latest <==="
@@ -107,27 +105,35 @@ test-notebooks: ## Test notebooks (arg: NOTEBOOKS=<path_to_files>)
 	fi
 
 
+##@ Local Testing
 
-##@ Executions Environments
+# sandbox is a bloated image that contains everything we will need.
+# we don't need to expose this one to the tuser.
+build-sandbox: ## Build a SuperDuperDB image with all the extras.
+	echo "===> Build superduper-full:$(RELEASE_VERSION:v%=%)"
+	docker build ./deploy/images/superduperdb -t superduperdb/sandbox:$(RELEASE_VERSION:v%=%) --progress=plain --build-arg SUPERDUPERDB_EXTRAS="apis,docs,lint,tests,typing,torch"
 
-run-pull-request: ## Run PR in sandbox (arg: PR_NUMBER=555)
-	@if [[ -z "${PR_NUMBER}" ]]; then echo "Usage: make sandbox-pull-request PR_NUMBER=<pull-request-number>"; exit -1; fi
+run-sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
+	@if [[ -z "${PR_NUMBER}" ]]; then echo "Usage: make run-sandbox-pr PR_NUMBER=<pull-request-number>"; exit -1; fi
 
-	@echo "===> Prepare sandbox (superduperdb:latest) for pull-request "${PR_NUMBER}" <==="
+	@echo "===> Checkout Pull Request #"${PR_NUMBER}" <==="
 
-	# checkout the pull-request from remote repo.
+	# checkout remote repo.
 	git clone --depth 1 --single-branch git@github.com:SuperDuperDB/superduperdb.git /tmp/superduperdb_pr_$(PR_NUMBER)
 
+	# fetch specific pr
 	cd /tmp/superduperdb_pr_$(PR_NUMBER) && \
 	git fetch --depth 1 origin pull/$(PR_NUMBER)/head:pr_branch && \
 	git checkout pr_branch
 
-	# mount pull-request to the sandbox environment
-	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/code superduperdb/superduperdb:latest
+	# mount pr to sandbox
+	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/code superduperdb/sandbox:$(RELEASE_VERSION:v%=%)
 
 	# clean up the tmp directory
 	rm -rf /tmp/superduperdb_pr_$(PR_NUMBER)
 
+
+##@ Demo
 
 run-demo: ## Run SuperDuperDB demo on docker-compose
 	@echo "===> Run SuperDuperDB Demo <==="

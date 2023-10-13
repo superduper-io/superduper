@@ -4,6 +4,7 @@ import typing as t
 import cohere
 import tqdm
 from cohere.error import CohereAPIError, CohereConnectionError
+
 from superduperdb.container.component import Component
 from superduperdb.container.encoder import Encoder
 from superduperdb.container.model import PredictMixin

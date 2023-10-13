@@ -2,13 +2,14 @@ import dataclasses as dc
 import typing as t
 
 import numpy
+from tqdm import tqdm
+
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.metric import Metric
 from superduperdb.container.model import Model, _TrainingConfiguration
 from superduperdb.db.base.db import DB
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
-from tqdm import tqdm
 
 
 def _get_data_from_query(

@@ -3,9 +3,8 @@ import typing as t
 import uuid
 from abc import abstractmethod
 
-from superduperdb.container.tasks import callable_job, method_job
-
 import superduperdb as s
+from superduperdb.container.tasks import callable_job, method_job
 
 
 def job(f):

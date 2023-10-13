@@ -3,6 +3,7 @@ import json
 import openai
 import pytest
 import vcr
+
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.container.vector_index import VectorIndex

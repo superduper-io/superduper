@@ -1,9 +1,9 @@
 import typing as t
 
 from pydantic import dataclasses as dc
-from superduperdb.data.tree.for_each import for_each
 
 import superduperdb as s
+from superduperdb.data.tree.for_each import for_each
 
 
 @dc.dataclass

@@ -1,8 +1,7 @@
 import time
 
-from superduperdb.misc.runnable import thread
-
 import superduperdb as s
+from superduperdb.misc.runnable import thread
 
 
 def test_is_thread():

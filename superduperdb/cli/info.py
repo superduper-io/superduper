@@ -6,9 +6,9 @@ import socket
 import sys
 from pathlib import Path
 
+from superduperdb import ROOT
 from superduperdb.misc import run
 
-from superduperdb import ROOT
 from . import command
 
 PYPROJECT = ROOT / 'pyproject.toml'

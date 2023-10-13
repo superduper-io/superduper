@@ -10,14 +10,14 @@ import requests
 import tqdm
 from openai import Audio, ChatCompletion, Embedding, Image, Model as OpenAIModel
 from openai.error import RateLimitError, ServiceUnavailableError, Timeout, TryAgain
+
+import superduperdb as s
 from superduperdb.container.component import Component
 from superduperdb.container.encoder import Encoder
 from superduperdb.container.model import PredictMixin
 from superduperdb.ext.vector.encoder import vector
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
-
-import superduperdb as s
 
 retry = Retry(
     exception_types=(RateLimitError, ServiceUnavailableError, Timeout, TryAgain)

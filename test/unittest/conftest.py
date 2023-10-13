@@ -1,10 +1,10 @@
 import json
 import random
+from test.material.metrics import PatK
 
 import lorem
 import numpy
 import pytest
-from test.material.metrics import PatK
 
 try:
     from test.material.models import BinaryClassifier

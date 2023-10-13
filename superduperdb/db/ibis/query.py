@@ -4,6 +4,7 @@ import typing as t
 
 import ibis
 from ibis.expr.types.relations import Table as IbisTable
+
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encoder

@@ -14,6 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
+
 from superduperdb.db.base.metadata import MetaDataStore
 from superduperdb.misc.colors import Colors
 

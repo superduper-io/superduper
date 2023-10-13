@@ -1,11 +1,10 @@
 import typing as t
 
+from superduperdb import CFG, logging
 from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.download import Downloader, SaveFile, gather_uris
 from superduperdb.db.base.query import Insert, Select
-
-from superduperdb import CFG, logging
 
 
 def download_content(
@@ -88,7 +87,7 @@ def download_content(
         _download_update = SaveFile(CFG.downloads.root)
     else:
 
-        def _download_update(key, id, bytes_, **kwargs):  # type: ignore[misc]
+        def _download_update(key, id, bytes_):  # type: ignore[misc]
             return query.download_update(db=db, key=key, id=id, bytes=bytes_)
 
     assert place_ids is not None

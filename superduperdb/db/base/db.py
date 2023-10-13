@@ -7,6 +7,8 @@ from collections import defaultdict
 import click
 import networkx
 from dask.distributed import Future
+
+import superduperdb as s
 from superduperdb.container import serializable
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
@@ -18,7 +20,6 @@ from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorDatabase
 
-import superduperdb as s
 from .artifact import ArtifactStore
 from .cursor import SuperDuperCursor
 from .data_backend import BaseDataBackend
@@ -350,7 +351,6 @@ class DB:
         task_workflow: TaskWorkflow = self._build_task_workflow(
             query.select_table,
             ids=ids,
-            verbose=verbose,
         )
         task_workflow.run_jobs(distributed=self.distributed)
         return task_workflow
@@ -504,7 +504,6 @@ class DB:
         query,
         ids=None,
         dependencies=(),
-        verbose: bool = True,
     ) -> TaskWorkflow:
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
@@ -713,7 +712,6 @@ class DB:
         raises: bool = True,
         n_download_workers=None,
         headers=None,
-        **kwargs,
     ):
         update_db = False
 

@@ -6,6 +6,7 @@ from enum import Enum
 
 from bson import objectid
 from pymongo.change_stream import CollectionChangeStream
+
 from superduperdb.container.serializable import Serializable
 
 TokenType = t.Dict[str, str]

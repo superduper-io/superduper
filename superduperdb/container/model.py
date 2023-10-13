@@ -10,6 +10,8 @@ import tqdm
 from dask.distributed import Future
 from numpy import ndarray
 from sklearn.pipeline import Pipeline
+
+import superduperdb as s
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.component import Component
 from superduperdb.container.dataset import Dataset
@@ -21,8 +23,6 @@ from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.misc.special_dicts import MongoStyleDict
-
-import superduperdb as s
 
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB

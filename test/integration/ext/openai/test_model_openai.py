@@ -4,6 +4,7 @@ import os
 import openai
 import pytest
 import vcr
+
 from superduperdb.ext.openai.model import (
     OpenAIAudioTranscription,
     OpenAIAudioTranslation,

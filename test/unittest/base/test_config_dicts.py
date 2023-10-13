@@ -1,6 +1,7 @@
 import io
 
 import pytest
+
 from superduperdb.base import config_dicts
 
 

@@ -6,11 +6,11 @@ from typing import Iterator
 
 import fil
 import pytest
-from superduperdb.db.base.db import DB
-from superduperdb.misc import superduper
 from tenacity import Retrying, stop_after_delay
 
 import superduperdb as s
+from superduperdb.db.base.db import DB
+from superduperdb.misc import superduper
 
 _sleep = time.sleep
 

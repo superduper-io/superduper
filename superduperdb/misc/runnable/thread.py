@@ -5,6 +5,7 @@ from functools import cached_property, partial, wraps
 from threading import Thread
 
 import superduperdb as s
+
 from .runnable import Callback, Runnable
 
 

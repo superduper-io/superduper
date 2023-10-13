@@ -14,7 +14,7 @@
 
 <div align="center">
 	
-### <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Example Use-Cases & Apps</strong></a> | <a href="http://demo.superduperdb.com"><strong>Jupyter Demo</strong></a>
+### <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Showcases</strong></a> | <a href="http://demo.superduperdb.com"><strong>Live Demo</strong></a>
 
 </div>
 
@@ -36,6 +36,8 @@
     <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg", alt="Apache License">
 </a> 
 </p>
+
+<hr>
 
 <div align="center">	
 	

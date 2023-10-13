@@ -65,14 +65,6 @@
 
 Accelerate AI development and enable data symbiotic AI applications with a simple and familiar Python<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/> interface that can handle even the most complex AI use-cases.
 
-
-- **Deploy all your AI** models to automatically compute outputs (inference) with your database in a single environment.
-- **Train models** simply by querying without additional ingestion and pre-processing.
-- **Integrate AI APIs** to work together with other models on your data effortlessly.
-- **Search your data** with vector search, including model management and serving.
-
-
-
 <table>
   <tr>
     <td width="30%">
@@ -167,8 +159,13 @@ pip install superduperdb
 
 
 ## How To
-The following are examples of how to use SuperDuperDB with Python (find all how-tos and examples <a href="https://docs.superduperdb.com/docs/docs/intro">in the docs</a>): 
-#### - Add a ML/AI model to your database:
+The following are examples of how to use SuperDuperDB with Python. 
+
+Visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
+
+
+#### - Deploy ML/AI models to your database:
+Automatically compute outputs (inference) with your database in a single environment.
 
 ```python
 import pymongo
@@ -189,7 +186,9 @@ db.add(model)
 model.predict(X='input_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
 ```
 
-#### - Train/fine-tune a model using data from your database directly:
+
+#### - Train models directly from your database.
+Simply query your database, without additional ingestion and pre-processing:
 
 ```python
 import pymongo
@@ -207,7 +206,9 @@ model = superduper(SVC())
 model.predict(X='input_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
 ```
 
-#### - Use your existing favorite database as a vector search database:
+#### - Vector-Search your data:
+Use your existing favorite database as a vector search database, including model management and serving. 
+
 ```python
 # First a "Listener" makes sure vectors stay up-to-date
 indexing_listener = Listener(model=OpenAIEmbedding(), key='text', select=collection.find())
@@ -221,7 +222,9 @@ db.add(VectorIndex('my-index', indexing_listener=indexing_listener))
 db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
 ```
 
-#### - Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search:
+#### - Integrate AI APIs to work together with other models. 
+Use OpenAI, PyTorch or Hugging face model as an embedding model for vector search.
+
 ```python
 # Create a ``VectorIndex`` instance with indexing listener as OpenAIEmbedding and add it to the database.
 db.add(

@@ -3,7 +3,6 @@ import json
 from typer import Option
 
 from superduperdb import CFG
-
 from . import command
 
 

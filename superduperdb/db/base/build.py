@@ -2,8 +2,6 @@ import re
 
 import mongomock
 import pymongo
-
-import superduperdb as s
 from superduperdb.base.logger import logging
 from superduperdb.db.base.backends import (
     data_backends,
@@ -14,6 +12,8 @@ from superduperdb.db.base.db import DB
 from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.db.mongodb.artifacts import MongoArtifactStore
 from superduperdb.server.dask_client import dask_client
+
+import superduperdb as s
 
 
 def build_vector_database(cfg):

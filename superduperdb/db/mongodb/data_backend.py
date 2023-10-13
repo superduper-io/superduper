@@ -4,8 +4,6 @@ import typing as t
 
 import click
 import pymongo
-
-from superduperdb import logging
 from superduperdb.container.serializable import Serializable
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.base.data_backend import BaseDataBackend
@@ -13,6 +11,8 @@ from superduperdb.db.mongodb.artifacts import MongoArtifactStore
 from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
+
+from superduperdb import logging
 
 
 class MongoDataBackend(BaseDataBackend):

@@ -1,7 +1,6 @@
 import dataclasses as dc
 
 import ibis
-
 from superduperdb.container.encoder import Encoder
 from superduperdb.container.schema import Schema
 

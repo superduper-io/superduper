@@ -8,12 +8,11 @@ from collections import Counter
 from enum import Enum
 
 from pymongo.change_stream import CollectionChangeStream
-
-from superduperdb import logging
 from superduperdb.db.base.db import DB
 from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS, query
 from superduperdb.misc.runnable.runnable import Event
 
+from superduperdb import logging
 from .base import BaseDatabaseListener, CachedTokens, DBEvent, Packet, TokenType
 from .handler import CDC_QUEUE, CDCHandler
 

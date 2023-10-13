@@ -3,13 +3,13 @@ import traceback
 import uuid
 
 from flask import Flask, jsonify, make_response, request
-
-from superduperdb import CFG
 from superduperdb.container.document import load_bson, load_bsons
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.artifact import ArtifactStore
 from superduperdb.db.base.build import build_datalayer
 from superduperdb.misc.serialization import serializers
+
+from superduperdb import CFG
 
 
 def make_endpoints(app, db):

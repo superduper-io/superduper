@@ -6,11 +6,11 @@ from typing import Iterator
 
 import fil
 import pytest
+from superduperdb.db.base.db import DB
+from superduperdb.misc import superduper
 from tenacity import Retrying, stop_after_delay
 
 import superduperdb as s
-from superduperdb.db.base.db import DB
-from superduperdb.misc import superduper
 
 _sleep = time.sleep
 
@@ -48,7 +48,6 @@ def _write(t):
 
 @pytest.fixture(autouse=SDDB_USE_MONGOMOCK)
 def patch_mongomock(monkeypatch):
-    import gridfs
     import gridfs.grid_file
     import pymongo
     from mongomock import Collection, Database, MongoClient

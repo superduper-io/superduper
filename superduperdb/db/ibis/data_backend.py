@@ -3,7 +3,6 @@ from warnings import warn
 import click
 import ibis
 from ibis.backends.base import BaseBackend
-
 from superduperdb.db.base.data_backend import BaseDataBackend
 from superduperdb.misc.colors import Colors
 

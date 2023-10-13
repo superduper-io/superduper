@@ -2,7 +2,6 @@ import typing as t
 
 import bson
 from bson.objectid import ObjectId
-
 from superduperdb.container.encoder import Encodable, Encoder
 from superduperdb.container.schema import Schema
 

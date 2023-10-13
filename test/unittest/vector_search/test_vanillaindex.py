@@ -2,7 +2,6 @@ import uuid
 
 import numpy as np
 import pytest
-
 from superduperdb.vector_search.table_scan import VanillaVectorIndex, cosine, dot, l2
 
 

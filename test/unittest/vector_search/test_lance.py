@@ -4,7 +4,6 @@ import lance
 import numpy as np
 import pyarrow as pa
 import pytest
-
 from superduperdb.vector_search.base import VectorCollectionConfig, VectorCollectionItem
 from superduperdb.vector_search.lance import LanceVectorCollection, LanceVectorDatabase
 

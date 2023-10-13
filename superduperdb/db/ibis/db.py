@@ -1,7 +1,8 @@
-from superduperdb import logging
 from superduperdb.db.base.db import DB
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
 from superduperdb.db.ibis.query import InMemoryTable, OutputTable
+
+from superduperdb import logging
 
 _INMEMORY_BACKENDS = ['duckdb']
 

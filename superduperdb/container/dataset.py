@@ -6,7 +6,6 @@ from functools import cached_property
 
 import numpy
 from overrides import override
-
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document

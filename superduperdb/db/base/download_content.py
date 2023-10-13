@@ -1,10 +1,11 @@
 import typing as t
 
-from superduperdb import CFG, logging
 from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.base.download import Downloader, SaveFile, gather_uris
 from superduperdb.db.base.query import Insert, Select
+
+from superduperdb import CFG, logging
 
 
 def download_content(

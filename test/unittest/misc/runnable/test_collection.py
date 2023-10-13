@@ -2,7 +2,6 @@ import random
 import time
 
 import pytest
-
 from superduperdb.misc.runnable.collection import ThreadQueue
 
 

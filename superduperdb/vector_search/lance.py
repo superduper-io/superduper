@@ -1,10 +1,8 @@
 import os
 import typing as t
 
-import lance
 import numpy as np
 import pyarrow as pa
-
 from superduperdb.vector_search.base import (
     VectorCollection,
     VectorCollectionConfig,
@@ -13,6 +11,9 @@ from superduperdb.vector_search.base import (
     VectorCollectionResult,
     VectorDatabase,
 )
+
+import lance
+
 
 # TODO: Implement a vector index manager for ``lance`` after tidying
 # base classes and interfaces in ``superduperdb.vector_search.base``.

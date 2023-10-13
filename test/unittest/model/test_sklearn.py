@@ -5,7 +5,6 @@ import pytest
 from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
-
 from superduperdb.container.document import Document
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.sklearn.model import Estimator

@@ -1,6 +1,6 @@
 # When to use standalone or cluster mode
 
-SuperDuperDB may be used in **cluster** or **standalone** mode, depending on the use-case, and whether SuperDuperDB is being used for development of production. By default SuperDuperDB runs in **standalone** mode.
+SuperDuperDB may be used in **cluster** or **standalone** mode, depending on the use-case, and whether SuperDuperDB is being used for development of production. By default, SuperDuperDB runs in **standalone** mode.
 **Cluster** and **standalone** mode affect how and where computations are run, which are triggered whenever:
 
 - Data is inserted or updated, triggering data to be downloaded and `model.predict` to be executed on added `Listener` instances.

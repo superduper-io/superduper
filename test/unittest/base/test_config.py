@@ -2,7 +2,6 @@ from collections import Counter
 
 import pydantic
 import pytest
-
 from superduperdb.base.config import Config, Factory, JSONable
 
 from .test_config_dicts import PARENT

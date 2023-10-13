@@ -1,8 +1,7 @@
-import React from "react"
-import { useState } from 'react'
+import React, {useState} from "react"
 import ReactMarkdown from 'react-markdown'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { hopscotch } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
+import {hopscotch} from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const MarkdownDisplay = ({responseText}) => {
     return (

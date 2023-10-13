@@ -1,11 +1,9 @@
+import PIL.Image
 import ibis
 import pandas as pd
-import PIL.Image
 import pytest
 import tdir
 import torchvision
-
-import superduperdb as s
 from superduperdb.container.document import Document as D
 from superduperdb.db.base.build import build_vector_database
 from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
@@ -17,6 +15,8 @@ from superduperdb.db.ibis.schema import IbisSchema
 from superduperdb.db.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.ext.pillow.image import pil_image
 from superduperdb.ext.torch.model import TorchModel
+
+import superduperdb as s
 
 
 @pytest.fixture

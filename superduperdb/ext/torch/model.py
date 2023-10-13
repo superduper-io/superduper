@@ -7,12 +7,6 @@ from contextlib import contextmanager
 from functools import cached_property
 
 import torch
-from torch.utils import data
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-
-import superduperdb as s
-from superduperdb import logging
 from superduperdb.container.artifact import Artifact
 from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encodable
@@ -23,6 +17,12 @@ from superduperdb.db.base.db import DB
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.ext.torch.utils import device_of, eval, to_device
+from torch.utils import data
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+import superduperdb as s
+from superduperdb import logging
 
 if t.TYPE_CHECKING:
     from superduperdb.container.dataset import Dataset

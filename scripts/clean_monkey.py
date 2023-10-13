@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import re
-import safer
 import subprocess as sp
+
+import safer
 
 IMPORT_LINE = 'from typing import '
 TYPES = '|'.join((

@@ -60,13 +60,13 @@ m = Model(
 See [below](#model-design) for an explanation of each of these parameters.
 Here are examples of each of these parameters in several frameworks and applications:
 
-| Application | Task | Framework(s) | `object` | `preprocess`               | `postprocess` | `encoder` |
-| ----------- | ----------- | ------------ | ------------------------ | ----------- | ------- | ----------- |
-| Vision      | Classification | `torch`      | CNN | `torchvision.transforms` | Top-K estimate | `None` |
-| Generative | Image generation | `torch` | GAN | `None` | `None` | `pillow` |
-| NLP | LLM | `transformers` | Transformer | Tokenizer | Sampling | `None` |
-| Risk | Fraud detection | `sklearn` | Estimator | `None` | `None` | `None` |
-| Search | Vector Search | `openai` | OpenAI Embedding | `None` | `None` | `None` |
+| Application | Task             | Framework(s)   | `object`         | `preprocess`             | `postprocess`  | `encoder` |
+|-------------|------------------|----------------|------------------|--------------------------|----------------|-----------|
+| Vision      | Classification   | `torch`        | CNN              | `torchvision.transforms` | Top-K estimate | `None`    |
+| Generative  | Image generation | `torch`        | GAN              | `None`                   | `None`         | `pillow`  |
+| NLP         | LLM              | `transformers` | Transformer      | Tokenizer                | Sampling       | `None`    |
+| Risk        | Fraud detection  | `sklearn`      | Estimator        | `None`                   | `None`         | `None`    |
+| Search      | Vector Search    | `openai`       | OpenAI Embedding | `None`                   | `None`         | `None`    |
 
 ## Vanilla Usage
 

@@ -2,7 +2,6 @@ import dataclasses as dc
 import typing as t
 
 from overrides import override
-
 from superduperdb.db.base.db import DB
 from superduperdb.db.base.query import Select
 

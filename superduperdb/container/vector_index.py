@@ -4,9 +4,6 @@ import typing as t
 
 import tqdm
 from overrides import override
-
-import superduperdb as s
-from superduperdb import logging
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encodable
@@ -19,6 +16,9 @@ from superduperdb.vector_search.base import (
     VectorCollectionItem,
     VectorIndexMeasureType,
 )
+
+import superduperdb as s
+from superduperdb import logging
 
 if t.TYPE_CHECKING:
     pass

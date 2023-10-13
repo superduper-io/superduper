@@ -7,8 +7,6 @@ from collections import defaultdict
 import click
 import networkx
 from dask.distributed import Future
-
-import superduperdb as s
 from superduperdb.container import serializable
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
@@ -20,6 +18,7 @@ from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorDatabase
 
+import superduperdb as s
 from .artifact import ArtifactStore
 from .cursor import SuperDuperCursor
 from .data_backend import BaseDataBackend

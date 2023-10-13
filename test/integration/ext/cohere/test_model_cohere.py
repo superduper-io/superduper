@@ -2,7 +2,6 @@ import os
 
 import pytest
 import vcr
-
 from superduperdb.ext.cohere import CohereEmbed, CohereGenerate
 
 CASSETTE_DIR = 'test/integration/ext/cohere/cassettes'

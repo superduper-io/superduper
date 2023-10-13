@@ -8,12 +8,11 @@ import typing as t
 from bson import ObjectId
 from overrides import override
 from pymongo import InsertOne as _InsertOne, UpdateOne as _UpdateOne
-
-import superduperdb as s
 from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
 from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS
 
+import superduperdb as s
 from ..base.cursor import SuperDuperCursor
 from ..base.query import Delete, Insert, Like, Select, SelectOne, Update
 

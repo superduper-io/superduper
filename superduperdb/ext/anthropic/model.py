@@ -3,7 +3,6 @@ import typing as t
 
 import anthropic
 from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutError
-
 from superduperdb.container.component import Component
 from superduperdb.container.encoder import Encoder
 from superduperdb.container.model import PredictMixin

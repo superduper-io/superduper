@@ -6,7 +6,6 @@ import uuid
 
 import click
 import requests
-
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document, dump_bsons, load_bson, load_bsons
 from superduperdb.container.serializable import Serializable
@@ -308,12 +307,12 @@ class Client:
 
     def select_one(self, query: SelectOne) -> Document:
         """
-        Send a select query to the server and return a the result.
+        Send a select query to the server and return the result.
 
         This endpoint sends a request to the server to execute a single select
         statement in the database. It receives an ID for the result from the
         server, and then uses this ID to retrieve the result from the server.
-        Finally it deserializes the result and returns it. It generates a random
+        Finally, it deserializes the result and returns it. It generates a random
         ID value for communicating with the server.
 
         :param query: serialized query

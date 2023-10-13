@@ -2,7 +2,6 @@ from typing import Iterator
 
 import numpy
 import pytest
-
 from superduperdb.vector_search.base import (
     VectorCollectionConfig,
     VectorCollectionItem,

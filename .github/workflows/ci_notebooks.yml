@@ -37,7 +37,7 @@ jobs:
       - name: Run pytest on changed files
         run: |
           # Check if there are any changes in Jupyter notebooks
-          CHANGED_FILES=$(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} | grep '.ipynb$' || true)
+          CHANGED_FILES=$(git diff --name-only ${{ github.base_ref }} ./ | grep '.ipynb$' || true)
                     
           # Check if there are any changes
           if [ -z "$CHANGED_FILES" ]; then

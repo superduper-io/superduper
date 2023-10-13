@@ -64,12 +64,21 @@ With SuperDuperDB, you can enjoy:
 
 Build next-gen AI applications using Python without the need for complex MLOps pipelines, infrastructure, or data duplication and migration to specialized vector databases.
 
-| Databases                                                                                                                                                                                                   | AI Frameworks                                                            | Models & AI APIs                                    |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|-----------------------------------------------------|
-| **- MongoDB** <br> **- MongoDB Atlas** <br> **- S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | **- PyTorch** <br> **- Scikit-Learn**<br> - **HuggingFace Transformers** | **- OpenAI** <br> **- Cohere** <br> **- Anthropic** |
+<div align="center">	
 
 
+| Databases                 |             | AI Frameworks            |             | Models & AI APIs |
+|---------------------------|-------------|--------------------------|-------------|------------------|
+| MongoDB                   |             | PyTorch                  |             | OpenAI           |
+| MongoDB Atlas             |             | Scikit-Learn             |             | Cohere           |
+| AWS S3                    |             | HuggingFace Transformers |             | Anthropic        |
+| PostgreSQL (experimental) |             |                          |             |                  |
+| SQLite (experimental)     |             |                          |             |                  |
+| DuckDB (experimental)     |             |                          |             |                  |
+| MySQL (experimental)      |             |                          |             |                  |
+| Snowflake (experimental)  |             |                          |             |                  |
 
+</div>
 
 ### Featured Examples
 

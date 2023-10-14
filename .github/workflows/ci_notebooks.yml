@@ -5,7 +5,9 @@ on:
 
   pull_request:
     paths:
-      - '**/*.ipynb'  # Adjust the path pattern to match your project's Python files
+      # - '**/*.ipynb'  # Handle all notebooks.
+      - './docs/content/use_cases/items/*.ipynb'  # Handle notebooks in the specific path.
+      - './examples/*.ipynb'  # Handle notebooks in the specific path.
 
 jobs:
   test-notebooks:

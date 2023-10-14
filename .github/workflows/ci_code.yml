@@ -8,6 +8,7 @@ on:  # rules for when this action will be triggered
       - 'docs/**'
       - '*.md'
       - '*.rst'
+      - ".github/**"
   workflow_dispatch:  # allows triggering a github action manually - see 'Actions' tab
 
 # When this workflow is queued, automatically cancel any previous running

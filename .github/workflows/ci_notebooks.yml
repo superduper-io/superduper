@@ -45,6 +45,6 @@ jobs:
           if [ -z "$CHANGED_FILES" ]; then
             echo "No Jupyter notebook files have changed."
           else
-            echo "Running pytest on changed notebooks:" 
+            echo "Changed notebooks: $CHANGED_FILES" 
             make test-notebooks NOTEBOOKS=$CHANGED_FILES
           fi

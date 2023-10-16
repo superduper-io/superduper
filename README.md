@@ -67,7 +67,6 @@ Build next-gen AI applications using Python without the need for complex MLOps p
 
 <div align="center">	
 
-
 | Databases                                                                                                                                                                                                   | AI Frameworks                                                            | Models & AI APIs                                    |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|-----------------------------------------------------|
 | **• MongoDB** <br> **• MongoDB Atlas** <br> **• S3** <br> • PostgreSQL (experimental) <br> • SQLite (experimental) <br> • DuckDB (experimental) <br> • MySQL (experimental) <br> • Snowflake (experimental) | **• PyTorch** <br> **• Scikit-Learn**<br> • **HuggingFace Transformers** | **• OpenAI** <br> **• Cohere** <br> **• Anthropic** |

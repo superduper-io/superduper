@@ -2,7 +2,7 @@
 
 
 ```python
-!pip install superduperdb==0.0.12
+!pip install superduperdb
 !pip install sentence-transformers
 ```
 
@@ -48,15 +48,17 @@ from superduperdb.container.document import Document as D
 
 data = load_dataset("imdb")
 
+N_DATAPOINTS = 500    # increase in order to improve quality
+
 train_data = [
     D({'_fold': 'train', **data['train'][int(i)]}) 
     for i in numpy.random.permutation(len(data['train']))
-][:5000]
+][:N_DATAPOINTS]
 
 valid_data = [
     D({'_fold': 'valid', **data['test'][int(i)]}) 
     for i in numpy.random.permutation(len(data['test']))
-][:500]
+][:N_DATAPOINTS // 10]
 
 db.execute(collection.insert_many(train_data))
 

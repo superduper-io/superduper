@@ -3,8 +3,10 @@ import typing as t
 import bson
 from bson.objectid import ObjectId
 
+from superduperdb import CFG
 from superduperdb.container.encoder import Encodable, Encoder
 from superduperdb.container.schema import Schema
+from superduperdb.misc.files import get_file_from_uri
 
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
@@ -145,6 +147,8 @@ def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
 
 def _unpack(item: t.Any) -> t.Any:
     if isinstance(item, Encodable):
+        if CFG.downloads.hybrid and not item.encoder.load_hybrid and item.x is None:
+            return get_file_from_uri(item.uri)
         return item.x
     elif isinstance(item, dict):
         return {k: _unpack(v) for k, v in item.items()}

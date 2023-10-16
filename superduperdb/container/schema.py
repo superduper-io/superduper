@@ -10,8 +10,15 @@ from superduperdb.container.encoder import Encoder
 class Schema(Component):
     identifier: str
     fields: t.Mapping[str, t.Union[Encoder, str]]
+    version: t.Optional[int] = None
 
     type_id: t.ClassVar[str] = 'schema'
+
+    def on_create(self, db) -> None:
+        for v in self.fields.values():
+            if isinstance(v, Encoder):
+                db.add(v)
+        return super().on_create(db)
 
     @cached_property
     def encoded_types(self):

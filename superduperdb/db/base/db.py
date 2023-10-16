@@ -366,7 +366,7 @@ class DB:
 
     def add(
         self,
-        object: Component,
+        object: t.Union[Component, t.Sequence[Component]],
         dependencies: t.Sequence[Job] = (),
     ):
         """
@@ -378,10 +378,20 @@ class DB:
         :param dependencies: list of jobs which should execute before component
                              init begins
         """
-        return self._add(
-            object=object,
-            dependencies=dependencies,
-        )
+        if isinstance(object, (list, tuple)):
+            return type(object)(
+                self._add(
+                    object=component,
+                    dependencies=dependencies,
+                )
+                for component in object
+            )
+        elif isinstance(object, Component):
+            return self._add(object=object, dependencies=dependencies)
+        else:
+            raise ValueError(
+                'object should be a sequence of `Component` or `Component`'
+            )
 
     def remove(
         self,

@@ -3,6 +3,8 @@ import importlib
 import inspect
 import typing as t
 
+from superduperdb.misc.serialization import asdict
+
 
 def is_component_metadata(r: dict) -> bool:
     COMPONENT_KEYS = {'type_id', 'identifier', 'version'}
@@ -81,4 +83,4 @@ class Serializable:
     serialize = _serialize
 
     def dict(self) -> t.Dict[str, t.Any]:
-        return dc.asdict(self)
+        return asdict(self)

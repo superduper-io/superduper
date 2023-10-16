@@ -4,8 +4,8 @@ on:
     branches:
       - main
     paths:  # run this action only when the docs folder is changed
-      - 'docs/content/**'
-      - 'docs/blog/**'
+      - 'docs/hr/content/**'
+      - 'docs/hr/blog/**'
 
 # allow the action to write to the gh-pages branch
 permissions:
@@ -18,11 +18,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-        # required for 
-      - name: Install pandoc
+        # required for docs/hr/build to be available
+      - name: Install node
         run: |
           sudo apt-get update
-          sudo apt-get install -y pandoc
           sudo apt-get install nodejs npm
 
       - name: Set up Python 3.10
@@ -41,26 +40,24 @@ jobs:
           key: 3.10-ubuntu-latest-${{ hashFiles('.github/ci-pinned-requirements/docs.txt') }}
 
       - name: Build docs and use-cases
+        # build is available in docs/hr/build
         run: |
-          cd docs
-          npm i
-          npm run build
-          cd ..
+          make hr-docs
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install -r .github/ci-pinned-requirements/docs.txt
     
-      - name: Build api docs
-        # doc build is available in docs/build/apidocs
+      - name: Build inline api docs
+        # build is available in docs/hr/build/apidocs
         run: |
-          make documentation
+          make api-docs
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/build
+          publish_dir: docs/hr/build
           cname: docs.superduperdb.com
           enable_jekyll: true

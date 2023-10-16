@@ -5,7 +5,8 @@ on:
 
   pull_request:
     paths:
-      - '**/*.ipynb'  # Adjust the path pattern to match your project's Python files
+      - '**/*.ipynb'  # Handle all notebooks.
+      - './docs/content/use_cases/items/*.ipynb'  # Handle notebooks in the specific path.
 
 jobs:
   test-notebooks:
@@ -37,7 +38,7 @@ jobs:
       - name: Run pytest on changed files
         run: |
           # Check if there are any changes in Jupyter notebooks
-          CHANGED_FILES=$(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} | grep '.ipynb$' || true)
+          CHANGED_FILES=$(git diff --name-only ${{ github.base_ref }} ./ | grep '.ipynb$' || true)
                     
           # Check if there are any changes
           if [ -z "$CHANGED_FILES" ]; then

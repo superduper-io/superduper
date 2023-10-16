@@ -11,7 +11,6 @@
 
 </div>
 
-
 <div align="center">
 	
 ### <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Showcases</strong></a> | <a href="http://demo.superduperdb.com"><strong>Live Demo</strong></a>
@@ -67,19 +66,9 @@ Build next-gen AI applications using Python without the need for complex MLOps p
 
 <div align="center">	
 
-| Databases               |         | AI Frameworks                |         | Models & AI APIs        |
-|-------------------------|---------|------------------------------|---------|-------------------------|
-| **NoSQL**               |         | **Machine Learning**         |         | **NLP**                 |
-| MongoDB                 |         | PyTorch                      |         | OpenAI                  |
-| MongoDB Atlas           |         | Scikit-Learn                 |         | Cohere                  |
-| **Object Storage**      |         | **Deep Learning**            |         | **AI Platforms**        |
-| AWS S3                  |         | HuggingFace Transformers     |         | Anthropic               |
-| **SQL**                 |         |                              |         |                         |
-| PostgreSQL              |         |                              |         |                         |
-| SQLite                  |         |                              |         |                         |
-| DuckDB                  |         |                              |         |                         |
-| MySQL                   |         |                              |         |                         |
-| Snowflake               |         |                              |         |                         |
+| Databases                                                                                                                                                                                                   | AI Frameworks                                                            | Models & AI APIs                                    |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|-----------------------------------------------------|
+| **- MongoDB** <br> **- MongoDB Atlas** <br> **- S3** <br> - PostgreSQL (experimental) <br> - SQLite (experimental) <br> - DuckDB (experimental) <br> - MySQL (experimental) <br> - Snowflake (experimental) | **- PyTorch** <br> **- Scikit-Learn**<br> - **HuggingFace Transformers** | **- OpenAI** <br> **- Cohere** <br> **- Anthropic** |
 
 
 
@@ -92,7 +81,6 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
 - from LLM-based (RAG) chatbots and vector search
 - image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc.
 - to highly custom machine learning use-cases and workflows
-
 
 
 <table>
@@ -108,51 +96,53 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
       </a>
     </td>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/openai.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
         <img src="./apidocs/img/document-search.png" />
       </a>
     </td>
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">Text-To-Image search </a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">Textual Image Search</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">Video search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">Textual Video Search</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/openai.ipynb">Document search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">Question the Docs</a>
     </th>
   </tr>
   <tr>     
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/voice_memos.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
         <img src="./apidocs/img/voice-search.png" />
       </a>
     </td>
     <td width="30%">
-      <a href="URL_TO_FIFTH_CATEGORY">
-        <img src="IMAGE_URL_FOR_FIFTH_CATEGORY" />
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
+        <img src="./apidocs/img/machine-learning.jpg" />
       </a>
     </td>
     <td width="30%">
-      <a href="URL_TO_SIXTH_CATEGORY">
-        <img src="IMAGE_URL_FOR_SIXTH_CATEGORY" />
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
+        <img src="./apidocs/img/transfer-learning.png" />
       </a>
     </td>
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/voice_memos.ipynb">Question your memos</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">Q&A Voice Memos</a>
     </th>
     <th>
-      <a href="URL_TO_FIFTH_CATEGORY">Fifth Category</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">Classical Machine Learning</a>
     </th>
     <th>
-      <a href="URL_TO_SIXTH_CATEGORY">Sixth Category</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
     </th>
   </tr>
 </table>
+
+
 
 
 
@@ -160,15 +150,19 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
 
 
 ## Installation
-#### 1. Install SuperDuperDB via `pip` *(~1 minute)*
+##### 1. Install SuperDuperDB via `pip` *(~1 minute)*
 ```
 pip install superduperdb
 ```
-#### 2. Database installation (for MongoDB) *(~10-15 minutes)*:
-   - You already have MongoDB installed? Let's go!
-   - You need to install MongoDB? See the docs <a href="https://www.mongodb.com/docs/manual/installation/">here</a>.
 
-#### 3. Now you can start using SuperDuperDB with oneclick: [Live Demo](https://demo.superduperdb.com)!
+#### 2. Try SuperDuperDB locally using `docker-compose` *(~2 minutes)*:
+   - You need to install Docker? See the docs <a href="https://docs.docker.com/engine/install/">here</a>.
+
+```
+make run-demo
+```
+
+#### 3. Try [SuperDuperDB Live!](https://demo.superduperdb.com) (~1 minute).
 
 
 

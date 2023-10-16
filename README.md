@@ -163,7 +163,7 @@ pip install superduperdb
 make run-demo
 ```
 
-#### 3. Try [🔮 SuperDuperDB Live!](https://demo.superduperdb.com) (~1 minute).
+#### 3. Or, try [SuperDuperDB Live!](https://demo.superduperdb.com) on your browser (~1 minute). 
 
 
 

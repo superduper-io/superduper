@@ -5,13 +5,15 @@ together with MongoDB.
 
 
 ```python
-!pip install superduperdb==0.0.12
+!pip install superduperdb
 ```
 
 
 ```python
 import os
-os.environ['OPENAI_API_KEY'] = '<YOUR-OPENAI-API-KEY>'
+
+if 'OPENAI_API_KEY' not in os.environ:
+    raise Exception('Environment variable "OPENAI_API_KEY" not set')
 ```
 
 
@@ -39,23 +41,35 @@ collection = Collection('questiondocs')
 In this example we use the internal textual data from the `superduperdb` project's API documentation, with the "meta"-goal of 
 creating a chat-bot to tell us about the project which we are using!
 
+Uncomment the following cell if you have the superduperdb docs locally.
+Otherwise you can load the data in the following cells.
+
 
 ```python
-import glob
-glob.glob('../superduperdb/docs/content/docs/*/*.md')
+# import glob
+
+# ROOT = '../docs/content/docs'
+
+# STRIDE = 5       # stride in numbers of lines
+# WINDOW = 10       # length of window in numbers of lines
+
+# content = sum([open(file).readlines() 
+#                for file in glob.glob(f'{ROOT}/*/*.md') 
+#                + glob.glob('{ROOT}/*.md')], [])
+# chunks = ['\n'.join(content[i: i + WINDOW]) for i in range(0, len(content), STRIDE)]
 ```
 
 
 ```python
-import glob
+!curl -O https://superduperdb-public.s3.eu-west-1.amazonaws.com/superduperdb_docs.json
+```
 
-STRIDE = 5       # stride in numbers of lines
-WINDOW = 10       # length of window in numbers of lines
 
-content = sum([open(file).readlines() 
-               for file in glob.glob('../superduperdb/docs/content/docs/*/*.md') 
-               + glob.glob('../superduperdb/docs/content/docs/*.md')], [])
-chunks = ['\n'.join(content[i: i + WINDOW]) for i in range(0, len(content), STRIDE)]
+```python
+import json
+
+with open('superduperdb_docs.json') as f:
+    chunks = json.load(f)
 ```
 
 You can see that the chunks of text contain bits of code, and explanations, 

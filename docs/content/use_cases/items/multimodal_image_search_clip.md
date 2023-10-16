@@ -17,7 +17,7 @@ To this end, we'll be using the [CLIP multimodal architecture](https://openai.co
 So let's start. 
 
 SuperDuperDB supports MongoDB as a databackend. Correspondingly, we'll import the python MongoDB client `pymongo`
-and "wrap" our database to convert it to a SuperDuper `Datalayer`:
+and "wrap" our database to convert it to a SuperDuper `DB`:
 
 
 ```python
@@ -36,7 +36,6 @@ mongodb_uri = os.getenv("MONGODB_URI", "mongomock://test")
 # Super-Duper your Database!
 CFG.data_backend = mongodb_uri
 CFG.artifact_store = 'filesystem://./models'
-CFG.vector_search = mongodb_uri
 
 db = build_datalayer(CFG)
 

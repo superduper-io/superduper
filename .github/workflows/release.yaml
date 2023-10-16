@@ -41,6 +41,9 @@ jobs:
         with:
           path: ./dist
 
+  #---------------------------------------------------
+  # Build GitHub Artifacts
+  #---------------------------------------------------
   test-build:
     needs: ['build']
     runs-on: ubuntu-latest
@@ -78,7 +81,10 @@ jobs:
 
     outputs:
       package_version: ${{ steps.set-version.outputs.package_version }}
-  
+
+  #---------------------------------------------------
+  # Publish GitHub Artifacts
+  #---------------------------------------------------
   create-release:
     needs: ['test-build']
     runs-on: ubuntu-latest
@@ -97,9 +103,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-  ####################################
+
+  #---------------------------------------------------
   # Publish SuperDuperDB in Pypi
-  ####################################
+  #---------------------------------------------------
   publish-pypi:
     needs: ['create-release']
     # Environment waits for approval before attempting to upload to PyPI.
@@ -119,10 +126,9 @@ jobs:
         with:
           packages-dir: artifact/
 
-
-  ####################################
+  #---------------------------------------------------
   # Publish SuperDuperDB in DockerHub
-  ####################################
+  #---------------------------------------------------
   publish-docker:
     needs: ['publish-pypi']
     runs-on: ubuntu-latest

@@ -7,8 +7,10 @@ on:
   workflow_dispatch:
 
 jobs:
-    # Repo usage stats
-    calculate-stats:
+    #---------------------------------------------------
+    # Repo Analytics
+    #---------------------------------------------------
+    repo-analytics:
       runs-on: ubuntu-22.04
       environment: "analytics"
       steps:
@@ -16,7 +18,34 @@ jobs:
           with:
             ghtoken: ${{ secrets.GH_TOKEN_ANALYTICS }}
 
+    #---------------------------------------------------
+    # Check for broken links in *md files
+    #---------------------------------------------------
+    markdown-link-check:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@master
+      - name: Create configuration for handling relative paths
+        # regex validation: https://regex101.com/r/L2M2wa/1
+        run: |
+          cat <<EOF > mlc_config.json
+          {
+            "replacementPatterns": [
+              {
+              "pattern": "^[./]",
+              "replacement": "{{BASEURL}}/"
+              }
+              ]
+          }
+          EOF
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: 'mlc_config.json'
 
+
+    #---------------------------------------------------
+    # Check ImportsLinting and Testing
+    #---------------------------------------------------
     # Checks imports using latest versions of dependencies for the core package.
     check-imports:
         runs-on: ${{ matrix.os }}
@@ -52,6 +81,9 @@ jobs:
                 python -m superduperdb.db.base.backends
                 python -m superduperdb.container.model 
 
+    #---------------------------------------------------
+    # Test External Dependencies
+    #---------------------------------------------------
     # Run tests using latest versions of dependencies for the dev environment.
     test-latest-dev-deps:
         runs-on: ${{ matrix.os }}
@@ -81,24 +113,42 @@ jobs:
             - name: Run tests
               run: make test
 
-    markdown-link-check:
+    #---------------------------------------------------
+    # Test Notebooks
+    #---------------------------------------------------
+    test-notebooks:
       runs-on: ubuntu-latest
       steps:
-      - uses: actions/checkout@master
-      - name: Create configuration for handling relative paths
-        # regex validation: https://regex101.com/r/L2M2wa/1
-        run: |
-          cat <<EOF > mlc_config.json
-          {
-            "replacementPatterns": [
-              {
-              "pattern": "^[./]",
-              "replacement": "{{BASEURL}}/"
-              }
-              ]
-          }
-          EOF
-      - uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          config-file: 'mlc_config.json'
+        - name: Check out code
+          uses: actions/checkout@v3
 
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: 3.8  # Adjust the Python version as needed
+
+        - name: Cache pip packages
+          uses: actions/cache@v3
+          with:
+            path: ~/.cache/pip
+            key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+            restore-keys: |
+              ${{ runner.os }}-pip-
+
+        - name: Install SuperDuperDB
+          run: |
+            # Install project and dependencies from pyproject.toml
+            pip install .[tests]
+
+        - name: Run pytest on changed files
+          run: |
+            # List Jupyter notebooks
+            NOTEBOOKS=$(ls examples/*.ipynb || true)
+
+            # Check if there are any changes
+            if [ -z "${NOTEBOOKS}" ]; then
+              echo "No Jupyter notebook files are found."
+            else
+              echo "Running pytest on notebooks: ${NOTEBOOKS}" 
+              make test-notebooks NOTEBOOKS=${NOTEBOOKS}
+            fi

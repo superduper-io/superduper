@@ -1,7 +1,8 @@
 import hashlib
+import typing as t
 
 
-def _get_file(uri):
+def get_file_from_uri(uri):
     """
     Get file name from uri.
 
@@ -23,7 +24,12 @@ def _get_file(uri):
     return file
 
 
-def load_uris(r: dict, root: str, raises: bool = False):
+def load_uris(
+    r: dict,
+    root: str,
+    encoders: t.Dict,
+    raises: bool = False,
+):
     """
     Load ``"bytes"`` into ``"_content"`` from ``"uri"`` inside ``r``.
 
@@ -40,8 +46,13 @@ def load_uris(r: dict, root: str, raises: bool = False):
     """
     for k, v in r.items():
         if isinstance(v, dict):
-            if k == '_content' and 'uri' in v and 'bytes' not in v:
-                file = _get_file(v['uri'])
+            if (
+                k == '_content'
+                and 'uri' in v
+                and 'bytes' not in v
+                and encoders[v['encoder']].load_hybrid
+            ):
+                file = get_file_from_uri(v['uri'])
                 if root:
                     file = f'{root}/{file}'
                 try:
@@ -51,9 +62,9 @@ def load_uris(r: dict, root: str, raises: bool = False):
                     if raises:
                         raise e
             else:
-                load_uris(v, root)
+                load_uris(v, root, encoders=encoders)
         elif isinstance(v, list):
             for i in v:
-                load_uris(i, root)
+                load_uris(i, root, encoders=encoders)
         else:
             pass

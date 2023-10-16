@@ -31,9 +31,17 @@ class Encoder(Component):
                     of this ``Encoder``
     :param encoder: Callable converting an ``Encodable`` of this ``Encoder``
                     to ``bytes``
+    :param shape: Shape of the data
+    :param version: Version of the encoder (don't use this)
+    :param load_hybrid: Whether to load the data from the URI or return the URI in
+                        `CFG.hybrid` mode
     """
 
+    type_id: t.ClassVar[str] = 'encoder'
+    # TODO what's this for?
+    encoders: t.ClassVar[t.List] = []
     artifact_artibutes: t.ClassVar[t.Sequence[str]] = ['decoder', 'encoder']
+
     identifier: str
     decoder: t.Union[t.Callable, Artifact] = dc.field(
         default_factory=lambda: Artifact(artifact=_pickle_decoder)
@@ -43,9 +51,7 @@ class Encoder(Component):
     )
     shape: t.Optional[t.Sequence] = None
     version: t.Optional[int] = None
-
-    type_id: t.ClassVar[str] = 'encoder'
-    encoders: t.ClassVar[t.List] = []
+    load_hybrid: bool = True
 
     def __post_init__(self):
         self.encoders.append(self.identifier)
@@ -72,6 +78,7 @@ class Encoder(Component):
         uri: t.Optional[str] = None,
         wrap: bool = True,
     ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
+        # TODO clarify what is going on here
         def _wrap_content(x):
             return {
                 '_content': {
@@ -110,11 +117,11 @@ class Encodable:
     :param uri: URI of the content, if any
     """
 
-    encoder: t.Callable
+    encoder: Encoder
     x: t.Optional[t.Any] = None
     uri: t.Optional[str] = None
 
-    def encode(self) -> t.Dict[str, t.Any]:
+    def encode(self) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
         assert hasattr(self.encoder, 'encode')
         return self.encoder.encode(x=self.x, uri=self.uri)
 

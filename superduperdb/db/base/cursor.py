@@ -76,7 +76,7 @@ class SuperDuperCursor:
         if self.features is not None and self.features:
             r = self.add_features(r, features=self.features)
         if CFG.downloads.hybrid:
-            load_uris(r, CFG.downloads.root)
+            load_uris(r, CFG.downloads.root, encoders=self.encoders)
         return self.wrap_document(r, self.encoders)
 
     next = __next__

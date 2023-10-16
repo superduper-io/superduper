@@ -144,11 +144,17 @@ run-demo: ## Run SuperDuperDB demo on docker-compose
 
 ##@ Documentation
 
-documentation: ## Generate Sphinx inline-API HTML documentation, including API docs
+api-docs: ## Generate Sphinx inline-API HTML documentation, including API docs
 	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
-	rm -rf apidocs/source/
-	rm -rf docs/build/apidocs
-	sphinx-apidoc -f -o apidocs/source superduperdb
-	sphinx-build -a apidocs docs/build/apidocs
-	@echo "Build finished. The HTML pages are in docs/build/apidocs"
+	rm -rf docs/api/source/
+	rm -rf docs/hr/build/apidocs
+	sphinx-apidoc -f -o docs/api/source superduperdb
+	sphinx-build -a docs/api docs/hr/build/apidocs
+	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
 
+
+hr-docs: ## Generate ...
+	@echo "===> Generate docusaurus docs and blog-posts <==="
+	cd docs/hr && npm i && npm run build
+	cd ../..
+	@echo "Build finished. The HTML pages are in docs/hr/build"

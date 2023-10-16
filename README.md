@@ -88,26 +88,26 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
   <tr>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
-        <img src="./apidocs/img/image-search.png" />
+        <img src="docs/api/img/thumbnails/image-search.png" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
-        <img src="./apidocs/img/video-search.png" />
+        <img src="docs/api/img/thumbnails/video-search.png" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
-        <img src="./apidocs/img/document-search.png" />
+        <img src="docs/api/img/thumbnails/document-search.png" />
       </a>
     </td>
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">Textual Image Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">Textual Video Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">Text-To-Video Search</a>
     </th>
     <th>
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">Question the Docs</a>
@@ -116,23 +116,23 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
   <tr>     
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
-        <img src="./apidocs/img/voice-search.png" />
+        <img src="docs/api/img/thumbnails/semantic-search.png" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
-        <img src="./apidocs/img/machine-learning.jpg" />
+        <img src="docs/api/img/thumbnails/machine-learning.jpg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
-        <img src="./apidocs/img/transfer-learning.png" />
+        <img src="docs/api/img/thumbnails/transfer-learning.png" />
       </a>
     </td>
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">Q&A Voice Memos</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">Semantic Search Engine</a>
     </th>
     <th>
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">Classical Machine Learning</a>

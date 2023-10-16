@@ -1,11 +1,12 @@
 <p align="center">
   <a href="https://www.superduperdb.com">
-    <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_logo_color.svg">
+    <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/api/img/SuperDuperDB_logo.png">
   </a>
 </p>
-
 <div align="center">
 	
+
+
 # Bring AI to your favourite database! 
  
 
@@ -55,7 +56,7 @@ With SuperDuperDB, you can enjoy:
 
 
 <p align="center">
-  <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/static/img/SuperDuperDB_diagram.svg">
+  <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/img/SuperDuperDB_diagram.svg">
 </p>
 
 

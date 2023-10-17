@@ -558,7 +558,7 @@ class Collection(TableOrCollection):
         else:
 
             class LocalAggregate:
-                def find(self, *args, **kwargs):
+                def find(this, *args, **kwargs):
                     second_part = []
                     if args:
                         second_part.append({"$match": args[0] if args else {}})

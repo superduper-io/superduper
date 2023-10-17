@@ -84,17 +84,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
-        <img src="docs/api/img/thumbnails/image-search.png" />
+        <img src="docs/hr/static/thumbnails/image-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
-        <img src="docs/api/img/thumbnails/video-search.png" />
+        <img src="docs/hr/static/thumbnails/video-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
-        <img src="docs/api/img/thumbnails/document-search.png" />
+        <img src="docs/hr/static/thumbnails/semantic-search.svg" />
       </a>
     </td>
   </tr>
@@ -112,17 +112,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>     
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
-        <img src="docs/api/img/thumbnails/semantic-search.png" />
+        <img src="docs/hr/static/thumbnails/document-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
-        <img src="docs/api/img/thumbnails/machine-learning.jpg" />
+        <img src="docs/hr/static/thumbnails/machine-learning.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
-        <img src="docs/api/img/thumbnails/transfer-learning.png" />
+        <img src="docs/hr/static/thumbnails/transfer-learning.svg" />
       </a>
     </td>
   </tr>

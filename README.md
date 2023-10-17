@@ -78,7 +78,7 @@
 
 ## Featured Examples
 
-Try our ready-to-use notebooks [live](https://demo.superduperdb.com) on your browser. 
+Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.com). 
 
 <table>
   <tr>

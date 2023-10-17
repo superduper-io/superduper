@@ -110,7 +110,9 @@ class MongoDataBackend(BaseDataBackend):
 
         :param vector_index: vector index to create
         """
-        collection = vector_index.indexing_listener.select.collection.identifier
+        collection = (
+            vector_index.indexing_listener.select.table_or_collection.identifier
+        )
         key = vector_index.indexing_listener.key
         if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+$', key):
             key = key.split('.')[1]

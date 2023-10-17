@@ -4,7 +4,7 @@ set -eux
 
 GITHUB_REPO=https://github.com/SuperDuperDB/superduperdb/tree/main/
 BLOB_REPO=https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/
-EXAMPLES_DIR=/docs/content/use_cases/items/
+EXAMPLES_DIR=/examples
 
 # Will download an index file container links to the documents within it.
 wget -q --no-check-certificate ${GITHUB_REPO}/${EXAMPLES_DIR}
@@ -14,7 +14,7 @@ wget -q --no-check-certificate ${GITHUB_REPO}/${EXAMPLES_DIR}
 # -F'"' sets the field separator (FS) to double quotes ("), so awk will treat everything between double quotes as fields.
 # /"path":/ is an awk pattern that looks for lines containing "path":.
 # {print $4} prints the fourth field, which is the path value, for each matching line.
-awk -v RS=',' -F'"' '/"path":/ {print $4}' index.html | grep ipynb &> ./file_list
+awk -v RS=',' -F'"' '/"path":/ {print $4}' examples | grep ipynb &> ./file_list
 
 # Download the notebook files to ./examples
 for file in $(cat ./file_list); do
@@ -23,4 +23,4 @@ for file in $(cat ./file_list); do
 done
 
 
-rm ./index.html ./file_list
+rm ./file_list

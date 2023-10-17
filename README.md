@@ -43,7 +43,7 @@
  </div>
 
 
-**Integrate, train, and manage your AI models and APIs directly with your chosen database, using a simple Python interface. Easily implement AI without the need to copy and move your data to complex MLOps pipelines and specialized vector databases:**
+**Easily implement AI without the need to copy and move your data to complex MLOps pipelines and specialized vector databases. Integrate, train, and manage your AI models and APIs directly with your chosen database, using a simple Python interface.**
 - Generative AI & chatbots
 - Vector Search
 - Standard Use-Cases (classification, segmentation, recommendation etc)

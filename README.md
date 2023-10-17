@@ -1,20 +1,19 @@
 <p align="center">
   <a href="https://www.superduperdb.com">
-    <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/api/img/SuperDuperDB_logo.png">
+    <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/img/SuperDuperDB_logo_color.svg">
   </a>
 </p>
 <div align="center">
 	
 
 
-# Bring AI to your favourite database! 
- 
+# Bring AI to your favorite database! 
 
 </div>
 
 <div align="center">
 	
-### <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Showcases</strong></a> | <a href="http://demo.superduperdb.com"><strong>Live Demo</strong></a>
+## <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Showcases</strong></a> | <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples"><strong>Live Jupyter Demo</strong></a>
 
 </div>
 
@@ -43,16 +42,20 @@
  `🔮 SuperDuperDB is open-source: Leave a star ⭐️ to support the project!`
  </div>
 
-# Overview
 
-SuperDuperDB is not just another database; it's a revolutionary platform that transforms your existing database into an AI powerhouse. 
+**Integrate, train, and manage your AI models and APIs directly with your chosen database, using a simple Python interface. Easily implement AI without the need to copy and move your data to complex MLOps pipelines and specialized vector databases:**
+- Generative AI & chatbots
+- Vector Search
+- Standard Use-Cases (classification, segmentation, recommendation etc)
+- Highly custom AI use-cases and workflows with specialized models.
 
-With SuperDuperDB, you can enjoy:
+<br> 
 
-- **A single scalable AI deployment** of all your models and AI APIs including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
-- **A model trainer** allowing you to easily train and fine-tune models simply by querying your database.
+**SuperDuperDB is not another database. It is a framework that transforms your favorite database into an AI powerhouse:**
+- **A single scalable AI deployment** of all your models and AI APIs, including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
+- **A model trainer** that allows to easily train and fine-tune models simply by querying the database.
 - **A feature store** in which the model outputs are stored alongside the inputs in any data format.
-- **A fully functional vector database** to easily generate vector embeddings of your data with your favorite models and APIs and connect them with your database (and/ or) vector database.
+- **A fully functional vector database** that allows to easily generate vector embeddings and vector indexes of the data with preferred models and APIs.
 
 
 <p align="center">
@@ -61,28 +64,21 @@ With SuperDuperDB, you can enjoy:
 
 
 
-### Current Integrations (*more coming soon*):
-
-Build next-gen AI applications using Python without the need for complex MLOps pipelines, infrastructure, or data duplication and migration to specialized vector databases.
+## Current Integrations (*more coming soon*):
 
 <div align="center">	
 
 | Databases | AI Frameworks | Models & AI APIs |
 | :--- | :--- | :--- |
-| **• MongoDB** <br> **• MongoDB Atlas** <br> **• S3** <br> • PostgreSQL (experimental) <br> • SQLite (experimental) <br> • DuckDB (experimental) <br> • MySQL (experimental) <br> • Snowflake (experimental) | **• PyTorch** <br> **• Scikit-Learn**<br> • **HuggingFace Transformers** | **• OpenAI** <br> **• Cohere** <br> **• Anthropic** |
+| **• MongoDB** <br> **• MongoDB Atlas** <br> **• AWS S3** <br> • PostgreSQL (experimental) <br> • SQLite (experimental) <br> • DuckDB (experimental) <br> • MySQL (experimental) <br> • Snowflake (experimental) | **• PyTorch** <br> **• Scikit-Learn**<br> • **HuggingFace Transformers** | **• OpenAI** <br> **• Cohere** <br> **• Anthropic** |
 
 
 
 </div>
 
-### Featured Examples
+## Featured Examples
 
-Accelerate AI development and enable data symbiotic AI applications with a simple and familiar Python<img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/files/python-logo-only.svg" width="2%"/> interface that can support even the most complex AI use-cases.
-
-- from LLM-based (RAG) chatbots and vector search
-- image generation, segmentation, time series forecasting, anomaly detection, classification, recommendation, personalisation etc.
-- to highly custom machine learning use-cases and workflows
-
+Try our ready-to-use notebooks [live](https://demo.superduperdb.com) on your browser. 
 
 <table>
   <tr>
@@ -145,12 +141,7 @@ Accelerate AI development and enable data symbiotic AI applications with a simpl
 
 
 
-
-
-# Quickstart
-
-
-## Installation
+# Installation
 ##### 1. Install SuperDuperDB via `pip` *(~1 minute)*
 ```
 pip install superduperdb
@@ -163,11 +154,7 @@ pip install superduperdb
 make run-demo
 ```
 
-#### 3. Or, try [SuperDuperDB Live!](https://demo.superduperdb.com) on your browser (~1 minute). 
-
-
-
-## Tutorial
+# Tutorial
 
 In this tutorial, you will learn how to Integrate, train and manage any AI models and APIs directly with your database with your data. You can visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
 

@@ -141,6 +141,9 @@ jobs:
             pip install .[tests]
 
         - name: Run pytest on changed files
+          env:
+            # set credentials for OpenAI
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           run: |
             # List Jupyter notebooks
             NOTEBOOKS=./examples

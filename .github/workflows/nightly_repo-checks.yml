@@ -143,7 +143,7 @@ jobs:
         - name: Run pytest on changed files
           run: |
             # List Jupyter notebooks
-            NOTEBOOKS=$(ls examples/*.ipynb || true)
+              NOTEBOOKS=$(ls -x examples/*.ipynb || true)
 
             # Check if there are any changes
             if [ -z "${NOTEBOOKS}" ]; then

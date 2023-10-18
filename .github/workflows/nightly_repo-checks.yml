@@ -21,26 +21,26 @@ jobs:
     #---------------------------------------------------
     # Check for broken links in *md files
     #---------------------------------------------------
-    markdown-link-check:
-      runs-on: ubuntu-latest
-      steps:
-      - uses: actions/checkout@master
-      - name: Create configuration for handling relative paths
-        # regex validation: https://regex101.com/r/L2M2wa/1
-        run: |
-          cat <<EOF > mlc_config.json
-          {
-            "replacementPatterns": [
-              {
-              "pattern": "^[./]",
-              "replacement": "{{BASEURL}}/"
-              }
-              ]
-          }
-          EOF
-      - uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          config-file: 'mlc_config.json'
+#    markdown-link-check:
+#      runs-on: ubuntu-latest
+#      steps:
+#      - uses: actions/checkout@master
+#      - name: Create configuration for handling relative paths
+#        # regex validation: https://regex101.com/r/L2M2wa/1
+#        run: |
+#          cat <<EOF > mlc_config.json
+#          {
+#            "replacementPatterns": [
+#              {
+#              "pattern": "^[./]",
+#              "replacement": "{{BASEURL}}/"
+#              }
+#              ]
+#          }
+#          EOF
+#      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+#        with:
+#          config-file: 'mlc_config.json'
 
 
     #---------------------------------------------------

@@ -4,10 +4,12 @@ on:  # rules for when this action will be triggered
   pull_request:
     branches:
       - main
-    paths:  # run this action only when the docs folder is changed
-      - './superduperdb/**'
-      - './test/**'
-  workflow_dispatch:  # allows triggering a github action manually - see 'Actions' tab
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '*.rst'
+      - ".github"
+  workflow_dispatch:  # allows triggering a GitHub action manually - see 'Actions' tab
 
 # When this workflow is queued, automatically cancel any previous running
 # or pending jobs from the same branch

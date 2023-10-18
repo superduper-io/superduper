@@ -59,7 +59,7 @@
 
 
 <p align="center">
-  <img width="90%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/img/SuperDuperDB_diagram.svg">
+  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/img/SuperDuperDB_diagram.svg">
 </p>
 
 

@@ -63,6 +63,19 @@ class InMemoryVectorCollection(VectorCollection):
             self._index.lookup[item.id] = len(self._index.lookup)
             self._index.h_list.append(list(item.vector))
 
+    def size(self):
+        return len(self._index.index)
+
+    def delete_from_ids(self, ids: t.Sequence[str]) -> None:
+        """
+        Delete vectors from the inmemory vector db.
+        :param ids: t.Sequence of identifiers.
+        """
+        with self._lock.gen_wlock():
+            for id in ids:
+                self._index.lookup.pop(str(id))
+                self._index.index.remove(str(id))
+
     def find_nearest_from_id(
         self,
         identifier: VectorCollectionItemId,

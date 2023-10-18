@@ -24,6 +24,7 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorDatabase
 
 from .artifact import ArtifactStore
+from .cdc import DatabaseChangeDataCapture
 from .cursor import SuperDuperCursor
 from .data_backend import BaseDataBackend
 from .download_content import download_content
@@ -85,6 +86,11 @@ class DB:
         self.databackend = databackend
         self.vector_database = vector_database
         self._distributed_client = distributed_client
+        self._cdc = DatabaseChangeDataCapture(self)
+
+    @property
+    def cdc(self):
+        return self._cdc
 
     @property
     def distributed_client(self):

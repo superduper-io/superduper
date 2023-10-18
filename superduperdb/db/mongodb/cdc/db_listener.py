@@ -1,21 +1,21 @@
 import dataclasses as dc
 import datetime
-import json
 import threading
-import traceback
 import typing as t
-from collections import Counter
 from enum import Enum
 
 from pymongo.change_stream import CollectionChangeStream
 
 from superduperdb import logging
-from superduperdb.db.base.db import DB
+from superduperdb.db.base import cdc
+from superduperdb.db.base.base_cdc import DBEvent
 from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS, query
 from superduperdb.misc.runnable.runnable import Event
 
-from .base import BaseDatabaseListener, CachedTokens, DBEvent, Packet, TokenType
-from .handler import CDC_QUEUE, CDCHandler
+from .base import CachedTokens, MongoDBPacket as Packet, TokenType
+
+if t.TYPE_CHECKING:
+    from superduperdb.db.base.db import DB
 
 MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
 
@@ -31,29 +31,6 @@ class CDCKeys(str, Enum):
     update_field_key = 'updatedFields'
     document_data_key = 'fullDocument'
     deleted_document_data_key = 'documentKey'
-
-
-class _DatabaseListenerThreadScheduler(threading.Thread):
-    def __init__(
-        self,
-        listener: BaseDatabaseListener,
-        stop_event: Event,
-        start_event: Event,
-    ) -> None:
-        threading.Thread.__init__(self, daemon=True)
-        self.stop_event = stop_event
-        self.start_event = start_event
-        self.listener = listener
-
-    def run(self) -> None:
-        try:
-            cdc_stream = self.listener.setup_cdc()
-            self.start_event.set()
-            while not self.stop_event.is_set():
-                self.listener.next_cdc(cdc_stream)
-        except Exception:
-            logging.error('In _DatabaseListenerThreadScheduler')
-            traceback.print_exc()
 
 
 @dc.dataclass
@@ -78,16 +55,57 @@ class MongoChangePipeline:
         return [{'$match': {'operationType': {'$in': [*self.matching_operations]}}}]
 
 
-class MongoEventMixin:
-    """A Mixin class which defines helper fxns for `MongoDatabaseListener`
-    It define basic events handling methods like
-    `on_create`, `on_update`, etc.
+class MongoDatabaseListener(cdc.BaseDatabaseListener):
+    """
+    It is a class which helps capture data from mongodb database and handle it
+    accordingly.
+
+    This class accepts options and db instance from user and starts a scheduler
+    which could schedule a listening service to listen change stream.
+
+    This class builds a workflow graph on each change observed.
+
     """
 
     DEFAULT_ID: str = '_id'
     EXCLUSION_KEYS: t.Sequence[str] = [DEFAULT_ID]
+    IDENTITY_SEP: str = '/'
+    _scheduler: t.Optional[threading.Thread]
 
-    def on_create(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+    _change_pipeline: t.Union[str, t.Sequence[t.Dict], None] = None
+
+    def __init__(
+        self,
+        db: 'DB',
+        on: query.Collection,
+        stop_event: Event,
+        identifier: 'str' = '',
+        timeout: t.Optional[float] = None,
+        resume_token: t.Optional[TokenType] = None,
+    ):
+        """__init__.
+
+        :param db: It is a superduperdb instance.
+        :param on: It is used to define a Collection on which CDC would be performed.
+        :param stop_event: A threading event flag to notify for stoppage.
+        :param identifier: A identifier to represent the listener service.
+        :param resume_token: A resume token is a token used to resume
+        the change stream in mongo.
+        """
+
+        self.tokens = CachedTokens()
+        self.resume_token = None
+
+        if resume_token is not None:
+            self.resume_token = resume_token
+
+        self._change_pipeline = None
+
+        super().__init__(
+            db=db, on=on, stop_event=stop_event, identifier=identifier, timeout=timeout
+        )
+
+    def on_create(self, change: t.Dict, db: 'DB', collection: query.Collection) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
         change stream.
@@ -104,9 +122,9 @@ class MongoEventMixin:
         ids = [document[self.DEFAULT_ID]]
         cdc_query = collection.find()
         packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
-        CDC_QUEUE.put_nowait(packet)
+        db.cdc.CDC_QUEUE.put_nowait(packet)
 
-    def on_update(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+    def on_update(self, change: t.Dict, db: 'DB', collection: query.Collection) -> None:
         """on_update.
 
         A helper on update event handler which handles updated document in the
@@ -124,9 +142,9 @@ class MongoEventMixin:
         ids = [document[self.DEFAULT_ID]]
         cdc_query = collection.find()
         packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
-        CDC_QUEUE.put_nowait(packet)
+        db.cdc.CDC_QUEUE.put_nowait(packet)
 
-    def on_delete(self, change: t.Dict, db: DB, collection: query.Collection) -> None:
+    def on_delete(self, change: t.Dict, db: 'DB', collection: query.Collection) -> None:
         """on_delete.
 
         A helper on delete event handler which handles deleted document in the
@@ -143,77 +161,7 @@ class MongoEventMixin:
         document = change[CDCKeys.deleted_document_data_key]
         ids = [document[self.DEFAULT_ID]]
         packet = Packet(ids=ids, event_type=DBEvent.delete, query=None)
-        CDC_QUEUE.put_nowait(packet)
-
-
-class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
-    """
-    It is a class which helps capture data from mongodb database and handle it
-    accordingly.
-
-    This class accepts options and db instance from user and starts a scheduler
-    which could schedule a listening service to listen change stream.
-
-    This class builds a workflow graph on each change observed.
-
-    """
-
-    IDENTITY_SEP: str = '/'
-    _scheduler: t.Optional[threading.Thread]
-
-    _change_pipeline: t.Union[str, t.Sequence[t.Dict], None] = None
-
-    def __init__(
-        self,
-        db: DB,
-        on: query.Collection,
-        stop_event: Event,
-        identifier: 'str' = '',
-        resume_token: t.Optional[TokenType] = None,
-    ):
-        """__init__.
-
-        :param db: It is a superduperdb instance.
-        :param on: It is used to define a Collection on which CDC would be performed.
-        :param stop_event: A threading event flag to notify for stoppage.
-        :param identifier: A identifier to represent the listener service.
-        :param resume_token: A resume token is a token used to resume
-        the change stream in mongo.
-        """
-        self.db = db
-        self._on_component = on
-        self._identifier = self._build_identifier([identifier, on.identifier])
-        self.tokens = CachedTokens()
-        self._change_counters = Counter(inserts=0, updates=0, deletes=0)
-        self.resume_token = None
-
-        if resume_token is not None:
-            self.resume_token = resume_token
-
-        self._change_pipeline = None
-        self._stop_event = stop_event
-        self._startup_event = Event()
-        self._scheduler = None
-        self.start_handler()
-
-        super().__init__()
-
-    @property
-    def identity(self) -> str:
-        return self._identifier
-
-    def start_handler(self):
-        self._cdc_change_handler = CDCHandler(db=self.db, stop_event=self._stop_event)
-        self._cdc_change_handler.start()
-
-    @classmethod
-    def _build_identifier(cls, identifiers) -> str:
-        """_build_identifier.
-
-        :param identifiers: list of identifiers.
-        :rtype: str
-        """
-        return cls.IDENTITY_SEP.join(identifiers)
+        db.cdc.CDC_QUEUE.put_nowait(packet)
 
     @staticmethod
     def _get_stream_pipeline(
@@ -237,31 +185,6 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         except KeyError:
             return None
         return reference_id
-
-    def event_handler(self, change: t.Dict) -> None:
-        """event_handler.
-        A helper fxn to handle incoming changes from change stream on a collection.
-
-        :param change: The change (document) observed during the change stream.
-        """
-        event = change[CDCKeys.operation_type]
-        reference_id = self._get_reference_id(change)
-
-        if not reference_id:
-            logging.warn('Document change not handled due to no document key')
-            return
-
-        if event == DBEvent.insert:
-            self._change_counters['inserts'] += 1
-            self.on_create(change, db=self.db, collection=self._on_component)
-
-        elif event == DBEvent.update:
-            self._change_counters['updates'] += 1
-            self.on_update(change, db=self.db, collection=self._on_component)
-
-        elif event == DBEvent.delete:
-            self._change_counters['deletes'] += 1
-            self.on_delete(change, db=self.db, collection=self._on_component)
 
     def dump_token(self, change: t.Dict) -> None:
         """dump_token.
@@ -318,26 +241,18 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             logging.debug(f'Database change encountered at {datetime.datetime.now()}')
 
             if not self.check_if_taskgraph_change(change):
-                self.event_handler(change)
+                reference_id = self._get_reference_id(change)
+
+                if not reference_id:
+                    logging.warn('Document change not handled due to no document key')
+                    return
+
+                event = change[CDCKeys.operation_type]
+                self.event_handler(change, event)
             self.dump_token(change)
 
     def attach_scheduler(self, scheduler: threading.Thread) -> None:
         self._scheduler = scheduler
-
-    def info(self) -> t.Dict:
-        """
-        Get info on the current state of listener.
-        """
-        info = {}
-        info.update(
-            {
-                'inserts': self._change_counters['inserts'],
-                'updates': self._change_counters['updates'],
-                'deletes': self._change_counters['deletes'],
-            }
-        )
-        logging.info(json.dumps(info, indent=2))
-        return info
 
     def set_resume_token(self, token: TokenType) -> None:
         """
@@ -366,7 +281,6 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
     def listen(
         self,
         change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]] = None,
-        timeout: t.Optional[float] = None,
     ) -> None:
         """Primary fxn to initiate listening of a database on the collection
         with defined `change_pipeline` by the user.
@@ -385,11 +299,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
                         'Please stop the listener first.'
                     )
 
-            if not self._cdc_change_handler.is_alive():
-                del self._cdc_change_handler
-                self.start_handler()
-
-            scheduler = _DatabaseListenerThreadScheduler(
+            scheduler = cdc.DatabaseListenerThreadScheduler(
                 self, stop_event=self._stop_event, start_event=self._startup_event
             )
             self.attach_scheduler(scheduler)
@@ -397,7 +307,7 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
             assert self._scheduler is not None
             self._scheduler.start()
 
-            self._startup_event.wait(timeout=timeout)
+            self._startup_event.wait(timeout=self.timeout)
         except Exception:
             logging.error('Listening service stopped!')
             CDC_COLLECTION_LOCKS.pop(self._on_component.identifier, None)
@@ -425,7 +335,6 @@ class MongoDatabaseListener(BaseDatabaseListener, MongoEventMixin):
         CDC_COLLECTION_LOCKS.pop(self._on_component.identifier, None)
 
         self._stop_event.set()
-        self._cdc_change_handler.join()
         if self._scheduler:
             self._scheduler.join()
 

@@ -99,7 +99,9 @@ lint-and-type-check: ## Lint your code
 	interrogate superduperdb
 
 
-test-notebooks: ## Test notebooks (arg: NOTEBOOKS=<path_to_files>)
+test-notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
+	@echo "Notebook Path: $(NOTEBOOKS)"
+
 	@if [ -n "${NOTEBOOKS}" ]; then	\
 		pytest --nbval ${NOTEBOOKS}; 	\
 	fi

@@ -143,12 +143,11 @@ jobs:
         - name: Run pytest on changed files
           run: |
             # List Jupyter notebooks
-              NOTEBOOKS=$(ls -x examples/*.ipynb || true)
+            NOTEBOOKS=./examples
 
             # Check if there are any changes
-            if [ -z "${NOTEBOOKS}" ]; then
-              echo "No Jupyter notebook files are found."
-            else
-              echo "Running pytest on notebooks: ${NOTEBOOKS}" 
+            if [ ! -e "${NOTEBOOKS}" ]; then
+              echo "Notebook path does not exist."
+            else 
               make test-notebooks NOTEBOOKS=${NOTEBOOKS}
             fi

@@ -17,7 +17,6 @@ def serve():
 @command(help='Start local cluster: server, dask and change data capture')
 def local_cluster(on: t.List[str] = []):
     from superduperdb.db.base.build import build_datalayer
-    from superduperdb.db.base.cdc import DatabaseListener
     from superduperdb.db.mongodb.query import Collection
     from superduperdb.server.dask_client import dask_client
     from superduperdb.server.server import serve
@@ -28,9 +27,7 @@ def local_cluster(on: t.List[str] = []):
         local=True,
     )
     for collection in on:
-        w = DatabaseListener(
-            db=db,
+        db.cdc.start(
             on=Collection(identifier=collection),
         )
-        w.listen()
     serve(db)

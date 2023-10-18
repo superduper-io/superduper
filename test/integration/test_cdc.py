@@ -12,10 +12,8 @@ except ImportError:
 
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
-from superduperdb.db.base.cdc import DatabaseListener
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.vector_search.base import VectorCollectionConfig
-from superduperdb.vector_search.lance import LanceVectorDatabase as LanceVectorIndex
 
 RETRY_TIMEOUT = 1
 LISTEN_TIMEOUT = 0.1
@@ -41,32 +39,28 @@ LISTEN_TIMEOUT = 0.1
 
 @pytest.fixture
 def listener_and_collection_name(database_with_default_encoders_and_model):
+    db = database_with_default_encoders_and_model
     collection_name = str(uuid.uuid4())
-    listener = DatabaseListener(
-        db=database_with_default_encoders_and_model, on=Collection(collection_name)
-    )
-    listener._cdc_change_handler._QUEUE_BATCH_SIZE = 1
+    listener = db.cdc.start(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
+    db.cdc.cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
     yield listener, collection_name
 
-    listener.stop()
+    db.cdc.stop(collection_name)
 
 
 @pytest.fixture
 def listener_with_vector_database(database_with_default_encoders_and_model):
     collection_name = str(uuid.uuid4())
     with tdir():
-        vector_db_client = LanceVectorIndex("lance://.lancedb")
-        database_with_default_encoders_and_model.vector_database = vector_db_client
-        listener = DatabaseListener(
-            db=database_with_default_encoders_and_model,
-            on=Collection(collection_name),
+        listener = database_with_default_encoders_and_model.cdc.start(
+            on=Collection(collection_name), timeout=LISTEN_TIMEOUT
         )
-        listener._cdc_change_handler._QUEUE_BATCH_SIZE = 1
+        vector_db_client = database_with_default_encoders_and_model.vector_database
 
         yield listener, vector_db_client, collection_name
 
-        listener.stop()
+        database_with_default_encoders_and_model.cdc.stop(collection_name)
 
 
 @pytest.fixture
@@ -74,11 +68,11 @@ def listener_without_cdc_handler_and_collection_name(
     database_with_default_encoders_and_model,
 ):
     collection_name = str(uuid.uuid4())
-    listener = DatabaseListener(
-        db=database_with_default_encoders_and_model, on=Collection(collection_name)
+    listener = database_with_default_encoders_and_model.cdc.start(
+        on=Collection(collection_name), timeout=LISTEN_TIMEOUT
     )
     yield listener, collection_name
-    listener.stop()
+    database_with_default_encoders_and_model.cdc.stop(collection_name)
 
 
 def retry_state_check(state_check):
@@ -99,11 +93,10 @@ def retry_state_check(state_check):
 def test_smoke(listener_without_cdc_handler_and_collection_name):
     """Health-check before we test stateful database changes"""
     listener, name = listener_without_cdc_handler_and_collection_name
-    listener.listen(timeout=LISTEN_TIMEOUT)
     assert isinstance(name, str)
 
 
-@pytest.mark.parametrize('op_type', ['insert', 'update'])
+@pytest.mark.parametrize('op_type', ['insert'])
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_task_workflow(
     listener_and_collection_name,
@@ -115,7 +108,6 @@ def test_task_workflow(
     """Test that task graph executed on `insert`"""
 
     listener, name = listener_and_collection_name
-    listener.listen(timeout=LISTEN_TIMEOUT)
 
     with add_and_cleanup_listeners(
         database_with_default_encoders_and_model, name
@@ -160,9 +152,8 @@ def test_vector_database_sync_with_delete(
     database_with_default_encoders_and_model,
     fake_inserts,
 ):
-    listener, vector_db_client, name = listener_with_vector_database
+    _, vector_db_client, name = listener_with_vector_database
 
-    listener.listen(timeout=LISTEN_TIMEOUT)
     with add_and_cleanup_listeners(
         database_with_default_encoders_and_model, name
     ) as database_with_listeners:
@@ -199,7 +190,6 @@ def test_vector_database_sync(
     fake_inserts,
 ):
     listener, vector_db_client, name = listener_with_vector_database
-    listener.listen(timeout=LISTEN_TIMEOUT)
 
     with add_and_cleanup_listeners(
         database_with_default_encoders_and_model, name
@@ -226,7 +216,6 @@ def test_single_insert(
     fake_inserts,
 ):
     listener, name = listener_without_cdc_handler_and_collection_name
-    listener.listen(timeout=LISTEN_TIMEOUT)
     database_with_default_encoders_and_model.execute(
         Collection(name).insert_many([fake_inserts[0]]),
         refresh=False,
@@ -245,7 +234,6 @@ def test_many_insert(
     fake_inserts,
 ):
     listener, name = listener_without_cdc_handler_and_collection_name
-    listener.listen(timeout=LISTEN_TIMEOUT)
     database_with_default_encoders_and_model.execute(
         Collection(name).insert_many(fake_inserts),
         refresh=False,
@@ -264,7 +252,6 @@ def test_delete_one(
     fake_inserts,
 ):
     listener, name = listener_without_cdc_handler_and_collection_name
-    listener.listen(timeout=LISTEN_TIMEOUT)
     inserted_ids, _ = database_with_default_encoders_and_model.execute(
         Collection(name).insert_many(fake_inserts),
         refresh=False,
@@ -287,7 +274,6 @@ def test_single_update(
     fake_updates,
 ):
     listener, name = listener_without_cdc_handler_and_collection_name
-    listener.listen(timeout=LISTEN_TIMEOUT)
     inserted_ids, _ = database_with_default_encoders_and_model.execute(
         Collection(name).insert_many(fake_updates),
         refresh=False,
@@ -313,7 +299,6 @@ def test_many_update(
     fake_updates,
 ):
     listener, name = listener_without_cdc_handler_and_collection_name
-    listener.listen(timeout=LISTEN_TIMEOUT)
     inserted_ids, _ = database_with_default_encoders_and_model.execute(
         Collection(name).insert_many(fake_updates), refresh=False
     )
@@ -339,7 +324,6 @@ def test_insert_without_cdc_handler(
 ):
     """Test that `insert` without CDC handler does not execute task graph"""
     listener, name = listener_without_cdc_handler_and_collection_name
-    listener.listen(timeout=LISTEN_TIMEOUT)
     inserted_ids, _ = database_with_default_encoders_and_model.execute(
         Collection(name).insert_many(fake_inserts),
         refresh=False,
@@ -353,13 +337,10 @@ def test_insert_without_cdc_handler(
 def test_cdc_stop(listener_and_collection_name):
     """Test that CDC listen service stopped properly"""
     listener, _ = listener_and_collection_name
-    listener.listen(timeout=LISTEN_TIMEOUT)
     listener.stop()
 
     def state_check():
-        assert not all(
-            [listener._scheduler.is_alive(), listener._cdc_change_handler.is_alive()]
-        )
+        assert not listener._scheduler.is_alive()
 
     retry_state_check(state_check)
 

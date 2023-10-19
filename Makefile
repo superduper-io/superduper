@@ -13,7 +13,7 @@ DIRECTORIES = superduperdb test
 .DEFAULT_GOAL := help
 
 help: ## Display this help
-	@cat ./apidocs/banner.txt
+	@cat ./docs/api/banner.txt
 
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
@@ -62,6 +62,25 @@ docker-push: ## Push the latest SuperDuperDB image
 
 	@echo "===> Release SuperDuperDB:latest Container <==="
 	docker push superduperdb/superduperdb:latest
+
+
+
+##@ Documentation
+
+api-docs: ## Generate Sphinx inline-API HTML documentation, including API docs
+	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
+	rm -rf docs/api/source/
+	rm -rf docs/hr/build/apidocs
+	sphinx-apidoc -f -o docs/api/source superduperdb
+	sphinx-build -a docs/api docs/hr/build/apidocs
+	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
+
+
+hr-docs: ## Generate docusaurus and blog-post
+	@echo "===> Generate docusaurus docs and blog-posts <==="
+	cd docs/hr && npm i && npm run build
+	cd ../..
+	@echo "Build finished. The HTML pages are in docs/hr/build"
 
 
 ##@ CI Functions
@@ -143,20 +162,3 @@ run-demo: ## Run SuperDuperDB demo on docker-compose
 	# TODO: make it take as argument the TAG of desired image.
 	docker compose -f ./deploy/docker-compose/demo.yaml up
 
-
-##@ Documentation
-
-api-docs: ## Generate Sphinx inline-API HTML documentation, including API docs
-	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
-	rm -rf docs/api/source/
-	rm -rf docs/hr/build/apidocs
-	sphinx-apidoc -f -o docs/api/source superduperdb
-	sphinx-build -a docs/api docs/hr/build/apidocs
-	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
-
-
-hr-docs: ## Generate ...
-	@echo "===> Generate docusaurus docs and blog-posts <==="
-	cd docs/hr && npm i && npm run build
-	cd ../..
-	@echo "Build finished. The HTML pages are in docs/hr/build"

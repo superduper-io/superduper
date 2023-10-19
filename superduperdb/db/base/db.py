@@ -349,7 +349,7 @@ class DB:
         :param ids: ids which reduce scopy of computations
         :param verbose: Toggle to ``True`` to get more output
         """
-        task_workflow: TaskWorkflow = self._build_task_workflow(
+        task_workflow: TaskWorkflow = self.build_task_workflow(
             query.select_table,  # TODO can be replaced by select_using_ids
             ids=ids,
             verbose=verbose,
@@ -519,7 +519,7 @@ class DB:
             getattr(self, cm)[m.identifier] = m
         return m
 
-    def _build_task_workflow(
+    def build_task_workflow(
         self,
         query,
         ids=None,

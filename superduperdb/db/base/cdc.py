@@ -19,6 +19,8 @@ ref: https://www.mongodb.com/docs/manual/changeStreams/
 Use this module like this::
     db = any_arbitary_database.connect(...)
     db = superduper(db)
+    db.cdc.start()
+
     db.cdc.start(on=Collection('test_collection'))
 """
 
@@ -43,7 +45,7 @@ from .base_cdc import DBEvent, Packet
 
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
-    from superduperdb.db.mongodb.query import Collection
+    from superduperdb.db.base.query import TableOrCollection
 
 
 queue_chunker = QueueChunker(chunk_size=100, timeout=0.2)
@@ -60,7 +62,7 @@ class BaseDatabaseListener(ABC):
     def __init__(
         self,
         db: 'DB',
-        on: 'Collection',
+        on: 'TableOrCollection',
         stop_event: Event,
         identifier: 'str' = '',
         timeout: t.Optional[float] = None,
@@ -219,7 +221,7 @@ def _submit_task_workflow(db: 'DB', packet: Packet) -> None:
     if packet.is_delete:
         workflow = TaskWorkflow(db)
     else:
-        workflow = db._build_task_workflow(packet.query, ids=packet.ids, verbose=False)
+        workflow = db.build_task_workflow(packet.query, ids=packet.ids, verbose=False)
 
     task = 'delete' if packet.is_delete else 'copy'
     task_callable, task_name = vector_task_factory(task=task)
@@ -285,10 +287,22 @@ class DatabaseChangeDataCapture:
         self.CDC_QUEUE: queue.Queue = queue.Queue()
         self.cdc_change_handler: t.Optional[CDCHandler] = None
         self._CDC_LISTENERS: t.Dict[str, BaseDatabaseListener] = {}
+        self._running = False
+        self._cdc_existing_collections: t.MutableSequence['TableOrCollection'] = []
 
-    def start(
+    @property
+    def running(self):
+        return self._running
+
+    def start(self):
+        self._running = True
+
+        # listen to existing collection without cdc enabled
+        list(map(lambda on: self.listen(on), self._cdc_existing_collections))
+
+    def listen(
         self,
-        on: 'Collection',
+        on: 'TableOrCollection',
         identifier: str = '',
         *args,
         **kwargs,
@@ -338,3 +352,9 @@ class DatabaseChangeDataCapture:
         self._cdc_stop_event.clear()
         if self.cdc_change_handler:
             self.cdc_change_handler.join()
+
+    def add(self, collection: 'TableOrCollection'):
+        if self.running:
+            self.listen(collection)
+        else:
+            self._cdc_existing_collections.append(collection)

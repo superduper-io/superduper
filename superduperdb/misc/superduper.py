@@ -35,7 +35,7 @@ def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
 
     else:
         raise NotImplementedError(f'Can\'t auto-identify connection string {item}')
-    return build_datalayer(CFG)
+    return build_datalayer(CFG, **kwargs)
 
 
 class _DuckTyper:

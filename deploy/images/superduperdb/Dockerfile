@@ -46,7 +46,7 @@ ENV PATH="${HOME}/.local/bin:$PATH"
 
 # Install Python dependencies
 # ---------------
-RUN pip install --no-cache-dir \
+RUN pip install --no-cache-dir --no-cache -U \
     # SuperDuperDB
     superduperdb[${SUPERDUPERDB_EXTRAS}] \
     # JupyterLab extensions \

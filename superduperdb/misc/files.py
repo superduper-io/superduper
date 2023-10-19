@@ -44,6 +44,8 @@ def load_uris(
     >>> r
     {'_content': {'uri': 'file://test.txt', 'bytes': b'test'}}
     """
+    if not isinstance(r, dict):
+        return
     for k, v in r.items():
         if isinstance(v, dict):
             if (
@@ -64,7 +66,7 @@ def load_uris(
             else:
                 load_uris(v, root, encoders=encoders)
         elif isinstance(v, list):
-            for i in v:
-                load_uris(i, root, encoders=encoders)
+            for x in v:
+                load_uris(x, root, encoders=encoders)
         else:
             pass

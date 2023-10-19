@@ -47,13 +47,16 @@ def build_artifact_store(cfg):
         raise ValueError(f'Unknown artifact store: {cfg.artifact_store}')
 
 
-def build_datalayer(cfg=None) -> DB:
+def build_datalayer(cfg=None, **kwargs) -> DB:
     """
     Build db as per ``db = superduper(db)`` from configuration.
 
     :param cfg: configuration to use. If None, use ``superduperdb.CFG``.
     """
     cfg = cfg or s.CFG
+
+    for k, v in kwargs.items():
+        setattr(cfg, k, v)
 
     def build(uri, mapping):
         if re.match('^mongodb:\/\/|^mongodb\+srv:\/\/', uri) is not None:

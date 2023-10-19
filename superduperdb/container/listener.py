@@ -48,6 +48,9 @@ class Listener(Component):
         if isinstance(self.model, str):
             self.model = t.cast(Model, db.load('model', self.model))
 
+        # Start cdc service if enabled
+        db.cdc.add(self.select.table_or_collection)
+
     @property
     def dependencies(self) -> t.List[str]:
         out = []

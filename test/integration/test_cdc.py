@@ -41,7 +41,8 @@ LISTEN_TIMEOUT = 0.1
 def listener_and_collection_name(database_with_default_encoders_and_model):
     db = database_with_default_encoders_and_model
     collection_name = str(uuid.uuid4())
-    listener = db.cdc.start(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
+    db.cdc._cdc_existing_collections = []
+    listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
     db.cdc.cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
     yield listener, collection_name
@@ -52,27 +53,27 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
 @pytest.fixture
 def listener_with_vector_database(database_with_default_encoders_and_model):
     collection_name = str(uuid.uuid4())
+    db = database_with_default_encoders_and_model
     with tdir():
-        listener = database_with_default_encoders_and_model.cdc.start(
-            on=Collection(collection_name), timeout=LISTEN_TIMEOUT
-        )
-        vector_db_client = database_with_default_encoders_and_model.vector_database
+        db.cdc._cdc_existing_collections = []
+        listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
+        vector_db_client = db.vector_database
 
         yield listener, vector_db_client, collection_name
 
-        database_with_default_encoders_and_model.cdc.stop(collection_name)
+        db.cdc.stop(collection_name)
 
 
 @pytest.fixture
 def listener_without_cdc_handler_and_collection_name(
     database_with_default_encoders_and_model,
 ):
+    db = database_with_default_encoders_and_model
     collection_name = str(uuid.uuid4())
-    listener = database_with_default_encoders_and_model.cdc.start(
-        on=Collection(collection_name), timeout=LISTEN_TIMEOUT
-    )
+    db.cdc._cdc_existing_collections = []
+    listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
     yield listener, collection_name
-    database_with_default_encoders_and_model.cdc.stop(collection_name)
+    db.cdc.stop(collection_name)
 
 
 def retry_state_check(state_check):
@@ -92,7 +93,7 @@ def retry_state_check(state_check):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_smoke(listener_without_cdc_handler_and_collection_name):
     """Health-check before we test stateful database changes"""
-    listener, name = listener_without_cdc_handler_and_collection_name
+    _, name = listener_without_cdc_handler_and_collection_name
     assert isinstance(name, str)
 
 
@@ -323,7 +324,7 @@ def test_insert_without_cdc_handler(
     fake_inserts,
 ):
     """Test that `insert` without CDC handler does not execute task graph"""
-    listener, name = listener_without_cdc_handler_and_collection_name
+    _, name = listener_without_cdc_handler_and_collection_name
     inserted_ids, _ = database_with_default_encoders_and_model.execute(
         Collection(name).insert_many(fake_inserts),
         refresh=False,

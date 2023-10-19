@@ -76,7 +76,7 @@ api-docs: ## Generate Sphinx inline-API HTML documentation, including API docs
 	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
 
 
-hr-docs: ## Generate docusaurus and blog-post
+hr-docs: ## Generate docusaurus and blog-posts
 	@echo "===> Generate docusaurus docs and blog-posts <==="
 	cd docs/hr && npm i && npm run build
 	cd ../..

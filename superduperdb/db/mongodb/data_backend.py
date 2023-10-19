@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import typing as t
@@ -104,7 +105,7 @@ class MongoDataBackend(BaseDataBackend):
             }
         )
 
-    def create_vector_index(self, vector_index):
+    def create_vector_index(self, vector_index, dry_run=False):
         """
         Create a vector index in the data backend if an Atlas deployment.
 
@@ -114,7 +115,7 @@ class MongoDataBackend(BaseDataBackend):
             vector_index.indexing_listener.select.table_or_collection.identifier
         )
         key = vector_index.indexing_listener.key
-        if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+$', key):
+        if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
             key = key.split('.')[1]
         model = vector_index.indexing_listener.model.identifier
         fields = {
@@ -126,29 +127,30 @@ class MongoDataBackend(BaseDataBackend):
                 }
             ]
         }
-        self.db.command(
-            {
-                "createSearchIndexes": collection,
-                "indexes": [
-                    {
-                        "name": vector_index.identifier,
-                        "definition": {
-                            "mappings": {
-                                "dynamic": True,
-                                "fields": {
-                                    "_outputs": {
-                                        "fields": {
-                                            key: {
-                                                "fields": fields,
-                                                "type": "document",
-                                            }
-                                        },
-                                        "type": "document",
-                                    }
-                                },
-                            }
-                        },
-                    }
-                ],
-            }
-        )
+        index_definition = {
+            "createSearchIndexes": collection,
+            "indexes": [
+                {
+                    "name": vector_index.identifier,
+                    "definition": {
+                        "mappings": {
+                            "dynamic": True,
+                            "fields": {
+                                "_outputs": {
+                                    "fields": {
+                                        key: {
+                                            "fields": fields,
+                                            "type": "document",
+                                        }
+                                    },
+                                    "type": "document",
+                                }
+                            },
+                        }
+                    },
+                }
+            ],
+        }
+        print(json.dumps(index_definition, indent=2))
+        if not dry_run:
+            self.db.command(index_definition)

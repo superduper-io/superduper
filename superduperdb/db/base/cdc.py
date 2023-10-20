@@ -20,10 +20,11 @@ Use this module like this::
     db = any_arbitary_database.connect(...)
     db = superduper(db)
     db.cdc.start()
-
-    db.cdc.start(on=Collection('test_collection'))
+    # or
+    db.cdc.listen(on=Collection('test_collection'))
 """
 
+import dataclasses as dc
 import json
 import queue
 import threading
@@ -31,21 +32,53 @@ import traceback
 import typing as t
 from abc import ABC, abstractmethod
 from collections import Counter
+from enum import Enum
 
 from pymongo.change_stream import CollectionChangeStream
 
 from superduperdb import logging
 from superduperdb.container.job import FunctionJob
 from superduperdb.container.task_workflow import TaskWorkflow
-from superduperdb.db.base.vector_task_factory import vector_task_factory
 from superduperdb.misc.runnable.queue_chunker import QueueChunker
 from superduperdb.misc.runnable.runnable import Event
-
-from .base_cdc import DBEvent, Packet
+from superduperdb.vector_search.vector_task_factory import vector_task_factory
 
 if t.TYPE_CHECKING:
+    from superduperdb.container.serializable import Serializable
     from superduperdb.db.base.db import DB
     from superduperdb.db.base.query import TableOrCollection
+
+
+class DBEvent(str, Enum):
+    """`DBEvent` simple enum to hold mongo basic events."""
+
+    delete = 'delete'
+    insert = 'insert'
+    update = 'update'
+
+
+@dc.dataclass
+class Packet:
+    ids: t.Any
+    query: t.Optional['Serializable']
+    event_type: DBEvent = DBEvent.insert
+
+    @property
+    def is_delete(self) -> bool:
+        return self.event_type == DBEvent.delete
+
+    @staticmethod
+    def collate(packets: t.Sequence['Packet']) -> 'Packet':
+        """
+        Collate a batch of packets into one
+        """
+        assert packets
+        ids = [packet.ids[0] for packet in packets]
+        query = packets[0].query
+
+        # TODO: cluster Packet for each event.
+        event_type = packets[0].event_type
+        return type(packets[0])(ids=ids, query=query, event_type=event_type)
 
 
 queue_chunker = QueueChunker(chunk_size=100, timeout=0.2)
@@ -58,6 +91,7 @@ class BaseDatabaseListener(ABC):
 
     IDENTITY_SEP: str = '/'
     _scheduler: t.Optional[threading.Thread]
+    Packet: Packet
 
     def __init__(
         self,
@@ -75,6 +109,18 @@ class BaseDatabaseListener(ABC):
         self._startup_event = Event()
         self._scheduler = None
         self.timeout = timeout
+        self.db_type = None
+
+        from superduperdb.db.base import backends
+        from superduperdb.db.mongodb.cdc.base import MongoDBPacket
+
+        if isinstance(self.db.databackend, backends.MongoDataBackend):
+            self.db_type = 'mongodb'
+            self.packet = lambda ids, query, event_type: MongoDBPacket(
+                ids, query, event_type
+            )
+        else:
+            raise NotImplementedError(f'{self.db.databackend} not supported yet!')
 
     @property
     def identity(self) -> str:
@@ -132,23 +178,45 @@ class BaseDatabaseListener(ABC):
     def next_cdc(self, stream: CollectionChangeStream) -> None:
         raise NotImplementedError
 
-    def event_handler(self, change: t.Dict, event: DBEvent) -> None:
+    def create_event(
+        self,
+        ids: t.Sequence,
+        db: 'DB',
+        table_or_collection: 'TableOrCollection',
+        event: DBEvent,
+    ):
+        """
+        A helper to create packet based on the event type and put it on the cdc queue
+
+        :param change: The changed document.
+        :param db: a superduperdb instance.
+        :param table_or_collection: The collection on which change was observed.
+        :param event: CDC event type
+        """
+        cdc_query = None
+        if event != DBEvent.delete:
+            cdc_query = table_or_collection.find()
+
+        db.cdc.CDC_QUEUE.put_nowait(self.packet(ids, cdc_query, event))
+
+    def event_handler(self, ids: t.Sequence, event: DBEvent) -> None:
         """event_handler.
         A helper fxn to handle incoming changes from change stream on a collection.
 
-        :param change: The change (document) observed during the change stream.
+        :param ids: Changed document ids
+        :param event: CDC event
         """
         if event == DBEvent.insert:
             self._change_counters['inserts'] += 1
-            self.on_create(change, db=self.db, collection=self._on_component)
+            self.on_create(ids, db=self.db, collection=self._on_component)
 
         elif event == DBEvent.update:
             self._change_counters['updates'] += 1
-            self.on_update(change, db=self.db, collection=self._on_component)
+            self.on_update(ids, db=self.db, collection=self._on_component)
 
         elif event == DBEvent.delete:
             self._change_counters['deletes'] += 1
-            self.on_delete(change, db=self.db, collection=self._on_component)
+            self.on_delete(ids, db=self.db, collection=self._on_component)
 
 
 class DatabaseListenerThreadScheduler(threading.Thread):
@@ -272,7 +340,7 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
         stop_event = Event()
         kwargs['stop_event'] = stop_event
         if self.db_type == 'mongodb':
-            from superduperdb.db.mongodb.cdc.db_listener import MongoDatabaseListener
+            from superduperdb.db.mongodb.cdc.listener import MongoDatabaseListener
 
             listener = MongoDatabaseListener(*args, **kwargs)
             return t.cast(DBListenerType, listener)
@@ -281,24 +349,39 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
 
 
 class DatabaseChangeDataCapture:
+    """
+    DatabaseChangeDataCapture is a Python class that provides a flexible and
+    extensible framework for capturing and managing data changes
+    in a database.
+
+    This class is repsonsible for cdc service on the provided `db` instance
+    This class is designed to simplify the process of tracking changes
+    to database records,allowing you to monitor and respond to
+    data modifications efficiently.
+    """
+
     def __init__(self, db: 'DB'):
         self.db = db
         self._cdc_stop_event = Event()
         self.CDC_QUEUE: queue.Queue = queue.Queue()
         self.cdc_change_handler: t.Optional[CDCHandler] = None
         self._CDC_LISTENERS: t.Dict[str, BaseDatabaseListener] = {}
-        self._running = False
+        self._running: bool = False
         self._cdc_existing_collections: t.MutableSequence['TableOrCollection'] = []
 
     @property
-    def running(self):
+    def running(self) -> bool:
         return self._running
 
     def start(self):
+        """
+        This method starts the cdc process on the database.
+        """
         self._running = True
 
         # listen to existing collection without cdc enabled
-        list(map(lambda on: self.listen(on), self._cdc_existing_collections))
+        for collection in self._cdc_existing_collections:
+            self.listen(collection)
 
     def listen(
         self,
@@ -338,23 +421,27 @@ class DatabaseChangeDataCapture:
         listener.listen()
         return listener
 
-    def stop(self, on: str):
-        try:
-            listener = self._CDC_LISTENERS[on]
-        except KeyError:
-            raise KeyError(
-                f'CDC service is not yet triggered for {on} collection/table'
-            )
-        listener.stop()
-        self._cdc_stop_event.clear()
+    def stop(self):
+        """
+        Stop all registered listeners
+        """
+        for _, listener in self._CDC_LISTENERS.items():
+            listener.stop()
 
     def stop_handler(self):
+        """
+        Stop the cdc handler thread
+        """
         self._cdc_stop_event.clear()
         if self.cdc_change_handler:
             self.cdc_change_handler.join()
 
     def add(self, collection: 'TableOrCollection'):
+        """
+        This method registered the given collection for cdc
+        """
         if self.running:
             self.listen(collection)
         else:
+            # Append to existing collection list
             self._cdc_existing_collections.append(collection)

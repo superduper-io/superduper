@@ -50,7 +50,6 @@ class Cluster(JSONable):
     dask_scheduler: str = 'tcp://localhost:8786'
     local: bool = True
     backfill_batch_size: int = 100
-    cdc: bool = False
 
 
 class LogLevel(str, Enum):

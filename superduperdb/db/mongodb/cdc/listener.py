@@ -8,11 +8,10 @@ from pymongo.change_stream import CollectionChangeStream
 
 from superduperdb import logging
 from superduperdb.db.base import cdc
-from superduperdb.db.base.base_cdc import DBEvent
-from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS, query
+from superduperdb.db.mongodb import query
 from superduperdb.misc.runnable.runnable import Event
 
-from .base import CachedTokens, MongoDBPacket as Packet, TokenType
+from .base import CachedTokens, TokenType
 
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
@@ -33,6 +32,13 @@ class CDCKeys(str, Enum):
     deleted_document_data_key = 'documentKey'
 
 
+_CDCKEY_MAP = {
+    cdc.DBEvent.update: CDCKeys.document_key,
+    cdc.DBEvent.insert: CDCKeys.document_data_key,
+    cdc.DBEvent.delete: CDCKeys.deleted_document_data_key,
+}
+
+
 @dc.dataclass
 class MongoChangePipeline:
     """`MongoChangePipeline` is a class to represent listen pipeline
@@ -49,7 +55,7 @@ class MongoChangePipeline:
 
         :param matching_operations: A list of operations to watch.
         """
-        if bad := [op for op in self.matching_operations if op not in DBEvent]:
+        if bad := [op for op in self.matching_operations if op not in cdc.DBEvent]:
             raise ValueError(f'Unknown operations: {bad}')
 
         return [{'$match': {'operationType': {'$in': [*self.matching_operations]}}}]
@@ -105,26 +111,28 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
             db=db, on=on, stop_event=stop_event, identifier=identifier, timeout=timeout
         )
 
-    def on_create(self, change: t.Dict, db: 'DB', collection: query.Collection) -> None:
+    def on_create(
+        self, ids: t.Sequence, db: 'DB', collection: query.Collection
+    ) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
         change stream.
         It basically extracts the change document and build the taskflow graph to
         execute.
 
-        :param change: The changed document.
+        :param ids: Changed document ids.
         :param db: a superduperdb instance.
         :param collection: The collection on which change was observed.
         """
         logging.debug('Triggered `on_create` handler.')
         # new document added!
-        document = change[CDCKeys.document_data_key]
-        ids = [document[self.DEFAULT_ID]]
-        cdc_query = collection.find()
-        packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
-        db.cdc.CDC_QUEUE.put_nowait(packet)
+        self.create_event(
+            ids=ids, db=db, table_or_collection=collection, event=cdc.DBEvent.insert
+        )
 
-    def on_update(self, change: t.Dict, db: 'DB', collection: query.Collection) -> None:
+    def on_update(
+        self, ids: t.Sequence, db: 'DB', collection: query.Collection
+    ) -> None:
         """on_update.
 
         A helper on update event handler which handles updated document in the
@@ -132,19 +140,18 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         It basically extracts the change document and build the taskflow graph to
         execute.
 
-        :param change: The changed document.
+        :param ids: Changed document ids.
         :param db: a superduperdb instance.
         :param collection: The collection on which change was observed.
         """
+        logging.debug('Triggered `on_update` handler.')
+        self.create_event(
+            ids=ids, db=db, table_or_collection=collection, event=cdc.DBEvent.insert
+        )
 
-        # TODO: Handle removed fields and updated fields.
-        document = change[CDCKeys.document_key]
-        ids = [document[self.DEFAULT_ID]]
-        cdc_query = collection.find()
-        packet = Packet(ids=ids, event_type=DBEvent.insert, query=cdc_query)
-        db.cdc.CDC_QUEUE.put_nowait(packet)
-
-    def on_delete(self, change: t.Dict, db: 'DB', collection: query.Collection) -> None:
+    def on_delete(
+        self, ids: t.Sequence, db: 'DB', collection: query.Collection
+    ) -> None:
         """on_delete.
 
         A helper on delete event handler which handles deleted document in the
@@ -152,16 +159,14 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         It basically extracts the change document and build the taskflow graph to
         execute.
 
-        :param change: The changed document.
+        :param ids: Changed document ids.
         :param db: a superduperdb instance.
         :param collection: The collection on which change was observed.
         """
         logging.debug('Triggered `on_delete` handler.')
-        # new document added!
-        document = change[CDCKeys.deleted_document_data_key]
-        ids = [document[self.DEFAULT_ID]]
-        packet = Packet(ids=ids, event_type=DBEvent.delete, query=None)
-        db.cdc.CDC_QUEUE.put_nowait(packet)
+        self.create_event(
+            ids=ids, db=db, table_or_collection=collection, event=cdc.DBEvent.delete
+        )
 
     @staticmethod
     def _get_stream_pipeline(
@@ -200,7 +205,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         A helper method to check if the cdc change is done
         by taskgraph nodes.
         """
-        if change[CDCKeys.operation_type] == DBEvent.update:
+        if change[CDCKeys.operation_type] == cdc.DBEvent.update:
             updates = change[CDCKeys.update_descriptions_key]
             updated_fields = updates[CDCKeys.update_field_key]
             return any(
@@ -248,17 +253,9 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
                     return
 
                 event = change[CDCKeys.operation_type]
-                self.event_handler(change, event)
+                ids = [change[_CDCKEY_MAP[event]][self.DEFAULT_ID]]
+                self.event_handler(ids, event)
             self.dump_token(change)
-
-    def attach_scheduler(self, scheduler: threading.Thread) -> None:
-        self._scheduler = scheduler
-
-    def set_resume_token(self, token: TokenType) -> None:
-        """
-        Set the resume token for the listener.
-        """
-        self.resume_token = token
 
     def set_change_pipeline(
         self, change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]]
@@ -271,13 +268,6 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
 
         self._change_pipeline = change_pipeline
 
-    def resume(self, token: TokenType) -> None:
-        """
-        Resume the listener from a given token.
-        """
-        self.set_resume_token(token)
-        self.listen()
-
     def listen(
         self,
         change_pipeline: t.Optional[t.Union[str, t.Sequence[t.Dict]]] = None,
@@ -289,8 +279,6 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         for more fine grained listening.
         """
         try:
-            CDC_COLLECTION_LOCKS[self._on_component.identifier] = True
-
             self._stop_event.clear()
             if self._scheduler:
                 if self._scheduler.is_alive():
@@ -299,27 +287,19 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
                         'Please stop the listener first.'
                     )
 
-            scheduler = cdc.DatabaseListenerThreadScheduler(
+            self._scheduler = cdc.DatabaseListenerThreadScheduler(
                 self, stop_event=self._stop_event, start_event=self._startup_event
             )
-            self.attach_scheduler(scheduler)
             self.set_change_pipeline(change_pipeline)
+
             assert self._scheduler is not None
             self._scheduler.start()
 
             self._startup_event.wait(timeout=self.timeout)
         except Exception:
             logging.error('Listening service stopped!')
-            CDC_COLLECTION_LOCKS.pop(self._on_component.identifier, None)
-
             self.stop()
             raise
-
-    def last_resume_token(self) -> TokenType:
-        """
-        Get the last resume token from the change stream.
-        """
-        return self.tokens.load()[0]
 
     def resume_tokens(self) -> t.Sequence[TokenType]:
         """
@@ -332,17 +312,9 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         Stop listening cdc changes.
         This stops the corresponding services as well.
         """
-        CDC_COLLECTION_LOCKS.pop(self._on_component.identifier, None)
-
         self._stop_event.set()
         if self._scheduler:
             self._scheduler.join()
 
-    def is_available(self) -> bool:
-        """
-        Get the status of listener.
-        """
+    def running(self) -> bool:
         return not self._stop_event.is_set()
-
-    def close(self) -> None:
-        self.stop()

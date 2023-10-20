@@ -47,7 +47,7 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
 
     yield listener, collection_name
 
-    db.cdc.stop(collection_name)
+    db.cdc.stop()
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def listener_with_vector_database(database_with_default_encoders_and_model):
 
         yield listener, vector_db_client, collection_name
 
-        db.cdc.stop(collection_name)
+        db.cdc.stop()
 
 
 @pytest.fixture
@@ -73,7 +73,7 @@ def listener_without_cdc_handler_and_collection_name(
     db.cdc._cdc_existing_collections = []
     listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
     yield listener, collection_name
-    db.cdc.stop(collection_name)
+    db.cdc.stop()
 
 
 def retry_state_check(state_check):

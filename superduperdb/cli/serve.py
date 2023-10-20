@@ -27,7 +27,7 @@ def local_cluster(on: t.List[str] = []):
         local=True,
     )
     for collection in on:
-        db.cdc.start(
+        db.cdc.listen(
             on=Collection(identifier=collection),
         )
     serve(db)

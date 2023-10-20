@@ -86,11 +86,7 @@ class DB:
         self.databackend = databackend
         self.vector_database = vector_database
         self._distributed_client = distributed_client
-        self._cdc = DatabaseChangeDataCapture(self)
-
-    @property
-    def cdc(self):
-        return self._cdc
+        self.cdc = DatabaseChangeDataCapture(self)
 
     @property
     def distributed_client(self):
@@ -302,10 +298,10 @@ class DB:
             if random.random() < s.CFG.fold_probability:
                 r['_fold'] = 'valid'  # type: ignore[assignment]
         inserted_ids = insert.execute(self)
-        if refresh and s.CFG.cluster.cdc:
-            raise Exception('CFG.cluster.cdc cannot be activated and refresh=True')
+        if refresh and self.cdc.running:
+            raise Exception('cdc cannot be activated and refresh=True')
 
-        if not s.CFG.cluster.cdc and refresh:
+        if refresh:
             return inserted_ids, self.refresh_after_update_or_insert(
                 insert, ids=inserted_ids, verbose=False
             )
@@ -365,9 +361,9 @@ class DB:
         """
         updated_ids = update.execute(self)
 
-        if refresh and s.CFG.cluster.cdc:
-            raise Exception('CFG.cluster.cdc cannot be activated and refresh=True')
-        if not s.CFG.cluster.cdc and refresh:
+        if refresh and self.cdc.running:
+            raise Exception('cdc cannot be activated and refresh=True')
+        if refresh:
             return updated_ids, self.refresh_after_update_or_insert(
                 query=update, ids=updated_ids, verbose=False
             )

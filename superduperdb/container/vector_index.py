@@ -12,7 +12,6 @@ from superduperdb.container.document import Document
 from superduperdb.container.encoder import Encodable
 from superduperdb.container.listener import Listener
 from superduperdb.db.base.db import DB
-from superduperdb.db.mongodb import CDC_COLLECTION_LOCKS
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import (
     VectorCollectionConfig,
@@ -99,8 +98,7 @@ class VectorIndex(Component):
 
             assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 
-            if not CDC_COLLECTION_LOCKS.get(clt.identifier, False):
-                self._initialize_vector_database(db)
+            self._initialize_vector_database(db)
 
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:

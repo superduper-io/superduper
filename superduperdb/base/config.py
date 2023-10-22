@@ -4,6 +4,7 @@ which means that this file gets imported before alost anything else, and
 canot contain any other imports from this project.
 """
 
+import re
 import typing as t
 from enum import Enum
 
@@ -114,7 +115,7 @@ class Config(JSONable):
     """The data class containing all configurable superduperdb values
 
     :param data_backend: The URI for the data backend
-    :param vector_search: The URI for the vector search
+    :param vector_search: The configuration for the vector search {'in_memory', 'lance'}
     :param artifact_store: The URI for the artifact store
     :param metadata_store: The URI for the metadata store
     :param cluster: Settings distributed computing and change data capture
@@ -123,14 +124,15 @@ class Config(JSONable):
     :param server: Settings for the experimental Rest server
     :param downloads: Settings for downloading files"""
 
-    # 4 main components are URI strings
+    @property
+    def self_hosted_vector_search(self) -> bool:
+        return re.split('://|\+', self.data_backend)[0] == self.vector_search
 
     data_backend: str = 'mongodb://localhost:27017'
 
-    #: The URI for the vector search
-    vector_search: 'str' = 'inmemory://'  # 'lance://foo/bar/baz.lance'
+    #: The configuration for the vector search
+    vector_search: 'str' = 'in_memory'  # "in_memory" / "lance"
 
-    #: The URI for the artifact store
     artifact_store: t.Optional[str] = None
     metadata_store: t.Optional[str] = None
     cluster: Cluster = Factory(Cluster)

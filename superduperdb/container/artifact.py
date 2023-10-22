@@ -27,7 +27,6 @@ class Artifact:
     :param hash: in case the object isn't hashable (deduplication not possible)
     """
 
-    artifact: t.Any = None
     file_id: t.Optional[str] = None
     info: Info = None
     object_id: int = 0
@@ -44,14 +43,36 @@ class Artifact:
         serializer: str = 'dill',
         sha1: str = '',
         hash: t.Optional[int] = None,
+        artifact_store: t.Optional['ArtifactStore'] = None,
     ):
-        self.artifact = artifact
+        self._artifact = artifact
         self.file_id = file_id
         self.info = info
         self.object_id = object_id
         self.serializer = serializer
         self.hash = hash
         self._sha1 = sha1
+        self.artifact_store = artifact_store
+
+    @property
+    def artifact(self):
+        if self._artifact is None:
+            msg = 'Artifact Store is not available.'
+            assert self.artifact_store is not None, msg
+            self._artifact = self.artifact_store.load_artifact(
+                file_id=self.file_id,
+                serializer=self.serializer,
+                info=self.info,
+            )
+            self.load(self.artifact_store)
+        return self._artifact
+
+    def load(self, artifact_store):
+        self._artifact = artifact_store.load_artifact(
+            file_id=self.file_id,
+            serializer=self.serializer,
+            info=self.info,
+        )
 
     @property
     def sha1(self):
@@ -76,7 +97,12 @@ class Artifact:
         return self.artifact == other.artifact
 
     def __repr__(self):
-        return f'<Artifact artifact={str(self.artifact)} serializer={self.serializer}>'
+        if self._artifact:
+            return (
+                f'<Artifact artifact={str(self.artifact)} serializer={self.serializer}>'
+            )
+        else:
+            return f'<Artifact artifact={self.file_id} serializer={self.serializer}>'
 
     @staticmethod
     def _is_self_serializable(object):

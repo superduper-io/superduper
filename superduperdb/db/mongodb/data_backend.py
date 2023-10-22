@@ -8,7 +8,6 @@ import pymongo
 
 from superduperdb import logging
 from superduperdb.container.serializable import Serializable
-from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.base.data_backend import BaseDataBackend
 from superduperdb.db.mongodb.artifacts import MongoArtifactStore
 from superduperdb.db.mongodb.metadata import MongoMetaDataStore
@@ -86,7 +85,7 @@ class MongoDataBackend(BaseDataBackend):
                 indexes.append(batch['name'])
         return indexes
 
-    def delete_vector_index(self, vector_index: VectorIndex):
+    def delete_vector_index(self, vector_index):
         """
         Delete a vector index in the data backend if an Atlas deployment.
 

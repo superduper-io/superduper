@@ -133,6 +133,15 @@ class MetaDataStore(ABC):
         """
         pass
 
+    def get_indexing_listener_of_vector_index(
+        self, identifier: str, version: t.Optional[int] = None
+    ):
+        info = self.get_component(
+            'vector_index', identifier=identifier, version=version
+        )
+        indexing_listener = info['dict']['indexing_listener']['identifier']
+        return indexing_listener
+
     @abstractmethod
     def delete_component_version(self, type_id: str, identifier: str, version: int):
         """

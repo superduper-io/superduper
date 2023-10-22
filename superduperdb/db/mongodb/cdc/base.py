@@ -50,6 +50,5 @@ class MongoDBPacket(Packet):
     """
 
     ids: t.List[t.Union[ObjectId, str]]
-    query: t.Optional[Serializable]
-
+    query: t.Optional[Serializable] = None
     event_type: DBEvent = DBEvent.insert

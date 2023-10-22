@@ -2,22 +2,15 @@ import dataclasses as dc
 import itertools
 import typing as t
 
-import tqdm
 from overrides import override
 
 import superduperdb as s
-from superduperdb import logging
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
-from superduperdb.container.encoder import Encodable
 from superduperdb.container.listener import Listener
 from superduperdb.db.base.db import DB
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.vector_search.base import (
-    VectorCollectionConfig,
-    VectorCollectionItem,
-    VectorIndexMeasureType,
-)
+from superduperdb.vector_search.base import VectorIndexMeasureType
 
 if t.TYPE_CHECKING:
     pass
@@ -83,23 +76,6 @@ class VectorIndex(Component):
                 Listener, db.load('listener', self.compatible_listener)
             )
 
-        if not s.CFG.vector_search == s.CFG.data_backend:
-            assert db.vector_database
-            self.vector_table = db.vector_database.get_table(
-                VectorCollectionConfig(
-                    id=self.identifier,
-                    dimensions=self.dimensions,
-                    measure=self.measure,
-                ),
-                create=True,  # type: ignore[call-arg]
-            )
-
-            clt = self.indexing_listener.select.table_or_collection
-
-            assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
-
-            self._initialize_vector_database(db)
-
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
         out = [('indexing_listener', 'listener')]
@@ -154,7 +130,7 @@ class VectorIndex(Component):
     def get_nearest(
         self,
         like: Document,
-        db: t.Any = None,
+        db: t.Any,
         id_field: str = '_id',
         outputs: t.Optional[t.Dict] = None,
         featurize: bool = True,
@@ -178,12 +154,8 @@ class VectorIndex(Component):
         within_ids = ids or ()
 
         if isinstance(like.content, dict) and id_field in like.content:
-            nearest = self.vector_table.find_nearest_from_id(
+            return db.fast_vector_searchers[self.identifier].find_nearest_from_id(
                 str(like[id_field]), within_ids=within_ids, limit=n
-            )
-            return (
-                [result.id for result in nearest],
-                [result.score for result in nearest],
             )
         h = self.get_vector(
             like=like,
@@ -193,12 +165,9 @@ class VectorIndex(Component):
             outputs=outputs,
             featurize=featurize,
         )[0]
-        nearest = self.vector_table.find_nearest_from_array(
-            h, within_ids=within_ids, limit=n
-        )
-        return (
-            [result.id for result in nearest],
-            [result.score for result in nearest],
+
+        return db.fast_vector_searchers[self.identifier].find_nearest_from_array(
+            h, within_ids=within_ids, n=n
         )
 
     @property
@@ -217,34 +186,6 @@ class VectorIndex(Component):
         models = [w.model.identifier for w in listeners]  # type: ignore[union-attr]
         keys = [w.key for w in listeners]
         return models, keys
-
-    def _initialize_vector_database(self, db: DB) -> None:
-        logging.info(f'loading hashes: {self.identifier!r}')
-        assert not isinstance(self.indexing_listener, str)
-
-        if self.indexing_listener.select is None:
-            raise ValueError('.select must be set')
-
-        progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
-        for record_batch in ibatch(
-            db.execute(self.indexing_listener.select),
-            s.CFG.cluster.backfill_batch_size,
-        ):
-            items = []
-            for record in record_batch:
-                key = self.indexing_listener.key
-                if key.startswith('_outputs.'):
-                    key = key.split('.')[1]
-
-                id = record[db.databackend.id_field]
-                assert not isinstance(self.indexing_listener.model, str)
-                h = record.outputs(key, self.indexing_listener.model.identifier)
-                if isinstance(h, Encodable):
-                    h = h.x
-                items.append(VectorCollectionItem.create(id=str(id), vector=h))
-
-            self.vector_table.add(items)
-            progress.update(len(items))
 
     @property
     def dimensions(self) -> int:

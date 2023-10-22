@@ -37,11 +37,8 @@ from enum import Enum
 from pymongo.change_stream import CollectionChangeStream
 
 from superduperdb import logging
-from superduperdb.container.job import FunctionJob
-from superduperdb.container.task_workflow import TaskWorkflow
 from superduperdb.misc.runnable.queue_chunker import QueueChunker
 from superduperdb.misc.runnable.runnable import Event
-from superduperdb.vector_search.vector_task_factory import vector_task_factory
 
 if t.TYPE_CHECKING:
     from superduperdb.container.serializable import Serializable
@@ -194,8 +191,9 @@ class BaseDatabaseListener(ABC):
         :param event: CDC event type
         """
         cdc_query = None
-        if event != DBEvent.delete:
-            cdc_query = table_or_collection.find()
+        # TODO why was this logic here? Why is the query always the same?
+        # if event != DBEvent.delete:
+        cdc_query = table_or_collection.find()
 
         db.cdc.CDC_QUEUE.put_nowait(self.packet(ids, cdc_query, event))
 
@@ -269,56 +267,20 @@ class CDCHandler(threading.Thread):
         self._is_running = True
         try:
             for c in queue_chunker(self.cdc_queue, self._stop_event):
-                _submit_task_workflow(self.db, Packet.collate(c))
+                packet = Packet.collate(c)
+                if packet.is_delete:
+                    self.db.refresh_after_delete(packet.query, packet.ids)
+                else:
+                    self.db.refresh_after_update_or_insert(
+                        packet.query,
+                        packet.ids,
+                    )
 
         except Exception as exc:
             traceback.print_exc()
             logging.info(f'Error while handling cdc batches :: reason {exc}')
         finally:
             self._is_running = False
-
-
-def _submit_task_workflow(db: 'DB', packet: Packet) -> None:
-    """
-    Build a taskflow and execute it with changed ids.
-
-    This also extends the task workflow graph with a node.
-    This node is responsible for applying a vector indexing listener,
-    and copying the vectors into a vector search database.
-    """
-    if packet.is_delete:
-        workflow = TaskWorkflow(db)
-    else:
-        workflow = db.build_task_workflow(packet.query, ids=packet.ids, verbose=False)
-
-    task = 'delete' if packet.is_delete else 'copy'
-    task_callable, task_name = vector_task_factory(task=task)
-
-    serialized_query = packet.query.serialize() if packet.query else None
-
-    def add_node(identifier):
-        from superduperdb.container.vector_index import VectorIndex
-
-        vi = db.load(identifier=identifier, type_id='vector_index')
-        assert isinstance(vi, VectorIndex)
-
-        assert not isinstance(vi.indexing_listener, str)
-        listener_id = vi.indexing_listener.identifier
-
-        args = [listener_id, serialized_query, packet.ids]
-        job = FunctionJob(callable=task_callable, args=args)
-        workflow.add_node(f'{task_name}({listener_id})', job=job)
-
-        return listener_id
-
-    listener_ids = [add_node(i) for i in db.show('vector_index')]
-    if not packet.is_delete:
-        assert listener_ids
-        listener_id = listener_ids[-1]
-        model, _, key = listener_id.rpartition('/')
-        workflow.add_edge(f'{model}.predict({key})', f'{task_name}({listener_id})')
-
-    workflow.run_jobs()
 
 
 DBListenerType = t.TypeVar('DBListenerType')

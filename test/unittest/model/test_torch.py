@@ -59,6 +59,7 @@ def test_fit(random_data, si_validation):
             max_iterations=100,
             validation_interval=10,
         ),
+        preferred_devices=('cpu',),
         postprocess=lambda x: int(torch.sigmoid(x).item() > 0.5),
     )
     m.fit(

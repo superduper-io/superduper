@@ -277,6 +277,7 @@ class MongoCompoundSelect(CompoundSelect):
         )
         return collection.update_one({'_id': id}, update)
 
+    @property
     def select_table(self):
         return self.table_or_collection.find()
 

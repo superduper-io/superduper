@@ -430,6 +430,11 @@ class Insert(_ReprMixin, Serializable, ABC):
         """
         pass
 
+    def to_select(self, ids=None):
+        if ids is None:
+            ids = [r['_id'] for r in self.documents]
+        return self.table.find({'_id': ids})
+
 
 class QueryType(str, enum.Enum):
     """

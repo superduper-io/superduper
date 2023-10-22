@@ -7,6 +7,7 @@ from collections import defaultdict
 
 import click
 import networkx
+import tqdm
 from dask.distributed import Future
 
 import superduperdb as s
@@ -14,14 +15,17 @@ from superduperdb.base.logger import logging
 from superduperdb.container import serializable
 from superduperdb.container.component import Component
 from superduperdb.container.document import Document
-from superduperdb.container.encoder import Encoder
+from superduperdb.container.encoder import Encodable, Encoder
 from superduperdb.container.job import ComponentJob, FunctionJob, Job
 from superduperdb.container.model import Model
 from superduperdb.container.task_workflow import TaskWorkflow
+from superduperdb.db.base.backends import vector_searcher_implementations
 from superduperdb.db.base.download import Downloader, gather_uris
 from superduperdb.misc.colors import Colors
+from superduperdb.misc.data import ibatch
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.vector_search.base import VectorDatabase
+from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
+from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
 
 from .artifact import ArtifactStore
 from .cdc import DatabaseChangeDataCapture
@@ -63,7 +67,6 @@ class DB:
         databackend: BaseDataBackend,
         metadata: MetaDataStore,
         artifact_store: ArtifactStore,
-        vector_database: t.Optional[VectorDatabase] = None,
         distributed_client=None,
     ):
         """
@@ -71,22 +74,71 @@ class DB:
         :param metadata: metadata object containing connection to Metadatastore
         :param artifact_store: artifact_store object containing connection to
                                Artifactstore
-        :param vector_database: vector_database object containing connection to
-                                VectorDatabase
         :param distributed_client:
         """
-        self.metrics = LoadDict(self, 'metric')
-        self.models = LoadDict(self, 'model')
-        self.encoders = LoadDict(self, 'encoder')
-        self.vector_indices = LoadDict(self, 'vector_index')
+        self.metrics = LoadDict(self, field='metric')
+        self.models = LoadDict(self, field='model')
+        self.encoders = LoadDict(self, field='encoder')
+        self.vector_indices = LoadDict(self, field='vector_index')
+        self.fast_vector_searchers = LoadDict(
+            self, callable=self._initialize_vector_searcher
+        )
 
         self.distributed = s.CFG.cluster.distributed
         self.metadata = metadata
         self.artifact_store = artifact_store
         self.databackend = databackend
-        self.vector_database = vector_database
         self._distributed_client = distributed_client
         self.cdc = DatabaseChangeDataCapture(self)
+
+    def _initialize_vector_searcher(
+        self, identifier, searcher_type: t.Optional[str] = None
+    ) -> BaseVectorSearcher:
+        searcher_type = searcher_type or s.CFG.vector_search
+        logging.info(f'loading of vectors of vector-index: {identifier}')
+        vi = self.vector_indices[identifier]
+
+        clt = vi.indexing_listener.select.table_or_collection
+        if self.cdc.running:
+            msg = 'CDC only supported for vector search via lance format'
+            assert s.CFG.vector_search == 'lance', msg
+
+        vector_search_cls = vector_searcher_implementations[searcher_type]
+        vector_comparison = vector_search_cls(
+            identifier=vi.identifier,
+            dimensions=vi.dimensions,
+            measure=vi.measure,
+        )
+        assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
+
+        if self.cdc.running:
+            # In this case loading has already happened on disk via CDC mechanism
+            return vector_comparison
+
+        if vi.indexing_listener.select is None:
+            raise ValueError('.select must be set')
+
+        progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
+        for record_batch in ibatch(
+            self.execute(vi.indexing_listener.select),
+            s.CFG.cluster.backfill_batch_size,
+        ):
+            items = []
+            for record in record_batch:
+                key = vi.indexing_listener.key
+                if key.startswith('_outputs.'):
+                    key = key.split('.')[1]
+
+                id = record[self.databackend.id_field]
+                assert not isinstance(vi.indexing_listener.model, str)
+                h = record.outputs(key, vi.indexing_listener.model.identifier)
+                if isinstance(h, Encodable):
+                    h = h.x
+                items.append(VectorItem.create(id=str(id), vector=h))
+
+            vector_comparison.add(items)
+            progress.update(len(items))
+        return vector_comparison
 
     @property
     def distributed_client(self):
@@ -275,13 +327,16 @@ class DB:
             f'Got {type(query)};'
         )
 
-    def delete(self, delete: Delete) -> DeleteResult:
+    def delete(self, delete: Delete, refresh: bool = True) -> DeleteResult:
         """
         Delete data.
 
         :param delete: delete query object
         """
-        return delete.execute(self)
+        result = delete.execute(self)
+        if refresh and not self.cdc.running:
+            return result, self.refresh_after_delete(delete, ids=result)
+        return result, None
 
     def insert(
         self, insert: Insert, refresh: bool = True, encoders: t.Sequence[Encoder] = ()
@@ -298,6 +353,7 @@ class DB:
             if random.random() < s.CFG.fold_probability:
                 r['_fold'] = 'valid'  # type: ignore[assignment]
         inserted_ids = insert.execute(self)
+
         if refresh and self.cdc.running:
             raise Exception('cdc cannot be activated and refresh=True')
 
@@ -332,6 +388,27 @@ class DB:
         """
         return select.execute(self)
 
+    def refresh_after_delete(
+        self,
+        query: Delete,
+        ids: t.Sequence[str],
+        verbose: bool = False,
+    ):
+        """
+        Trigger cleanup jobs after data deletion.
+
+        :param query: Select or Update which reduces scope of computations
+        :param ids: ids which reduce scopy of computations
+        :param verbose: Toggle to ``True`` to get more output
+        """
+        task_workflow: TaskWorkflow = self._build_delete_task_workflow(
+            query,
+            ids=ids,
+            verbose=verbose,
+        )
+        task_workflow.run_jobs(distributed=self.distributed)
+        return task_workflow
+
     def refresh_after_update_or_insert(
         self,
         query: t.Union[Insert, Select, Update],
@@ -345,7 +422,7 @@ class DB:
         :param ids: ids which reduce scopy of computations
         :param verbose: Toggle to ``True`` to get more output
         """
-        task_workflow: TaskWorkflow = self.build_task_workflow(
+        task_workflow: TaskWorkflow = self._build_task_workflow(
             query.select_table,  # TODO can be replaced by select_using_ids
             ids=ids,
             verbose=verbose,
@@ -506,7 +583,7 @@ class DB:
             return r
 
         info = replace_children(info)
-        info = self.artifact_store.load(info)
+        info = self.artifact_store.load(info, lazy=True)
 
         m = Component.deserialize(info)
         m.on_load(self)
@@ -515,7 +592,50 @@ class DB:
             getattr(self, cm)[m.identifier] = m
         return m
 
-    def build_task_workflow(
+    def _build_delete_task_workflow(
+        self,
+        query: Delete,
+        ids: t.Sequence[str],
+        verbose: bool = False,
+    ):
+        G = TaskWorkflow(self)
+        vector_indices = self.show('vector_index')
+
+        if not vector_indices:
+            return G
+
+        deleted_table_or_collection = query.table_or_collection.identifier
+
+        for vi in vector_indices:
+            vi = self.vector_indices[vi]
+            listener_table_or_collection = (
+                vi.indexing_listener.select.table_or_collection.identifier
+            )
+
+            if deleted_table_or_collection != listener_table_or_collection:
+                continue
+
+            if (
+                s.CFG.vector_search == 'in_memory'
+                and vi.identifier not in self.fast_vector_searchers
+            ):
+                continue
+
+            G.add_node(
+                f'{vi.identifier}.{delete_vectors.__name__}()',
+                job=FunctionJob(
+                    callable=delete_vectors,
+                    args=[],
+                    kwargs=dict(
+                        vector_index=vi.identifier,
+                        ids=ids,
+                    ),
+                ),
+            )
+
+        return G
+
+    def _build_task_workflow(
         self,
         query,
         ids=None,
@@ -524,27 +644,34 @@ class DB:
     ) -> TaskWorkflow:
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
+        # TODO use these job_ids as dependencies for every job
+
         G = TaskWorkflow(self)
 
         # TODO extract this logic from this class
-        G.add_node(
-            f'{download_content.__name__}()',
-            job=FunctionJob(
-                callable=download_content,
-                args=[],
-                kwargs=dict(
-                    ids=ids,
-                    query=query.serialize(),
+        try:
+            G.add_node(
+                f'{download_content.__name__}()',
+                job=FunctionJob(
+                    callable=download_content,
+                    args=[],
+                    kwargs=dict(
+                        ids=ids,
+                        query=query.serialize(),
+                    ),
                 ),
-            ),
-        )
-        listener = self.show('listener')
-        if not listener:
+            )
+        except Exception as e:
+            logging.info(query)
+            raise e
+
+        listeners = self.show('listener')
+        if not listeners:
             return G
 
-        for identifier in listener:
+        for identifier in listeners:
             info = self.metadata.get_component('listener', identifier)
-            query = info['dict']['select']
+            listener_query = info['dict']['select']
             model, _, key = identifier.rpartition('/')
             G.add_node(
                 f'{model}.predict({key})',
@@ -553,7 +680,7 @@ class DB:
                     args=[key],
                     kwargs={
                         'ids': ids,
-                        'select': query,
+                        'select': listener_query,
                         **info['dict']['predict_kwargs'],
                     },
                     method_name='predict',
@@ -561,7 +688,7 @@ class DB:
                 ),
             )
 
-        for identifier in listener:
+        for identifier in listeners:
             model, _, key = identifier.rpartition('/')
             G.add_edge(
                 f'{download_content.__name__}()',
@@ -576,6 +703,39 @@ class DB:
                     f'{dep_model}.predict({dep_key})',
                     f'{model}.predict({key})',
                 )
+
+        if s.CFG.self_hosted_vector_search:
+            return G
+
+        for identifier in self.show('vector_index'):
+            # if a vector-searcher is not loaded, then skip
+            # since s.CFG.vector_search == 'in_memory' implies the
+            # program is standalone
+            if (
+                s.CFG.vector_search == 'in_memory'
+                and identifier not in self.fast_vector_searchers
+            ):
+                continue
+
+            vi = self.vector_indices[identifier]
+
+            G.add_node(
+                f'{identifier}.{copy_vectors.__name__}',
+                FunctionJob(
+                    callable=copy_vectors,
+                    args=[],
+                    kwargs={
+                        'vector_index': identifier,
+                        'ids': ids,
+                        'query': vi.indexing_listener.select.serialize(),
+                    },
+                ),
+            )
+            model = vi.indexing_listener.model.identifier
+            key = vi.indexing_listener.key
+            G.add_edge(
+                f'{model}.predict({key})', f'{identifier}.{copy_vectors.__name__}'
+            )
 
         return G
 
@@ -950,8 +1110,14 @@ class DB:
 @dc.dataclass
 class LoadDict(dict):
     database: DB
-    field: str
+    field: t.Optional[str] = None
+    callable: t.Optional[t.Callable] = None
 
     def __missing__(self, key: str):
-        value = self[key] = self.database.load(self.field, key)
+        if self.field is not None:
+            value = self[key] = self.database.load(self.field, key)
+        else:
+            msg = f'callable is ``None`` for {key}'
+            assert self.callable is not None, msg
+            value = self[key] = self.callable(key)
         return value

@@ -5,10 +5,8 @@ import tdir
 import torch.nn
 import torchvision
 
-import superduperdb as s
 from superduperdb.container.document import Document as D
 from superduperdb.container.schema import Schema
-from superduperdb.db.base.build import build_vector_database
 from superduperdb.db.base.db import DB
 from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.db.ibis.data_backend import IbisDataBackend
@@ -58,7 +56,6 @@ def make_ibis_db(db_conn, metadata_conn, tmp_dir, in_memory=False):
         databackend=IbisDataBackend(conn=db_conn, name='ibis', in_memory=in_memory),
         metadata=SQLAlchemyMetadata(conn=metadata_conn.con, name='ibis'),
         artifact_store=FileSystemArtifactStore(conn=tmp_dir, name='ibis'),
-        vector_database=build_vector_database(s.CFG),
     )
 
 

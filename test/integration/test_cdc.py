@@ -1,9 +1,9 @@
+import shutil
 import time
 import uuid
 from contextlib import contextmanager
 
 import pytest
-import tdir
 
 try:
     import torch
@@ -13,7 +13,6 @@ except ImportError:
 from superduperdb.container.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.db.mongodb.query import Collection
-from superduperdb.vector_search.base import VectorCollectionConfig
 
 RETRY_TIMEOUT = 1
 LISTEN_TIMEOUT = 0.1
@@ -40,6 +39,8 @@ LISTEN_TIMEOUT = 0.1
 @pytest.fixture
 def listener_and_collection_name(database_with_default_encoders_and_model):
     db = database_with_default_encoders_and_model
+    # This doesn't look right - database_with_default_encoders_and_model
+    # inserts to 'documents'
     collection_name = str(uuid.uuid4())
     db.cdc._cdc_existing_collections = []
     listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
@@ -51,17 +52,21 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
 
 
 @pytest.fixture
-def listener_with_vector_database(database_with_default_encoders_and_model):
-    collection_name = str(uuid.uuid4())
+def database_listener_with_lance_searcher(database_with_default_encoders_and_model):
     db = database_with_default_encoders_and_model
-    with tdir():
-        db.cdc._cdc_existing_collections = []
-        listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
-        vector_db_client = db.vector_database
 
-        yield listener, vector_db_client, collection_name
+    db.fast_vector_searchers['test_index'] = db._initialize_vector_searcher(
+        'test_index',
+        searcher_type='lance',
+    )
 
-        db.cdc.stop()
+    db.cdc._cdc_existing_collections = ['documents']
+    db.cdc.listen(on=Collection('documents'), timeout=LISTEN_TIMEOUT)
+
+    yield db, 'documents'
+
+    db.cdc.stop()
+    shutil.rmtree('.superduperdb/vector_indices')
 
 
 @pytest.fixture
@@ -149,65 +154,52 @@ def test_task_workflow(
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_vector_database_sync_with_delete(
-    listener_with_vector_database,
-    database_with_default_encoders_and_model,
+    database_listener_with_lance_searcher,
     fake_inserts,
 ):
-    _, vector_db_client, name = listener_with_vector_database
+    db, name = database_listener_with_lance_searcher
 
-    with add_and_cleanup_listeners(
-        database_with_default_encoders_and_model, name
-    ) as database_with_listeners:
-        inserted_ids, _ = database_with_listeners.execute(
-            Collection(name).insert_many([fake_inserts[0]]),
-            refresh=False,
-        )
+    inserted_ids, _ = db.execute(
+        Collection(name).insert_many(fake_inserts[:2]),
+        refresh=False,
+    )
 
-        def state_check():
-            table = vector_db_client.get_table(
-                VectorCollectionConfig(id='model_linear_a/x', dimensions=0)
-            )
-            assert table.size() == 1
+    def state_check():
+        assert len(db.fast_vector_searchers['test_index']) == 2
 
-        retry_state_check(state_check)
-        database_with_listeners.execute(
-            Collection(name).delete_one({'_id': inserted_ids[0]})
-        )
+    retry_state_check(state_check)
 
-        # check if vector database is in sync with the model outputs
-        def state_check_2():
-            table = vector_db_client.get_table(
-                VectorCollectionConfig(id='model_linear_a/x', dimensions=0)
-            )
-            assert table.size() == 0
+    # TODO DatabaseListener sees the change but CDCHandler doesn't
+    db.execute(
+        Collection(name).delete_one({'_id': inserted_ids[0]}),
+        refresh=False,
+    )
 
-        retry_state_check(state_check_2)
+    # check if vector database is in sync with the model outputs
+    def state_check_2():
+        assert len(db.fast_vector_searchers['test_index']) == 1
+
+    retry_state_check(state_check_2)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_vector_database_sync(
-    listener_with_vector_database,
-    database_with_default_encoders_and_model,
+    database_listener_with_lance_searcher,
     fake_inserts,
 ):
-    listener, vector_db_client, name = listener_with_vector_database
+    db, name = database_listener_with_lance_searcher
 
-    with add_and_cleanup_listeners(
-        database_with_default_encoders_and_model, name
-    ) as database_with_listeners:
-        database_with_listeners.execute(
-            Collection(name).insert_many([fake_inserts[0]]),
-            refresh=False,
-        )
+    db.execute(
+        Collection(name).insert_many([fake_inserts[0]]),
+        refresh=False,
+    )
 
-        # Check if vector database is in sync with the model outputs
-        def state_check():
-            table = vector_db_client.get_table(
-                VectorCollectionConfig(id='model_linear_a/x', dimensions=0)
-            )
-            assert table.size() == 1
+    # Check if vector database is in sync with the model outputs
+    def state_check():
+        vector_searcher = db.fast_vector_searchers['test_index']
+        assert len(vector_searcher) == 1
 
-        retry_state_check(state_check)
+    retry_state_check(state_check)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

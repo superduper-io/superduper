@@ -92,7 +92,10 @@ class ArtifactStoreMixin:
 
     @staticmethod
     def _load_artifacts(
-        tree: t.Any, make: t.Callable[[str, str], bytes], cache: t.Dict[str, Artifact]
+        tree: t.Any,
+        make: t.Callable,
+        cache: t.Dict[str, Artifact],
+        artifact_store: t.Optional['ArtifactStore'] = None,
     ) -> t.Any:
         """Replace ArtifactDesc dicts in a tree by Artifacts."""
 
@@ -105,7 +108,11 @@ class ArtifactStoreMixin:
             info, serializer = t.get('info'), t['serializer']
             artifact = make(file_id=file_id, serializer=serializer)
             cache[file_id] = Artifact(
-                artifact=artifact, info=info, serializer=serializer
+                artifact=artifact,
+                info=info,
+                serializer=serializer,
+                artifact_store=artifact_store,
+                file_id=file_id,
             )
             return cache[file_id]
 
@@ -206,15 +213,28 @@ class ArtifactStore(ABC, ArtifactStoreMixin):
 
         return self.replace(serialized, artifact_details)
 
-    def load(self, info, cache: t.Dict = {}):
+    def load(self, info, cache: t.Dict = {}, lazy: bool = False):
         """
         Recursively search through a tree for ArtifactDescs by an Artifact with
         that `file_id`.
 
         :param info: A tree made up of dicts and lists
         :param cache: A cache dictionary of Artifacts, keyed by file_id
+        :param lazy: If True, don't load the artifacts; used so that big objects don't
+                     clutter up the memory.
         """
-        return self._load_artifacts(info, self.load_artifact, cache)
+
+        def no_load(*args, **kwargs):
+            pass
+
+        make = t.cast(t.Callable, self.load_artifact if not lazy else no_load)
+
+        return self._load_artifacts(
+            tree=info,
+            make=make,
+            cache=cache,
+            artifact_store=self,
+        )
 
     @staticmethod
     def load_from_cache(info, cache: t.Dict = {}):

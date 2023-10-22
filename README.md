@@ -46,7 +46,7 @@
 **Easily implement AI without the need to copy and move your data to complex MLOps pipelines and specialized vector databases. Integrate, train, and manage your AI models and APIs directly with your chosen database, using a simple Python interface.**
 - Generative AI & chatbots
 - Vector Search
-- Standard Use-Cases (classification, segmentation, recommendation etc)
+- Standard Use-Cases (classification, regression, clustering, recommendation etc)
 - Highly custom AI use-cases and workflows with specialized models.
 
 <br> 

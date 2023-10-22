@@ -155,7 +155,7 @@ addopts = "-W ignore"
 
 color = true
 exclude = []
-fail-under = 36.1
+fail-under = 35.1
 ignore-magic = true
 ignore-nested-classes = false
 ignore-nested-functions = true

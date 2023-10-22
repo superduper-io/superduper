@@ -9,54 +9,83 @@ import numpy
 import numpy.typing
 
 
-class BaseVectorIndex:
-    name: t.Optional[str] = None
-    index: t.List[str]
-    lookup: t.Dict[str, t.Union[t.Iterator[int], int]]
-    measure: str
+class BaseVectorSearcher(ABC):
+    @abstractmethod
+    def __init__(
+        self,
+        identifier: str,
+        dimensions: int,
+        h: t.Optional[numpy.ndarray] = None,
+        index: t.Optional[t.List[str]] = None,
+        measure: t.Optional[str] = None,
+    ):
+        pass
 
-    def __init__(self, h, index, measure):
+    @abstractmethod
+    def __len__(self):
+        pass
+
+    @staticmethod
+    def to_numpy(h):
+        if isinstance(h, numpy.ndarray):
+            return h
+        if hasattr(h, 'numpy'):
+            return h.numpy()
+        if isinstance(h, list):
+            return numpy.array(h)
+        raise ValueError(str(h))
+
+    @staticmethod
+    def to_list(h):
         if hasattr(h, 'tolist'):
-            h = h.tolist()
-        self.h_list = h
-        self._h = numpy.array(h)
-        self.index = index
-        if index is not None:
-            self.lookup = dict(zip(index, range(len(index))))
-        self.measure = measure
+            return h.tolist()
+        if isinstance(h, list):
+            return h
+        raise ValueError(str(h))
 
-    @property
-    def h(self):
-        if len(self.h_list) != self._h.shape[0]:
-            self._h = numpy.array(self.h_list)
-        return self._h
+    @abstractmethod
+    def add(self, items: t.Sequence[VectorItem]) -> None:
+        """
+        Add items to the index.
 
-    @property
-    def shape(self):
-        return self.h.shape
+        :param items: t.Sequence of VectorItems
+        """
 
-    def find_nearest_from_id(self, _id, n=100):
-        _ids, scores = self.find_nearest_from_ids([_id], n=n)
-        return _ids[0], scores[0]
+    @abstractmethod
+    def delete(self, ids: t.Sequence[str]) -> None:
+        """
+        Remove items from the index
 
-    def find_nearest_from_ids(self, _ids, n=100):
-        ix = list(map(self.lookup.__getitem__, _ids))
-        return self.find_nearest_from_arrays(self.h[ix, :], n=n)
+        :param ids: t.Sequence of ids of vectors.
+        """
 
-    def find_nearest_from_array(self, h, n=100):
-        h = to_numpy(h)
-        _ids, scores = self.find_nearest_from_arrays(h[None, :], n=n)
-        return _ids[0], scores[0]
+    @abstractmethod
+    def find_nearest_from_id(
+        self,
+        _id,
+        n: int = 100,
+        within_ids: t.Sequence[str] = (),
+    ) -> t.Tuple[t.List[str], t.List[float]]:
+        """
+        Find the nearest vectors to the vector with the given id.
 
-    def find_nearest_from_arrays(self, h, n=100):
-        raise NotImplementedError
+        :param _id: id of the vector
+        :param n: number of nearest vectors to return
+        """
 
-    def __getitem__(self, item):
-        raise NotImplementedError
+    @abstractmethod
+    def find_nearest_from_array(
+        self,
+        h: numpy.typing.ArrayLike,
+        n: int = 100,
+        within_ids: t.Sequence[str] = (),
+    ) -> t.Tuple[t.List[str], t.List[float]]:
+        """
+        Find the nearest vectors to the given vector.
 
-
-def to_numpy(x: numpy.typing.ArrayLike) -> numpy.ndarray:
-    return numpy.array(x)
+        :param h: vector
+        :param n: number of nearest vectors to return
+        """
 
 
 class VectorIndexMeasureType(str, enum.Enum):
@@ -66,120 +95,50 @@ class VectorIndexMeasureType(str, enum.Enum):
     l2 = 'l2'
 
 
-VectorCollectionId = str
-VectorCollectionItemId = str
-VectorIndexMeasure = t.Union[VectorIndexMeasureType, str]
-
-
-class VectorCollectionItemNotFound(Exception):
-    pass
-
-
 @dataclass(frozen=True)
-class VectorCollectionConfig:
-    id: VectorCollectionId
+class VectorSearchConfig:
+    id: str
     dimensions: int
-    measure: VectorIndexMeasure = VectorIndexMeasureType.l2
+    measure: VectorIndexMeasureType = VectorIndexMeasureType.l2
     parameters: t.Mapping[str, t.Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
-class VectorCollectionItem:
-    id: VectorCollectionItemId
+class VectorItem:
+    id: str
     vector: numpy.ndarray
 
     @classmethod
     def create(
         cls,
         *,
-        id: VectorCollectionItemId,
+        id: str,
         vector: numpy.typing.ArrayLike,
-    ) -> VectorCollectionItem:
-        return VectorCollectionItem(id=id, vector=to_numpy(vector))
+    ) -> VectorItem:
+        return VectorItem(id=id, vector=BaseVectorSearcher.to_numpy(vector))
 
     def to_dict(self) -> t.Dict:
         return {'id': self.id, 'vector': self.vector}
 
 
 @dataclass(frozen=True)
-class VectorCollectionResult:
-    id: VectorCollectionItemId
+class VectorSearchResult:
+    id: str
     score: float
 
 
-class VectorCollection(ABC):
-    """A vector collection within a vector database.
-
-    Concrete implementations of this class are responsible for lifecycle management of
-    a single vector collection within a specific vector database.
-
-    It is assumed that a vector collection is associated with a single vector column or
-    field within a vector database.
-    """
-
-    @abstractmethod
-    def add(self, items: t.Sequence[VectorCollectionItem]) -> None:
-        """
-        Add items to the collection.
-
-        :param items: items to add
-        """
-        pass
-
-    @abstractmethod
-    def find_nearest_from_id(
-        self,
-        identifier: VectorCollectionItemId,
-        *,
-        within_ids: t.Sequence[VectorCollectionItemId] = (),
-        limit: int = 100,
-        offset: int = 0,
-    ) -> t.List[VectorCollectionResult]:
-        """
-        Find items that are nearest to the item with the given identifier.
-
-        :param identifier: identifier of the item
-        :param within_ids: identifiers to search within
-        :param limit: maximum number of nearest items to return
-        :param offset: offset of the first item to return
-        """
-        pass
-
-    @abstractmethod
-    def find_nearest_from_array(
-        self,
-        array: numpy.typing.ArrayLike,
-        *,
-        within_ids: t.Sequence[VectorCollectionItemId] = (),
-        limit: int = 100,
-        offset: int = 0,
-    ) -> t.List[VectorCollectionResult]:
-        """
-        Find items that are nearest to the given vector.
-
-        :param array: array representing the vector
-        :param within_ids: identifiers to search within
-        :param limit: maximum number of nearest items to return
-        :param offset: offset of the first item to return
-        """
-        pass
+def l2(x, y):
+    return numpy.array([-numpy.linalg.norm(x - y, axis=1)])
 
 
-class VectorDatabase(ABC):
-    """
-    A vector database that manages vector collections.
+def dot(x, y):
+    return numpy.dot(x, y.T)
 
-    Concrete implementations of this class are responsible for lifecycle management of
-    vector collections within a specific vector database.
 
-    Implementations of this abstract base class retrieve vector collections by their
-    identifier for subsequent operations.
-    """
+def cosine(x, y):
+    x = x / numpy.linalg.norm(x, axis=1)[:, None]
+    y = y / numpy.linalg.norm(y, axis=1)[:, None]
+    return dot(x, y)
 
-    @abstractmethod
-    def get_table(self, config: VectorCollectionConfig) -> VectorCollection:
-        """Get a vector collection by its identifier.
 
-        :param config: configuration for the vector database
-        """
-        pass
+measures = {'cosine': cosine, 'dot': dot, 'l2': l2}

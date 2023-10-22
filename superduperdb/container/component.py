@@ -5,7 +5,6 @@ The component module provides the base class for all components in SuperDuperDB.
 
 from __future__ import annotations
 
-import dataclasses as dc
 import typing as t
 
 from superduperdb.container.job import ComponentJob, Job
@@ -33,14 +32,14 @@ class Component(Serializable):
 
         :param db: the db that creates the component
         """
-        pass
+        assert db
 
     def on_load(self, db: DB) -> None:
         """Called when this component is loaded from the data store
 
         :param db: the db that loaded the component
         """
-        pass
+        assert db
 
     @property
     def child_components(self) -> t.Sequence[t.Any]:
@@ -57,9 +56,6 @@ class Component(Serializable):
         if getattr(self, 'version', None) is None:
             raise Exception('Version not yet set for component uniqueness')
         return f'{self.type_id}/' f'{self.identifier}/' f'{self.version}'
-
-    def dict(self) -> t.Dict[str, t.Any]:
-        return dc.asdict(self)
 
     def create_validation_job(
         self,

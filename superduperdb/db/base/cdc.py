@@ -369,6 +369,15 @@ class DatabaseChangeDataCapture:
         self._running: bool = False
         self._cdc_existing_collections: t.MutableSequence['TableOrCollection'] = []
 
+        listeners = self.db.show('listeners')
+        if listeners:
+            from superduperdb.container.listener import Listener
+
+            for listener in listeners:
+                listener = db.load(identifier=listener, type_id='listener')
+                assert isinstance(listener, Listener)
+                self.add(listener.select.table_or_collection)
+
     @property
     def running(self) -> bool:
         return self._running

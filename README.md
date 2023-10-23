@@ -21,6 +21,9 @@
 <p align="center">
 	<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">
     <img src="https://img.shields.io/badge/slack-superduperdb-8A2BE2?logo=slack" alt="slack">
+    </a>
+    <a  href="https://twitter.com/superduperdb">
+<img  src="https://img.shields.io/badge/Twitter - Follow superduperdb-1DA1F2?logo=twitter"  alt="Twitter">
 </a>
 <a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">
     <img src="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main/graph/badge.svg" alt="Coverage">

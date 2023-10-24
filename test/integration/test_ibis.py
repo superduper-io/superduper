@@ -158,7 +158,7 @@ def end2end_workflow(ibis_db):
     )
 
     # Build query to get the results back
-    q = t.select('id', 'image', 'age').filter(t.age > 25).outputs('resnet18')
+    q = t.select('id', 'image', 'age').filter(t.age > 25).outputs('image', 'resnet18')
 
     # Get the results
     result = list(q.execute(db))
@@ -166,7 +166,11 @@ def end2end_workflow(ibis_db):
     assert 'image' in result[0].unpack()
 
     # Get vector results
-    q = t.select('id', 'image', 'age').filter(t.age > 25).outputs('model_linear_a')
+    q = (
+        t.select('id', 'image', 'age')
+        .filter(t.age > 25)
+        .outputs('image', 'model_linear_a')
+    )
 
     # Get the results
     result = list(q.execute(db))

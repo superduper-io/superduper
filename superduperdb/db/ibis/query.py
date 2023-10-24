@@ -14,7 +14,6 @@ from superduperdb.base.logger import logging
 from superduperdb.container.component import Component
 from superduperdb.container.encoder import Encoder
 from superduperdb.container.schema import Schema
-from superduperdb.db.base.cursor import SuperDuperCursor
 from superduperdb.db.base.query import (
     CompoundSelect,
     Insert,
@@ -25,6 +24,10 @@ from superduperdb.db.base.query import (
     TableOrCollection,
     _ReprMixin,
 )
+from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
+
+if t.TYPE_CHECKING:
+    from superduperdb.container.document import Document
 
 if t.TYPE_CHECKING:
     from superduperdb.db.base.db import DB
@@ -87,7 +90,7 @@ class IbisCompoundSelect(CompoundSelect):
             kwargs = {}
         return IbisQueryComponent(name, type=type, args=args, kwargs=kwargs)
 
-    def outputs(self, model: str):
+    def outputs(self, key: str, model: str):
         """
         This method returns a query which joins a query with the outputs
         for a table.
@@ -103,7 +106,7 @@ class IbisCompoundSelect(CompoundSelect):
         return IbisCompoundSelect(
             table_or_collection=self.table_or_collection,
             pre_like=self.pre_like,
-            query_linker=self.query_linker.outputs(model),
+            query_linker=self.query_linker.outputs(key, model),
             post_like=self.post_like,
         )
 
@@ -158,11 +161,12 @@ class IbisCompoundSelect(CompoundSelect):
             if isinstance(type, Encoder):
                 output[column] = output[column].map(type.decode)
         if scores is not None:
-            output['scores'] = list(
-                map(scores, output[self.table_or_collection.primary_id].tolist())
-            )
+            output['scores'] = output[self.primary_id].map(scores)
+
         output = output.to_dict(orient='records')
-        return SuperDuperCursor(output, id_field=self.table_or_collection.primary_id)
+        return SuperDuperIbisCursor(
+            output, id_field=self.table_or_collection.primary_id
+        )
 
 
 class _LogicalExprMixin:
@@ -262,7 +266,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         )
 
     def select_ids_of_missing_outputs(self, key: str, model: str):
-        raise NotImplementedError
+        return self.select(self.table_or_collection.primary_id)
 
     def get_all_tables(self):
         out = []
@@ -270,10 +274,10 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             out.extend(member.get_all_tables())
         return list(set(out))
 
-    def outputs(self, model: str):
+    def outputs(self, key: str, model: str):
         symbol_table = IbisQueryTable(
             identifier=f'_outputs/{model}',
-            primary_id='id',
+            primary_id='output_id',
         )
         attr = getattr(  # type: ignore[call-overload]
             self, self.table_or_collection.primary_id
@@ -281,6 +285,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         other_query = self.join(
             symbol_table,
             [
+                symbol_table.key == key,
                 symbol_table.input_id == attr,
                 symbol_table.query_id == self.table_or_collection.identifier,
             ],
@@ -350,6 +355,11 @@ class IbisTable(Component):
         return IbisQueryTable(
             identifier=self.identifier, primary_id=self.primary_id
         ).insert(documents, **kwargs)
+
+    def like(self, r: 'Document', vector_index: str, n: int = 10):
+        return IbisQueryTable(
+            identifier=self.identifier, primary_id=self.primary_id
+        ).like(r=r, vector_index=vector_index, n=n)
 
     def __getattr__(self, item):
         return IbisQueryTable(
@@ -464,7 +474,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         table_records = []
         for ix in range(len(outputs)):
             d = {
-                'id': str(ids[ix]),
+                'output_id': str(ids[ix]),
                 'input_id': str(ids[ix]),
                 'query_id': self.identifier,
                 'output': outputs[ix],

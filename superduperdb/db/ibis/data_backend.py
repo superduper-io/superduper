@@ -42,7 +42,7 @@ class IbisDataBackend(BaseDataBackend):
         else:
             output_type = model.encoder
         fields = {
-            'id': dtype('int32'),
+            'output_id': dtype('int32'),
             'input_id': dtype('int32'),
             'query_id': dtype('string'),
             'output': output_type,

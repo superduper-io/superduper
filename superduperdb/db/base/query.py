@@ -4,6 +4,8 @@ import typing as t
 from abc import ABC, abstractmethod
 from typing import Any
 
+import pandas as pd
+
 from superduperdb.base.logger import logging
 from superduperdb.container.document import Document
 from superduperdb.container.serializable import Serializable
@@ -372,9 +374,12 @@ class CompoundSelect(_ReprMixin, Select, ABC):
             return query_linker.execute(db), similar_scores
 
         assert self.pre_like is None
-        query_linker_ids = query_linker.select_ids
-        ids = [str(r[self.primary_id]) for r in query_linker_ids.execute(db)]
-        similar_ids, similar_scores = self.post_like.execute(db, ids=ids)
+        cursor = query_linker.select_ids.execute(db)
+        if isinstance(cursor, pd.DataFrame):
+            query_ids = [id[0] for id in cursor.values.tolist()]
+        else:
+            query_ids = [str(document[self.primary_id]) for document in cursor]
+        similar_ids, similar_scores = self.post_like.execute(db, ids=query_ids)
         similar_scores = dict(zip(similar_ids, similar_scores))
 
         post_query_linker = self.query_linker.select_using_ids(similar_ids)

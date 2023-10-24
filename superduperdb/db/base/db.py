@@ -120,7 +120,11 @@ class DB:
 
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
-            self.execute(vi.indexing_listener.select),
+            self.execute(
+                vi.indexing_listener.select.outputs(
+                    vi.indexing_listener.key, vi.indexing_listener.model.identifier
+                )
+            ),
             s.CFG.cluster.backfill_batch_size,
         ):
             items = []

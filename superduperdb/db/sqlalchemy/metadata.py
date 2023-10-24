@@ -22,11 +22,14 @@ class Job(Base, DictMixin):  # type: ignore[valid-type, misc]
     __tablename__ = 'job'
 
     identifier = Column(String, primary_key=True)
+    component_identifier = Column(String)
+    type_id = Column(String)
     info = Column(JSON)
     time = Column(DateTime)
     status = Column(String)
     args = Column(JSON)
     kwargs = Column(JSON)
+    method_name = Column(String)
     stdout = Column(JSON)
     stderr = Column(JSON)
     cls = Column(String)

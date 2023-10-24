@@ -76,8 +76,7 @@ class SuperDuperCursor:
             return r
         return self.raw_cursor.next()
 
-    @staticmethod
-    def wrap_document(r, encoders):
+    def wrap_document(self, r, encoders):
         """
         Wrap a document in a ``Document``.
         """

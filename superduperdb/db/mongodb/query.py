@@ -89,6 +89,15 @@ class Find(QueryComponent):
             kwargs=self.kwargs,
         )
 
+    def outputs(self, key: str, model: str):
+        # TODO: This was needed due to vector initialize ``.outputs``.
+        return Find(
+            name=self.name,
+            type=self.type,
+            args=self.args,
+            kwargs=self.kwargs,
+        )
+
     def select_using_ids(self, ids):
         ids = [ObjectId(id) for id in ids]
         args = list(self.args)[:]
@@ -236,9 +245,27 @@ class Aggregate(Select):
 
 @dc.dataclass(repr=False)
 class MongoCompoundSelect(CompoundSelect):
-    def _get_query_linker(cls, table_or_collection, members) -> 'QueryLinker':
+    def _get_query_linker(self, table_or_collection, members) -> 'QueryLinker':
         return MongoQueryLinker(
             table_or_collection=table_or_collection, members=members
+        )
+
+    def outputs(self, key: str, model: str):
+        """
+        This method returns a query which joins a query with the outputs
+        for a table.
+
+        :param model: The model identifier for which to get the outputs
+
+        >>> q = Collection(...).find(...).outputs('key', 'model_name')
+
+        """
+        assert self.query_linker is not None
+        return MongoCompoundSelect(
+            table_or_collection=self.table_or_collection,
+            pre_like=self.pre_like,
+            query_linker=self.query_linker.outputs(key, model),
+            post_like=self.post_like,
         )
 
     def change_stream(self, *args, **kwargs):
@@ -295,6 +322,19 @@ class MongoQueryLinker(QueryLinker):
                 new_members.append(member.add_fold(fold))
             else:
                 new_members.append(member)
+        return MongoQueryLinker(
+            table_or_collection=self.table_or_collection,
+            members=new_members,
+        )
+
+    def outputs(self, key: str, model: str):
+        new_members = []
+        for member in self.members:
+            if hasattr(member, 'outputs'):
+                new_members.append(member.outputs(key, model))
+            else:
+                new_members.append(member)
+
         return MongoQueryLinker(
             table_or_collection=self.table_or_collection,
             members=new_members,

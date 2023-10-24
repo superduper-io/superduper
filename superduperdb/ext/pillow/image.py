@@ -4,7 +4,7 @@ import PIL.Image
 import PIL.JpegImagePlugin
 import PIL.PngImagePlugin
 
-from superduperdb.container.encoder import Encoder
+from superduperdb.component.encoder import Encoder
 
 BLANK_IMAGE = PIL.Image.new('RGB', (600, 600), (255, 255, 255))
 

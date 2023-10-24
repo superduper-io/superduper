@@ -11,12 +11,15 @@ except ImportError:
 
 from pathlib import Path
 
-from superduperdb.container.dataset import Dataset
-from superduperdb.container.document import Document
-from superduperdb.container.encoder import Encoder
-from superduperdb.container.listener import Listener
-from superduperdb.db.base.exceptions import ComponentInUseError, ComponentInUseWarning
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.base.exceptions import (
+    ComponentInUseError,
+    ComponentInUseWarning,
+)
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.component.dataset import Dataset
+from superduperdb.component.document import Document
+from superduperdb.component.encoder import Encoder
+from superduperdb.component.listener import Listener
 
 n_data_points = 250
 

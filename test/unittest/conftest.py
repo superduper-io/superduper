@@ -16,13 +16,13 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.container.dataset import Dataset
-from superduperdb.container.document import Document
-from superduperdb.container.listener import Listener
-from superduperdb.container.metric import Metric
-from superduperdb.container.vector_index import VectorIndex
-from superduperdb.db.base.db import DB
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.component.dataset import Dataset
+from superduperdb.component.document import Document
+from superduperdb.component.listener import Listener
+from superduperdb.component.metric import Metric
+from superduperdb.component.vector_index import VectorIndex
+from superduperdb.datalayer.datalayer import Datalayer
 from superduperdb.ext.numpy.array import array
 from superduperdb.ext.pillow.image import pil_image
 
@@ -30,7 +30,7 @@ n_data_points = 250
 
 
 @pytest.fixture()
-def empty(test_db: DB):
+def empty(test_db: Datalayer):
     yield test_db
 
 

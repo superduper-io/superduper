@@ -6,7 +6,7 @@ except ImportError:
     torch = None
 
 from superduperdb import superduper
-from superduperdb.misc.superduper import SklearnTyper, TorchTyper
+from superduperdb.base.superduper import SklearnTyper, TorchTyper
 
 
 def test_sklearn_typer():

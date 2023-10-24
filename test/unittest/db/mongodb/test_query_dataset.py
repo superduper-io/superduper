@@ -1,7 +1,7 @@
 import pytest
 
-from superduperdb.db.mongodb.query import Collection
-from superduperdb.db.query_dataset import QueryDataset
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.backends.query_dataset import QueryDataset
 
 try:
     import torch

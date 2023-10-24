@@ -5,14 +5,14 @@ import tdir
 import torch.nn
 import torchvision
 
-from superduperdb.container.document import Document as D
-from superduperdb.container.schema import Schema
-from superduperdb.db.base.db import DB
-from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
-from superduperdb.db.ibis.data_backend import IbisDataBackend
-from superduperdb.db.ibis.field_types import dtype
-from superduperdb.db.ibis.query import IbisTable
-from superduperdb.db.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
+from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.backends.ibis.query import IbisTable
+from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduperdb.component.document import Document as D
+from superduperdb.component.schema import Schema
+from superduperdb.datalayer.datalayer import Datalayer
 from superduperdb.ext.pillow.image import pil_image
 from superduperdb.ext.torch.model import TorchModel
 from superduperdb.ext.torch.tensor import tensor
@@ -52,7 +52,7 @@ def ibis_pandas_db(sqllite_conn):
 
 
 def make_ibis_db(db_conn, metadata_conn, tmp_dir, in_memory=False):
-    return DB(
+    return Datalayer(
         databackend=IbisDataBackend(conn=db_conn, name='ibis', in_memory=in_memory),
         metadata=SQLAlchemyMetadata(conn=metadata_conn.con, name='ibis'),
         artifact_store=FileSystemArtifactStore(conn=tmp_dir, name='ibis'),

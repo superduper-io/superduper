@@ -1,5 +1,5 @@
 from .base import config, configs, jsonable, logger
-from .misc.superduper import superduper
+from .base.superduper import superduper
 
 __all__ = 'CFG', 'ICON', 'JSONable', 'ROOT', 'config', 'log', 'logging', 'superduper'
 

@@ -1,8 +1,8 @@
 import pytest
 
-from superduperdb.container.document import Document
-from superduperdb.container.model import Model
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.component.document import Document
+from superduperdb.component.model import Model
 
 
 @pytest.fixture()

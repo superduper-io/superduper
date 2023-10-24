@@ -1,4 +1,4 @@
-from superduperdb.container.model import Model
+from superduperdb.component.model import Model
 
 
 class SentenceTransformer(Model):

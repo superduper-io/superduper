@@ -1,3 +1,4 @@
-from .model import TorchModel
+from .model import TorchModel, TorchTrainerConfiguration
+from .tensor import tensor
 
-__all__ = ('TorchModel',)
+__all__ = ('TorchModel', 'TorchTrainerConfiguration', 'tensor')

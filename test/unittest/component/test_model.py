@@ -7,7 +7,7 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

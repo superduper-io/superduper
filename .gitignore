@@ -189,3 +189,5 @@ test/sleep.json
 .vscode
 
 /tmp
+
+/rename.sh

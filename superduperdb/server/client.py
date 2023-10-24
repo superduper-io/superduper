@@ -7,12 +7,12 @@ import uuid
 import click
 import requests
 
-from superduperdb.container.component import Component
-from superduperdb.container.document import dump_bsons, load_bsons
-from superduperdb.container.serializable import Serializable
-from superduperdb.db.base.artifact import ArtifactStore
-from superduperdb.db.base.db import ExecuteQuery
-from superduperdb.db.base.query import Delete, Insert, Like, Select, Update
+from superduperdb.backends.base.artifact import ArtifactStore
+from superduperdb.backends.base.query import Delete, Insert, Like, Select, Update
+from superduperdb.base.serializable import Serializable
+from superduperdb.component.component import Component
+from superduperdb.component.document import dump_bsons, load_bsons
+from superduperdb.datalayer.datalayer import ExecuteQuery
 from superduperdb.misc.serialization import serializers
 
 

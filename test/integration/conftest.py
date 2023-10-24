@@ -13,10 +13,10 @@ except ImportError:
     torch = None
 
 from superduperdb import CFG
-from superduperdb.container.document import Document
-from superduperdb.container.listener import Listener
-from superduperdb.container.vector_index import VectorIndex
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.component.document import Document
+from superduperdb.component.listener import Listener
+from superduperdb.component.vector_index import VectorIndex
 from superduperdb.server.dask_client import dask_client
 
 '''

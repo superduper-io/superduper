@@ -7,7 +7,7 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.container.document import Document
+from superduperdb.component.document import Document
 
 
 @pytest.fixture

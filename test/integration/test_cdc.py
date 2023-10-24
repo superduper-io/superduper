@@ -10,9 +10,9 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.container.document import Document
-from superduperdb.container.listener import Listener
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.component.document import Document
+from superduperdb.component.listener import Listener
 
 RETRY_TIMEOUT = 1
 LISTEN_TIMEOUT = 0.1

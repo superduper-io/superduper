@@ -4,9 +4,9 @@ import typing as t
 import anthropic
 from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutError
 
-from superduperdb.container.component import Component
-from superduperdb.container.encoder import Encoder
-from superduperdb.container.model import PredictMixin
+from superduperdb.component.component import Component
+from superduperdb.component.encoder import Encoder
+from superduperdb.component.model import PredictMixin
 from superduperdb.ext.utils import format_prompt, get_key
 from superduperdb.misc.retry import Retry
 

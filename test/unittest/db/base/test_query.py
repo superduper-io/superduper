@@ -1,11 +1,11 @@
-from superduperdb.container.document import Document
-from superduperdb.container.schema import Schema
-from superduperdb.db.ibis.field_types import dtype
+from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.component.document import Document
+from superduperdb.component.schema import Schema
 from superduperdb.ext.pillow.image import pil_image
 
 
 def test_create_ibis_query():
-    from superduperdb.db.ibis.query import IbisTable
+    from superduperdb.backends.ibis.query import IbisTable
 
     t = IbisTable(
         identifier='my_table',
@@ -33,8 +33,8 @@ def test_create_ibis_query():
 
 
 def test_execute_insert_and_find(empty):
-    from superduperdb.container.document import Document
-    from superduperdb.db.mongodb.query import Collection
+    from superduperdb.backends.mongodb.query import Collection
+    from superduperdb.component.document import Document
 
     collection = Collection('documents')
     collection.insert_many([Document({'this': 'is a test'})]).execute(empty)
@@ -43,8 +43,8 @@ def test_execute_insert_and_find(empty):
 
 
 def test_execute_complex_query(empty):
-    from superduperdb.container.document import Document
-    from superduperdb.db.mongodb.query import Collection
+    from superduperdb.backends.mongodb.query import Collection
+    from superduperdb.component.document import Document
 
     collection = Collection('documents')
     collection.insert_many(
@@ -57,7 +57,7 @@ def test_execute_complex_query(empty):
 
 
 def test_execute_like_queries(with_vector_index):
-    from superduperdb.db.mongodb.query import Collection
+    from superduperdb.backends.mongodb.query import Collection
 
     collection = Collection('documents')
 

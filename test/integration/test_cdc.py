@@ -1,6 +1,5 @@
 import shutil
 import time
-import uuid
 from contextlib import contextmanager
 
 import pytest
@@ -39,9 +38,7 @@ LISTEN_TIMEOUT = 0.1
 @pytest.fixture
 def listener_and_collection_name(database_with_default_encoders_and_model):
     db = database_with_default_encoders_and_model
-    # This doesn't look right - database_with_default_encoders_and_model
-    # inserts to 'documents'
-    collection_name = str(uuid.uuid4())
+    collection_name = 'documents'
     db.cdc._cdc_existing_collections = []
     listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
     db.cdc.cdc_change_handler._QUEUE_BATCH_SIZE = 1
@@ -74,7 +71,7 @@ def listener_without_cdc_handler_and_collection_name(
     database_with_default_encoders_and_model,
 ):
     db = database_with_default_encoders_and_model
-    collection_name = str(uuid.uuid4())
+    collection_name = 'documents'
     db.cdc._cdc_existing_collections = []
     listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
     yield listener, collection_name

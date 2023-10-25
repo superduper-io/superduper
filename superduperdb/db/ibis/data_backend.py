@@ -4,8 +4,8 @@ import ibis
 import pandas
 from ibis.backends.base import BaseBackend
 
-from superduperdb.container.model import Model
-from superduperdb.container.schema import Schema
+from superduperdb.components.model import Model
+from superduperdb.components.schema import Schema
 from superduperdb.db.base.data_backend import BaseDataBackend
 from superduperdb.db.ibis.field_types import FieldType, dtype
 from superduperdb.db.ibis.query import IbisTable

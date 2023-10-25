@@ -5,7 +5,7 @@ import tenacity
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 from superduperdb.base.logger import logging
-from superduperdb.container.component import Component
+from superduperdb.components.component import Component
 from superduperdb.db.base.metadata import MetaDataStore
 from superduperdb.misc.colors import Colors
 

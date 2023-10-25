@@ -11,9 +11,9 @@ import typing as t
 import ibis
 
 from superduperdb.base.logger import logging
-from superduperdb.container.component import Component
-from superduperdb.container.encoder import Encoder
-from superduperdb.container.schema import Schema
+from superduperdb.components.component import Component
+from superduperdb.components.encoder import Encoder
+from superduperdb.components.schema import Schema
 from superduperdb.db.base.query import (
     CompoundSelect,
     Insert,

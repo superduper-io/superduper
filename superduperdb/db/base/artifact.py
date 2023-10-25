@@ -6,7 +6,7 @@ from superduperdb.misc.tree import tree_find, tree_rewrite
 from superduperdb.misc.serialization import Info, serializers
 
 if t.TYPE_CHECKING:
-    from superduperdb.container.component import Component
+    from superduperdb.components.component import Component
 
 
 def _is_artifact(t: t.Any) -> bool:

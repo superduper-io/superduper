@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 from superduperdb import CFG
 from superduperdb.jobs.job import FunctionJob
-from superduperdb.container.listener import Listener
+from superduperdb.components.listener import Listener
 from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.db.mongodb.query import Collection
 

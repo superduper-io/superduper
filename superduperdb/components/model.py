@@ -13,12 +13,12 @@ from sklearn.pipeline import Pipeline
 
 import superduperdb as s
 from superduperdb.base.artifact import Artifact
-from superduperdb.container.component import Component
-from superduperdb.container.dataset import Dataset
-from superduperdb.container.encoder import Encoder
+from superduperdb.components.component import Component
+from superduperdb.components.dataset import Dataset
+from superduperdb.components.encoder import Encoder
 from superduperdb.jobs.job import ComponentJob, Job
-from superduperdb.container.metric import Metric
-from superduperdb.container.schema import Schema
+from superduperdb.components.metric import Metric
+from superduperdb.components.schema import Schema
 from superduperdb.base.serializable import Serializable
 from superduperdb.db.base.query import CompoundSelect, Select
 from superduperdb.db.ibis.field_types import FieldType
@@ -263,7 +263,7 @@ class PredictMixin:
         dependencies: t.Sequence[Job] = (),
         **kwargs,
     ):
-        from superduperdb.container.listener import Listener
+        from superduperdb.components.listener import Listener
 
         return db.add(
             Listener(

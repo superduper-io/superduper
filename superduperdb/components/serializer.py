@@ -1,7 +1,7 @@
 import dataclasses as dc
 import typing as t
 
-from superduperdb.container.component import Component
+from superduperdb.components.component import Component
 from superduperdb.misc.serialization import serializers
 
 if t.TYPE_CHECKING:

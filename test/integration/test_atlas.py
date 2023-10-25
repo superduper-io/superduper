@@ -8,9 +8,9 @@ import pytest
 import superduperdb as s
 from superduperdb import superduper
 from superduperdb.base.document import Document
-from superduperdb.container.listener import Listener
-from superduperdb.container.model import Model
-from superduperdb.container.vector_index import VectorIndex
+from superduperdb.components.listener import Listener
+from superduperdb.components.model import Model
+from superduperdb.components.vector_index import VectorIndex
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.vector.encoder import vector
 

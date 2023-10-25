@@ -13,11 +13,11 @@ from dask.distributed import Future
 import superduperdb as s
 from superduperdb.base.logger import logging
 from superduperdb.base import serializable
-from superduperdb.container.component import Component
+from superduperdb.components.component import Component
 from superduperdb.base.document import Document
-from superduperdb.container.encoder import Encodable, Encoder
+from superduperdb.components.encoder import Encodable, Encoder
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
-from superduperdb.container.model import Model
+from superduperdb.components.model import Model
 from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.db.base.backends import vector_searcher_implementations
 from superduperdb.misc.download import Downloader, gather_uris

@@ -4,8 +4,8 @@ import bson
 from bson.objectid import ObjectId
 
 from superduperdb import CFG
-from superduperdb.container.encoder import Encodable, Encoder
-from superduperdb.container.schema import Schema
+from superduperdb.components.encoder import Encodable, Encoder
+from superduperdb.components.schema import Schema
 from superduperdb.misc.files import get_file_from_uri
 
 ContentType = t.Union[t.Dict, Encodable]

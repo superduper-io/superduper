@@ -1,7 +1,7 @@
 import pytest
 
 from superduperdb.base.document import Document
-from superduperdb.container.model import Model
+from superduperdb.components.model import Model
 from superduperdb.db.mongodb.query import Collection
 
 

@@ -8,7 +8,7 @@ import numpy
 from overrides import override
 
 from superduperdb.base.artifact import Artifact
-from superduperdb.container.component import Component
+from superduperdb.components.component import Component
 from superduperdb.base.document import Document
 from superduperdb.db.mongodb.query import Select
 

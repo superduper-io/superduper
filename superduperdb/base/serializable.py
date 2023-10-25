@@ -58,7 +58,7 @@ def _serialize(item: t.Any) -> t.Dict[str, t.Any]:
 
     d = {k: unpack(k, v) for k, v in item.dict().items()}
 
-    from superduperdb.container.component import Component
+    from superduperdb.components.component import Component
 
     to_add = {}
     if isinstance(item, Component):

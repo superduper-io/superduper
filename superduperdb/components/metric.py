@@ -2,7 +2,7 @@ import dataclasses as dc
 import typing as t
 
 from superduperdb.base.artifact import Artifact
-from superduperdb.container.component import Component
+from superduperdb.components.component import Component
 
 
 @dc.dataclass

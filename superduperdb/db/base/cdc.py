@@ -333,7 +333,7 @@ class DatabaseChangeDataCapture:
 
         listeners = self.db.show('listeners')
         if listeners:
-            from superduperdb.container.listener import Listener
+            from superduperdb.components.listener import Listener
 
             for listener in listeners:
                 listener = db.load(identifier=listener, type_id='listener')

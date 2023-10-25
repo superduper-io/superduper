@@ -3,7 +3,7 @@ import typing as t
 
 from superduperdb import CFG
 from superduperdb.base.document import Document
-from superduperdb.container.encoder import Encoder
+from superduperdb.components.encoder import Encoder
 from superduperdb.misc.files import load_uris
 from superduperdb.misc.special_dicts import MongoStyleDict
 

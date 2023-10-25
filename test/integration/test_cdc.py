@@ -11,7 +11,7 @@ except ImportError:
     torch = None
 
 from superduperdb.base.document import Document
-from superduperdb.container.listener import Listener
+from superduperdb.components.listener import Listener
 from superduperdb.db.mongodb.query import Collection
 
 RETRY_TIMEOUT = 1

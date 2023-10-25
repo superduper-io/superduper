@@ -1,7 +1,7 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduperdb.container.model import Model
+from superduperdb.components.model import Model
 
 
 class BaseDataBackend(ABC):

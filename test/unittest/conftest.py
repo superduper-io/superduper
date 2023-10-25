@@ -16,11 +16,11 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.container.dataset import Dataset
+from superduperdb.components.dataset import Dataset
 from superduperdb.base.document import Document
-from superduperdb.container.listener import Listener
-from superduperdb.container.metric import Metric
-from superduperdb.container.vector_index import VectorIndex
+from superduperdb.components.listener import Listener
+from superduperdb.components.metric import Metric
+from superduperdb.components.vector_index import VectorIndex
 from superduperdb.base.db import DB
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.numpy.array import array

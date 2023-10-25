@@ -1,4 +1,4 @@
-from superduperdb.container import vector_index
+from superduperdb.components import vector_index
 
 
 def test_ibatch():

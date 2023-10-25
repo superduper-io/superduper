@@ -1,8 +1,8 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from superduperdb.container.artifact import Artifact
-from superduperdb.data.tree.tree import tree_find, tree_rewrite
+from superduperdb.base.artifact import Artifact
+from superduperdb.misc.tree import tree_find, tree_rewrite
 from superduperdb.misc.serialization import Info, serializers
 
 if t.TYPE_CHECKING:

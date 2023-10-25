@@ -3,7 +3,7 @@ import typing as t
 
 from ibis.expr.datatypes import DataType, dtype as _dtype
 
-from superduperdb.container.serializable import Serializable
+from superduperdb.base.serializable import Serializable
 
 
 @dc.dataclass

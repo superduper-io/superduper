@@ -5,7 +5,7 @@ from superduperdb.container.component import Component
 from superduperdb.misc.serialization import serializers
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.db import DB
+    from superduperdb.base.db import DB
 
 
 @dc.dataclass

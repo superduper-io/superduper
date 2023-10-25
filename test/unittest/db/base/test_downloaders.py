@@ -5,8 +5,8 @@ import pytest
 import tdir
 
 from superduperdb import CFG
-from superduperdb.container.document import Document
-from superduperdb.db.base.download import Fetcher
+from superduperdb.base.document import Document
+from superduperdb.misc.download import Fetcher
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.pillow.image import pil_image
 

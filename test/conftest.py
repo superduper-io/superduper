@@ -9,7 +9,7 @@ import pytest
 from tenacity import Retrying, stop_after_delay
 
 import superduperdb as s
-from superduperdb.db.base.db import DB
+from superduperdb.base.db import DB
 from superduperdb.misc import superduper
 
 _sleep = time.sleep
@@ -67,7 +67,7 @@ def patch_mongomock(monkeypatch):
 @pytest.fixture
 def test_db() -> Iterator[DB]:
     from superduperdb import CFG
-    from superduperdb.db.base.build import build_datalayer
+    from superduperdb.base.build import build_datalayer
 
     CFG.data_backend = (
         'mongodb://testmongodbuser:testmongodbpassword@localhost:27018/test_db'

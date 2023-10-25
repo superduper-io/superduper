@@ -41,8 +41,8 @@ from superduperdb.misc.runnable.queue_chunker import QueueChunker
 from superduperdb.misc.runnable.runnable import Event
 
 if t.TYPE_CHECKING:
-    from superduperdb.container.serializable import Serializable
-    from superduperdb.db.base.db import DB
+    from superduperdb.base.serializable import Serializable
+    from superduperdb.base.db import DB
     from superduperdb.db.base.query import TableOrCollection
 
 

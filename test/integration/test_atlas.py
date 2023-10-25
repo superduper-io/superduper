@@ -7,7 +7,7 @@ import pytest
 
 import superduperdb as s
 from superduperdb import superduper
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.container.model import Model
 from superduperdb.container.vector_index import VectorIndex

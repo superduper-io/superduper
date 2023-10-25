@@ -12,21 +12,21 @@ from numpy import ndarray
 from sklearn.pipeline import Pipeline
 
 import superduperdb as s
-from superduperdb.container.artifact import Artifact
+from superduperdb.base.artifact import Artifact
 from superduperdb.container.component import Component
 from superduperdb.container.dataset import Dataset
 from superduperdb.container.encoder import Encoder
-from superduperdb.container.job import ComponentJob, Job
+from superduperdb.jobs.job import ComponentJob, Job
 from superduperdb.container.metric import Metric
 from superduperdb.container.schema import Schema
-from superduperdb.container.serializable import Serializable
+from superduperdb.base.serializable import Serializable
 from superduperdb.db.base.query import CompoundSelect, Select
 from superduperdb.db.ibis.field_types import FieldType
 from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.db import DB
+    from superduperdb.base.db import DB
 
 EncoderArg = t.Union[Encoder, FieldType, str, None]
 ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]

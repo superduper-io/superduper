@@ -20,7 +20,7 @@ def superduper(item: t.Any, **kwargs) -> t.Any:
 
 
 def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
-    from superduperdb.db.base.build import build_datalayer
+    from superduperdb.base.build import build_datalayer
 
     # cfg = copy.deepcopy(CFG)
     if item.startswith('mongomock://'):
@@ -91,7 +91,7 @@ class MongoDbTyper(_DuckTyper):
         from mongomock.database import Database as MockDatabase
         from pymongo.database import Database
 
-        from superduperdb.db.base.db import DB
+        from superduperdb.base.db import DB
         from superduperdb.db.mongodb.data_backend import MongoDataBackend
 
         if kwargs:

@@ -6,9 +6,9 @@ from overrides import override
 
 import superduperdb as s
 from superduperdb.container.component import Component
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 from superduperdb.container.listener import Listener
-from superduperdb.db.base.db import DB
+from superduperdb.base.db import DB
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 

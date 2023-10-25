@@ -8,8 +8,8 @@ from cohere.error import CohereAPIError, CohereConnectionError
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.model import PredictMixin
+from superduperdb.components.vector_index import vector
 from superduperdb.ext.utils import format_prompt, get_key
-from superduperdb.ext.vector.encoder import vector
 from superduperdb.misc.retry import Retry
 
 retry = Retry(exception_types=(CohereAPIError, CohereConnectionError))

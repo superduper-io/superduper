@@ -2,8 +2,8 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from superduperdb.base.artifact import Artifact
-from superduperdb.misc.tree import tree_find, tree_rewrite
 from superduperdb.misc.serialization import Info, serializers
+from superduperdb.misc.tree import tree_find, tree_rewrite
 
 if t.TYPE_CHECKING:
     from superduperdb.components.component import Component
@@ -147,6 +147,8 @@ class ArtifactStore(ABC, ArtifactStoreMixin):
     def drop(self, force: bool = False):
         """
         Drop the artifact store.
+
+        :param force: If ``True``, don't ask for confirmation
         """
         pass
 
@@ -161,10 +163,20 @@ class ArtifactStore(ABC, ArtifactStoreMixin):
 
     @abstractmethod
     def save_artifact(self, serialized: bytes) -> t.Any:
+        """
+        Save serialized object in the artifact store.
+
+        :param serialized: Serialized object
+        """
         pass
 
     @abstractmethod
     def load_bytes(self, file_id: str) -> bytes:
+        """
+        Load bytes from artifact store.
+
+        :param file_id: Identifier of artifact in the store
+        """
         pass
 
     def load_artifact(self, file_id: str, serializer: str, info: Info = None) -> t.Any:

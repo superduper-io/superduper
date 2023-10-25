@@ -15,7 +15,7 @@ import superduperdb as s
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.model import PredictMixin
-from superduperdb.ext.vector.encoder import vector
+from superduperdb.components.vector_index import vector
 from superduperdb.misc.compat import cache
 from superduperdb.misc.retry import Retry
 

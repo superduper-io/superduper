@@ -5,10 +5,10 @@ import pytest
 import tdir
 
 from superduperdb import CFG
-from superduperdb.base.document import Document
-from superduperdb.misc.download import Fetcher
 from superduperdb.backends.mongodb.query import Collection
-from superduperdb.ext.pillow.image import pil_image
+from superduperdb.base.document import Document
+from superduperdb.ext.pillow.encoder import pil_image
+from superduperdb.misc.download import Fetcher
 
 remote = os.environ.get('SDDB_REMOTE_TEST', 'local')
 

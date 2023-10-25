@@ -1,7 +1,7 @@
 import dataclasses as dc
 
-from superduperdb.base.document import Document
 from superduperdb.base.cursor import SuperDuperCursor
+from superduperdb.base.document import Document
 
 
 class IbisDocument(Document):

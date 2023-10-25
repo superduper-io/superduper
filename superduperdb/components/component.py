@@ -7,13 +7,13 @@ from __future__ import annotations
 
 import typing as t
 
-from superduperdb.jobs.job import ComponentJob, Job
-from superduperdb.base.serializable import Serializable
 from superduperdb.backends.base.artifact import ArtifactStore
+from superduperdb.base.serializable import Serializable
+from superduperdb.jobs.job import ComponentJob, Job
 
 if t.TYPE_CHECKING:
-    from superduperdb.components.dataset import Dataset
     from superduperdb.base.datalayer import Datalayer
+    from superduperdb.components.dataset import Dataset
 
 
 class Component(Serializable):

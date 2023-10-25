@@ -4,12 +4,12 @@ import typing as t
 import numpy
 from tqdm import tqdm
 
-from superduperdb.base.artifact import Artifact
-from superduperdb.components.metric import Metric
-from superduperdb.components.model import Model, _TrainingConfiguration
-from superduperdb.base.datalayer import Datalayer
 from superduperdb.backends.base.query import Select
 from superduperdb.backends.query_dataset import QueryDataset
+from superduperdb.base.artifact import Artifact
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.components.metric import Metric
+from superduperdb.components.model import Model, _TrainingConfiguration
 
 
 def _get_data_from_query(

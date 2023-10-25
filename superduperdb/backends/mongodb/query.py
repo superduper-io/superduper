@@ -8,8 +8,6 @@ from bson import ObjectId
 from pymongo import InsertOne as _InsertOne, UpdateOne as _UpdateOne
 
 from superduperdb import CFG
-from superduperdb.base.document import Document
-from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.backends.base.query import (
     CompoundSelect,
     Delete,
@@ -23,6 +21,8 @@ from superduperdb.backends.base.query import (
     TableOrCollection,
     Update,
 )
+from superduperdb.base.cursor import SuperDuperCursor
+from superduperdb.base.document import Document
 
 
 class FindOne(QueryComponent):

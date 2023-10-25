@@ -6,8 +6,8 @@ from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, Str
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
-from superduperdb.base.logger import logging
 from superduperdb.backends.base.metadata import MetaDataStore
+from superduperdb.base.logger import logging
 from superduperdb.misc.colors import Colors
 
 Base = declarative_base()

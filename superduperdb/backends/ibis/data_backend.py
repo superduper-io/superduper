@@ -4,11 +4,11 @@ import ibis
 import pandas
 from ibis.backends.base import BaseBackend
 
-from superduperdb.components.model import Model
-from superduperdb.components.schema import Schema
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import IbisTable
+from superduperdb.components.model import Model
+from superduperdb.components.schema import Schema
 
 
 class IbisDataBackend(BaseDataBackend):

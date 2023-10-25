@@ -5,8 +5,8 @@ import uuid
 
 import click
 
-from superduperdb.base.logger import logging
 from superduperdb.backends.base.artifact import ArtifactStore
+from superduperdb.base.logger import logging
 from superduperdb.misc.colors import Colors
 
 

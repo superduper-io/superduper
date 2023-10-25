@@ -7,8 +7,8 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.components.metric import Metric
 from superduperdb.backends.mongodb.query import Collection
+from superduperdb.components.metric import Metric
 
 
 class ToDict:

@@ -6,8 +6,8 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.base.document import Document
 from superduperdb.backends.mongodb.query import Collection
+from superduperdb.base.document import Document
 
 from .test_database import IMAGE_URL
 

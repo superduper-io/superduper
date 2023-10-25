@@ -7,10 +7,10 @@ import click
 import pymongo
 
 from superduperdb import logging
-from superduperdb.base.serializable import Serializable
 from superduperdb.backends.base.data_backend import BaseDataBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
+from superduperdb.base.serializable import Serializable
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
 
@@ -40,7 +40,9 @@ class MongoDataBackend(BaseDataBackend):
         from mongomock import MongoClient as MockClient
 
         if isinstance(self.conn, MockClient):
-            from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
+            from superduperdb.backends.filesystem.artifacts import (
+                FileSystemArtifactStore,
+            )
 
             os.makedirs(f'/tmp/{self.name}', exist_ok=True)
             return FileSystemArtifactStore(f'/tmp/{self.name}')

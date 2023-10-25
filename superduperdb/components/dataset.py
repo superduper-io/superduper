@@ -7,10 +7,10 @@ from functools import cached_property
 import numpy
 from overrides import override
 
-from superduperdb.base.artifact import Artifact
-from superduperdb.components.component import Component
-from superduperdb.base.document import Document
 from superduperdb.backends.mongodb.query import Select
+from superduperdb.base.artifact import Artifact
+from superduperdb.base.document import Document
+from superduperdb.components.component import Component
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer

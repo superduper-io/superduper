@@ -2,8 +2,8 @@ from superduperdb.base.document import Document
 
 
 def test_execute_insert_and_find(empty):
-    from superduperdb.base.document import Document
     from superduperdb.backends.mongodb.query import Collection
+    from superduperdb.base.document import Document
 
     collection = Collection('documents')
     collection.insert_many([Document({'this': 'is a test'})]).execute(empty)
@@ -12,8 +12,8 @@ def test_execute_insert_and_find(empty):
 
 
 def test_execute_complex_query(empty):
-    from superduperdb.base.document import Document
     from superduperdb.backends.mongodb.query import Collection
+    from superduperdb.base.document import Document
 
     collection = Collection('documents')
     collection.insert_many(

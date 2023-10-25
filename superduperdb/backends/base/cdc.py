@@ -41,9 +41,9 @@ from superduperdb.misc.runnable.queue_chunker import QueueChunker
 from superduperdb.misc.runnable.runnable import Event
 
 if t.TYPE_CHECKING:
-    from superduperdb.base.serializable import Serializable
-    from superduperdb.base.datalayer import Datalayer
     from superduperdb.backends.base.query import TableOrCollection
+    from superduperdb.base.datalayer import Datalayer
+    from superduperdb.base.serializable import Serializable
 
 
 class DBEvent(str, Enum):

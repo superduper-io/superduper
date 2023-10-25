@@ -3,11 +3,11 @@ import typing as t
 
 from overrides import override
 
-from superduperdb.base.datalayer import Datalayer
 from superduperdb.backends.base.query import CompoundSelect
+from superduperdb.base.datalayer import Datalayer
 
-from .component import Component
 from ..jobs.job import Job
+from .component import Component
 from .model import Model
 
 

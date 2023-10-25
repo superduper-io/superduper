@@ -11,20 +11,20 @@ try:
 
     import torch
 
+    from superduperdb.ext.torch.encoder import tensor
     from superduperdb.ext.torch.model import TorchModel
-    from superduperdb.ext.torch.tensor import tensor
 except ImportError:
     torch = None
 
-from superduperdb.components.dataset import Dataset
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
+from superduperdb.components.dataset import Dataset
 from superduperdb.components.listener import Listener
 from superduperdb.components.metric import Metric
 from superduperdb.components.vector_index import VectorIndex
-from superduperdb.base.datalayer import Datalayer
-from superduperdb.backends.mongodb.query import Collection
-from superduperdb.ext.numpy.array import array
-from superduperdb.ext.pillow.image import pil_image
+from superduperdb.ext.numpy.encoder import array
+from superduperdb.ext.pillow.encoder import pil_image
 
 n_data_points = 250
 

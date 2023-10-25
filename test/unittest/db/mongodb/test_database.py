@@ -4,19 +4,19 @@ import pytest
 try:
     import torch
 
+    from superduperdb.ext.torch.encoder import tensor
     from superduperdb.ext.torch.model import TorchModel
-    from superduperdb.ext.torch.tensor import tensor
 except ImportError:
     torch = None
 
 from pathlib import Path
 
-from superduperdb.components.dataset import Dataset
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
+from superduperdb.base.exceptions import ComponentInUseError, ComponentInUseWarning
+from superduperdb.components.dataset import Dataset
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.listener import Listener
-from superduperdb.base.exceptions import ComponentInUseError, ComponentInUseWarning
-from superduperdb.backends.mongodb.query import Collection
 
 n_data_points = 250
 

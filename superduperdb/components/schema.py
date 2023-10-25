@@ -2,9 +2,9 @@ import dataclasses as dc
 import typing as t
 from functools import cached_property
 
+from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
-from superduperdb.backends.ibis.field_types import dtype
 
 
 @dc.dataclass

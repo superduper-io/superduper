@@ -5,14 +5,14 @@ import pytest
 try:
     import torch
 
+    from superduperdb.ext.torch.encoder import tensor
     from superduperdb.ext.torch.model import TorchModel
-    from superduperdb.ext.torch.tensor import tensor
 except ImportError:
     torch = None
 
 from superduperdb import CFG
-from superduperdb.base.document import Document
 from superduperdb.backends.mongodb.query import Collection
+from superduperdb.base.document import Document
 from superduperdb.server.client import Client
 from superduperdb.server.server import make_flask_app
 

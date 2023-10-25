@@ -11,30 +11,30 @@ import tqdm
 from dask.distributed import Future
 
 import superduperdb as s
-from superduperdb.base.logger import logging
-from superduperdb.base import serializable
-from superduperdb.components.component import Component
-from superduperdb.base.document import Document
-from superduperdb.components.encoder import Encodable, Encoder
-from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
-from superduperdb.components.model import Model
-from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.backends.base.backends import vector_searcher_implementations
-from superduperdb.misc.download import Downloader, gather_uris
+from superduperdb.base import serializable
+from superduperdb.base.document import Document
+from superduperdb.base.logger import logging
+from superduperdb.components.component import Component
+from superduperdb.components.encoder import Encodable, Encoder
+from superduperdb.components.model import Model
+from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
+from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.data import ibatch
+from superduperdb.misc.download import Downloader, gather_uris
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
 
 from ..backends.base.artifact import ArtifactStore
 from ..backends.base.cdc import DatabaseChangeDataCapture
-from .cursor import SuperDuperCursor
 from ..backends.base.data_backend import BaseDataBackend
-from ..misc.download import download_content
-from .exceptions import ComponentInUseError, ComponentInUseWarning
 from ..backends.base.metadata import MetaDataStore
 from ..backends.base.query import Delete, Insert, Select, Update
+from ..misc.download import download_content
+from .cursor import SuperDuperCursor
+from .exceptions import ComponentInUseError, ComponentInUseWarning
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -546,8 +546,8 @@ class Datalayer:
         """
         Load component using uniquely identifying information.
 
-        :param type_id: type_id of component to remove ['encoder', 'model', 'listener',
-                        'training_configuration', 'learning_task', 'vector_index']
+        :param type_id: type_id of component to remove
+                        ['encoder', 'model', 'listener', ...]
         :param identifier: identifier of component (see `container.base.Component`)
         :param version: [optional] numerical version
         :param allow_hidden: toggle to ``True`` to allow loading of deprecated

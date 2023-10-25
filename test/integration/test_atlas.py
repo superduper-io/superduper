@@ -7,12 +7,11 @@ import pytest
 
 import superduperdb as s
 from superduperdb import superduper
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import Model
-from superduperdb.components.vector_index import VectorIndex
-from superduperdb.backends.mongodb.query import Collection
-from superduperdb.ext.vector.encoder import vector
+from superduperdb.components.vector_index import VectorIndex, vector
 
 ATLAS_VECTOR_URI = os.environ.get('ATLAS_VECTOR_URI')
 

@@ -4,10 +4,10 @@ import openai
 import pytest
 import vcr
 
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
-from superduperdb.backends.mongodb.query import Collection
 from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 
 CASSETTE_DIR = 'test/unittest/model/cassettes'

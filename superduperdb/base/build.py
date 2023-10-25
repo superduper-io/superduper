@@ -5,9 +5,9 @@ import pymongo
 
 import superduperdb as s
 from superduperdb.backends.base.backends import data_backends, metadata_stores
-from superduperdb.base.datalayer import Datalayer
 from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
+from superduperdb.base.datalayer import Datalayer
 from superduperdb.server.dask_client import dask_client
 
 

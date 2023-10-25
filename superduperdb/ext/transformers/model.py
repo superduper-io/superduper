@@ -14,12 +14,12 @@ from transformers import (
     pipeline as _pipeline,
 )
 
-from superduperdb.base.artifact import Artifact
-from superduperdb.components.metric import Metric
-from superduperdb.components.model import Model, _TrainingConfiguration
-from superduperdb.base.datalayer import Datalayer
 from superduperdb.backends.base.query import Select
 from superduperdb.backends.query_dataset import query_dataset_factory
+from superduperdb.base.artifact import Artifact
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.components.metric import Metric
+from superduperdb.components.model import Model, _TrainingConfiguration
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 _DEFAULT_PREFETCH_SIZE: int = 100

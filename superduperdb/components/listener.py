@@ -3,8 +3,8 @@ import typing as t
 
 from overrides import override
 
-from superduperdb.base.db import DB
-from superduperdb.db.base.query import CompoundSelect
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.backends.base.query import CompoundSelect
 
 from .component import Component
 from ..jobs.job import Job
@@ -44,7 +44,7 @@ class Listener(Component):
         return [('model', 'model')]
 
     @override
-    def on_create(self, db: DB) -> None:
+    def on_create(self, db: Datalayer) -> None:
         if isinstance(self.model, str):
             self.model = t.cast(Model, db.load('model', self.model))
 
@@ -81,7 +81,7 @@ class Listener(Component):
     @override
     def schedule_jobs(
         self,
-        database: DB,
+        database: Datalayer,
         dependencies: t.Sequence[Job] = (),
         distributed: bool = False,
         verbose: bool = False,
@@ -107,7 +107,7 @@ class Listener(Component):
             **(self.predict_kwargs or {}),
         )
 
-    def cleanup(self, database: DB) -> None:
+    def cleanup(self, database: Datalayer) -> None:
         """Clean up when the listener is deleted
 
         :param database: The DB instance to process

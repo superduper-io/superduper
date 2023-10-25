@@ -20,13 +20,13 @@ from superduperdb.jobs.job import ComponentJob, Job
 from superduperdb.components.metric import Metric
 from superduperdb.components.schema import Schema
 from superduperdb.base.serializable import Serializable
-from superduperdb.db.base.query import CompoundSelect, Select
-from superduperdb.db.ibis.field_types import FieldType
-from superduperdb.db.query_dataset import QueryDataset
+from superduperdb.backends.base.query import CompoundSelect, Select
+from superduperdb.backends.ibis.field_types import FieldType
+from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
-    from superduperdb.base.db import DB
+    from superduperdb.base.datalayer import Datalayer
 
 EncoderArg = t.Union[Encoder, FieldType, str, None]
 ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
@@ -170,7 +170,7 @@ class PredictMixin:
     def predict(
         self,
         X: t.Any,
-        db: t.Optional[DB] = None,
+        db: t.Optional[Datalayer] = None,
         select: t.Optional[Select] = None,
         distributed: t.Optional[bool] = None,
         ids: t.Optional[t.List[str]] = None,
@@ -257,7 +257,7 @@ class PredictMixin:
         self,
         X: t.Any,
         select: CompoundSelect,
-        db: DB,
+        db: Datalayer,
         in_memory: bool = True,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.Sequence[Job] = (),
@@ -283,7 +283,7 @@ class PredictMixin:
         self,
         X: t.Any,
         select: Select,
-        db: DB,
+        db: Datalayer,
         max_chunk_size: t.Optional[int] = None,
         in_memory: bool = True,
         overwrite: bool = False,
@@ -311,7 +311,7 @@ class PredictMixin:
     def _predict_with_select_and_ids(
         self,
         X: t.Any,
-        db: DB,
+        db: Datalayer,
         select: Select,
         ids: t.List[str],
         in_memory: bool = True,
@@ -453,7 +453,7 @@ class Model(Component, PredictMixin):
         if self.model_to_device_method is not None:
             self._artifact_method = getattr(self, self.model_to_device_method)
 
-    def on_load(self, db: DB) -> None:
+    def on_load(self, db: Datalayer) -> None:
         if self._artifact_method and self.preferred_devices:
             for i, device in enumerate(self.preferred_devices):
                 try:
@@ -509,7 +509,7 @@ class Model(Component, PredictMixin):
             value=self.metric_values,
         )
 
-    def on_create(self, db: DB):
+    def on_create(self, db: Datalayer):
         if isinstance(self.encoder, str):
             self.encoder = db.load('encoder', self.encoder)  # type: ignore[assignment]
         # TODO: check if output table should be created
@@ -518,7 +518,7 @@ class Model(Component, PredictMixin):
             db.add(output_component)
 
     def _validate(
-        self, db: DB, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
+        self, db: Datalayer, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
     ):
         if isinstance(validation_set, str):
             validation_set = t.cast(Dataset, db.load('dataset', validation_set))
@@ -563,7 +563,7 @@ class Model(Component, PredictMixin):
         y: t.Any = None,
         configuration: t.Optional[_TrainingConfiguration] = None,
         data_prefetch: bool = False,
-        db: t.Optional[DB] = None,
+        db: t.Optional[Datalayer] = None,
         dependencies: t.Sequence[Job] = (),
         metrics: t.Optional[t.Sequence[Metric]] = None,
         select: t.Optional[Select] = None,
@@ -577,7 +577,7 @@ class Model(Component, PredictMixin):
         y: t.Any = None,
         configuration: t.Optional[_TrainingConfiguration] = None,
         data_prefetch: bool = False,
-        db: t.Optional[DB] = None,
+        db: t.Optional[Datalayer] = None,
         dependencies: t.Sequence[Job] = (),
         distributed: t.Optional[bool] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,

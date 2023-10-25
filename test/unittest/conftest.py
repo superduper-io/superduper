@@ -21,8 +21,8 @@ from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.metric import Metric
 from superduperdb.components.vector_index import VectorIndex
-from superduperdb.base.db import DB
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.ext.numpy.array import array
 from superduperdb.ext.pillow.image import pil_image
 
@@ -30,7 +30,7 @@ n_data_points = 250
 
 
 @pytest.fixture()
-def empty(test_db: DB):
+def empty(test_db: Datalayer):
     yield test_db
 
 

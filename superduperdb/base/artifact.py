@@ -6,7 +6,7 @@ import typing_extensions as te
 from superduperdb.misc.serialization import Info, serializers
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.artifact import ArtifactStore
+    from superduperdb.backends.base.artifact import ArtifactStore
 
 ArtifactCache = t.Dict[int, t.Any]
 

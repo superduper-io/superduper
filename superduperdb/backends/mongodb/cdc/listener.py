@@ -7,14 +7,14 @@ from enum import Enum
 from pymongo.change_stream import CollectionChangeStream
 
 from superduperdb import logging
-from superduperdb.db.base import cdc
-from superduperdb.db.mongodb import query
+from superduperdb.backends.base import cdc
+from superduperdb.backends.mongodb import query
 from superduperdb.misc.runnable.runnable import Event
 
 from .base import CachedTokens, TokenType
 
 if t.TYPE_CHECKING:
-    from superduperdb.base.db import DB
+    from superduperdb.base.datalayer import Datalayer
 
 MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
 
@@ -82,7 +82,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
 
     def __init__(
         self,
-        db: 'DB',
+        db: 'Datalayer',
         on: query.Collection,
         stop_event: Event,
         identifier: 'str' = '',
@@ -112,7 +112,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         )
 
     def on_create(
-        self, ids: t.Sequence, db: 'DB', collection: query.Collection
+        self, ids: t.Sequence, db: 'Datalayer', collection: query.Collection
     ) -> None:
         """on_create.
         A helper on create event handler which handles inserted document in the
@@ -131,7 +131,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         )
 
     def on_update(
-        self, ids: t.Sequence, db: 'DB', collection: query.Collection
+        self, ids: t.Sequence, db: 'Datalayer', collection: query.Collection
     ) -> None:
         """on_update.
 
@@ -150,7 +150,7 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         )
 
     def on_delete(
-        self, ids: t.Sequence, db: 'DB', collection: query.Collection
+        self, ids: t.Sequence, db: 'Datalayer', collection: query.Collection
     ) -> None:
         """on_delete.
 

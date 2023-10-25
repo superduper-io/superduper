@@ -10,10 +10,10 @@ from overrides import override
 from superduperdb.base.artifact import Artifact
 from superduperdb.components.component import Component
 from superduperdb.base.document import Document
-from superduperdb.db.mongodb.query import Select
+from superduperdb.backends.mongodb.query import Select
 
 if t.TYPE_CHECKING:
-    from superduperdb.base.db import DB
+    from superduperdb.base.datalayer import Datalayer
 
 
 @dc.dataclass
@@ -40,7 +40,7 @@ class Dataset(Component):
     type_id: t.ClassVar[str] = 'dataset'
 
     @override
-    def on_create(self, db: DB) -> None:
+    def on_create(self, db: Datalayer) -> None:
         if self.raw_data is None:
             if self.select is None:
                 raise ValueError('select cannot be None')
@@ -51,7 +51,7 @@ class Dataset(Component):
             self.raw_data = Artifact(artifact=[r.encode() for r in data])
 
     @override
-    def on_load(self, db: DB) -> None:
+    def on_load(self, db: Datalayer) -> None:
         assert isinstance(self.raw_data, Artifact)
         self.data = [
             Document(Document.decode(r.copy(), encoders=db.encoders))

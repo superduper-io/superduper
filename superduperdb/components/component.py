@@ -9,11 +9,11 @@ import typing as t
 
 from superduperdb.jobs.job import ComponentJob, Job
 from superduperdb.base.serializable import Serializable
-from superduperdb.db.base.artifact import ArtifactStore
+from superduperdb.backends.base.artifact import ArtifactStore
 
 if t.TYPE_CHECKING:
     from superduperdb.components.dataset import Dataset
-    from superduperdb.base.db import DB
+    from superduperdb.base.datalayer import Datalayer
 
 
 class Component(Serializable):
@@ -27,14 +27,14 @@ class Component(Serializable):
         identifier: t.Optional[str]
         version: t.Optional[int]
 
-    def on_create(self, db: DB) -> None:
+    def on_create(self, db: Datalayer) -> None:
         """Called the first time this component is created
 
         :param db: the db that creates the component
         """
         assert db
 
-    def on_load(self, db: DB) -> None:
+    def on_load(self, db: Datalayer) -> None:
         """Called when this component is loaded from the data store
 
         :param db: the db that loaded the component
@@ -76,7 +76,7 @@ class Component(Serializable):
 
     def schedule_jobs(
         self,
-        database: DB,
+        database: Datalayer,
         dependencies: t.Sequence[Job] = (),
         distributed: bool = False,
         verbose: bool = False,

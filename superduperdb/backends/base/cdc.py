@@ -42,8 +42,8 @@ from superduperdb.misc.runnable.runnable import Event
 
 if t.TYPE_CHECKING:
     from superduperdb.base.serializable import Serializable
-    from superduperdb.base.db import DB
-    from superduperdb.db.base.query import TableOrCollection
+    from superduperdb.base.datalayer import Datalayer
+    from superduperdb.backends.base.query import TableOrCollection
 
 
 class DBEvent(str, Enum):
@@ -92,7 +92,7 @@ class BaseDatabaseListener(ABC):
 
     def __init__(
         self,
-        db: 'DB',
+        db: 'Datalayer',
         on: 'TableOrCollection',
         stop_event: Event,
         identifier: 'str' = '',
@@ -108,8 +108,8 @@ class BaseDatabaseListener(ABC):
         self.timeout = timeout
         self.db_type = None
 
-        from superduperdb.db.base import backends
-        from superduperdb.db.mongodb.cdc.base import MongoDBPacket
+        from superduperdb.backends.base import backends
+        from superduperdb.backends.mongodb.cdc.base import MongoDBPacket
 
         if isinstance(self.db.databackend, backends.MongoDataBackend):
             self.db_type = 'mongodb'
@@ -178,7 +178,7 @@ class BaseDatabaseListener(ABC):
     def create_event(
         self,
         ids: t.Sequence,
-        db: 'DB',
+        db: 'Datalayer',
         table_or_collection: 'TableOrCollection',
         event: DBEvent,
     ):
@@ -247,7 +247,7 @@ class CDCHandler(threading.Thread):
     does post model executiong jobs, i.e `copy_vectors`.
     """
 
-    def __init__(self, db: 'DB', stop_event: Event, queue):
+    def __init__(self, db: 'Datalayer', stop_event: Event, queue):
         """__init__.
 
         :param db: a superduperdb instance.
@@ -302,7 +302,7 @@ class DatabaseListenerFactory(t.Generic[DBListenerType]):
         stop_event = Event()
         kwargs['stop_event'] = stop_event
         if self.db_type == 'mongodb':
-            from superduperdb.db.mongodb.cdc.listener import MongoDatabaseListener
+            from superduperdb.backends.mongodb.cdc.listener import MongoDatabaseListener
 
             listener = MongoDatabaseListener(*args, **kwargs)
             return t.cast(DBListenerType, listener)
@@ -322,7 +322,7 @@ class DatabaseChangeDataCapture:
     data modifications efficiently.
     """
 
-    def __init__(self, db: 'DB'):
+    def __init__(self, db: 'Datalayer'):
         self.db = db
         self._cdc_stop_event = Event()
         self.CDC_QUEUE: queue.Queue = queue.Queue()
@@ -369,7 +369,7 @@ class DatabaseChangeDataCapture:
         :param on: Which collection/table listener service this be invoked on?
         :param identifier: A identity given to the listener service.
         """
-        from superduperdb.db.base import backends
+        from superduperdb.backends.base import backends
 
         if isinstance(self.db.databackend, backends.MongoDataBackend):
             db_type = 'mongodb'

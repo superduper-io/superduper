@@ -9,7 +9,7 @@ import pytest
 from tenacity import Retrying, stop_after_delay
 
 import superduperdb as s
-from superduperdb.base.db import DB
+from superduperdb.base.datalayer import Datalayer
 from superduperdb.misc import superduper
 
 _sleep = time.sleep
@@ -53,7 +53,7 @@ def patch_mongomock(monkeypatch):
     import pymongo
     from mongomock import Collection, Database, MongoClient
 
-    from superduperdb.db.base.backends import CONNECTIONS
+    from superduperdb.backends.base.backends import CONNECTIONS
 
     monkeypatch.setattr(gridfs, 'Collection', Collection)
     monkeypatch.setattr(gridfs.grid_file, 'Collection', Collection)
@@ -65,7 +65,7 @@ def patch_mongomock(monkeypatch):
 
 
 @pytest.fixture
-def test_db() -> Iterator[DB]:
+def test_db() -> Iterator[Datalayer]:
     from superduperdb import CFG
     from superduperdb.base.build import build_datalayer
 

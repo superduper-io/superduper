@@ -2,7 +2,7 @@ import click
 import gridfs
 
 from superduperdb.base.logger import logging
-from superduperdb.db.base.artifact import ArtifactStore
+from superduperdb.backends.base.artifact import ArtifactStore
 from superduperdb.misc.colors import Colors
 
 

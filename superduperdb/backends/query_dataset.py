@@ -1,7 +1,7 @@
 import random
 import typing as t
 
-from superduperdb.db.base.query import Select
+from superduperdb.backends.base.query import Select
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 

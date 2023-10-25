@@ -14,7 +14,7 @@ from superduperdb.base.logger import logging
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.schema import Schema
-from superduperdb.db.base.query import (
+from superduperdb.backends.base.query import (
     CompoundSelect,
     Insert,
     Like,
@@ -24,13 +24,13 @@ from superduperdb.db.base.query import (
     TableOrCollection,
     _ReprMixin,
 )
-from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
+from superduperdb.backends.ibis.cursor import SuperDuperIbisCursor
 
 if t.TYPE_CHECKING:
     from superduperdb.base.document import Document
 
 if t.TYPE_CHECKING:
-    from superduperdb.base.db import DB
+    from superduperdb.base.datalayer import Datalayer
 
 PRIMARY_ID: str = 'id'
 
@@ -110,7 +110,7 @@ class IbisCompoundSelect(CompoundSelect):
             post_like=self.post_like,
         )
 
-    def compile(self, db: 'DB', tables: t.Optional[t.Dict] = None):
+    def compile(self, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
         """
         Convert the current query to an ``ibis`` native query.
 
@@ -292,7 +292,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         )
         return other_query
 
-    def compile(self, db: 'DB', tables: t.Optional[t.Dict] = None):
+    def compile(self, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
         table_id = self.table_or_collection.identifier
         if tables is None:
             tables = {}
@@ -333,7 +333,7 @@ class IbisTable(Component):
     version: t.Optional[int] = None
     type_id: t.ClassVar[str] = 'table'
 
-    def on_create(self, db: 'DB'):
+    def on_create(self, db: 'Datalayer'):
         assert self.schema is not None, "Schema must be set"
         for e in self.schema.encoders:
             db.add(e)
@@ -385,7 +385,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
 
     primary_id: str = 'id'
 
-    def compile(self, db: 'DB', tables: t.Optional[t.Dict] = None):
+    def compile(self, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
         if tables is None:
             tables = {}
         if self.identifier not in tables:
@@ -549,7 +549,7 @@ class IbisQueryComponent(QueryComponent):
             out = f' {lookup[match.groups()[0]]} {match.groups()[1]}'
         return out
 
-    def compile(self, parent: t.Any, db: 'DB', tables: t.Optional[t.Dict] = None):
+    def compile(self, parent: t.Any, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
         if self.type == QueryType.ATTR:
             return getattr(parent, self.name), tables
         args, tables = _compile_item(self.args, db, tables=tables)

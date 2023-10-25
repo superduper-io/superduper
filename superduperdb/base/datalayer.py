@@ -19,7 +19,7 @@ from superduperdb.components.encoder import Encodable, Encoder
 from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.components.model import Model
 from superduperdb.jobs.task_workflow import TaskWorkflow
-from superduperdb.db.base.backends import vector_searcher_implementations
+from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.misc.download import Downloader, gather_uris
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.data import ibatch
@@ -27,14 +27,14 @@ from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
 
-from ..db.base.artifact import ArtifactStore
-from ..db.base.cdc import DatabaseChangeDataCapture
+from ..backends.base.artifact import ArtifactStore
+from ..backends.base.cdc import DatabaseChangeDataCapture
 from .cursor import SuperDuperCursor
-from ..db.base.data_backend import BaseDataBackend
+from ..backends.base.data_backend import BaseDataBackend
 from ..misc.download import download_content
 from .exceptions import ComponentInUseError, ComponentInUseWarning
-from ..db.base.metadata import MetaDataStore
-from ..db.base.query import Delete, Insert, Select, Update
+from ..backends.base.metadata import MetaDataStore
+from ..backends.base.query import Delete, Insert, Select, Update
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -50,7 +50,7 @@ ExecuteResult = t.Union[SelectResult, DeleteResult, UpdateResult, InsertResult]
 ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'update'
 
 
-class DB:
+class Datalayer:
     """
     Base database connector for SuperDuperDB
     """
@@ -1113,7 +1113,7 @@ class DB:
 
 @dc.dataclass
 class LoadDict(dict):
-    database: DB
+    database: Datalayer
     field: t.Optional[str] = None
     callable: t.Optional[t.Callable] = None
 

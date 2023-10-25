@@ -5,7 +5,7 @@ from superduperdb.components.component import Component
 from superduperdb.misc.serialization import serializers
 
 if t.TYPE_CHECKING:
-    from superduperdb.base.db import DB
+    from superduperdb.base.datalayer import Datalayer
 
 
 @dc.dataclass
@@ -17,7 +17,7 @@ class Serializer(Component):
 
     version: t.Optional[int]
 
-    def on_create(self, db: 'DB'):
+    def on_create(self, db: 'Datalayer'):
         serializers.add(self.identifier, self.object)
 
         self.object = t.cast(t.Type, self.identifier)

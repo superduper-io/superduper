@@ -11,7 +11,7 @@ from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import Model
 from superduperdb.components.vector_index import VectorIndex
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.ext.vector.encoder import vector
 
 ATLAS_VECTOR_URI = os.environ.get('ATLAS_VECTOR_URI')

@@ -7,7 +7,7 @@ from flask import Flask, jsonify, make_response, request
 from superduperdb import CFG
 from superduperdb.base.document import load_bson, load_bsons
 from superduperdb.base.serializable import Serializable
-from superduperdb.db.base.artifact import ArtifactStore
+from superduperdb.backends.base.artifact import ArtifactStore
 from superduperdb.base.build import build_datalayer
 from superduperdb.misc.serialization import serializers
 

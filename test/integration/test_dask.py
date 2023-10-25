@@ -13,7 +13,7 @@ from superduperdb import CFG
 from superduperdb.jobs.job import FunctionJob
 from superduperdb.components.listener import Listener
 from superduperdb.jobs.task_workflow import TaskWorkflow
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 
 
 @contextmanager

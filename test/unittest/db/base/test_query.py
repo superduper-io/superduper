@@ -3,7 +3,7 @@ from superduperdb.base.document import Document
 
 def test_execute_insert_and_find(empty):
     from superduperdb.base.document import Document
-    from superduperdb.db.mongodb.query import Collection
+    from superduperdb.backends.mongodb.query import Collection
 
     collection = Collection('documents')
     collection.insert_many([Document({'this': 'is a test'})]).execute(empty)
@@ -13,7 +13,7 @@ def test_execute_insert_and_find(empty):
 
 def test_execute_complex_query(empty):
     from superduperdb.base.document import Document
-    from superduperdb.db.mongodb.query import Collection
+    from superduperdb.backends.mongodb.query import Collection
 
     collection = Collection('documents')
     collection.insert_many(
@@ -26,7 +26,7 @@ def test_execute_complex_query(empty):
 
 
 def test_execute_like_queries(with_vector_index):
-    from superduperdb.db.mongodb.query import Collection
+    from superduperdb.backends.mongodb.query import Collection
 
     collection = Collection('documents')
 

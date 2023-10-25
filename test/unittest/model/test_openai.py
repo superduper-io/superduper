@@ -7,7 +7,7 @@ import vcr
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 
 CASSETTE_DIR = 'test/unittest/model/cassettes'

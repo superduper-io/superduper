@@ -12,7 +12,7 @@ except ImportError:
 
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 
 RETRY_TIMEOUT = 1
 LISTEN_TIMEOUT = 0.1

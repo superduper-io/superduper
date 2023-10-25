@@ -1,6 +1,6 @@
 import pytest
 
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 
 try:
     import torch

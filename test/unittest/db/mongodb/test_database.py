@@ -16,7 +16,7 @@ from superduperdb.base.document import Document
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.listener import Listener
 from superduperdb.base.exceptions import ComponentInUseError, ComponentInUseWarning
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 
 n_data_points = 250
 

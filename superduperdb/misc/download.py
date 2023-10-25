@@ -16,7 +16,7 @@ from tqdm import tqdm
 from superduperdb import CFG, logging
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable
-from superduperdb.db.base.query import Insert, Select
+from superduperdb.backends.base.query import Insert, Select
 
 
 class TimeoutException(Exception):

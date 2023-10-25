@@ -13,7 +13,7 @@ except ImportError:
     torch = None
 
 from superduperdb import CFG
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.container.vector_index import VectorIndex
 from superduperdb.db.mongodb.query import Collection

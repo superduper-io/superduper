@@ -8,10 +8,10 @@ import click
 import requests
 
 from superduperdb.container.component import Component
-from superduperdb.container.document import dump_bsons, load_bsons
-from superduperdb.container.serializable import Serializable
+from superduperdb.base.document import dump_bsons, load_bsons
+from superduperdb.base.serializable import Serializable
 from superduperdb.db.base.artifact import ArtifactStore
-from superduperdb.db.base.db import ExecuteQuery
+from superduperdb.base.db import ExecuteQuery
 from superduperdb.db.base.query import Delete, Insert, Like, Select, Update
 from superduperdb.misc.serialization import serializers
 

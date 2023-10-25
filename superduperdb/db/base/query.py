@@ -7,9 +7,9 @@ from typing import Any
 import pandas as pd
 
 from superduperdb.base.logger import logging
-from superduperdb.container.document import Document
-from superduperdb.container.serializable import Serializable
-from superduperdb.db.base.cursor import SuperDuperCursor
+from superduperdb.base.document import Document
+from superduperdb.base.serializable import Serializable
+from superduperdb.base.cursor import SuperDuperCursor
 
 GREEN = '\033[92m'
 BOLD = '\033[1m'

@@ -1,5 +1,5 @@
 from superduperdb.container.schema import Schema
-from superduperdb.container.serializable import Serializable
+from superduperdb.base.serializable import Serializable
 from superduperdb.db.ibis.field_types import dtype
 from superduperdb.db.ibis.query import IbisTable
 from superduperdb.ext.pillow.image import pil_image

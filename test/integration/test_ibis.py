@@ -5,9 +5,9 @@ import tdir
 import torch.nn
 import torchvision
 
-from superduperdb.container.document import Document as D
+from superduperdb.base.document import Document as D
 from superduperdb.container.schema import Schema
-from superduperdb.db.base.db import DB
+from superduperdb.base.db import DB
 from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.db.ibis.data_backend import IbisDataBackend
 from superduperdb.db.ibis.field_types import dtype

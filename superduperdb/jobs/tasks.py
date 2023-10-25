@@ -25,7 +25,7 @@ def method_job(
     :param job_id: unique identifier for this job
     :param dependencies: other jobs that this job depends on
     """
-    from superduperdb.db.base.build import build_datalayer
+    from superduperdb.base.build import build_datalayer
 
     cfg.cluster.distributed = False
     db = build_datalayer(cfg)
@@ -81,7 +81,7 @@ def callable_job(
     job_id,
     dependencies=(),
 ):
-    from superduperdb.db.base.build import build_datalayer
+    from superduperdb.base.build import build_datalayer
 
     cfg.cluster.distributed = False
     db = build_datalayer(cfg)

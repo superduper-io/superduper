@@ -1,8 +1,8 @@
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 
 
 def test_execute_insert_and_find(empty):
-    from superduperdb.container.document import Document
+    from superduperdb.base.document import Document
     from superduperdb.db.mongodb.query import Collection
 
     collection = Collection('documents')
@@ -12,7 +12,7 @@ def test_execute_insert_and_find(empty):
 
 
 def test_execute_complex_query(empty):
-    from superduperdb.container.document import Document
+    from superduperdb.base.document import Document
     from superduperdb.db.mongodb.query import Collection
 
     collection = Collection('documents')

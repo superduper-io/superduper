@@ -10,7 +10,7 @@ except ImportError:
     torch = None
 from sklearn.svm import SVC
 
-from superduperdb.container.artifact import Artifact
+from superduperdb.base.artifact import Artifact
 from superduperdb.container.model import Model
 from superduperdb.ext.sklearn.model import Estimator
 

@@ -13,13 +13,13 @@ from tqdm import tqdm
 
 import superduperdb as s
 from superduperdb import logging
-from superduperdb.container.artifact import Artifact
-from superduperdb.container.document import Document
+from superduperdb.base.artifact import Artifact
+from superduperdb.base.document import Document
 from superduperdb.container.encoder import Encodable
 from superduperdb.container.metric import Metric
 from superduperdb.container.model import Model, _TrainingConfiguration
-from superduperdb.container.serializable import Serializable
-from superduperdb.db.base.db import DB
+from superduperdb.base.serializable import Serializable
+from superduperdb.base.db import DB
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.ext.torch.utils import device_of, eval, to_device

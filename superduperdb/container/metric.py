@@ -1,7 +1,7 @@
 import dataclasses as dc
 import typing as t
 
-from superduperdb.container.artifact import Artifact
+from superduperdb.base.artifact import Artifact
 from superduperdb.container.component import Component
 
 

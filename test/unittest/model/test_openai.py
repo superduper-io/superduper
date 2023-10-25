@@ -5,8 +5,8 @@ import pytest
 import vcr
 
 from superduperdb.base.document import Document
-from superduperdb.container.listener import Listener
-from superduperdb.container.vector_index import VectorIndex
+from superduperdb.components.listener import Listener
+from superduperdb.components.vector_index import VectorIndex
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 

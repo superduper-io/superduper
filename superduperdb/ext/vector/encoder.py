@@ -1,4 +1,4 @@
-from superduperdb.container.encoder import Encoder
+from superduperdb.components.encoder import Encoder
 from superduperdb.ext.utils import str_shape
 
 

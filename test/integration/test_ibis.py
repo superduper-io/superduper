@@ -6,7 +6,7 @@ import torch.nn
 import torchvision
 
 from superduperdb.base.document import Document as D
-from superduperdb.container.schema import Schema
+from superduperdb.components.schema import Schema
 from superduperdb.base.db import DB
 from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.db.ibis.data_backend import IbisDataBackend

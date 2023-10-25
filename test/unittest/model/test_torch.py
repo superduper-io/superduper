@@ -7,7 +7,7 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.container.metric import Metric
+from superduperdb.components.metric import Metric
 from superduperdb.db.mongodb.query import Collection
 
 

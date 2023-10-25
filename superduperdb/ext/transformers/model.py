@@ -15,8 +15,8 @@ from transformers import (
 )
 
 from superduperdb.base.artifact import Artifact
-from superduperdb.container.metric import Metric
-from superduperdb.container.model import Model, _TrainingConfiguration
+from superduperdb.components.metric import Metric
+from superduperdb.components.model import Model, _TrainingConfiguration
 from superduperdb.base.db import DB
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import query_dataset_factory

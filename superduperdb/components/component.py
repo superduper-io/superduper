@@ -12,7 +12,7 @@ from superduperdb.base.serializable import Serializable
 from superduperdb.db.base.artifact import ArtifactStore
 
 if t.TYPE_CHECKING:
-    from superduperdb.container.dataset import Dataset
+    from superduperdb.components.dataset import Dataset
     from superduperdb.base.db import DB
 
 

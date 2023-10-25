@@ -11,7 +11,7 @@ except ImportError:
 from sklearn.svm import SVC
 
 from superduperdb.base.artifact import Artifact
-from superduperdb.container.model import Model
+from superduperdb.components.model import Model
 from superduperdb.ext.sklearn.model import Estimator
 
 

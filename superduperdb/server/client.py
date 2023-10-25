@@ -7,7 +7,7 @@ import uuid
 import click
 import requests
 
-from superduperdb.container.component import Component
+from superduperdb.components.component import Component
 from superduperdb.base.document import dump_bsons, load_bsons
 from superduperdb.base.serializable import Serializable
 from superduperdb.db.base.artifact import ArtifactStore

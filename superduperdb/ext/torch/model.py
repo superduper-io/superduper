@@ -15,9 +15,9 @@ import superduperdb as s
 from superduperdb import logging
 from superduperdb.base.artifact import Artifact
 from superduperdb.base.document import Document
-from superduperdb.container.encoder import Encodable
-from superduperdb.container.metric import Metric
-from superduperdb.container.model import Model, _TrainingConfiguration
+from superduperdb.components.encoder import Encodable
+from superduperdb.components.metric import Metric
+from superduperdb.components.model import Model, _TrainingConfiguration
 from superduperdb.base.serializable import Serializable
 from superduperdb.base.db import DB
 from superduperdb.db.base.query import Select
@@ -25,7 +25,7 @@ from superduperdb.db.query_dataset import QueryDataset
 from superduperdb.ext.torch.utils import device_of, eval, to_device
 
 if t.TYPE_CHECKING:
-    from superduperdb.container.dataset import Dataset
+    from superduperdb.components.dataset import Dataset
 
 
 class BasicDataset(data.Dataset):

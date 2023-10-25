@@ -27,8 +27,8 @@ from superduperdb.components.encoder import Encoder
 from superduperdb.components.schema import Schema
 
 if t.TYPE_CHECKING:
-    from superduperdb.base.document import Document
     from superduperdb.base.datalayer import Datalayer
+    from superduperdb.base.document import Document
 
 PRIMARY_ID: str = 'id'
 
@@ -280,13 +280,11 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         attr = getattr(  # type: ignore[call-overload]
             self, self.table_or_collection.primary_id
         )
-        other_query = self.join(
-            symbol_table,
-            [
-                symbol_table.key == key,
-                symbol_table.input_id == attr,
-                symbol_table.query_id == self.table_or_collection.identifier,
-            ],
+        other_query = self.join(symbol_table, symbol_table.input_id == attr)
+
+        other_query.filter(
+            symbol_table.key == key
+            and symbol_table.query_id == self.table_or_collection.identifier
         )
         return other_query
 
@@ -359,6 +357,11 @@ class IbisTable(Component):
             identifier=self.identifier, primary_id=self.primary_id
         ).like(r=r, vector_index=vector_index, n=n)
 
+    def outputs(self, *args, **kwargs):
+        return IbisQueryTable(
+            identifier=self.identifier, primary_id=self.primary_id
+        ).outputs(*args, **kwargs)
+
     def __getattr__(self, item):
         return IbisQueryTable(
             identifier=self.identifier, primary_id=self.primary_id
@@ -395,6 +398,23 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
 
     def add_fold(self, fold: str) -> Select:
         return self.filter(self.fold == fold)
+
+    def outputs(self, key: str, model: str):
+        """
+        This method returns a query which joins a query with the outputs
+        for a table.
+
+        :param model: The model identifier for which to get the outputs
+
+        >>> q = t.filter(t.age > 25).outputs('model_name', db)
+
+        The above query will return the outputs of the `model_name` model
+        with t.filter() ids.
+        """
+        return IbisCompoundSelect(
+            table_or_collection=self,
+            query_linker=self._get_query_linker(members=[]).outputs(key, model),
+        )
 
     @property
     def id_field(self):

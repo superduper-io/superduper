@@ -158,7 +158,7 @@ def end2end_workflow(ibis_db):
     )
 
     # Build query to get the results back
-    q = t.select('id', 'image', 'age').filter(t.age > 25).outputs('image', 'resnet18')
+    q = t.outputs('image', 'resnet18').select('id', 'image', 'age').filter(t.age > 25)
 
     # Get the results
     result = list(q.execute(db))
@@ -209,6 +209,5 @@ def test_end2end_duckdb(ibis_duckdb):
     end2end_workflow(ibis_duckdb)
 
 
-@pytest.mark.skip(reason='bug in ibis framework in pandas backend')
 def test_end2end_pandas(ibis_pandas_db):
     end2end_workflow(ibis_pandas_db)

@@ -14,10 +14,10 @@ from transformers import (
     pipeline as _pipeline,
 )
 
-from superduperdb.container.artifact import Artifact
+from superduperdb.base.artifact import Artifact
 from superduperdb.container.metric import Metric
 from superduperdb.container.model import Model, _TrainingConfiguration
-from superduperdb.db.base.db import DB
+from superduperdb.base.db import DB
 from superduperdb.db.base.query import Select
 from superduperdb.db.query_dataset import query_dataset_factory
 from superduperdb.misc.special_dicts import MongoStyleDict

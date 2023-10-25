@@ -7,13 +7,13 @@ from functools import cached_property
 import numpy
 from overrides import override
 
-from superduperdb.container.artifact import Artifact
+from superduperdb.base.artifact import Artifact
 from superduperdb.container.component import Component
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 from superduperdb.db.mongodb.query import Select
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.db import DB
+    from superduperdb.base.db import DB
 
 
 @dc.dataclass

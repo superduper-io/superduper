@@ -11,7 +11,7 @@ except ImportError:
     torch = None
 
 from superduperdb import CFG
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.server.client import Client
 from superduperdb.server.server import make_flask_app

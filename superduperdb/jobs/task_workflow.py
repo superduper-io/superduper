@@ -12,7 +12,7 @@ import superduperdb as s
 from .job import ComponentJob, FunctionJob, Job
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.db import DB
+    from superduperdb.base.db import DB
 
 
 @dc.dataclass

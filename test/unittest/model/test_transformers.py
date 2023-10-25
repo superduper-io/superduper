@@ -7,7 +7,7 @@ except ImportError:
     torch = None
 
 from superduperdb.container.dataset import Dataset
-from superduperdb.container.document import Document as D
+from superduperdb.base.document import Document as D
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.transformers.model import (
     Pipeline,

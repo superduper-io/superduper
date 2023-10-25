@@ -1,4 +1,4 @@
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 from superduperdb.db.mongodb import query as q
 
 

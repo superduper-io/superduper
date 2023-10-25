@@ -10,7 +10,7 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.db.mongodb.query import Collection
 

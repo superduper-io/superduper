@@ -27,10 +27,10 @@ from superduperdb.db.base.query import (
 from superduperdb.db.ibis.cursor import SuperDuperIbisCursor
 
 if t.TYPE_CHECKING:
-    from superduperdb.container.document import Document
+    from superduperdb.base.document import Document
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.db import DB
+    from superduperdb.base.db import DB
 
 PRIMARY_ID: str = 'id'
 

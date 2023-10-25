@@ -17,11 +17,11 @@ except ImportError:
     torch = None
 
 from superduperdb.container.dataset import Dataset
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 from superduperdb.container.listener import Listener
 from superduperdb.container.metric import Metric
 from superduperdb.container.vector_index import VectorIndex
-from superduperdb.db.base.db import DB
+from superduperdb.base.db import DB
 from superduperdb.db.mongodb.query import Collection
 from superduperdb.ext.numpy.array import array
 from superduperdb.ext.pillow.image import pil_image

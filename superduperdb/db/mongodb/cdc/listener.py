@@ -14,7 +14,7 @@ from superduperdb.misc.runnable.runnable import Event
 from .base import CachedTokens, TokenType
 
 if t.TYPE_CHECKING:
-    from superduperdb.db.base.db import DB
+    from superduperdb.base.db import DB
 
 MongoChangePipelines: t.Dict[str, t.Sequence[t.Any]] = {'generic': []}
 

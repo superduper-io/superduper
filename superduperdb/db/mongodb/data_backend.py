@@ -7,7 +7,7 @@ import click
 import pymongo
 
 from superduperdb import logging
-from superduperdb.container.serializable import Serializable
+from superduperdb.base.serializable import Serializable
 from superduperdb.db.base.data_backend import BaseDataBackend
 from superduperdb.db.mongodb.artifacts import MongoArtifactStore
 from superduperdb.db.mongodb.metadata import MongoMetaDataStore

@@ -4,10 +4,10 @@ import mongomock
 import pymongo
 
 import superduperdb as s
-from superduperdb.db.base.backends import data_backends, metadata_stores
-from superduperdb.base.db import DB
-from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
-from superduperdb.db.mongodb.artifacts import MongoArtifactStore
+from superduperdb.backends.base.backends import data_backends, metadata_stores
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
+from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.server.dask_client import dask_client
 
 
@@ -25,7 +25,7 @@ def build_artifact_store(cfg):
         raise ValueError(f'Unknown artifact store: {cfg.artifact_store}')
 
 
-def build_datalayer(cfg=None, **kwargs) -> DB:
+def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     """
     Build db as per ``db = superduper(db)`` from configuration.
 
@@ -54,7 +54,7 @@ def build_datalayer(cfg=None, **kwargs) -> DB:
 
     databackend = build(cfg.data_backend, data_backends)
 
-    db = DB(
+    db = Datalayer(
         databackend=databackend,
         metadata=(
             build(cfg.metadata_store, metadata_stores)

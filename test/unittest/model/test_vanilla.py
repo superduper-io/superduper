@@ -2,7 +2,7 @@ import pytest
 
 from superduperdb.base.document import Document
 from superduperdb.components.model import Model
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 
 
 @pytest.fixture()

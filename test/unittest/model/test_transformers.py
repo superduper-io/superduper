@@ -8,7 +8,7 @@ except ImportError:
 
 from superduperdb.components.dataset import Dataset
 from superduperdb.base.document import Document as D
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.ext.transformers.model import (
     Pipeline,
     TransformersTrainerConfiguration,

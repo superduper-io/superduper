@@ -4,7 +4,7 @@ from functools import cached_property
 
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
-from superduperdb.db.ibis.field_types import dtype
+from superduperdb.backends.ibis.field_types import dtype
 
 
 @dc.dataclass

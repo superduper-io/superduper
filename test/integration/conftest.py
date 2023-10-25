@@ -16,7 +16,7 @@ from superduperdb import CFG
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.server.dask_client import dask_client
 
 '''

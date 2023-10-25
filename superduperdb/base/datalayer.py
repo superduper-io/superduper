@@ -672,10 +672,20 @@ class Datalayer:
         listeners = self.show('listener')
         if not listeners:
             return G
+        listener_selects = {}
 
         for identifier in listeners:
             info = self.metadata.get_component('listener', identifier)
             listener_query = info['dict']['select']
+
+            listener_select = serializable.Serializable.deserialize(listener_query)
+            listener_selects.update({identifier: listener_select})
+            if (
+                listener_select.table_or_collection.identifier
+                != query.table_or_collection.identifier
+            ):
+                continue
+
             model, _, key = identifier.rpartition('/')
             G.add_node(
                 f'{model}.predict({key})',
@@ -693,6 +703,12 @@ class Datalayer:
             )
 
         for identifier in listeners:
+            listener_select = listener_selects[identifier]
+            if (
+                listener_select.table_or_collection.identifier
+                != query.table_or_collection.identifier
+            ):
+                continue
             model, _, key = identifier.rpartition('/')
             G.add_edge(
                 f'{download_content.__name__}()',

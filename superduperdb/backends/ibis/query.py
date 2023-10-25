@@ -28,8 +28,6 @@ from superduperdb.components.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduperdb.base.document import Document
-
-if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 PRIMARY_ID: str = 'id'

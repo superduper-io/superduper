@@ -4,7 +4,7 @@
   </a>
 </p>
 <div align="center">
-	
+​	
 
 
 # Bring AI to your favorite database! 
@@ -12,12 +12,12 @@
 </div>
 
 <div align="center">
-	
+
 ## <a href="https://superduperdb.github.io/superduperdb/"><strong>Docs</strong></a> | <a href="https://docs.superduperdb.com/blog"><strong>Blog</strong></a> | <a href="https://docs.superduperdb.com/docs/category/use-cases"><strong>Showcases</strong></a> | <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples"><strong>Live Jupyter Demo</strong></a>
 
 </div>
 
- 
+
 <p align="center">
 	<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">
     <img src="https://img.shields.io/badge/slack-superduperdb-8A2BE2?logo=slack" alt="slack">
@@ -41,7 +41,7 @@
 
 
 <div align="center">	
-	
+
  `🔮 SuperDuperDB is open-source: Leave a star ⭐️ to support the project!`
  </div>
 
@@ -60,10 +60,10 @@
 - **A feature store** in which the model outputs are stored alongside the inputs in any data format.
 - **A fully functional vector database** that allows to easily generate vector embeddings and vector indexes of the data with preferred models and APIs.
 
-
 <p align="center">
-  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/img/SuperDuperDB_diagram.png">
+  <img width="100%" src="docs/hr/static/img/superduperdb.gif">
 </p>
+
 
 
 

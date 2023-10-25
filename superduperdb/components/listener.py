@@ -49,7 +49,8 @@ class Listener(Component):
             self.model = t.cast(Model, db.load('model', self.model))
 
         # Start cdc service if enabled
-        db.cdc.add(self.select.table_or_collection)
+        if self.select is not None and self.active:
+            db.cdc.add(self.select.table_or_collection)
 
     @property
     def dependencies(self) -> t.List[str]:

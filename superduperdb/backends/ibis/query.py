@@ -10,10 +10,6 @@ import typing as t
 
 import ibis
 
-from superduperdb.base.logger import logging
-from superduperdb.components.component import Component
-from superduperdb.components.encoder import Encoder
-from superduperdb.components.schema import Schema
 from superduperdb.backends.base.query import (
     CompoundSelect,
     Insert,
@@ -25,6 +21,10 @@ from superduperdb.backends.base.query import (
     _ReprMixin,
 )
 from superduperdb.backends.ibis.cursor import SuperDuperIbisCursor
+from superduperdb.base.logger import logging
+from superduperdb.components.component import Component
+from superduperdb.components.encoder import Encoder
+from superduperdb.components.schema import Schema
 
 if t.TYPE_CHECKING:
     from superduperdb.base.document import Document
@@ -549,7 +549,9 @@ class IbisQueryComponent(QueryComponent):
             out = f' {lookup[match.groups()[0]]} {match.groups()[1]}'
         return out
 
-    def compile(self, parent: t.Any, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
+    def compile(
+        self, parent: t.Any, db: 'Datalayer', tables: t.Optional[t.Dict] = None
+    ):
         if self.type == QueryType.ATTR:
             return getattr(parent, self.name), tables
         args, tables = _compile_item(self.args, db, tables=tables)

@@ -10,10 +10,10 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 from superduperdb import CFG
-from superduperdb.jobs.job import FunctionJob
-from superduperdb.components.listener import Listener
-from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.backends.mongodb.query import Collection
+from superduperdb.components.listener import Listener
+from superduperdb.jobs.job import FunctionJob
+from superduperdb.jobs.task_workflow import TaskWorkflow
 
 
 @contextmanager

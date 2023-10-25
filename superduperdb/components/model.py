@@ -12,17 +12,17 @@ from numpy import ndarray
 from sklearn.pipeline import Pipeline
 
 import superduperdb as s
-from superduperdb.base.artifact import Artifact
-from superduperdb.components.component import Component
-from superduperdb.components.dataset import Dataset
-from superduperdb.components.encoder import Encoder
-from superduperdb.jobs.job import ComponentJob, Job
-from superduperdb.components.metric import Metric
-from superduperdb.components.schema import Schema
-from superduperdb.base.serializable import Serializable
 from superduperdb.backends.base.query import CompoundSelect, Select
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.query_dataset import QueryDataset
+from superduperdb.base.artifact import Artifact
+from superduperdb.base.serializable import Serializable
+from superduperdb.components.component import Component
+from superduperdb.components.dataset import Dataset
+from superduperdb.components.encoder import Encoder
+from superduperdb.components.metric import Metric
+from superduperdb.components.schema import Schema
+from superduperdb.jobs.job import ComponentJob, Job
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 if t.TYPE_CHECKING:
@@ -518,7 +518,10 @@ class Model(Component, PredictMixin):
             db.add(output_component)
 
     def _validate(
-        self, db: Datalayer, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
+        self,
+        db: Datalayer,
+        validation_set: t.Union[Dataset, str],
+        metrics: t.Sequence[Metric],
     ):
         if isinstance(validation_set, str):
             validation_set = t.cast(Dataset, db.load('dataset', validation_set))

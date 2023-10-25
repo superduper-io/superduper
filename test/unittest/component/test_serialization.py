@@ -5,7 +5,7 @@ import pytest
 try:
     import torch
 
-    from superduperdb.ext.torch.tensor import tensor
+    from superduperdb.ext.torch.encoder import tensor
 except ImportError:
     torch = None
 from sklearn.svm import SVC

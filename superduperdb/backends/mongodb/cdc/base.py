@@ -4,8 +4,8 @@ import typing as t
 
 from bson import objectid
 
-from superduperdb.base.serializable import Serializable
 from superduperdb.backends.base.cdc import DBEvent, Packet
+from superduperdb.base.serializable import Serializable
 
 TokenType = t.Dict[str, str]
 

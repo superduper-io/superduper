@@ -1,36 +1,20 @@
 import dataclasses as dc
-import itertools
 import typing as t
 
 from overrides import override
 
 import superduperdb as s
-from superduperdb.components.component import Component
-from superduperdb.base.document import Document
-from superduperdb.components.listener import Listener
 from superduperdb.base.datalayer import Datalayer
+from superduperdb.base.document import Document
+from superduperdb.components.component import Component
+from superduperdb.components.encoder import Encoder
+from superduperdb.components.listener import Listener
+from superduperdb.ext.utils import str_shape
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import VectorIndexMeasureType
 
 if t.TYPE_CHECKING:
     pass
-
-T = t.TypeVar('T')
-
-
-def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
-    """
-    Batch an iterable into chunks of size `batch_size`
-
-    :param iterable: the iterable to batch
-    :param batch_size: the number of groups to write
-    """
-    iterator = iter(iterable)
-    while True:
-        batch = list(itertools.islice(iterator, batch_size))
-        if not batch:
-            break
-        yield batch
 
 
 @dc.dataclass
@@ -194,3 +178,17 @@ class VectorIndex(Component):
         if shape := getattr(self.indexing_listener.model.encoder, 'shape', None):
             return shape[-1]
         raise ValueError('Couldn\'t get shape of model outputs from model encoder')
+
+
+def vector(shape):
+    """
+    Create an encoder for a vector (list of ints/ floats) of a given shape
+
+    :param shape: The shape of the vector
+    """
+    return Encoder(
+        identifier=f'vector[{str_shape(shape)}]',
+        shape=shape,
+        encoder=None,
+        decoder=None,
+    )

@@ -5,17 +5,17 @@ import tdir
 import torch.nn
 import torchvision
 
-from superduperdb.base.document import Document as D
-from superduperdb.components.schema import Schema
-from superduperdb.base.datalayer import Datalayer
 from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import IbisTable
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
-from superduperdb.ext.pillow.image import pil_image
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.base.document import Document as D
+from superduperdb.components.schema import Schema
+from superduperdb.ext.pillow.encoder import pil_image
+from superduperdb.ext.torch.encoder import tensor
 from superduperdb.ext.torch.model import TorchModel
-from superduperdb.ext.torch.tensor import tensor
 
 
 @pytest.fixture

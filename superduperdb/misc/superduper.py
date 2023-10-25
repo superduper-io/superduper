@@ -91,8 +91,8 @@ class MongoDbTyper(_DuckTyper):
         from mongomock.database import Database as MockDatabase
         from pymongo.database import Database
 
-        from superduperdb.base.datalayer import Datalayer
         from superduperdb.backends.mongodb.data_backend import MongoDataBackend
+        from superduperdb.base.datalayer import Datalayer
 
         if kwargs:
             raise ValueError('MongoDb creator accepts no parameters')

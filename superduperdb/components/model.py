@@ -590,6 +590,9 @@ class Model(Component, PredictMixin):
         validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
         **kwargs,
     ) -> t.Optional[Pipeline]:
+        """
+        Fit the model on the given data.
+        """
         if isinstance(select, dict):
             select = Serializable.deserialize(select)
 

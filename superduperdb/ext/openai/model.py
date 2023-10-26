@@ -11,7 +11,6 @@ import tqdm
 from openai import Audio, ChatCompletion, Embedding, Image, Model as OpenAIModel
 from openai.error import RateLimitError, ServiceUnavailableError, Timeout, TryAgain
 
-import superduperdb as s
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.model import PredictMixin
@@ -22,11 +21,6 @@ from superduperdb.misc.retry import Retry
 retry = Retry(
     exception_types=(RateLimitError, ServiceUnavailableError, Timeout, TryAgain)
 )
-
-
-def init_fn():
-    s.logging.info('Setting OpenAI api-key...')
-    os.environ['OPENAI_API_KEY'] = s.CFG.apis.providers['openai'].api_key
 
 
 @cache

@@ -76,4 +76,4 @@ def test_use_atlas_vector_search(atlas_search_config):
         print(r)
         it += 1
 
-    assert it == 4
+    assert it == 5

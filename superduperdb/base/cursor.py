@@ -88,7 +88,7 @@ class SuperDuperCursor:
     def __next__(self):
         r = self.cursor_next()
         if self.scores is not None:
-            r['_score'] = self.scores[str(r[self.id_field])]
+            r['score'] = self.scores[str(r[self.id_field])]
         if self.features is not None and self.features:
             r = self.add_features(r, features=self.features)
         if CFG.downloads.hybrid:

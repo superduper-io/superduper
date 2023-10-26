@@ -1,8 +1,5 @@
 import re
 
-import mongomock
-import pymongo
-
 import superduperdb as s
 from superduperdb.backends.base.backends import data_backends, metadata_stores
 from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
@@ -15,6 +12,8 @@ def build_artifact_store(cfg):
     if cfg.artifact_store is None:
         raise ValueError('No artifact store specified')
     elif cfg.artifact_store.startswith('mongodb://'):
+        import pymongo
+
         conn = pymongo.MongoClient('/'.join(cfg.artifact_store.split('/')[:-1]))
         name = cfg.artifact_store.split('/')[-1]
         return MongoArtifactStore(conn, name)
@@ -39,11 +38,15 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     def build(uri, mapping):
         if re.match('^mongodb:\/\/|^mongodb\+srv:\/\/', uri) is not None:
             name = uri.split('/')[-1]
+            import pymongo
+
             uri = '/'.join(uri.split('/')[:-1])
             conn = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000)
             return mapping['mongodb'](conn, name)
         elif uri.startswith('mongomock://'):
             name = uri.split('/')[-1]
+            import mongomock
+
             conn = mongomock.MongoClient()
             return mapping['mongodb'](conn, name)
         else:

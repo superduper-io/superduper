@@ -1,0 +1,112 @@
+---
+sidebar_position: 18
+---
+
+# AI Models via `Model` and descendants
+
+AI models may be wrapped and used in `superduperdb` by the `Model` class and descendants.
+
+### Creating AI models in a range of frameworks
+
+Model instances may be saved to `superduperdb` using `db.add`.
+
+```mdx-code-block
+<Tabs>
+<TabItem value="vanilla" label="Vanilla">
+```
+
+By default, the `Model` component supports arbitrary callables to be used to 
+perform model predictions and transformations:
+
+```python
+from superduperdb import Model
+
+def chunk_text(x):
+    return x.split('\n\n')
+
+db.add(
+    Model('my-chunker', object=chunk_text)
+)
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="scikit-learn" label="Scikit-Learn">
+```
+
+```python
+from superduperdb.ext.sklearn import Estimator
+from sklearn.svm import SVC
+
+db.add(Estimator(SVC()))
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="transformers" label="Transformers">
+```
+
+```python
+from superduperdb.ext.transformers import Pipeline
+from superduperdb import superduper
+
+db.add(Pipeline(task='sentiment-analysis'))
+```
+
+There is also support for building the pipeline in separate stages, 
+with a high-degree of customization:
+
+```python
+from superduperdb.ext.transformers import Pipeline
+from transformers import Speech2TextProcessor, Speech2TextForConditionalGeneration
+
+model = Speech2TextForConditionalGeneration.from_pretrained("facebook/s2t-small-librispeech-asr")
+processor = Speech2TextProcessor.from_pretrained("facebook/s2t-small-librispeech-asr")
+
+transcriber = Pipeline(
+    identifier='transcription',
+    object=model,
+    preprocess=processor,
+    preprocess_kwargs={'sampling_rate': SAMPLING_RATE, 'return_tensors': 'pt', 'padding': True},
+    postprocess=lambda x: processor.batch_decode(x, skip_special_tokens=True),
+    predict_method='generate',
+    preprocess_type='other',
+)
+
+db.add(transcriber)
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="pytorch" label="PyTorch">
+```
+
+```python
+import torch
+from superduperdb.ext.torch import Module
+
+model = Module(
+    'my-classifier',
+    preprocess=lambda x: torch.tensor(x),
+    object=torch.nn.Linear(64, 512),
+    postprocess=lambda x: x.topk(1)[0].item(),
+)
+
+db.add(model)
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+### Important parameters, common to all models
+  
+| Name | Function |
+| --- | --- |
+| `identifier` | A unique name for `superduperdb`, for later use and recall |
+| `object` | The model-object, including parameters and hyper-parmaeters providing heavy lifting |
+| `preprocess` | `Callable` which processes individual rows/ records/ fields from database prior to passing to model |
+| `postprocess` | `Callable` applied to invidual rows/ items or output |
+| `encoder` | An `Encoder` instance which is applied to the model output in order to save that output in the database |
+| `schema` | A `Schema` instance which is applied to a model's output, whose rows are dictionaries |

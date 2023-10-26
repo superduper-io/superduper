@@ -70,7 +70,6 @@ class TorchTrainerConfiguration(_TrainingConfiguration):
     :param optimizer_cls: Optimizer class
     :param optimizer_kwargs: Kwargs for the optimizer
     :param target_preprocessors: Preprocessors for the target
-
     """
 
     objective: t.Optional[t.Union[Artifact, t.Callable]] = None

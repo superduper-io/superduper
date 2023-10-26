@@ -197,11 +197,11 @@ class Aggregate(Select):
     @staticmethod
     def _replace_document_with_vector(step, vector_index, db):
         step = copy.deepcopy(step)
-        assert "like" in step['$search']['knnBeta']
+        assert "like" in step['$vectorSearch']
         vector_index = db.vector_indices[vector_index]
         models, keys = vector_index.models_keys
-        step['$search']['knnBeta']['vector'], _, _ = vector_index.get_vector(
-            like=step['$search']['knnBeta']['like'],
+        step['$vectorSearch']['queryVector'], _, _ = vector_index.get_vector(
+            like=step['$vectorSearch']['like'],
             models=models,
             keys=keys,
             db=db,
@@ -210,9 +210,9 @@ class Aggregate(Select):
         if indexing_key.startswith('_outputs'):
             indexing_key = indexing_key.split('.')[1]
         indexing_model = vector_index.indexing_listener.model.identifier
-        step['$search']['knnBeta']['path'] = f'_outputs.{indexing_key}.{indexing_model}'
-        step['$search']['index'] = vector_index.identifier
-        del step['$search']['knnBeta']['like']
+        step['$vectorSearch']['path'] = f'_outputs.{indexing_key}.{indexing_model}'
+        step['$vectorSearch']['index'] = vector_index.identifier
+        del step['$vectorSearch']['like']
         return step
 
     @staticmethod
@@ -220,12 +220,14 @@ class Aggregate(Select):
         pipeline = copy.deepcopy(pipeline)
         try:
             search_step = next(
-                (i, step) for i, step in enumerate(pipeline) if '$search' in step
+                (i, step) for i, step in enumerate(pipeline) if '$vectorSearch' in step
             )
         except StopIteration:
             return pipeline
         pipeline[search_step[0]] = Aggregate._replace_document_with_vector(
-            search_step[1], vector_index, db
+            search_step[1],
+            vector_index,
+            db,
         )
         return pipeline
 
@@ -234,7 +236,11 @@ class Aggregate(Select):
             self.table_or_collection.identifier
         )
         cursor = collection.aggregate(
-            self._prepare_pipeline(self.args[0], db, self.vector_index)
+            self._prepare_pipeline(
+                self.args[0],
+                db,
+                self.vector_index,
+            )
         )
         return SuperDuperCursor(
             raw_cursor=cursor,
@@ -604,14 +610,20 @@ class Collection(TableOrCollection):
                     if args:
                         second_part.append({"$match": args[0] if args else {}})
                     if args[1:]:
-                        second_part.append({'$project': args[1]})
+                        project_args = args[1].update(
+                            {"score": {"$meta": "vectorSearchScore"}}
+                        )
+                        second_part.append({"$project": project_args})
+                    else:
+                        second_part.append(
+                            {'$addFields': {'score': {'$meta': 'vectorSearchScore'}}}
+                        )
                     pl = [
                         {
-                            "$search": {
-                                "knnBeta": {
-                                    'like': r,
-                                    "k": n,
-                                }
+                            "$vectorSearch": {
+                                'like': r,
+                                "limit": n,
+                                'numCandidates': n,
                             }
                         },
                         *second_part,

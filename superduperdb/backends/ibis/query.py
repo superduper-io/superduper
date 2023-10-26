@@ -36,6 +36,14 @@ IbisTableType = t.TypeVar('IbisTableType')
 ParentType = t.TypeVar('ParentType')
 
 
+class IbisBackendError(Exception):
+    """
+    This error represents ibis query related errors
+    i.e when there is an error while executing an ibis query,
+    use this exception to represent the error.
+    """
+
+
 @dc.dataclass(repr=False)
 class IbisCompoundSelect(CompoundSelect):
     """
@@ -301,7 +309,12 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
     def execute(self, db):
         native_query, _ = self.compile(db)
-        result = native_query.execute()
+        try:
+            result = native_query.execute()
+        except Exception as exc:
+            raise IbisBackendError(
+                f'{native_query} Wrong query or not supported yet :: {exc}'
+            )
         return result
 
 

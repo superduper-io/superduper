@@ -14,6 +14,19 @@ def serve():
     serve(db)
 
 
+@command(help='Start local dask cluster')
+def local_dask():
+    raise NotImplementedError
+
+
+@command(help='Start standalone change data capture')
+def cdc():
+    from superduperdb.base.build import build_datalayer
+
+    db = build_datalayer()
+    db.cdc.listen()
+
+
 @command(help='Start local cluster: server, dask and change data capture')
 def local_cluster(on: t.List[str] = []):
     from superduperdb.backends.mongodb.query import Collection

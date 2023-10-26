@@ -3,6 +3,7 @@ The classes in this file define the configuration variables for SuperDuperDB,
 which means that this file gets imported before alost anything else, and
 canot contain any other imports from this project.
 """
+# TODO further simplify these configurations
 
 import re
 import typing as t
@@ -19,6 +20,8 @@ class Retry(JSONable):
     :param wait_min: The minimum time to wait between attempts
     :param wait_multiplier: The multiplier for the wait time between attempts
     """
+
+    # TODO - add this to an API mixin instead of project level config
 
     stop_after_attempt: int = 2
     wait_max: float = 10.0
@@ -45,6 +48,7 @@ class Cluster(JSONable):
     :param local: Whether the connection is local
     """
 
+    # TODO - none of these are actually used apart from `dask`
     distributed: bool = False
     deserializers: t.List[str] = Factory(list)
     serializers: t.List[str] = Factory(list)

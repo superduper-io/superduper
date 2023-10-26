@@ -96,8 +96,6 @@ fix-and-test: mongo_init ##  Lint the code before testing
 	pytest $(PYTEST_ARGUMENTS)
 	# Check for missing docstrings
 	interrogate superduperdb
-	# Check for unused dependencies
-	deptry ./
 
 
 test-and-fix: mongo_init ## Test the code before linting

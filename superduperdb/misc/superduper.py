@@ -22,7 +22,6 @@ def superduper(item: t.Any, **kwargs) -> t.Any:
 def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
     from superduperdb.base.build import build_datalayer
 
-    # cfg = copy.deepcopy(CFG)
     if item.startswith('mongomock://'):
         CFG.data_backend = item
 

@@ -144,5 +144,5 @@ jobs:
             if [ ! -e "${NOTEBOOKS}" ]; then
               echo "Notebook path does not exist."
             else 
-              make test-notebooks NOTEBOOKS=${NOTEBOOKS}
+              make test_notebooks NOTEBOOKS=${NOTEBOOKS}
             fi

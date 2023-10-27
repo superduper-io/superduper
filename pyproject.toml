@@ -116,6 +116,13 @@ tests = [
     "pytest-asyncio",
     "urllib3<2",  # see https://github.com/urllib3/urllib3/issues/3053
 ]
+demo = [
+    "git+https://github.com/openai/CLIP",
+    "datasets",
+    "sentence-transformers",
+    "opencv-python",
+    "matplotlib",
+]
 dev = ["superduperdb[apis,docs,lint,tests,typing,torch]"]
 
 [project.urls]

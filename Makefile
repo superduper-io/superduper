@@ -20,13 +20,13 @@ help: ## Display this help
 
 # RELEASE_VERSION defines the project version for the operator.
 # Update this value when you upgrade the version of your project.
-# The general flow is VERSION -> make new-release -> GITHUB_ACTIONS -> {make docker_push, ...}
+# The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 
 
 ##@ Release Management
 
-new-release: ## Release a new SuperDuperDB version
+new_release: ## Release a new SuperDuperDB version
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
 	@ if [[ "${RELEASE_VERSION}" == "${TAG}" ]]; then echo "no new release version. Please update VERSION file."; exit 1; fi
 
@@ -49,23 +49,23 @@ new-release: ## Release a new SuperDuperDB version
 	@echo "** Push release-${RELEASE_VERSION}"
 	git push --set-upstream origin release-${RELEASE_VERSION} --tags
 
-docker-build: ## Build minimal SuperDuperDB image.
-	echo "===> Build superduper:$(RELEASE_VERSION:v%=%)"; \
+
+# superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
+build_superduperdb: ## Build minimal Docker image for general use
+	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker build ./deploy/images/superduperdb -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache
 
-docker-push: ## Push the latest SuperDuperDB image
-	@echo "===> Set SuperDuperDB:$(RELEASE_VERSION:v%=%) as the latest <==="
-	docker tag superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) superduperdb/superduperdb:latest
 
-	@echo "===> Release SuperDuperDB:$(RELEASE_VERSION:v%=%) Container <==="
+push_superduperdb: ## Push superduperdb/superduperdb:latest
+	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
 
-	@echo "===> Release SuperDuperDB:latest Container <==="
+	@echo "===> release superduperdb/superduperdb:latest"
+	docker tag superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) superduperdb/superduperdb:latest
 	docker push superduperdb/superduperdb:latest
 
 
-
-##@ Documentation
+##@ CI Doc Functions
 
 api-docs: ## Generate Sphinx inline-API HTML documentation, including API docs
 	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
@@ -83,7 +83,7 @@ hr-docs: ## Generate docusaurus and blog-posts
 	@echo "Build finished. The HTML pages are in docs/hr/build"
 
 
-##@ CI Functions
+##@ CI Testing Functions
 
 mongo_init: ## Initialize a local MongoDB setup
 	docker compose -f test/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
@@ -117,8 +117,7 @@ lint-and-type-check: ## Lint your code
 	ruff check $(DIRECTORIES)
 	interrogate superduperdb
 
-
-test-notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
+test_notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"
 
 	@if [ -n "${NOTEBOOKS}" ]; then	\
@@ -126,16 +125,20 @@ test-notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
 	fi
 
 
-##@ Local Testing
+##@ DevOps Sandbox
 
-# sandbox is a bloated image that contains everything we will need.
-# we don't need to expose this one to the user.
-build-sandbox: ## Build a SuperDuperDB image with all the extras.
-	echo "===> Build superduper-full:$(RELEASE_VERSION:v%=%)"
-	docker build ./deploy/images/superduperdb -t superduperdb/sandbox:$(RELEASE_VERSION:v%=%) --progress=plain --build-arg SUPERDUPERDB_EXTRAS="apis,docs,lint,tests,typing,torch"
+# sandbox is a bloated image that contains everything we will need.  we don't need to expose this one to the user.
+build_sandbox: ## Build bloated Docker image for development.
+	@echo "===> release superduperdb/sandbox:$(RELEASE_VERSION:v%=%)"
+	docker build . -f ./deploy/images/sandbox/Dockerfile -t superduperdb/sandbox:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	--build-arg SUPERDUPERDB_EXTRAS="tests,demo"
+	#--build-arg SUPERDUPERDB_EXTRAS="apis,docs,lint,tests,typing,torch"
 
-run-sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
-	@if [[ -z "${PR_NUMBER}" ]]; then echo "Usage: make run-sandbox-pr PR_NUMBER=<pull-request-number>"; exit -1; fi
+run_sandbox: ## Run local repo in sandbox
+	docker run -p 8888:8888 superduperdb/sandbox:$(RELEASE_VERSION:v%=%)
+
+run_sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
+	@if [[ -z "${PR_NUMBER}" ]]; then echo "Usage: make run_sandbox-pr PR_NUMBER=<pull-request-number>"; exit -1; fi
 
 	@echo "===> Checkout Pull Request #"${PR_NUMBER}" <==="
 
@@ -148,15 +151,30 @@ run-sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
 	git checkout pr_branch
 
 	# mount pr to sandbox
-	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/code superduperdb/sandbox:$(RELEASE_VERSION:v%=%)
+	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/app superduperdb/sandbox:$(RELEASE_VERSION:v%=%)
 
 	# clean up the tmp directory
 	rm -rf /tmp/superduperdb_pr_$(PR_NUMBER)
 
 
-##@ Demo
+##@ Demo Applications
 
-run-demo: ## Run SuperDuperDB demo on docker-compose
+# superduperdb/demo is a bloated image that contains everything we need to run the online demo.
+build_demo: ## Build bloated Docker image for the demo
+	echo "===> build superduperdb/demo:$(RELEASE_VERSION:v%=%)"
+	docker build ./deploy/images/superduperdb -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	--build-arg SUPERDUPERDB_EXTRAS="apis,docs,lint,tests,typing,torch"
+
+push_demo: ## Push superduperdb/demo:latest
+	@echo "===> release superduperdb/demo:$(RELEASE_VERSION:v%=%) <==="
+	docker push superduperdb/demo:$(RELEASE_VERSION:v%=%)
+
+	@echo "===> release superduperdb/demo:latest <==="
+	docker tag superduperdb/demo:$(RELEASE_VERSION:v%=%) superduperdb/demo:latest
+	docker push superduperdb/demo:latest
+
+
+run_demo: ## Run SuperDuperDB demo on docker-compose
 	@echo "===> Run SuperDuperDB Demo <==="
 
 	# TODO: make it take as argument the TAG of desired image.

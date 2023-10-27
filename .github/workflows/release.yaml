@@ -143,5 +143,5 @@ jobs:
 
       - name: Push Docker image
         run: |
-          make docker-build
-          make docker-push
+          make build_superduperdb
+          make push_superduperdb

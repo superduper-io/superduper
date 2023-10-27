@@ -9,7 +9,7 @@ ROOT = configs.ROOT
 
 logging = log = logger.logging
 
-__version__ = '0.0.13'
+__version__ = '0.0.14'
 
 from superduperdb.backends import ibis, mongodb
 

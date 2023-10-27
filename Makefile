@@ -53,7 +53,8 @@ new_release: ## Release a new SuperDuperDB version
 # superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
 build_superduperdb: ## Build minimal Docker image for general use
 	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker build ./deploy/images/superduperdb -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache
+	docker build ./deploy/images/superduperdb -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	--build-arg SUPERDUPERDB_VERSION=$(RELEASE_VERSION:v%=%)
 
 
 push_superduperdb: ## Push superduperdb/superduperdb:latest
@@ -163,7 +164,8 @@ run_sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
 build_demo: ## Build bloated Docker image for the demo
 	echo "===> build superduperdb/demo:$(RELEASE_VERSION:v%=%)"
 	docker build ./deploy/images/superduperdb -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
-	--build-arg SUPERDUPERDB_EXTRAS="apis,docs,lint,tests,typing,torch"
+	--build-arg SUPERDUPERDB_VERSION=$(RELEASE_VERSION:v%=%)
+	--build-arg SUPERDUPERDB_EXTRAS="demo"
 
 push_demo: ## Push superduperdb/demo:latest
 	@echo "===> release superduperdb/demo:$(RELEASE_VERSION:v%=%) <==="

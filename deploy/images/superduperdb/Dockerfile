@@ -2,6 +2,7 @@
 FROM jupyterhub/k8s-singleuser-sample:3.1.0
 
 ARG SUPERDUPERDB_EXTRAS
+ARG SUPERDUPERDB_VERSION
 
 ENV NB_USER=superduper \
     NB_UID=1000 \
@@ -20,6 +21,8 @@ RUN apt-get update \
         wget curl unzip git \
         # DevOps
         vim procps make \
+        # required by opencv
+        libglib2.0-0 libgl1-mesa-glx \
    # Purge apt cache
    && apt-get clean \
    && rm -rf /var/lib/apt/lists/*
@@ -48,12 +51,12 @@ ENV PATH="${HOME}/.local/bin:$PATH"
 # ---------------
 RUN pip install --no-cache-dir --upgrade \
     # SuperDuperDB
-    superduperdb[${SUPERDUPERDB_EXTRAS}] \
+    superduperdb[${SUPERDUPERDB_EXTRAS}]~=${SUPERDUPERDB_VERSION} \
     # JupyterLab extensions \
     theme-darcula \
     ipywidgets \
-    # jupyterlab-lsp \
-    # 'python-lsp-server[all]' \
+    jupyterlab-lsp \
+    'python-lsp-server[all]' \
     # Purge pip cache
     && pip cache purge
 

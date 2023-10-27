@@ -26,7 +26,6 @@ def _get_info():
         'cfg': _cfg(),
         'cwd': Path.cwd(),
         'freeze': _freeze(),
-        'git': _git(),
         'hostname': socket.gethostname(),
         'os_uname': list(os.uname()),
         'package_versions': _package_versions(),
@@ -53,19 +52,6 @@ def _freeze():
         return list(freeze())
     except Exception as e:
         return [f'Freeze failed with {e}']
-
-
-def _git():
-    def run_out(*cmd):
-        try:
-            return run.out(cmd, cwd=ROOT)
-        except Exception as e:
-            return f'{cmd} failed with {e}'
-
-    return {
-        'branch': run_out('git', 'branch', '--show-current'),
-        'commit': run_out('git', 'show', '-s', '--format="%h: %s"'),
-    }
 
 
 def _package_versions():

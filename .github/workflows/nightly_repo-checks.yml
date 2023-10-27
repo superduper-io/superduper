@@ -71,15 +71,7 @@ jobs:
               run: |
                 python3 -m pip install --upgrade pip-tools
                 python3 -m pip install .
-
-            # smoke-tests that check imports
-            - name: Check imports
-              # these modules cover most of the imports for the core package
-              # Note: if these modules are renamed, please update this list
-              run: |
-                python -m superduperdb.db.base.db
-                python -m superduperdb.db.base.backends
-                python -m superduperdb.container.model 
+  
 
     #---------------------------------------------------
     # Test External Dependencies

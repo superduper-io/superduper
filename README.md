@@ -45,14 +45,6 @@
  </div>
 
 
-**Easily implement AI without the need to copy and move your data to complex MLOps pipelines and specialized vector databases. Integrate, train, and manage your AI models and APIs directly with your chosen database, using a simple Python interface.**
-- Generative AI & chatbots
-- Vector Search
-- Standard Use-Cases (classification, regression, clustering, recommendation etc)
-- Highly custom AI use-cases and workflows with specialized models.
-
-<br> 
-
 **SuperDuperDB is not another database. It is a framework that transforms your favorite database into an AI powerhouse:**
 - **A single scalable AI deployment** of all your models and AI APIs, including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
 - **A model trainer** that allows to easily train and fine-tune models simply by querying the database.
@@ -68,85 +60,76 @@
 
 ## ⚡ Integrations (*more coming soon*):
 
-### Databases 
+Easily implement AI without the need to copy and move your data to complex MLOps pipelines and specialized vector databases. Integrate, train, and manage your AI models and APIs directly with your chosen database, using a simple Python interface.
+
+### Datastores 
+Unlock the power of SuperDuperDB to connect and manage various types of data sources effortlessly!
 
 <div align="center">
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mongodb.png" width="65px"/>
-            <br /> MongoDB
+            <img src="docs/hr/static/icons/databases/mongodb.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mongodb-atlas.png" width="65px"/>
-            <br /> MongoDB Atlas
+            <img src="docs/hr/static/icons/databases/mongodb-atlas.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/aws-s3.png" width="65px"/>
-            <br /> AWS S3
+            <img src="docs/hr/static/icons/databases/aws-s3.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/postgresql.png" width="65px"/>
-            <br /> PostgreSQL
+            <img src="docs/hr/static/icons/databases/postgresql.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/sqlite.png" width="65px"/>
-            <br /> SQLite
+            <img src="docs/hr/static/icons/databases/sqlite.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/duckdb.png" width="65px"/>
-            <br /> DuckDB
+            <img src="docs/hr/static/icons/databases/duckdb.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mysql.png" width="65px"/>
-            <br /> MySQL
+            <img src="docs/hr/static/icons/databases/mysql.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/snowflake.png" width="65px"/>
-            <br /> Snowflake
+            <img src="docs/hr/static/icons/databases/snowflake.png" width="150px"/>
         </td>
     </tr>
 </table>
 </div>
 
 ### AI Frameworks
+Leverage SuperDuperDB to discover insights from your data using a variety of AI models!
 
 <div align="center">
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/pytorch.png" width="65px"/>
-            <br /> PyTorch
+            <img src="docs/hr/static/icons/frameworks/pytorch.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/scikit-learn.png" width="65px"/>
-            <br /> Scikit-Learn
+            <img src="docs/hr/static/icons/frameworks/scikit-learn.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/huggingface-transformers.png" width="65px"/>
-            <br /> HuggingFace Transformers
+            <img src="docs/hr/static/icons/frameworks/huggingface-transformers.png" width="150px"/>
         </td>
     </tr>
 </table>
 </div>
 
 
-### Models & AI APIs
+### AI APIs
+Let SuperDuperDB make your applications smarter using a suite of ready-to-use AI models!
 
 <div align="center">
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/apis/openai.png" width="65px"/>
-            <br /> OpenAI
+            <img src="docs/hr/static/icons/apis/openai.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/apis/cohere.png" width="65px"/>
-            <br /> Cohere
+            <img src="docs/hr/static/icons/apis/cohere.png" width="150px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/apis/anthropic.png" width="65px"/>
-            <br /> Anthropic
+            <img src="docs/hr/static/icons/apis/anthropic.png" width="150px"/>
         </td>
     </tr>
 </table>
@@ -158,6 +141,13 @@
 ## 🔥 Featured Examples
 
 Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.com). 
+
+- Generative AI & chatbots
+- Vector Search
+- Standard Use-Cases (classification, regression, clustering, recommendation etc)
+- Highly custom AI use-cases and workflows with specialized models.
+
+
 <table>
   <tr>
     <td width="30%">

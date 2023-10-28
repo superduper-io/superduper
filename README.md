@@ -155,7 +155,7 @@
 
 
 
-## Featured Examples
+## 🔥 Featured Examples
 
 Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.com). 
 <table>
@@ -219,7 +219,7 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
 
 
 
-# Installation
+# 🚀 Installation
 #### 1. Install SuperDuperDB via `pip` *(~1 minute)*
 ```
 pip install superduperdb
@@ -232,7 +232,7 @@ pip install superduperdb
 make run_demo
 ```
 
-# Tutorial
+# 📚 Tutorial
 
 In this tutorial, you will learn how to Integrate, train and manage any AI models and APIs directly with your database with your data. You can visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
 
@@ -364,7 +364,7 @@ model.predict(
 
 
 
-# Community & Getting Help 
+# 🤝 Community & Getting Help 
 
 #### If you have any problems, questions, comments or ideas:
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
@@ -376,7 +376,7 @@ model.predict(
 
 
 
-# Contributing  
+# 🌱 Contributing  
 
 #### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 

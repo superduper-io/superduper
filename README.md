@@ -74,35 +74,35 @@
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/databases/mongodb.png" width="65px"/>
+            <img src="docs/hr/static/icons/databases/mongodb.png" width="65px"/>
             <br /> MongoDB
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/databases/mongodb-atlas.png" width="65px"/>
+            <img src="docs/hr/static/icons/databases/mongodb-atlas.png" width="65px"/>
             <br /> MongoDB Atlas
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/databases/aws-s3.png" width="65px"/>
+            <img src="docs/hr/static/icons/databases/aws-s3.png" width="65px"/>
             <br /> AWS S3
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/databases/postgresql.png" width="65px"/>
+            <img src="docs/hr/static/icons/databases/postgresql.png" width="65px"/>
             <br /> PostgreSQL
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/databases/sqlite.png" width="65px"/>
+            <img src="docs/hr/static/icons/databases/sqlite.png" width="65px"/>
             <br /> SQLite
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/databases/duckdb.png" width="65px"/>
+            <img src="docs/hr/static/icons/databases/duckdb.png" width="65px"/>
             <br /> DuckDB
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/databases/mysql.png" width="65px"/>
+            <img src="docs/hr/static/icons/databases/mysql.png" width="65px"/>
             <br /> MySQL
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/databases/snowflake.png" width="65px"/>
+            <img src="docs/hr/static/icons/databases/snowflake.png" width="65px"/>
             <br /> Snowflake
         </td>
     </tr>
@@ -115,15 +115,15 @@
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/frameworks/pytorch.png" width="65px"/>
+            <img src="docs/hr/static/icons/frameworks/pytorch.png" width="65px"/>
             <br /> PyTorch
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/frameworks/scikit-learn.png" width="65px"/>
+            <img src="docs/hr/static/icons/frameworks/scikit-learn.png" width="65px"/>
             <br /> Scikit-Learn
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/frameworks/huggingface-transformers.png" width="65px"/>
+            <img src="docs/hr/static/icons/frameworks/huggingface-transformers.png" width="65px"/>
             <br /> HuggingFace Transformers
         </td>
     </tr>
@@ -137,15 +137,15 @@
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/apis/openai.png" width="65px"/>
+            <img src="docs/hr/static/icons/apis/openai.png" width="65px"/>
             <br /> OpenAI
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/apis/cohere.png" width="65px"/>
+            <img src="docs/hr/static/icons/apis/cohere.png" width="65px"/>
             <br /> Cohere
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/thumbnails/apis/anthropic.png" width="65px"/>
+            <img src="docs/hr/static/icons/apis/anthropic.png" width="65px"/>
             <br /> Anthropic
         </td>
     </tr>
@@ -162,17 +162,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
-        <img src="docs/hr/static/thumbnails/featured-examples/image-search.svg" />
+        <img src="docs/hr/static/icons/featured-examples/image-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
-        <img src="docs/hr/static/thumbnails/featured-examples/video-search.svg" />
+        <img src="docs/hr/static/icons/featured-examples/video-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
-        <img src="docs/hr/static/thumbnails/featured-examples/semantic-search.svg" />
+        <img src="docs/hr/static/icons/featured-examples/semantic-search.svg" />
       </a>
     </td>
   </tr>
@@ -190,17 +190,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>     
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
-        <img src="docs/hr/static/thumbnails/featured-examples/document-search.svg" />
+        <img src="docs/hr/static/icons/featured-examples/document-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
-        <img src="docs/hr/static/thumbnails/featured-examples/machine-learning.svg" />
+        <img src="docs/hr/static/icons/featured-examples/machine-learning.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
-        <img src="docs/hr/static/thumbnails/featured-examples/transfer-learning.svg" />
+        <img src="docs/hr/static/icons/featured-examples/transfer-learning.svg" />
       </a>
     </td>
   </tr>

@@ -4,7 +4,6 @@
   </a>
 </p>
 <div align="center">
-	
 
 
 # Bring AI to your favorite database! 
@@ -67,37 +66,113 @@
 
 
 
-## Current Integrations (*more coming soon*):
+## ⚡ Integrations (*more coming soon*):
 
-<div align="center">	
+### Databases 
 
-| Databases | AI Frameworks | Models & AI APIs |
-| :--- | :--- | :--- |
-| **• MongoDB** <br> **• MongoDB Atlas** <br> **• AWS S3** <br> • PostgreSQL (experimental) <br> • SQLite (experimental) <br> • DuckDB (experimental) <br> • MySQL (experimental) <br> • Snowflake (experimental) | **• PyTorch** <br> **• Scikit-Learn**<br> • **HuggingFace Transformers** | **• OpenAI** <br> **• Cohere** <br> **• Anthropic** |
-
-
-
+<div align="center">
+<table align="center">
+    <tr>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/databases/mongodb.png" width="65px"/>
+            <br /> MongoDB
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/databases/mongodb-atlas.png" width="65px"/>
+            <br /> MongoDB Atlas
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/databases/aws-s3.png" width="65px"/>
+            <br /> AWS S3
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/databases/postgresql.png" width="65px"/>
+            <br /> PostgreSQL
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/databases/sqlite.png" width="65px"/>
+            <br /> SQLite
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/databases/duckdb.png" width="65px"/>
+            <br /> DuckDB
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/databases/mysql.png" width="65px"/>
+            <br /> MySQL
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/databases/snowflake.png" width="65px"/>
+            <br /> Snowflake
+        </td>
+    </tr>
+</table>
 </div>
+
+### AI Frameworks
+
+<div align="center">
+<table align="center">
+    <tr>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/frameworks/pytorch.png" width="65px"/>
+            <br /> PyTorch
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/frameworks/scikit-learn.png" width="65px"/>
+            <br /> Scikit-Learn
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/frameworks/huggingface-transformers.png" width="65px"/>
+            <br /> HuggingFace Transformers
+        </td>
+    </tr>
+</table>
+</div>
+
+
+### Models & AI APIs
+
+<div align="center">
+<table align="center">
+    <tr>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/apis/openai.png" width="65px"/>
+            <br /> OpenAI
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/apis/cohere.png" width="65px"/>
+            <br /> Cohere
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/thumbnails/apis/anthropic.png" width="65px"/>
+            <br /> Anthropic
+        </td>
+    </tr>
+</table>
+</div>
+
+
+
 
 ## Featured Examples
 
 Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.com). 
-
 <table>
   <tr>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
-        <img src="docs/hr/static/thumbnails/image-search.svg" />
+        <img src="docs/hr/static/thumbnails/featured-examples/image-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
-        <img src="docs/hr/static/thumbnails/video-search.svg" />
+        <img src="docs/hr/static/thumbnails/featured-examples/video-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
-        <img src="docs/hr/static/thumbnails/semantic-search.svg" />
+        <img src="docs/hr/static/thumbnails/featured-examples/semantic-search.svg" />
       </a>
     </td>
   </tr>
@@ -115,17 +190,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>     
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
-        <img src="docs/hr/static/thumbnails/document-search.svg" />
+        <img src="docs/hr/static/thumbnails/featured-examples/document-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
-        <img src="docs/hr/static/thumbnails/machine-learning.svg" />
+        <img src="docs/hr/static/thumbnails/featured-examples/machine-learning.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
-        <img src="docs/hr/static/thumbnails/transfer-learning.svg" />
+        <img src="docs/hr/static/thumbnails/featured-examples/transfer-learning.svg" />
       </a>
     </td>
   </tr>
@@ -154,7 +229,7 @@ pip install superduperdb
    - You need to install Docker? See the docs <a href="https://docs.docker.com/engine/install/">here</a>.
 
 ```
-make run-demo
+make run_demo
 ```
 
 # Tutorial
@@ -295,8 +370,11 @@ model.predict(
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
 - Search through <a href="https://github.com/SuperDuperDB/superduperdb/discussions">our GitHub Discussions</a>, or <a href="https://github.com/SuperDuperDB/superduperdb/discussions/new/choose">add a new question</a>.
 - Comment <a href="https://github.com/SuperDuperDB/superduperdb/issues/">an existing issue</a> or create <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">a new one</a>.
-- Send us an email to gethelp@superduperdb.com.
+- Help us to improve SuperDuperDB by providing your valuable feedback <a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">here</a>!
+- Email us to `gethelp@superduperdb.com`.
 - Feel free to contact a maintainer or community volunteer directly! 
+
+
 
 # Contributing  
 
@@ -311,10 +389,10 @@ model.predict(
 
 Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-# Feedback 
+<a href="https://github.com/SuperDuperDB/superduperdb/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=SuperDuperDB/superduperdb" />
+</a>
 
-Help us to improve SuperDuperDB by providing your valuable feedback
-<a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">here</a>!
 
 # License  
 

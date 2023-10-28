@@ -281,7 +281,6 @@ db.add(VectorIndex('my-index', indexing_listener=indexing_listener))
 
 # The "VectorIndex" may be used to search data. Items to be searched against are passed
 # to the registered model and vectorized. No additional app layer is required.
-# By default, SuperDuperDB uses LanceDB for vector comparison operations
 db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
 ```
 

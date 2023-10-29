@@ -25,6 +25,7 @@ from superduperdb.db.mongodb.data_backend import MongoDatabackend
 from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 from superduperdb.db.mongodb.artifacts import MongoArtifactStore
 from superduperdb.vector_search.lancedb_client import LanceVectorIndex
+import pymongo
 
 class SuperDuperDatabase:
     _instance = None

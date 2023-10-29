@@ -379,6 +379,9 @@ model.predict(
 
 Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
+# ❤️ Contributors
+#### Thanks goes to these wonderful people:
+
 <a href="https://github.com/SuperDuperDB/superduperdb/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=SuperDuperDB/superduperdb" />
 </a>

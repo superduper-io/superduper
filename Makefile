@@ -18,6 +18,12 @@ help: ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 
+devkit: ## Add some basic dev tools
+	# Add pre-commit hooks to ensure that no strange stuff are being committed.
+	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
+	pip install pre-commit
+	pre-commit autoupdate
+
 # RELEASE_VERSION defines the project version for the operator.
 # Update this value when you upgrade the version of your project.
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}

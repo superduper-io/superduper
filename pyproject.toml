@@ -101,6 +101,7 @@ lint = [
     "black>=23.3",
     "interrogate>=1.5.0",
     "ruff>=0.0.267",
+    "deptry>=0.12.0",
 ]
 tests = [
     "fastapi>=0.103.1",
@@ -117,7 +118,7 @@ tests = [
     "urllib3<2",  # see https://github.com/urllib3/urllib3/issues/3053
 ]
 demo = [
-    "git+https://github.com/openai/CLIP",
+    "clip@git+https://github.com/openai/CLIP#egg=main",
     "datasets",
     "sentence-transformers",
     "opencv-python",

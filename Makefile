@@ -25,8 +25,6 @@ devkit: ## Add some basic dev tools
 	pre-commit autoupdate
 	pre-commit install --install-hooks
 
-	# Code Quality
-	pip install deptry isort black ruff mypy pytest interrogate
 
 # RELEASE_VERSION defines the project version for the operator.
 # Update this value when you upgrade the version of your project.

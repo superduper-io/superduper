@@ -266,7 +266,7 @@ db = superduper(pymongo.MongoClient().my_db)
 model = superduper(SVC())
 
 # Predict on the selected data.
-model.predict(X='input_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
+model.train(X='input_col', y='target_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
 ```
 
 #### - Vector-Search your data:

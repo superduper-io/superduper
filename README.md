@@ -251,7 +251,7 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 
 
 #### - Train models directly from your database.
-Query your database, without additional ingestion and pre-processing:
+Simply by querying your database, without additional ingestion and pre-processing:
 
 ```python
 import pymongo

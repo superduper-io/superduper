@@ -26,20 +26,26 @@ from superduperdb.db.mongodb.metadata import MongoMetaDataStore
 from superduperdb.db.mongodb.artifacts import MongoArtifactStore
 from superduperdb.vector_search.lancedb_client import LanceVectorIndex
 
-import pymongo
+class SuperDuperDatabase:
+    _instance = None
 
-mongo_client = pymongo.MongoClient()
-my_databackend = MongoDatabackend(mongo_client, name='test_db')
-my_metadata = MongoMetaDataStore(mongo_client, name='test_db')
-my_artifact_store = MongoArtifactStore(mongo_client, name='_filesystem:test_db')
-vector_database = LanceVectorIndex(uri='~/.lancedb')
-
-db = DB(
-    data_backend=my_databackend,
-    metadata=my_metadata_store,
-    artifact_store=my_artifact_store,
-    vector_database=my_vector_database,
-)
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(SuperDuperDatabase, cls).__new__(cls)
+            # Create necessary objects to build the database
+            mongo_client = pymongo.MongoClient()
+            data_backend = MongoDatabackend(mongo_client, name='test_db')
+            metadata_store = MongoMetaDataStore(mongo_client, name='test_db')
+            artifact_store = MongoArtifactStore(mongo_client, name='_filesystem:test_db')
+            vector_database = LanceVectorIndex(uri='~/.lancedb')
+            # Initialize the DB class
+            cls._instance.db = DB(
+                data_backend=data_backend,
+                metadata=metadata_store,
+                artifact_store=artifact_store,
+                vector_database=vector_database
+            )
+        return cls._instance
 ```
 
 Connecting these 4 elements in this way can be slightly tedious, so we provide a helper function to do this on 

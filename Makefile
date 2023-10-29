@@ -23,6 +23,10 @@ devkit: ## Add some basic dev tools
 	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
 	pip install pre-commit
 	pre-commit autoupdate
+	pre-commit install --install-hooks
+
+	# Code Quality
+	pip install deptry isort black ruff mypy pytest interrogate
 
 # RELEASE_VERSION defines the project version for the operator.
 # Update this value when you upgrade the version of your project.
@@ -103,12 +107,20 @@ test: mongo_init ## Perform unit testing
 clean-test: mongo_shutdown	## Clean-up unit testing environment
 
 fix-and-test: mongo_init ## Lint before testing
+	# Sort mports
 	isort $(DIRECTORIES)
+	# Code formatting
 	black $(DIRECTORIES)
+	# Linter and code formatting
 	ruff check --fix $(DIRECTORIES)
+	# Linting
 	mypy superduperdb
+	# Unit testing
 	pytest $(PYTEST_ARGUMENTS)
+	# Check for missing docstrings
 	interrogate superduperdb
+	# Check for unused dependencies
+	deptry ./
 
 test-and-fix: mongo_init ## Test before linting.
 	mypy superduperdb

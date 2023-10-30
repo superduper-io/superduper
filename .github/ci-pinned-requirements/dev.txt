@@ -152,7 +152,7 @@ execnet==2.0.2
     # via pytest-xdist
 executing==2.0.1
     # via stack-data
-fastapi==0.104.0
+fastapi==0.104.1
     # via
     #   file:///home/fnikol/workspace/projects/superduper/superduperdb
     #   superduperdb
@@ -700,7 +700,6 @@ stack-data==0.6.3
     # via ipython
 starlette==0.27.0
     # via fastapi
-superduperdb[apis,docs,quality,testing,torch] @ file:///home/fnikol/Workspace/projects/superduper/superduperdb
     # via superduperdb (pyproject.toml)
 sympy==1.12
     # via torch

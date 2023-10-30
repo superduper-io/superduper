@@ -23,8 +23,11 @@ help: ## Display this help
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 
-
-##@ Release Management
+devkit: ## Add some basic dev tools
+	# Add pre-commit hooks to ensure that no strange stuff are being committed.
+	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
+	pip install pre-commit
+	pre-commit autoupdate
 
 new_release: ## Release a new SuperDuperDB version
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
@@ -48,21 +51,6 @@ new_release: ## Release a new SuperDuperDB version
 
 	@echo "** Push release-${RELEASE_VERSION}"
 	git push --set-upstream origin release-${RELEASE_VERSION} --tags
-
-
-# superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
-build_superduperdb: ## Build minimal Docker image for general use
-	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker build ./deploy/images/superduperdb -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache
-
-
-push_superduperdb: ## Push superduperdb/superduperdb:latest
-	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
-
-	@echo "===> release superduperdb/superduperdb:latest"
-	docker tag superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) superduperdb/superduperdb:latest
-	docker push superduperdb/superduperdb:latest
 
 
 ##@ CI Doc Functions
@@ -125,9 +113,26 @@ test_notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
 	fi
 
 
-##@ DevOps Sandbox
+##@ Base Image Management
 
-# sandbox is a bloated image that contains everything we will need.  we don't need to expose this one to the user.
+# superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
+build_superduperdb: ## Build minimal Docker image for general use
+	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
+	docker build ./deploy/images/superduperdb -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache
+
+
+push_superduperdb: ## Push superduperdb/superduperdb:latest
+	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
+	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
+
+	@echo "===> release superduperdb/superduperdb:latest"
+	docker tag superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) superduperdb/superduperdb:latest
+	docker push superduperdb/superduperdb:latest
+
+
+##@ Sandbox Image Management
+
+# dev is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
 build_sandbox: ## Build bloated Docker image for development.
 	@echo "===> release superduperdb/sandbox:$(RELEASE_VERSION:v%=%)"
 	docker build . -f ./deploy/images/sandbox/Dockerfile -t superduperdb/sandbox:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
@@ -157,7 +162,7 @@ run_sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
 	rm -rf /tmp/superduperdb_pr_$(PR_NUMBER)
 
 
-##@ Demo Applications
+##@ Demo Image Management
 
 # superduperdb/demo is a bloated image that contains everything we need to run the online demo.
 build_demo: ## Build bloated Docker image for the demo

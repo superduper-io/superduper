@@ -85,24 +85,42 @@ test: mongo_init ## Perform unit testing
 clean-test: mongo_shutdown	## Clean-up unit testing environment
 
 fix-and-test: mongo_init ## Lint before testing
+	# Sort mports
 	isort $(DIRECTORIES)
+	# Code formatting
 	black $(DIRECTORIES)
+	# Linter and code formatting
 	ruff check --fix $(DIRECTORIES)
+	# Linting
 	mypy superduperdb
+	# Unit testing
 	pytest $(PYTEST_ARGUMENTS)
+	# Check for missing docstrings
 	interrogate superduperdb
+	# Check for unused dependencies
+	deptry ./
+
 
 test-and-fix: mongo_init ## Test before linting.
+	# Linting
 	mypy superduperdb
+	# Unit testing
 	pytest $(PYTEST_ARGUMENTS)
+	# Code formatting
 	black $(DIRECTORIES)
+	# Linter and code formatting
 	ruff check --fix $(DIRECTORIES)
+	# Check for missing docstrings
 	interrogate superduperdb
 
 lint-and-type-check: ## Lint your code
+	# Linting
 	mypy superduperdb
+	# Code formatting
 	black --check $(DIRECTORIES)
+	# Linter and code formatting
 	ruff check $(DIRECTORIES)
+	# Check for missing docstrings
 	interrogate superduperdb
 
 test_notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)

@@ -5,6 +5,7 @@ TODO:
 
 import dataclasses as dc
 import enum
+import json
 import re
 import typing as t
 
@@ -97,7 +98,7 @@ class IbisCompoundSelect(CompoundSelect):
             kwargs = {}
         return IbisQueryComponent(name, type=type, args=args, kwargs=kwargs)
 
-    def outputs(self, key: str, model: str):
+    def outputs(self, key: str, model: str, query_id: str):
         """
         This method returns a query which joins a query with the outputs
         for a table.
@@ -113,7 +114,7 @@ class IbisCompoundSelect(CompoundSelect):
         return IbisCompoundSelect(
             table_or_collection=self.table_or_collection,
             pre_like=self.pre_like,
-            query_linker=self.query_linker.outputs(key, model),
+            query_linker=self.query_linker.outputs(key, model, query_id),
             post_like=self.post_like,
         )
 
@@ -281,7 +282,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             out.extend(member.get_all_tables())
         return list(set(out))
 
-    def outputs(self, key: str, model: str):
+    def outputs(self, key: str, model: str, query_id: str):
         symbol_table = IbisQueryTable(
             identifier=f'_outputs/{model}',
             primary_id='output_id',
@@ -292,8 +293,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         other_query = self.join(symbol_table, symbol_table.input_id == attr)
 
         other_query.filter(
-            symbol_table.key == key
-            and symbol_table.query_id == self.table_or_collection.identifier
+            symbol_table.key == key and symbol_table.query_id == query_id
         )
         return other_query
 
@@ -413,7 +413,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
     def add_fold(self, fold: str) -> Select:
         return self.filter(self.fold == fold)
 
-    def outputs(self, key: str, model: str):
+    def outputs(self, key: str, model: str, query_id: str):
         """
         This method returns a query which joins a query with the outputs
         for a table.
@@ -427,7 +427,9 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         """
         return IbisCompoundSelect(
             table_or_collection=self,
-            query_linker=self._get_query_linker(members=[]).outputs(key, model),
+            query_linker=self._get_query_linker(members=[]).outputs(
+                key=key, model=model, query_id=query_id
+            ),
         )
 
     @property
@@ -492,6 +494,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         model: str,
         outputs: t.Sequence[t.Any],
         flatten: bool = False,
+        serialized_select=None,
     ):
         if flatten:
             raise NotImplementedError('Flatten not yet supported for ibis')
@@ -504,11 +507,14 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
 
         # TODO generalize this to multiple queries per table/ model
         table_records = []
+        query_hash = hash(json.dumps(serialized_select))
+        query_id = db.metadata.get_query(query_hash)
+
         for ix in range(len(outputs)):
             d = {
                 'output_id': str(ids[ix]),
                 'input_id': str(ids[ix]),
-                'query_id': self.identifier,
+                'query_id': query_id,
                 'output': outputs[ix],
                 'key': key,
             }
@@ -517,7 +523,6 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         for r in table_records:
             if isinstance(r['output'], dict) and '_content' in r['output']:
                 r['output'] = r['output']['_content']['bytes']
-
         db.databackend.insert(f'_outputs/{model}', table_records)
 
     def insert(

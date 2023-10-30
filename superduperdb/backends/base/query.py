@@ -53,6 +53,9 @@ class Select(Serializable, ABC):
         :param model: The model to update
         :param outputs: The outputs to update
         """
+        serialized_select = super().serialize()
+        kwargs.update({'serialized_select': serialized_select})
+
         return self.table_or_collection.model_update(
             db=db,
             ids=ids,

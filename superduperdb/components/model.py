@@ -190,6 +190,8 @@ class PredictMixin:
             select = Serializable.deserialize(select)
 
         if db is not None:
+            db.metadata.add_query(select, self.identifier)
+
             logging.info(f'Adding model {self.identifier} to db')
             assert isinstance(self, Component)
             db.add(self)

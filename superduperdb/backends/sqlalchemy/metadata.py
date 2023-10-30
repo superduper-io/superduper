@@ -1,3 +1,5 @@
+import json
+import threading
 import typing as t
 from contextlib import contextmanager
 
@@ -8,7 +10,11 @@ from sqlalchemy.orm import relationship, sessionmaker
 
 from superduperdb.backends.base.metadata import MetaDataStore
 from superduperdb.base.logger import logging
+from superduperdb.base.serializable import Serializable
 from superduperdb.misc.colors import Colors
+
+if t.TYPE_CHECKING:
+    from superduperdb.backends.base.query import Select
 
 Base = declarative_base()
 
@@ -16,6 +22,15 @@ Base = declarative_base()
 class DictMixin:
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
+class QueryID(Base):  # type: ignore[valid-type, misc]
+    __tablename__ = 'query_id_table'
+
+    query_id = Column(Integer, primary_key=True, autoincrement=False)
+    query = Column(JSON)
+    model = Column(String)
+    hash = Column(String)
 
 
 class Job(Base, DictMixin):  # type: ignore[valid-type, misc]
@@ -88,6 +103,9 @@ class SQLAlchemyMetadata(MetaDataStore):
         self.name = name
         self.conn = conn
         Base.metadata.create_all(self.conn)
+
+        self._lock = threading.Lock()
+        self._query_watermark = 0
 
     def drop(self, force: bool = False):
         """
@@ -329,3 +347,48 @@ class SQLAlchemyMetadata(MetaDataStore):
     def update_metadata(self, key, value):
         with self.session_context() as session:
             session.query(Meta).filter(Meta.key == key).update({Meta.value: value})
+
+    # --------------- Query ID -----------------
+    def add_query(self, query: 'Select', model: str):
+        query_serialized = query.serialize()
+        query_hash = str(hash(json.dumps(query_serialized)))
+        with self.session_context() as session:
+            with self._lock:
+                row = {
+                    'query_id': self._query_watermark,
+                    'query': query_serialized,
+                    'model': model,
+                    'hash': query_hash,
+                }
+
+            session.add(QueryID(**row))
+            self._query_watermark += 1
+
+    def get_query(self, query_hash: str):
+        '''
+        Get the query from query table corresponding to the query hash
+        '''
+        with self.session_context() as session:
+            return (
+                session.query(QueryID)
+                .filter(QueryID.hash == str(query_hash))
+                .first()
+                .query_id
+            )
+
+    def get_model_queries(self, model: str):
+        '''
+        Get queries related to the given model.
+        '''
+        with self.session_context() as session:
+            queries = session.query(QueryID).filter(QueryID.model == model).all()
+
+            unpacked_queries = []
+            for row in queries:
+                id = row.query_id
+                serialized = row.query
+                query = Serializable.deserialize(serialized)
+                unpacked_queries.append(
+                    {'query_id': id, 'query': query, 'sql': query.repr_()}
+                )
+            return unpacked_queries

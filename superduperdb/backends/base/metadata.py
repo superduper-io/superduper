@@ -2,6 +2,9 @@ import time
 import typing as t
 from abc import ABC, abstractmethod
 
+if t.TYPE_CHECKING:
+    from superduperdb.backends.base.query import Select
+
 
 class MetaDataStore(ABC):
     """
@@ -334,3 +337,19 @@ class MetaDataStore(ABC):
         :param value: Value of metadata
         """
         pass
+
+    def add_query(self, query: 'Select', model: str):
+        """
+        Add query id to query table
+        """
+
+    def get_query(self, query_hash: str):
+        """
+        Get query from query table
+        """
+
+    def get_queries(self, model: str):
+        """
+        Get all queries from query table corresponding
+        to the model.
+        """

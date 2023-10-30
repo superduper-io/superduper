@@ -47,7 +47,11 @@
 ---
 <p style="color:red"><strong>Important Announcement</strong></p>
 
-Our upcoming launch is scheduled for `15/Nov/2023`. Don't miss it! Stay tuned for exciting updates.
+Our upcoming launch is scheduled for `15/Nov/2023`. 
+
+Don't miss it! 
+
+Try our read-to-use notebooks <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples"><strong>Live on your browser</strong></a> and stay tuned on <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> for exciting updates.
 
 ---
 

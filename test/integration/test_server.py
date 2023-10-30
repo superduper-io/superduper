@@ -72,7 +72,7 @@ def test_add_load(client, test_db, test_collection):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_show(client, database_with_default_encoders_and_model):
     encoders = client.show('encoder')
-    assert encoders == ['torch.float32[16]', 'torch.float32[32]']
+    assert sorted(encoders) == ['torch.float32[16]', 'torch.float32[32]']
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -88,11 +88,15 @@ def test_insert(
 def test_remove(client, database_with_default_encoders_and_model):
     database_with_default_encoders_and_model.add(tensor(torch.float64, shape=(32,)))
     encoders = client.show('encoder')
-    assert encoders == ['torch.float32[16]', 'torch.float32[32]', 'torch.float64[32]']
+    assert sorted(encoders) == [
+        'torch.float32[16]',
+        'torch.float32[32]',
+        'torch.float64[32]',
+    ]
 
     client.remove('encoder', 'torch.float64[32]', force=True)
     encoders = client.show('encoder')
-    assert encoders == ['torch.float32[16]', 'torch.float32[32]']
+    assert sorted(encoders) == ['torch.float32[16]', 'torch.float32[32]']
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

@@ -4,7 +4,6 @@
   </a>
 </p>
 <div align="center">
-​	
 
 
 # Bring AI to your favorite database! 
@@ -46,14 +45,6 @@
  </div>
 
 
-**Easily implement AI without the need to copy and move your data to complex MLOps pipelines and specialized vector databases. Integrate, train, and manage your AI models and APIs directly with your chosen database, using a simple Python interface.**
-- Generative AI & chatbots
-- Vector Search
-- Standard Use-Cases (classification, regression, clustering, recommendation etc)
-- Highly custom AI use-cases and workflows with specialized models.
-
-<br> 
-
 **SuperDuperDB is not another database. It is a framework that transforms your favorite database into an AI powerhouse:**
 - **A single scalable AI deployment** of all your models and AI APIs, including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
 - **A model trainer** that allows to easily train and fine-tune models simply by querying the database.
@@ -65,39 +56,111 @@
 </p>
 
 
+## ⚡ Integrations (*more coming soon*):
 
+Easily implement AI without the need to copy and move your data to complex MLOps pipelines and specialized vector databases. Integrate, train, and manage your AI models and APIs directly with your chosen database, using a simple Python interface.
 
-## Current Integrations (*more coming soon*):
+### Datastores 
+Unlock the power of SuperDuperDB to connect and manage various types of data sources effortlessly!
 
-<div align="center">	
-
-| Databases | AI Frameworks | Models & AI APIs |
-| :--- | :--- | :--- |
-| **• MongoDB** <br> **• MongoDB Atlas** <br> **• AWS S3** <br> • PostgreSQL (experimental) <br> • SQLite (experimental) <br> • DuckDB (experimental) <br> • MySQL (experimental) <br> • Snowflake (experimental) | **• PyTorch** <br> **• Scikit-Learn**<br> • **HuggingFace Transformers** | **• OpenAI** <br> **• Cohere** <br> **• Anthropic** |
-
-
-
+<div align="center">
+<table align="center">
+    <tr>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/databases/mongodb.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/databases/mongodb-atlas.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/databases/aws-s3.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/databases/postgresql.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/databases/sqlite.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/databases/duckdb.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/databases/mysql.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/databases/snowflake.png" width="150px"/>
+        </td>
+    </tr>
+</table>
 </div>
 
-## Featured Examples
+### AI Frameworks
+Leverage SuperDuperDB to discover insights from your data using a variety of AI models!
+
+<div align="center">
+<table align="center">
+    <tr>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/frameworks/pytorch.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/frameworks/scikit-learn.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/frameworks/huggingface-transformers.png" width="150px"/>
+        </td>
+    </tr>
+</table>
+</div>
+
+
+### AI APIs
+Let SuperDuperDB make your applications smarter using a suite of ready-to-use AI models!
+
+<div align="center">
+<table align="center">
+    <tr>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/apis/openai.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/apis/cohere.png" width="150px"/>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="docs/hr/static/icons/apis/anthropic.png" width="150px"/>
+        </td>
+    </tr>
+</table>
+</div>
+
+
+
+
+## 🔥 Featured Examples
 
 Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.com). 
+
+- Generative AI & chatbots
+- Vector Search
+- Standard Use-Cases (classification, regression, clustering, recommendation etc)
+- Highly custom AI use-cases and workflows with specialized models.
+
 
 <table>
   <tr>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
-        <img src="docs/hr/static/thumbnails/image-search.svg" />
+        <img src="docs/hr/static/icons/featured-examples/image-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
-        <img src="docs/hr/static/thumbnails/video-search.svg" />
+        <img src="docs/hr/static/icons/featured-examples/video-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
-        <img src="docs/hr/static/thumbnails/semantic-search.svg" />
+        <img src="docs/hr/static/icons/featured-examples/semantic-search.svg" />
       </a>
     </td>
   </tr>
@@ -115,17 +178,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>     
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
-        <img src="docs/hr/static/thumbnails/document-search.svg" />
+        <img src="docs/hr/static/icons/featured-examples/document-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
-        <img src="docs/hr/static/thumbnails/machine-learning.svg" />
+        <img src="docs/hr/static/icons/featured-examples/machine-learning.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
-        <img src="docs/hr/static/thumbnails/transfer-learning.svg" />
+        <img src="docs/hr/static/icons/featured-examples/transfer-learning.svg" />
       </a>
     </td>
   </tr>
@@ -144,7 +207,7 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
 
 
 
-# Installation
+# 🚀 Installation
 #### 1. Install SuperDuperDB via `pip` *(~1 minute)*
 ```
 pip install superduperdb
@@ -154,10 +217,10 @@ pip install superduperdb
    - You need to install Docker? See the docs <a href="https://docs.docker.com/engine/install/">here</a>.
 
 ```
-make run-demo
+make run_demo
 ```
 
-# Tutorial
+# 📚 Tutorial
 
 In this tutorial, you will learn how to Integrate, train and manage any AI models and APIs directly with your database with your data. You can visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
 
@@ -186,7 +249,7 @@ model.predict(X='input_col', db=db, select=Collection(name='test_documents').fin
 
 
 #### - Train models directly from your database.
-Query your database, without additional ingestion and pre-processing:
+Simply by querying your database, without additional ingestion and pre-processing:
 
 ```python
 import pymongo
@@ -201,7 +264,7 @@ db = superduper(pymongo.MongoClient().my_db)
 model = superduper(SVC())
 
 # Predict on the selected data.
-model.predict(X='input_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
+model.train(X='input_col', y='target_col', db=db, select=Collection(name='test_documents').find({'_fold': 'valid'}))
 ```
 
 #### - Vector-Search your data:
@@ -216,7 +279,6 @@ db.add(VectorIndex('my-index', indexing_listener=indexing_listener))
 
 # The "VectorIndex" may be used to search data. Items to be searched against are passed
 # to the registered model and vectorized. No additional app layer is required.
-# By default, SuperDuperDB uses LanceDB for vector comparison operations
 db.execute(collection.like({'text': 'clothing item'}, 'my-index').find({'brand': 'Nike'}))
 ```
 
@@ -290,16 +352,19 @@ model.predict(
 
 
 
-# Community & Getting Help 
+# 🤝 Community & Getting Help 
 
 #### If you have any problems, questions, comments or ideas:
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
 - Search through <a href="https://github.com/SuperDuperDB/superduperdb/discussions">our GitHub Discussions</a>, or <a href="https://github.com/SuperDuperDB/superduperdb/discussions/new/choose">add a new question</a>.
 - Comment <a href="https://github.com/SuperDuperDB/superduperdb/issues/">an existing issue</a> or create <a href="https://github.com/SuperDuperDB/superduperdb/issues/new/choose">a new one</a>.
-- Send us an email to gethelp@superduperdb.com.
+- Help us to improve SuperDuperDB by providing your valuable feedback <a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">here</a>!
+- Email us to `gethelp@superduperdb.com`.
 - Feel free to contact a maintainer or community volunteer directly! 
 
-# Contributing  
+
+
+# 🌱 Contributing  
 
 #### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 
@@ -312,10 +377,13 @@ model.predict(
 
 Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-# Feedback 
+# ❤️ Contributors
+#### Thanks goes to these wonderful people:
 
-Help us to improve SuperDuperDB by providing your valuable feedback
-<a href="https://docs.google.com/forms/d/e/1FAIpQLScKNyLCjSEWAwc-THjC7NJVDNRxQmVR5ey30VVayPhWOIhy1Q/viewform">here</a>!
+<a href="https://github.com/SuperDuperDB/superduperdb/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=SuperDuperDB/superduperdb" />
+</a>
+
 
 # License  
 

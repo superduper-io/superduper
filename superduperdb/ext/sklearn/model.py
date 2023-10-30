@@ -4,18 +4,18 @@ import typing as t
 import numpy
 from tqdm import tqdm
 
-from superduperdb.container.artifact import Artifact
-from superduperdb.container.metric import Metric
-from superduperdb.container.model import Model, _TrainingConfiguration
-from superduperdb.db.base.db import DB
-from superduperdb.db.base.query import Select
-from superduperdb.db.query_dataset import QueryDataset
+from superduperdb.backends.base.query import Select
+from superduperdb.backends.query_dataset import QueryDataset
+from superduperdb.base.artifact import Artifact
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.components.metric import Metric
+from superduperdb.components.model import Model, _TrainingConfiguration
 
 
 def _get_data_from_query(
     select: Select,
     X: str,
-    db: DB,
+    db: Datalayer,
     y: t.Optional[str] = None,
     y_preprocess: t.Optional[t.Callable] = None,
     preprocess: t.Optional[t.Callable] = None,
@@ -86,7 +86,7 @@ class Estimator(Model):
         y=None,
         configuration: t.Optional[SklearnTrainingConfiguration] = None,
         data_prefetch: bool = False,
-        db: t.Optional[DB] = None,
+        db: t.Optional[Datalayer] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,
         select: t.Optional[Select] = None,
         validation_sets: t.Optional[t.Sequence[str]] = None,

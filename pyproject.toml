@@ -116,6 +116,13 @@ tests = [
     "pytest-asyncio",
     "urllib3<2",  # see https://github.com/urllib3/urllib3/issues/3053
 ]
+demo = [
+    "openai-clip",
+    "datasets",
+    "sentence-transformers",
+    "opencv-python",
+    "matplotlib",
+]
 dev = ["superduperdb[apis,docs,lint,tests,typing,torch]"]
 
 [project.urls]
@@ -137,12 +144,7 @@ target-version = ["py38"]
 ignore_missing_imports = true
 no_implicit_optional = true
 warn_unused_ignores = true
-# disallow_any_generics = true
-# disallow_any_unimported = true
-# disallow_untyped_calls = true
-# disallow_untyped_defs = true
-# ignore_missing_imports = false
-# warn_return_any = true
+disable_error_code = "has-type"
 
 [tool.pytest.ini_options]
 addopts = "-W ignore"

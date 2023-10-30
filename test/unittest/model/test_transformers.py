@@ -6,9 +6,9 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb.container.dataset import Dataset
-from superduperdb.container.document import Document as D
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.base.document import Document as D
+from superduperdb.components.dataset import Dataset
 from superduperdb.ext.transformers.model import (
     Pipeline,
     TransformersTrainerConfiguration,

@@ -14,12 +14,12 @@ from transformers import (
     pipeline as _pipeline,
 )
 
-from superduperdb.container.artifact import Artifact
-from superduperdb.container.metric import Metric
-from superduperdb.container.model import Model, _TrainingConfiguration
-from superduperdb.db.base.db import DB
-from superduperdb.db.base.query import Select
-from superduperdb.db.query_dataset import query_dataset_factory
+from superduperdb.backends.base.query import Select
+from superduperdb.backends.query_dataset import query_dataset_factory
+from superduperdb.base.artifact import Artifact
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.components.metric import Metric
+from superduperdb.components.model import Model, _TrainingConfiguration
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 _DEFAULT_PREFETCH_SIZE: int = 100
@@ -138,7 +138,7 @@ class Pipeline(Model):
         y: str,
         configuration: t.Optional[_TrainingConfiguration] = None,
         data_prefetch: bool = False,
-        db: t.Optional[DB] = None,
+        db: t.Optional[Datalayer] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,
         prefetch_size: int = _DEFAULT_PREFETCH_SIZE,
         select: t.Optional[Select] = None,

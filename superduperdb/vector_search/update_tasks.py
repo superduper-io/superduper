@@ -1,7 +1,7 @@
 import typing as t
 
-from superduperdb.container.serializable import Serializable
-from superduperdb.db.base.query import CompoundSelect
+from superduperdb.backends.base.query import CompoundSelect
+from superduperdb.base.serializable import Serializable
 from superduperdb.vector_search.base import VectorItem
 
 

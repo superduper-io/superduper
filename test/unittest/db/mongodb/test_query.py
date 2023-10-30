@@ -1,5 +1,5 @@
-from superduperdb.container.document import Document
-from superduperdb.db.mongodb import query as q
+from superduperdb.backends.mongodb import query as q
+from superduperdb.base.document import Document
 
 
 def test_select_missing_outputs(random_data):

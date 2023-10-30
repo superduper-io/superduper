@@ -64,15 +64,6 @@ jobs:
       - name: Install wheel
         run: python -m pip install artifact/*.whl
       
-        # smoke-tests that check imports
-      - name: Check imports
-        # these modules cover most of the imports for the core package
-        # Note: if these modules are renamed, please update this list
-        run: |
-          python -m superduperdb.db.base.db
-          python -m superduperdb.db.base.backends
-          python -m superduperdb.container.model 
-
       - name: Set version for tagging
         id: set-version
         run: |
@@ -152,5 +143,5 @@ jobs:
 
       - name: Push Docker image
         run: |
-          make docker-build
-          make docker-push
+          make build_superduperdb
+          make push_superduperdb

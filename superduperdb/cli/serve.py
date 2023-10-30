@@ -7,7 +7,7 @@ from . import command
 
 @command(help='Start server')
 def serve():
-    from superduperdb.db.base.build import build_datalayer
+    from superduperdb.base.build import build_datalayer
     from superduperdb.server.server import serve
 
     db = build_datalayer()
@@ -16,8 +16,8 @@ def serve():
 
 @command(help='Start local cluster: server, dask and change data capture')
 def local_cluster(on: t.List[str] = []):
-    from superduperdb.db.base.build import build_datalayer
-    from superduperdb.db.mongodb.query import Collection
+    from superduperdb.backends.mongodb.query import Collection
+    from superduperdb.base.build import build_datalayer
     from superduperdb.server.dask_client import dask_client
     from superduperdb.server.server import serve
 

@@ -20,7 +20,7 @@ def superduper(item: t.Any, **kwargs) -> t.Any:
 
 
 def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
-    from superduperdb.db.base.build import build_datalayer
+    from superduperdb.base.build import build_datalayer
 
     # cfg = copy.deepcopy(CFG)
     if item.startswith('mongomock://'):
@@ -91,8 +91,8 @@ class MongoDbTyper(_DuckTyper):
         from mongomock.database import Database as MockDatabase
         from pymongo.database import Database
 
-        from superduperdb.db.base.db import DB
-        from superduperdb.db.mongodb.data_backend import MongoDataBackend
+        from superduperdb.backends.mongodb.data_backend import MongoDataBackend
+        from superduperdb.base.datalayer import Datalayer
 
         if kwargs:
             raise ValueError('MongoDb creator accepts no parameters')
@@ -100,7 +100,7 @@ class MongoDbTyper(_DuckTyper):
             raise TypeError(f'Expected Database but got {type(item)}')
 
         databackend = MongoDataBackend(conn=item.client, name=item.name)
-        return DB(
+        return Datalayer(
             databackend=databackend,
             metadata=databackend.build_metadata(),
             artifact_store=databackend.build_artifact_store(),

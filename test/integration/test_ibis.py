@@ -5,17 +5,17 @@ import tdir
 import torch.nn
 import torchvision
 
-from superduperdb.container.document import Document as D
-from superduperdb.container.schema import Schema
-from superduperdb.db.base.db import DB
-from superduperdb.db.filesystem.artifacts import FileSystemArtifactStore
-from superduperdb.db.ibis.data_backend import IbisDataBackend
-from superduperdb.db.ibis.field_types import dtype
-from superduperdb.db.ibis.query import IbisTable
-from superduperdb.db.sqlalchemy.metadata import SQLAlchemyMetadata
-from superduperdb.ext.pillow.image import pil_image
+from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
+from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.backends.ibis.query import IbisTable
+from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.base.document import Document as D
+from superduperdb.components.schema import Schema
+from superduperdb.ext.pillow.encoder import pil_image
+from superduperdb.ext.torch.encoder import tensor
 from superduperdb.ext.torch.model import TorchModel
-from superduperdb.ext.torch.tensor import tensor
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ def ibis_pandas_db(sqllite_conn):
 
 
 def make_ibis_db(db_conn, metadata_conn, tmp_dir, in_memory=False):
-    return DB(
+    return Datalayer(
         databackend=IbisDataBackend(conn=db_conn, name='ibis', in_memory=in_memory),
         metadata=SQLAlchemyMetadata(conn=metadata_conn.con, name='ibis'),
         artifact_store=FileSystemArtifactStore(conn=tmp_dir, name='ibis'),
@@ -158,7 +158,7 @@ def end2end_workflow(ibis_db):
     )
 
     # Build query to get the results back
-    q = t.select('id', 'image', 'age').filter(t.age > 25).outputs('image', 'resnet18')
+    q = t.outputs('image', 'resnet18').select('id', 'image', 'age').filter(t.age > 25)
 
     # Get the results
     result = list(q.execute(db))
@@ -209,6 +209,5 @@ def test_end2end_duckdb(ibis_duckdb):
     end2end_workflow(ibis_duckdb)
 
 
-@pytest.mark.skip(reason='bug in ibis framework in pandas backend')
 def test_end2end_pandas(ibis_pandas_db):
     end2end_workflow(ibis_pandas_db)

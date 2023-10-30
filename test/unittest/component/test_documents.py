@@ -3,11 +3,11 @@ import pytest
 try:
     import torch
 
-    from superduperdb.ext.torch.tensor import tensor
+    from superduperdb.ext.torch.encoder import tensor
 except ImportError:
     torch = None
 
-from superduperdb.container.document import Document
+from superduperdb.base.document import Document
 
 
 @pytest.fixture

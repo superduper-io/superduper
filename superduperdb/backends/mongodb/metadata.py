@@ -119,6 +119,7 @@ class MongoMetaDataStore(MetaDataStore):
         )
 
     def show_components(self, type_id: str, **kwargs) -> t.List[t.Union[t.Any, str]]:
+        # TODO: Should this be sorted?
         return self.component_collection.distinct(
             'identifier', {'type_id': type_id, **kwargs}
         )

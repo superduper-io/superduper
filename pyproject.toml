@@ -117,7 +117,7 @@ tests = [
     "urllib3<2",  # see https://github.com/urllib3/urllib3/issues/3053
 ]
 demo = [
-    "git+https://github.com/openai/CLIP",
+    "openai-clip",
     "datasets",
     "sentence-transformers",
     "opencv-python",

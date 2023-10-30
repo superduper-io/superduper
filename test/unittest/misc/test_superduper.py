@@ -36,3 +36,6 @@ def test_superduper_raise():
 
     with pytest.raises(NotImplementedError):
         superduper("string")
+
+
+# TODO: add MongoDbTyper test

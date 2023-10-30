@@ -226,11 +226,11 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
 pip install superduperdb
 ```
 
-#### 2. Try SuperDuperDB via `docker-compose` *(~2 minutes)*:
+#### 2. Try SuperDuperDB via Docker *(~2 minutes)*:
    - You need to install Docker? See the docs <a href="https://docs.docker.com/engine/install/">here</a>.
 
 ```
-make run_demo
+docker run -p 8888:8888 superduperdb/demo:latest
 ```
 
 # 📚 Tutorial

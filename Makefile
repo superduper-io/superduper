@@ -130,15 +130,14 @@ test_notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
 
 ##@ Development Sandbox Management
 
-# superduperdb/sandbox is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
-build_sandbox: ## Build bloated Docker image for development.
+# superduperdb/devsandbox is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
+build_devsandbox: ## Build bloated Docker image for development.
 	@echo "===> release superduperdb/sandbox:$(RELEASE_VERSION:v%=%)"
-	docker build . -f ./deploy/images/sandbox/Dockerfile -t superduperdb/sandbox:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
-	--build-arg SUPERDUPERDB_EXTRAS="testing,demo"
-	#--build-arg SUPERDUPERDB_EXTRAS="torch,apis,docs,quality,testing"
+	docker build . -f ./deploy/images/sandbox/Dockerfile -t superduperdb/devsandbox:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	--build-arg SUPERDUPERDB_EXTRAS="dev"
 
 run_sandbox: ## Run local repo in sandbox
-	docker run -p 8888:8888 superduperdb/sandbox:$(RELEASE_VERSION:v%=%)
+	docker run -p 8888:8888 superduperdb/devsandbox:$(RELEASE_VERSION:v%=%)
 
 run_sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
 	@if [[ -z "${PR_NUMBER}" ]]; then echo "Usage: make run_sandbox-pr PR_NUMBER=<pull-request-number>"; exit -1; fi
@@ -154,7 +153,7 @@ run_sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
 	git checkout pr_branch
 
 	# mount pr to sandbox
-	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/app superduperdb/sandbox:$(RELEASE_VERSION:v%=%)
+	docker run -p 8888:8888 -v /tmp/superduperdb_pr_$(PR_NUMBER):/home/superduper/app superduperdb/devsandbox:$(RELEASE_VERSION:v%=%)
 
 	# clean up the tmp directory
 	rm -rf /tmp/superduperdb_pr_$(PR_NUMBER)
@@ -186,7 +185,7 @@ build_demo: ## Build bloated Docker image for the demo
 	echo "===> build superduperdb/demo:$(RELEASE_VERSION:v%=%)"
 	docker build ./deploy/images/superduperdb -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg SUPERDUPERDB_VERSION=$(RELEASE_VERSION:v%=%) \
-	--build-arg SUPERDUPERDB_EXTRAS="torch,apis,docs,quality,testing"
+	--build-arg SUPERDUPERDB_EXTRAS="demo"
 
 push_demo: ## Push superduperdb/demo:latest
 	@echo "===> release superduperdb/demo:$(RELEASE_VERSION:v%=%) <==="

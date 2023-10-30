@@ -636,7 +636,7 @@ class Collection(TableOrCollection):
 
             return LocalAggregate()
 
-    def model_update(  # type: ignore[override]
+    def model_update(
         self,
         db,
         ids: t.Sequence[t.Any],
@@ -645,6 +645,7 @@ class Collection(TableOrCollection):
         outputs: t.Sequence[t.Any],
         document_embedded: bool = True,
         flatten: bool = False,
+        **kwargs,
     ):
         if key.startswith('_outputs'):
             key = key.split('.')[1]

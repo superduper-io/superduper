@@ -1,5 +1,4 @@
 import os
-from test.unittest.db.mongodb.test_database import IMAGE_URL
 
 import pytest
 import tdir
@@ -26,20 +25,20 @@ def patch_cfg_downloads(monkeypatch):
         yield
 
 
-def test_file_blobs(empty, patch_cfg_downloads):
+def test_file_blobs(empty, patch_cfg_downloads, image_url):
     to_insert = [
         Document(
             {
                 'item': {
                     '_content': {
-                        'uri': IMAGE_URL,
+                        'uri': image_url,
                         'encoder': 'pil_image',
                     }
                 },
                 'other': {
                     'item': {
                         '_content': {
-                            'uri': IMAGE_URL,
+                            'uri': image_url,
                             'encoder': 'pil_image',
                         }
                     }

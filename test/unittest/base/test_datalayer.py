@@ -9,7 +9,6 @@ try:
 except ImportError:
     torch = None
 
-from pathlib import Path
 
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
@@ -19,8 +18,6 @@ from superduperdb.components.encoder import Encoder
 from superduperdb.components.listener import Listener
 
 n_data_points = 250
-
-IMAGE_URL = f'file://{Path(__file__).parent}/1x1.png'
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -127,20 +124,20 @@ def test_insert(random_data, a_listener, an_update):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_insert_from_uris(empty, image_type):
+def test_insert_from_uris(empty, image_type, image_url):
     to_insert = [
         Document(
             {
                 'item': {
                     '_content': {
-                        'uri': IMAGE_URL,
+                        'uri': image_url,
                         'encoder': 'pil_image',
                     }
                 },
                 'other': {
                     'item': {
                         '_content': {
-                            'uri': IMAGE_URL,
+                            'uri': image_url,
                             'encoder': 'pil_image',
                         }
                     }

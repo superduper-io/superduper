@@ -49,3 +49,6 @@ def test_jsonization2():
     doc = Document()
     s = doc.dict()
     assert s == {'uri': '', 'type_id': 'doc'}
+
+
+# TODO: test superduper.base.jsonable

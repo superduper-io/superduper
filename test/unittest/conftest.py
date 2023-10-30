@@ -1,5 +1,6 @@
 import json
 import random
+from pathlib import Path
 from test.material.metrics import PatK
 from typing import Iterator
 
@@ -368,3 +369,9 @@ def c_model(float_tensors_32, float_tensors_16):
         if "'NoneType' object is not subscriptable" in str(e):
             return
         raise e
+
+
+@pytest.fixture(scope='session')
+def image_url():
+    path = Path(__file__).parent.parent / 'material' / 'data' / '1x1.png'
+    return f'file://{path}'

@@ -10,7 +10,7 @@ from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
 
-CASSETTE_DIR = 'test/unittest/model/cassettes'
+CASSETTE_DIR = 'test/unittest/ext/cassettes'
 
 
 @pytest.fixture

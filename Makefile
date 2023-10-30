@@ -131,8 +131,8 @@ test_notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
 build_sandbox: ## Build bloated Docker image for development.
 	@echo "===> release superduperdb/sandbox:$(RELEASE_VERSION:v%=%)"
 	docker build . -f ./deploy/images/sandbox/Dockerfile -t superduperdb/sandbox:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
-	--build-arg SUPERDUPERDB_EXTRAS="tests,demo"
-	#--build-arg SUPERDUPERDB_EXTRAS="apis,docs,lint,tests,typing,torch"
+	--build-arg SUPERDUPERDB_EXTRAS="testing,demo"
+	#--build-arg SUPERDUPERDB_EXTRAS="torch,apis,docs,quality,testing"
 
 run_sandbox: ## Run local repo in sandbox
 	docker run -p 8888:8888 superduperdb/sandbox:$(RELEASE_VERSION:v%=%)
@@ -163,7 +163,7 @@ run_sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
 build_demo: ## Build bloated Docker image for the demo
 	echo "===> build superduperdb/demo:$(RELEASE_VERSION:v%=%)"
 	docker build ./deploy/images/superduperdb -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
-	--build-arg SUPERDUPERDB_EXTRAS="apis,docs,lint,tests,typing,torch"
+	--build-arg SUPERDUPERDB_EXTRAS="torch,apis,docs,quality,testing"
 
 push_demo: ## Push superduperdb/demo:latest
 	@echo "===> release superduperdb/demo:$(RELEASE_VERSION:v%=%) <==="

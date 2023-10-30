@@ -66,16 +66,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-apis = [
-    "cohere",
-    "anthropic",
-    ]
 torch = [
     "torch>=2.0.0,!=2.0.1",
     "accelerate>=0.20.1",
     "transformers>=4.29.1",
     "torchvision",
 ]
+apis = [
+    "cohere",
+    "anthropic",
+    ]
 # TODO lots of these now unused
 docs = [
     "furo",
@@ -89,20 +89,20 @@ docs = [
     "sphinxcontrib-mermaid",
     "nbsphinx-link",
 ]
-typing = [
+quality = [
+    # Static Typing
     "mypy>=1.3.0",
     "types-pillow>=9.5.0.4",
     "types-requests>=2.31.0.1",
     "types-tqdm>=4.65.0.1",
     "monkeytype",
     "boto3-stubs>=1.26.154",
-]
-lint = [
+    # Linting
     "black>=23.3",
     "interrogate>=1.5.0",
     "ruff>=0.0.267",
 ]
-tests = [
+testing = [
     "fastapi>=0.103.1",
     "httpx>=0.24.1",
     "impall>=1.2.0",
@@ -116,14 +116,17 @@ tests = [
     "pytest-asyncio",
     "urllib3<2",  # see https://github.com/urllib3/urllib3/issues/3053
 ]
+dev = ["superduperdb[torch,apis,docs,quality,testing]"]
+
+# Dependencies for supported Notebooks in examples dir.
 demo = [
-    "git+https://github.com/openai/CLIP",
+    "clip@git+https://github.com/openai/CLIP#egg=main",
     "datasets",
     "sentence-transformers",
     "opencv-python",
     "matplotlib",
 ]
-dev = ["superduperdb[apis,docs,lint,tests,typing,torch]"]
+
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"

@@ -40,9 +40,6 @@ new_release: ## Release a new SuperDuperDB version
 	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
 	@git add superduperdb/__init__.py
 
-	@echo "** Change deploy/docker-compose/demo to version $(RELEASE_VERSION:v%=%)"
-	sed -ie "s/superduperdb\/superduperdb:.*/superduperdb\/superduperdb:$(RELEASE_VERSION:v%=%)/" deploy/docker-compose/demo.yaml
-	@git add deploy/docker-compose/demo.yaml
 
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION
@@ -131,24 +128,7 @@ test_notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
 	fi
 
 
-##@ Base Image Management
-
-# superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
-build_superduperdb: ## Build minimal Docker image for general use
-	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker build ./deploy/images/superduperdb -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache
-
-
-push_superduperdb: ## Push superduperdb/superduperdb:latest
-	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
-
-	@echo "===> release superduperdb/superduperdb:latest"
-	docker tag superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) superduperdb/superduperdb:latest
-	docker push superduperdb/superduperdb:latest
-
-
-##@ Sandbox Image Management
+##@ Development Sandbox Management
 
 # superduperdb/sandbox is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
 build_sandbox: ## Build bloated Docker image for development.
@@ -180,12 +160,32 @@ run_sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
 	rm -rf /tmp/superduperdb_pr_$(PR_NUMBER)
 
 
+
+##@ Base Image Management
+
+# superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
+build_superduperdb: ## Build minimal Docker image for general use
+	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
+	docker build ./deploy/images/superduperdb -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	--build-arg SUPERDUPERDB_VERSION=$(RELEASE_VERSION:v%=%)
+
+
+push_superduperdb: ## Push superduperdb/superduperdb:latest
+	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
+	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
+
+	@echo "===> release superduperdb/superduperdb:latest"
+	docker tag superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) superduperdb/superduperdb:latest
+	docker push superduperdb/superduperdb:latest
+
+
 ##@ Demo Image Management
 
 # superduperdb/demo is a bloated image that contains everything we need to run the online demo.
 build_demo: ## Build bloated Docker image for the demo
 	echo "===> build superduperdb/demo:$(RELEASE_VERSION:v%=%)"
 	docker build ./deploy/images/superduperdb -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	--build-arg SUPERDUPERDB_VERSION=$(RELEASE_VERSION:v%=%) \
 	--build-arg SUPERDUPERDB_EXTRAS="torch,apis,docs,quality,testing"
 
 push_demo: ## Push superduperdb/demo:latest
@@ -196,10 +196,4 @@ push_demo: ## Push superduperdb/demo:latest
 	docker tag superduperdb/demo:$(RELEASE_VERSION:v%=%) superduperdb/demo:latest
 	docker push superduperdb/demo:latest
 
-
-run_demo: ## Run SuperDuperDB demo on docker-compose
-	@echo "===> Run SuperDuperDB Demo <==="
-
-	# TODO: make it take as argument the TAG of desired image.
-	docker compose -f ./deploy/docker-compose/demo.yaml up
 

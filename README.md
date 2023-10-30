@@ -90,7 +90,6 @@ Unlock the power of SuperDuperDB to connect and manage various types of data sou
         </td>
         <td align="center" width="140" height="112.43">
             <img src="docs/hr/static/icons/databases/postgresql.png" width="150px"/>
-	    <br> *experimental*
         </td>
         <td align="center" width="140" height="112.43">
             <img src="docs/hr/static/icons/databases/sqlite.png" width="150px"/>

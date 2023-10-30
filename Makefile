@@ -150,7 +150,7 @@ push_superduperdb: ## Push superduperdb/superduperdb:latest
 
 ##@ Sandbox Image Management
 
-# dev is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
+# superduperdb/sandbox is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
 build_sandbox: ## Build bloated Docker image for development.
 	@echo "===> release superduperdb/sandbox:$(RELEASE_VERSION:v%=%)"
 	docker build . -f ./deploy/images/sandbox/Dockerfile -t superduperdb/sandbox:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \

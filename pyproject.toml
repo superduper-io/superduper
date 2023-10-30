@@ -120,7 +120,7 @@ dev = ["superduperdb[torch,apis,docs,quality,testing]"]
 
 # Dependencies for supported Notebooks in examples dir.
 demo = [
-    "clip@git+https://github.com/openai/CLIP#egg=main",
+    "openai-clip",
     "datasets",
     "sentence-transformers",
     "opencv-python",

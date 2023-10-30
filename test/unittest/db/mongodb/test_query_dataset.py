@@ -12,6 +12,7 @@ except ImportError:
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_query_dataset(random_data, a_listener):
     train_data = QueryDataset(
+        db=random_data,
         select=Collection('documents').find(
             {}, {'_id': 0, 'x': 1, '_fold': 1, '_outputs': 1}
         ),
@@ -25,6 +26,7 @@ def test_query_dataset(random_data, a_listener):
     assert r['x'].shape[0] == 16
 
     train_data = QueryDataset(
+        db=random_data,
         select=Collection('documents').find(),
         keys=['x', 'y'],
         fold='train',
@@ -43,6 +45,7 @@ def test_query_dataset(random_data, a_listener):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_query_dataset_base(random_data, a_listener_base):
     train_data = QueryDataset(
+        db=random_data,
         select=Collection('documents').find({}, {'_id': 0}),
         keys=['_base', 'y'],
         fold='train',

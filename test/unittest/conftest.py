@@ -1,6 +1,7 @@
 import json
 import random
 from test.material.metrics import PatK
+from typing import Iterator
 
 import lorem
 import numpy
@@ -29,9 +30,15 @@ from superduperdb.ext.pillow.encoder import pil_image
 n_data_points = 250
 
 
-@pytest.fixture()
-def empty(test_db: Datalayer):
-    yield test_db
+@pytest.fixture
+def empty() -> Iterator[Datalayer]:
+    from superduperdb import CFG
+    from superduperdb.base.build import build_datalayer
+
+    db = build_datalayer(CFG, data_backend='mongomock:///test_db')
+    db.databackend.conn.is_mongos
+    yield db
+    db.databackend.conn.close()
 
 
 @pytest.fixture()

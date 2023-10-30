@@ -45,13 +45,14 @@
  </div>
 
 ---
-<p style="color:red"><strong>Important Announcement</strong></p>
+<p style="color:red"><strong>Important Announcement !</strong></p>
 
-Our upcoming launch is scheduled for `15/Nov/2023`. 
+On the 15th of November we are going to officially launch SuperDuperDB with the release of v0.1. The release will include:
+* Integration of major SQL databases, including PostgreSQL, MySQL, SQLite, DuckDB, BigQuery, Snowflake, and many more.
+* Massive overhaul of the docs
+* Revamped and modularized testing suite
 
-Don't miss it! 
-
-Try our read-to-use notebooks <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples"><strong>Live on your browser</strong></a> and stay tuned on <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> for exciting updates.
+⭐️ Leave a star to be informed of more exciting updates!
 
 ---
 
@@ -70,7 +71,7 @@ Try our read-to-use notebooks <a href="https://demo.superduperdb.com/user-redire
 
 ## ⚡ Integrations (*more coming soon*):
 
-Easily implement AI without the need to copy and move your data to complex MLOps pipelines and specialized vector databases. Integrate, train, and manage your AI models and APIs directly with your chosen database, using a simple Python interface.
+**Build AI applications easily without needing to move your data to complex pipelines and specialized vector databases. Integrate AI and vector search directly with your database including real-time inference and model training. All through a simple Python interface!**
 
 ### Datastores 
 Unlock the power of SuperDuperDB to connect and manage various types of data sources effortlessly!
@@ -89,6 +90,7 @@ Unlock the power of SuperDuperDB to connect and manage various types of data sou
         </td>
         <td align="center" width="140" height="112.43">
             <img src="docs/hr/static/icons/databases/postgresql.png" width="150px"/>
+	    <br> *experimental*
         </td>
         <td align="center" width="140" height="112.43">
             <img src="docs/hr/static/icons/databases/sqlite.png" width="150px"/>

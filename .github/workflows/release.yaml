@@ -141,7 +141,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: Push Docker image
+      - name: Push Base Docker image
         run: |
           make build_superduperdb
           make push_superduperdb
+
+      - name: Push Demo Docker image
+        run: |
+          make build_demo
+          make push_demo

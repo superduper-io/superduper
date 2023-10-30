@@ -44,6 +44,12 @@
  `🔮 SuperDuperDB is open-source: Leave a star ⭐️ to support the project!`
  </div>
 
+---
+<p style="color:red"><strong>Important Announcement</strong></p>
+
+Our upcoming launch is scheduled for `15/Nov/2023`. Don't miss it! Stay tuned for exciting updates.
+
+---
 
 **SuperDuperDB is not another database. It is a framework that transforms your favorite database into an AI powerhouse:**
 - **A single scalable AI deployment** of all your models and AI APIs, including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.

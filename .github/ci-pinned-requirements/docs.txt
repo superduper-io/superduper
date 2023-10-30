@@ -4,15 +4,15 @@
 #
 #    pip-compile --extra=docs --output-file=.github/ci-pinned-requirements/docs.txt pyproject.toml
 #
-aiohttp==3.8.5
+aiohttp==3.8.6
     # via openai
 aiosignal==1.3.1
     # via aiohttp
 alabaster==0.7.13
     # via sphinx
-annotated-types==0.5.0
+annotated-types==0.6.0
     # via pydantic
-asttokens==2.4.0
+asttokens==2.4.1
     # via stack-data
 async-timeout==4.0.3
     # via aiohttp
@@ -23,7 +23,7 @@ attrs==23.1.0
     #   aiohttp
     #   jsonschema
     #   referencing
-babel==2.12.1
+babel==2.13.1
     # via sphinx
 backcall==0.2.0
     # via ipython
@@ -33,19 +33,19 @@ beautifulsoup4==4.12.2
     #   nbconvert
 bidict==0.22.1
     # via ibis-framework
-bleach==6.0.0
+bleach==6.1.0
     # via nbconvert
-blinker==1.6.2
+blinker==1.6.3
     # via flask
-boto3==1.28.54
+boto3==1.28.73
     # via superduperdb (pyproject.toml)
-botocore==1.31.54
+botocore==1.31.73
     # via
     #   boto3
     #   s3transfer
 certifi==2023.7.22
     # via requests
-charset-normalizer==3.2.0
+charset-normalizer==3.3.1
     # via
     #   aiohttp
     #   requests
@@ -55,12 +55,13 @@ click==8.1.7
     #   distributed
     #   flask
     #   typer
-cloudpickle==2.2.1
+cloudpickle==3.0.0
     # via
     #   dask
     #   distributed
 dask[distributed]==2023.5.0
     # via
+    #   dask
     #   distributed
     #   superduperdb (pyproject.toml)
 decorator==5.1.1
@@ -78,19 +79,19 @@ docutils==0.20.1
     #   myst-parser
     #   nbsphinx
     #   sphinx
-duckdb==0.9.0
+duckdb==0.9.1
     # via
     #   duckdb-engine
     #   ibis-framework
 duckdb-engine==0.9.2
     # via ibis-framework
-executing==1.2.0
+executing==2.0.1
     # via stack-data
-fastjsonschema==2.18.0
+fastjsonschema==2.18.1
     # via nbformat
 fil==1.3.0
     # via superduperdb (pyproject.toml)
-flask==2.3.3
+flask==3.0.0
     # via
     #   flask-cors
     #   flask-httpauth
@@ -103,14 +104,16 @@ frozenlist==1.4.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2023.9.2
+fsspec==2023.10.0
     # via dask
 furo==2023.9.10
     # via superduperdb (pyproject.toml)
-greenlet==2.0.2
+greenlet==3.0.1
     # via sqlalchemy
 ibis-framework[duckdb,sqlite]==5.1.0
-    # via superduperdb (pyproject.toml)
+    # via
+    #   ibis-framework
+    #   superduperdb (pyproject.toml)
 idna==3.4
     # via
     #   requests
@@ -129,11 +132,11 @@ importlib-resources==5.13.0
     #   ibis-framework
     #   jsonschema
     #   jsonschema-specifications
-ipython==8.12.2
+ipython==8.12.3
     # via superduperdb (pyproject.toml)
 itsdangerous==2.1.2
     # via flask
-jedi==0.19.0
+jedi==0.19.1
     # via ipython
 jinja2==3.1.2
     # via
@@ -153,9 +156,9 @@ jsonschema==4.19.1
     # via nbformat
 jsonschema-specifications==2023.7.1
     # via jsonschema
-jupyter-client==8.3.1
+jupyter-client==8.5.0
     # via nbclient
-jupyter-core==5.3.1
+jupyter-core==5.4.0
     # via
     #   jupyter-client
     #   nbclient
@@ -183,11 +186,11 @@ mdit-py-plugins==0.4.0
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
-mistune==3.0.1
+mistune==3.0.2
     # via nbconvert
 mongomock==4.1.2
     # via superduperdb (pyproject.toml)
-msgpack==1.0.6
+msgpack==1.0.7
     # via distributed
 multidict==6.0.4
     # via
@@ -199,7 +202,7 @@ myst-parser==2.0.0
     # via superduperdb (pyproject.toml)
 nbclient==0.8.0
     # via nbconvert
-nbconvert==7.8.0
+nbconvert==7.9.2
     # via nbsphinx
 nbformat==5.9.2
     # via
@@ -227,7 +230,7 @@ openai==0.28.1
     # via superduperdb (pyproject.toml)
 overrides==7.4.0
     # via superduperdb (pyproject.toml)
-packaging==23.1
+packaging==23.2
     # via
     #   dask
     #   distributed
@@ -252,11 +255,11 @@ pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==10.0.1
+pillow==10.1.0
     # via superduperdb (pyproject.toml)
 pkgutil-resolve-name==1.3.10
     # via jsonschema
-platformdirs==3.10.0
+platformdirs==3.11.0
     # via
     #   jupyter-core
     #   pooch
@@ -264,11 +267,13 @@ plumbum==1.8.2
     # via pandoc
 ply==3.11
     # via pandoc
-pooch[progress,xxhash]==1.7.0
-    # via ibis-framework
+pooch[progress,xxhash]==1.8.0
+    # via
+    #   ibis-framework
+    #   pooch
 prompt-toolkit==3.0.39
     # via ipython
-psutil==5.9.5
+psutil==5.9.6
     # via distributed
 ptyprocess==0.7.0
     # via pexpect
@@ -278,7 +283,7 @@ pyarrow==11.0.0
     # via
     #   ibis-framework
     #   pylance
-pydantic==2.4.1
+pydantic==2.4.2
     # via superduperdb (pyproject.toml)
 pydantic-core==2.10.1
     # via pydantic
@@ -289,7 +294,7 @@ pygments==2.16.1
     #   nbconvert
     #   rich
     #   sphinx
-pylance==0.7.5
+pylance==0.8.8
     # via superduperdb (pyproject.toml)
 pymongo==4.5.0
     # via superduperdb (pyproject.toml)
@@ -317,7 +322,7 @@ referencing==0.30.2
     # via
     #   jsonschema
     #   jsonschema-specifications
-regex==2023.8.8
+regex==2023.10.3
     # via ibis-framework
 requests==2.31.0
     # via
@@ -325,23 +330,23 @@ requests==2.31.0
     #   pooch
     #   sphinx
     #   superduperdb (pyproject.toml)
-rich==13.5.3
+rich==13.6.0
     # via ibis-framework
-rpds-py==0.10.3
+rpds-py==0.10.6
     # via
     #   jsonschema
     #   referencing
-s3transfer==0.6.2
+s3transfer==0.7.0
     # via boto3
-safer==4.8.0
+safer==4.10.1
     # via
     #   fil
     #   superduperdb (pyproject.toml)
-scikit-learn==1.3.1
+scikit-learn==1.3.2
     # via superduperdb (pyproject.toml)
 scipy==1.10.1
     # via scikit-learn
-semver==3.0.1
+semver==3.0.2
     # via superduperdb (pyproject.toml)
 sentinels==1.0.0
     # via mongomock
@@ -387,7 +392,7 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
-sqlalchemy==2.0.21
+sqlalchemy==2.0.22
     # via
     #   duckdb-engine
     #   ibis-framework
@@ -396,9 +401,9 @@ sqlalchemy-views==0.3.2
     # via ibis-framework
 sqlglot==11.7.1
     # via ibis-framework
-stack-data==0.6.2
+stack-data==0.6.3
     # via ipython
-tblib==2.0.0
+tblib==3.0.0
     # via distributed
 tenacity==8.2.3
     # via superduperdb (pyproject.toml)
@@ -421,7 +426,7 @@ tqdm==4.66.1
     #   openai
     #   pooch
     #   superduperdb (pyproject.toml)
-traitlets==5.10.1
+traitlets==5.12.0
     # via
     #   ipython
     #   jupyter-client
@@ -446,22 +451,22 @@ typing-extensions==4.8.0
     #   typer
 tzdata==2023.3
     # via pandas
-urllib3==1.26.16
+urllib3==1.26.18
     # via
     #   botocore
     #   distributed
     #   requests
-wcwidth==0.2.6
+wcwidth==0.2.8
     # via prompt-toolkit
 webencodings==0.5.1
     # via
     #   bleach
     #   tinycss2
-werkzeug==2.3.7
+werkzeug==3.0.1
     # via
     #   flask
     #   superduperdb (pyproject.toml)
-xxhash==3.3.0
+xxhash==3.4.1
     # via pooch
 yarl==1.9.2
     # via aiohttp

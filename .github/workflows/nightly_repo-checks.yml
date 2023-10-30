@@ -130,7 +130,7 @@ jobs:
         - name: Install SuperDuperDB
           run: |
             # Install project and dependencies from pyproject.toml
-            pip install .[tests]
+            pip install .[testing]
 
         - name: Run pytest on changed files
           env:

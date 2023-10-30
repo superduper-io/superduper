@@ -26,6 +26,7 @@ do
     --resolver backtracking \
     --upgrade \
     pyproject.toml
+
+    sed -i '/^superduperdb\[/d' .github/ci-pinned-requirements/"$dep".txt
 done
 
-sed -I '' '/superduperdb\[/d' .github/ci-pinned-requirements/dev.txt

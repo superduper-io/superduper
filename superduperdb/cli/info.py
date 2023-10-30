@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 from superduperdb import ROOT
-from superduperdb.misc import run
 
 from . import command
 

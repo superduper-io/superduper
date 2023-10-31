@@ -80,35 +80,35 @@ Unlock the power of SuperDuperDB to connect and manage various types of data sou
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mongodb.png"/>
+            <img src="docs/hr/static/icons/databases/mongodb.png" width="140px"/>
 	    <br />		
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mongodb-atlas.png" />
+            <img src="docs/hr/static/icons/databases/mongodb-atlas.png" width="140px"/>
 	    <br />		
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/aws-s3.png"/>
+            <img src="docs/hr/static/icons/databases/aws-s3.png" width="140px"/>
 	    <br />		
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/postgresql.png" />
+            <img src="docs/hr/static/icons/databases/postgresql.png" width="140px"/>
 	    <br /> Experimental
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/sqlite.png"/>
+            <img src="docs/hr/static/icons/databases/sqlite.png" width="140px"/>
 	    <br /> Experimental
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/duckdb.png" />
+            <img src="docs/hr/static/icons/databases/duckdb.png" width="140px"/>
 	    <br /> Experimental
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mysql.png"/>
+            <img src="docs/hr/static/icons/databases/mysql.png" width="140px"/>
 	    <br /> Experimental
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/snowflake.png"/>
+            <img src="docs/hr/static/icons/databases/snowflake.png" width="140px"/>
 	    <br /> Experimental
         </td>
     </tr>
@@ -122,13 +122,13 @@ Leverage SuperDuperDB to discover insights from your data using a variety of AI 
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/pytorch.png"/>
+            <img src="docs/hr/static/icons/frameworks/pytorch.png" width="140px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/scikit-learn.png"/>
+            <img src="docs/hr/static/icons/frameworks/scikit-learn.png" width="140px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/huggingface-transformers.png"/>
+            <img src="docs/hr/static/icons/frameworks/huggingface-transformers.png" width="140px"/>
         </td>
     </tr>
 </table>

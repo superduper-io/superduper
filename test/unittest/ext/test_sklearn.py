@@ -43,13 +43,13 @@ class TestPipeline:
         yield [random.choice(dictionary) for _ in range(100)]
 
     @pytest.fixture()
-    def data_in_db(self, empty, X, y):
-        empty.execute(
+    def data_in_db(self, local_empty_data_layer, X, y):
+        local_empty_data_layer.execute(
             Collection('documents').insert_many(
                 [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
             )
         )
-        yield empty
+        yield local_empty_data_layer
 
     @pytest.fixture()
     def y(self):

@@ -95,7 +95,7 @@ class CohereEmbed(Cohere):
         out = []
         batch_size = kwargs.pop('batch_size', 100)
         for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
+            out.extend(self._predict_a_batch(X[i: i + batch_size], **kwargs))
         return out
 
     async def _apredict(self, X, one=False, **kwargs):
@@ -104,7 +104,7 @@ class CohereEmbed(Cohere):
         out = []
         batch_size = kwargs.pop('batch_size', 100)
         for i in range(0, len(X), batch_size):
-            out.extend(await self._apredict_a_batch(X[i : i + batch_size], **kwargs))
+            out.extend(await self._apredict_a_batch(X[i: i + batch_size], **kwargs))
         return out
 
 
@@ -137,7 +137,7 @@ class CohereGenerate(Cohere):
         return resp.generations[0].text
 
     def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         if context:
             assert one, 'context only works with ``one=True``'
@@ -146,7 +146,7 @@ class CohereGenerate(Cohere):
         return [self._predict_one(msg) for msg in X]
 
     async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         if context:
             assert one, 'context only works with ``one=True``'

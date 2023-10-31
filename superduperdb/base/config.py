@@ -126,7 +126,7 @@ class Config(JSONable):
 
     @property
     def self_hosted_vector_search(self) -> bool:
-        return re.split('://|\+', self.data_backend)[0] == self.vector_search
+        return re.split('://|\\+', self.data_backend)[0] == self.vector_search
 
     data_backend: str = 'mongodb://localhost:27017'
 

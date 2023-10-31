@@ -63,11 +63,11 @@ class Datalayer:
     }
 
     def __init__(
-        self,
-        databackend: BaseDataBackend,
-        metadata: MetaDataStore,
-        artifact_store: ArtifactStore,
-        distributed_client=None,
+            self,
+            databackend: BaseDataBackend,
+            metadata: MetaDataStore,
+            artifact_store: ArtifactStore,
+            distributed_client=None,
     ):
         """
         :param databackend: databackend object containing connection to Datastore
@@ -92,7 +92,7 @@ class Datalayer:
         self.cdc = DatabaseChangeDataCapture(self)
 
     def _initialize_vector_searcher(
-        self, identifier, searcher_type: t.Optional[str] = None
+            self, identifier, searcher_type: t.Optional[str] = None
     ) -> BaseVectorSearcher:
         searcher_type = searcher_type or s.CFG.vector_search
         logging.info(f'loading of vectors of vector-index: {identifier}')
@@ -120,12 +120,12 @@ class Datalayer:
 
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
-            self.execute(
-                vi.indexing_listener.select.outputs(
-                    vi.indexing_listener.key, vi.indexing_listener.model.identifier
-                )
-            ),
-            s.CFG.cluster.backfill_batch_size,
+                self.execute(
+                    vi.indexing_listener.select.outputs(
+                        vi.indexing_listener.key, vi.indexing_listener.model.identifier
+                    )
+                ),
+                s.CFG.cluster.backfill_batch_size,
         ):
             items = []
             for record in record_batch:
@@ -160,10 +160,10 @@ class Datalayer:
         Drop all data, artifacts and metadata
         """
         if not force and not click.confirm(
-            f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-            f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
-            'Are you sure you want to drop the database? ',
-            default=False,
+                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                'Are you sure you want to drop the database? ',
+                default=False,
         ):
             logging.warn('Aborting...')
 
@@ -172,11 +172,11 @@ class Datalayer:
         self.artifact_store.drop(force=True)
 
     def validate(
-        self,
-        identifier: str,
-        type_id: str,
-        validation_set: str,
-        metrics: t.Sequence[str],
+            self,
+            identifier: str,
+            type_id: str,
+            validation_set: str,
+            metrics: t.Sequence[str],
     ):
         """
         Evaluate quality of component, using `Component.validate`, if implemented.
@@ -197,10 +197,10 @@ class Datalayer:
         )
 
     def show(
-        self,
-        type_id: str,
-        identifier: t.Optional[str] = None,
-        version: t.Optional[int] = None,
+            self,
+            type_id: str,
+            identifier: t.Optional[str] = None,
+            version: t.Optional[int] = None,
     ):
         """
         Show available functionality which has been added using ``self.add``.
@@ -231,7 +231,7 @@ class Datalayer:
         )
 
     def _get_context(
-        self, model, context_select: t.Optional[Select], context_key: t.Optional[str]
+            self, model, context_select: t.Optional[Select], context_key: t.Optional[str]
     ):
         assert model.takes_context, 'model does not take context'
         assert context_select is not None
@@ -242,12 +242,12 @@ class Datalayer:
         return context
 
     async def apredict(
-        self,
-        model_name: str,
-        input: t.Union[Document, t.Any],
-        context_select: t.Optional[Select] = None,
-        context_key: t.Optional[str] = None,
-        **kwargs,
+            self,
+            model_name: str,
+            input: t.Union[Document, t.Any],
+            context_select: t.Optional[Select] = None,
+            context_key: t.Optional[str] = None,
+            **kwargs,
     ):
         """
         Apply model to input using asyncio.
@@ -277,12 +277,12 @@ class Datalayer:
         return Document(out), []
 
     def predict(
-        self,
-        model_name: str,
-        input: t.Union[Document, t.Any],
-        context_select: t.Optional[Select] = None,
-        context_key: t.Optional[str] = None,
-        **kwargs,
+            self,
+            model_name: str,
+            input: t.Union[Document, t.Any],
+            context_select: t.Optional[Select] = None,
+            context_key: t.Optional[str] = None,
+            **kwargs,
     ) -> t.Tuple[Document, t.List[Document]]:
         """
         Apply model to input.
@@ -343,7 +343,7 @@ class Datalayer:
         return result, None
 
     def insert(
-        self, insert: Insert, refresh: bool = True, encoders: t.Sequence[Encoder] = ()
+            self, insert: Insert, refresh: bool = True, encoders: t.Sequence[Encoder] = ()
     ) -> InsertResult:
         """
         Insert data.
@@ -368,10 +368,10 @@ class Datalayer:
         return inserted_ids, None
 
     def run(
-        self,
-        job,
-        depends_on: t.Optional[t.Sequence[Future]] = None,
-        distributed: t.Optional[bool] = None,
+            self,
+            job,
+            depends_on: t.Optional[t.Sequence[Future]] = None,
+            distributed: t.Optional[bool] = None,
     ):
         """
         Run job. See ``container.job.Job``, ``container.job.FunctionJob``,
@@ -393,10 +393,10 @@ class Datalayer:
         return select.execute(self)
 
     def refresh_after_delete(
-        self,
-        query: Delete,
-        ids: t.Sequence[str],
-        verbose: bool = False,
+            self,
+            query: Delete,
+            ids: t.Sequence[str],
+            verbose: bool = False,
     ):
         """
         Trigger cleanup jobs after data deletion.
@@ -414,10 +414,10 @@ class Datalayer:
         return task_workflow
 
     def refresh_after_update_or_insert(
-        self,
-        query: t.Union[Insert, Select, Update],
-        ids: t.Sequence[str],
-        verbose: bool = False,
+            self,
+            query: t.Union[Insert, Select, Update],
+            ids: t.Sequence[str],
+            verbose: bool = False,
     ):
         """
         Trigger computation jobs after data insertion.
@@ -451,9 +451,9 @@ class Datalayer:
         return updated_ids, None
 
     def add(
-        self,
-        object: t.Union[Component, t.Sequence[Component]],
-        dependencies: t.Sequence[Job] = (),
+            self,
+            object: t.Union[Component, t.Sequence[Component]],
+            dependencies: t.Sequence[Job] = (),
     ):
         """
         Add functionality in the form of components. Components are stored in the
@@ -480,11 +480,11 @@ class Datalayer:
             )
 
     def remove(
-        self,
-        type_id: str,
-        identifier: str,
-        version: t.Optional[int] = None,
-        force: bool = False,
+            self,
+            type_id: str,
+            identifier: str,
+            version: t.Optional[int] = None,
+            force: bool = False,
     ):
         """
         Remove component (version: optional)
@@ -524,8 +524,8 @@ class Datalayer:
                 )
 
         if force or click.confirm(
-            f'You are about to delete {type_id}/{identifier}, are you sure?',
-            default=False,
+                f'You are about to delete {type_id}/{identifier}, are you sure?',
+                default=False,
         ):
             for v in sorted(list(set(versions) - set(versions_in_use))):
                 self._remove_component_version(type_id, identifier, v, force=True)
@@ -536,12 +536,12 @@ class Datalayer:
             logging.warn('aborting.')
 
     def load(
-        self,
-        type_id: str,
-        identifier: str,
-        version: t.Optional[int] = None,
-        allow_hidden: bool = False,
-        info_only: bool = False,
+            self,
+            type_id: str,
+            identifier: str,
+            version: t.Optional[int] = None,
+            allow_hidden: bool = False,
+            info_only: bool = False,
     ) -> t.Union[Component, t.Dict[str, t.Any]]:
         """
         Load component using uniquely identifying information.
@@ -597,10 +597,10 @@ class Datalayer:
         return m
 
     def _build_delete_task_workflow(
-        self,
-        query: Delete,
-        ids: t.Sequence[str],
-        verbose: bool = False,
+            self,
+            query: Delete,
+            ids: t.Sequence[str],
+            verbose: bool = False,
     ):
         G = TaskWorkflow(self)
         vector_indices = self.show('vector_index')
@@ -620,8 +620,8 @@ class Datalayer:
                 continue
 
             if (
-                s.CFG.vector_search == 'in_memory'
-                and vi.identifier not in self.fast_vector_searchers
+                    s.CFG.vector_search == 'in_memory'
+                    and vi.identifier not in self.fast_vector_searchers
             ):
                 continue
 
@@ -640,11 +640,11 @@ class Datalayer:
         return G
 
     def _build_task_workflow(
-        self,
-        query,
-        ids=None,
-        dependencies=(),
-        verbose: bool = True,
+            self,
+            query,
+            ids=None,
+            dependencies=(),
+            verbose: bool = True,
     ) -> TaskWorkflow:
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
@@ -681,8 +681,8 @@ class Datalayer:
             listener_select = serializable.Serializable.deserialize(listener_query)
             listener_selects.update({identifier: listener_select})
             if (
-                listener_select.table_or_collection.identifier
-                != query.table_or_collection.identifier
+                    listener_select.table_or_collection.identifier
+                    != query.table_or_collection.identifier
             ):
                 continue
 
@@ -705,8 +705,8 @@ class Datalayer:
         for identifier in listeners:
             listener_select = listener_selects[identifier]
             if (
-                listener_select.table_or_collection.identifier
-                != query.table_or_collection.identifier
+                    listener_select.table_or_collection.identifier
+                    != query.table_or_collection.identifier
             ):
                 continue
             model, _, key = identifier.rpartition('/')
@@ -732,8 +732,8 @@ class Datalayer:
             # since s.CFG.vector_search == 'in_memory' implies the
             # program is standalone
             if (
-                s.CFG.vector_search == 'in_memory'
-                and identifier not in self.fast_vector_searchers
+                    s.CFG.vector_search == 'in_memory'
+                    and identifier not in self.fast_vector_searchers
             ):
                 continue
 
@@ -760,14 +760,14 @@ class Datalayer:
         return G
 
     def _compute_model_outputs(
-        self,
-        model_info,
-        _ids,
-        select: Select,
-        key='_base',
-        features=None,
-        model=None,
-        predict_kwargs=None,
+            self,
+            model_info,
+            _ids,
+            select: Select,
+            key='_base',
+            features=None,
+            model=None,
+            predict_kwargs=None,
     ):
         s.log.info('finding documents under filter')
         features = features or {}
@@ -789,11 +789,11 @@ class Datalayer:
         raise NotImplementedError  # TODO use in the server code...
 
     def _add(
-        self,
-        object: Component,
-        dependencies: t.Sequence[Job] = (),
-        serialized: t.Optional[t.Dict] = None,
-        parent: t.Optional[str] = None,
+            self,
+            object: Component,
+            dependencies: t.Sequence[Job] = (),
+            serialized: t.Optional[t.Dict] = None,
+            parent: t.Optional[str] = None,
     ):
         object.on_create(self)
         assert hasattr(object, 'identifier')
@@ -867,11 +867,11 @@ class Datalayer:
         delete.execute(self)
 
     def _remove_component_version(
-        self,
-        type_id: str,
-        identifier: str,
-        version: int,
-        force: bool = False,
+            self,
+            type_id: str,
+            identifier: str,
+            version: int,
+            force: bool = False,
     ):
         unique_id = Component.make_unique_id(type_id, identifier, version)
         if self.metadata.component_version_has_parents(type_id, identifier, version):
@@ -879,8 +879,8 @@ class Datalayer:
             raise Exception(f'{unique_id} is involved in other components: {parents}')
 
         if force or click.confirm(
-            f'You are about to delete {unique_id}, are you sure?',
-            default=False,
+                f'You are about to delete {unique_id}, are you sure?',
+                default=False,
         ):
             component = self.load(type_id, identifier, version=version)
             info = self.metadata.get_component(type_id, identifier, version=version)
@@ -900,15 +900,15 @@ class Datalayer:
             self.metadata.delete_component_version(type_id, identifier, version=version)
 
     def _download_content(  # TODO: duplicated function
-        self,
-        query: t.Optional[t.Union[Select, Insert]] = None,
-        ids=None,
-        documents=None,
-        timeout=None,
-        raises: bool = True,
-        n_download_workers=None,
-        headers=None,
-        **kwargs,
+            self,
+            query: t.Optional[t.Union[Select, Insert]] = None,
+            ids=None,
+            documents=None,
+            timeout=None,
+            raises: bool = True,
+            n_download_workers=None,
+            headers=None,
+            **kwargs,
     ):
         update_db = False
 
@@ -1013,15 +1013,15 @@ class Datalayer:
         return self.metadata.get_component(type_id, identifier, version=version)
 
     def _apply_listener(
-        self,
-        identifier,
-        ids: t.Optional[t.Sequence[str]] = None,
-        verbose: bool = False,
-        max_chunk_size=5000,
-        model=None,
-        recompute: bool = False,
-        listener_info=None,
-        **kwargs,
+            self,
+            identifier,
+            ids: t.Optional[t.Sequence[str]] = None,
+            verbose: bool = False,
+            max_chunk_size=5000,
+            model=None,
+            recompute: bool = False,
+            listener_info=None,
+            **kwargs,
     ) -> t.List:
         # NOTE: this method is never called anywhere except for itself!
         if listener_info is None:
@@ -1044,7 +1044,7 @@ class Datalayer:
                 )
                 self._apply_listener(
                     identifier,
-                    ids=ids[i : i + max_chunk_size],
+                    ids=ids[i: i + max_chunk_size],
                     verbose=verbose,
                     max_chunk_size=None,
                     model=model,
@@ -1080,9 +1080,9 @@ class Datalayer:
         return outputs
 
     def replace(
-        self,
-        object: t.Any,
-        upsert: bool = False,
+            self,
+            object: t.Any,
+            upsert: bool = False,
     ):
         """
         (Use-with caution!!) Replace a model in artifact store with updated object.
@@ -1108,12 +1108,12 @@ class Datalayer:
         )
 
     def _select_nearest(
-        self,
-        like: Document,
-        vector_index: str,
-        ids: t.Optional[t.Sequence[str]] = None,
-        outputs: t.Optional[Document] = None,
-        n: int = 100,
+            self,
+            like: Document,
+            vector_index: str,
+            ids: t.Optional[t.Sequence[str]] = None,
+            outputs: t.Optional[Document] = None,
+            n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
         like = self._get_content_for_filter(like)
         vi = self.vector_indices[vector_index]

@@ -84,12 +84,12 @@ class PredictMixin:
     model_update_kwargs: t.Dict
 
     def create_predict_job(
-        self,
-        X: str,
-        select: t.Optional[Select] = None,
-        ids: t.Optional[t.Sequence[str]] = None,
-        max_chunk_size: t.Optional[int] = None,
-        **kwargs,
+            self,
+            X: str,
+            select: t.Optional[Select] = None,
+            ids: t.Optional[t.Sequence[str]] = None,
+            max_chunk_size: t.Optional[int] = None,
+            **kwargs,
     ):
         return ComponentJob(
             component_identifier=self.identifier,
@@ -143,7 +143,7 @@ class PredictMixin:
         return outputs
 
     def _predict(
-        self, X: t.Any, one: bool = False, **predict_kwargs
+            self, X: t.Any, one: bool = False, **predict_kwargs
     ) -> t.Union[ndarray, int, t.Sequence[int]]:
         if one:
             return self._predict_one(X)
@@ -168,20 +168,20 @@ class PredictMixin:
         return outputs
 
     def predict(
-        self,
-        X: t.Any,
-        db: t.Optional[Datalayer] = None,
-        select: t.Optional[Select] = None,
-        distributed: t.Optional[bool] = None,
-        ids: t.Optional[t.List[str]] = None,
-        max_chunk_size: t.Optional[int] = None,
-        dependencies: t.Sequence[Job] = (),
-        listen: bool = False,
-        one: bool = False,
-        context: t.Optional[t.Dict] = None,
-        in_memory: bool = True,
-        overwrite: bool = False,
-        **kwargs,
+            self,
+            X: t.Any,
+            db: t.Optional[Datalayer] = None,
+            select: t.Optional[Select] = None,
+            distributed: t.Optional[bool] = None,
+            ids: t.Optional[t.List[str]] = None,
+            max_chunk_size: t.Optional[int] = None,
+            dependencies: t.Sequence[Job] = (),
+            listen: bool = False,
+            one: bool = False,
+            context: t.Optional[t.Dict] = None,
+            in_memory: bool = True,
+            overwrite: bool = False,
+            **kwargs,
     ) -> t.Any:
         if one:
             assert db is None, 'db must be None when ``one=True`` (direct call)'
@@ -243,25 +243,25 @@ class PredictMixin:
                 return self._predict(X, one=one, **kwargs)
 
     async def apredict(
-        self,
-        X: t.Any,
-        context: t.Optional[t.Dict] = None,
-        one: bool = False,
-        **kwargs,
+            self,
+            X: t.Any,
+            context: t.Optional[t.Dict] = None,
+            one: bool = False,
+            **kwargs,
     ):
         if self.takes_context:
             kwargs['context'] = context
         return await self._apredict(X, one=one, **kwargs)
 
     def _predict_and_listen(
-        self,
-        X: t.Any,
-        select: CompoundSelect,
-        db: Datalayer,
-        in_memory: bool = True,
-        max_chunk_size: t.Optional[int] = None,
-        dependencies: t.Sequence[Job] = (),
-        **kwargs,
+            self,
+            X: t.Any,
+            select: CompoundSelect,
+            db: Datalayer,
+            in_memory: bool = True,
+            max_chunk_size: t.Optional[int] = None,
+            dependencies: t.Sequence[Job] = (),
+            **kwargs,
     ):
         from superduperdb.components.listener import Listener
 
@@ -280,14 +280,14 @@ class PredictMixin:
         )
 
     def _predict_with_select(
-        self,
-        X: t.Any,
-        select: Select,
-        db: Datalayer,
-        max_chunk_size: t.Optional[int] = None,
-        in_memory: bool = True,
-        overwrite: bool = False,
-        **kwargs,
+            self,
+            X: t.Any,
+            select: Select,
+            db: Datalayer,
+            max_chunk_size: t.Optional[int] = None,
+            in_memory: bool = True,
+            overwrite: bool = False,
+            **kwargs,
     ):
         ids = []
         if overwrite:
@@ -309,14 +309,14 @@ class PredictMixin:
         )
 
     def _predict_with_select_and_ids(
-        self,
-        X: t.Any,
-        db: Datalayer,
-        select: Select,
-        ids: t.List[str],
-        in_memory: bool = True,
-        max_chunk_size: t.Optional[int] = None,
-        **kwargs,
+            self,
+            X: t.Any,
+            db: Datalayer,
+            select: Select,
+            ids: t.List[str],
+            in_memory: bool = True,
+            max_chunk_size: t.Optional[int] = None,
+            **kwargs,
     ):
         if max_chunk_size is not None:
             it = 0
@@ -325,7 +325,7 @@ class PredictMixin:
                 self._predict_with_select_and_ids(
                     X=X,
                     db=db,
-                    ids=ids[i : i + max_chunk_size],
+                    ids=ids[i: i + max_chunk_size],
                     select=select,
                     max_chunk_size=None,
                     in_memory=in_memory,
@@ -494,7 +494,7 @@ class Model(Component, PredictMixin):
                 self.metric_values.setdefault(k, []).append(v)
 
     def validate(
-        self, db, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
+            self, db, validation_set: t.Union[Dataset, str], metrics: t.Sequence[Metric]
     ):
         db.add(self)
         out = self._validate(db, validation_set, metrics)
@@ -518,10 +518,10 @@ class Model(Component, PredictMixin):
             db.add(output_component)
 
     def _validate(
-        self,
-        db: Datalayer,
-        validation_set: t.Union[Dataset, str],
-        metrics: t.Sequence[Metric],
+            self,
+            db: Datalayer,
+            validation_set: t.Union[Dataset, str],
+            metrics: t.Sequence[Metric],
     ):
         if isinstance(validation_set, str):
             validation_set = t.cast(Dataset, db.load('dataset', validation_set))
@@ -541,11 +541,11 @@ class Model(Component, PredictMixin):
         return results
 
     def create_fit_job(
-        self,
-        X: t.Union[str, t.Sequence[str]],
-        select: t.Optional[Select] = None,
-        y: t.Optional[str] = None,
-        **kwargs,
+            self,
+            X: t.Union[str, t.Sequence[str]],
+            select: t.Optional[Select] = None,
+            y: t.Optional[str] = None,
+            **kwargs,
     ):
         return ComponentJob(
             component_identifier=self.identifier,
@@ -561,32 +561,32 @@ class Model(Component, PredictMixin):
         )
 
     def _fit(
-        self,
-        X: t.Any,
-        y: t.Any = None,
-        configuration: t.Optional[_TrainingConfiguration] = None,
-        data_prefetch: bool = False,
-        db: t.Optional[Datalayer] = None,
-        dependencies: t.Sequence[Job] = (),
-        metrics: t.Optional[t.Sequence[Metric]] = None,
-        select: t.Optional[Select] = None,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
+            self,
+            X: t.Any,
+            y: t.Any = None,
+            configuration: t.Optional[_TrainingConfiguration] = None,
+            data_prefetch: bool = False,
+            db: t.Optional[Datalayer] = None,
+            dependencies: t.Sequence[Job] = (),
+            metrics: t.Optional[t.Sequence[Metric]] = None,
+            select: t.Optional[Select] = None,
+            validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
     ):
         raise NotImplementedError
 
     def fit(
-        self,
-        X: t.Any,
-        y: t.Any = None,
-        configuration: t.Optional[_TrainingConfiguration] = None,
-        data_prefetch: bool = False,
-        db: t.Optional[Datalayer] = None,
-        dependencies: t.Sequence[Job] = (),
-        distributed: t.Optional[bool] = None,
-        metrics: t.Optional[t.Sequence[Metric]] = None,
-        select: t.Optional[Select] = None,
-        validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
-        **kwargs,
+            self,
+            X: t.Any,
+            y: t.Any = None,
+            configuration: t.Optional[_TrainingConfiguration] = None,
+            data_prefetch: bool = False,
+            db: t.Optional[Datalayer] = None,
+            dependencies: t.Sequence[Job] = (),
+            distributed: t.Optional[bool] = None,
+            metrics: t.Optional[t.Sequence[Metric]] = None,
+            select: t.Optional[Select] = None,
+            validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
+            **kwargs,
     ) -> t.Optional[Pipeline]:
         if isinstance(select, dict):
             select = Serializable.deserialize(select)

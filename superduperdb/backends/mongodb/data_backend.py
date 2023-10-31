@@ -51,10 +51,10 @@ class MongoDataBackend(BaseDataBackend):
     def drop(self, force: bool = False):
         if not force:
             if not click.confirm(
-                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
-                'Are you sure you want to drop the data-backend? ',
-                default=False,
+                    f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+                    f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                    'Are you sure you want to drop the data-backend? ',
+                    default=False,
             ):
                 logging.warn('Aborting...')
         return self.db.client.drop_database(self.db.name)
@@ -116,7 +116,7 @@ class MongoDataBackend(BaseDataBackend):
             vector_index.indexing_listener.select.table_or_collection.identifier
         )
         key = vector_index.indexing_listener.key
-        if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
+        if re.match(r'^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
             key = key.split('.')[1]
         model = vector_index.indexing_listener.model.identifier
         fields = {

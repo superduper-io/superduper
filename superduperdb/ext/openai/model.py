@@ -64,7 +64,7 @@ class OpenAI(Component, PredictMixin):
     def __post_init__(self):
         # dall-e is not currently included in list returned by OpenAI model endpoint
         if self.model not in (mo := _available_models()) and self.model not in (
-            'dall-e'
+                'dall-e'
         ):
             msg = f'model {self.model} not in OpenAI available models, {mo}'
             raise ValueError(msg)
@@ -118,7 +118,7 @@ class OpenAIEmbedding(OpenAI):
         out = []
         batch_size = kwargs.pop('batch_size', 100)
         for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
+            out.extend(self._predict_a_batch(X[i: i + batch_size], **kwargs))
         return out
 
     async def _apredict(self, X, one: bool = False, **kwargs):
@@ -128,7 +128,7 @@ class OpenAIEmbedding(OpenAI):
         batch_size = kwargs.pop('batch_size', 100)
         # Note: we submit the async requests in serial to avoid rate-limiting
         for i in range(0, len(X), batch_size):
-            out.extend(await self._apredict_a_batch(X[i : i + batch_size], **kwargs))
+            out.extend(await self._apredict_a_batch(X[i: i + batch_size], **kwargs))
         return out
 
 
@@ -170,7 +170,7 @@ class OpenAIChatCompletion(OpenAI):
         )['choices'][0]['message']['content']
 
     def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         if context:
             assert one, 'context only works with ``one=True``'
@@ -179,7 +179,7 @@ class OpenAIChatCompletion(OpenAI):
         return [self._predict_one(msg) for msg in X]
 
     async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         if context:
             assert one, 'context only works with ``one=True``'
@@ -205,12 +205,12 @@ class OpenAIImageCreation(OpenAI):
 
     @retry
     def _predict_one(
-        self,
-        X,
-        n: int,
-        response_format: str,
-        context: t.Optional[t.List[str]] = None,
-        **kwargs,
+            self,
+            X,
+            n: int,
+            response_format: str,
+            context: t.Optional[t.List[str]] = None,
+            **kwargs,
     ):
         if context is not None:
             X = self._format_prompt(context, X)
@@ -225,12 +225,12 @@ class OpenAIImageCreation(OpenAI):
 
     @retry
     async def _apredict_one(
-        self,
-        X,
-        n: int,
-        response_format: str,
-        context: t.Optional[t.List[str]] = None,
-        **kwargs,
+            self,
+            X,
+            n: int,
+            response_format: str,
+            context: t.Optional[t.List[str]] = None,
+            **kwargs,
     ):
         if context is not None:
             X = self._format_prompt(context, X)
@@ -246,7 +246,7 @@ class OpenAIImageCreation(OpenAI):
                     return await resp.read()
 
     def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         response_format = kwargs.pop('response_format', 'b64_json')
         if context:
@@ -260,7 +260,7 @@ class OpenAIImageCreation(OpenAI):
         ]
 
     async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         response_format = kwargs.pop('response_format', 'b64_json')
         if context:
@@ -292,13 +292,13 @@ class OpenAIImageEdit(OpenAI):
 
     @retry
     def _predict_one(
-        self,
-        image: t.BinaryIO,
-        n: int,
-        response_format: str,
-        context: t.Optional[t.List[str]] = None,
-        mask_png_path: t.Optional[str] = None,
-        **kwargs,
+            self,
+            image: t.BinaryIO,
+            n: int,
+            response_format: str,
+            context: t.Optional[t.List[str]] = None,
+            mask_png_path: t.Optional[str] = None,
+            **kwargs,
     ):
         if context is not None:
             self.prompt = self._format_prompt(context)
@@ -326,13 +326,13 @@ class OpenAIImageEdit(OpenAI):
 
     @retry
     async def _apredict_one(
-        self,
-        image: t.BinaryIO,
-        n: int,
-        response_format: str,
-        context: t.Optional[t.List[str]] = None,
-        mask_png_path: t.Optional[str] = None,
-        **kwargs,
+            self,
+            image: t.BinaryIO,
+            n: int,
+            response_format: str,
+            context: t.Optional[t.List[str]] = None,
+            mask_png_path: t.Optional[str] = None,
+            **kwargs,
     ):
         if context is not None:
             self.prompt = self._format_prompt(context)
@@ -365,7 +365,7 @@ class OpenAIImageEdit(OpenAI):
                     return await resp.read()
 
     def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         response_format = kwargs.pop('response_format', 'b64_json')
         if context:
@@ -382,7 +382,7 @@ class OpenAIImageEdit(OpenAI):
         ]
 
     async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         response_format = kwargs.pop('response_format', 'b64_json')
         if context:
@@ -412,7 +412,7 @@ class OpenAIAudioTranscription(OpenAI):
 
     @retry
     def _predict_one(
-        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
+            self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         "Converts a file-like Audio recording to text."
         if context is not None:
@@ -428,7 +428,7 @@ class OpenAIAudioTranscription(OpenAI):
 
     @retry
     async def _apredict_one(
-        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
+            self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         "Converts a file-like Audio recording to text."
         if context is not None:
@@ -463,7 +463,7 @@ class OpenAIAudioTranscription(OpenAI):
         return [resp['text'] for resp in resps]
 
     def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         if context:
             assert one, 'context only works with ``one=True``'
@@ -472,11 +472,11 @@ class OpenAIAudioTranscription(OpenAI):
         out = []
         batch_size = kwargs.pop('batch_size', 10)
         for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
+            out.extend(self._predict_a_batch(X[i: i + batch_size], **kwargs))
         return out
 
     async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         if context:
             assert one, 'context only works with ``one=True``'
@@ -485,7 +485,7 @@ class OpenAIAudioTranscription(OpenAI):
         batch_size = kwargs.pop('batch_size', 10)
         list_of_lists = await asyncio.gather(
             *[
-                self._apredict_a_batch(X[i : i + batch_size], **kwargs)
+                self._apredict_a_batch(X[i: i + batch_size], **kwargs)
                 for i in range(0, len(X), batch_size)
             ]
         )
@@ -505,7 +505,7 @@ class OpenAIAudioTranslation(OpenAI):
 
     @retry
     def _predict_one(
-        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
+            self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         "Translates a file-like Audio recording to English."
         if context is not None:
@@ -521,7 +521,7 @@ class OpenAIAudioTranslation(OpenAI):
 
     @retry
     async def _apredict_one(
-        self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
+            self, file: t.BinaryIO, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         "Translates a file-like Audio recording to English."
         if context is not None:
@@ -556,7 +556,7 @@ class OpenAIAudioTranslation(OpenAI):
         return [resp['text'] for resp in resps]
 
     def _predict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         if context:
             assert one, 'context only works with ``one=True``'
@@ -565,11 +565,11 @@ class OpenAIAudioTranslation(OpenAI):
         out = []
         batch_size = kwargs.pop('batch_size', 10)
         for i in tqdm.tqdm(range(0, len(X), batch_size)):
-            out.extend(self._predict_a_batch(X[i : i + batch_size], **kwargs))
+            out.extend(self._predict_a_batch(X[i: i + batch_size], **kwargs))
         return out
 
     async def _apredict(
-        self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
+            self, X, one: bool = True, context: t.Optional[t.List[str]] = None, **kwargs
     ):
         if context:
             assert one, 'context only works with ``one=True``'
@@ -578,7 +578,7 @@ class OpenAIAudioTranslation(OpenAI):
         batch_size = kwargs.pop('batch_size', 10)
         list_of_lists = await asyncio.gather(
             *[
-                self._apredict_a_batch(X[i : i + batch_size], **kwargs)
+                self._apredict_a_batch(X[i: i + batch_size], **kwargs)
                 for i in range(0, len(X), batch_size)
             ]
         )

@@ -37,7 +37,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         setattr(cfg, k, v)
 
     def build(uri, mapping):
-        if re.match('^mongodb:\/\/|^mongodb\+srv:\/\/', uri) is not None:
+        if re.match(r'^mongodb://|^mongodb\+srv://', uri) is not None:
             name = uri.split('/')[-1]
             uri = '/'.join(uri.split('/')[:-1])
             conn = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000)

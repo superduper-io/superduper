@@ -11,8 +11,6 @@ logging = log = logger.logging
 
 __version__ = '0.0.14'
 
-from superduperdb.backends import ibis, mongodb
-
 from .base.document import Document
 from .components.dataset import Dataset
 from .components.encoder import Encoder

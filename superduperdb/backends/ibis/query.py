@@ -219,7 +219,7 @@ class _LogicalExprMixin:
 class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
     def repr_(self) -> str:
         out = super().repr_()
-        out = re.sub('\. ', ' ', out)
+        out = re.sub(r'\. ', ' ', out)
         return out
 
     def __eq__(self, other):
@@ -574,7 +574,7 @@ class IbisQueryComponent(QueryComponent):
 
     def repr_(self) -> str:
         out = super().repr_()
-        match = re.match('.*__([a-z]{2,2})__\(([a-z0-9_\.\']+)\)', out)
+        match = re.match(r'.*__([a-z]{2})__\(([a-z0-9_.\']+)\\)', out)
         lookup = {'gt': '>', 'lt': '<', 'eq': '=='}
         if match is not None and match.groups()[0] in lookup:
             out = f' {lookup[match.groups()[0]]} {match.groups()[1]}'

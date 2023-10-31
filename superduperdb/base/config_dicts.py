@@ -39,11 +39,11 @@ def _combine(dicts: t.Sequence[Dict]) -> Dict:
 
 
 def _environ_to_config_dict(
-    prefix: str,
-    parent: StrDict,
-    environ: t.Optional[StrDict] = None,
-    err: t.Optional[t.TextIO] = sys.stderr,
-    fail: bool = False,
+        prefix: str,
+        parent: StrDict,
+        environ: t.Optional[StrDict] = None,
+        err: t.Optional[t.TextIO] = sys.stderr,
+        fail: bool = False,
 ):
     env_dict = _environ_dict(prefix, environ)
 
@@ -64,7 +64,7 @@ def _environ_to_config_dict(
 
 
 def _split_address(
-    key: str, parent: StrDict
+        key: str, parent: StrDict
 ) -> t.Iterator[t.Tuple[StrDict, t.Tuple[str]]]:
     def split(key, parent, *address):
         if key in parent:
@@ -72,7 +72,7 @@ def _split_address(
 
         for k, v in parent.items():
             if key.startswith(ks := k + SEP) and isinstance(v, dict):
-                yield from split(key[len(ks) :], v, *address, k)
+                yield from split(key[len(ks):], v, *address, k)
 
     return split(key, parent)
 
@@ -83,7 +83,7 @@ def _environ_dict(prefix: str, environ: t.Optional[StrDict] = None) -> StrDict:
 
     d = os.environ if environ is None else environ
     items = ((k, v) for k, v in d.items() if k.isupper() and k.startswith(prefix))
-    return {k[len(prefix) :].lower(): v for k, v in items}
+    return {k[len(prefix):].lower(): v for k, v in items}
 
 
 def _combine_one(target, source):
@@ -104,7 +104,7 @@ def _combine_one(target, source):
 
 
 def _env_dict_to_config_dict(
-    env_dict: StrDict, parent: StrDict
+        env_dict: StrDict, parent: StrDict
 ) -> t.Tuple[StrDict, StrDict]:
     good: t.Dict = {}
     bad: t.Dict = {}

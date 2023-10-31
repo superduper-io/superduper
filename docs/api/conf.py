@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('..'))
 
-extensions =[
+extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.doctest',

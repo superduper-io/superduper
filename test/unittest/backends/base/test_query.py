@@ -1,42 +1,35 @@
 from superduperdb.base.document import Document
 
 
-def test_execute_insert_and_find(empty):
-    from superduperdb.backends.mongodb.query import Collection
-    from superduperdb.base.document import Document
-
-    collection = Collection('documents')
-    collection.insert_many([Document({'this': 'is a test'})]).execute(empty)
-    r = collection.find_one().execute(empty)
+def test_execute_insert_and_find(data_layer, empty_collection):
+    collection = empty_collection
+    collection.insert_many([Document({'this': 'is a test'})]).execute(data_layer)
+    r = collection.find_one().execute(data_layer)
     print(r)
 
 
-def test_execute_complex_query(empty):
-    from superduperdb.backends.mongodb.query import Collection
-    from superduperdb.base.document import Document
-
-    collection = Collection('documents')
+def test_execute_complex_query(data_layer, empty_collection):
+    collection = empty_collection
     collection.insert_many(
         [Document({'this': f'is a test {i}'}) for i in range(100)]
-    ).execute(empty)
+    ).execute(data_layer)
 
-    cur = collection.find().limit(10).sort('this', -1).execute(empty)
+    cur = collection.find().limit(10).sort('this', -1).execute(data_layer)
     for r in cur:
         print(r)
 
 
-def test_execute_like_queries(with_vector_index):
+def test_execute_like_queries(data_layer):
     from superduperdb.backends.mongodb.query import Collection
 
     collection = Collection('documents')
-
     # get a data point for testing
-    r = collection.find_one().execute(with_vector_index)
+    r = collection.find_one().execute(data_layer)
 
     out = (
         collection.like({'x': r['x']}, vector_index='test_vector_search', n=10)
         .find()
-        .execute(with_vector_index)
+        .execute(data_layer)
     )
 
     ids = list(out.scores.keys())
@@ -49,7 +42,7 @@ def test_execute_like_queries(with_vector_index):
     result = (
         collection.like(Document({'x': r['x']}), vector_index='test_vector_search', n=1)
         .find_one()
-        .execute(with_vector_index)
+        .execute(data_layer)
     )
 
     print(result)
@@ -62,8 +55,8 @@ def test_execute_like_queries(with_vector_index):
     print(q)
 
     # check queries we didn't have before
-    y = collection.distinct('y').execute(with_vector_index)
+    y = collection.distinct('y').execute(data_layer)
     assert set(y) == {0, 1}
 
     # post-like
-    result = q.execute(with_vector_index)
+    result = q.execute(data_layer)

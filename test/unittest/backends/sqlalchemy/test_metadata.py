@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -8,7 +6,7 @@ from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 
 Base = declarative_base()
 
-DATABASE_URL = "sqlite:///.testsqlite.db"
+DATABASE_URL = "sqlite:///:memory:"
 
 
 @pytest.fixture
@@ -19,7 +17,6 @@ def metadata():
     store.drop(force=True)
     engine.dispose()
     Base.metadata.drop_all(engine)
-    os.remove('.testsqlite.db')
 
 
 def test(metadata):

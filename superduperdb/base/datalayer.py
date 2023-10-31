@@ -31,7 +31,7 @@ from ..backends.base.artifact import ArtifactStore
 from ..backends.base.cdc import DatabaseChangeDataCapture
 from ..backends.base.data_backend import BaseDataBackend
 from ..backends.base.metadata import MetaDataStore
-from ..backends.base.query import Delete, Insert, Select, Update
+from ..backends.base.query import Delete, Insert, RawQuery, Select, Update
 from ..misc.download import download_content
 from .cursor import SuperDuperCursor
 from .exceptions import ComponentInUseError, ComponentInUseWarning
@@ -325,6 +325,9 @@ class Datalayer:
             return self.select(query, *args, **kwargs)
         if isinstance(query, Update):
             return self.update(query, *args, **kwargs)
+        if isinstance(query, RawQuery):
+            return query.execute(self)
+
         raise TypeError(
             f'Wrong type of {query}; '
             f'Expected object of type {t.Union[Select, Delete, Update, Insert]}; '

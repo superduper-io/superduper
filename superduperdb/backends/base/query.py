@@ -707,3 +707,14 @@ class TableOrCollection(Serializable, ABC):
         **kwargs,
     ):
         pass
+
+
+@dc.dataclass
+class RawQuery:
+    query: t.Any
+
+    @abstractmethod
+    def execute(self, db):
+        '''
+        A raw query method which executes the query and returns the result
+        '''

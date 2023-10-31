@@ -8,7 +8,7 @@ import torchvision
 from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import IbisTable
+from superduperdb.backends.ibis.query import IbisTable, RawSQL
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document as D
@@ -59,7 +59,7 @@ def make_ibis_db(db_conn, metadata_conn, tmp_dir, in_memory=False):
     )
 
 
-def end2end_workflow(ibis_db):
+def end2end_workflow(ibis_db, memory_table=False):
     db = ibis_db
     schema = Schema(
         identifier='my_table',
@@ -176,6 +176,18 @@ def end2end_workflow(ibis_db):
     result = list(q.execute(db))
     assert 'output' in result[0].unpack()
 
+    # Raw query
+    if not memory_table:
+        query = RawSQL(query='SELECT id from my_table')
+        rows = list(db.execute(query))
+        assert 'id' in list(rows[0].unpack().keys())
+        assert [r.unpack() for r in rows] == [
+            {'id': 1},
+            {'id': 2},
+            {'id': 3},
+            {'id': 4},
+        ]
+
 
 def test_nested_query(ibis_sqllite_db):
     db = ibis_sqllite_db
@@ -210,4 +222,4 @@ def test_end2end_duckdb(ibis_duckdb):
 
 
 def test_end2end_pandas(ibis_pandas_db):
-    end2end_workflow(ibis_pandas_db)
+    end2end_workflow(ibis_pandas_db, memory_table=True)

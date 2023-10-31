@@ -23,13 +23,13 @@ help: ## Display this help
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 
-devkit: ## Add some basic dev tools
+devkit: ## Add essential development tools
 	# Add pre-commit hooks to ensure that no strange stuff are being committed.
 	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
 	pip install pre-commit
 	pre-commit autoupdate
 
-new_release: ## Release a new SuperDuperDB version
+new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
 	@ if [[ "${RELEASE_VERSION}" == "${TAG}" ]]; then echo "no new release version. Please update VERSION file."; exit 1; fi
 
@@ -52,7 +52,7 @@ new_release: ## Release a new SuperDuperDB version
 
 ##@ CI Doc Functions
 
-api-docs: ## Generate Sphinx inline-API HTML documentation, including API docs
+api-docs: ## Generate Sphinx inline-API HTML documentation
 	@echo "===> Generate Sphinx HTML documentation, including API docs <==="
 	rm -rf docs/api/source/
 	rm -rf docs/hr/build/apidocs
@@ -61,7 +61,7 @@ api-docs: ## Generate Sphinx inline-API HTML documentation, including API docs
 	@echo "Build finished. The HTML pages are in docs/hr/build/apidocs"
 
 
-hr-docs: ## Generate docusaurus and blog-posts
+hr-docs: ## Generate Docusaurus documentation and blog posts
 	@echo "===> Generate docusaurus docs and blog-posts <==="
 	cd docs/hr && npm i && npm run build
 	cd ../..
@@ -70,18 +70,18 @@ hr-docs: ## Generate docusaurus and blog-posts
 
 ##@ CI Testing Functions
 
-mongo_init: ## Initialize a local MongoDB setup
+mongo_init: ## Initialize a local MongoDB instance
 	docker compose -f test/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
 
-mongo_shutdown: ## Terminate the local MongoDB setup
+mongo_shutdown: ## Terminate the local MongoDB instance
 	docker compose -f test/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
 
-test: mongo_init ## Perform unit testing
+test: mongo_init ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS)
 
-clean-test: mongo_shutdown	## Clean-up unit testing environment
+clean-test: mongo_shutdown	##  Clean up the unit testing environment
 
-fix-and-test: mongo_init ## Lint before testing
+fix-and-test: mongo_init ##  Lint the code before testing
 	# Sort mports
 	isort $(DIRECTORIES)
 	# Code formatting
@@ -98,7 +98,7 @@ fix-and-test: mongo_init ## Lint before testing
 	deptry ./
 
 
-test-and-fix: mongo_init ## Test before linting.
+test-and-fix: mongo_init ## Test the code before linting
 	# Linting
 	mypy superduperdb
 	# Unit testing
@@ -110,7 +110,7 @@ test-and-fix: mongo_init ## Test before linting.
 	# Check for missing docstrings
 	interrogate superduperdb
 
-lint-and-type-check: ## Lint your code
+lint-and-type-check: ##  Perform code linting and type checking
 	# Linting
 	mypy superduperdb
 	# Code formatting
@@ -120,7 +120,7 @@ lint-and-type-check: ## Lint your code
 	# Check for missing docstrings
 	interrogate superduperdb
 
-test_notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
+test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 	@echo "Notebook Path: $(NOTEBOOKS)"
 
 	@if [ -n "${NOTEBOOKS}" ]; then	\
@@ -131,16 +131,16 @@ test_notebooks: ## Test notebooks (arg: NOTEBOOKS=<test|dir>)
 ##@ Development Sandbox Management
 
 # superduperdb/sandbox is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
-build_sandbox: ## Build bloated Docker image for development.
+build_sandbox: ##  Build a development Docker image
 	@echo "===> release superduperdb/sandbox"
 	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain  --no-cache \
 	--build-arg BUILD_ENV="sandbox" \
 	--build-arg SUPERDUPERDB_EXTRAS="dev,demo"
 
-run_sandbox: ## Run local repo in sandbox
+run_sandbox: ## Run the local repository in a sandbox environment
 	docker run -p 8888:8888 superduperdb/sandbox
 
-run_sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
+run_sandbox-pr: ## Run a pull request in the sandbox (argument: PR_NUMBER=555)
 	@if [[ -z "${PR_NUMBER}" ]]; then echo "Usage: make run_sandbox-pr PR_NUMBER=<pull-request-number>"; exit -1; fi
 
 	@echo "===> Checkout Pull Request #"${PR_NUMBER}" <==="
@@ -164,13 +164,13 @@ run_sandbox-pr: ## Run PR in sandbox (arg: PR_NUMBER=555)
 ##@ Base Image Management
 
 # superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
-build_superduperdb: ## Build minimal Docker image for general use
+build_superduperdb: ## Build a minimal Docker image for general use
 	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg BUILD_ENV="pypi"
 
 
-push_superduperdb: ## Push superduperdb/superduperdb:latest
+push_superduperdb: ## Push the superduperdb/superduperdb:latest image
 	@echo "===> release superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
 	docker push superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)
 
@@ -182,13 +182,13 @@ push_superduperdb: ## Push superduperdb/superduperdb:latest
 ##@ Demo Image Management
 
 # superduperdb/demo is a bloated image that contains everything we need to run the online demo.
-build_demo: ## Build bloated Docker image for the demo
+build_demo: ## Build a feature-rich Docker image for demonstrations
 	echo "===> build superduperdb/demo:$(RELEASE_VERSION:v%=%)"
 	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg BUILD_ENV="pypi" \
 	--build-arg SUPERDUPERDB_EXTRAS="demo"
 
-push_demo: ## Push superduperdb/demo:latest
+push_demo: ## Push the superduperdb/demo:latest image
 	@echo "===> release superduperdb/demo:$(RELEASE_VERSION:v%=%) <==="
 	docker push superduperdb/demo:$(RELEASE_VERSION:v%=%)
 

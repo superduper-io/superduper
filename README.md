@@ -80,36 +80,36 @@ Unlock the power of SuperDuperDB to connect and manage various types of data sou
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mongodb.png" width="140px"/>
-	    <br />		
+            <img src="docs/hr/static/icons/databases/mongodb.png" width="100px"/>
+	    <pre> FullSupport </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mongodb-atlas.png" width="140px"/>
-	    <br />		
+            <img src="docs/hr/static/icons/databases/mongodb-atlas.png" width="100px"/>
+	    <pre> FullSupport </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/aws-s3.png" width="140px"/>
-	    <br />		
+            <img src="docs/hr/static/icons/databases/aws-s3.png" width="100px"/>
+	    <pre> FullSupport </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/postgresql.png" width="140px"/>
-	    <br /> Experimental
+            <img src="docs/hr/static/icons/databases/postgresql.png" width="100px"/>
+	    <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/sqlite.png" width="140px"/>
-	    <br /> Experimental
+            <img src="docs/hr/static/icons/databases/sqlite.png" width="100px"/>
+	    <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/duckdb.png" width="140px"/>
-	    <br /> Experimental
+            <img src="docs/hr/static/icons/databases/duckdb.png" width="100px"/>
+	    <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mysql.png" width="140px"/>
-	    <br /> Experimental
+            <img src="docs/hr/static/icons/databases/mysql.png" width="100px"/>
+	    <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/snowflake.png" width="140px"/>
-	    <br /> Experimental
+            <img src="docs/hr/static/icons/databases/snowflake.png" width="100px"/>
+	    <pre> Experimental </pre>
         </td>
     </tr>
 </table>
@@ -122,13 +122,13 @@ Leverage SuperDuperDB to discover insights from your data using a variety of AI 
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/pytorch.png" width="140px"/>
+            <img src="docs/hr/static/icons/frameworks/pytorch.png" width="100px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/scikit-learn.png" width="140px"/>
+            <img src="docs/hr/static/icons/frameworks/scikit-learn.png" width="100px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/huggingface-transformers.png" width="140px"/>
+            <img src="docs/hr/static/icons/frameworks/huggingface-transformers.png" width="100px"/>
         </td>
     </tr>
 </table>
@@ -142,13 +142,13 @@ Let SuperDuperDB make your applications smarter using a suite of ready-to-use AI
 <table align="center">
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/apis/openai.png"/>
+            <img src="docs/hr/static/icons/apis/openai.png" width="100px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/apis/cohere.png"/>
+            <img src="docs/hr/static/icons/apis/cohere.png" width="100px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/apis/anthropic.png"/>
+            <img src="docs/hr/static/icons/apis/anthropic.png" width="100px"/>
         </td>
     </tr>
 </table>

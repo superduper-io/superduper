@@ -16,7 +16,7 @@ python -m piptools compile \
   --upgrade \
   pyproject.toml
 
-deps=("docs" "dev")
+deps=("docs" "dev" "demo")
 for dep in "${deps[@]}"
 do
     echo "Running pip-compile for $dep to produce pinned dependencies"

@@ -1,10 +1,7 @@
-import pytest
-
 from superduperdb.backends.mongodb import query as q
 from superduperdb.base.document import Document
 
 
-@pytest.mark.parametrize('local_data_layer', [5], indirect=True)
 def test_select_missing_outputs(local_data_layer):
     docs = list(
         local_data_layer.execute(q.Collection('documents').find({}, {'_id': 1}))

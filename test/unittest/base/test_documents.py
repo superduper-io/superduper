@@ -30,11 +30,11 @@ def test_document_outputs(document):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_only_uri(float_tensors_8):
+def test_only_uri(local_data_layer):
     r = Document(
         Document.decode(
             {'x': {'_content': {'uri': 'foo', 'encoder': 'torch.float32[8]'}}},
-            encoders=float_tensors_8.encoders,
+            encoders=local_data_layer.encoders,
         )
     )
     assert r['x'].uri == 'foo'

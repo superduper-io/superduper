@@ -33,6 +33,10 @@ from superduperdb.ext.pillow.encoder import pil_image
 
 n_data_points = 250
 
+LOCAL_TEST_N_DATA_POINTS = 5
+
+MONGOMOCK_URI = 'mongomock:///test_db'
+
 
 @pytest.fixture
 # TODO: use monkeypatch to set this
@@ -395,10 +399,12 @@ def add_random_data(
                 }
             )
         )
-    data_layer.execute(
-        Collection(collection_name).insert_many(data),
-        refresh=False,
-    )
+
+    if data:
+        data_layer.execute(
+            Collection(collection_name).insert_many(data),
+            refresh=False,
+        )
 
 
 def add_encoders(data_layer: Datalayer):
@@ -460,26 +466,34 @@ def global_identifier_of_vector_index() -> str:
     return 'global_identifier_of_vector_index'
 
 
-def setup_data_layer(data_layer, number_data_points=n_data_points):
+def setup_data_layer(data_layer, **kwargs):
     # TODO: support more parameters to control the setup
     add_encoders(data_layer)
-    add_random_data(data_layer, number_data_points=number_data_points)
+    n_data = kwargs.get('n_data', n_data_points)
+    add_random_data(data_layer, number_data_points=n_data)
     add_models(data_layer)
-    add_vector_index(data_layer)
+    if kwargs.get('add_vector_index', True):
+        add_vector_index(data_layer)
 
 
 @pytest.fixture(scope='session')
 def data_layer() -> Datalayer:
-    _data_layer = build_datalayer(CFG, data_backend='mongomock:///test_db')
+    _data_layer = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
     setup_data_layer(_data_layer)
     return _data_layer
 
 
 @pytest.fixture
 def local_data_layer(request) -> Datalayer:
-    _data_layer = build_datalayer(CFG, data_backend='mongomock:///test_db')
-    number_data_points = getattr(request, 'param', n_data_points)
-    setup_data_layer(_data_layer, number_data_points)
+    _data_layer = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
+    setup_config = getattr(request, 'param', {'n_data': LOCAL_TEST_N_DATA_POINTS})
+    setup_data_layer(_data_layer, **setup_config)
+    return _data_layer
+
+
+@pytest.fixture
+def local_empty_data_layer(request) -> Datalayer:
+    _data_layer = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
     return _data_layer
 
 

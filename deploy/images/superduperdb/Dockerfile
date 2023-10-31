@@ -72,8 +72,7 @@ COPY --chown=superduper ./deploy/images/superduperdb/apputils-extension/themes.j
 # ---------------
 FROM base AS build_sandbox
 ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
-ONBUILD WORKDIR ${HOME}/superduperdb
-ONBUILD RUN pip install --upgrade \
+ONBUILD RUN cd ${HOME}/superduperdb; pip install --upgrade \
     .[${SUPERDUPERDB_EXTRAS}]    \
     # Purge pip cache
     && pip cache purge

@@ -11,8 +11,8 @@ from superduperdb.backends.mongodb.query import Collection
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_predict(random_data, float_tensors_32):
-    encoder = random_data.encoders['torch.float32[32]']
+def test_predict(local_data_layer):
+    encoder = local_data_layer.encoders['torch.float32[32]']
 
     m = TorchModel(
         identifier='my-model',
@@ -20,7 +20,7 @@ def test_predict(random_data, float_tensors_32):
         encoder=encoder,
     )
 
-    X = [r['x'] for r in random_data.execute(Collection('documents').find())]
+    X = [r['x'] for r in local_data_layer.execute(Collection('documents').find())]
 
     out = m.predict(X=X, distributed=False)
 
@@ -28,7 +28,7 @@ def test_predict(random_data, float_tensors_32):
 
     m.predict(
         X='x',
-        db=random_data,
+        db=local_data_layer,
         select=Collection('documents').find(),
         distributed=False,
         listen=True,

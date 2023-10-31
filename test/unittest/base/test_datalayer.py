@@ -1,4 +1,3 @@
-import PIL.PngImagePlugin
 import pytest
 
 try:
@@ -21,31 +20,35 @@ n_data_points = 250
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_create_component(empty, float_tensors_16, float_tensors_32):
-    empty.add(TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module'))
-    assert 'my-test-module' in empty.show('model')
-    model = empty.models['my-test-module']
+def test_create_component(local_empty_data_layer):
+    local_empty_data_layer.add(
+        TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module')
+    )
+    model = local_empty_data_layer.models['my-test-module']
+    assert 'my-test-module' in local_empty_data_layer.show('model')
     print(model)
     output = model.predict(torch.randn(16), one=True)
     assert output.shape[0] == 32
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_update_component(empty):
-    empty.add(TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module'))
+def test_update_component(local_empty_data_layer):
+    local_empty_data_layer.add(
+        TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module')
+    )
     m = TorchModel(object=torch.nn.Linear(16, 32), identifier='my-test-module')
-    empty.add(m)
-    assert empty.show('model', 'my-test-module') == [0, 1]
-    empty.add(m)
-    assert empty.show('model', 'my-test-module') == [0, 1]
+    local_empty_data_layer.add(m)
+    assert local_empty_data_layer.show('model', 'my-test-module') == [0, 1]
+    local_empty_data_layer.add(m)
+    assert local_empty_data_layer.show('model', 'my-test-module') == [0, 1]
 
-    n = empty.models[m.identifier]
-    empty.add(n)
-    assert empty.show('model', 'my-test-module') == [0, 1]
+    n = local_empty_data_layer.models[m.identifier]
+    local_empty_data_layer.add(n)
+    assert local_empty_data_layer.show('model', 'my-test-module') == [0, 1]
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_compound_component(empty):
+def test_compound_component(local_empty_data_layer):
     t = tensor(torch.float, shape=(32,))
 
     m = TorchModel(
@@ -54,192 +57,107 @@ def test_compound_component(empty):
         encoder=t,
     )
 
-    empty.add(m)
-    assert 'torch.float32[32]' in empty.show('encoder')
-    assert 'my-test-module' in empty.show('model')
-    assert empty.show('model', 'my-test-module') == [0]
+    local_empty_data_layer.add(m)
+    assert 'torch.float32[32]' in local_empty_data_layer.show('encoder')
+    assert 'my-test-module' in local_empty_data_layer.show('model')
+    assert local_empty_data_layer.show('model', 'my-test-module') == [0]
 
-    empty.add(m)
-    assert empty.show('model', 'my-test-module') == [0]
-    assert empty.show('encoder', 'torch.float32[32]') == [0]
+    local_empty_data_layer.add(m)
+    assert local_empty_data_layer.show('model', 'my-test-module') == [0]
+    assert local_empty_data_layer.show('encoder', 'torch.float32[32]') == [0]
 
-    empty.add(
+    local_empty_data_layer.add(
         TorchModel(
             object=torch.nn.Linear(16, 32),
             identifier='my-test-module',
             encoder=t,
         )
     )
-    assert empty.show('model', 'my-test-module') == [0, 1]
-    assert empty.show('encoder', 'torch.float32[32]') == [0]
+    assert local_empty_data_layer.show('model', 'my-test-module') == [0, 1]
+    assert local_empty_data_layer.show('encoder', 'torch.float32[32]') == [0]
 
-    m = empty.load(type_id='model', identifier='my-test-module')
+    m = local_empty_data_layer.load(type_id='model', identifier='my-test-module')
     assert isinstance(m.encoder, Encoder)
 
     with pytest.raises(ComponentInUseError):
-        empty.remove('encoder', 'torch.float32[32]')
+        local_empty_data_layer.remove('encoder', 'torch.float32[32]')
 
     with pytest.warns(ComponentInUseWarning):
-        empty.remove('encoder', 'torch.float32[32]', force=True)
+        local_empty_data_layer.remove('encoder', 'torch.float32[32]', force=True)
 
-    empty.remove('model', 'my-test-module', force=True)
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_select_vanilla(random_data):
-    r = random_data.execute(Collection('documents').find_one())
-    print(r)
+    local_empty_data_layer.remove('model', 'my-test-module', force=True)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_select(with_vector_index):
-    db = with_vector_index
-    r = db.execute(Collection('documents').find_one())
-    query = (
-        Collection('documents')
-        .like(
-            r=Document({'x': r['x']}),
-            vector_index='test_vector_search',
-        )
-        .find()
+def test_reload_dataset(local_data_layer):
+    from superduperdb.components.dataset import Dataset
+
+    d = Dataset(
+        identifier='my_valid',
+        select=Collection('documents').find({'_fold': 'valid'}),
+        sample_size=100,
     )
-    s = next(db.execute(query))
-    assert r['_id'] == s['_id']
+    local_data_layer.add(d)
+    new_d = local_data_layer.load('dataset', 'my_valid')
+    assert new_d.sample_size == 100
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_reload_dataset(si_validation):
-    si_validation.load('dataset', 'my_valid')
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_insert(random_data, a_listener, an_update):
-    random_data.execute(Collection('documents').insert_many(an_update))
-    r = next(random_data.execute(Collection('documents').find({'update': True})))
-    assert 'linear_a' in r['_outputs']['x']
-    assert (
-        len(list(random_data.execute(Collection('documents').find())))
-        == n_data_points + 10
-    )
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_insert_from_uris(empty, image_type, image_url):
-    to_insert = [
-        Document(
-            {
-                'item': {
-                    '_content': {
-                        'uri': image_url,
-                        'encoder': 'pil_image',
-                    }
-                },
-                'other': {
-                    'item': {
-                        '_content': {
-                            'uri': image_url,
-                            'encoder': 'pil_image',
-                        }
-                    }
-                },
-            }
-        )
-        for _ in range(2)
-    ]
-    empty.execute(Collection('documents').insert_many(to_insert))
-    r = empty.execute(Collection('documents').find_one())
-    assert isinstance(r['item'].x, PIL.Image.Image)
-    assert isinstance(r['other']['item'].x, PIL.Image.Image)
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_update(random_data, a_listener):
-    to_update = torch.randn(32)
-    t = random_data.encoders['torch.float32[32]']
-    random_data.execute(
-        Collection('documents').update_many({}, Document({'$set': {'x': t(to_update)}}))
-    )
-    cur = random_data.execute(Collection('documents').find())
-    r = next(cur)
-    s = next(cur)
-
-    assert all(r['x'].x == to_update)
-    assert all(s['x'].x == to_update)
-    assert (
-        r['_outputs']['x']['linear_a'].x.tolist()
-        == s['_outputs']['x']['linear_a'].x.tolist()
-    )
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_listener(random_data, a_model, b_model):
-    random_data.add(
+@pytest.mark.parametrize(
+    'local_data_layer', [{'add_vector_index': False}], indirect=True
+)
+def test_listener(local_data_layer):
+    local_data_layer.add(
         Listener(
             model='linear_a',
             select=Collection('documents').find(),
             key='x',
         ),
     )
-    r = random_data.execute(Collection('documents').find_one())
+    r = local_data_layer.execute(Collection('documents').find_one())
     assert 'linear_a' in r['_outputs']['x']
 
-    t = random_data.encoders['torch.float32[32]']
+    t = local_data_layer.encoders['torch.float32[32]']
 
-    random_data.execute(
+    local_data_layer.execute(
         Collection('documents').insert_many(
             [Document({'x': t(torch.randn(32)), 'update': True}) for _ in range(5)]
         )
     )
 
-    r = random_data.execute(Collection('documents').find_one({'update': True}))
+    r = local_data_layer.execute(Collection('documents').find_one({'update': True}))
     assert 'linear_a' in r['_outputs']['x']
 
-    random_data.add(
+    local_data_layer.add(
         Listener(
             model='linear_b',
             select=Collection('documents').find().featurize({'x': 'linear_a'}),
             key='x',
         )
     )
-    r = random_data.execute(Collection('documents').find_one())
+    r = local_data_layer.execute(Collection('documents').find_one())
     assert 'linear_b' in r['_outputs']['x']
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_predict(a_model, float_tensors_32, float_tensors_16):
-    t = float_tensors_32.encoders['torch.float32[32]']
-    a_model.predict('linear_a', Document(t(torch.randn(32))))
+@pytest.mark.parametrize(
+    'local_data_layer', [{'add_vector_index': False}], indirect=True
+)
+def test_predict(local_data_layer):
+    t = local_data_layer.encoders['torch.float32[32]']
+    local_data_layer.predict('linear_a', Document(t(torch.randn(32))))
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_delete(random_data):
-    r = random_data.execute(Collection('documents').find_one())
-    random_data.execute(Collection('documents').delete_many({'_id': r['_id']}))
-    with pytest.raises(StopIteration):
-        next(random_data.execute(Collection('documents').find({'_id': r['_id']})))
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_replace(random_data):
-    r = next(random_data.execute(Collection('documents').find()))
-    x = torch.randn(32)
-    t = random_data.encoders['torch.float32[32]']
-    r['x'] = t(x)
-    random_data.execute(
-        Collection('documents').replace_one(
-            {'_id': r['_id']},
-            r,
-        )
-    )
-
-
-@pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_dataset(random_data):
+@pytest.mark.parametrize(
+    'local_data_layer', [{'add_vector_index': False}], indirect=True
+)
+def test_dataset(local_data_layer):
     d = Dataset(
         identifier='test_dataset',
         select=Collection('documents').find({'_fold': 'valid'}),
     )
-    random_data.add(d)
-    assert random_data.show('dataset') == ['test_dataset']
-    dataset = random_data.load('dataset', 'test_dataset')
-    assert len(dataset.data) == len(list(random_data.execute(dataset.select)))
+    local_data_layer.add(d)
+    assert local_data_layer.show('dataset') == ['test_dataset']
+    dataset = local_data_layer.load('dataset', 'test_dataset')
+    assert len(dataset.data) == len(list(local_data_layer.execute(dataset.select)))

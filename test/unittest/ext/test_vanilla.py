@@ -6,15 +6,15 @@ from superduperdb.components.model import Model
 
 
 @pytest.fixture()
-def data_in_db(empty):
+def data_in_db(local_empty_data_layer):
     X = [1, 2, 3, 4, 5]
     y = [1, 2, 3, 4, 5]
-    empty.execute(
+    local_empty_data_layer.execute(
         Collection(identifier='documents').insert_many(
             [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
         )
     )
-    yield empty
+    yield local_empty_data_layer
 
 
 def test_function_predict_one():

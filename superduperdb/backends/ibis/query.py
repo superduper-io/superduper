@@ -16,6 +16,7 @@ from superduperdb.backends.base.query import (
     Like,
     QueryComponent,
     QueryLinker,
+    RawQuery,
     Select,
     TableOrCollection,
     _ReprMixin,
@@ -616,3 +617,23 @@ class IbisInsert(Insert):
     @property
     def select_table(self):
         return self.table_or_collection
+
+
+class _SQLDictIterable:
+    def __init__(self, iterable):
+        self.iterable = iter(iterable)
+
+    def next(self):
+        element = next(self.iterable)
+        return dict(element)
+
+
+@dc.dataclass
+class RawSQL(RawQuery):
+    query: str
+    id_field: str = 'id'
+
+    def execute(self, db):
+        cursor = db.databackend.conn.raw_sql(self.query).mappings().all()
+        cursor = _SQLDictIterable(cursor)
+        return SuperDuperIbisCursor(cursor, id_field=self.id_field)

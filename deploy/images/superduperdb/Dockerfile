@@ -1,8 +1,14 @@
 # syntax = docker/dockerfile:1.3
-FROM jupyterhub/k8s-singleuser-sample:3.1.0
+
+# BUILD_ENV choses whether to use local source (sandbox) or released wheel (pypi).
+ARG BUILD_ENV=pypi
+
+# ---------------
+# Configure Basic Template
+# ---------------
+FROM jupyterhub/k8s-singleuser-sample:3.1.0 as base
 
 ARG SUPERDUPERDB_EXTRAS
-ARG SUPERDUPERDB_VERSION=latest
 
 ENV NB_USER=superduper \
     NB_UID=1000 \
@@ -45,35 +51,49 @@ USER ${NB_USER}
 ENV PATH="${HOME}/.local/bin:$PATH"
 
 
-# Install Python dependencies
+# Install common dependencies
 # ---------------
 RUN pip install --no-cache-dir --upgrade \
-    # SuperDuperDB
-    superduperdb[${SUPERDUPERDB_EXTRAS}]==${SUPERDUPERDB_VERSION} \
     # JupyterLab extensions \
     theme-darcula \
     ipywidgets \
     jupyterlab-lsp \
-    'python-lsp-server[all]' \
+    'python-lsp-server[all]'
+
+
+# Install Jupyterlab extensions
+# ---------------
+COPY --chown=superduper ./deploy/images/superduperdb/labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
+COPY --chown=superduper ./deploy/images/superduperdb/apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
+
+
+# ---------------
+# Configure Sandbox Build
+# ---------------
+FROM base AS build_sandbox
+ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
+ONBUILD WORKDIR ${HOME}/superduperdb
+ONBUILD RUN pip install --upgrade \
+    .[${SUPERDUPERDB_EXTRAS}]    \
     # Purge pip cache
     && pip cache purge
 
 
-# Configure Jupyterlab extensions.
 # ---------------
-COPY --chown=superduper ./labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
-COPY --chown=superduper ./apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
-
-
-# Pre-Install SuperDuper examples
+# Configure pypi Build
 # ---------------
-COPY ./download-examples.sh ./
-RUN ./download-examples.sh && \
-    rm ./download-examples.sh
+FROM base AS build_pypi
+ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
+ONBUILD RUN pip install --no-cache-dir --upgrade \
+    superduperdb[${SUPERDUPERDB_EXTRAS}] \
+    # Purge pip cache
+    && pip cache purge
 
 
-# Replay Jupyter's entrypoint
 # ---------------
+# Select Build
+# ---------------
+FROM build_${BUILD_ENV}
 EXPOSE 8888
 ENTRYPOINT ["tini", "--"]
 CMD ["jupyter", "lab", "--port=8888", "--no-browser", "--ip=0.0.0.0"]

@@ -33,20 +33,23 @@ def get_new_data(encoder: Encoder, n=10, update=False):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_collection_with_random_data', [5], indirect=True)
-def test_delete_many(data_layer, local_collection_with_random_data):
-    collection = local_collection_with_random_data
-    old_ids = {r['_id'] for r in data_layer.execute(collection.find({}, {'_id': 1}))}
+@pytest.mark.parametrize('local_data_layer', [{'n_data': 5}], indirect=True)
+def test_delete_many(local_data_layer):
+    collection = Collection('documents')
+    old_ids = {
+        r['_id'] for r in local_data_layer.execute(collection.find({}, {'_id': 1}))
+    }
     deleted_ids = list(old_ids)[:2]
-    data_layer.execute(collection.delete_many({'_id': {'$in': deleted_ids}}))
-    new_ids = {r['_id'] for r in data_layer.execute(collection.find({}, {'_id': 1}))}
+    local_data_layer.execute(collection.delete_many({'_id': {'$in': deleted_ids}}))
+    new_ids = {
+        r['_id'] for r in local_data_layer.execute(collection.find({}, {'_id': 1}))
+    }
     assert len(new_ids) == 3
 
     assert old_ids - new_ids == set(deleted_ids)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_data_layer', [5], indirect=True)
 def test_replace(local_data_layer):
     collection = Collection('documents')
     r = next(local_data_layer.execute(collection.find()))
@@ -96,7 +99,6 @@ def test_insert_from_uris(local_data_layer, empty_collection, image_url):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_data_layer', [5], indirect=True)
 def test_update_many(local_data_layer):
     collection = Collection('documents')
     to_update = torch.randn(32)
@@ -117,7 +119,7 @@ def test_update_many(local_data_layer):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_data_layer', [5], indirect=True)
+@pytest.mark.parametrize('local_data_layer', [{'n_data': 5}], indirect=True)
 def test_insert_many(local_data_layer):
     collection = Collection('documents')
     an_update = get_new_data(
@@ -142,7 +144,6 @@ def test_like(data_layer):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_data_layer', [5], indirect=True)
 def test_insert_one(local_data_layer):
     # MARK: empty Collection + a_single_insert
     collection = Collection('documents')
@@ -190,7 +191,7 @@ def test_aggregate(data_layer):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_data_layer', [5], indirect=True)
+@pytest.mark.parametrize('local_data_layer', [{'n_data': 5}], indirect=True)
 def test_replace_one(local_data_layer):
     collection = Collection('documents')
     # MARK: random data (change)

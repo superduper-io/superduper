@@ -81,12 +81,15 @@ Unlock the power of SuperDuperDB to connect and manage various types of data sou
     <tr>
         <td align="center" width="140" height="112.43">
             <img src="docs/hr/static/icons/databases/mongodb.png" width="90px"/>
+	    <br />		
         </td>
         <td align="center" width="140" height="112.43">
             <img src="docs/hr/static/icons/databases/mongodb-atlas.png" width="90px"/>
+	    <br />		
         </td>
         <td align="center" width="140" height="112.43">
             <img src="docs/hr/static/icons/databases/aws-s3.png" width="90px"/>
+	    <br />		
         </td>
         <td align="center" width="140" height="112.43">
             <img src="docs/hr/static/icons/databases/postgresql.png" width="90px"/>

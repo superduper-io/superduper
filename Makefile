@@ -28,6 +28,7 @@ devkit: ## Add essential development tools
 	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
 	pip install pre-commit
 	pre-commit autoupdate
+	pip install .[quality]
 
 new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi

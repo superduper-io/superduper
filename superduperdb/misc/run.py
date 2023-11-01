@@ -1,7 +1,8 @@
-import logging
 import subprocess
 import typing as t
 from subprocess import PIPE, CalledProcessError
+
+from superduperdb import logging
 
 __all__ = (
     'CalledProcessError',

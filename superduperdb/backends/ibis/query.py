@@ -11,6 +11,7 @@ import typing as t
 
 import ibis
 
+from superduperdb import logging
 from superduperdb.backends.base.query import (
     CompoundSelect,
     Insert,
@@ -23,7 +24,6 @@ from superduperdb.backends.base.query import (
     _ReprMixin,
 )
 from superduperdb.backends.ibis.cursor import SuperDuperIbisCursor
-from superduperdb.base.logger import logging
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.schema import Schema

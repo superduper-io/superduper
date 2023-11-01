@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses as dc
-import logging
 import multiprocessing
 import typing as t
 from functools import wraps
@@ -12,6 +11,7 @@ from numpy import ndarray
 from sklearn.pipeline import Pipeline
 
 import superduperdb as s
+from superduperdb import logging
 from superduperdb.backends.base.query import CompoundSelect, Select
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.query_dataset import QueryDataset

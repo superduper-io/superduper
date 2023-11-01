@@ -49,12 +49,12 @@ def acc(x, y):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
-    'local_data_layer',
+    'local_db',
     [{'add_vector_index': False, 'add_models': False}],
     indirect=True,
 )
-def test_fit(local_data_layer, valid_dataset):
-    local_data_layer.add(valid_dataset)
+def test_fit(local_db, valid_dataset):
+    local_db.add(valid_dataset)
 
     m = TorchModel(
         object=torch.nn.Linear(32, 1),
@@ -72,7 +72,7 @@ def test_fit(local_data_layer, valid_dataset):
     m.fit(
         X='x',
         y='y',
-        db=local_data_layer,
+        db=local_db,
         select=Collection('documents').find(),
         metrics=[Metric(identifier='acc', object=acc)],
         validation_sets=['my_valid'],

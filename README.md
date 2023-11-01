@@ -45,14 +45,18 @@
  </div>
 
 ---
-<p style="color:red"><strong>Important Announcement !</strong></p>
+## 📢 Important Announcement !
 
-On the 15th of November, we are going to officially launch SuperDuperDB with the release of v0.1. The release will include:
-* Integration of major SQL databases, including PostgreSQL, MySQL, SQLite, DuckDB, BigQuery, Snowflake, and many more.
-* Massive overhaul of the docs
-* Revamped and modularized testing suite
+On the **15th of November**, we are going to officially launch **SuperDuperDB** with the release of **v0.1**. 
 
-⭐️ Leave a star to be informed of more exciting updates!
+The release will include:
+
+- Full integration of major SQL databases, including PostgreSQL, MySQL, SQLite, DuckDB, BigQuery, Snowflake, and many more.
+- Massive overhaul of the docs
+- Revamped and modularized testing suite
+
+⭐️ **Leave a star** to be informed of more exciting updates!
+
 
 ---
 

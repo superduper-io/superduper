@@ -82,35 +82,35 @@ Unlock the power of SuperDuperDB to connect and manage various types of data sou
 <table>
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mongodb.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/mongodb.png" width="139px"/>
 	    <pre> Full Support </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mongodb-atlas.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/mongodb-atlas.png" width="139px"/>
 	    <pre> Full Support </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/aws-s3.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/aws-s3.png" width="139px"/>
 	    <pre> Full Support </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/postgresql.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/postgresql.png" width="139px"/>
 	    <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/sqlite.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/sqlite.png" width="139px"/>
 	    <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/duckdb.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/duckdb.png" width="139px"/>
 	    <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/mysql.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/mysql.png" width="139px"/>
 	    <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/databases/snowflake.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/snowflake.png" width="139px"/>
 	    <pre> Experimental </pre>
         </td>
     </tr>
@@ -125,15 +125,15 @@ Leverage SuperDuperDB to discover insights from your data using a variety of AI 
 <table>
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/pytorch.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/frameworks/pytorch.png" width="139px"/>
 	    <pre> Full Support </pre>		
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/scikit-learn.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/frameworks/scikit-learn.png" width="139px"/>
 	    <pre> Full Support </pre>		
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/frameworks/huggingface-transformers.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/frameworks/huggingface-transformers.png" width="139px"/>
 	    <pre> Full Support </pre>		
         </td>
     </tr>
@@ -149,15 +149,15 @@ Let SuperDuperDB make your applications smarter using a suite of ready-to-use AI
 <table >
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/apis/openai.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/openai.png" width="139px"/>
 	    <pre> Full Support </pre>		
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/apis/cohere.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/cohere.png" width="139px"/>
 	    <pre> Full Support </pre>		
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="docs/hr/static/icons/apis/anthropic.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/anthropic.png" width="139px"/>
 	    <pre> Full Support </pre>		
         </td>
     </tr>

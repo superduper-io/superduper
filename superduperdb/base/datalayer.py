@@ -741,6 +741,11 @@ class Datalayer:
                 continue
 
             vi = self.vector_indices[identifier]
+            if (
+                vi.indexing_listener.select.table_or_collection.identifier
+                != query.table_or_collection.identifier
+            ):
+                continue
 
             G.add_node(
                 f'{identifier}.{copy_vectors.__name__}',

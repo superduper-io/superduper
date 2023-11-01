@@ -25,7 +25,7 @@ def patch_cfg_downloads(monkeypatch):
         yield
 
 
-def test_file_blobs(local_empty_data_layer, patch_cfg_downloads, image_url):
+def test_file_blobs(local_empty_db, patch_cfg_downloads, image_url):
     to_insert = [
         Document(
             {
@@ -48,8 +48,8 @@ def test_file_blobs(local_empty_data_layer, patch_cfg_downloads, image_url):
         for _ in range(2)
     ]
 
-    local_empty_data_layer.execute(
+    local_empty_db.execute(
         Collection('documents').insert_many(to_insert), encoders=(pil_image,)
     )
-    local_empty_data_layer.execute(Collection('documents').find_one())
+    local_empty_db.execute(Collection('documents').find_one())
     assert list(CFG.downloads.root.iterdir())

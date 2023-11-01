@@ -16,7 +16,7 @@ from superduperdb.ext.transformers.model import (
 
 
 @pytest.fixture
-def transformers_model(local_empty_data_layer):
+def transformers_model(local_empty_db):
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
     data = [
@@ -25,7 +25,7 @@ def transformers_model(local_empty_data_layer):
         {'text': 'dummy text 1', 'label': 1},
     ]
     data = [D(d) for d in data]
-    local_empty_data_layer.execute(Collection('train_documents').insert_many(data))
+    local_empty_db.execute(Collection('train_documents').insert_many(data))
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = AutoModelForSequenceClassification.from_pretrained(
         "distilbert-base-uncased", num_labels=2
@@ -50,7 +50,7 @@ def test_transformer_predict(transformers_model):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @tdir
-def test_tranformers_fit(transformers_model, local_empty_data_layer):
+def test_tranformers_fit(transformers_model, local_empty_db):
     repo_name = "test-superduperdb-sentiment-analysis"
     training_args = TransformersTrainerConfiguration(
         identifier=repo_name,
@@ -66,7 +66,7 @@ def test_tranformers_fit(transformers_model, local_empty_data_layer):
     transformers_model.fit(
         X='text',
         y='label',
-        db=local_empty_data_layer,
+        db=local_empty_db,
         select=Collection('train_documents').find(),
         configuration=training_args,
         validation_sets=[

@@ -14,17 +14,17 @@ CASSETTE_DIR = 'test/unittest/ext/cassettes'
 
 
 @pytest.fixture
-def open_ai_with_rhymes(local_empty_data_layer, monkeypatch):
+def open_ai_with_rhymes(local_empty_db, monkeypatch):
     with open('test/material/data/rhymes.json') as f:
         data = json.load(f)
     for i, r in enumerate(data):
         data[i] = Document({'story': r.replace('\n', ' ')})
     monkeypatch.setattr(openai, 'api_key', 'sk-TopSecret')
     monkeypatch.setenv('OPENAI_API_KEY', 'sk-TopSecret')
-    local_empty_data_layer.execute(Collection('openai').insert_many(data))
-    yield local_empty_data_layer
-    local_empty_data_layer.remove('model', 'gpt-3.5-turbo', force=True)
-    local_empty_data_layer.remove('model', 'text-embedding-ada-002', force=True)
+    local_empty_db.execute(Collection('openai').insert_many(data))
+    yield local_empty_db
+    local_empty_db.remove('model', 'gpt-3.5-turbo', force=True)
+    local_empty_db.remove('model', 'text-embedding-ada-002', force=True)
 
 
 # TODO: Mock OpenAI API instead of using VCR

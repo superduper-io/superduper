@@ -110,6 +110,8 @@ locket==1.0.0
     #   partd
 loguru==0.7.2
     # via superduperdb (pyproject.toml)
+loki-logger-handler==0.1.1
+    # via superduperdb (pyproject.toml)
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.3

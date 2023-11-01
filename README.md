@@ -51,7 +51,7 @@ On the **15th of November**, we are going to officially launch **SuperDuperDB** 
 
 The release will include:
 
-- Integration of major SQL databases, including PostgreSQL, MySQL, SQLite, DuckDB, BigQuery, Snowflake, and many more.
+- Full integration of major SQL databases, including PostgreSQL, MySQL, SQLite, DuckDB, BigQuery, Snowflake, and many more.
 - Massive overhaul of the docs
 - Revamped and modularized testing suite
 

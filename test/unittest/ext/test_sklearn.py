@@ -58,7 +58,7 @@ class TestPipeline:
     def test_fit_predict_classic(self, pipeline, X, y):
         pipeline.fit(X, y)
         output = pipeline.predict(X)
-        print(output)
+        assert len(output) == len(X)
 
     def test_fit_db(self, pipeline, data_in_db):
         pipeline.fit(

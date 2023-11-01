@@ -20,8 +20,11 @@ def document():
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_document_encoding(document):
     t = tensor(torch.float, shape=(20,))
-    print(document.encode())
-    Document.decode(document.encode(), encoders={'torch.float32[20]': t})
+    new_document = Document(
+        Document.decode(document.encode(), encoders={'torch.float32[20]': t})
+    )
+    assert (new_document['x'].x - document['x'].x).sum() == 0
+    assert new_document.outputs('x', 'model_test') == 1
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

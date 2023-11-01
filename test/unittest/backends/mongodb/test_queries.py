@@ -69,8 +69,11 @@ def test_replace(local_data_layer):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_insert_from_uris(local_data_layer, empty_collection, image_url):
-    collection = empty_collection
+def test_insert_from_uris(local_empty_data_layer, image_url):
+    from superduperdb.ext.pillow.encoder import pil_image
+
+    local_empty_data_layer.add(pil_image)
+    collection = Collection('documents')
     to_insert = [
         Document(
             {
@@ -92,8 +95,8 @@ def test_insert_from_uris(local_data_layer, empty_collection, image_url):
         )
         for _ in range(2)
     ]
-    local_data_layer.execute(collection.insert_many(to_insert))
-    r = local_data_layer.execute(collection.find_one())
+    local_empty_data_layer.execute(collection.insert_many(to_insert))
+    r = local_empty_data_layer.execute(collection.find_one())
     assert isinstance(r['item'].x, PIL.Image.Image)
     assert isinstance(r['other']['item'].x, PIL.Image.Image)
 
@@ -150,7 +153,6 @@ def test_insert_one(local_data_layer):
     a_single_insert = get_new_data(
         local_data_layer.encoders['torch.float32[32]'], 1, update=False
     )[0]
-    print(a_single_insert)
     out, _ = local_data_layer.execute(collection.insert_one(a_single_insert))
     r = local_data_layer.execute(collection.find({'_id': out[0]}))
     docs = list(r)
@@ -158,13 +160,13 @@ def test_insert_one(local_data_layer):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_delete_one(data_layer, local_collection_with_random_data):
+def test_delete_one(local_data_layer):
     # MARK: random data (change)
-    collection = local_collection_with_random_data
-    r = data_layer.execute(collection.find_one())
-    data_layer.execute(collection.delete_one({'_id': r['_id']}))
+    collection = Collection('documents')
+    r = local_data_layer.execute(collection.find_one())
+    local_data_layer.execute(collection.delete_one({'_id': r['_id']}))
     with pytest.raises(StopIteration):
-        next(data_layer.execute(Collection('documents').find({'_id': r['_id']})))
+        next(local_data_layer.execute(Collection('documents').find({'_id': r['_id']})))
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

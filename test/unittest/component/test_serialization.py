@@ -27,13 +27,13 @@ def test_model():
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_sklearn(local_empty_data_layer):
+def test_sklearn(local_empty_db):
     m = Estimator(
         identifier='test',
         object=SVC(),
         encoder=tensor(torch.float, shape=(32,)),
     )
-    local_empty_data_layer.add(m)
-    assert local_empty_data_layer.metadata.component_collection.count_documents({}) == 2
-    reloaded = local_empty_data_layer.load(type_id='model', identifier='test')
+    local_empty_db.add(m)
+    assert local_empty_db.metadata.component_collection.count_documents({}) == 2
+    reloaded = local_empty_db.load(type_id='model', identifier='test')
     assert isinstance(reloaded.object, Artifact)

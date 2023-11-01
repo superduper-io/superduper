@@ -25,7 +25,7 @@ retry = Retry(
 
 
 def init_fn():
-    s.log.info('Setting OpenAI api-key...')
+    s.logging.info('Setting OpenAI api-key...')
     os.environ['OPENAI_API_KEY'] = s.CFG.apis.providers['openai'].api_key
 
 

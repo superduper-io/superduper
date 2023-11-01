@@ -11,10 +11,10 @@ import tqdm
 from dask.distributed import Future
 
 import superduperdb as s
+from superduperdb import logging
 from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.base import serializable
 from superduperdb.base.document import Document
-from superduperdb.base.logger import logging
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encodable, Encoder
 from superduperdb.components.model import Model
@@ -772,13 +772,13 @@ class Datalayer:
         model=None,
         predict_kwargs=None,
     ):
-        s.log.info('finding documents under filter')
+        s.logging.info('finding documents under filter')
         features = features or {}
         model_identifier = model_info['identifier']
         if features is None:
             features = {}
         documents = list(self.execute(select.select_using_ids(_ids)))
-        s.log.info('done.')
+        s.logging.info('done.')
         documents = [x.unpack() for x in documents]
         if key != '_base' or '_base' in features:
             passed_docs = [r[key] for r in documents]
@@ -804,7 +804,7 @@ class Datalayer:
 
         existing_versions = self.show(object.type_id, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
-            s.log.warn(f'{object.unique_id} already exists - doing nothing')
+            s.logging.warn(f'{object.unique_id} already exists - doing nothing')
             return
 
         if existing_versions:
@@ -932,7 +932,7 @@ class Datalayer:
 
         documents = [x.content for x in documents]
         uris, keys, place_ids = gather_uris(documents)
-        s.log.info(f'found {len(uris)} uris')
+        s.logging.info(f'found {len(uris)} uris')
         if not uris:
             return
 
@@ -1041,7 +1041,7 @@ class Datalayer:
 
         if max_chunk_size is not None:
             for it, i in enumerate(range(0, len(ids), max_chunk_size)):
-                s.log.info(
+                s.logging.info(
                     'computing chunk '
                     f'({it + 1}/{math.ceil(len(ids) / max_chunk_size)})'
                 )

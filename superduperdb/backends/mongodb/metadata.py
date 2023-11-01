@@ -4,8 +4,8 @@ import click
 import tenacity
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
+from superduperdb import logging
 from superduperdb.backends.base.metadata import MetaDataStore
-from superduperdb.base.logger import logging
 from superduperdb.components.component import Component
 from superduperdb.misc.colors import Colors
 

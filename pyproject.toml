@@ -40,6 +40,7 @@ dependencies = [
     "dask[distributed]>=2022.6.0",
     "dill>=0.3.6",
     "fil>=1.1.0",
+    "loguru>0.7.2",
     "networkx>=2.8.8",
     "requests>=2.22",  # lower bound from openai and boto3
     "tqdm>=4.64.1",
@@ -98,6 +99,7 @@ quality = [
     "monkeytype",
     "boto3-stubs>=1.26.154",
     # Linting
+    "isort>=3.8.1",
     "black>=23.3",
     "interrogate>=1.5.0",
     "ruff>=0.0.267",

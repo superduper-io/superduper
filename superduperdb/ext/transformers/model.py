@@ -1,6 +1,5 @@
 import dataclasses as dc
 import functools
-import logging
 import random
 import re
 import typing as t
@@ -14,6 +13,7 @@ from transformers import (
     pipeline as _pipeline,
 )
 
+from superduperdb import logging
 from superduperdb.backends.base.query import Select
 from superduperdb.backends.query_dataset import query_dataset_factory
 from superduperdb.base.artifact import Artifact

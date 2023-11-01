@@ -11,6 +11,7 @@ def ibatch(iterable: t.Iterable[T], batch_size: int) -> t.Iterator[t.List[T]]:
     :param iterable: the iterable to batch
     :param batch_size: the number of groups to write
     """
+
     iterator = iter(iterable)
     while True:
         batch = list(itertools.islice(iterator, batch_size))

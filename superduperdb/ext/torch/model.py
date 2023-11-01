@@ -360,7 +360,7 @@ class TorchModel(Base, Model):  # type: ignore[misc]
 
     def __post_init__(self):
         if self.model_to_device_method:
-            s.log.warn(f'{self.model_to_device_method} will be overriden with `to`')
+            s.logging.warn(f'{self.model_to_device_method} will be overriden with `to`')
 
         self.model_to_device_method = 'to'
 

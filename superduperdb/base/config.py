@@ -58,14 +58,21 @@ class LogLevel(str, Enum):
 
     DEBUG = 'DEBUG'
     INFO = 'INFO'
+    SUCCESS = "SUCCESS"
     WARN = 'WARN'
+    ERROR = 'ERROR'
 
 
 class LogType(str, Enum):
     """Enumerate the standard logs"""
 
-    STDERR = 'STDERR'
-    LOGGING = 'LOGGING'
+    # SYSTEM uses the systems STDOUT and STDERR for printing the logs.
+    # DEBUG, INFO, and WARN go to STDOUT.
+    # ERROR goes to STDERR.
+    SYSTEM = "STDOUT"
+
+    # LOKI a format that is compatible with the Loki Log aggregation system.
+    LOKI = "LOKI"
 
 
 class Logging(JSONable):
@@ -77,7 +84,7 @@ class Logging(JSONable):
     """
 
     level: LogLevel = LogLevel.INFO
-    type: LogType = LogType.STDERR
+    type: LogType = LogType.SYSTEM
     kwargs: dict = Factory(dict)
 
 

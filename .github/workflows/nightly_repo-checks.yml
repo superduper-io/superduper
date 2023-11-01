@@ -68,7 +68,6 @@ jobs:
         - name: Install core Dependencies
           run: python -m pip install .[demo]
 
-
         - name: Run notebook testing
           env:
             OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

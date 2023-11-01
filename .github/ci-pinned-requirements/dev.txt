@@ -307,6 +307,10 @@ loguru==0.7.2
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
+loki-logger-handler==0.1.1
+    # via
+    #   superduperdb
+    #   superduperdb (pyproject.toml)
 lorem==0.1.1
     # via
     #   file:///home/fnikol/workspace/projects/superduper/superduperdb

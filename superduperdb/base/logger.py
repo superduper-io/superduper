@@ -24,7 +24,8 @@ class Logging:
         logger.configure(handlers=[{"sink": custom_handler, "serialize": True}])
     else:
         logger.remove()
-        fmt = "<green>{time:YYYY-MMM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{line}</cyan> | <cyan>{extra}</cyan> <level> | {message} </level> "
+        fmt = ("<green>{time:YYYY-MMM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:"
+               "<cyan>{line}</cyan> | <cyan>{extra}</cyan> <level> | {message} </level>")
 
         # Send "ERROR" and below to stdout, with "ERROR" and above copied to stderr
         logger.add(stdout, format=fmt, level=CFG.logging.level)

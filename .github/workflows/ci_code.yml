@@ -37,8 +37,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip' # caching pip dependencies
 
-      - name: Install core Dependencies
-        run: python -m pip install .
+      - name: Install Dependencies
+        run: python -m pip install .[dev]
 
       - name: Check core imports
         run: |

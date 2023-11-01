@@ -69,7 +69,7 @@ class LogType(str, Enum):
     # SYSTEM uses the systems STDOUT and STDERR for printing the logs.
     # DEBUG, INFO, and WARN go to STDOUT.
     # ERROR goes to STDERR.
-    SYSTEM = "STDOUT"
+    SYSTEM = "SYSTEM"
 
     # LOKI a format that is compatible with the Loki Log aggregation system.
     LOKI = "LOKI"

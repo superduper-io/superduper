@@ -4,7 +4,7 @@
 #
 #    pip-compile --extra=dev --output-file=.github/ci-pinned-requirements/dev.txt pyproject.toml
 #
-accelerate==0.24.0
+accelerate==0.24.1
     # via
     #   file:///home/fnikol/workspace/projects/superduper/superduperdb
     #   superduperdb
@@ -60,26 +60,26 @@ bleach==6.1.0
     # via nbconvert
 blinker==1.6.3
     # via flask
-boto3==1.28.73
+boto3==1.28.75
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-boto3-stubs==1.28.73
+boto3-stubs==1.28.75
     # via
     #   file:///home/fnikol/workspace/projects/superduper/superduperdb
     #   superduperdb
-botocore==1.31.73
+botocore==1.31.75
     # via
     #   boto3
     #   s3transfer
-botocore-stubs==1.31.73
+botocore-stubs==1.31.75
     # via boto3-stubs
 certifi==2023.7.22
     # via
     #   httpcore
     #   httpx
     #   requests
-charset-normalizer==3.3.1
+charset-normalizer==3.3.2
     # via
     #   aiohttp
     #   requests
@@ -164,7 +164,7 @@ fil==1.3.0
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-filelock==3.13.0
+filelock==3.13.1
     # via
     #   huggingface-hub
     #   torch
@@ -256,6 +256,10 @@ ipython==8.12.3
     #   file:///home/fnikol/workspace/projects/superduper/superduperdb
     #   ipykernel
     #   superduperdb
+isort==5.12.0
+    # via
+    #   file:///home/fnikol/workspace/projects/superduper/superduperdb
+    #   superduperdb
 itsdangerous==2.1.2
     # via flask
 jedi==0.19.1
@@ -275,7 +279,7 @@ jmespath==1.0.1
     #   botocore
 joblib==1.3.2
     # via scikit-learn
-jsonschema==4.19.1
+jsonschema==4.19.2
     # via nbformat
 jsonschema-specifications==2023.7.1
     # via jsonschema
@@ -284,7 +288,7 @@ jupyter-client==8.5.0
     #   ipykernel
     #   nbclient
     #   nbval
-jupyter-core==5.4.0
+jupyter-core==5.5.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -299,6 +303,10 @@ locket==1.0.0
     # via
     #   distributed
     #   partd
+loguru==0.7.2
+    # via
+    #   superduperdb
+    #   superduperdb (pyproject.toml)
 lorem==0.1.1
     # via
     #   file:///home/fnikol/workspace/projects/superduper/superduperdb
@@ -357,7 +365,7 @@ myst-parser==2.0.0
     #   superduperdb
 nbclient==0.8.0
     # via nbconvert
-nbconvert==7.9.2
+nbconvert==7.10.0
     # via nbsphinx
 nbformat==5.9.2
     # via
@@ -526,7 +534,7 @@ pygments==2.16.1
     #   nbconvert
     #   rich
     #   sphinx
-pylance==0.8.8
+pylance==0.8.9
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
@@ -661,7 +669,7 @@ sphinx==7.1.2
     #   sphinx-basic-ng
     #   sphinx-copybutton
     #   superduperdb
-sphinx-autodoc-typehints==1.24.0
+sphinx-autodoc-typehints==1.24.1
     # via
     #   file:///home/fnikol/workspace/projects/superduper/superduperdb
     #   superduperdb
@@ -760,7 +768,7 @@ tqdm==4.66.1
     #   superduperdb
     #   superduperdb (pyproject.toml)
     #   transformers
-traitlets==5.12.0
+traitlets==5.13.0
     # via
     #   comm
     #   ipykernel
@@ -782,7 +790,7 @@ typer==0.9.0
     # via
     #   superduperdb
     #   superduperdb (pyproject.toml)
-types-awscrt==0.19.6
+types-awscrt==0.19.7
     # via botocore-stubs
 types-pillow==10.1.0.0
     # via
@@ -838,7 +846,7 @@ vcrpy==5.1.0
     # via
     #   file:///home/fnikol/workspace/projects/superduper/superduperdb
     #   superduperdb
-wcwidth==0.2.8
+wcwidth==0.2.9
     # via prompt-toolkit
 webencodings==0.5.1
     # via

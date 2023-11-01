@@ -22,10 +22,10 @@ def _debug(method=None, before=True, after=False):
         msg = f'{self}: {method.__name__}'
 
         try:
-            before and s.log.debug(f'{msg}: before')
+            before and s.logging.debug(f'{msg}: before')
             return method(self, *a, **ka)
         finally:
-            after and s.log.debug(f'{msg}: after')
+            after and s.logging.debug(f'{msg}: after')
 
     return wrapped
 
@@ -63,7 +63,7 @@ class ThreadBase(Runnable):
                 self.callback()
             except Exception as e:
                 exc = traceback.format_exc()
-                s.log.error(f'{self}: Exception\n{exc}')
+                s.logging.error(f'{self}: Exception\n{exc}')
 
                 self.error(e)
                 self.stop()

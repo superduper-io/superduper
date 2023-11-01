@@ -7,7 +7,7 @@ CFG = configs.CFG
 JSONable = jsonable.JSONable
 ROOT = configs.ROOT
 
-logging = log = logger.logging
+logging = logger.Logging
 
 __version__ = '0.0.15'
 
@@ -29,7 +29,6 @@ __all__ = (
     'JSONable',
     'ROOT',
     'config',
-    'log',
     'logging',
     'superduper',
     'Encoder',

@@ -1,37 +1,55 @@
-import warnings
+from superduperdb.base.config import LogLevel, LogType
 
 from .configs import CFG
 
-__all__ = ('logging',)
+__all__ = ('Logging',)
 
 
-if CFG.logging.type == 'stdout':
+class Logging:
+    if CFG.logging.type == LogType.SYSTEM:
+        from sys import stderr, stdout
 
-    class logging:
-        warn = staticmethod(warnings.warn)
-        error = staticmethod(warnings.warn)
-        debug = staticmethod(print)
-        info = staticmethod(print)
+        from loguru import logger
 
-    def dont_print(*a, **ka):
-        pass
+        # Replace default with SuperDuperDB settings
+        logger.remove()
+        fmt = "<green>{time:YYYY-MMM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{line}</cyan> | <cyan>{extra}</cyan> <level> | {message} </level> "
 
-    level = CFG.logging.level
+        # Send "ERROR" and below to stdout, with "ERROR" and above copied to stderr
+        logger.add(stdout, format=fmt, level=CFG.logging.level)
+        logger.add(stderr, format=fmt, level=LogLevel.ERROR)
 
-    if level == level.DEBUG:
-        pass
+        # Send "ERROR" and below to stdout, with "ERROR" and above moved to stderr
+        # logger.add(sys.stdout, filter=lambda record: record["level"].no < 40, level="INFO")
 
-    elif level == level.INFO:
-        logging.debug = dont_print  # type: ignore[assignment]
-
+        # Set log levels
+        debug = logger.debug
+        info = logger.info
+        success = logger.success
+        warn = logger.warning
+        error = logger.error
     else:
-        logging.debug = dont_print  # type: ignore[assignment]
-        logging.info = dont_print  # type: ignore[assignment]
+        import os
 
-else:
-    import logging  # type: ignore[assignment]
+        from loguru import logger
+        from loki_logger_handler.loki_logger_handler import (
+            LoguruFormatter,
+            LokiLoggerHandler,
+        )
 
-    level = getattr(logging, CFG.logging.level.name)
-    logging.basicConfig(level=level, **CFG.logging.kwargs)  # type: ignore[attr-defined]
-    logging.getLogger('distributed').propagate = True  # type: ignore[attr-defined]
-    logging.getLogger('vcr').setLevel(logging.WARNING)  # type: ignore[attr-defined]
+        custom_handler = LokiLoggerHandler(
+            url=os.environ["LOKI_URI"],
+            labels={"application": "Test", "environment": "Develop"},
+            labelKeys={},
+            timeout=10,
+            defaultFormatter=LoguruFormatter(),
+        )
+
+        logger.configure(handlers=[{"sink": custom_handler, "serialize": True}])
+
+        # Set log levels
+        debug = logger.debug
+        info = logger.info
+        success = logger.success
+        warn = logger.warning
+        error = logger.error

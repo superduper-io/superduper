@@ -1,27 +1,29 @@
+from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 
 
-def test_execute_insert_and_find(data_layer, empty_collection):
-    collection = empty_collection
-    collection.insert_many([Document({'this': 'is a test'})]).execute(data_layer)
-    r = collection.find_one().execute(data_layer)
-    print(r)
+def test_execute_insert_and_find(local_empty_data_layer):
+    collection = Collection('documents')
+    collection.insert_many([Document({'this': 'is a test'})]).execute(
+        local_empty_data_layer
+    )
+    r = collection.find_one().execute(local_empty_data_layer)
+    assert r['this'] == 'is a test'
 
 
-def test_execute_complex_query(data_layer, empty_collection):
-    collection = empty_collection
+def test_execute_complex_query(local_empty_data_layer):
+    collection = Collection('documents')
     collection.insert_many(
         [Document({'this': f'is a test {i}'}) for i in range(100)]
-    ).execute(data_layer)
+    ).execute(local_empty_data_layer)
 
-    cur = collection.find().limit(10).sort('this', -1).execute(data_layer)
-    for r in cur:
-        print(r)
+    cur = collection.find().limit(10).sort('this', -1).execute(local_empty_data_layer)
+    expected = [f'is a test {i}' for i in range(99, 89, -1)]
+    cur_this = [r['this'] for r in cur]
+    assert sorted(cur_this) == sorted(expected)
 
 
 def test_execute_like_queries(data_layer):
-    from superduperdb.backends.mongodb.query import Collection
-
     collection = Collection('documents')
     # get a data point for testing
     r = collection.find_one().execute(data_layer)
@@ -45,14 +47,11 @@ def test_execute_like_queries(data_layer):
         .execute(data_layer)
     )
 
-    print(result)
     assert result['_id'] == r['_id']
 
     q = collection.find().like(
         Document({'x': r['x']}), vector_index='test_vector_search', n=3
     )
-
-    print(q)
 
     # check queries we didn't have before
     y = collection.distinct('y').execute(data_layer)

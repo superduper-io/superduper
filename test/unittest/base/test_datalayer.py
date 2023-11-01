@@ -26,7 +26,6 @@ def test_create_component(local_empty_data_layer):
     )
     model = local_empty_data_layer.models['my-test-module']
     assert 'my-test-module' in local_empty_data_layer.show('model')
-    print(model)
     output = model.predict(torch.randn(16), one=True)
     assert output.shape[0] == 32
 

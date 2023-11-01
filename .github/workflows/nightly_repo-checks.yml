@@ -44,46 +44,17 @@ jobs:
 
 
     #---------------------------------------------------
-    # Check ImportsLinting and Testing
+    # Testing
     #---------------------------------------------------
-    # Checks imports using latest versions of dependencies for the core package.
-    check-imports:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-              os: [ "ubuntu-latest", "windows-latest", "macos-latest" ]
-              python-version: ["3.8"]
-        defaults:
-            run:
-              shell: bash
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v3
-
-            - name: Set up Python ${{ matrix.python-version }}
-              id: setup-python
-              uses: actions/setup-python@v4
-              with:
-                python-version: ${{ matrix.python-version }}
-
-            - name: Install latest versions of core dependencies.
-              run: |
-                python3 -m pip install --upgrade pip-tools
-                python3 -m pip install .
-  
-
-    #---------------------------------------------------
-    # Test External Dependencies
-    #---------------------------------------------------
-    # Run tests using latest versions of dependencies for the dev environment.
-    test-latest-dev-deps:
+    # Run tests using the latest versions of dependencies for the dev environment.
+    testing:
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
             matrix:
               os: [ "ubuntu-latest" ]  # TODO: add "windows-latest", "macos-latest" when Docker removed
-              python-version: ["3.8"]
+    #          python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+              python-version: [ "3.8" ]
         defaults:
             run:
               shell: bash
@@ -97,52 +68,32 @@ jobs:
               with:
                 python-version: ${{ matrix.python-version }}
 
-            - name: Install latest versions of developer dependencies
-              run: |
-                python3 -m pip install --upgrade pip-tools
-                python3 -m pip install .[dev]
+            - name: Cache Dependencies
+              uses: actions/cache@v3
+              with:
+                # https://blog.allenai.org/python-caching-in-github-actions-e9452698e98d
+                path: ${{ env.pythonLocation }}
+                key: ${{ matrix.os }}_${{ matrix.python-version }}_${{ hashFiles('./pyproject.toml') }}
 
-            - name: Run tests
+            - name: Install dependencies
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: |
+                pip install .[dev,demo]
+
+            - name: Run unit testing
               run: make test
 
-    #---------------------------------------------------
-    # Test Notebooks
-    #---------------------------------------------------
-    test-notebooks:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Check out code
-          uses: actions/checkout@v3
-
-        - name: Set up Python
-          uses: actions/setup-python@v4
-          with:
-            python-version: 3.8  # Adjust the Python version as needed
-
-        - name: Cache pip packages
-          uses: actions/cache@v3
-          with:
-            path: ~/.cache/pip
-            key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
-            restore-keys: |
-              ${{ runner.os }}-pip-
-
-        - name: Install SuperDuperDB
-          run: |
-            # Install project and dependencies from pyproject.toml
-            pip install .[testing]
-
-        - name: Run pytest on changed files
-          env:
-            # set credentials for OpenAI
-            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          run: |
-            # List Jupyter notebooks
-            NOTEBOOKS=./examples
-
-            # Check if there are any changes
-            if [ ! -e "${NOTEBOOKS}" ]; then
-              echo "Notebook path does not exist."
-            else 
-              make test_notebooks NOTEBOOKS=${NOTEBOOKS}
-            fi
+            - name: Run notebook testing
+              env:
+                # set credentials for OpenAI
+                OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+              run: |
+                # List Jupyter notebooks
+                NOTEBOOKS=./examples
+    
+                # Check if there are any changes
+                if [ ! -e "${NOTEBOOKS}" ]; then
+                  echo "Notebook path does not exist."
+                else 
+                  make test_notebooks NOTEBOOKS=${NOTEBOOKS}
+                fi

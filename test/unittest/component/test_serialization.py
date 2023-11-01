@@ -1,5 +1,3 @@
-import pprint
-
 import pytest
 
 try:
@@ -22,8 +20,10 @@ def test_model():
         encoder=tensor(torch.float, shape=(32,)),
         object=torch.nn.Linear(13, 18),
     )
-    print(m)
-    print(m.dict())
+    m_dict = m.dict()
+    assert m_dict['identifier'] == m.identifier
+    assert m_dict['object'] == m.object
+    assert m_dict['encoder']['identifier'] == 'torch.float32[32]'
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -35,11 +35,5 @@ def test_sklearn(local_empty_data_layer):
     )
     local_empty_data_layer.add(m)
     assert local_empty_data_layer.metadata.component_collection.count_documents({}) == 2
-    pprint.pprint(
-        local_empty_data_layer.metadata.get_component(
-            type_id='model', identifier='test'
-        )
-    )
     reloaded = local_empty_data_layer.load(type_id='model', identifier='test')
     assert isinstance(reloaded.object, Artifact)
-    pprint.pprint(reloaded)

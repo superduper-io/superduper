@@ -52,4 +52,6 @@ def test_query_dataset_base(data_layer):
         fold='train',
     )
     r = train_data[0]
-    print(r)
+    assert '_id' not in r
+    assert set(r.keys()) == {'_base', 'y'}
+    assert r['_base']['_fold'] == 'train'

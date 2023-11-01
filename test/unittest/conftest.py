@@ -1,5 +1,4 @@
 import random
-import uuid
 from pathlib import Path
 
 import pytest
@@ -22,8 +21,7 @@ from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.pillow.encoder import pil_image
 
-n_data_points = 250
-
+GLOBAL_TEST_N_DATA_POINTS = 250
 LOCAL_TEST_N_DATA_POINTS = 5
 
 MONGOMOCK_URI = 'mongomock:///test_db'
@@ -42,7 +40,7 @@ def valid_dataset():
 def add_random_data(
     data_layer: Datalayer,
     collection_name: str = 'documents',
-    number_data_points: int = n_data_points,
+    number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
     float_tensor = data_layer.encoders['torch.float32[32]']
     data = []
@@ -121,15 +119,10 @@ def image_url():
     return f'file://{path}'
 
 
-@pytest.fixture(scope='session')
-def global_identifier_of_vector_index() -> str:
-    return 'global_identifier_of_vector_index'
-
-
 def setup_data_layer(data_layer, **kwargs):
     # TODO: support more parameters to control the setup
     add_encoders(data_layer)
-    n_data = kwargs.get('n_data', n_data_points)
+    n_data = kwargs.get('n_data', GLOBAL_TEST_N_DATA_POINTS)
     add_random_data(data_layer, number_data_points=n_data)
     if kwargs.get('add_models', True):
         add_models(data_layer)
@@ -139,33 +132,20 @@ def setup_data_layer(data_layer, **kwargs):
 
 @pytest.fixture(scope='session')
 def data_layer() -> Datalayer:
-    _data_layer = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
-    setup_data_layer(_data_layer)
-    return _data_layer
+    data_layer = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
+    setup_data_layer(data_layer)
+    return data_layer
 
 
 @pytest.fixture
 def local_data_layer(request) -> Datalayer:
-    _data_layer = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
+    data_layer = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
     setup_config = getattr(request, 'param', {'n_data': LOCAL_TEST_N_DATA_POINTS})
-    setup_data_layer(_data_layer, **setup_config)
-    return _data_layer
+    setup_data_layer(data_layer, **setup_config)
+    return data_layer
 
 
 @pytest.fixture
 def local_empty_data_layer(request) -> Datalayer:
-    _data_layer = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
-    return _data_layer
-
-
-@pytest.fixture
-def empty_collection() -> Collection:
-    return Collection(str(uuid.uuid4()))
-
-
-@pytest.fixture
-def local_collection_with_random_data(data_layer: Datalayer, request) -> Collection:
-    collection_name = str(uuid.uuid4())
-    number_data_points = getattr(request, 'param', n_data_points)
-    add_random_data(data_layer, collection_name, number_data_points)
-    yield Collection(collection_name)
+    data_layer = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
+    return data_layer

@@ -90,6 +90,7 @@ fix-and-test: mongo_init ##  Lint the code before testing
 	# Linter and code formatting
 	ruff check --fix $(DIRECTORIES)
 	# Linting
+	mypy --install-types
 	mypy superduperdb
 	# Unit testing
 	pytest $(PYTEST_ARGUMENTS)

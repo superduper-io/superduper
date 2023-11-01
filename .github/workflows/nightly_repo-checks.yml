@@ -44,56 +44,33 @@ jobs:
 
 
     #---------------------------------------------------
-    # Testing
+    # Notebook Testing
     #---------------------------------------------------
-    # Run tests using the latest versions of dependencies for the dev environment.
-    testing:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-              os: [ "ubuntu-latest" ]  # TODO: add "windows-latest", "macos-latest" when Docker removed
-    #          python-version: [ "3.8", "3.9", "3.10", "3.11" ]
-              python-version: [ "3.8" ]
-        defaults:
-            run:
-              shell: bash
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v3
+    notebook-testing:
+      runs-on: ${{ matrix.os }}
+      strategy:
+        fail-fast: false
+        matrix:
+          os: [ "ubuntu-latest" ]  # TODO: add "windows-latest", "macos-latest" when Docker removed
+          python-version: [ "3.8", "3.9", "3.10", "3.11" ]
 
-            - name: Set up Python ${{ matrix.python-version }}
-              id: setup-python
-              uses: actions/setup-python@v4
-              with:
-                python-version: ${{ matrix.python-version }}
+      steps:
+        - name: Check out repository
+          uses: actions/checkout@v3
 
-            - name: Cache Dependencies
-              uses: actions/cache@v3
-              with:
-                # https://blog.allenai.org/python-caching-in-github-actions-e9452698e98d
-                path: ${{ env.pythonLocation }}
-                key: ${{ matrix.os }}_${{ matrix.python-version }}_${{ hashFiles('./pyproject.toml') }}
+        - name: Set up Python ${{ matrix.python-version }}
+          id: setup-python
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python-version }}
+            # cache: 'pip' # caching pip dependencies
 
-            - name: Install dependencies
-              if: steps.cache.outputs.cache-hit != 'true'
-              run: |
-                pip install .[dev,demo]
+        - name: Install core Dependencies
+          run: python -m pip install .[demo]
 
-            - name: Run unit testing
-              run: make test
 
-            - name: Run notebook testing
-              env:
-                # set credentials for OpenAI
-                OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-              run: |
-                # List Jupyter notebooks
-                NOTEBOOKS=./examples
-    
-                # Check if there are any changes
-                if [ ! -e "${NOTEBOOKS}" ]; then
-                  echo "Notebook path does not exist."
-                else 
-                  make test_notebooks NOTEBOOKS=${NOTEBOOKS}
-                fi
+        - name: Run notebook testing
+          env:
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          run: |
+              make test_notebooks NOTEBOOKS=./examples

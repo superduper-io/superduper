@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
+- Add Changelog for tracking changes on the repo. It must be filled before any PR.
 - Removed ci-pinned-dependencies and replaced them with actions with better cache management.
 - Changed logging mechanism from the default to loguru
 - Update icons on the README.

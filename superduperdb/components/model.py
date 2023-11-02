@@ -54,7 +54,7 @@ class _TrainingConfiguration(Component):
         try:
             return getattr(self, k)
         except AttributeError:
-            return self.kwargs.get(k, default=default)
+            return self.kwargs.get(k, default)
 
 
 class PredictMixin:

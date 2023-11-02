@@ -33,14 +33,12 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Cache dependencies
+      - name: Cache pip packages
         uses: actions/cache@v3
-        id: cache
         with:
-          # https://blog.allenai.org/python-caching-in-github-actions-e9452698e98d
           path: |
             ${{ env.pythonLocation }}
-          key: 3.10-ubuntu-latest-${{ hashFiles('.github/ci-pinned-requirements/docs.txt') }}
+          key: python3.10_ubuntu-latest_${{ hashFiles('**/pyproject.toml') }}
 
       - name: Build docs and use-cases
         # build is available in docs/hr/build
@@ -49,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r .github/ci-pinned-requirements/docs.txt
+        run: pip install .[docs]
     
       - name: Build inline api docs
         # build is available in docs/hr/build/apidocs

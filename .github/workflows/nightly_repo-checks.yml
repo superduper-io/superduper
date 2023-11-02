@@ -44,105 +44,45 @@ jobs:
 
 
     #---------------------------------------------------
-    # Check ImportsLinting and Testing
+    # Notebook Testing
     #---------------------------------------------------
-    # Checks imports using latest versions of dependencies for the core package.
-    check-imports:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-              os: [ "ubuntu-latest", "windows-latest", "macos-latest" ]
-              python-version: ["3.8"]
-        defaults:
-            run:
-              shell: bash
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v3
+    notebook-testing:
+      runs-on: ${{ matrix.os }}
+      strategy:
+        fail-fast: false
+        matrix:
+          os: [ "ubuntu-latest" ]  # TODO: add "windows-latest", "macos-latest" when Docker removed
+          python-version: [ "3.8",  "3.11" ] # Due to cache limitations, check only the earliest and the latest.
 
-            - name: Set up Python ${{ matrix.python-version }}
-              id: setup-python
-              uses: actions/setup-python@v4
-              with:
-                python-version: ${{ matrix.python-version }}
-
-            - name: Install latest versions of core dependencies.
-              run: |
-                python3 -m pip install --upgrade pip-tools
-                python3 -m pip install .
-  
-
-    #---------------------------------------------------
-    # Test External Dependencies
-    #---------------------------------------------------
-    # Run tests using latest versions of dependencies for the dev environment.
-    test-latest-dev-deps:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-              os: [ "ubuntu-latest" ]  # TODO: add "windows-latest", "macos-latest" when Docker removed
-              python-version: ["3.8"]
-        defaults:
-            run:
-              shell: bash
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v3
-
-            - name: Set up Python ${{ matrix.python-version }}
-              id: setup-python
-              uses: actions/setup-python@v4
-              with:
-                python-version: ${{ matrix.python-version }}
-
-            - name: Install latest versions of developer dependencies
-              run: |
-                python3 -m pip install --upgrade pip-tools
-                python3 -m pip install .[dev]
-
-            - name: Run tests
-              run: make test
-
-    #---------------------------------------------------
-    # Test Notebooks
-    #---------------------------------------------------
-    test-notebooks:
-      runs-on: ubuntu-latest
       steps:
-        - name: Check out code
+        - name: Check out repository
           uses: actions/checkout@v3
 
-        - name: Set up Python
+        #---------------------------------------------------
+        # Configuring Python environments.
+        #
+        # We intentionally commented the `cache` field to remind us not to enable it.
+        # The reason is that most of the time is spent on package installation rather than package downloading.
+        # As a result, in the next step, we will cache the complete Python environment, including all pre-installed components.
+        - name: Set up Python ${{ matrix.python-version }}
+          id: setup-python
           uses: actions/setup-python@v4
           with:
-            python-version: 3.8  # Adjust the Python version as needed
+            python-version: ${{ matrix.python-version }}
+            #cache: 'pip' # Do not activate
 
-        - name: Cache pip packages
+        - name: Cache Python ${{ matrix.python-version }}
           uses: actions/cache@v3
           with:
-            path: ~/.cache/pip
-            key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
-            restore-keys: |
-              ${{ runner.os }}-pip-
+            path: ${{ env.pythonLocation }}
+            key: ${{  matrix.os }}_python-${{  matrix.python-version }}_${{ hashFiles('pyproject.toml') }}
+        #---------------------------------------------------
 
-        - name: Install SuperDuperDB
-          run: |
-            # Install project and dependencies from pyproject.toml
-            pip install .[testing]
+        - name: Install Demo Dependencies
+          run: python -m pip install .[demo]
 
-        - name: Run pytest on changed files
+        - name: Run notebook testing
           env:
-            # set credentials for OpenAI
             OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           run: |
-            # List Jupyter notebooks
-            NOTEBOOKS=./examples
-
-            # Check if there are any changes
-            if [ ! -e "${NOTEBOOKS}" ]; then
-              echo "Notebook path does not exist."
-            else 
-              make test_notebooks NOTEBOOKS=${NOTEBOOKS}
-            fi
+              make test_notebooks NOTEBOOKS=./examples

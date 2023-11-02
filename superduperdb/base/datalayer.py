@@ -695,6 +695,8 @@ class Datalayer:
 
             listener_select = serializable.Serializable.deserialize(listener_query)
             listener_selects.update({identifier: listener_select})
+            if listener_select is None:
+                continue
             if (
                 listener_select.table_or_collection.identifier
                 != query.table_or_collection.identifier
@@ -719,6 +721,8 @@ class Datalayer:
 
         for identifier in listeners:
             listener_select = listener_selects[identifier]
+            if listener_select is None:
+                continue
             if (
                 listener_select.table_or_collection.identifier
                 != query.table_or_collection.identifier

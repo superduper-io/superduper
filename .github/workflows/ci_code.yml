@@ -18,87 +18,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  #---------------------------------------------------
-  # Check Core Imports
-  #---------------------------------------------------
-  # This job checks that no optional dependencies are imported in the core code.
-  # In the future, we may include checks for certain optional dependency subgroups.
-  check-core-imports:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ "ubuntu-latest" ]
-        python-version: ["3.8"]
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python ${{ matrix.python-version }}
-        id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        id: cache
-        with:
-          # https://blog.allenai.org/python-caching-in-github-actions-e9452698e98d
-          path: |
-            ${{ env.pythonLocation }}
-          key: ${{ matrix.python-version }}-ubuntu-latest-${{ hashFiles('.github/ci-pinned-requirements/core.txt') }}
-
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: python -m pip install -r .github/ci-pinned-requirements/core.txt
-
-      - name: Checks core imports
-        run: |
-          python -m pip install impall==1.3.1
-          python -m impall --NO_CLEAR_SYS_MODULES -E 'test**:superduperdb/ext**'
-
-
-  #---------------------------------------------------
-  # Linting and Testing
-  #---------------------------------------------------
-  lint-type-check-and-test:
+  testing:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ "ubuntu-latest" ]  # TODO: add "windows-latest", "macos-latest" when Docker removed
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-    defaults:
-      run:
-        shell: bash
-    steps:
+        python-version: ["3.8", "3.11"] # Due to cache limitations, check only the earliest and the latest.
 
+    steps:
       - name: Check out repository
         uses: actions/checkout@v3
 
+      #---------------------------------------------------
+      # Configuring Python environments.
+      #
+      # We intentionally commented the `cache` field to remind us not to enable it.
+      # The reason is that most of the time is spent on package installation rather than package downloading.
+      # As a result, in the next step, we will cache the complete Python environment, including all pre-installed components.
       - name: Set up Python ${{ matrix.python-version }}
         id: setup-python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          #cache: 'pip' # Do not activate
 
-      - name: Cache dependencies and mypy analysis
+      - name: Cache Python ${{ matrix.python-version }}
         uses: actions/cache@v3
-        id: cache
         with:
-          # https://blog.allenai.org/python-caching-in-github-actions-e9452698e98d
-          path: |
-            ./.mypy_cache
-            ${{ env.pythonLocation }}
-          key: ${{ matrix.python-version }}-ubuntu-latest-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('.github/ci-pinned-requirements/dev.txt') }}
+          path: ${{ env.pythonLocation }}
+          key: ${{  matrix.os }}_python-${{  matrix.python-version }}_${{ hashFiles('pyproject.toml') }}
+      #---------------------------------------------------
 
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install -r .github/ci-pinned-requirements/dev.txt
+      - name: Install Dependencies
+        run: python -m pip install .[dev]
+
+      - name: Check core imports
+        run: |
+          # This job checks that no optional dependencies are imported in the core code.
+          python -m pip install impall==1.3.1
+          python -m impall --NO_CLEAR_SYS_MODULES -E 'test**:superduperdb/ext**'
 
       - name: Basic health check
         run: |
@@ -110,7 +69,7 @@ jobs:
         run: |
           make lint-and-type-check
 
-      - name: test
+      - name: Unit Testing
         run: |
           make test PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml test"
 

@@ -24,14 +24,25 @@ class Logging:
         logger.configure(handlers=[{"sink": custom_handler, "serialize": True}])
     else:
         logger.remove()
-        fmt = "<green>{time:YYYY-MMM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{line}</cyan> | <cyan>{extra}</cyan> <level> | {message} </level> "
+        fmt = (
+            "<green>{time:YYYY-MMM-DD HH:mm:ss}</green> | <level>{level: <8}</level> |"
+            "<cyan>{name}</cyan>:<cyan>{line}</cyan> |"
+            " <cyan>{extra}</cyan> <level> | {message} </level>"
+        )
 
-        # Send "ERROR" and below to stdout, with "ERROR" and above copied to stderr
-        logger.add(stdout, format=fmt, level=CFG.logging.level)
+        # Send ERROR to stderr
         logger.add(stderr, format=fmt, level=LogLevel.ERROR)
 
-        # Send "ERROR" and below to stdout, with "ERROR" and above moved to stderr
-        # logger.add(sys.stdout, filter=lambda record: record["level"].no < 40, level="INFO")
+        # Whether to copy ERROR to stdout or not
+        COPY_ERROR_TO_STDOUT = True
+        if COPY_ERROR_TO_STDOUT:
+            logger.add(stdout, format=fmt, level=CFG.logging.level)
+        else:
+            logger.add(
+                stdout,
+                filter=lambda record: record["level"].no < 40,
+                level="INFO",
+            )
 
     # Set log levels
     debug = logger.debug

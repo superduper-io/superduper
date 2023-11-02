@@ -135,7 +135,7 @@ test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 # superduperdb/sandbox is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
 build_sandbox: ##  Build a development Docker image
 	@echo "===> release superduperdb/sandbox"
-	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain  --no-cache \
+	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 	--build-arg BUILD_ENV="sandbox" \
 	--build-arg SUPERDUPERDB_EXTRAS="dev,demo"
 

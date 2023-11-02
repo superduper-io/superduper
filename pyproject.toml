@@ -128,6 +128,7 @@ demo = [
     "sentence-transformers",
     "opencv-python",
     "matplotlib",
+    "aquirdturtle_collapsible_headings", # For collapsing headers
 ]
 
 

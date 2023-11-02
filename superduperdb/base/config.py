@@ -6,7 +6,6 @@ canot contain any other imports from this project.
 # TODO further simplify these configurations
 
 import os
-import re
 import typing as t
 from enum import Enum
 
@@ -140,7 +139,7 @@ class Config(JSONable):
 
     @property
     def self_hosted_vector_search(self) -> bool:
-        return re.split('://|\+', self.data_backend)[0] == self.vector_search
+        return self.data_backend == self.vector_search
 
     data_backend: str = 'mongodb://localhost:27018'
 

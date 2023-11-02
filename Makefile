@@ -97,7 +97,7 @@ integration-testing: ## Execute integration testing
 	# Run the test
 	pytest $(PYTEST_ARGUMENTS) ./test/integration
 
-fix-and-test: testenv_init ##  Lint the code before testing
+fix-and-test: ##  Lint the code before testing
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting

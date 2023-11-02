@@ -46,7 +46,8 @@ The final steps to creating a development environment involve installing [MongoD
 ### How do I update the `requirements` files for CI? :link:
 
 1. Activate your [developer](#where-to-start--boom-) environment.
-2. Run `. .github/ci-pinned-requirements/update-pinned-deps.sh`
+2. Update the Changelog to reflect the changes you did.
+3. Create a Pull Request.
 
 ### Why do we have so many `requirements` files for CI? :confused:
 

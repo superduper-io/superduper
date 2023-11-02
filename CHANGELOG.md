@@ -1,5 +1,12 @@
 # SuperDuperDB Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is inspired by (but not strictly follows) [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Before you create a Pull Request, remember to update the Changelog with your changes.
+
 ## Changes Since Last Release
 
 ### Changed defaults / behaviours
@@ -16,7 +23,7 @@
 
 ## 0.0.15 \[2023-Nov-01\]
 
-### Changed defaults / behaviours
+### Changed defaults / behaviors
     -   Updated readme by @fnikolai in #1196.
     -   Removed unused import by @jieguangzhou in #1205.
     -   Updated README.md with contributors by @thejumpman2323 in #1201.

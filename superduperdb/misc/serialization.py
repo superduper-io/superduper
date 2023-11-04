@@ -85,12 +85,11 @@ class TorchSerializer(Serializer):
         from superduperdb.ext.torch.utils import device_of
 
         if not isinstance(object, dict):
-            was_gpu = str(device_of(object)) == 'cuda'
+            previous_device = str(device_of(object))
             object.to('cpu')
             f = io.BytesIO()
             torch.save(object, f)
-            if was_gpu:
-                object.to('cuda')
+            object.to(previous_device)
         else:
             f = io.BytesIO()
             torch.save(object, f)

@@ -87,7 +87,7 @@ class Logging(JSONable):
     :param kwargs: Any additional keyword arguments
     """
 
-    level: LogLevel = LogLevel.INFO
+    level: LogLevel = LogLevel.DEBUG
     type: LogType = LogType.SYSTEM
     kwargs: dict = Factory(dict)
 

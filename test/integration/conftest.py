@@ -13,6 +13,7 @@ except ImportError:
     torch = None
 
 from superduperdb import CFG
+from superduperdb import logging
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
@@ -112,9 +113,17 @@ def fake_updates(database_with_default_encoders_and_model):
 
 @pytest.fixture
 def local_dask_client():
-    os.environ[
-        'SUPERDUPERDB_DATA_BACKEND'
-    ] = 'mongodb://testmongodbuser:testmongodbpassword@localhost:27018/test_db'
-    client = dask_client(CFG.cluster, local=True)
+    os.environ['SUPERDUPERDB_DATA_BACKEND'] = 'mongodb://root:root@localhost:27017/admin'
+    # os.environ['SUPERDUPERDB_DATA_BACKEND'] = 'mongodb://superduper:superduper@localhost:27017/test_db'
+
+    logging.info("Starting Local Dask client")
+
+    client = dask_client('tcp://localhost:8786',
+                         serializers=CFG.cluster.serializers,
+                         deserializers=CFG.cluster.deserializers,
+                         )
+
     yield client
     client.shutdown()
+
+    logging.success("Local Dask client has been terminated")

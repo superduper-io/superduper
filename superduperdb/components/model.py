@@ -195,7 +195,7 @@ class PredictMixin:
             logging.info(f'Adding model {self.identifier} to db')
             assert isinstance(self, Component)
             db.add(self)
-            logging.info('Done.')
+            logging.success(f'Model {self.identifier} has been added to db')
 
         if distributed is None:
             distributed = s.CFG.cluster.distributed

@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 import pytest
@@ -68,14 +69,23 @@ def test_insert_with_dask(
             database_with_default_encoders_and_model,
             collection_name,
         ) as db:
+            # Submit job
             db.distributed = True
             db._distributed_client = local_dask_client
-
             db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
+
+            # Barrier
             local_dask_client.wait_all_pending_tasks()
+
+            # Assert result
             q = Collection(identifier=collection_name).find({'update': True})
             r = next(db.execute(q))
             assert 'model_linear_a' in r['_outputs']['x']
+
+            # Get distributed logs
+            logs = local_dask_client.client.get_worker_logs()
+            logging.info("execution logs", logs)
+
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

@@ -124,6 +124,6 @@ def local_dask_client():
     )
 
     yield client
-    client.shutdown()
+    client.disconnect()
 
     logging.success("Local Dask client has been terminated")

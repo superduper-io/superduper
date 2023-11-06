@@ -61,9 +61,15 @@ class DaskClient:
         distributed.fire_and_forget(future)
         return future
 
+    def disconnect(self) -> None:
+        """
+        Disconnect the Dask client.
+        """
+        self.client.close()
+
     def shutdown(self) -> None:
         """
-        Shuts down the Dask client.
+        Shuts down the Dask cluster.
         """
         self.client.shutdown()
 

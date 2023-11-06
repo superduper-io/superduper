@@ -63,7 +63,6 @@ def test_add_load(client, test_db, test_collection):
     )
     client.add(m)
     models = test_db.show('model')
-    print(models)
     assert 'test-add-client' in models
     m = client.load('model', 'test-add-client')
     assert isinstance(m.object.artifact, torch.nn.Module)

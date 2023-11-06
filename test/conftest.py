@@ -85,5 +85,6 @@ def test_db() -> Iterator[Datalayer]:
         if database_name in ("admin", "config", "local"):
             continue
 
-        logging.info("Drop database", database_name)
+        logging.info("Dropping database", database_name)
         db.databackend.conn.drop_database(database_name)
+        logging.success("Database", database_name, " has been dropped")

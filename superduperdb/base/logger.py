@@ -1,4 +1,5 @@
 import os
+import socket
 from sys import stderr
 from tqdm import tqdm
 from loguru import logger
@@ -24,10 +25,15 @@ class Logging:
         # Replace default logger with a custom SuperDuper format.
         logger.remove()
 
+        # Enrich logger with additional information.
+        logger.configure(extra={
+            "hostname": socket.gethostname(),
+        })
+
         fmt = (
             " <green> {time:YYYY-MMM-DD HH:mm:ss}</green> | <level>{level: <8}</level> |"
-            " <cyan>{thread.name}</cyan>:<cyan>{name}</cyan>:<cyan>{line}</cyan> |"
-            " <level> {message} | {extra} </level>"
+            " <cyan><{extra[hostname]}></cyan>:<cyan>{name}</cyan>:<cyan>{line}</cyan> |"
+            " <level> {message} </level>"
         )
 
         # DEBUG until WARNING are sent to stdout.
@@ -75,4 +81,3 @@ class Logging:
     success = multikey_success
     warn = multikey_warn
     error = multikey_error
-    bind = logger.bind

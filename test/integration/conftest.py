@@ -115,10 +115,12 @@ def local_dask_client():
     os.environ['SUPERDUPERDB_DATA_BACKEND'] = 'mongodb://root:root@mongodb:27017/admin'
     # os.environ['SUPERDUPERDB_DATA_BACKEND'] = 'mongodb://superduper:superduper@localhost:27017/test_db'
 
+    scheduler_uri = 'tcp://scheduler:8786'
+
     logging.info("Starting Local Dask client")
 
     client = dask_client(
-        'tcp://scheduler:8786',
+        scheduler_uri,
         serializers=CFG.cluster.serializers,
         deserializers=CFG.cluster.deserializers,
     )
@@ -126,4 +128,4 @@ def local_dask_client():
     yield client
     client.disconnect()
 
-    logging.success("Local Dask client has been terminated")
+    logging.success("Dask Client disconnected from ", scheduler_uri)

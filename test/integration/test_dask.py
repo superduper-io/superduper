@@ -1,4 +1,4 @@
-import logging
+from  superduperdb import logging
 import uuid
 
 import pytest
@@ -77,14 +77,15 @@ def test_insert_with_dask(
             # Barrier
             local_dask_client.wait_all_pending_tasks()
 
+            # Get distributed logs
+            logs = local_dask_client.client.get_worker_logs()
+            logging.info("worker logs", logs)
+
             # Assert result
             q = Collection(identifier=collection_name).find({'update': True})
             r = next(db.execute(q))
             assert 'model_linear_a' in r['_outputs']['x']
 
-            # Get distributed logs
-            logs = local_dask_client.client.get_worker_logs()
-            logging.info("execution logs", logs)
 
 
 

@@ -36,7 +36,7 @@ RUN apt-get update \
 
 # Replace the default Jupyter user with a SuperDuper user
 # ---------------
-RUN deluser jovyan \
+RUN deluser jovyan && rm -rf /home/jovyan \
     && adduser \
         --disabled-password \
         --gecos "SuperDuper User" \

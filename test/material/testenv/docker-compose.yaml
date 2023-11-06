@@ -37,17 +37,19 @@ services:
       dockerfile: ./images/superduperdb/Dockerfile
     hostname: scheduler
     ports:
-      - "8786:8786"
-      - "8787:8787"
+      - "8786:8786" # Peer communication
+      - "8787:8787" # HTTP Dashboard
     volumes:
-        - ../../../:/superduperdb # mount the root path
+        - ../../../:/app # mount the root path
     command:
       - /bin/sh
       - -c
       - |
-        cd /superduperdb
+        cd /app
         
-        pip install .[torch]
+        # Basic stuff needed for pickling. 
+        # No complex dependencies
+        pip install . 
         dask scheduler
     
 
@@ -58,14 +60,15 @@ services:
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
     volumes:
-        - ../../../:/superduperdb # mount the root path
+        - ../../../:/app # mount the root path
     command:
       - /bin/sh
       - -c
       - |       
-        cd /superduperdb
+        cd /app
+        
+        # Require all computational dependencies
         pip install .[torch]
-          
         dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1

@@ -54,7 +54,7 @@ class InMemoryVectorSearcher(BaseVectorSearcher):
         self.lookup = dict(zip(index, range(len(index))))
 
     def find_nearest_from_id(self, _id, n=100):
-        return self.find_nearest_from_array(self._h[self.lookup[_id]], n=n)
+        return self.find_nearest_from_array(self.h[self.lookup[_id]], n=n)
 
     def find_nearest_from_array(self, h, n=100, within_ids=None):
         h = self.to_numpy(h)[None, :]

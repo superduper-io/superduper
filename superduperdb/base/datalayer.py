@@ -25,6 +25,7 @@ from superduperdb.misc.data import ibatch
 from superduperdb.misc.download import Downloader, gather_uris
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
+from superduperdb.vector_search.interface import FastVectorSearcher
 from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
 
 from ..backends.base.artifact import ArtifactStore
@@ -81,7 +82,7 @@ class Datalayer:
         self.encoders = LoadDict(self, field='encoder')
         self.vector_indices = LoadDict(self, field='vector_index')
         self.fast_vector_searchers = LoadDict(
-            self, callable=self._initialize_vector_searcher
+            self, callable=self.initialize_vector_searcher
         )
 
         self.distributed = s.CFG.cluster.distributed
@@ -91,14 +92,15 @@ class Datalayer:
         self._distributed_client = distributed_client
         self.cdc = DatabaseChangeDataCapture(self)
 
-    def _initialize_vector_searcher(
-        self, identifier, searcher_type: t.Optional[str] = None
+    def initialize_vector_searcher(
+        self, identifier, searcher_type: t.Optional[str] = None, backfill=False
     ) -> BaseVectorSearcher:
         searcher_type = searcher_type or s.CFG.vector_search
         logging.info(f'loading of vectors of vector-index: {identifier}')
         vi = self.vector_indices[identifier]
 
         clt = vi.indexing_listener.select.table_or_collection
+
         if self.cdc.running:
             msg = 'CDC only supported for vector search via lance format'
             assert s.CFG.vector_search == 'lance', msg
@@ -115,6 +117,14 @@ class Datalayer:
             # In this case loading has already happened on disk via CDC mechanism
             return vector_comparison
 
+        if backfill or s.CFG.mode != 'production':
+            self.backfill_vector_search(vi, vector_comparison)
+
+        if s.CFG.mode != 'production':
+            vector_comparison = FastVectorSearcher(vector_comparison, vi.identifier)
+        return vector_comparison
+
+    def backfill_vector_search(self, vi, searcher):
         if vi.indexing_listener.select is None:
             raise ValueError('.select must be set')
 
@@ -140,9 +150,8 @@ class Datalayer:
                     h = h.x
                 items.append(VectorItem.create(id=str(id), vector=h))
 
-            vector_comparison.add(items)
+            searcher.add(items)
             progress.update(len(items))
-        return vector_comparison
 
     @property
     def distributed_client(self):

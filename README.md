@@ -46,7 +46,7 @@
 ---
 ## 📢 Important Announcement !
 
-On the **27th of November**, we are going to officially launch **SuperDuperDB** with the release of **v0.1**. 
+On the **22nd of November**, we are going to officially launch **SuperDuperDB** with the release of **v0.1**. 
 
 The release will include:
 

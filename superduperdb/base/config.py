@@ -93,6 +93,13 @@ class Logging(JSONable):
     kwargs: dict = Factory(dict)
 
 
+class VectorSearchServer(JSONable):
+    host: str = '0.0.0.0'
+    port: int = 8000
+    protocol: str = 'http'
+    name: str = 'vector_search'
+
+
 class Server(JSONable):
     """Configure the SuperDuperDB server connection information
 
@@ -104,6 +111,7 @@ class Server(JSONable):
     host: str = '127.0.0.1'
     port: int = 3223
     protocol: str = 'http'
+    vector_search: VectorSearchServer = Factory(VectorSearchServer)
 
     @property
     def uri(self) -> str:
@@ -156,6 +164,9 @@ class Config(JSONable):
 
     #: Probability of validation fold
     fold_probability: float = 0.05
+
+    # mode
+    mode: str = 'development'
 
     class Config(JSONable.Config):
         protected_namespaces = ()

@@ -1,4 +1,3 @@
-import os
 import uuid
 
 import pytest
@@ -11,7 +10,6 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 from superduperdb import CFG
-from superduperdb import logging
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.components.listener import Listener
 from superduperdb.jobs.job import FunctionJob
@@ -36,9 +34,7 @@ def add_and_cleanup_listener(database, collection_name):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_taskgraph_futures_with_dask(
-        local_dask_client,
-        database_with_default_encoders_and_model,
-        fake_updates
+    local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
     collection_name = str(uuid.uuid4())
     with patch.object(CFG.cluster, "distributed", True):
@@ -63,16 +59,14 @@ def test_taskgraph_futures_with_dask(
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_with_dask(
-        local_dask_client,
-        database_with_default_encoders_and_model,
-        fake_updates
+    local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
     collection_name = str(uuid.uuid4())
 
     with patch.object(CFG.cluster, "distributed", True):
         with add_and_cleanup_listener(
-                database_with_default_encoders_and_model,
-                collection_name,
+            database_with_default_encoders_and_model,
+            collection_name,
         ) as db:
             db.distributed = True
             db._distributed_client = local_dask_client
@@ -83,10 +77,10 @@ def test_insert_with_dask(
             r = next(db.execute(q))
             assert 'model_linear_a' in r['_outputs']['x']
 
+
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_dependencies_with_dask(
-        local_dask_client,
-        database_with_default_encoders_and_model
+    local_dask_client, database_with_default_encoders_and_model
 ):
     database = database_with_default_encoders_and_model
 

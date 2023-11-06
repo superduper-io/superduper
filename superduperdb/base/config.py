@@ -52,7 +52,7 @@ class Cluster(JSONable):
     distributed: bool = False
     deserializers: t.List[str] = Factory(list)
     serializers: t.List[str] = Factory(list)
-    dask_scheduler: str = 'tcp://localhost:8786'
+    dask_scheduler: str = 'tcp://scheduler:8786'
     local: bool = True
     backfill_batch_size: int = 100
 

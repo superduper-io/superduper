@@ -12,8 +12,7 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb import CFG
-from superduperdb import logging
+from superduperdb import CFG, logging
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
@@ -118,10 +117,11 @@ def local_dask_client():
 
     logging.info("Starting Local Dask client")
 
-    client = dask_client('tcp://localhost:8786',
-                         serializers=CFG.cluster.serializers,
-                         deserializers=CFG.cluster.deserializers,
-                         )
+    client = dask_client(
+        'tcp://scheduler:8786',
+        serializers=CFG.cluster.serializers,
+        deserializers=CFG.cluster.deserializers,
+    )
 
     yield client
     client.shutdown()

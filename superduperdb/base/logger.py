@@ -1,11 +1,14 @@
 import os
 import socket
 from sys import stderr
-from tqdm import tqdm
+
 from loguru import logger
-from .configs import CFG
-from loki_logger_handler.loki_logger_handler import (LoguruFormatter, LokiLoggerHandler)
+from loki_logger_handler.loki_logger_handler import LoguruFormatter, LokiLoggerHandler
+from tqdm import tqdm
+
 from superduperdb.base.config import LogLevel, LogType
+
+from .configs import CFG
 
 __all__ = ('Logging',)
 
@@ -26,9 +29,11 @@ class Logging:
         logger.remove()
 
         # Enrich logger with additional information.
-        logger.configure(extra={
-            "hostname": socket.gethostname(),
-        })
+        logger.configure(
+            extra={
+                "hostname": socket.gethostname(),
+            }
+        )
 
         fmt = (
             " <green> {time:YYYY-MMM-DD HH:mm:ss}</green> | <level>{level: <8}</level> |"

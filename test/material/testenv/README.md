@@ -9,13 +9,13 @@
 
 `root:root` on `admin` database.
 ```shell
-mongosh "mongodb://root:root@localhost:27017/admin"
+mongosh "mongodb://root:root@mongodb:27017/admin"
 ```
 
 `superduper:superduper` on `test_db` database
 
 ```shell
-mongosh "mongodb://superduper:superduper@localhost:27017/test_db"
+mongosh "mongodb://superduper:superduper@mongodb:27017/test_db"
 ```
 
 Have in mind that `docker-compose` with source the `default credentials` from `.env` file.

@@ -1,5 +1,13 @@
 version: "3.9"
 services:
+  # Resolv container hostnames
+  # ------------------------------
+  host-mapper:
+    image: dvdarias/docker-hoster
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+      - /etc/hosts:/tmp/hosts
+
   # MongoDB Datastore
   # ------------------------------
   mongodb:
@@ -9,12 +17,12 @@ services:
       - "27017:27017"
     environment:
       # create a root account in `admin` database
-      # 'mongodb://root:root@localhost:27017/admin'
+      # 'mongodb://root:root@mongodb:27017/admin'
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
 
       # create a superduper account in `test_db` database
-      # "mongodb://superduper:superduper@localhost:27017/test_db"
+      # "mongodb://superduper:superduper@mongodb:27017/test_db"
       SDDB_USER: ${SDDB_USER}
       SDDB_PASS: ${SDDB_PASS}
       SDDB_DATABASE: ${SDDB_DATABASE}
@@ -24,19 +32,44 @@ services:
   # Dask Parallel Computation
   # ------------------------------
   dask-scheduler:
-    image: daskdev/dask:latest
+    build: # Build the latest SuperDuperDB code
+      context: ../../../. # Build from project's root
+      dockerfile: ./images/superduperdb/Dockerfile
     hostname: scheduler
     ports:
       - "8786:8786"
       - "8787:8787"
-    command: ["dask-scheduler"]
+    volumes:
+        - ../../../:/superduperdb # mount the root path
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /superduperdb
+        
+        pip install .[torch]
+        dask scheduler
+    
 
   dask-worker:
-    image: daskdev/dask:latest
-    command: ["dask-worker", "tcp://scheduler:8786"]
-    # For Docker swarm, you can specify multiple workers, but this is ignored by `docker-compose up`
+    depends_on:
+      -   dask-scheduler
+    build: # Build the latest SuperDuperDB code
+      context: ../../../. # Build from project's root
+      dockerfile: ./images/superduperdb/Dockerfile
+    volumes:
+        - ../../../:/superduperdb # mount the root path
+    command:
+      - /bin/sh
+      - -c
+      - |       
+        cd /superduperdb
+        pip install .[torch]
+          
+        dask worker "tcp://scheduler:8786"
     deploy:
-      replicas: 2
+      replicas: 1
+  
 
   # SuperDuperDB Notebooks
   # ------------------------------

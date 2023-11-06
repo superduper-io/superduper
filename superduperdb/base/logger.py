@@ -1,15 +1,10 @@
 import os
-from sys import stderr, stdout
-
-from loguru import logger
-from loki_logger_handler.loki_logger_handler import (LoguruFormatter,
-                                                     LokiLoggerHandler)
-
+from sys import stderr
 from tqdm import tqdm
-
-from superduperdb.base.config import LogLevel, LogType
-
+from loguru import logger
 from .configs import CFG
+from loki_logger_handler.loki_logger_handler import (LoguruFormatter, LokiLoggerHandler)
+from superduperdb.base.config import LogLevel, LogType
 
 __all__ = ('Logging',)
 
@@ -55,20 +50,25 @@ class Logging:
 
     # Set Multi-Key loggers
     # Example: logging.info("param 1", "param 2", ..)
-    def multikey_debug(*args):
-        logger.opt(depth=1).debug(" ".join(map(str, args)))
+    @staticmethod
+    def multikey_debug(msg: str, *args):
+        logger.opt(depth=1).debug(" ".join(map(str, (msg, *args))))
 
-    def multikey_info(*args):
-        logger.opt(depth=1).info(" ".join(map(str, args)))
+    @staticmethod
+    def multikey_info(msg: str, *args):
+        logger.opt(depth=1).info(" ".join(map(str, (msg, *args))))
 
-    def multikey_success(*args):
-        logger.opt(depth=1).success(" ".join(map(str, args)))
+    @staticmethod
+    def multikey_success(msg: str, *args):
+        logger.opt(depth=1).success(" ".join(map(str, (msg, *args))))
 
-    def multikey_warn(*args):
-        logger.opt(depth=1).warning(" ".join(map(str, args)))
+    @staticmethod
+    def multikey_warn(msg: str, *args):
+        logger.opt(depth=1).warning(" ".join(map(str, (msg, *args))))
 
-    def multikey_error(*args):
-        logger.opt(depth=1).error(" ".join(map(str, args)))
+    @staticmethod
+    def multikey_error(msg: str, *args):
+        logger.opt(depth=1).error(" ".join(map(str, (msg, *args))))
 
     debug = multikey_debug
     info = multikey_info

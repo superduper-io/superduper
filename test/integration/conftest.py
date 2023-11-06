@@ -113,7 +113,7 @@ def fake_updates(database_with_default_encoders_and_model):
 
 @pytest.fixture
 def local_dask_client():
-    os.environ['SUPERDUPERDB_DATA_BACKEND'] = 'mongodb://root:root@localhost:27017/admin'
+    os.environ['SUPERDUPERDB_DATA_BACKEND'] = 'mongodb://root:root@mongodb:27017/admin'
     # os.environ['SUPERDUPERDB_DATA_BACKEND'] = 'mongodb://superduper:superduper@localhost:27017/test_db'
 
     logging.info("Starting Local Dask client")

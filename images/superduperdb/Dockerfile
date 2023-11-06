@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:1.3
+# syntax = docker/dockerfile:experimental
 
 # BUILD_ENV choses whether to use local source (sandbox) or released wheel (pypi).
 ARG BUILD_ENV=pypi
@@ -55,12 +55,13 @@ ENV PATH="${HOME}/.local/bin:$PATH"
 
 # Install common dependencies
 # ---------------
-RUN pip install --no-cache-dir --upgrade \
+RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade \
     # JupyterLab extensions \
     theme-darcula \
     ipywidgets \
     jupyterlab-lsp \
-    'python-lsp-server[all]'
+    'python-lsp-server[all]' \
+    "dask-labextension>=5"
 
 
 # Install Jupyterlab extensions
@@ -74,7 +75,7 @@ COPY --chown=superduper ./images/superduperdb/apputils-extension/themes.jupyterl
 # ---------------
 FROM base AS build_sandbox
 ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
-ONBUILD RUN cd ${HOME}/superduperdb; pip install --upgrade \
+ONBUILD RUN cd ${HOME}/superduperdb; --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade \
     .[${SUPERDUPERDB_EXTRAS}]    \
     # Purge pip cache
     && pip cache purge
@@ -85,7 +86,7 @@ ONBUILD RUN cd ${HOME}/superduperdb; pip install --upgrade \
 # ---------------
 FROM base AS build_pypi
 ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
-ONBUILD RUN pip install --no-cache-dir --upgrade \
+ONBUILD RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade \
     superduperdb[${SUPERDUPERDB_EXTRAS}] \
     # Purge pip cache
     && pip cache purge

@@ -71,7 +71,7 @@ def test_db() -> Iterator[Datalayer]:
 
     #'mongodb://superduper:superduper@localhost:27017/test_db'
     CFG.data_backend = (
-        'mongodb://root:root@localhost:27017/admin'
+        'mongodb://root:root@mongodb:27017/admin'
     )
 
     for attempt in Retrying(stop=stop_after_delay(15)):

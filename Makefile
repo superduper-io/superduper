@@ -23,12 +23,6 @@ help: ## Display this help
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 
-devkit: ## Add essential development tools
-	# Add pre-commit hooks to ensure that no strange stuff are being committed.
-	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
-	pip install pre-commit
-	pre-commit autoupdate
-	pip install .[quality]
 
 new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
@@ -48,6 +42,19 @@ new_release: ## Release a new version of SuperDuperDB
 
 	@echo "** Push release-${RELEASE_VERSION}"
 	git push --set-upstream origin release-${RELEASE_VERSION} --tags
+
+
+##@ DevKit
+
+devkit: ## Add essential development tools
+	# Add pre-commit hooks to ensure that no strange stuff are being committed.
+	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
+	pip install pre-commit
+	pre-commit autoupdate
+
+	# Download tools for code quality testing
+	pip install .[quality]
+
 
 
 ##@ CI Doc Functions
@@ -71,7 +78,7 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 ##@ CI Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
-	docker compose -f test/material/testenv/docker-compose.yaml up
+	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans
 
 testenv_shutdown: ## Terminate the local Testing environment
 	docker compose -f test/material/testenv/docker-compose.yaml down

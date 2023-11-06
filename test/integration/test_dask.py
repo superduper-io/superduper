@@ -1,7 +1,8 @@
-from  superduperdb import logging
 import uuid
 
 import pytest
+
+from superduperdb import logging
 
 try:
     import torch
@@ -85,8 +86,6 @@ def test_insert_with_dask(
             q = Collection(identifier=collection_name).find({'update': True})
             r = next(db.execute(q))
             assert 'model_linear_a' in r['_outputs']['x']
-
-
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

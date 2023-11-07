@@ -36,9 +36,11 @@ class Logging:
         )
 
         fmt = (
-            " <green> {time:YYYY-MMM-DD HH:mm:ss}</green> | <level>{level: <8}</level> |"
-            " <cyan><{extra[hostname]}></cyan>:<cyan>{name}</cyan>:<cyan>{line}</cyan> |"
-            " <level> {message} </level>"
+            " <green> {time:YYYY-MMM-DD HH:mm:ss}</green>"
+            " | <level>{level: <8}</level> "
+            " | <cyan><{extra[hostname]}></cyan>"
+            " | <cyan>{name}</cyan>:<cyan>{line}</cyan> "
+            " | <level> {message} </level>"
         )
 
         # DEBUG until WARNING are sent to stdout.

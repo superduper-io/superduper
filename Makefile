@@ -83,8 +83,6 @@ test: mongo_init ## Execute unit testing
 clean-test: mongo_shutdown	##  Clean up the unit testing environment
 
 fix-and-test: mongo_init ##  Lint the code before testing
-	# Sort mports
-	isort $(DIRECTORIES)
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting

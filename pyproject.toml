@@ -64,7 +64,6 @@ dependencies = [
     "mongomock>=4.1.2",
     "ibis-framework[sqlite]>=5.1.0",
     "ibis-framework[duckdb]>=5.1.0",
-    "openai>=1.1.1",    
 ]
 
 [project.optional-dependencies]
@@ -75,6 +74,7 @@ torch = [
     "torchvision",
 ]
 apis = [
+    "openai>=1.1.1", 
     "cohere",
     "anthropic",
     ]

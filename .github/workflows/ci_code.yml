@@ -1,4 +1,4 @@
-name: Validate code changes
+name: Code Testing
 
 on:  # rules for when this action will be triggered
   pull_request:

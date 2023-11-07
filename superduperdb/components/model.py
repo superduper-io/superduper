@@ -158,6 +158,7 @@ class PredictMixin:
         elif self.collate_fn is not None:
             X = self.collate_fn(X)
 
+        # TODO: Miss hanlding the context in _forward
         outputs = self._forward(X, **predict_kwargs)
 
         if isinstance(self.postprocess, Artifact):

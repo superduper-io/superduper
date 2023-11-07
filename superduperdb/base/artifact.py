@@ -118,7 +118,13 @@ class Artifact:
             return t.cast(bytes, object.serialize())
 
         serializer = serializers[self.serializer]
-        return serializer.encode(self.artifact, self.info)
+        try:
+            return serializer.encode(self.artifact, self.info)
+        except Exception as e:
+            raise ArtifactSavingError(
+                f'Error using serializer "{self.serializer}" '
+                f'to save artifact: {self.artifact}'
+            ) from e
 
     def save(self, artifact_store: 'ArtifactStore') -> t.Dict[str, t.Any]:
         """Store this artifact, and return a dictionary of the results

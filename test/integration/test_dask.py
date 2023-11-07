@@ -58,6 +58,11 @@ def test_taskgraph_futures_with_dask(
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
+@pytest.mark.parametrize(
+    'local_dask_client, test_db',
+    [('test_insert_with_distributed', 'test_insert_with_distributed')],
+    indirect=True,
+)
 def test_insert_with_dask(
     local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):

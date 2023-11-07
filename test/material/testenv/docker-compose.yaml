@@ -1,0 +1,91 @@
+version: "3.9"
+services:
+  # Resolv container hostnames
+  # ------------------------------
+  host-mapper:
+    image: dvdarias/docker-hoster
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+      - /etc/hosts:/tmp/hosts
+
+  # MongoDB Datastore
+  # ------------------------------
+  mongodb:
+    image: mongo:7
+    hostname: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      # create a root account in `admin` database
+      # 'mongodb://root:root@mongodb:27017/admin'
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+
+      # create a superduper account in `test_db` database
+      # "mongodb://superduper:superduper@mongodb:27017/test_db"
+      SDDB_USER: ${SDDB_USER}
+      SDDB_PASS: ${SDDB_PASS}
+      SDDB_DATABASE: ${SDDB_DATABASE}
+    volumes:
+      - ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
+
+  # Dask Parallel Computation
+  # ------------------------------
+  dask-scheduler:
+    build: # Build the latest SuperDuperDB code
+      context: ../../../. # Build from project's root
+      dockerfile: ./images/superduperdb/Dockerfile
+    hostname: scheduler
+    ports:
+      - "8786:8786" # Peer communication
+      - "8787:8787" # HTTP Dashboard
+    volumes:
+        - ../../../:/app # mount the root path
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /app
+        
+        # Basic stuff needed for pickling. 
+        # No complex dependencies
+        pip install . 
+        dask scheduler
+    
+
+  dask-worker:
+    depends_on:
+      -   dask-scheduler
+    build: # Build the latest SuperDuperDB code
+      context: ../../../. # Build from project's root
+      dockerfile: ./images/superduperdb/Dockerfile
+    volumes:
+        - ../../../:/app # mount the root path
+#    environment:
+#        - SUPERDUPERDB_DATA_BACKEND = 'mongodb://mongodb:27017'
+    command:
+      - /bin/sh
+      - -c
+      - |       
+        cd /app
+        
+        # Require all computational dependencies
+        pip install .[torch,apis,docs,quality,testing]
+        dask worker "tcp://scheduler:8786"
+    deploy:
+      replicas: 1
+  
+
+  # SuperDuperDB Notebooks
+  # ------------------------------
+  #superduperdb:
+  #  depends_on:
+  #    - mongodb
+  #    - dask-scheduler
+  #  image: superduperdb/demo:0.0.15
+  #  ports:
+  #    - "8888:8888"
+  #  command: ["jupyter", "lab", "--ip='*'", "--LabApp.token=''"]
+  #  environment:
+  #      DASK_URI: "tcp://dask-scheduler:8786"
+  #      MONGODB_URI: "mongodb://${SDDB_USER}:${SDDB_PASS}@mongodb"

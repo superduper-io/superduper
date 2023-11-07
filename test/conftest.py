@@ -66,19 +66,23 @@ def patch_mongomock(monkeypatch):
 
 @pytest.fixture
 def test_db() -> Iterator[Datalayer]:
-    from superduperdb import CFG
+    from superduperdb import CFG, logging
     from superduperdb.base.build import build_datalayer
 
-    CFG.data_backend = (
-        'mongodb://testmongodbuser:testmongodbpassword@localhost:27018/test_db'
-    )
+    #'mongodb://superduper:superduper@localhost:27017/test_db'
+    CFG.data_backend = 'mongodb://root:root@mongodb:27017/admin'
+
     for attempt in Retrying(stop=stop_after_delay(15)):
         with attempt:
             db = build_datalayer(CFG)
             db.databackend.conn.is_mongos
-            print("Connected to DB instance with MongoDB!")
+            logging.success("Connected to DB instance with MongoDB!")
+
     yield db
     for database_name in db.databackend.conn.list_database_names():
         if database_name in ("admin", "config", "local"):
             continue
+
+        logging.info("Dropping database", database_name)
         db.databackend.conn.drop_database(database_name)
+        logging.success("Database", database_name, " has been dropped")

@@ -189,3 +189,6 @@ test/sleep.json
 .vscode
 
 /tmp
+
+# bin
+bin

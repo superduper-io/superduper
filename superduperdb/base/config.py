@@ -52,7 +52,7 @@ class Cluster(JSONable):
     distributed: bool = False
     deserializers: t.List[str] = Factory(list)
     serializers: t.List[str] = Factory(list)
-    dask_scheduler: str = 'tcp://localhost:8786'
+    dask_scheduler: str = 'tcp://scheduler:8786'
     local: bool = True
     backfill_batch_size: int = 100
 
@@ -87,7 +87,7 @@ class Logging(JSONable):
     :param kwargs: Any additional keyword arguments
     """
 
-    level: LogLevel = LogLevel.INFO
+    level: LogLevel = LogLevel.DEBUG
     type: LogType = LogType.SYSTEM
     kwargs: dict = Factory(dict)
 

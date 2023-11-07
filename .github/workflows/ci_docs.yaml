@@ -6,6 +6,8 @@ on:
     paths:  # run this action only when the docs folder is changed
       - 'docs/hr/content/**'
       - 'docs/hr/blog/**'
+  workflow_dispatch:  # allows triggering a GitHub action manually - see 'Actions' tab
+
 
 # allow the action to write to the gh-pages branch
 permissions:

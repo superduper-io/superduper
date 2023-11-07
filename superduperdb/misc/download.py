@@ -334,8 +334,8 @@ def download_content(
     >>> download_content(None, None, ids=["0"], documents=[d]))
     ...
     """
-    logging.debug(query)
-    logging.debug(ids)
+    logging.debug(query.__str__())
+    logging.debug(ids.__str__())
     update_db = False
     if isinstance(query, dict):
         query = Serializable.deserialize(query)

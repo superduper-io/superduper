@@ -23,12 +23,6 @@ help: ## Display this help
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 
-devkit: ## Add essential development tools
-	# Add pre-commit hooks to ensure that no strange stuff are being committed.
-	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
-	pip install pre-commit
-	pre-commit autoupdate
-	pip install .[quality]
 
 new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
@@ -41,7 +35,6 @@ new_release: ## Release a new version of SuperDuperDB
 	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
 	@git add superduperdb/__init__.py
 
-
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION
 	@git commit -m "Bump Version $(RELEASE_VERSION:v%=%)"
@@ -49,6 +42,19 @@ new_release: ## Release a new version of SuperDuperDB
 
 	@echo "** Push release-${RELEASE_VERSION}"
 	git push --set-upstream origin release-${RELEASE_VERSION} --tags
+
+
+##@ DevKit
+
+devkit: ## Add essential development tools
+	# Add pre-commit hooks to ensure that no strange stuff are being committed.
+	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
+	pip install pre-commit
+	pre-commit autoupdate
+
+	# Download tools for code quality testing
+	pip install .[quality]
+
 
 
 ##@ CI Doc Functions
@@ -69,20 +75,20 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 	@echo "Build finished. The HTML pages are in docs/hr/build"
 
 
+##@ CI Testing Environment
+
+testenv_init: ## Initialize a local Testing environment
+	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans
+
+testenv_shutdown: ## Terminate the local Testing environment
+	docker compose -f test/material/testenv/docker-compose.yaml down
+
 ##@ CI Testing Functions
 
-mongo_init: ## Initialize a local MongoDB instance
-	docker compose -f test/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
-
-mongo_shutdown: ## Terminate the local MongoDB instance
-	docker compose -f test/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
-
-test: mongo_init ## Execute unit testing
+test: testenv_init ## Execute unit testing
 	pytest $(PYTEST_ARGUMENTS)
 
-clean-test: mongo_shutdown	##  Clean up the unit testing environment
-
-fix-and-test: mongo_init ##  Lint the code before testing
+fix-and-test: testenv_init ##  Lint the code before testing
 	# Sort mports
 	isort $(DIRECTORIES)
 	# Code formatting
@@ -90,15 +96,15 @@ fix-and-test: mongo_init ##  Lint the code before testing
 	# Linter and code formatting
 	ruff check --fix $(DIRECTORIES)
 	# Linting
-	mypy --install-types
 	mypy superduperdb
 	# Unit testing
 	pytest $(PYTEST_ARGUMENTS)
 	# Check for missing docstrings
 	interrogate superduperdb
+	# Check for unused dependencies
+	#deptry ./
 
-
-test-and-fix: mongo_init ## Test the code before linting
+test-and-fix: testenv_init ## Test the code before linting
 	# Linting
 	mypy superduperdb
 	# Unit testing
@@ -133,7 +139,7 @@ test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 # superduperdb/sandbox is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
 build_sandbox: ##  Build a development Docker image
 	@echo "===> release superduperdb/sandbox"
-	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
+	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 	--build-arg BUILD_ENV="sandbox" \
 	--build-arg SUPERDUPERDB_EXTRAS="dev,demo"
 
@@ -166,7 +172,7 @@ run_sandbox-pr: ## Run a pull request in the sandbox (argument: PR_NUMBER=555)
 # superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
 build_superduperdb: ## Build a minimal Docker image for general use
 	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg BUILD_ENV="pypi"
 
 
@@ -184,7 +190,7 @@ push_superduperdb: ## Push the superduperdb/superduperdb:latest image
 # superduperdb/demo is a bloated image that contains everything we need to run the online demo.
 build_demo: ## Build a feature-rich Docker image for demonstrations
 	echo "===> build superduperdb/demo:$(RELEASE_VERSION:v%=%)"
-	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg BUILD_ENV="pypi" \
 	--build-arg SUPERDUPERDB_EXTRAS="demo"
 

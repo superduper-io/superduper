@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Changed defaults / behaviours
 
+- Pinned OpenAI to `v0.27.6` due to `attr-defined` error from `mypy`.
 - Add Changelog for tracking changes on the repo. It must be filled before any PR.
 - Removed ci-pinned-dependencies and replaced them with actions with better cache management.
 - Changed logging mechanism from the default to loguru
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### New Features & Functionality
 
+- Add support for dask in integration testing. 
 - Add support for selecting whether logs will be redirected to the system output or directly to Loki
 
 

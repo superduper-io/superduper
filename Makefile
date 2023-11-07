@@ -78,7 +78,7 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 ##@ CI Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
-	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans
+	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans --detach
 
 testenv_shutdown: ## Terminate the local Testing environment
 	docker compose -f test/material/testenv/docker-compose.yaml down

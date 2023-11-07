@@ -27,7 +27,10 @@ class LanceVectorSearcher(BaseVectorSearcher):
         index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        self.dataset_path = f'.superduperdb/vector_indices/{identifier}.lance'
+        lance_home = os.environ.get(
+            'SUPERDUPERDB_LANCE_HOME', '.superduperdb/vector_indices'
+        )
+        self.dataset_path = f'{lance_home}/{identifier}.lance'
         self.dimensions = dimensions
         self._created = False
         self.measure = measure

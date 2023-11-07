@@ -1,6 +1,7 @@
 import inspect
 import os
 import time
+import uuid
 from threading import Lock
 from typing import Iterator
 
@@ -65,20 +66,22 @@ def patch_mongomock(monkeypatch):
 
 
 @pytest.fixture
-def test_db() -> Iterator[Datalayer]:
+def test_db(monkeypatch, request) -> Iterator[Datalayer]:
     from superduperdb import CFG
     from superduperdb.base.build import build_datalayer
 
-    CFG.data_backend = (
-        'mongodb://testmongodbuser:testmongodbpassword@localhost:27018/test_db'
+    # use the below decorator to set the db name, if not using random db_name
+    # `@pytest.mark.parametrize('test_db', [db_name], indirect=True)`
+    db_name = getattr(request, 'param', uuid.uuid4().hex)
+    data_backend = (
+        f'mongodb://testmongodbuser:testmongodbpassword@localhost:27018/{db_name}'
     )
+    monkeypatch.setattr(CFG, 'data_backend', data_backend)
     for attempt in Retrying(stop=stop_after_delay(15)):
         with attempt:
             db = build_datalayer(CFG)
             db.databackend.conn.is_mongos
             print("Connected to DB instance with MongoDB!")
     yield db
-    for database_name in db.databackend.conn.list_database_names():
-        if database_name in ("admin", "config", "local"):
-            continue
-        db.databackend.conn.drop_database(database_name)
+    db.databackend.conn.drop_database(db_name)
+    db.databackend.conn.drop_database(f'_filesystem:{db_name}')

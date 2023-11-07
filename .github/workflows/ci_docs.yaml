@@ -1,4 +1,4 @@
-name: Publish Doc Changes
+name: Build Doc Website
 on:
   push:
     branches:

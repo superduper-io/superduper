@@ -498,8 +498,11 @@ class Datalayer:
         :param version: [optional] numerical version to remove
         :param force: force skip confirmation (use with caution)
         """
+        # TODO: versions = [version] if version is not None else ...
         if version is not None:
-            return self._remove_component_version(type_id, identifier, version=version)
+            return self._remove_component_version(
+                type_id, identifier, version=version, force=force
+            )
         versions = self.metadata.show_component_versions(type_id, identifier)
         versions_in_use = []
         for v in versions:
@@ -846,6 +849,9 @@ class Datalayer:
                     'identifier': child,
                     'version': self.metadata.get_latest_version(child_type_id, child),
                 }
+                self.metadata.create_parent_child(
+                    component.unique_id, Component.make_unique_id(**serialized_dict)
+                )
             else:
                 self._add(
                     child,
@@ -1107,6 +1113,8 @@ class Datalayer:
                     object,
                 )
             raise e
+        # If object has no version, update the last version
+        object.version = info['version']
         new_info = self.artifact_store.update(object, metadata_info=info)
         self.metadata.replace_object(
             new_info,

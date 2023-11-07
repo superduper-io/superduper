@@ -29,7 +29,23 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
+      
+      - name: Enable Debug Output
+        run: |
+          echo ::set-env name=ACTIONS_STEP_DEBUG::true
 
+      - name: Debug Hash Files
+        run: |
+          ls -lahR $RUNNER_TOOL_CACHE/
+      
+      - name: Check Hash Values
+        run: |
+          echo "Hash of somefile.txt: $(sha256sum pyproject.toml)"
+      
+      - name: Check Cache Key
+        run: |
+          echo "Cache Key: ${{ runner.os }}-${{ hashFiles('**/pyproject.toml') }}"
+      
       #---------------------------------------------------
       # Configuring Python environments.
       #

@@ -99,8 +99,6 @@ quality = [
     "types-tqdm>=4.65.0.1",
     "monkeytype",
     "boto3-stubs>=1.26.154",
-    # Linting
-    "isort>=3.8.1",
     "black>=23.3",
     "interrogate>=1.5.0",
     "ruff>=0.0.267",

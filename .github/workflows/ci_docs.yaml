@@ -1,4 +1,4 @@
-name: Publish Doc Changes
+name: Build Doc Website
 on:
   push:
     branches:
@@ -27,18 +27,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install nodejs npm
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Cache pip packages
         uses: actions/cache@v3
         with:
           path: |
             ${{ env.pythonLocation }}
-          key: python3.10_ubuntu-latest_${{ hashFiles('**/pyproject.toml') }}
+          key: ubuntu-latest_python-3.11_${{ hashFiles('**/pyproject.toml') }}
 
       - name: Build docs and use-cases
         # build is available in docs/hr/build
@@ -46,7 +46,6 @@ jobs:
           make hr-docs
 
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: pip install .[docs]
     
       - name: Build inline api docs

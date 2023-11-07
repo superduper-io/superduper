@@ -1,4 +1,4 @@
-name: Release new version
+name: Release in Pypi/DockerHub
 on:
   push:
     branches:

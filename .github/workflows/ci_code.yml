@@ -21,7 +21,7 @@ jobs:
   testing:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         os: [ "ubuntu-latest" ]  # TODO: add "windows-latest", "macos-latest" when Docker removed
         python-version: ["3.8", "3.11"] # Due to cache limitations, check only the earliest and the latest.

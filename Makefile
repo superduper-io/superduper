@@ -78,7 +78,7 @@ mongo_shutdown: ## Terminate the local MongoDB instance
 	docker compose -f test/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
 
 test: mongo_init ## Execute unit testing
-	pytest $(PYTEST_ARGUMENTS)
+	pytest -n auto $(PYTEST_ARGUMENTS)
 
 clean-test: mongo_shutdown	##  Clean up the unit testing environment
 
@@ -91,7 +91,7 @@ fix-and-test: mongo_init ##  Lint the code before testing
 	mypy --install-types
 	mypy superduperdb
 	# Unit testing
-	pytest $(PYTEST_ARGUMENTS)
+	pytest -n auto $(PYTEST_ARGUMENTS)
 	# Check for missing docstrings
 	interrogate superduperdb
 
@@ -100,7 +100,7 @@ test-and-fix: mongo_init ## Test the code before linting
 	# Linting
 	mypy superduperdb
 	# Unit testing
-	pytest $(PYTEST_ARGUMENTS)
+	pytest -n auto $(PYTEST_ARGUMENTS)
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting

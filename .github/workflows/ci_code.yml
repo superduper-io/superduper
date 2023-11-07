@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  testing:
+  code-testing:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true

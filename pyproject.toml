@@ -68,13 +68,13 @@ dependencies = [
 
 [project.optional-dependencies]
 torch = [
-    "torch>=2.0.0,!=2.0.1",
+    "torch>=2.1.0",
     "accelerate>=0.20.1",
     "transformers>=4.29.1",
     "torchvision",
 ]
 apis = [
-    "openai>=0.27.6",
+    "openai>=1.1.1",
     "cohere",
     "anthropic",
     ]

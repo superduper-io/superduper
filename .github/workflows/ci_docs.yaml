@@ -6,6 +6,8 @@ on:
     paths:  # run this action only when the docs folder is changed
       - 'docs/hr/content/**'
       - 'docs/hr/blog/**'
+  workflow_dispatch:  # allows triggering a GitHub action manually - see 'Actions' tab
+
 
 # allow the action to write to the gh-pages branch
 permissions:
@@ -21,34 +23,39 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
+      #---------------------------------------------------
+      # Configuring Python environments.
+      #
+      # We intentionally commented the `cache` field to remind us not to enable it.
+      # The reason is that most of the time is spent on package installation rather than package downloading.
+      # As a result, in the next step, we will cache the complete Python environment, including all pre-installed components.
+      - name: Set up Python 3.11
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cache Python 3.11
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ubuntu-latest_python-3.11_${{ hashFiles('pyproject.toml') }}
+      #---------------------------------------------------
+
+      - name: Install dependencies
+        run: python -m pip install .[testing,docs]
+
         # required for docs/hr/build to be available
       - name: Install node
         run: |
           sudo apt-get update
           sudo apt-get install nodejs npm
 
-      - name: Set up Python 3.10
-        id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Cache pip packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ env.pythonLocation }}
-          key: python3.10_ubuntu-latest_${{ hashFiles('**/pyproject.toml') }}
-
       - name: Build docs and use-cases
         # build is available in docs/hr/build
         run: |
           make hr-docs
 
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install .[docs]
-    
       - name: Build inline api docs
         # build is available in docs/hr/build/apidocs
         run: |

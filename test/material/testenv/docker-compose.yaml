@@ -68,7 +68,7 @@ services:
         cd /app
         
         # Require all computational dependencies
-        pip install .[torch]
+        pip install .[dev]
         dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1

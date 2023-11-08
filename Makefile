@@ -131,7 +131,7 @@ test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 # superduperdb/sandbox is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
 build_sandbox: ##  Build a development Docker image
 	@echo "===> release superduperdb/sandbox"
-	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
+	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 	--build-arg BUILD_ENV="sandbox" \
 	--build-arg SUPERDUPERDB_EXTRAS="dev,demo"
 
@@ -164,7 +164,7 @@ run_sandbox-pr: ## Run a pull request in the sandbox (argument: PR_NUMBER=555)
 # superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
 build_superduperdb: ## Build a minimal Docker image for general use
 	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg BUILD_ENV="pypi"
 
 
@@ -182,7 +182,7 @@ push_superduperdb: ## Push the superduperdb/superduperdb:latest image
 # superduperdb/demo is a bloated image that contains everything we need to run the online demo.
 build_demo: ## Build a feature-rich Docker image for demonstrations
 	echo "===> build superduperdb/demo:$(RELEASE_VERSION:v%=%)"
-	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
 	--build-arg BUILD_ENV="pypi" \
 	--build-arg SUPERDUPERDB_EXTRAS="demo"
 

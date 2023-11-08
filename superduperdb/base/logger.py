@@ -1,12 +1,16 @@
 import os
-from sys import stderr, stdout
+import socket
+from sys import stderr
 
 from loguru import logger
 from loki_logger_handler.loki_logger_handler import LoguruFormatter, LokiLoggerHandler
+from tqdm import tqdm
 
 from superduperdb.base.config import LogLevel, LogType
 
 from .configs import CFG
+
+
 
 __all__ = ('Logging',)
 
@@ -23,26 +27,41 @@ class Logging:
 
         logger.configure(handlers=[{"sink": custom_handler, "serialize": True}])
     else:
+        # Replace default logger with a custom SuperDuper format.
         logger.remove()
-        fmt = (
-            "<green>{time:YYYY-MMM-DD HH:mm:ss}</green> | <level>{level: <8}</level> |"
-            "<cyan>{name}</cyan>:<cyan>{line}</cyan> |"
-            " <cyan>{extra}</cyan> <level> | {message} </level>"
+
+        # Enrich logger with additional information.
+        logger.configure(
+            extra={
+                "hostname": socket.gethostname(),
+            }
         )
 
-        # Send ERROR to stderr
-        logger.add(stderr, format=fmt, level=LogLevel.ERROR)
+        fmt = (
+            " <green> {time:YYYY-MMM-DD HH:mm:ss}</green>"
+            " | <level>{level: <8} </level> "
+            " | <cyan>{extra[hostname]}</cyan>"
+            " | <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
+            " | <level> {message} </level>"
+        )
 
-        # Whether to copy ERROR to stdout or not
-        COPY_ERROR_TO_STDOUT = True
-        if COPY_ERROR_TO_STDOUT:
-            logger.add(stdout, format=fmt, level=CFG.logging.level)
-        else:
-            logger.add(
-                stdout,
-                filter=lambda record: record["level"].no < 40,
-                level="INFO",
-            )
+        # DEBUG until WARNING are sent to stdout.
+        logger.add(
+            lambda msg: tqdm.write(msg, end=""),
+            format=fmt,
+            level=CFG.logging.level,
+            filter=lambda record: record["level"].no < 40,
+            colorize=True,
+        )
+
+        # ERROR and above sent to stderr
+        # https://loguru.readthedocs.io/en/stable/api/logger.html
+        logger.add(
+            stderr,
+            format=fmt,
+            level=LogLevel.ERROR,
+            colorize=True,
+        )
 
     # Set log levels
     debug = logger.debug

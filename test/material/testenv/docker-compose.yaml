@@ -10,27 +10,6 @@ services:
 
   # MongoDB Datastore
   # ------------------------------
-  #mongodb:
-  #  image: mongo:7
-  #  hostname: mongodb
-  #  ports:
-  #    - "27017:27017"
-  #  command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0"]
-
-  #mongo-init:
-  #  image: mongo:7
-  #  depends_on:
-  #    - mongodb
-  #  volumes:
-  #    - ./mongo-init.sh:/scripts/mongo-init.sh
-  #  environment:
-  #    # create a superduper account in `test_db` database
-  #    # "mongodb://superduper:superduper@mongodb:27017/test_db"
-  #    SDDB_USER: ${SDDB_USER}
-  #    SDDB_PASS: ${SDDB_PASS}
-  #    SDDB_DATABASE: ${SDDB_DATABASE}
-  #  command: sh -c "/scripts/mongo-init.sh"
-
   mongodb:
     image: mongo:6
     hostname: mongodb
@@ -46,10 +25,8 @@ services:
       - mongodb
     volumes:
       - ./mongo-init.sh:/scripts/mongo-init.sh
-    environment:
-      SDDB_USER: ${SDDB_USER}
-      SDDB_PASS: ${SDDB_PASS}
-      SDDB_DATABASE: ${SDDB_DATABASE}
+    env_file: # Read From
+    - users.env
     command: sh -c "/scripts/mongo-init.sh"
 
   # Dask Parallel Computation

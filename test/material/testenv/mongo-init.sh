@@ -38,20 +38,13 @@ mongosh --host mongodb  <<EOF
 EOF
 
 echo "Creating normal user: superduper:superduper/test_db"
-
-USER="${SDDB_USER}"
-PASSWORD="${SDDB_PASS}"
-DATABASE_NAME="${SDDB_DATABASE}"
-ROLE="dbOwner"  # Replace with the appropriate role you want
-
-
 mongosh --host mongodb  <<EOF
-  use ${DATABASE_NAME}
+  use ${SDDB_DATABASE}
   db.createUser(
     {
-      user: "${USER}",
-      pwd: "${PASSWORD}",
-      roles: [ { role: "${ROLE}", db: "${DATABASE_NAME}" } ]
+      user: "${SDDB_USER}",
+      pwd: "${SDDB_PASS}",
+      roles: [ { role: "dbOwner", db: "${SDDB_DATABASE}" } ]
     }
   )
 EOF

@@ -7,7 +7,6 @@ from typing import Iterator
 
 import fil
 import pytest
-from tenacity import Retrying, stop_after_delay
 
 import superduperdb as s
 from superduperdb.base.datalayer import Datalayer
@@ -82,6 +81,7 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
             db = build_datalayer(CFG)
             db.databackend.conn.is_mongos
             print("Connected to DB instance with MongoDB!")
+
     yield db
 
     db.databackend.conn.drop_database(db_name)

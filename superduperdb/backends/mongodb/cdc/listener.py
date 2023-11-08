@@ -233,7 +233,9 @@ class MongoDatabaseListener(cdc.BaseDatabaseListener):
         )
 
         stream_iterator = stream(self.db)
-        logging.info(f'Started listening database with identity {self.identity}...')
+
+        logging.info("Started listening database with identity ", self.identity)
+
         return stream_iterator
 
     def next_cdc(self, stream: CollectionChangeStream) -> None:

@@ -10,8 +10,6 @@ from superduperdb.base.config import LogLevel, LogType
 
 from .configs import CFG
 
-
-
 __all__ = ('Logging',)
 
 

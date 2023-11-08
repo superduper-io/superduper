@@ -4,6 +4,7 @@ import uuid
 import numpy as np
 import pytest
 
+from superduperdb import CFG
 from superduperdb.vector_search.base import VectorItem
 from superduperdb.vector_search.in_memory import InMemoryVectorSearcher
 from superduperdb.vector_search.lance import LanceVectorSearcher
@@ -12,7 +13,7 @@ from superduperdb.vector_search.lance import LanceVectorSearcher
 @pytest.fixture
 def index_data(monkeypatch):
     with tempfile.TemporaryDirectory() as unique_dir:
-        monkeypatch.setenv('SUPERDUPERDB_LANCE_HOME', str(unique_dir))
+        monkeypatch.setattr(CFG, 'lance_home', str(unique_dir))
         h = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0]])
         ids = [str(uuid.uuid4()) for _ in range(h.shape[0])]
         yield h, ids

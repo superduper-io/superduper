@@ -5,6 +5,7 @@ import lance
 import numpy
 import pyarrow as pa
 
+from superduperdb import CFG
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 
 
@@ -27,10 +28,7 @@ class LanceVectorSearcher(BaseVectorSearcher):
         index: t.Optional[t.List[str]] = None,
         measure: t.Optional[str] = None,
     ):
-        lance_home = os.environ.get(
-            'SUPERDUPERDB_LANCE_HOME', '.superduperdb/vector_indices'
-        )
-        self.dataset_path = f'{lance_home}/{identifier}.lance'
+        self.dataset_path = os.path.join(CFG.lance_home, f'{identifier}.lance')
         self.dimensions = dimensions
         self._created = False
         self.measure = measure

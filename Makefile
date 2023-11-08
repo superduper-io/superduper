@@ -23,12 +23,6 @@ help: ## Display this help
 # The general flow is VERSION -> make new_release -> GITHUB_ACTIONS -> {make docker_push, ...}
 RELEASE_VERSION=$(shell cat VERSION)
 
-devkit: ## Add essential development tools
-	# Add pre-commit hooks to ensure that no strange stuff are being committed.
-	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
-	pip install pre-commit
-	pre-commit autoupdate
-	pip install .[quality]
 
 new_release: ## Release a new version of SuperDuperDB
 	@ if [[ -z "${RELEASE_VERSION}" ]]; then echo "VERSION is not set"; exit 1; fi
@@ -41,7 +35,6 @@ new_release: ## Release a new version of SuperDuperDB
 	@sed -ie "s/^__version__ = .*/__version__ = '$(RELEASE_VERSION:v%=%)'/" superduperdb/__init__.py
 	@git add superduperdb/__init__.py
 
-
 	@echo "** Commit Bump Version and Tags"
 	@git add VERSION
 	@git commit -m "Bump Version $(RELEASE_VERSION:v%=%)"
@@ -49,6 +42,18 @@ new_release: ## Release a new version of SuperDuperDB
 
 	@echo "** Push release-${RELEASE_VERSION}"
 	git push --set-upstream origin release-${RELEASE_VERSION} --tags
+
+
+##@ DevKit
+
+devkit: ## Add essential development tools
+	# Add pre-commit hooks to ensure that no strange stuff are being committed.
+	# https://stackoverflow.com/questions/3462955/putting-git-hooks-into-a-repository
+	pip install pre-commit
+	pre-commit autoupdate
+
+	# Download tools for code quality testing
+	pip install .[quality]
 
 
 ##@ CI Doc Functions
@@ -69,20 +74,22 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 	@echo "Build finished. The HTML pages are in docs/hr/build"
 
 
+##@ CI Testing Environment
+
+testenv_init: ## Initialize a local Testing environment
+	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans --detach
+
+testenv_shutdown: ## Terminate the local Testing environment
+	docker compose -f test/material/testenv/docker-compose.yaml down
+
 ##@ CI Testing Functions
 
-mongo_init: ## Initialize a local MongoDB instance
-	docker compose -f test/material/docker-compose.yml up mongodb mongo-init -d $(COMPOSE_ARGUMENTS)
-
-mongo_shutdown: ## Terminate the local MongoDB instance
-	docker compose -f test/material/docker-compose.yml down $(COMPOSE_ARGUMENTS)
-
-test: mongo_init ## Execute unit testing
+test: testenv_init ## Execute unit testing
 	pytest -n auto $(PYTEST_ARGUMENTS)
 
-clean-test: mongo_shutdown	##  Clean up the unit testing environment
-
-fix-and-test: mongo_init ##  Lint the code before testing
+fix-and-test: testenv_init ##  Lint the code before testing
+	# Sort mports
+	isort $(DIRECTORIES)
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting
@@ -94,9 +101,10 @@ fix-and-test: mongo_init ##  Lint the code before testing
 	pytest -n auto $(PYTEST_ARGUMENTS)
 	# Check for missing docstrings
 	interrogate superduperdb
+	# Check for unused dependencies
+	#deptry ./
 
-
-test-and-fix: mongo_init ## Test the code before linting
+test-and-fix: testenv_init ## Test the code before linting
 	# Linting
 	mypy superduperdb
 	# Unit testing

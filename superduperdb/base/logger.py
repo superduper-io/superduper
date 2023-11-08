@@ -36,7 +36,7 @@ class Logging:
         )
 
         fmt = (
-            "<green> {time:YYYY-MMM-DD HH:mm:ss}</green>"
+            "<green> {time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
             "| <level>{level: <8}</level> "
             "| <cyan>{extra[hostname]: <8}</cyan>"
             "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
@@ -61,9 +61,30 @@ class Logging:
             colorize=True,
         )
 
-    # Set log levels
-    debug = logger.debug
-    info = logger.info
-    success = logger.success
-    warn = logger.warning
-    error = logger.error
+    # Set Multi-Key loggers
+    # Example: logging.info("param 1", "param 2", ..)
+    @staticmethod
+    def multikey_debug(msg: str, *args):
+        logger.opt(depth=1).debug(" ".join(map(str, (msg, *args))))
+
+    @staticmethod
+    def multikey_info(msg: str, *args):
+        logger.opt(depth=1).info(" ".join(map(str, (msg, *args))))
+
+    @staticmethod
+    def multikey_success(msg: str, *args):
+        logger.opt(depth=1).success(" ".join(map(str, (msg, *args))))
+
+    @staticmethod
+    def multikey_warn(msg: str, *args):
+        logger.opt(depth=1).warning(" ".join(map(str, (msg, *args))))
+
+    @staticmethod
+    def multikey_error(msg: str, *args):
+        logger.opt(depth=1).error(" ".join(map(str, (msg, *args))))
+
+    debug = multikey_debug
+    info = multikey_info
+    success = multikey_success
+    warn = multikey_warn
+    error = multikey_error

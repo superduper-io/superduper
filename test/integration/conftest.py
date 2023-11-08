@@ -12,7 +12,7 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb import CFG
+from superduperdb import CFG, logging
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
@@ -114,9 +114,19 @@ def fake_updates(database_with_default_encoders_and_model):
 def local_dask_client(monkeypatch, request):
     db_name = getattr(request, 'param', uuid.uuid4().hex)
     data_backend = (
-        f'mongodb://testmongodbuser:testmongodbpassword@localhost:27018/{db_name}'
+        f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
     )
     monkeypatch.setenv('SUPERDUPERDB_DATA_BACKEND', data_backend)
-    client = dask_client(CFG.cluster, local=True)
+
+
+    scheduler_uri = 'tcp://scheduler:8786'
+
+    logging.info("Starting Dask client ", scheduler_uri)
+
+    client = dask_client(scheduler_uri)
+
     yield client
-    client.shutdown()
+
+    client.disconnect()
+
+    logging.success("Dask Client disconnected from ", scheduler_uri)

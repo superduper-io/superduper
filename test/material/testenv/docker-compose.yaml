@@ -10,28 +10,48 @@ services:
 
   # MongoDB Datastore
   # ------------------------------
+  #mongodb:
+  #  image: mongo:7
+  #  hostname: mongodb
+  #  ports:
+  #    - "27017:27017"
+  #  command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0"]
+
+  #mongo-init:
+  #  image: mongo:7
+  #  depends_on:
+  #    - mongodb
+  #  volumes:
+  #    - ./mongo-init.sh:/scripts/mongo-init.sh
+  #  environment:
+  #    # create a superduper account in `test_db` database
+  #    # "mongodb://superduper:superduper@mongodb:27017/test_db"
+  #    SDDB_USER: ${SDDB_USER}
+  #    SDDB_PASS: ${SDDB_PASS}
+  #    SDDB_DATABASE: ${SDDB_DATABASE}
+  #  command: sh -c "/scripts/mongo-init.sh"
+
   mongodb:
-    image: mongo:7
+    image: mongo:6
     hostname: mongodb
+    restart: always
+    # use ["x", "y", ...] syntax for cross-platform compatibility
+    command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: testmongodbuser
+      MONGO_INITDB_ROOT_PASSWORD: testmongodbpassword
     ports:
       - "27017:27017"
-    command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0"]
 
   mongo-init:
-    image: mongo:7
+    image: mongo:6
     depends_on:
       - mongodb
+    command: sh -c "/scripts/mongo-init.sh"
     volumes:
       - ./mongo-init.sh:/scripts/mongo-init.sh
-    environment:
-      # create a superduper account in `test_db` database
-      # "mongodb://superduper:superduper@mongodb:27017/test_db"
-      SDDB_USER: ${SDDB_USER}
-      SDDB_PASS: ${SDDB_PASS}
-      SDDB_DATABASE: ${SDDB_DATABASE}
-    command: sh -c "/scripts/mongo-init.sh"
 
-  
+
   # Dask Parallel Computation
   # ------------------------------
   dask-scheduler:

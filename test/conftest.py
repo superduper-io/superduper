@@ -49,7 +49,6 @@ def _write(t):
 
 @pytest.fixture(autouse=SDDB_USE_MONGOMOCK)
 def patch_mongomock(monkeypatch):
-    import gridfs
     import gridfs.grid_file
     import pymongo
     from mongomock import Collection, Database, MongoClient

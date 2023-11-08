@@ -36,7 +36,7 @@ def add_and_cleanup_listener(database, collection_name):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_taskgraph_futures_with_dask(
-        local_dask_client, database_with_default_encoders_and_model, fake_updates
+    local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
     collection_name = str(uuid.uuid4())
     with patch.object(CFG.cluster, "distributed", True):
@@ -66,14 +66,14 @@ def test_taskgraph_futures_with_dask(
     indirect=True,
 )
 def test_insert_with_dask(
-        local_dask_client, database_with_default_encoders_and_model, fake_updates
+    local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
     collection_name = str(uuid.uuid4())
 
     with patch.object(CFG.cluster, "distributed", True):
         with add_and_cleanup_listener(
-                database_with_default_encoders_and_model,
-                collection_name,
+            database_with_default_encoders_and_model,
+            collection_name,
         ) as db:
             # Submit job
             logging.info("Submitting job")
@@ -97,7 +97,7 @@ def test_insert_with_dask(
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_dependencies_with_dask(
-        local_dask_client, database_with_default_encoders_and_model
+    local_dask_client, database_with_default_encoders_and_model
 ):
     database = database_with_default_encoders_and_model
 

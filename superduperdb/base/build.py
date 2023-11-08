@@ -5,7 +5,7 @@ from superduperdb.backends.base.backends import data_backends, metadata_stores
 from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.base.datalayer import Datalayer
-from superduperdb.server.dask_client import dask_client
+from superduperdb.server.dask_client import DaskClient
 
 
 def build_artifact_store(cfg):
@@ -69,7 +69,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             if cfg.artifact_store is not None
             else databackend.build_artifact_store()
         ),
-        distributed_client=dask_client(
+        distributed_client=DaskClient(
             cfg.cluster.dask_scheduler,
             local=cfg.cluster.local,
             serializers=cfg.cluster.serializers,

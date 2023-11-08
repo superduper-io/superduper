@@ -89,31 +89,3 @@ class DaskClient:
         """
         future = self.futures_collection[identifier]
         return self.client.gather(future)
-
-
-def dask_client(
-    uri: str,
-    serializers: t.Optional[t.Sequence[t.Callable]] = None,
-    deserializers: t.Optional[t.Sequence[t.Callable]] = None,
-    envs: t.Optional[t.Dict[str, t.Any]] = None,
-    local: bool = False,
-    **kwargs,
-) -> DaskClient:
-    """
-    Creates a DaskClient instance.
-
-    :param uri: The address of the Dask cluster.
-    :param serializers: A list of serializers to be used by the client. (optional)
-    :param deserializers: A list of deserializers to be used by the client. (optional)
-    :param envs: An environment dict for cluster.
-    :param local: Set to True to create a local Dask cluster. (optional)
-    :param **kwargs: Additional keyword arguments to be passed to the DaskClient.
-    """
-    return DaskClient(
-        address=uri,
-        serializers=serializers,
-        deserializers=deserializers,
-        envs=envs,
-        local=local,
-        **kwargs,
-    )

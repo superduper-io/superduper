@@ -23,14 +23,16 @@ def local_dask():
 def local_cluster(on: t.List[str] = []):
     from superduperdb.backends.mongodb.query import Collection
     from superduperdb.base.build import build_datalayer
-    from superduperdb.server.dask_client import dask_client
+    from superduperdb.server.dask_client import DaskClient
     from superduperdb.server.server import serve
 
     db = build_datalayer()
-    dask_client(
-        uri=s.CFG.cluster.dask_scheduler,
+
+    DaskClient(
+        address=s.CFG.cluster.dask_scheduler,
         local=True,
     )
+
     for collection in on:
         db.cdc.listen(
             on=Collection(identifier=collection),

@@ -16,18 +16,6 @@ do
 done
 
 echo "Initializing replicaset..."
-mongosh --host mongodb  <<EOF
-  rs.initiate(
-  {
-      _id: "rs0",
-      version: 1,
-      members: [
-        { _id: 0, host: "localhost:27017"}
-      ]
-  }
-  )
-  rs.status()
-EOF
 
 # Create new users
 echo "Creating ${USER}:${PASSWORD}/${DATABASE_NAME}"

@@ -118,7 +118,6 @@ def local_dask_client(monkeypatch, request):
     )
     monkeypatch.setenv('SUPERDUPERDB_DATA_BACKEND', data_backend)
 
-
     scheduler_uri = 'tcp://scheduler:8786'
 
     logging.info("Starting Dask client ", scheduler_uri)

@@ -2,9 +2,6 @@
 
 set -eu
 
-MONGO_INITDB_USERNAME=testmongodbuser
-MONGO_INITDB_PASSWORD=testmongodbpassword
-
 # replicate set initiate
 echo "Checking mongo container..."
 until mongosh --host mongodb  --eval "print(\"waited for connection\")"
@@ -27,16 +24,34 @@ mongosh --host mongodb  <<EOF
 EOF
 
 
-# Create new admin user.
-echo "Create user: ${MONGO_INITDB_USERNAME}:${MONGO_INITDB_PASSWORD}/admin"
+echo "Creating admin user: root@root/admin"
 mongosh --host mongodb  <<EOF
     db.getSiblingDB('admin').createUser(
         {
-            user: "$MONGO_INITDB_USERNAME",
-            pwd: "$MONGO_INITDB_PASSWORD",
+            user: "root",
+            pwd: "root",
             roles: [ { role: "root", db: "admin" } ]
          }
     )
 
     rs.status()
+EOF
+
+echo "Creating normal user: superduper:superduper/test_db"
+
+USER="${SDDB_USER}"
+PASSWORD="${SDDB_PASS}"
+DATABASE_NAME="${SDDB_DATABASE}"
+ROLE="dbOwner"  # Replace with the appropriate role you want
+
+
+mongosh --host mongodb  <<EOF
+  use ${DATABASE_NAME}
+  db.createUser(
+    {
+      user: "${USER}",
+      pwd: "${PASSWORD}",
+      roles: [ { role: "${ROLE}", db: "${DATABASE_NAME}" } ]
+    }
+  )
 EOF

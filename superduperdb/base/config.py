@@ -5,6 +5,7 @@ canot contain any other imports from this project.
 """
 # TODO further simplify these configurations
 
+import os
 import re
 import typing as t
 from enum import Enum
@@ -143,6 +144,7 @@ class Config(JSONable):
 
     #: The configuration for the vector search
     vector_search: 'str' = 'in_memory'  # "in_memory" / "lance"
+    lance_home: str = os.path.join('.superduperdb', 'vector_indices')
 
     artifact_store: t.Optional[str] = None
     metadata_store: t.Optional[str] = None

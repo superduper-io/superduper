@@ -62,7 +62,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             conn = ibis.connect(uri)
             return mapping['ibis'](conn, name)
 
-    # Build the data backend.
+    # Connect to data backend.
     try:
         databackend = build(cfg.data_backend, data_backends)
         logging.success("Connected to Data Backend: ", databackend.conn)
@@ -70,6 +70,17 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         # Exit quickly if a connection fails.
         logging.error("Error connecting to the Data Backend:", str(e))
         sys.exit(1)
+
+    # Connect to Dask scheduler
+    dask_client = None
+    if cfg.cluster.distributed:
+        dask_client = DaskClient(
+            address=cfg.cluster.dask_scheduler,
+            serializers=cfg.cluster.serializers,
+            deserializers=cfg.cluster.deserializers,
+            local=cfg.cluster.local,
+        ),
+
 
     # Build a Datalayer object with the specified components.
     db = Datalayer(
@@ -84,12 +95,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             if cfg.artifact_store is not None
             else databackend.build_artifact_store()
         ),
-        distributed_client=DaskClient(
-            address=cfg.cluster.dask_scheduler,
-            serializers=cfg.cluster.serializers,
-            deserializers=cfg.cluster.deserializers,
-            local=cfg.cluster.local,
-        ),
+        distributed_client=dask_client
     )
 
     return db

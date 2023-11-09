@@ -1,4 +1,3 @@
-from superduperdb import logging
 from typing import Optional
 
 import pytest

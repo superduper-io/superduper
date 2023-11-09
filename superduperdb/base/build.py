@@ -101,7 +101,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             if cfg.artifact_store is not None
             else databackend.build_artifact_store()
         ),
-        distributed_client=dask_client
+        distributed_client=dask_client,
     )
 
     return db

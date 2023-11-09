@@ -4,6 +4,7 @@ import os
 import openai
 import pytest
 import vcr
+from vcr.stubs import httpx_stubs
 
 from superduperdb.ext.openai.model import (
     OpenAIAudioTranscription,
@@ -24,12 +25,30 @@ if os.getenv('OPENAI_API_KEY') is None:
     mp.setenv('OPENAI_API_KEY', 'sk-TopSecret')
 
 
-def _record_only_png_signature_in_response(response):
+# monkey patch vcr to make it work with upload binary data
+def _make_vcr_request(httpx_request, **kwargs):
+    from vcr.request import Request as VcrRequest
+
+    try:
+        body = httpx_request.read().decode("utf-8")
+    except UnicodeDecodeError:
+        body = str(httpx_request.read())
+    uri = str(httpx_request.url)
+    headers = dict(httpx_request.headers)
+    return VcrRequest(httpx_request.method, uri, body, headers)
+
+
+httpx_stubs._make_vcr_request = _make_vcr_request
+
+
+def before_record_response(response):
     '''
     VCR filter function to only record the PNG signature in the response.
 
     This is necessary because the response is a PNG which can be quite large.
     '''
+    if 'body' not in response:
+        return response
     if PNG_BYTE_SIGNATURE in response['body']['string']:
         response['body']['string'] = PNG_BYTE_SIGNATURE
 
@@ -42,10 +61,27 @@ def _record_only_png_signature_in_response(response):
     return response
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_embed.yaml',
+def before_record_request(request):
+    # make the cassette simpler
+    if getattr(request, 'body', None) is not None:
+        request.body = 'fake_body'
+    # make the cassette simpler
+    request.headers = {}
+    return request
+
+
+# TODO: Move to top level of test dir, help other api tests
+vcr = vcr.VCR(
+    path_transformer=lambda x: x + '.yaml',
+    match_on=('method', 'path'),
     filter_headers=['authorization'],
+    cassette_library_dir=CASSETTE_DIR,
+    before_record_request=before_record_request,
+    before_record_response=before_record_response,
 )
+
+
+@vcr.use_cassette()
 def test_embed():
     e = OpenAIEmbedding(model='text-embedding-ada-002')
     resp = e.predict('Hello, world!')
@@ -54,10 +90,7 @@ def test_embed():
     assert all(isinstance(x, float) for x in resp)
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_batch_embed.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 def test_batch_embed():
     e = OpenAIEmbedding(model='text-embedding-ada-002')
     resp = e.predict(['Hello', 'world!'], batch_size=1)
@@ -67,10 +100,7 @@ def test_batch_embed():
     assert all(isinstance(x, float) for y in resp for x in y)
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_embed_async.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_embed_async():
     e = OpenAIEmbedding(model='text-embedding-ada-002')
@@ -80,10 +110,7 @@ async def test_embed_async():
     assert all(isinstance(x, float) for x in resp)
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_batch_embed_async.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_batch_embed_async():
     e = OpenAIEmbedding(model='text-embedding-ada-002')
@@ -94,10 +121,7 @@ async def test_batch_embed_async():
     assert all(isinstance(x, float) for y in resp for x in y)
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_chat.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 def test_chat():
     e = OpenAIChatCompletion(model='gpt-3.5-turbo', prompt='Hello, {context}')
     resp = e.predict('', one=True, context=['world!'])
@@ -105,10 +129,7 @@ def test_chat():
     assert isinstance(resp, str)
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_batch_chat.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 def test_batch_chat():
     e = OpenAIChatCompletion(model='gpt-3.5-turbo')
     resp = e.predict(['Hello, world!'], one=False)
@@ -117,10 +138,7 @@ def test_batch_chat():
     assert isinstance(resp[0], str)
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_chat_async.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_chat_async():
     e = OpenAIChatCompletion(model='gpt-3.5-turbo', prompt='Hello, {context}')
@@ -129,10 +147,7 @@ async def test_chat_async():
     assert isinstance(resp, str)
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_batch_chat_async.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_batch_chat_async():
     e = OpenAIChatCompletion(model='gpt-3.5-turbo')
@@ -142,11 +157,7 @@ async def test_batch_chat_async():
     assert isinstance(resp[0], str)
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_create_url.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 def test_create_url():
     e = OpenAIImageCreation(
         model='dall-e', prompt='a close up, studio photographic portrait of a {context}'
@@ -157,11 +168,7 @@ def test_create_url():
     assert resp[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_create_url_batch.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 def test_create_url_batch():
     e = OpenAIImageCreation(
         model='dall-e', prompt='a close up, studio photographic portrait of a'
@@ -173,11 +180,7 @@ def test_create_url_batch():
         assert img[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_create_async.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_create_async():
     e = OpenAIImageCreation(
@@ -191,11 +194,7 @@ async def test_create_async():
     assert resp[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_create_url_async.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_create_url_async():
     e = OpenAIImageCreation(
@@ -207,11 +206,7 @@ async def test_create_url_async():
     assert resp[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_create_url_async_batch.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_create_url_async_batch():
     e = OpenAIImageCreation(
@@ -224,11 +219,7 @@ async def test_create_url_async_batch():
         assert img[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_edit_url.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 def test_edit_url():
     e = OpenAIImageEdit(
         model='dall-e', prompt='A celebration party at the launch of {context}'
@@ -242,11 +233,7 @@ def test_edit_url():
     assert resp[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_edit_url_batch.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 def test_edit_url_batch():
     e = OpenAIImageEdit(
         model='dall-e', prompt='A celebration party at the launch of superduperdb'
@@ -266,11 +253,7 @@ def test_edit_url_batch():
         assert img[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_edit_async.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_edit_async():
     e = OpenAIImageEdit(
@@ -287,11 +270,7 @@ async def test_edit_async():
     assert resp[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_edit_url_async.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_edit_url_async():
     e = OpenAIImageEdit(
@@ -308,11 +287,7 @@ async def test_edit_url_async():
     assert resp[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_edit_url_async_batch.yaml',
-    filter_headers=['authorization'],
-    before_record_response=_record_only_png_signature_in_response,
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_edit_url_async_batch():
     e = OpenAIImageEdit(
@@ -333,10 +308,7 @@ async def test_edit_url_async_batch():
         assert img[0:16] == PNG_BYTE_SIGNATURE
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_transcribe.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 def test_transcribe():
     with open('test/material/data/test.wav', 'rb') as f:
         buffer = io.BytesIO(f.read())
@@ -352,10 +324,7 @@ def test_transcribe():
     assert 'United States' in resp
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_batch_transcribe.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 def test_batch_transcribe():
     with open('test/material/data/test.wav', 'rb') as f:
         buffer = io.BytesIO(f.read())
@@ -374,10 +343,7 @@ def test_batch_transcribe():
     assert 'United States' in resp[0]
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_transcribe_async.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_transcribe_async():
     with open('test/material/data/test.wav', 'rb') as f:
@@ -394,10 +360,7 @@ async def test_transcribe_async():
     assert 'United States' in resp
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_batch_transcribe_async.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_batch_transcribe_async():
     with open('test/material/data/test.wav', 'rb') as f:
@@ -417,10 +380,7 @@ async def test_batch_transcribe_async():
     assert 'United States' in resp[0]
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_translate.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 def test_translate():
     with open('test/material/data/german.wav', 'rb') as f:
         buffer = io.BytesIO(f.read())
@@ -436,10 +396,7 @@ def test_translate():
     assert 'station' in resp
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_batch_translate.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 def test_batch_translate():
     with open('test/material/data/german.wav', 'rb') as f:
         buffer = io.BytesIO(f.read())
@@ -458,10 +415,7 @@ def test_batch_translate():
     assert 'station' in resp[0]
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_translate_async.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_translate_async():
     with open('test/material/data/german.wav', 'rb') as f:
@@ -478,10 +432,7 @@ async def test_translate_async():
     assert 'station' in resp
 
 
-@vcr.use_cassette(
-    f'{CASSETTE_DIR}/test_batch_translate_async.yaml',
-    filter_headers=['authorization'],
-)
+@vcr.use_cassette()
 @pytest.mark.asyncio
 async def test_batch_translate_async():
     with open('test/material/data/german.wav', 'rb') as f:

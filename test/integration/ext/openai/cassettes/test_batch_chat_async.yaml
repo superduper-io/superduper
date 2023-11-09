@@ -1,34 +1,21 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Hello, world!"}], "model": "gpt-3.5-turbo"}'
-    headers:
-      Content-Type:
-      - application/json
-      User-Agent:
-      - OpenAI/v1 PythonBindings/0.28.1
-      X-OpenAI-Client-User-Agent:
-      - '{"bindings_version": "0.28.1", "httplib": "requests", "lang": "python", "lang_version":
-        "3.8.10", "platform": "Linux-6.2.0-33-generic-x86_64-with-glibc2.34", "publisher":
-        "openai", "uname": "Linux 6.2.0-33-generic #33~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
-        Thu Sep  7 10:33:52 UTC 2 x86_64 x86_64"}'
-    method: post
+    body: fake_body
+    headers: {}
+    method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
-    body:
-      string: "{\n  \"id\": \"chatcmpl-846SRgCC2AH9CzE7oYBlpxrNk2xzG\",\n  \"object\":
-        \"chat.completion\",\n  \"created\": 1695988827,\n  \"model\": \"gpt-3.5-turbo-0613\",\n
-        \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
-        \"assistant\",\n        \"content\": \"Hello there! How can I assist you today?\"\n
-        \     },\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n
-        \   \"prompt_tokens\": 11,\n    \"completion_tokens\": 10,\n    \"total_tokens\":
-        21\n  }\n}\n"
+    content: "{\n  \"id\": \"chatcmpl-8J2gDBWPnza2DxvtSeOEPW0Zfjkzj\",\n  \"object\":
+      \"chat.completion\",\n  \"created\": 1699549225,\n  \"model\": \"gpt-3.5-turbo-0613\",\n
+      \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
+      \"assistant\",\n        \"content\": \"Hello there! How can I assist you today?\"\n
+      \     },\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\":
+      11,\n    \"completion_tokens\": 10,\n    \"total_tokens\": 21\n  }\n}\n"
     headers:
-      Access-Control-Allow-Origin:
-      - '*'
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80e410da1d46046e-FRA
+      - 82379ca0ff3e2b04-SLC
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -38,11 +25,17 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 29 Sep 2023 12:00:28 GMT
+      - Thu, 09 Nov 2023 17:00:26 GMT
       Server:
       - cloudflare
+      Set-Cookie:
+      - __cf_bm=Rbg4v0H96ThFJo7x_NxOH7fnLcJtNucbuhqMkJhdO4Q-1699549226-0-AQB7ayAlr8PFGX1zKdMXv4pmZ9+c/oOes9l4aBE3QJUPogoyqtWovOu8BhvOecQh1wP2upnZK1eTVL9F9Ae4x7Y=;
+        path=/; expires=Thu, 09-Nov-23 17:30:26 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
       Transfer-Encoding:
       - chunked
+      access-control-allow-origin:
+      - '*'
       alt-svc:
       - h3=":443"; ma=86400
       openai-model:
@@ -50,7 +43,7 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '643'
+      - '1125'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -68,8 +61,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 14ms
       x-request-id:
-      - 85f830bc051e6b2ecc15cd135a103474
-    status:
-      code: 200
-      message: OK
+      - 9a4ee143f7c868fa74a048fe3674a2e9
+    http_version: HTTP/1.1
+    status_code: 200
 version: 1

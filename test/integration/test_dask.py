@@ -51,6 +51,8 @@ def test_taskgraph_futures_with_dask(
             Collection(identifier=collection_name).find({'update': True})
         )
     )
+
+    logging.info("Waiting for job to complete...")
     local_dask_client.wait_all_pending_tasks()
 
     nodes = graph.G.nodes
@@ -81,6 +83,7 @@ def test_insert_with_dask(
             db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
 
             # Barrier
+            logging.info("Waiting for job to complete...")
             local_dask_client.wait_all_pending_tasks()
 
             # Worker Logs
@@ -126,6 +129,7 @@ def test_dependencies_with_dask(
     G.run_jobs(distributed=True)
 
     # Barrier
+    logging.info("Waiting for job to complete...")
     local_dask_client.wait_all_pending_tasks()
 
     # Worker Logs

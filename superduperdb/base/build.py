@@ -68,19 +68,25 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         logging.success("Connected to Data Backend: ", databackend.conn)
     except Exception as e:
         # Exit quickly if a connection fails.
-        logging.error("Error connecting to the Data Backend:", str(e))
+        logging.error("Error connecting to Data Backend:", str(e))
         sys.exit(1)
 
     # Connect to Dask scheduler
     dask_client = None
     if cfg.cluster.distributed:
-        dask_client = DaskClient(
-            address=cfg.cluster.dask_scheduler,
-            serializers=cfg.cluster.serializers,
-            deserializers=cfg.cluster.deserializers,
-            local=cfg.cluster.local,
-        ),
+        try:
+            dask_client = DaskClient(
+                address=cfg.cluster.dask_scheduler,
+                serializers=cfg.cluster.serializers,
+                deserializers=cfg.cluster.deserializers,
+                local=cfg.cluster.local,
+            )
 
+            logging.success("Connected to Dask Scheduler: ", cfg.cluster.dask_scheduler)
+        except Exception as e:
+            # Exit quickly if a connection fails.
+            logging.error("Error connecting to Dask Scheduler:", str(e))
+            sys.exit(1)
 
     # Build a Datalayer object with the specified components.
     db = Datalayer(

@@ -75,7 +75,7 @@ torch = [
     "torchaudio",
 ]
 apis = [
-    "openai==0.27.6",
+    "openai>=1.1.2",
     "cohere",
     "anthropic",
     ]

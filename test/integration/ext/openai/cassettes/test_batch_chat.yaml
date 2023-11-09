@@ -1,40 +1,21 @@
 interactions:
 - request:
-    body: '{"messages": [{"role": "user", "content": "Hello, world!"}], "model": "gpt-3.5-turbo"}'
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '86'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - OpenAI/v1 PythonBindings/0.28.1
-      X-OpenAI-Client-User-Agent:
-      - '{"bindings_version": "0.28.1", "httplib": "requests", "lang": "python", "lang_version":
-        "3.8.10", "platform": "Linux-6.2.0-33-generic-x86_64-with-glibc2.34", "publisher":
-        "openai", "uname": "Linux 6.2.0-33-generic #33~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
-        Thu Sep  7 10:33:52 UTC 2 x86_64 x86_64"}'
+    body: fake_body
+    headers: {}
     method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAAA1SQQU/CQBCF7/0V45wpoSCk9OLBg2A0MVEPSgxZtmNb3e6U7pCKhP9utgUaL3t4
-        b743b/YQAGCRYgKocyW6rEwYX8+en/LtSy7Nw+/y/jF7u7X79+22ye6aVxx4gjdfpOVMDTWXlSEp
-        2Ha2rkkJ+dRoNp/O4zgeT1uj5JSMx7JKwslwGsqu3nA4mkWTE5lzoclhAqsAAODQvr6jTekHExgN
-        zkpJzqmMMLkMAWDNxiuonCucKCs46E3NVsi2tRdkDF/BghvQysISOgD2vAPhVO1v8MQdLws/C1u4
-        fF2Tcmx9iBOuurFjAPDRHrD71wmrmstK1sLfZP1VUdTFYf9lvTk/ecKiTC+PR4HfcAz+AAAA//8D
-        AIT+6W6tAQAA
+    content: "{\n  \"id\": \"chatcmpl-8J2g58Le7ot3shVE82qOIzbN721Fq\",\n  \"object\":
+      \"chat.completion\",\n  \"created\": 1699549217,\n  \"model\": \"gpt-3.5-turbo-0613\",\n
+      \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
+      \"assistant\",\n        \"content\": \"Hello! How can I assist you today?\"\n
+      \     },\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\":
+      11,\n    \"completion_tokens\": 9,\n    \"total_tokens\": 20\n  }\n}\n"
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80e410cf3ea32bf6-FRA
+      - 82379c6e7d9a2b5b-LAX
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -44,9 +25,13 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 29 Sep 2023 12:00:26 GMT
+      - Thu, 09 Nov 2023 17:00:34 GMT
       Server:
       - cloudflare
+      Set-Cookie:
+      - __cf_bm=VsstUV6z0AsBqlhZoNWLeDYbItQPaITRwrvgMPUfjq4-1699549234-0-AVtpK2RypOVPDcJ/Ur5rVAT7vlM7zge3J5NmCC8JhhPbCp0XkqFZGS8is+iWrV96+KecE99K7CudGGpnMUpVSQo=;
+        path=/; expires=Thu, 09-Nov-23 17:30:34 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
       Transfer-Encoding:
       - chunked
       access-control-allow-origin:
@@ -58,7 +43,7 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '593'
+      - '17446'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -76,8 +61,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 14ms
       x-request-id:
-      - 64170529350e377556ff0ec260549e2e
-    status:
-      code: 200
-      message: OK
+      - 6286d92547b87911ab51d7b16eb7b0c9
+    http_version: HTTP/1.1
+    status_code: 200
 version: 1

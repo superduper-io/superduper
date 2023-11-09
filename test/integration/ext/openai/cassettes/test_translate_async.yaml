@@ -1,0 +1,50 @@
+interactions:
+- request:
+    body: fake_body
+    headers: {}
+    method: POST
+    uri: https://api.openai.com/v1/audio/translations
+  response:
+    content: '{"text":"Could you give me a connection to Emmerich border station?"}'
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 82379d62fdee2c69-SLC
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 09 Nov 2023 17:00:58 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=KE930j6P18Yo1yl3A0fnjjNF53Gydf8FOt7IdqwuY6o-1699549258-0-Aa6Yb1OHQvYD6JWnRjPeAXYSuMOHUHbMhf4jqH5bKwkBcJG+L0KcyuNnQ9YfsS7M15vHn6fItuDla6/vs/rRhwU=;
+        path=/; expires=Thu, 09-Nov-23 17:30:58 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - user-vp5fxwabufahnpgnwgptlchk
+      openai-processing-ms:
+      - '444'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '50'
+      x-ratelimit-remaining-requests:
+      - '49'
+      x-ratelimit-reset-requests:
+      - 1.2s
+      x-request-id:
+      - 75c07347bf7e781c8198073ea13b99b3
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

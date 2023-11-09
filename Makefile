@@ -77,15 +77,19 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 ##@ CI Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
-	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans --detach
+	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans
 
 testenv_shutdown: ## Terminate the local Testing environment
 	docker compose -f test/material/testenv/docker-compose.yaml down
 
 ##@ CI Testing Functions
 
-test: testenv_init ## Execute unit testing
-	pytest -n auto $(PYTEST_ARGUMENTS)
+unit-testing: ## Execute unit testing
+	pytest -n auto $(PYTEST_ARGUMENTS) ./test/unittest/
+
+integration-testing: testenv_init ## Execute integration testing
+	pytest -n auto $(PYTEST_ARGUMENTS) ./test/integration
+	testenv_shutdown
 
 fix-and-test: testenv_init ##  Lint the code before testing
 	# Sort mports

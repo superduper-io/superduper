@@ -71,7 +71,12 @@ jobs:
 
       - name: Unit Testing
         run: |
-          make test PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml test"
+          make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml test"
+
+      - name: Integration Testing
+        run: |
+          make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml test"
+
 
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v3.1.4

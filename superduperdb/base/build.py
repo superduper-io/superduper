@@ -52,6 +52,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
                 uri,
                 serverSelectionTimeoutMS=5000,
             )
+
             return mapping['mongodb'](conn, name)
         elif uri.startswith('mongomock://'):
             name = uri.split('/')[-1]
@@ -82,10 +83,10 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
                 local=cfg.cluster.local,
             )
 
-            logging.success("Connected to Dask Scheduler: ", cfg.cluster.dask_scheduler)
+            logging.success("Initializing Dask Client: ", cfg.cluster.dask_scheduler)
         except Exception as e:
             # Exit quickly if a connection fails.
-            logging.error("Error connecting to Dask Scheduler:", str(e))
+            logging.error("Error initializing Dask Client:", str(e))
             sys.exit(1)
 
     # Build a Datalayer object with the specified components.

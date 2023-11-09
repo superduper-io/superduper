@@ -76,20 +76,17 @@ def test_insert_with_dask(
             collection_name,
         ) as db:
             # Submit job
-            logging.info("Submitting job")
             db.distributed = True
             db._distributed_client = local_dask_client
             db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
 
             # Barrier
-            logging.info("Waiting for job to complete")
             local_dask_client.wait_all_pending_tasks()
 
             # Worker Logs
             logging.info("worker logs", local_dask_client.client.get_worker_logs())
 
             # Assertions
-            logging.info("Assert Results")
             q = Collection(identifier=collection_name).find({'update': True})
             r = next(db.execute(q))
             assert 'model_linear_a' in r['_outputs']['x']
@@ -124,23 +121,18 @@ def test_dependencies_with_dask(
     local_dask_client.futures_collection.clear()
 
     # Submit Job
-    logging.info("Submitting job")
     database.distributed = True
     database._distributed_client = local_dask_client
     G.run_jobs(distributed=True)
 
     # Barrier
-    logging.info("Waiting for job to complete")
     local_dask_client.wait_all_pending_tasks()
 
     # Worker Logs
     logging.info("worker logs", local_dask_client.client.get_worker_logs())
 
     # Assertions
-    logging.info("Assert Results")
     futures = list(local_dask_client.futures_collection.values())
-
-    logging.info("Assert Results", futures)
     assert len(futures) == 2
     assert futures[0].status == 'finished'
     assert futures[1].status == 'finished'

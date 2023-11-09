@@ -76,7 +76,7 @@ jobs:
       - name: Integration Testing
         run: |
           make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
-
+          make testenv_shutdown
 
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v3.1.4

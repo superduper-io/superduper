@@ -71,11 +71,11 @@ jobs:
 
       - name: Unit Testing
         run: |
-          make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml test"
+          make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
 
       - name: Integration Testing
         run: |
-          make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml test"
+          make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
 
 
       - name: Upload code coverage to Codecov

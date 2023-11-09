@@ -1,42 +1,18 @@
 interactions:
 - request:
-    body: '{"prompt": "cat", "n": 1}'
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '25'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - OpenAI/v1 PythonBindings/0.28.1
-      X-OpenAI-Client-User-Agent:
-      - '{"bindings_version": "0.28.1", "httplib": "requests", "lang": "python", "lang_version":
-        "3.8.10", "platform": "Linux-6.2.0-33-generic-x86_64-with-glibc2.34", "publisher":
-        "openai", "uname": "Linux 6.2.0-33-generic #33~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
-        Thu Sep  7 10:33:52 UTC 2 x86_64 x86_64"}'
+    body: fake_body
+    headers: {}
     method: POST
     uri: https://api.openai.com/v1/images/generations
   response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAAA1yRXW+bMBiF7/kVFlK4mvl0jImEJtZsSWjaZm3Y1Ey7MNihFsQ4NoRpVf/7RHcx
-        ZTevjvSci/PofbUAsCvNac+ZvQABTuYJIQTFHybAaE/tBfhhAQDA6/sFwB50ay+A/dL3yiw8r6OC
-        0bblVAmlO2aqwbhl25Vu1WnujkKybjSu5L2ntLjQnnudruEzUXF+yR/PxffuNuGPTyKn9cP2yRsM
-        1/Ci5l9+jVlZHOlaqtX9uFL77c268cSphrfy7C8L+XVTHIphmYt9mw3nnN+5StYfTZ+GfhhBP4Fh
-        sg+CWZT5/izKUHxwDL9i0RVTqXbMZSoE0CfQx47RaeloU7FUyFZIPuU+FSdac0/J2jFNJ1iKKaWM
-        Mw7RsYwgwgmBlBwxxASxOCa49HHsmKYXLKWIVBWdY8gxoxARxCElAYJJRVCC52FZldFU/beS7MPJ
-        4O9UfHBMc6XwPzRp6ZjmWkLU6bddVt0/bO4Cvvy023h0tUbFze9hNOPLSjxvPyscB8N2l7SnbhYt
-        7fc/v1kA/LTerD8AAAD//wMATvhWRiECAAA=
+    content: "{\n  \"created\": 1699549333,\n  \"data\": [\n    {\n      \"url\":
+      \"https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-uEMEXjjbgTjBWhBp61UpsE5c.png?st=2023-11-09T16%3A02%3A13Z&se=2023-11-09T18%3A02%3A13Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T04%3A15%3A09Z&ske=2023-11-10T04%3A15%3A09Z&sks=b&skv=2021-08-06&sig=jnIq2rDFQF1ZVRqVzAqDoGd9KF37vAmEbrPCwCv/nis%3D\"\n
+      \   }\n  ]\n}\n"
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80e41126e9255ba4-FRA
+      - 82379f10a93208d4-LAX
       Connection:
       - keep-alive
       Content-Encoding:
@@ -44,9 +20,13 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 29 Sep 2023 12:00:47 GMT
+      - Thu, 09 Nov 2023 17:02:13 GMT
       Server:
       - cloudflare
+      Set-Cookie:
+      - __cf_bm=GaAvLgMwhkB48ezZ12Tzi1WKoN1BzZbHPc87NxC17AY-1699549333-0-ASvvE5jZdXV+jpqR9QqgvOSYjDbwgWp9tLqVtA4ebQN5UBRMAXsn+px39Grvd+pAmS2awYNjSmuoowT04D3zn0g=;
+        path=/; expires=Thu, 09-Nov-23 17:32:13 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
       Transfer-Encoding:
       - chunked
       access-control-allow-origin:
@@ -56,29 +36,20 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '7535'
+      - '8271'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=15724800; includeSubDomains
       x-request-id:
-      - 34de2db7a3aefdc5b69cde1dc9e15f94
-    status:
-      code: 200
-      message: OK
+      - fbdf77e0c43746563b2dfea5deaac0ac
+    http_version: HTTP/1.1
+    status_code: 200
 - request:
     body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python-requests/2.31.0
+    headers: {}
     method: GET
-    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-Knq0DUnQIUZUuDJiTlAuqJeM.png?st=2023-09-29T11%3A00%3A47Z&se=2023-09-29T13%3A00%3A47Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-09-28T21%3A13%3A06Z&ske=2023-09-29T21%3A13%3A06Z&sks=b&skv=2021-08-06&sig=VPAcNOIM1eDBPI/aGH4UCzuwswhGiYLEp671uLP9lmo%3D
+    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-uEMEXjjbgTjBWhBp61UpsE5c.png?st=2023-11-09T16%3A02%3A13Z&se=2023-11-09T18%3A02%3A13Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T04%3A15%3A09Z&ske=2023-11-10T04%3A15%3A09Z&sks=b&skv=2021-08-06&sig=jnIq2rDFQF1ZVRqVzAqDoGd9KF37vAmEbrPCwCv/nis%3D
   response:
     body:
       string: !!binary |
@@ -91,27 +62,27 @@ interactions:
       Content-Length:
       - '3147977'
       Content-MD5:
-      - NhZg7i644kZgbukm4ZG41w==
+      - xsBe5h1NmiGKhsLPUt4Hgg==
       Content-Type:
       - image/png
       Date:
-      - Fri, 29 Sep 2023 12:00:47 GMT
+      - Thu, 09 Nov 2023 17:02:15 GMT
       ETag:
-      - '"0x8DBC0E3B7750EB4"'
+      - '"0x8DBE1459E8AE279"'
       Last-Modified:
-      - Fri, 29 Sep 2023 12:00:47 GMT
+      - Thu, 09 Nov 2023 17:02:13 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       x-ms-blob-type:
       - BlockBlob
       x-ms-creation-time:
-      - Fri, 29 Sep 2023 12:00:47 GMT
+      - Thu, 09 Nov 2023 17:02:13 GMT
       x-ms-lease-state:
       - available
       x-ms-lease-status:
       - unlocked
       x-ms-request-id:
-      - 6955b1f6-d01e-0029-2ccc-f2b732000000
+      - 5b80f7a2-d01e-0022-352e-13af46000000
       x-ms-server-encrypted:
       - 'true'
       x-ms-version:
@@ -120,43 +91,19 @@ interactions:
       code: 200
       message: OK
 - request:
-    body: '{"prompt": "dog", "n": 1}'
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '25'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - OpenAI/v1 PythonBindings/0.28.1
-      X-OpenAI-Client-User-Agent:
-      - '{"bindings_version": "0.28.1", "httplib": "requests", "lang": "python", "lang_version":
-        "3.8.10", "platform": "Linux-6.2.0-33-generic-x86_64-with-glibc2.34", "publisher":
-        "openai", "uname": "Linux 6.2.0-33-generic #33~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
-        Thu Sep  7 10:33:52 UTC 2 x86_64 x86_64"}'
+    body: fake_body
+    headers: {}
     method: POST
     uri: https://api.openai.com/v1/images/generations
   response:
-    body:
-      string: !!binary |
-        H4sIAAAAAAAAA2SRXWvbMBSG7/0rhCG+mmL5S5EDZqTplsxt15I0Lc7YxbElu6pdS7WUZFD634t7
-        s4XdvBx43ov34bw5CLnVIMAK7s5RQNMkZYwl7MsIOFhw5+iXgxBCb5+JkHsYOneO3CdrtZn7vgLJ
-        oesEaKkHxU11MNOyU+W0UoOYnmTP1clMe2F9PcgjWOGrocEF07P8mG9ed4/qKhWbrcyhub3e+gcj
-        BnzUyfc/p0W5q2Hd69XP00rfXy/XrS9fGqyfH2HHe5XUivDuttgqotQyL6a6b74am4UkjDBJcZje
-        B8EkWhAyiRYJ23tGnLHojOls8MxxLASYMEyoZ4as9AZT8Uz2nezFeNtMvkAjfN03nmmV5BkFAC64
-        wHFdRjimKcPAaoopi/lsxmhJ6MwzrZU8g5hVFSQUC8oBxywWGFgQ47RicUqTsKzKaKz+u5KMBtEY
-        QbD3TPtXISL/QZOVnmnPJWST5TcPxn7TfA/9JLywZiNZT59C/lysFsujvLt8fSjgqt7Ri3z9YxJd
-        up+ffncQ+u28Ox8AAAD//wMA4k2onyMCAAA=
+    content: "{\n  \"created\": 1699549347,\n  \"data\": [\n    {\n      \"url\":
+      \"https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-y6h1YIp4JpPoAP19jNUDWP7I.png?st=2023-11-09T16%3A02%3A27Z&se=2023-11-09T18%3A02%3A27Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T06%3A59%3A06Z&ske=2023-11-10T06%3A59%3A06Z&sks=b&skv=2021-08-06&sig=mdSLPAfUiIoPEOLoyOwiDtZcPJFwQ%2Bjwdrcj8Vh/Nn4%3D\"\n
+      \   }\n  ]\n}\n"
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80e4116c39d25ba4-FRA
+      - 82379f67d8be08d4-LAX
       Connection:
       - keep-alive
       Content-Encoding:
@@ -164,7 +111,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 29 Sep 2023 12:00:58 GMT
+      - Thu, 09 Nov 2023 17:02:27 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -176,29 +123,20 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '7500'
+      - '8217'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=15724800; includeSubDomains
       x-request-id:
-      - 73c51a28dae29d7c8de6ba31145fa2ef
-    status:
-      code: 200
-      message: OK
+      - 322bfe99baf05b0177b196c8c7248971
+    http_version: HTTP/1.1
+    status_code: 200
 - request:
     body: null
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python-requests/2.31.0
+    headers: {}
     method: GET
-    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-pjWaUdno5fo0dlOYSo0ooCJY.png?st=2023-09-29T11%3A00%3A58Z&se=2023-09-29T13%3A00%3A58Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-09-29T01%3A31%3A11Z&ske=2023-09-30T01%3A31%3A11Z&sks=b&skv=2021-08-06&sig=JMVstEpdZan%2BtsRi8n6h2djYGACviPDqVYaKfU6BJHI%3D
+    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-y6h1YIp4JpPoAP19jNUDWP7I.png?st=2023-11-09T16%3A02%3A27Z&se=2023-11-09T18%3A02%3A27Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T06%3A59%3A06Z&ske=2023-11-10T06%3A59%3A06Z&sks=b&skv=2021-08-06&sig=mdSLPAfUiIoPEOLoyOwiDtZcPJFwQ%2Bjwdrcj8Vh/Nn4%3D
   response:
     body:
       string: !!binary |
@@ -211,27 +149,27 @@ interactions:
       Content-Length:
       - '3147977'
       Content-MD5:
-      - LRQs97TbT3X1EbMFdC9vrQ==
+      - ks8QENxVvDkSc4ZnhRI7sQ==
       Content-Type:
       - image/png
       Date:
-      - Fri, 29 Sep 2023 12:00:58 GMT
+      - Thu, 09 Nov 2023 17:02:28 GMT
       ETag:
-      - '"0x8DBC0E3BE0D0F55"'
+      - '"0x8DBE145A6D2C628"'
       Last-Modified:
-      - Fri, 29 Sep 2023 12:00:58 GMT
+      - Thu, 09 Nov 2023 17:02:27 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       x-ms-blob-type:
       - BlockBlob
       x-ms-creation-time:
-      - Fri, 29 Sep 2023 12:00:58 GMT
+      - Thu, 09 Nov 2023 17:02:27 GMT
       x-ms-lease-state:
       - available
       x-ms-lease-status:
       - unlocked
       x-ms-request-id:
-      - 80e1c44d-401e-000e-44cc-f22d7b000000
+      - 15ed1e23-f01e-0053-712e-13dd7f000000
       x-ms-server-encrypted:
       - 'true'
       x-ms-version:

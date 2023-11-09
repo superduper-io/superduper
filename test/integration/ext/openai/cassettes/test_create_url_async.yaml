@@ -1,30 +1,18 @@
 interactions:
 - request:
-    body: '{"prompt": "a close up, studio photographic portrait of a cat", "n": 1}'
-    headers:
-      Content-Type:
-      - application/json
-      User-Agent:
-      - OpenAI/v1 PythonBindings/0.28.1
-      X-OpenAI-Client-User-Agent:
-      - '{"bindings_version": "0.28.1", "httplib": "requests", "lang": "python", "lang_version":
-        "3.8.10", "platform": "Linux-6.2.0-33-generic-x86_64-with-glibc2.34", "publisher":
-        "openai", "uname": "Linux 6.2.0-33-generic #33~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC
-        Thu Sep  7 10:33:52 UTC 2 x86_64 x86_64"}'
-    method: post
+    body: fake_body
+    headers: {}
+    method: POST
     uri: https://api.openai.com/v1/images/generations
   response:
-    body:
-      string: "{\n  \"created\": 1695988878,\n  \"data\": [\n    {\n      \"url\":
-        \"https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-Xhq0HQbhWzaSZMYkIeBxlJYU.png?st=2023-09-29T11%3A01%3A18Z&se=2023-09-29T13%3A01%3A18Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-09-28T21%3A12%3A24Z&ske=2023-09-29T21%3A12%3A24Z&sks=b&skv=2021-08-06&sig=RXY6j9cJT0C7HXwnju5Izya8/iFIPxckyBSfyWCpuRY%3D\"\n
-        \   }\n  ]\n}\n"
+    content: "{\n  \"created\": 1699549333,\n  \"data\": [\n    {\n      \"url\":
+      \"https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-UvW9D50OgOqiyjN7phnXtGZL.png?st=2023-11-09T16%3A02%3A13Z&se=2023-11-09T18%3A02%3A13Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T04%3A34%3A36Z&ske=2023-11-10T04%3A34%3A36Z&sks=b&skv=2021-08-06&sig=7knkXUfgZtXyyPKeyzEEvjEGduTe/Q1A3x3ftQqsg4M%3D\"\n
+      \   }\n  ]\n}\n"
     headers:
-      Access-Control-Allow-Origin:
-      - '*'
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 80e411ee1c8968eb-FRA
+      - 82379f168e4d2f57-LAX
       Connection:
       - keep-alive
       Content-Encoding:
@@ -32,31 +20,36 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 29 Sep 2023 12:01:19 GMT
+      - Thu, 09 Nov 2023 17:02:13 GMT
       Server:
       - cloudflare
+      Set-Cookie:
+      - __cf_bm=BOOn3SScqe5vDX32tQSjGCTWBdOusbFUki.3q_NSIkY-1699549333-0-AR2RGLDdaY5zw8BPTaqGYAziHYkUV8kTfu11DldtzP7nbM2IoOwxjZtyt/w68OHFjvMd9HQwegO1ak4pIW40ieE=;
+        path=/; expires=Thu, 09-Nov-23 17:32:13 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
       Transfer-Encoding:
       - chunked
+      access-control-allow-origin:
+      - '*'
       alt-svc:
       - h3=":443"; ma=86400
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '7494'
+      - '7462'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=15724800; includeSubDomains
       x-request-id:
-      - e3599127adffb8fefcd1f4914b0c2ad4
-    status:
-      code: 200
-      message: OK
+      - 7ef8dc88220b88f4e17e8c9f9315128d
+    http_version: HTTP/1.1
+    status_code: 200
 - request:
     body: null
     headers: {}
     method: GET
-    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-Xhq0HQbhWzaSZMYkIeBxlJYU.png?st=2023-09-29T11:01:18Z&se=2023-09-29T13:01:18Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-09-28T21:12:24Z&ske=2023-09-29T21:12:24Z&sks=b&skv=2021-08-06&sig=RXY6j9cJT0C7HXwnju5Izya8/iFIPxckyBSfyWCpuRY%3D
+    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-UvW9D50OgOqiyjN7phnXtGZL.png?st=2023-11-09T16:02:13Z&se=2023-11-09T18:02:13Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T04:34:36Z&ske=2023-11-10T04:34:36Z&sks=b&skv=2021-08-06&sig=7knkXUfgZtXyyPKeyzEEvjEGduTe/Q1A3x3ftQqsg4M%3D
   response:
     body:
       string: !!binary |
@@ -69,27 +62,27 @@ interactions:
       Content-Length:
       - '3147977'
       Content-MD5:
-      - 8ic/NnWf7w51d7EXfMwIMg==
+      - +UzYcj+AH5rRCxsvc3nHrA==
       Content-Type:
       - image/png
       Date:
-      - Fri, 29 Sep 2023 12:01:19 GMT
+      - Thu, 09 Nov 2023 17:02:14 GMT
       Etag:
-      - '"0x8DBC0E3CA6EC137"'
+      - '"0x8DBE1459EA13787"'
       Last-Modified:
-      - Fri, 29 Sep 2023 12:01:18 GMT
+      - Thu, 09 Nov 2023 17:02:13 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       x-ms-blob-type:
       - BlockBlob
       x-ms-creation-time:
-      - Fri, 29 Sep 2023 12:01:18 GMT
+      - Thu, 09 Nov 2023 17:02:13 GMT
       x-ms-lease-state:
       - available
       x-ms-lease-status:
       - unlocked
       x-ms-request-id:
-      - 7db57f5a-c01e-001f-52cc-f21a60000000
+      - 9d2b2780-a01e-0004-3d2e-1334f2000000
       x-ms-server-encrypted:
       - 'true'
       x-ms-version:

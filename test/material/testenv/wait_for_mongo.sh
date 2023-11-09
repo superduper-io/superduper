@@ -7,7 +7,7 @@ max_retries=10
 
 for ((i=1; i<=""$max_retries""; i++)); do
   # Check if mongo-init has exited (indicating mongo initialization)
-  result=$(docker compose ps -qa --status=exited mongo-init)
+  result=$(docker compose ps -qa --filter status=exited mongo-init)
 
   # Count the number of lines in the result
   line_count=$(echo "$result" | wc -l)

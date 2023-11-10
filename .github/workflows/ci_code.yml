@@ -51,7 +51,7 @@ jobs:
       #---------------------------------------------------
 
       - name: Install Dependencies
-        run: python -m pip install .[dev]
+        run: pip install .[dev]
 
       - name: Check core imports
         run: |
@@ -74,7 +74,6 @@ jobs:
           make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
 
       - name: Integration Testing
-        continue-on-error: true # Needed for writing the logs as artifacts
         run: |
           # Run testing environment on the background, but get the logs
           nohup make testenv_init  &

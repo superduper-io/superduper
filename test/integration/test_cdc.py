@@ -3,6 +3,7 @@ import time
 from contextlib import contextmanager
 
 import pytest
+from fastapi.testclient import TestClient
 
 try:
     import torch
@@ -52,7 +53,7 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
 def database_listener_with_lance_searcher(database_with_default_encoders_and_model):
     db = database_with_default_encoders_and_model
 
-    db.fast_vector_searchers['test_index'] = db._initialize_vector_searcher(
+    db.fast_vector_searchers['test_index'] = db.initialize_vector_searcher(
         'test_index',
         searcher_type='lance',
     )
@@ -81,15 +82,15 @@ def listener_without_cdc_handler_and_collection_name(
 def retry_state_check(state_check):
     start = time.time()
 
-    exc = None
+    exc_msg = ''
     while (time.time() - start) < RETRY_TIMEOUT:
         try:
             return state_check()
         except Exception as e:
-            exc = e
+            exc_msg = str(e)
             time.sleep(0.1)
 
-    raise Exception(exc)
+    raise Exception(exc_msg)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -357,3 +358,25 @@ def add_and_cleanup_listeners(database, collection_name):
     finally:
         database.remove('listener', 'model_linear_a/x', force=True)
         database.remove('listener', 'model_linear_a/z', force=True)
+
+
+@pytest.fixture
+def client(database_with_default_encoders_and_model):
+    from superduperdb.cdc.app import app as cdc_app
+
+    database_with_default_encoders_and_model.cdc.start()
+    cdc_app.app.state.pool = database_with_default_encoders_and_model
+    client = TestClient(cdc_app.app)
+    yield client
+
+
+def test_basic_workflow(client):
+    listener = 'model_linear_a/x'
+    response = client.get(f"/cdc/listener/add?name={listener}")
+    assert response.status_code == 200
+
+    db = client.app.state.pool
+    assert 'documents' in db.cdc._CDC_LISTENERS
+
+    response = client.get(f"/cdc/listener/delete?name={listener}")
+    assert 'documents' not in db.cdc._CDC_LISTENERS

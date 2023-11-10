@@ -93,13 +93,6 @@ class Logging(JSONable):
     kwargs: dict = Factory(dict)
 
 
-class VectorSearchServer(JSONable):
-    host: str = '0.0.0.0'
-    port: int = 8000
-    protocol: str = 'http'
-    name: str = 'vector_search'
-
-
 class Server(JSONable):
     """Configure the SuperDuperDB server connection information
 
@@ -111,7 +104,8 @@ class Server(JSONable):
     host: str = '127.0.0.1'
     port: int = 3223
     protocol: str = 'http'
-    vector_search: VectorSearchServer = Factory(VectorSearchServer)
+    vector_search: str = 'http://localhost:8000'
+    cdc: str = 'http://localhost:8001'
 
     @property
     def uri(self) -> str:

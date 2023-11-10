@@ -2,11 +2,13 @@ import typing as t
 
 from pydantic import BaseModel
 
+from superduperdb import CFG
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.server.app import DatalayerDependency, SuperDuperApp
 from superduperdb.vector_search.server import service
 
-app = SuperDuperApp('vector_search')
+port = int(CFG.server.vector_search.split(':')[-1])
+app = SuperDuperApp('vector_search', port=port)
 
 
 class VectorItem(BaseModel):

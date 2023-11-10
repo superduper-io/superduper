@@ -59,6 +59,9 @@ class OpenAI(Component, PredictMixin):
         return []
 
     def __post_init__(self):
+        if 'OPENAI_API_KEY' not in os.environ:
+            raise ValueError('OPENAI_API_KEY not set')
+
         # dall-e is not currently included in list returned by OpenAI model endpoint
         if self.model not in (mo := _available_models()) and self.model not in (
             'dall-e'
@@ -70,9 +73,6 @@ class OpenAI(Component, PredictMixin):
 
         self.syncClient = SyncOpenAI()
         self.asyncClient = AsyncOpenAI()
-
-        if 'OPENAI_API_KEY' not in os.environ:
-            raise ValueError('OPENAI_API_KEY not set')
 
 
 @dc.dataclass

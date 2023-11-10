@@ -1,0 +1,98 @@
+interactions:
+- request:
+    body: fake_body
+    headers: {}
+    method: POST
+    uri: https://api.openai.com/v1/audio/translations
+  response:
+    content: '{"text":"Could you give me a connection to Emmerich border station?"}'
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 82379cdf9da45305-SLC
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 09 Nov 2023 17:00:37 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=Ypo6eJUoq9gAV329waADu1NWpqfWhdo7tibgwL.IRl8-1699549237-0-AdpYKwGWMpylHRVk8S/1AwBCIJOmmbiTTtsiPNfbAJ+/zyuFC6YcizEhzH4gvx6ghvVKjc8xoGSbQh8bpN0BRmQ=;
+        path=/; expires=Thu, 09-Nov-23 17:30:37 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - user-vp5fxwabufahnpgnwgptlchk
+      openai-processing-ms:
+      - '413'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '50'
+      x-ratelimit-remaining-requests:
+      - '48'
+      x-ratelimit-reset-requests:
+      - 2.056s
+      x-request-id:
+      - 589e352691944e5ff18d30e8f23834ce
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: fake_body
+    headers: {}
+    method: POST
+    uri: https://api.openai.com/v1/audio/translations
+  response:
+    content: '{"text":"Could you give me a connection to Emmerich border station?"}'
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 82379cdf9f196a29-LAX
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 09 Nov 2023 17:00:38 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=02MtVP_dB7PEd1iUkcFC0RoZAD25wla81nQoJx6poow-1699549238-0-AZruxBaEC5vJyWtaDoLxTEYN/NZJ3evhztbu3XQPE+IVTmFtb/+cggwPMf0SQp0MqE3kr43hKwk8AjRPY4EiBMg=;
+        path=/; expires=Thu, 09-Nov-23 17:30:38 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      openai-organization:
+      - user-vp5fxwabufahnpgnwgptlchk
+      openai-processing-ms:
+      - '423'
+      openai-version:
+      - '2020-10-01'
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      x-ratelimit-limit-requests:
+      - '50'
+      x-ratelimit-remaining-requests:
+      - '46'
+      x-ratelimit-reset-requests:
+      - 3.822s
+      x-request-id:
+      - 0a02eb5b5df400932b30a6b39c8a0c5a
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

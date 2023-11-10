@@ -13,11 +13,9 @@ services:
   mongodb:
     image: mongo:6
     hostname: mongodb
-    restart: always
-    # use ["x", "y", ...] syntax for cross-platform compatibility
-    command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]
     ports:
       - "27017:27017"
+    command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]
 
   mongo-init:
     image: mongo:6

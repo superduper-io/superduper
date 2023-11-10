@@ -88,8 +88,14 @@ unit-testing: ## Execute unit testing
 	pytest -n auto $(PYTEST_ARGUMENTS) ./test/unittest/
 
 integration-testing: ## Execute integration testing
+	# Block waiting for the testenv to become ready.
+	cd ./test/material/testenv/; ./wait_ready.sh
+
+	# Make sure endpoints are discoverable
+	getent hosts mongodb scheduler
+
+	# Run the test
 	pytest -n auto $(PYTEST_ARGUMENTS) ./test/integration
-	testenv_shutdown
 
 fix-and-test: testenv_init ##  Lint the code before testing
 	# Sort mports

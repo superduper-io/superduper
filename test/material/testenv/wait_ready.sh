@@ -15,8 +15,6 @@ for ((i=1; i<=""$max_retries""; i++)); do
     echo "Waiting for mongo to be initialized (Attempt $i)..."
     sleep 5
   elif [ "$line_count" -eq 1 ]; then
-    echo "lines : ${line_count}, ${result}, ${line_count}"
-
     echo "Mongo has been initialized successfully."
     exit 0
   else

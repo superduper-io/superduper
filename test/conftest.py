@@ -1,5 +1,5 @@
 import inspect
-import logging
+
 import os
 import time
 import uuid
@@ -10,6 +10,7 @@ import fil
 import pytest
 
 import superduperdb as s
+from superduperdb import logging
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.misc import superduper
 

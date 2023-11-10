@@ -1,0 +1,46 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Content-Type:
+      - application/json
+      Request-Source:
+      - python-sdk-4.26.1
+    method: POST
+    uri: https://api.cohere.ai/v1/generate
+  response:
+    body:
+      string: '{"id":"32d854fe-1d0f-40cd-8e26-f5507b05de85","generations":[{"id":"33c933c3-baad-4156-b953-f5bc3379d5cf","text":"\nI''m
+        Masha. I''m a freelance web designer \u0026 developer from Ukraine. I am also"}],"prompt":"Hello,
+        world!","meta":{"api_version":{"version":"1"}}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Content-Length:
+      - '263'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Sep 2023 11:11:07 GMT
+      Vary:
+      - Origin
+      Via:
+      - 1.1 google
+      num_chars:
+      - '89'
+      x-endpoint-monthly-call-limit:
+      - '5000'
+      x-ratelimit-limit:
+      - '10000000'
+      x-ratelimit-remaining:
+      - '9999991'
+      x-ratelimit-reset:
+      - '1694403260'
+      x-trial-endpoint-call-limit:
+      - '5'
+      x-trial-endpoint-call-remaining:
+      - '2'
+    status:
+      code: 200
+      message: OK
+version: 1

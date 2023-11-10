@@ -66,10 +66,10 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     # Connect to data backend.
     try:
         databackend = build(cfg.data_backend, data_backends)
-        logging.success("Connected to Data Backend: ", databackend.conn)
+        logging.success("Initializing DataBackend Client: ", databackend.conn)
     except Exception as e:
         # Exit quickly if a connection fails.
-        logging.error("Error connecting to Data Backend:", str(e))
+        logging.error("Error initializing to DataBackend Client:", str(e))
         sys.exit(1)
 
     # Connect to Dask scheduler

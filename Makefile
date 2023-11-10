@@ -95,7 +95,7 @@ integration-testing: ## Execute integration testing
 	#getent hosts mongodb scheduler
 
 	# Run the test
-	pytest -n auto $(PYTEST_ARGUMENTS) ./test/integration
+	pytest $(PYTEST_ARGUMENTS) ./test/integration
 
 fix-and-test: testenv_init ##  Lint the code before testing
 	# Code formatting

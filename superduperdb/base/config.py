@@ -142,7 +142,7 @@ class Config(JSONable):
     def self_hosted_vector_search(self) -> bool:
         return re.split('://|\+', self.data_backend)[0] == self.vector_search
 
-    data_backend: str = 'mongodb://localhost:27017'
+    data_backend: str = 'mongodb://localhost:27018'
 
     #: The configuration for the vector search
     vector_search: 'str' = 'in_memory'  # "in_memory" / "lance"

@@ -1,4 +1,5 @@
 import inspect
+import logging
 import os
 import time
 import uuid
@@ -71,18 +72,16 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
     # use the below decorator to set the db name, if not using random db_name
     # `@pytest.mark.parametrize('test_db', [db_name], indirect=True)`
     db_name = getattr(request, 'param', uuid.uuid4().hex)
-    data_backend = (
-        f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
-    )
+    data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
 
     monkeypatch.setattr(CFG, 'data_backend', data_backend)
-    for attempt in Retrying(stop=stop_after_delay(15)):
-        with attempt:
-            db = build_datalayer(CFG)
-            db.databackend.conn.is_mongos
-            print("Connected to DB instance with MongoDB!")
+
+    db = build_datalayer(CFG)
+    db.databackend.conn.is_mongos
 
     yield db
+
+    logging.info("Dropping database ", {db_name})
 
     db.databackend.conn.drop_database(db_name)
     db.databackend.conn.drop_database(f'_filesystem:{db_name}')

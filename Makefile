@@ -87,7 +87,7 @@ testenv_shutdown: ## Terminate the local Testing environment
 unit-testing: ## Execute unit testing
 	pytest -n auto $(PYTEST_ARGUMENTS) ./test/unittest/
 
-integration-testing: testenv_init ## Execute integration testing
+integration-testing: ## Execute integration testing
 	pytest -n auto $(PYTEST_ARGUMENTS) ./test/integration
 	testenv_shutdown
 

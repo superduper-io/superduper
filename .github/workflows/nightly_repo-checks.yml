@@ -75,7 +75,7 @@ jobs:
           uses: actions/cache@v3
           with:
             path: ${{ env.pythonLocation }}
-            key: ${{  matrix.os }}_python-${{  matrix.python-version }}_${{ hashFiles('pyproject.toml') }}
+            key: ${{ matrix.os }}_python-${{ matrix.python-version }}_${{ hashFiles('**/pyproject.toml') }}
         #---------------------------------------------------
 
         - name: Install Demo Dependencies

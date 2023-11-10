@@ -92,7 +92,7 @@ integration-testing: ## Execute integration testing
 	cd ./test/material/testenv/; ./wait_ready.sh
 
 	# Make sure endpoints are discoverable
-	getent hosts mongodb scheduler
+	#getent hosts mongodb scheduler
 
 	# Run the test
 	pytest -n auto $(PYTEST_ARGUMENTS) ./test/integration

@@ -23,7 +23,7 @@ class FastVectorSearcher(BaseVectorSearcher):
             )
 
     def __len__(self):
-        raise self.searcher.__len__()
+        return len(self.searcher)
 
     def add(self, items: t.Sequence[VectorItem]) -> None:
         """

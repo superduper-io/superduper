@@ -1,3 +1,4 @@
+from functools import cached_property
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, Request
@@ -6,26 +7,112 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from superduperdb.base.build import build_datalayer
 from superduperdb.base.datalayer import Datalayer
+from superduperdb.base.logger import logger
 
 app = FastAPI()
 
 
-def create_datalayer() -> Datalayer:
-    return build_datalayer()
+class SuperDuperApp:
+    '''
+    This is a wrapper class which helps to create a fastapi application
+    in the realm of superduperdb.
+
+    This class prepares a basic api setup and only endpoint implementation
+    are need to be added into the app
+    '''
+
+    def __init__(self, service='vector_search', port=8000):
+        self.service = service
+        self.port = port
+
+        self.app_host = '0.0.0.0'
+
+        self.router = APIRouter(prefix='/' + self.service)
+        self._user_startup = False
+        self._user_shutdown = False
+
+    @cached_property
+    def db(self):
+        return app.state.pool
+
+    def add(self, *args, method='post', **kwargs):
+        '''
+        Register an endpoint with this method.
+        '''
+
+        def decorator(function):
+            self.router.add_api_route(
+                *args, **kwargs, endpoint=function, methods=[method]
+            )
+            return
+
+        return decorator
+
+    @cached_property
+    def app(self):
+        app.include_router(self.router)
+        return app
+
+    def start(self):
+        '''
+        This method is used to start the application server
+        '''
+        if not self._user_startup:
+            self.startup()
+
+        if not self._user_shutdown:
+            self.shutdown()
+        assert self.app
+        uvicorn.run(
+            app,
+            host=self.app_host,
+            port=self.port,
+            reload=False,
+        )
+
+    def startup(self, function=None):
+        '''
+        This method is used to register a startup function
+        '''
+        self._user_startup = True
+
+        @app.on_event('startup')
+        def startup_db_client():
+            db = build_datalayer()
+            if function:
+                function(db=db)
+            app.state.pool = db
+
+        return
+
+    def shutdown(self, function=None):
+        '''
+        This method is used to register a shutdown function
+        '''
+        self._user_shutdown = True
+
+        @app.on_event('shutdown')
+        def shutdown_db_client():
+            try:
+                if function:
+                    function(db=app.state.pool)
+                app.state.pool.close()
+            except AttributeError:
+                raise Exception('Could not close the database properly')
+
+        return
 
 
-@app.on_event('startup')
-def startup_db_client():
-    db = create_datalayer()
-    app.state.pool = db
+def database(request: Request) -> Datalayer:
+    return request.app.state.pool
 
 
-@app.on_event('shutdown')
-def shutdown_db_client():
-    try:
-        app.state.pool.close()
-    except AttributeError:
-        raise Exception('Could not close the database properly')
+def DatalayerDependency():
+    '''
+    A helper method to be used for injecting datalayer instance
+    into endpoint implementation
+    '''
+    return Depends(database)
 
 
 # --------------- Create exception handler middleware-----------------
@@ -36,6 +123,7 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)
         except Exception as e:
+            logger.exception(f'Error while serving {request} :: {e}')
             return JSONResponse(
                 status_code=500,
                 content={'error': e.__class__.__name__, 'messages': e.args},
@@ -43,39 +131,3 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(ExceptionHandlerMiddleware)
-
-
-class SuperDuperApp:
-    def __init__(self, service='vector_search', host='0.0.0.0', port=8000):
-        self.service = service
-        self.host = host
-        self.port = port
-
-        self.router = APIRouter(prefix='/' + self.service)
-
-    def add(self, *args, method='post', **kwargs):
-        def decorator(function):
-            self.router.add_api_route(
-                *args, **kwargs, endpoint=function, methods=[method]
-            )
-            return
-
-        return decorator
-
-    def start(self):
-        app.include_router(self.router)
-
-        uvicorn.run(
-            app,
-            host=self.host,
-            port=self.port,
-            reload=False,
-        )
-
-
-def database(request: Request) -> Datalayer:
-    return request.app.state.pool
-
-
-def DatalayerDependency():
-    return Depends(database)

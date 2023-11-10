@@ -7,8 +7,8 @@ from enum import Enum
 from pymongo.change_stream import CollectionChangeStream
 
 from superduperdb import logging
-from superduperdb.backends.base import cdc
 from superduperdb.backends.mongodb import query
+from superduperdb.cdc import cdc
 from superduperdb.misc.runnable.runnable import Event
 
 from .base import CachedTokens, TokenType

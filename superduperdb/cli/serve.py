@@ -19,14 +19,6 @@ def local_dask():
     raise NotImplementedError
 
 
-@command(help='Start standalone change data capture')
-def cdc():
-    from superduperdb.base.build import build_datalayer
-
-    db = build_datalayer()
-    db.cdc.listen()
-
-
 @command(help='Start local cluster: server, dask and change data capture')
 def local_cluster(on: t.List[str] = []):
     from superduperdb.backends.mongodb.query import Collection
@@ -44,3 +36,17 @@ def local_cluster(on: t.List[str] = []):
             on=Collection(identifier=collection),
         )
     serve(db)
+
+
+@command(help='Start vector search server')
+def vector_search():
+    from superduperdb.vector_search.server.app import app
+
+    app.start()
+
+
+@command(help='Start standalone change data capture')
+def cdc():
+    from superduperdb.cdc.app import app
+
+    app.start()

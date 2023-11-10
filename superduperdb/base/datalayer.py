@@ -821,7 +821,7 @@ class Datalayer:
 
         existing_versions = self.show(object.type_id, object.identifier)
         if isinstance(object.version, int) and object.version in existing_versions:
-            s.logging.warn(f'{object.unique_id} already exists - doing nothing')
+            s.logging.debug(f'{object.unique_id} already exists - doing nothing')
             return
 
         if existing_versions:

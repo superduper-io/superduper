@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  testing:
+  code-testing:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -71,7 +71,15 @@ jobs:
 
       - name: Unit Testing
         run: |
-          make test PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml test"
+          make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
+
+      - name: Integration Testing
+        run: |
+          # Run testing environment on the background, but get the logs
+          nohup make testenv_init  &
+          
+          make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
+          make testenv_shutdown
 
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v3.1.4

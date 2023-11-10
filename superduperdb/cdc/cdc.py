@@ -236,8 +236,8 @@ class DatabaseListenerThreadScheduler(threading.Thread):
             self.start_event.set()
             while not self.stop_event.is_set():
                 self.listener.next_cdc(cdc_stream)
-        except Exception:
-            logging.error('In DatabaseListenerThreadScheduler')
+        except Exception as e:
+            logging.error('In DatabaseListenerThreadScheduler', str(e))
             traceback.print_exc()
 
 
@@ -278,8 +278,8 @@ class CDCHandler(threading.Thread):
                     )
 
         except Exception as exc:
+            logging.error("Error while handling cdc batches :: reason", exc)
             traceback.print_exc()
-            logging.info(f'Error while handling cdc batches :: reason {exc}')
         finally:
             self._is_running = False
 

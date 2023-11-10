@@ -113,7 +113,9 @@ def fake_updates(database_with_default_encoders_and_model):
 @pytest.fixture
 def local_dask_client(monkeypatch, request):
     db_name = getattr(request, 'param', uuid.uuid4().hex)
-    data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
+    #data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
+    data_backend = f'mongodb://superduper:superduper@mongodb:27017/test_db'
+    
     monkeypatch.setenv('SUPERDUPERDB_DATA_BACKEND', data_backend)
 
     scheduler_uri = 'tcp://scheduler:8786'

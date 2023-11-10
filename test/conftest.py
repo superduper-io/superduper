@@ -72,9 +72,9 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
     # use the below decorator to set the db name, if not using random db_name
     # `@pytest.mark.parametrize('test_db', [db_name], indirect=True)`
     db_name = getattr(request, 'param', uuid.uuid4().hex)
-    #data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
+    # data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
 
-    data_backend = f'mongodb://superduper:superduper@mongodb:27017/test_db'
+    data_backend = 'mongodb://superduper:superduper@mongodb:27017/test_db'
 
     monkeypatch.setattr(CFG, 'data_backend', data_backend)
 

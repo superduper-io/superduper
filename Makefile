@@ -98,8 +98,6 @@ integration-testing: ## Execute integration testing
 	pytest -n auto $(PYTEST_ARGUMENTS) ./test/integration
 
 fix-and-test: testenv_init ##  Lint the code before testing
-	# Sort mports
-	isort $(DIRECTORIES)
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting

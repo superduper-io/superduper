@@ -63,7 +63,9 @@ dependencies = [
     "semver>=3",
     "mongomock>=4.1.2",
     "ibis-framework[sqlite]>=5.1.0",
-    "ibis-framework[duckdb]>=5.1.0"
+    "ibis-framework[duckdb]>=5.1.0",
+    "uvicorn>=0.24.0",
+    "fastapi>=0.103.2"
 ]
 
 [project.optional-dependencies]
@@ -131,6 +133,11 @@ demo = [
     "aquirdturtle_collapsible_headings", # For collapsing headers
 ]
 
+# Dependencies for server
+server = [
+    "uvicorn>=0.24.0",
+    "fastapi>=0.103.2"
+]
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"

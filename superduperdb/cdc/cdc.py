@@ -44,6 +44,7 @@ if t.TYPE_CHECKING:
     from superduperdb.backends.base.query import TableOrCollection
     from superduperdb.base.datalayer import Datalayer
     from superduperdb.base.serializable import Serializable
+    from superduperdb.components.listener import Listener
 
 
 class DBEvent(str, Enum):
@@ -338,7 +339,7 @@ class DatabaseChangeDataCapture:
             for listener in listeners:
                 listener = db.load(identifier=listener, type_id='listener')
                 assert isinstance(listener, Listener)
-                self.add(listener.select.table_or_collection)
+                self.add(listener)
 
     @property
     def running(self) -> bool:
@@ -392,12 +393,22 @@ class DatabaseChangeDataCapture:
         listener.listen()
         return listener
 
-    def stop(self):
+    def stop(self, name: str = ''):
         """
         Stop all registered listeners
+        :param name: Listener name
         """
+        if name:
+            try:
+                self._CDC_LISTENERS[name].stop()
+            except KeyError:
+                raise KeyError(f'{name} is already down or not added yet')
+            else:
+                del self._CDC_LISTENERS[name]
+
         for _, listener in self._CDC_LISTENERS.items():
             listener.stop()
+        self._CDC_LISTENERS = {}
 
     def stop_handler(self):
         """
@@ -407,11 +418,12 @@ class DatabaseChangeDataCapture:
         if self.cdc_change_handler:
             self.cdc_change_handler.join()
 
-    def add(self, collection: 'TableOrCollection'):
+    def add(self, listener: 'Listener'):
         """
         This method registered the given collection for cdc
         """
-        if self.running:
+        collection = listener.select.table_or_collection
+        if self.running and collection.identifier not in self._CDC_LISTENERS:
             self.listen(collection)
         else:
             # Append to existing collection list

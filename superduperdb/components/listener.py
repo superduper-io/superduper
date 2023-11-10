@@ -3,8 +3,10 @@ import typing as t
 
 from overrides import override
 
+from superduperdb import CFG
 from superduperdb.backends.base.query import CompoundSelect
 from superduperdb.base.datalayer import Datalayer
+from superduperdb.misc.server import request_server
 
 from ..jobs.job import Job
 from .component import Component
@@ -50,7 +52,15 @@ class Listener(Component):
 
         # Start cdc service if enabled
         if self.select is not None and self.active:
-            db.cdc.add(self.select.table_or_collection)
+            if CFG.mode == 'production':
+                request_server(
+                    service='cdc',
+                    endpoint='listener/add',
+                    args={'name': self.identifier},
+                    type='get',
+                )
+            else:
+                db.cdc.add(self)
 
     @property
     def dependencies(self) -> t.List[str]:

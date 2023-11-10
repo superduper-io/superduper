@@ -15,6 +15,7 @@ from superduperdb import logging
 from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.base import serializable
 from superduperdb.base.document import Document
+from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encodable, Encoder
 from superduperdb.components.model import Model
@@ -29,7 +30,6 @@ from superduperdb.vector_search.interface import FastVectorSearcher
 from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
 
 from ..backends.base.artifact import ArtifactStore
-from ..backends.base.cdc import DatabaseChangeDataCapture
 from ..backends.base.data_backend import BaseDataBackend
 from ..backends.base.metadata import MetaDataStore
 from ..backends.base.query import Delete, Insert, RawQuery, Select, Update

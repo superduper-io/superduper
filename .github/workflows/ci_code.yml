@@ -76,19 +76,11 @@ jobs:
       - name: Integration Testing
         continue-on-error: true # Needed for writing the logs as artifacts
         run: |
-          # Run testing environment on the background
-          make testenv_init >& ./logs.txt &
+          # Run testing environment on the background, but get the logs
+          nohup make testenv_init  &
           
           make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
           make testenv_shutdown
-
-      # Upload artifacts, even if the workflow fails
-      - name: Upload TestEnv logs as Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: testenv-logs
-          path: |
-            ./logs.txt
 
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v3.1.4

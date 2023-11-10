@@ -236,8 +236,8 @@ class DatabaseListenerThreadScheduler(threading.Thread):
             self.start_event.set()
             while not self.stop_event.is_set():
                 self.listener.next_cdc(cdc_stream)
-        except Exception:
-            logging.error('In DatabaseListenerThreadScheduler')
+        except Exception as e:
+            logging.error('In DatabaseListenerThreadScheduler', str(e))
             traceback.print_exc()
 
 

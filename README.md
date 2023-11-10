@@ -48,11 +48,13 @@
 
 ---
 
-**SuperDuperDB is not another database. It is a framework that transforms your favorite database into an AI powerhouse:**
-- **A single scalable AI deployment** of all your models and AI APIs, including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
-- **A model trainer** that allows easy training and fine-tuning of models simply by querying the database.
-- **A feature store** in which the model outputs are stored alongside the inputs in any data format.
-- **A fully functional vector database** that allows easy generalization of vector embeddings and vector indexes of the data with preferred models and APIs.
+**SuperDuperDB is not another database. It is a framework to integrate any AI models and APIs directly with your existing database, including real-time inference, model training and vector search — to build and deploy end-to-end AI applications without complex MLOps pipelines and the need for specialized vector databases. Only using Python!**
+
+**SuperDuperDB transforms your favorite database into an AI powerhouse:**
+- *A single scalable AI deployment* of all your models and AI APIs, including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
+- *A model trainer* that allows easy training and fine-tuning of models simply by querying the database.
+- *A feature store* in which the model outputs are stored alongside the inputs in any data format.
+- *A fully functional vector database* that allows easy generalization of vector embeddings and vector indexes of the data with preferred models and APIs.
 
 <p align="center">
   <img width="100%" src="docs/hr/static/img/superduperdb.gif">
@@ -62,11 +64,8 @@
 
 ## ⚡ Integrations (*more coming soon*):
 
-**Build AI applications easily without needing to move your data to complex pipelines and specialized vector databases. Integrate AI and vector search directly with your database including real-time inference and model training. All through a simple Python interface!**
-
-### Datastores 
-Unlock the power of SuperDuperDB to connect and manage various types of data sources effortlessly!
-
+### Supported Datastores 
+Super-duper your database and turn it into an AI development and deployment stack with one command `db = superduper(mongodb/postgres/sqlite/duckdb/snowflake...)`
 <div align="left">
 <table>
     <tr>
@@ -107,8 +106,12 @@ Unlock the power of SuperDuperDB to connect and manage various types of data sou
 </div>
 <br>
 
-### AI Frameworks
-Leverage SuperDuperDB to discover insights from your data using a variety of AI models!
+### Supported AI Frameworks
+Integrate, train and manage any AI model directly with your datastore to automatically compute outputs with a single Python command (whether from open-source, commercial models or self-developed).
+Add model: 
+Train model:
+Inference: 
+Predict:
 
 <div align="left">
 <table>

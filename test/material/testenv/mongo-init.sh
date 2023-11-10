@@ -48,3 +48,8 @@ mongosh --host mongodb  <<EOF
     }
   )
 EOF
+
+echo "Confirm everything is working properly"
+echo "---------------------------------------"
+mongosh --eval 'rs.status()' "mongodb://${SDDB_USER}:${SDDB_PASS}@mongodb:27017/${SDDB_DATABASE}"
+echo "---------------------------------------"

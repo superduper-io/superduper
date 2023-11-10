@@ -74,20 +74,16 @@ jobs:
           make unit-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
 
       - name: Integration Testing
+        continue-on-error: true # Needed for writing the logs as artifacts
         run: |
           # Run testing environment on the background
-          make testenv_init >& logs.txt &
+          make testenv_init >& ./logs.txt &
           
           make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
           make testenv_shutdown
 
-      # Conditional step to always run, even if the previous steps fail
-      - name: Always run, even if previous steps fail
-        run: echo "This step will always run"
-        continue-on-error: true
-
       # Upload artifacts, even if the workflow fails
-      - name: Upload Artifacts
+      - name: Upload TestEnv logs as Artifacts
         uses: actions/upload-artifact@v2
         with:
           name: testenv-logs

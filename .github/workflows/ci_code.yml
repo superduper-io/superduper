@@ -75,8 +75,24 @@ jobs:
 
       - name: Integration Testing
         run: |
+          # Run testing environment on the background
+          make testenv_init >& logs.txt &
+          
           make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
           make testenv_shutdown
+
+      # Conditional step to always run, even if the previous steps fail
+      - name: Always run, even if previous steps fail
+        run: echo "This step will always run"
+        continue-on-error: true
+
+      # Upload artifacts, even if the workflow fails
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: testenv-logs
+          path: |
+            ./logs.txt
 
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v3.1.4

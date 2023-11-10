@@ -40,8 +40,10 @@ def test_taskgraph_futures_with_dask(
 ):
     collection_name = str(uuid.uuid4())
     with patch.object(CFG.cluster, "distributed", True):
+        # Submit job
         database_with_default_encoders_and_model.distributed = True
         database_with_default_encoders_and_model._distributed_client = local_dask_client
+
         _, graph = database_with_default_encoders_and_model.execute(
             Collection(identifier=collection_name).insert_many(fake_updates)
         )
@@ -52,9 +54,14 @@ def test_taskgraph_futures_with_dask(
         )
     )
 
+    # Barrier
     logging.info("Waiting for job to complete...")
     local_dask_client.wait_all_pending_tasks()
 
+    # Worker Logs
+    logging.info("worker logs", local_dask_client.client.get_worker_logs())
+
+    # Assertions
     nodes = graph.G.nodes
     jobs = [nodes[node]['job'] for node in nodes]
 

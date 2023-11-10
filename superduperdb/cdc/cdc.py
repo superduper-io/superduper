@@ -278,8 +278,8 @@ class CDCHandler(threading.Thread):
                     )
 
         except Exception as exc:
-            traceback.print_exc()
             logging.error("Error while handling cdc batches :: reason", exc)
+            traceback.print_exc()
         finally:
             self._is_running = False
 

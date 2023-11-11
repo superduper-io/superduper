@@ -94,50 +94,53 @@ interactions:
       \     \"id\": \"code-search-babbage-text-001\",\n      \"object\": \"model\",\n
       \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
       \   {\n      \"id\": \"tts-1-hd-1106\",\n      \"object\": \"model\",\n      \"created\":
-      1699053533,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-instruct-0914\",\n
+      1699053533,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"whisper-1\",\n
+      \     \"object\": \"model\",\n      \"created\": 1677532384,\n      \"owned_by\":
+      \"openai-internal\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-instruct-0914\",\n
       \     \"object\": \"model\",\n      \"created\": 1694122472,\n      \"owned_by\":
       \"system\"\n    },\n    {\n      \"id\": \"ada\",\n      \"object\": \"model\",\n
       \     \"created\": 1649357491,\n      \"owned_by\": \"openai\"\n    },\n    {\n
       \     \"id\": \"gpt-3.5-turbo-0613\",\n      \"object\": \"model\",\n      \"created\":
       1686587434,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"text-ada-001\",\n
       \     \"object\": \"model\",\n      \"created\": 1649364042,\n      \"owned_by\":
-      \"openai\"\n    },\n    {\n      \"id\": \"ada-similarity\",\n      \"object\":
-      \"model\",\n      \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n
-      \   },\n    {\n      \"id\": \"code-search-ada-code-001\",\n      \"object\":
-      \"model\",\n      \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n
-      \   },\n    {\n      \"id\": \"text-similarity-ada-001\",\n      \"object\":
-      \"model\",\n      \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n
-      \   },\n    {\n      \"id\": \"gpt-3.5-turbo-0301\",\n      \"object\": \"model\",\n
+      \"openai\"\n    },\n    {\n      \"id\": \"canary-whisper\",\n      \"object\":
+      \"model\",\n      \"created\": 1699656801,\n      \"owned_by\": \"system\"\n
+      \   },\n    {\n      \"id\": \"ada-similarity\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"code-search-ada-code-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"text-similarity-ada-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"gpt-3.5-turbo-0301\",\n      \"object\": \"model\",\n
       \     \"created\": 1677649963,\n      \"owned_by\": \"openai\"\n    },\n    {\n
       \     \"id\": \"gpt-3.5-turbo-instruct\",\n      \"object\": \"model\",\n      \"created\":
       1692901427,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-0613\",\n
       \     \"object\": \"model\",\n      \"created\": 1686588896,\n      \"owned_by\":
-      \"openai\"\n    },\n    {\n      \"id\": \"whisper-1\",\n      \"object\": \"model\",\n
-      \     \"created\": 1677532384,\n      \"owned_by\": \"openai-internal\"\n    },\n
-      \   {\n      \"id\": \"text-search-curie-doc-001\",\n      \"object\": \"model\",\n
-      \     \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n    },\n
-      \   {\n      \"id\": \"text-davinci-003\",\n      \"object\": \"model\",\n      \"created\":
-      1669599635,\n      \"owned_by\": \"openai-internal\"\n    },\n    {\n      \"id\":
-      \"text-curie-001\",\n      \"object\": \"model\",\n      \"created\": 1649364043,\n
-      \     \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"curie\",\n      \"object\":
-      \"model\",\n      \"created\": 1649359874,\n      \"owned_by\": \"openai\"\n
-      \   },\n    {\n      \"id\": \"gpt-4-0314\",\n      \"object\": \"model\",\n
-      \     \"created\": 1687882410,\n      \"owned_by\": \"openai\"\n    },\n    {\n
-      \     \"id\": \"canary-tts\",\n      \"object\": \"model\",\n      \"created\":
-      1699492935,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"tts-1\",\n
-      \     \"object\": \"model\",\n      \"created\": 1681940951,\n      \"owned_by\":
-      \"openai-internal\"\n    },\n    {\n      \"id\": \"davinci\",\n      \"object\":
-      \"model\",\n      \"created\": 1649359874,\n      \"owned_by\": \"openai\"\n
-      \   },\n    {\n      \"id\": \"dall-e-2\",\n      \"object\": \"model\",\n      \"created\":
-      1698798177,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"tts-1-1106\",\n
-      \     \"object\": \"model\",\n      \"created\": 1699053241,\n      \"owned_by\":
-      \"system\"\n    },\n    {\n      \"id\": \"dall-e-3\",\n      \"object\": \"model\",\n
-      \     \"created\": 1698785189,\n      \"owned_by\": \"system\"\n    }\n  ]\n}\n"
+      \"openai\"\n    },\n    {\n      \"id\": \"text-search-curie-doc-001\",\n      \"object\":
+      \"model\",\n      \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n
+      \   },\n    {\n      \"id\": \"text-davinci-003\",\n      \"object\": \"model\",\n
+      \     \"created\": 1669599635,\n      \"owned_by\": \"openai-internal\"\n    },\n
+      \   {\n      \"id\": \"text-curie-001\",\n      \"object\": \"model\",\n      \"created\":
+      1649364043,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"curie\",\n
+      \     \"object\": \"model\",\n      \"created\": 1649359874,\n      \"owned_by\":
+      \"openai\"\n    },\n    {\n      \"id\": \"gpt-4-0314\",\n      \"object\":
+      \"model\",\n      \"created\": 1687882410,\n      \"owned_by\": \"openai\"\n
+      \   },\n    {\n      \"id\": \"canary-tts\",\n      \"object\": \"model\",\n
+      \     \"created\": 1699492935,\n      \"owned_by\": \"system\"\n    },\n    {\n
+      \     \"id\": \"tts-1\",\n      \"object\": \"model\",\n      \"created\": 1681940951,\n
+      \     \"owned_by\": \"openai-internal\"\n    },\n    {\n      \"id\": \"davinci\",\n
+      \     \"object\": \"model\",\n      \"created\": 1649359874,\n      \"owned_by\":
+      \"openai\"\n    },\n    {\n      \"id\": \"dall-e-2\",\n      \"object\": \"model\",\n
+      \     \"created\": 1698798177,\n      \"owned_by\": \"system\"\n    },\n    {\n
+      \     \"id\": \"tts-1-1106\",\n      \"object\": \"model\",\n      \"created\":
+      1699053241,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"dall-e-3\",\n
+      \     \"object\": \"model\",\n      \"created\": 1698785189,\n      \"owned_by\":
+      \"system\"\n    }\n  ]\n}\n"
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8237a1577e102b9f-SLC
+      - 8244560eaa3f7c67-LAX
       Connection:
       - keep-alive
       Content-Encoding:
@@ -145,12 +148,12 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 09 Nov 2023 17:03:38 GMT
+      - Sat, 11 Nov 2023 06:04:09 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=TKp9LwwCZCzLTRAk259uGGKmSvSHYiMGkPAO.YHTQ8c-1699549418-0-Aba+2moY4+NwZdhAqP0oT1/lfzXuWEgxjKxSNK6fF12uIs5H3z3WiwC+ta9LsJJ4TFIwhF268ad3FAGcBS8Y3cU=;
-        path=/; expires=Thu, 09-Nov-23 17:33:38 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=61WnA7BqF5jB3ioukgpSMx0.Le_VsRkLrWnqkA.XNp4-1699682649-0-AeCezdxQMV0974Q5dpln6oRtdXIT40cqQHE7N3f3uLf2nns/iu+GEkWazpBAme6dk8hCy19rXirokUQgPENd6Mo=;
+        path=/; expires=Sat, 11-Nov-23 06:34:09 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -159,13 +162,13 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       openai-processing-ms:
-      - '472'
+      - '127'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=15724800; includeSubDomains
       x-request-id:
-      - c9466edd75654b1697c3c21faa7752e3
+      - 7c1563288178b92c5ca99928a6181b1f
     http_version: HTTP/1.1
     status_code: 200
 - request:
@@ -174,14 +177,14 @@ interactions:
     method: POST
     uri: https://api.openai.com/v1/images/edits
   response:
-    content: "{\n  \"created\": 1699549434,\n  \"data\": [\n    {\n      \"url\":
-      \"https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-6Qf7pHBIkAeseftUHRXTS85W.png?st=2023-11-09T16%3A03%3A54Z&se=2023-11-09T18%3A03%3A54Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T09%3A21%3A50Z&ske=2023-11-10T09%3A21%3A50Z&sks=b&skv=2021-08-06&sig=wbTg9I9gzL1p08AhpkoW0CYJT2UZbDPBrohjtuIiCr0%3D\"\n
+    content: "{\n  \"created\": 1699682666,\n  \"data\": [\n    {\n      \"url\":
+      \"https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-ez87gn3ktdoRhnvyec3fGvZR.png?st=2023-11-11T05%3A04%3A26Z&se=2023-11-11T07%3A04%3A26Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-10T21%3A40%3A33Z&ske=2023-11-11T21%3A40%3A33Z&sks=b&skv=2021-08-06&sig=Zfe1idkzctTmYRFuiX%2BvaaQ4T1a/JiT%2Bo18nx0ckEys%3D\"\n
       \   }\n  ]\n}\n"
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8237a1615ce914d8-LAX
+      - 82445617a9525309-SLC
       Connection:
       - keep-alive
       Content-Encoding:
@@ -189,12 +192,12 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 09 Nov 2023 17:03:54 GMT
+      - Sat, 11 Nov 2023 06:04:26 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=2o6PhtIcKN9XqssJyYytvWo0Qf.c_ZZubUGz4H7f0ug-1699549434-0-AX0Kp9yQzwiE5PQ9DYOgVzBRTDB5a6uDPjr8aYaN4+Hles/YlIWUoM1GJdfYQCyuoRcBd07BDKj01EdxBWebnb4=;
-        path=/; expires=Thu, 09-Nov-23 17:33:54 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=PmSOp6RoTzDAcPOTcMFQPm1FHDw3DlK5gWWq0_nMp3U-1699682666-0-AeKDFLIWgilfhjdf7DcRq9iVGfqJz1zR3P31JDV+KbO0EOlprNtN/3QzknFANOFhhhGOsv7HfON47ps8xzO+aGQ=;
+        path=/; expires=Sat, 11-Nov-23 06:34:26 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -205,20 +208,20 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '11985'
+      - '11991'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=15724800; includeSubDomains
       x-request-id:
-      - 8353213b50a9f7fb512904c5e4d9ce89
+      - 4fae740729c83e16493c25e993fa0af6
     http_version: HTTP/1.1
     status_code: 200
 - request:
     body: null
     headers: {}
     method: GET
-    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-6Qf7pHBIkAeseftUHRXTS85W.png?st=2023-11-09T16:03:54Z&se=2023-11-09T18:03:54Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T09:21:50Z&ske=2023-11-10T09:21:50Z&sks=b&skv=2021-08-06&sig=wbTg9I9gzL1p08AhpkoW0CYJT2UZbDPBrohjtuIiCr0%3D
+    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-ez87gn3ktdoRhnvyec3fGvZR.png?st=2023-11-11T05:04:26Z&se=2023-11-11T07:04:26Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-10T21:40:33Z&ske=2023-11-11T21:40:33Z&sks=b&skv=2021-08-06&sig=Zfe1idkzctTmYRFuiX%2BvaaQ4T1a/JiT%2Bo18nx0ckEys%3D
   response:
     body:
       string: !!binary |
@@ -231,27 +234,27 @@ interactions:
       Content-Length:
       - '3147977'
       Content-MD5:
-      - OIbAh22+G9uIcgh+vKmxHg==
+      - Zcmh8b65yLROOwXkF5oDqA==
       Content-Type:
       - image/png
       Date:
-      - Thu, 09 Nov 2023 17:03:54 GMT
+      - Sat, 11 Nov 2023 06:04:27 GMT
       Etag:
-      - '"0x8DBE145DAB6F496"'
+      - '"0x8DBE27C0F7B5D38"'
       Last-Modified:
-      - Thu, 09 Nov 2023 17:03:54 GMT
+      - Sat, 11 Nov 2023 06:04:26 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       x-ms-blob-type:
       - BlockBlob
       x-ms-creation-time:
-      - Thu, 09 Nov 2023 17:03:54 GMT
+      - Sat, 11 Nov 2023 06:04:26 GMT
       x-ms-lease-state:
       - available
       x-ms-lease-status:
       - unlocked
       x-ms-request-id:
-      - 9b37b0a9-e01e-0008-7c2e-13da03000000
+      - 5285f8cf-501e-0033-1a64-14985d000000
       x-ms-server-encrypted:
       - 'true'
       x-ms-version:
@@ -265,14 +268,14 @@ interactions:
     method: POST
     uri: https://api.openai.com/v1/images/edits
   response:
-    content: "{\n  \"created\": 1699549450,\n  \"data\": [\n    {\n      \"url\":
-      \"https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-ak4R2e1PHCzhPIQofFaQ2qFq.png?st=2023-11-09T16%3A04%3A10Z&se=2023-11-09T18%3A04%3A10Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T14%3A22%3A09Z&ske=2023-11-10T14%3A22%3A09Z&sks=b&skv=2021-08-06&sig=w7BI%2BcSQBoVf6VbgDqd0oHTWgaeXuFPRHD2vJ%2BVSUSw%3D\"\n
+    content: "{\n  \"created\": 1699682783,\n  \"data\": [\n    {\n      \"url\":
+      \"https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-6B4MXw2UtWjYeDP293dCUwRs.png?st=2023-11-11T05%3A06%3A23Z&se=2023-11-11T07%3A06%3A23Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-10T21%3A41%3A52Z&ske=2023-11-11T21%3A41%3A52Z&sks=b&skv=2021-08-06&sig=O3HO6xzqOy1Ev9s1LRAUM/RGY7YQceEp1%2BpUL3IFtdI%3D\"\n
       \   }\n  ]\n}\n"
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 8237a1d00cdf14d8-LAX
+      - 824458ff3ace2b0a-SLC
       Connection:
       - keep-alive
       Content-Encoding:
@@ -280,7 +283,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 09 Nov 2023 17:04:10 GMT
+      - Sat, 11 Nov 2023 06:06:23 GMT
       Server:
       - cloudflare
       Transfer-Encoding:
@@ -292,20 +295,20 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '11285'
+      - '11852'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=15724800; includeSubDomains
       x-request-id:
-      - b36da429923e2a220a93ce626a426b6e
+      - d1430cdadfa9b1db6788d0dd43498ed3
     http_version: HTTP/1.1
     status_code: 200
 - request:
     body: null
     headers: {}
     method: GET
-    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-ak4R2e1PHCzhPIQofFaQ2qFq.png?st=2023-11-09T16:04:10Z&se=2023-11-09T18:04:10Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-09T14:22:09Z&ske=2023-11-10T14:22:09Z&sks=b&skv=2021-08-06&sig=w7BI%2BcSQBoVf6VbgDqd0oHTWgaeXuFPRHD2vJ%2BVSUSw%3D
+    uri: https://oaidalleapiprodscus.blob.core.windows.net/private/org-Y8p7JvJRqUWoK9eRSiJagOLS/user-vp5FxwAbUfaHnpGNwGpTLCHk/img-6B4MXw2UtWjYeDP293dCUwRs.png?st=2023-11-11T05:06:23Z&se=2023-11-11T07:06:23Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-11-10T21:41:52Z&ske=2023-11-11T21:41:52Z&sks=b&skv=2021-08-06&sig=O3HO6xzqOy1Ev9s1LRAUM/RGY7YQceEp1%2BpUL3IFtdI%3D
   response:
     body:
       string: !!binary |
@@ -318,27 +321,27 @@ interactions:
       Content-Length:
       - '3147977'
       Content-MD5:
-      - M59d0cH3PlWhSf3c+TtYhQ==
+      - JsYZLqsuPy/1H8m8qP9Zlg==
       Content-Type:
       - image/png
       Date:
-      - Thu, 09 Nov 2023 17:04:11 GMT
+      - Sat, 11 Nov 2023 06:06:23 GMT
       Etag:
-      - '"0x8DBE145E4852226"'
+      - '"0x8DBE27C551BF2BE"'
       Last-Modified:
-      - Thu, 09 Nov 2023 17:04:10 GMT
+      - Sat, 11 Nov 2023 06:06:23 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       x-ms-blob-type:
       - BlockBlob
       x-ms-creation-time:
-      - Thu, 09 Nov 2023 17:04:10 GMT
+      - Sat, 11 Nov 2023 06:06:23 GMT
       x-ms-lease-state:
       - available
       x-ms-lease-status:
       - unlocked
       x-ms-request-id:
-      - 57ffeae6-501e-005e-5e2e-133273000000
+      - 419c0fa8-701e-0042-4f65-14ea64000000
       x-ms-server-encrypted:
       - 'true'
       x-ms-version:

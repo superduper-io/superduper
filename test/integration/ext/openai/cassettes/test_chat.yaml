@@ -94,50 +94,53 @@ interactions:
       \     \"id\": \"code-search-babbage-text-001\",\n      \"object\": \"model\",\n
       \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
       \   {\n      \"id\": \"tts-1-hd-1106\",\n      \"object\": \"model\",\n      \"created\":
-      1699053533,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-instruct-0914\",\n
+      1699053533,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"whisper-1\",\n
+      \     \"object\": \"model\",\n      \"created\": 1677532384,\n      \"owned_by\":
+      \"openai-internal\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-instruct-0914\",\n
       \     \"object\": \"model\",\n      \"created\": 1694122472,\n      \"owned_by\":
       \"system\"\n    },\n    {\n      \"id\": \"ada\",\n      \"object\": \"model\",\n
       \     \"created\": 1649357491,\n      \"owned_by\": \"openai\"\n    },\n    {\n
       \     \"id\": \"gpt-3.5-turbo-0613\",\n      \"object\": \"model\",\n      \"created\":
       1686587434,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"text-ada-001\",\n
       \     \"object\": \"model\",\n      \"created\": 1649364042,\n      \"owned_by\":
-      \"openai\"\n    },\n    {\n      \"id\": \"ada-similarity\",\n      \"object\":
-      \"model\",\n      \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n
-      \   },\n    {\n      \"id\": \"code-search-ada-code-001\",\n      \"object\":
-      \"model\",\n      \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n
-      \   },\n    {\n      \"id\": \"text-similarity-ada-001\",\n      \"object\":
-      \"model\",\n      \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n
-      \   },\n    {\n      \"id\": \"gpt-3.5-turbo-0301\",\n      \"object\": \"model\",\n
+      \"openai\"\n    },\n    {\n      \"id\": \"canary-whisper\",\n      \"object\":
+      \"model\",\n      \"created\": 1699656801,\n      \"owned_by\": \"system\"\n
+      \   },\n    {\n      \"id\": \"ada-similarity\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"code-search-ada-code-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172507,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"text-similarity-ada-001\",\n      \"object\": \"model\",\n
+      \     \"created\": 1651172505,\n      \"owned_by\": \"openai-dev\"\n    },\n
+      \   {\n      \"id\": \"gpt-3.5-turbo-0301\",\n      \"object\": \"model\",\n
       \     \"created\": 1677649963,\n      \"owned_by\": \"openai\"\n    },\n    {\n
       \     \"id\": \"gpt-3.5-turbo-instruct\",\n      \"object\": \"model\",\n      \"created\":
       1692901427,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-0613\",\n
       \     \"object\": \"model\",\n      \"created\": 1686588896,\n      \"owned_by\":
-      \"openai\"\n    },\n    {\n      \"id\": \"whisper-1\",\n      \"object\": \"model\",\n
-      \     \"created\": 1677532384,\n      \"owned_by\": \"openai-internal\"\n    },\n
-      \   {\n      \"id\": \"text-search-curie-doc-001\",\n      \"object\": \"model\",\n
-      \     \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n    },\n
-      \   {\n      \"id\": \"text-davinci-003\",\n      \"object\": \"model\",\n      \"created\":
-      1669599635,\n      \"owned_by\": \"openai-internal\"\n    },\n    {\n      \"id\":
-      \"text-curie-001\",\n      \"object\": \"model\",\n      \"created\": 1649364043,\n
-      \     \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"curie\",\n      \"object\":
-      \"model\",\n      \"created\": 1649359874,\n      \"owned_by\": \"openai\"\n
-      \   },\n    {\n      \"id\": \"gpt-4-0314\",\n      \"object\": \"model\",\n
-      \     \"created\": 1687882410,\n      \"owned_by\": \"openai\"\n    },\n    {\n
-      \     \"id\": \"canary-tts\",\n      \"object\": \"model\",\n      \"created\":
-      1699492935,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"tts-1\",\n
-      \     \"object\": \"model\",\n      \"created\": 1681940951,\n      \"owned_by\":
-      \"openai-internal\"\n    },\n    {\n      \"id\": \"davinci\",\n      \"object\":
-      \"model\",\n      \"created\": 1649359874,\n      \"owned_by\": \"openai\"\n
-      \   },\n    {\n      \"id\": \"dall-e-2\",\n      \"object\": \"model\",\n      \"created\":
-      1698798177,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"tts-1-1106\",\n
-      \     \"object\": \"model\",\n      \"created\": 1699053241,\n      \"owned_by\":
-      \"system\"\n    },\n    {\n      \"id\": \"dall-e-3\",\n      \"object\": \"model\",\n
-      \     \"created\": 1698785189,\n      \"owned_by\": \"system\"\n    }\n  ]\n}\n"
+      \"openai\"\n    },\n    {\n      \"id\": \"text-search-curie-doc-001\",\n      \"object\":
+      \"model\",\n      \"created\": 1651172509,\n      \"owned_by\": \"openai-dev\"\n
+      \   },\n    {\n      \"id\": \"text-davinci-003\",\n      \"object\": \"model\",\n
+      \     \"created\": 1669599635,\n      \"owned_by\": \"openai-internal\"\n    },\n
+      \   {\n      \"id\": \"text-curie-001\",\n      \"object\": \"model\",\n      \"created\":
+      1649364043,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"curie\",\n
+      \     \"object\": \"model\",\n      \"created\": 1649359874,\n      \"owned_by\":
+      \"openai\"\n    },\n    {\n      \"id\": \"gpt-4-0314\",\n      \"object\":
+      \"model\",\n      \"created\": 1687882410,\n      \"owned_by\": \"openai\"\n
+      \   },\n    {\n      \"id\": \"canary-tts\",\n      \"object\": \"model\",\n
+      \     \"created\": 1699492935,\n      \"owned_by\": \"system\"\n    },\n    {\n
+      \     \"id\": \"tts-1\",\n      \"object\": \"model\",\n      \"created\": 1681940951,\n
+      \     \"owned_by\": \"openai-internal\"\n    },\n    {\n      \"id\": \"davinci\",\n
+      \     \"object\": \"model\",\n      \"created\": 1649359874,\n      \"owned_by\":
+      \"openai\"\n    },\n    {\n      \"id\": \"dall-e-2\",\n      \"object\": \"model\",\n
+      \     \"created\": 1698798177,\n      \"owned_by\": \"system\"\n    },\n    {\n
+      \     \"id\": \"tts-1-1106\",\n      \"object\": \"model\",\n      \"created\":
+      1699053241,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"dall-e-3\",\n
+      \     \"object\": \"model\",\n      \"created\": 1698785189,\n      \"owned_by\":
+      \"system\"\n    }\n  ]\n}\n"
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 82379c11ffe827d0-SLC
+      - 824444ffddd71b14-PHX
       Connection:
       - keep-alive
       Content-Encoding:
@@ -145,12 +148,12 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 09 Nov 2023 17:00:02 GMT
+      - Sat, 11 Nov 2023 05:52:31 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=Nmv4txthu1EZQVx1cFLNoveHh9X1SZJVLmBf0ze6aaU-1699549202-0-AaR1hQe8Vvxc4FBG/8DshpJ+K7zMQkSQTfXp4tMqGsg6SlBFVhnwH726Q0BwR+jqO5PvPYN9PLseSaJyGknTywM=;
-        path=/; expires=Thu, 09-Nov-23 17:30:02 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=5DRB8Kk3OpRLC8NRu9CzI_kg8co7cTr36NuyWJS6BU0-1699681951-0-AbCvEg78yN5PJ9VF8/OE2Q7Vce7CSlqprIYzgShAnLUbVooACsJFN2vWUkayZANMIi6xKcIX6sXwmkmFULdpYtg=;
+        path=/; expires=Sat, 11-Nov-23 06:22:31 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -159,13 +162,13 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       openai-processing-ms:
-      - '181'
+      - '221'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
       - max-age=15724800; includeSubDomains
       x-request-id:
-      - 532bead67a94182301c5ffd8ee555597
+      - bba1d3edf52a1ac076f887bcef3d2d53
     http_version: HTTP/1.1
     status_code: 200
 - request:
@@ -174,17 +177,17 @@ interactions:
     method: POST
     uri: https://api.openai.com/v1/chat/completions
   response:
-    content: "{\n  \"id\": \"chatcmpl-8J2fr6DY4jPOwSoM6JUiLaG9BqHxB\",\n  \"object\":
-      \"chat.completion\",\n  \"created\": 1699549203,\n  \"model\": \"gpt-3.5-turbo-0613\",\n
+    content: "{\n  \"id\": \"chatcmpl-8JbCyV364dcLxZ7dKKfEUK5DKLi6c\",\n  \"object\":
+      \"chat.completion\",\n  \"created\": 1699681952,\n  \"model\": \"gpt-3.5-turbo-0613\",\n
       \ \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\":
-      \"assistant\",\n        \"content\": \"Hello! How can I assist you today?\"\n
+      \"assistant\",\n        \"content\": \"Hello there! How can I assist you today?\"\n
       \     },\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\":
-      11,\n    \"completion_tokens\": 9,\n    \"total_tokens\": 20\n  }\n}\n"
+      11,\n    \"completion_tokens\": 10,\n    \"total_tokens\": 21\n  }\n}\n"
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 82379c1b4df52c06-SLC
+      - 824445086ac931a3-LAX
       Cache-Control:
       - no-cache, must-revalidate
       Connection:
@@ -194,12 +197,12 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 09 Nov 2023 17:00:15 GMT
+      - Sat, 11 Nov 2023 05:52:33 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=5GMlzcy4nD5iMEbPLvf8eJ.3sZD29s6Nzwvi_2jeOwI-1699549215-0-Aekr86Z48ere+WyVlOqWyg+bUYyom46ZFTUs4AXNzlDgQWozPmaVJ9iMPQxEyOw6hCuAhAcG6gDgqXCctG20WyQ=;
-        path=/; expires=Thu, 09-Nov-23 17:30:15 GMT; domain=.api.openai.com; HttpOnly;
+      - __cf_bm=mbAITfWCIL9QLsQI33rWs9Tb_qDEJ.4SSzLN21nvXsw-1699681953-0-AUVpjdlcTcCVZW3Nf2E2BklaKtgqGzZ7XJC2GKZcfUE/ohPi0QDeqB3tWqAAMKoHf7jBqPgfdIBaUxBinz1LTw0=;
+        path=/; expires=Sat, 11-Nov-23 06:22:33 GMT; domain=.api.openai.com; HttpOnly;
         Secure; SameSite=None
       Transfer-Encoding:
       - chunked
@@ -212,7 +215,7 @@ interactions:
       openai-organization:
       - user-vp5fxwabufahnpgnwgptlchk
       openai-processing-ms:
-      - '11562'
+      - '936'
       openai-version:
       - '2020-10-01'
       strict-transport-security:
@@ -230,7 +233,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 14ms
       x-request-id:
-      - f24c0967d41170f831e11b104e065755
+      - 14d4b5667aa4054b92aa9c7a767cc026
     http_version: HTTP/1.1
     status_code: 200
 version: 1

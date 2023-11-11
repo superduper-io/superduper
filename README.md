@@ -45,7 +45,7 @@
 
 
 ---
-**SuperDuperDB isn't just another database; it's a framework that integrates AI models and APIs directly into your existing database.**
+**SuperDuperDB isn't just another database; it's a framework that integrates AI models and APIs directly into your data infrastructure.**
 With SuperDuperDB, you can achieve real-time inference, model training, and vector search effortlessly, eliminating the need for complex MLOps pipelines and specialized vector databases—all using Python!
 
 **Key Features:**

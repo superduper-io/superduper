@@ -13,6 +13,7 @@ from superduperdb.ext.openai.model import (
     OpenAIEmbedding,
     OpenAIImageCreation,
     OpenAIImageEdit,
+    _available_models,
 )
 
 PNG_BYTE_SIGNATURE = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
@@ -78,7 +79,13 @@ vcr = vcr.VCR(
     cassette_library_dir=CASSETTE_DIR,
     before_record_request=before_record_request,
     before_record_response=before_record_response,
+    record_on_exception=False,
 )
+
+
+@pytest.fixture(autouse=True)
+def mock_lru_cache():
+    _available_models.cache_clear()
 
 
 @vcr.use_cassette()

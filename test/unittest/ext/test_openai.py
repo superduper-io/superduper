@@ -1,4 +1,5 @@
 import json
+import os
 
 import openai
 import pytest
@@ -8,9 +9,18 @@ from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
-from superduperdb.ext.openai.model import OpenAIChatCompletion, OpenAIEmbedding
+from superduperdb.ext.openai.model import (
+    OpenAIChatCompletion,
+    OpenAIEmbedding,
+    _available_models,
+)
 
 CASSETTE_DIR = 'test/unittest/ext/cassettes'
+
+
+@pytest.fixture(autouse=True)
+def mock_lru_cache():
+    _available_models.cache_clear()
 
 
 @pytest.fixture
@@ -19,18 +29,21 @@ def open_ai_with_rhymes(local_empty_db, monkeypatch):
         data = json.load(f)
     for i, r in enumerate(data):
         data[i] = Document({'story': r.replace('\n', ' ')})
-    monkeypatch.setattr(openai, 'api_key', 'sk-TopSecret')
-    monkeypatch.setenv('OPENAI_API_KEY', 'sk-TopSecret')
+
+    if os.getenv('OPENAI_API_KEY') is None:
+        monkeypatch.setattr(openai, 'api_key', 'sk-TopSecret')
+        monkeypatch.setenv('OPENAI_API_KEY', 'sk-TopSecret')
     local_empty_db.execute(Collection('openai').insert_many(data))
     yield local_empty_db
     local_empty_db.remove('model', 'gpt-3.5-turbo', force=True)
     local_empty_db.remove('model', 'text-embedding-ada-002', force=True)
 
 
-# TODO: Mock OpenAI API instead of using VCR
+# TODO: Mock OpenAI API instead of using VCR in unittest
 @vcr.use_cassette(
     f'{CASSETTE_DIR}/test_retrieve_with_similar_context.yaml',
     filter_headers=['authorization'],
+    record_on_exception=False,
 )
 def test_retrieve_with_similar_context(open_ai_with_rhymes):
     db = open_ai_with_rhymes

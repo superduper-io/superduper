@@ -52,7 +52,7 @@ With SuperDuperDB, you can achieve real-time inference, model training, and vect
 
 - **Scalable Model Training:** Utilize data and computational optimizations to train AI models on large, diverse datasets while ensuring optimal performance and ease of management.
 - **Streaming Inference Pipelines:** Continuously make predictions as new data arrive, propagating results to downstream applications in real-time. 
-- **Feature Store:** Store model outputs alongside inputs in any data format, establishing a robust feature store for enhanced data and model management.
+- **Feature Store:** Establish a centralized repository for managing your data's features (attributes or characteristics), along with the corresponding results produced by AI models.
 - **Vector Database:** Streamline storage, retrieval, and manipulation of vectors, making it easier for users to work with AI models that rely on similarity searches. 
  
 

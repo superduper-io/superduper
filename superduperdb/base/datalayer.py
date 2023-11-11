@@ -114,7 +114,7 @@ class Datalayer:
         assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 
         if self.cdc.running:
-            # In this case loading has already happened on disk via CDC mechanism
+            # In this case, loading has already happened on disk via CDC mechanism
             return vector_comparison
 
         if backfill or s.CFG.mode != 'production':
@@ -296,7 +296,7 @@ class Datalayer:
         """
         Apply model to input.
 
-        :param model: model identifier
+        :param model_name: model identifier
         :param input: input to be passed to the model.
                       Must be possible to encode with registered encoders
         :param context_select: select query object to provide context

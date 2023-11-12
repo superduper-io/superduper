@@ -72,7 +72,6 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         logging.error("Error initializing to DataBackend Client:", str(e))
         sys.exit(1)
 
-
     # Build a Datalayer object with the specified components.
     db = Datalayer(
         databackend=databackend,

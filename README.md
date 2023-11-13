@@ -59,7 +59,7 @@ With SuperDuperDB, you can achieve real-time inference, model training, and vect
  
 
 <p align="center">
-  <img width="100%" src="docs/hr/static/img/superduperdb.gif">
+  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/img/superduperdb.gif">
 </p>
 
 
@@ -169,17 +169,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/image-search.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/video-search.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/semantic-search.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
       </a>
     </td>
   </tr>
@@ -197,17 +197,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>     
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/document-search.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/machine-learning.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/transfer-learning.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
       </a>
     </td>
   </tr>

@@ -1,5 +1,4 @@
 import random
-import uuid
 
 import numpy as np
 import pytest
@@ -112,10 +111,9 @@ def fake_updates(database_with_default_encoders_and_model):
 
 @pytest.fixture
 def local_dask_client(monkeypatch, request):
-    db_name = getattr(request, 'param', uuid.uuid4().hex)
-    data_backend = (
-        f'mongodb://testmongodbuser:testmongodbpassword@localhost:27018/{db_name}'
-    )
+    db_name = "test_db"
+    data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
+
     monkeypatch.setenv('SUPERDUPERDB_DATA_BACKEND', data_backend)
     client = dask_client(CFG.cluster, local=True)
     yield client

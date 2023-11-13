@@ -3,6 +3,7 @@ import typing as t
 from contextlib import contextmanager
 
 import click
+from bson import ObjectId
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -11,12 +12,14 @@ from superduperdb import logging
 from superduperdb.backends.base.metadata import MetaDataStore, NonExistentMetadataError
 from superduperdb.base import exceptions
 from superduperdb.base.serializable import Serializable
+from superduperdb.components.component import Component as _Component
 from superduperdb.misc.colors import Colors
 
 if t.TYPE_CHECKING:
     from superduperdb.backends.base.query import Select
 
 Base = declarative_base()
+DEFAULT_LENGTH = 255
 
 
 class DictMixin:
@@ -27,54 +30,54 @@ class DictMixin:
 class QueryID(Base):  # type: ignore[valid-type, misc]
     __tablename__ = 'query_id_table'
 
-    query_id = Column(String, primary_key=True)
+    query_id = Column(String(DEFAULT_LENGTH), primary_key=True)
     query = Column(JSON)
-    model = Column(String)
+    model = Column(String(DEFAULT_LENGTH))
 
 
 class Job(Base, DictMixin):  # type: ignore[valid-type, misc]
     __tablename__ = 'job'
 
-    identifier = Column(String, primary_key=True)
-    component_identifier = Column(String)
-    type_id = Column(String)
+    identifier = Column(String(DEFAULT_LENGTH), primary_key=True)
+    component_identifier = Column(String(DEFAULT_LENGTH))
+    type_id = Column(String(DEFAULT_LENGTH))
     info = Column(JSON)
     time = Column(DateTime)
-    status = Column(String)
+    status = Column(String(DEFAULT_LENGTH))
     args = Column(JSON)
     kwargs = Column(JSON)
-    method_name = Column(String)
+    method_name = Column(String(DEFAULT_LENGTH))
     stdout = Column(JSON)
     stderr = Column(JSON)
-    cls = Column(String)
+    cls = Column(String(DEFAULT_LENGTH))
 
 
 class ParentChildAssociation(Base):  # type: ignore[valid-type, misc]
     __tablename__ = 'parent_child_association'
 
-    parent_id = Column(String, primary_key=True)
-    child_id = Column(String, primary_key=True)
+    parent_id = Column(String(DEFAULT_LENGTH), primary_key=True)
+    child_id = Column(String(DEFAULT_LENGTH), primary_key=True)
 
 
 class Component(Base, DictMixin):  # type: ignore[valid-type, misc]
     __tablename__ = 'component'
 
-    id = Column(String, primary_key=True)
-    identifier = Column(String)
+    id = Column(String(DEFAULT_LENGTH), primary_key=True)
+    identifier = Column(String(DEFAULT_LENGTH))
     version = Column(Integer)
     hidden = Column(Boolean)
-    type_id = Column(String)
-    cls = Column(String)
-    module = Column(String)
+    type_id = Column(String(DEFAULT_LENGTH))
+    cls = Column(String(DEFAULT_LENGTH))
+    module = Column(String(DEFAULT_LENGTH))
     dict = Column(JSON)
 
     # Define the parent-child relationship
-    parents = relationship(
+    children = relationship(
         "Component",
         secondary=ParentChildAssociation.__table__,
         primaryjoin=id == ParentChildAssociation.parent_id,
         secondaryjoin=id == ParentChildAssociation.child_id,
-        backref="children",
+        backref="parents",
         cascade="all, delete",
     )
 
@@ -82,8 +85,8 @@ class Component(Base, DictMixin):  # type: ignore[valid-type, misc]
 class Meta(Base, DictMixin):  # type: ignore[valid-type, misc]
     __tablename__ = 'meta'
 
-    key = Column(String, primary_key=True)
-    value = Column(String)
+    key = Column(String(DEFAULT_LENGTH), primary_key=True)
+    value = Column(String(DEFAULT_LENGTH))
 
 
 class SQLAlchemyMetadata(MetaDataStore):
@@ -145,16 +148,14 @@ class SQLAlchemyMetadata(MetaDataStore):
     def component_version_has_parents(
         self, type_id: str, identifier: str, version: int
     ):
+        unique_id = _Component.make_unique_id(type_id, identifier, version)
         with self.session_context() as session:
             return (
-                session.query(Component)
+                session.query(ParentChildAssociation)
                 .filter(
-                    Component.type_id == type_id,
-                    Component.identifier == identifier,
-                    Component.version == version,
+                    ParentChildAssociation.child_id == unique_id,
                 )
                 .first()
-                .parent_id
                 is not None
             )
 
@@ -226,24 +227,25 @@ class SQLAlchemyMetadata(MetaDataStore):
                     .first()
                 )
 
-            return res.as_dict()
+            return res.as_dict() if res else None
 
     def get_component_version_parents(self, unique_id: str):
         with self.session_context() as session:
-            components = (
-                session.query(Component)
+            assocations = (
+                session.query(ParentChildAssociation)
                 .filter(
-                    Component.id == unique_id,
+                    ParentChildAssociation.child_id == unique_id,
                 )
                 .all()
             )
-            return sum([c.parents for c in components], [])
+            parents = [a.parent_id for a in assocations]
+            return parents
 
     def get_latest_version(
         self, type_id: str, identifier: str, allow_hidden: bool = False
     ):
         with self.session_context() as session:
-            return (
+            component = (
                 session.query(Component)
                 .filter(
                     Component.type_id == type_id,
@@ -252,8 +254,12 @@ class SQLAlchemyMetadata(MetaDataStore):
                 )
                 .order_by(Component.version.desc())
                 .first()
-                .version
             )
+            if component is None:
+                raise FileNotFoundError(
+                    f'Can\'t find {type_id}: {identifier} in metadata'
+                )
+            return component.version
 
     def hide_component_version(self, type_id: str, identifier: str, version: int):
         with self.session_context() as session:
@@ -269,7 +275,7 @@ class SQLAlchemyMetadata(MetaDataStore):
                 Component.type_id == type_id,
                 Component.identifier == identifier,
                 Component.version == version,
-            ).update({'dict': info})
+            ).update(info)
 
     def replace_component(
         self,
@@ -290,7 +296,7 @@ class SQLAlchemyMetadata(MetaDataStore):
     def show_components(self, type_id: t.Optional[str] = None, **kwargs):
         if type_id is not None:
             with self.session_context() as session:
-                return [
+                identifiers = [
                     c.identifier
                     for c in session.query(Component)
                     .filter(Component.type_id == type_id)
@@ -298,7 +304,9 @@ class SQLAlchemyMetadata(MetaDataStore):
                 ]
         else:
             with self.session_context() as session:
-                return [c.identifier for c in session.query(Component).all()]
+                identifiers = [c.identifier for c in session.query(Component).all()]
+        identifiers = sorted(set(identifiers), key=lambda x: identifiers.index(x))
+        return identifiers
 
     def show_component_versions(self, type_id: str, identifier: str):
         with self.session_context() as session:
@@ -331,7 +339,9 @@ class SQLAlchemyMetadata(MetaDataStore):
     def create_job(self, info: t.Dict):
         try:
             with self.session_context() as session:
-                session.add(Job(**info))
+                job = Job(**info)
+                convert_object_id_type(job)
+                session.add(job)
         except Exception as e:
             raise exceptions.MetaDataStoreJobException(
                 'Error while creating job in metadata store'

@@ -150,14 +150,15 @@ def test_add_child(local_empty_db):
 
     child_component_2 = TestComponent(identifier='child-2')
     local_empty_db.add(child_component_2)
-    local_empty_db.add(component_2)
-    assert local_empty_db.show('test-component', 'test-2') == [0]
+    component_3 = TestComponent(identifier='test-3', child='child-2')
+    local_empty_db.add(component_3)
+    assert local_empty_db.show('test-component', 'test-3') == [0]
     assert local_empty_db.show('test-component', 'child-2') == [0]
 
     parents = local_empty_db.metadata.get_component_version_parents(
         child_component_2.unique_id
     )
-    assert parents == [component_2.unique_id]
+    assert parents == [component_3.unique_id]
 
 
 def test_add(local_empty_db):
@@ -211,9 +212,11 @@ def test_remove_component_with_parent(local_empty_db):
             child=TestComponent(identifier='test_3_child', version=0),
         )
     )
+
+    # local_empty_db._remove_component_version('test-component', 'test_3_child', 0)
     with pytest.raises(Exception) as e:
         local_empty_db._remove_component_version('test-component', 'test_3_child', 0)
-        assert 'test_3_parent' in str(e.value)
+    assert 'is involved in other components' in str(e)
 
 
 def test_remove_component_with_clean_up(local_empty_db):
@@ -226,7 +229,7 @@ def test_remove_component_with_clean_up(local_empty_db):
         local_empty_db._remove_component_version(
             'test-component', 'test_clean_up', 0, force=True
         )
-        assert 'test_clean_up' in str(e.value)
+    assert 'cleanup' in str(e)
 
 
 def test_remove_component_from_data_layer_dict(local_empty_db):
@@ -284,7 +287,7 @@ def test_remove_multi_version(local_empty_db):
 def test_remove_not_exist_component(local_empty_db):
     with pytest.raises(exceptions.ComponentException) as e:
         local_empty_db.remove('test-component', 'test', 0, force=True)
-        assert 'test' in str(e.value)
+    assert 'test' in str(e)
 
     local_empty_db.remove('test-component', 'test', force=True)
 
@@ -305,7 +308,7 @@ def test_show(local_empty_db):
 
     with pytest.raises(ValueError) as e:
         local_empty_db.show('test-component', version=1)
-        assert 'test-component' in str(e.value) and '1' in str(e.value)
+    assert 'None' in str(e) and '1' in str(e)
 
     assert sorted(local_empty_db.show('test-component')) == ['a1', 'a2', 'a3', 'b']
     assert sorted(local_empty_db.show('encoder')) == ['c1', 'c2']
@@ -498,12 +501,10 @@ def test_replace(local_empty_db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_compound_component(local_empty_db):
-    t = tensor(torch.float, shape=(32,))
-
     m = TorchModel(
         object=torch.nn.Linear(16, 32),
         identifier='my-test-module',
-        encoder=t,
+        encoder=tensor(torch.float, shape=(32,)),
     )
 
     local_empty_db.add(m)
@@ -519,11 +520,11 @@ def test_compound_component(local_empty_db):
         TorchModel(
             object=torch.nn.Linear(16, 32),
             identifier='my-test-module',
-            encoder=t,
+            encoder=tensor(torch.float, shape=(32,)),
         )
     )
     assert local_empty_db.show('model', 'my-test-module') == [0, 1]
-    assert local_empty_db.show('encoder', 'torch.float32[32]') == [0]
+    assert local_empty_db.show('encoder', 'torch.float32[32]') == [0, 1]
 
     m = local_empty_db.load(type_id='model', identifier='my-test-module')
     assert isinstance(m.encoder, Encoder)

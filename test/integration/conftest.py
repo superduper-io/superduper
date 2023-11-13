@@ -115,6 +115,10 @@ def local_dask_client(monkeypatch, request):
     data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
 
     monkeypatch.setenv('SUPERDUPERDB_DATA_BACKEND', data_backend)
-    client = dask_client(CFG.cluster, local=True)
+    client = dask_client(CFG.cluster.dask_scheduler, local=False)
+
     yield client
-    client.shutdown()
+
+    client.disconnect()
+
+   # logging.success("Dask Client disconnected from ", scheduler_uri)

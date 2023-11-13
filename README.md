@@ -17,24 +17,17 @@
 
 
 <p align="center">
-	<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">
-    <img src="https://img.shields.io/badge/slack-superduperdb-8A2BE2?logo=slack" alt="slack">
-    </a>
-    <a  href="https://twitter.com/superduperdb">
-<img  src="https://img.shields.io/badge/Twitter - Follow superduperdb-1DA1F2?logo=twitter"  alt="Twitter">
-</a>
-<a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">
-    <img src="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main/graph/badge.svg" alt="Coverage">
-</a>
-<a href="https://pypi.org/project/superduperdb">
-    <img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version">
-</a>
-<a href="https://pypi.org/project/superduperdb">
-    <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
-</a>    
-<a href="https://en.wikipedia.org/wiki/Apache_License#Apache_License_2.0">
-    <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg", alt="Apache License">
-</a> 
+  <a href="https://superduperdb.com"><img src="https://img.shields.io/badge/status-alpha-orange" alt="Status - Alpha"></a>	
+  <a href="https://github.com/superduperdb/superduperdb/actions"><img src="https://github.com/superduperdb/superduperdb/workflows/CI/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/superduperdb/superduperdb/branch/main"><img src="https://codecov.io/gh/superduperdb/superduperdb/branch/main/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
+  <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions"></a>      
+</p>
+<p align="center">  
+  <a href="https://github.com/superduperdb/superduperdb/stargazers/"><img src="https://img.shields.io/github/stars/superduperdb/superduperdb?style=social&label=Star&maxAge=2592000" /></a>		
+  <a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
+  <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><img src="https://img.shields.io/badge/slack-superduperdb-8A2BE2?logo=slack" alt="slack"></a>
+  <a href="https://github.com/superduperdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>		
 </p>
 
 

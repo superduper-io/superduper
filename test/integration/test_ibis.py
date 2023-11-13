@@ -8,7 +8,7 @@ import torchvision
 from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.backends.ibis.data_backend import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
-from superduperdb.backends.ibis.query import IbisTable, RawSQL
+from superduperdb.backends.ibis.query import RawSQL, Table
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document as D
@@ -64,7 +64,7 @@ def end2end_workflow(ibis_db, memory_table=False):
     schema = Schema(
         identifier='my_table',
         fields={
-            'id': dtype('int32'),
+            'id': dtype('str'),
             'health': dtype('int32'),
             'age': dtype('int32'),
             'image': pil_image,
@@ -79,7 +79,7 @@ def end2end_workflow(ibis_db, memory_table=False):
         {'id': '4', 'health': 1, 'age': 28, 'image': im},
     ]
 
-    t = IbisTable(identifier='my_table', schema=schema)
+    t = Table(identifier='my_table', schema=schema)
 
     db.add(t)
 
@@ -158,13 +158,7 @@ def end2end_workflow(ibis_db, memory_table=False):
     )
 
     # Build query to get the results back
-    queries = db.metadata.get_model_queries('resnet18')
-    resnet_query_id = queries[0]['query_id']
-    q = (
-        t.outputs('image', 'resnet18', resnet_query_id)
-        .select('id', 'image', 'age')
-        .filter(t.age > 25)
-    )
+    q = t.outputs('image', 'resnet18').select('id', 'image', 'age').filter(t.age > 25)
 
     # Get the results
     result = list(q.execute(db))
@@ -172,12 +166,10 @@ def end2end_workflow(ibis_db, memory_table=False):
     assert 'image' in result[0].unpack()
 
     # Get vector results
-    queries = db.metadata.get_model_queries('model_linear_a')
-    query_id = queries[0]['query_id']
     q = (
         t.select('id', 'image', 'age')
         .filter(t.age > 25)
-        .outputs('image', 'model_linear_a', query_id)
+        .outputs('image', 'model_linear_a')
     )
 
     # Get the results
@@ -190,10 +182,10 @@ def end2end_workflow(ibis_db, memory_table=False):
         rows = list(db.execute(query))
         assert 'id' in list(rows[0].unpack().keys())
         assert [r.unpack() for r in rows] == [
-            {'id': 1},
-            {'id': 2},
-            {'id': 3},
-            {'id': 4},
+            {'id': '1'},
+            {'id': '2'},
+            {'id': '3'},
+            {'id': '4'},
         ]
 
 
@@ -210,7 +202,7 @@ def test_nested_query(ibis_sqllite_db):
         },
     )
 
-    t = IbisTable(identifier='my_table', schema=schema)
+    t = Table(identifier='my_table', schema=schema)
 
     db.add(t)
 

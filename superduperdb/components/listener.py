@@ -86,7 +86,8 @@ class Listener(Component):
             else:
                 self.identifier = f'{self.model.identifier}/{self.id_key}'
         self.features = {}
-        if hasattr(self.select, 'features'):
+
+        if 'features' in dir(self.select):
             self.features = self.select.features
 
     @override

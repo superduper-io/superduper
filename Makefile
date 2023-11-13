@@ -111,7 +111,7 @@ fix-and-test: ##  Lint the code before testing
 	# Check for unused dependencies
 	#deptry ./
 
-test-and-fix: testenv_init ## Test the code before linting
+test-and-fix: ## Test the code before linting
 	# Linting
 	mypy superduperdb
 	# Unit testing

@@ -13,6 +13,7 @@ from dask.distributed import Future
 import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.backends import vector_searcher_implementations
+from superduperdb.backends.ibis.query import Table
 from superduperdb.base import serializable
 from superduperdb.base.document import Document
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
@@ -332,6 +333,8 @@ class Datalayer:
             return self.insert(query, *args, **kwargs)
         if isinstance(query, Select):
             return self.select(query, *args, **kwargs)
+        if isinstance(query, Table):
+            return self.select(query.to_query(), *args, **kwargs)
         if isinstance(query, Update):
             return self.update(query, *args, **kwargs)
         if isinstance(query, RawQuery):

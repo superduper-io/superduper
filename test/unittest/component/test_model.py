@@ -239,20 +239,6 @@ def test_pm_predict(predict_mixin):
         predict_mixin.predict('x', db, select, distributed=True)
         predict_func.assert_called_once()
 
-    with patch.object(db.metadata, 'add_query') as add_query, patch.object(
-        predict_mixin, '_predict_with_select'
-    ) as predict_func:
-        predict_mixin.predict('x', db, select)
-        add_query.assert_called_once_with(select, predict_mixin.identifier)
-        predict_func.assert_called_once()
-
-    with patch.object(db.metadata, 'add_query') as add_query, patch.object(
-        predict_mixin, '_predict_with_select_and_ids'
-    ) as predict_func:
-        predict_mixin.predict('x', db, select, ids=[1, 2, 3])
-        add_query.assert_called_once_with(select, predict_mixin.identifier)
-        predict_func.assert_called_once()
-
     with patch.object(predict_mixin, '_predict') as predict_func:
         predict_mixin.predict('x')
         predict_func.assert_called_once()

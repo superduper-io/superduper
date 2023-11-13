@@ -277,8 +277,31 @@ class MongoCompoundSelect(CompoundSelect):
     def change_stream(self, *args, **kwargs):
         return self.table_or_collection.change_stream(*args, **kwargs)
 
+    def _execute(self, db):
+        similar_scores = None
+        query_linker = self.query_linker
+        if self.pre_like:
+            similar_ids, similar_scores = self.pre_like.execute(db)
+            similar_scores = dict(zip(similar_ids, similar_scores))
+            if not self.query_linker:
+                return similar_ids, similar_scores
+            # TODO -- pre-select ids (this logic is wrong)
+            query_linker = query_linker.select_using_ids(similar_ids)
+
+        if not self.post_like:
+            return query_linker.execute(db), similar_scores
+
+        assert self.pre_like is None
+        cursor = query_linker.select_ids.execute(db)
+        query_ids = [str(document[self.primary_id]) for document in cursor]
+        similar_ids, similar_scores = self.post_like.execute(db, ids=query_ids)
+        similar_scores = dict(zip(similar_ids, similar_scores))
+
+        post_query_linker = self.query_linker.select_using_ids(similar_ids)
+        return post_query_linker.execute(db), similar_scores
+
     def execute(self, db):
-        output, scores = super().execute(db)
+        output, scores = self._execute(db)
         if isinstance(output, (pymongo.cursor.Cursor, mongomock.collection.Cursor)):
             return SuperDuperCursor(
                 raw_cursor=output,
@@ -373,7 +396,7 @@ class MongoQueryLinker(QueryLinker):
             members=new_members,
         )
 
-    def select_ids_of_missing_outputs(self, key: str, model: str):
+    def _select_ids_of_missing_outputs(self, key: str, model: str):
         new_members = []
         for member in self.members:
             if hasattr(member, 'select_ids_of_missing_outputs'):

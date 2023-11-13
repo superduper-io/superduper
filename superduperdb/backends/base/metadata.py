@@ -6,6 +6,10 @@ if t.TYPE_CHECKING:
     from superduperdb.backends.base.query import Select
 
 
+class NonExistentMetadataError(Exception):
+    ...
+
+
 class MetaDataStore(ABC):
     """
     Abstraction for storing meta-data separately from primary data.
@@ -342,11 +346,7 @@ class MetaDataStore(ABC):
         """
         Add query id to query table
         """
-
-    def get_query(self, query_hash: str):
-        """
-        Get query from query table
-        """
+        raise NotImplementedError
 
     def get_queries(self, model: str):
         """

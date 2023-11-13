@@ -12,8 +12,10 @@ from sklearn.pipeline import Pipeline
 
 import superduperdb as s
 from superduperdb import logging
+from superduperdb.backends.base.metadata import NonExistentMetadataError
 from superduperdb.backends.base.query import CompoundSelect, Select
 from superduperdb.backends.ibis.field_types import FieldType
+from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base.artifact import Artifact
 from superduperdb.base.serializable import Serializable
@@ -190,9 +192,17 @@ class PredictMixin:
         if isinstance(select, dict):
             select = Serializable.deserialize(select)
 
-        if db is not None:
-            db.metadata.add_query(select, self.identifier)
+        if isinstance(select, Table):
+            select = select.to_query()
 
+        if db is not None:
+            if isinstance(select, IbisCompoundSelect):
+                try:
+                    _ = db.metadata.get_query(str(hash(select)))
+                except NonExistentMetadataError:
+                    logging.info(f'Query {select} not found in metadata, adding...')
+                    db.metadata.add_query(select, self.identifier)
+                    logging.info('Done')
             logging.info(f'Adding model {self.identifier} to db')
             assert isinstance(self, Component)
             db.add(self)
@@ -205,7 +215,11 @@ class PredictMixin:
             assert db is not None
             assert select is not None
             return self._predict_and_listen(
-                X=X, db=db, select=select, max_chunk_size=max_chunk_size, **kwargs
+                X=X,
+                db=db,
+                select=select,
+                max_chunk_size=max_chunk_size,
+                **kwargs,
             )
 
         if distributed:
@@ -293,10 +307,10 @@ class PredictMixin:
         **kwargs,
     ):
         ids = []
-        if overwrite:
-            query = select.select_ids
-        else:
+        if not overwrite:
             query = select.select_ids_of_missing_outputs(key=X, model=self.identifier)
+        else:
+            query = select.select_ids
 
         for r in tqdm.tqdm(db.execute(query)):
             ids.append(str(r[db.databackend.id_field]))
@@ -384,7 +398,6 @@ class PredictMixin:
             flatten=self.flatten,
             **self.model_update_kwargs,
         )
-        return
 
 
 @dc.dataclass

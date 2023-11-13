@@ -5,8 +5,10 @@ import pandas
 from ibis.backends.base import BaseBackend
 
 from superduperdb.backends.base.data_backend import BaseDataBackend
+from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.backends.ibis.field_types import FieldType, dtype
-from superduperdb.backends.ibis.query import IbisTable
+from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.components.model import Model
 from superduperdb.components.schema import Schema
 
@@ -17,10 +19,10 @@ class IbisDataBackend(BaseDataBackend):
         self.in_memory = in_memory
 
     def build_artifact_store(self):
-        raise NotImplementedError
+        return FileSystemArtifactStore(conn='.superduperdb/artifacts/', name='ibis')
 
     def build_metadata(self):
-        raise NotImplementedError
+        return SQLAlchemyMetadata(conn=self.conn.con, name='ibis')
 
     def create_ibis_table(self, identifier: str, schema: Schema):
         self.conn.create_table(identifier, schema=schema)
@@ -43,12 +45,12 @@ class IbisDataBackend(BaseDataBackend):
             output_type = model.encoder
         fields = {
             'output_id': dtype('int32'),
-            'input_id': dtype('int32'),
+            'input_id': dtype('str'),
             'query_id': dtype('string'),
             'output': output_type,
             'key': dtype('string'),
         }
-        return IbisTable(
+        return Table(
             identifier=f'_outputs/{model.identifier}',
             schema=Schema(identifier=f'_schema/{model.identifier}', fields=fields),
         )

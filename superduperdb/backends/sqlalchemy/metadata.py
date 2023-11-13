@@ -1,15 +1,14 @@
-import json
 import threading
 import typing as t
 from contextlib import contextmanager
 
 import click
-from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
 from superduperdb import logging
-from superduperdb.backends.base.metadata import MetaDataStore
+from superduperdb.backends.base.metadata import MetaDataStore, NonExistentMetadataError
 from superduperdb.base.serializable import Serializable
 from superduperdb.misc.colors import Colors
 
@@ -27,10 +26,9 @@ class DictMixin:
 class QueryID(Base):  # type: ignore[valid-type, misc]
     __tablename__ = 'query_id_table'
 
-    query_id = Column(Integer, primary_key=True, autoincrement=False)
+    query_id = Column(String, primary_key=True)
     query = Column(JSON)
     model = Column(String)
-    hash = Column(String)
 
 
 class Job(Base, DictMixin):  # type: ignore[valid-type, misc]
@@ -53,8 +51,8 @@ class Job(Base, DictMixin):  # type: ignore[valid-type, misc]
 class ParentChildAssociation(Base):  # type: ignore[valid-type, misc]
     __tablename__ = 'parent_child_association'
 
-    parent_id = Column(String, ForeignKey('component.id'), primary_key=True)
-    child_id = Column(String, ForeignKey('component.id'), primary_key=True)
+    parent_id = Column(String, primary_key=True)
+    child_id = Column(String, primary_key=True)
 
 
 class Component(Base, DictMixin):  # type: ignore[valid-type, misc]
@@ -105,7 +103,6 @@ class SQLAlchemyMetadata(MetaDataStore):
         Base.metadata.create_all(self.conn)
 
         self._lock = threading.Lock()
-        self._query_watermark = 0
 
     def drop(self, force: bool = False):
         """
@@ -350,31 +347,38 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     # --------------- Query ID -----------------
     def add_query(self, query: 'Select', model: str):
-        query_serialized = query.serialize()
-        query_hash = str(hash(json.dumps(query_serialized)))
+        query_hash = str(hash(query))
+
         with self.session_context() as session:
             with self._lock:
                 row = {
-                    'query_id': self._query_watermark,
-                    'query': query_serialized,
+                    'query': query.serialize(),
                     'model': model,
-                    'hash': query_hash,
+                    'query_id': query_hash,
                 }
 
             session.add(QueryID(**row))
-            self._query_watermark += 1
 
     def get_query(self, query_hash: str):
         '''
         Get the query from query table corresponding to the query hash
         '''
-        with self.session_context() as session:
-            return (
-                session.query(QueryID)
-                .filter(QueryID.hash == str(query_hash))
-                .first()
-                .query_id
-            )
+        try:
+            with self.session_context() as session:
+                out = (
+                    session.query(QueryID)
+                    .filter(QueryID.query_id == str(query_hash))
+                    .first()
+                )
+        except AttributeError as e:
+            if 'NoneType' in str(e):
+                raise NonExistentMetadataError(
+                    f'Query hash {query_hash} does not exist'
+                )
+            raise e
+
+        if out is None:
+            raise NonExistentMetadataError(f'Query hash {query_hash} does not exist')
 
     def get_model_queries(self, model: str):
         '''

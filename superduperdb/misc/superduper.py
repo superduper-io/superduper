@@ -1,3 +1,4 @@
+import re
 import typing as t
 
 from superduperdb.base.configs import CFG
@@ -33,7 +34,9 @@ def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
         CFG.vector_search = item
 
     else:
-        raise NotImplementedError(f'Can\'t auto-identify connection string {item}')
+        if re.match(r'^[a-zA-Z0-9]+://', item) is None:
+            raise NotImplementedError(f'{item} is not a valid connection string')
+        CFG.data_backend = item
     return build_datalayer(CFG, **kwargs)
 
 

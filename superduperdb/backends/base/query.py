@@ -4,8 +4,6 @@ import typing as t
 from abc import ABC, abstractmethod
 from typing import Any
 
-import pandas as pd
-
 from superduperdb import logging
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
@@ -53,9 +51,6 @@ class Select(Serializable, ABC):
         :param model: The model to update
         :param outputs: The outputs to update
         """
-        serialized_select = super().serialize()
-        kwargs.update({'serialized_select': serialized_select})
-
         return self.table_or_collection.model_update(
             db=db,
             ids=ids,
@@ -254,7 +249,7 @@ class CompoundSelect(_ReprMixin, Select, ABC):
 
         return self._query_from_parts(
             table_or_collection=self.table_or_collection,
-            query_linker=self.query_linker.select_ids_of_missing_outputs(
+            query_linker=self.query_linker._select_ids_of_missing_outputs(
                 key=key, model=model
             ),
         )
@@ -294,14 +289,15 @@ class CompoundSelect(_ReprMixin, Select, ABC):
         String representation of the query.
         """
 
-        repr_str = self.table_or_collection.identifier
+        components = []
+        components.append(self.table_or_collection.identifier)
         if self.pre_like:
-            repr_str += '.' + str(self.pre_like)
+            components.append(str(self.pre_like))
         if self.query_linker:
-            repr_str += '.' + '.'.join(self.query_linker.repr_().split('.')[1:])
+            components.extend(self.query_linker.repr_().split('.')[1:])
         if self.post_like:
-            repr_str += '.' + str(self.post_like)
-        return repr_str
+            components.append(str(self.post_like))
+        return '.'.join(components)
 
     @classmethod
     def _query_from_parts(
@@ -358,35 +354,13 @@ class CompoundSelect(_ReprMixin, Select, ABC):
             query_linker=self.query_linker(*args, **kwargs),
         )
 
+    @abstractmethod
     def execute(self, db):
         """
         Execute the compound query on the DB instance.
 
         :param db: The DB instance to use
         """
-        similar_scores = None
-        query_linker = self.query_linker
-        if self.pre_like:
-            similar_ids, similar_scores = self.pre_like.execute(db)
-            similar_scores = dict(zip(similar_ids, similar_scores))
-            if not self.query_linker:
-                return similar_ids, similar_scores
-            query_linker = query_linker.select_using_ids(similar_ids)
-
-        if not self.post_like:
-            return query_linker.execute(db), similar_scores
-
-        assert self.pre_like is None
-        cursor = query_linker.select_ids.execute(db)
-        if isinstance(cursor, pd.DataFrame):
-            query_ids = [id[0] for id in cursor.values.tolist()]
-        else:
-            query_ids = [str(document[self.primary_id]) for document in cursor]
-        similar_ids, similar_scores = self.post_like.execute(db, ids=query_ids)
-        similar_scores = dict(zip(similar_ids, similar_scores))
-
-        post_query_linker = self.query_linker.select_using_ids(similar_ids)
-        return post_query_linker.execute(db), similar_scores
 
     def like(self, r: Document, vector_index: str, n: int = 10):
         assert self.query_linker is not None
@@ -590,10 +564,6 @@ class QueryLinker(_ReprMixin, Serializable, ABC):
     def select_using_ids(self, ids):
         pass
 
-    @abstractmethod
-    def select_ids_of_missing_outputs(self, key: str, model: str):
-        pass
-
     def __call__(self, *args, **kwargs):
         members = [*self.members[:-1], self.members[-1](*args, **kwargs)]
         return type(self)(table_or_collection=self.table_or_collection, members=members)
@@ -637,18 +607,6 @@ class TableOrCollection(Serializable, ABC):
     query_components: t.ClassVar[t.Dict] = {}
     type_id: t.ClassVar[str] = 'table_or_collection'
     identifier: str
-
-    @abstractmethod
-    def model_update(
-        self,
-        db,
-        ids: t.Sequence[t.Any],
-        key: str,
-        model: str,
-        outputs: t.Sequence[t.Any],
-        **kwargs,
-    ):
-        pass
 
     @abstractmethod
     def _get_query_linker(self, members) -> QueryLinker:

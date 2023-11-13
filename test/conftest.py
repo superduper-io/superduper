@@ -1,7 +1,6 @@
 import inspect
 import os
 import time
-import uuid
 from threading import Lock
 from typing import Iterator
 
@@ -69,12 +68,8 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
     from superduperdb import CFG
     from superduperdb.base.build import build_datalayer
 
-    # use the below decorator to set the db name, if not using random db_name
-    # `@pytest.mark.parametrize('test_db', [db_name], indirect=True)`
-    db_name = getattr(request, 'param', uuid.uuid4().hex)
-    # data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
-
-    data_backend = 'mongodb://superduper:superduper@mongodb:27017/test_db'
+    db_name = "test_db"
+    data_backend = f'mongodb://superduper:superduper@mongodb:27017/{db_name}'
 
     monkeypatch.setattr(CFG, 'data_backend', data_backend)
 

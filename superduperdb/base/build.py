@@ -55,9 +55,21 @@ def build(uri, mapping):
         conn = mongomock.MongoClient()
         return mapping['mongodb'](conn, name)
     else:
-        name = uri.split('//')[0]
         conn = ibis.connect(uri)
-        return mapping['ibis'](conn, name)
+        db_name = conn.current_database
+        if 'ibis' in mapping:
+            cls_ = mapping['ibis']
+        elif 'sqlalchemy' in mapping:
+            cls_ = mapping['sqlalchemy']
+            conn = conn.con
+        else:
+            raise ValueError('No ibis or sqlalchemy backend specified')
+
+        # if ':memory:' in uri:
+        #     conn = uri
+        #     db_name = None
+
+        return cls_(conn, db_name)
 
 
 def build_compute(cfg):

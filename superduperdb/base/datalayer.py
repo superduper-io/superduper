@@ -1039,19 +1039,19 @@ class Datalayer:
                 n_download_workers = self.metadata.get_metadata(
                     key='n_download_workers'
                 )
-            except TypeError:
+            except exceptions.MetadatastoreException:
                 n_download_workers = 0
 
         if headers is None:
             try:
                 headers = self.metadata.get_metadata(key='headers')
-            except TypeError:
+            except exceptions.MetadatastoreException:
                 headers = 0
 
         if timeout is None:
             try:
                 timeout = self.metadata.get_metadata(key='download_timeout')
-            except TypeError:
+            except exceptions.MetadatastoreException:
                 timeout = None
 
         def download_update(key, id, bytes):

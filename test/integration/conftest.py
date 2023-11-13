@@ -121,4 +121,5 @@ def local_dask_client(monkeypatch, request):
 
     client.disconnect()
 
-   # logging.success("Dask Client disconnected from ", scheduler_uri)
+
+# logging.success("Dask Client disconnected from ", scheduler_uri)

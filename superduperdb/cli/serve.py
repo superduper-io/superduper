@@ -28,7 +28,7 @@ def local_cluster(on: t.List[str] = []):
 
     db = build_datalayer()
 
-    dask_client(s.CFG.cluster)
+    dask_client(s.CFG.cluster.dask_scheduler)
 
     for collection in on:
         db.cdc.listen(

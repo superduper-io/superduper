@@ -230,6 +230,22 @@ def local_db(request) -> Datalayer:
 
 
 @pytest.fixture
-def local_empty_db(request) -> Datalayer:
-    db = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
-    return db
+def local_empty_db(request, monkeypatch) -> Datalayer:
+    for key, value in DB_CONFIGS.items():
+        monkeypatch.setattr(CFG, key, value)
+    db = build_datalayer(CFG)
+    yield db
+    db.drop(force=True)
+
+
+DB_CONFIGS = {
+    'data_backend': MONGOMOCK_URI,
+    # 'metadata_store': "sqlite://:memory:",
+    # 'data_backend': "sqlite://:memory:",
+    # 'data_backend': "mongodb://testmongodbuser:testmongodbpassword@localhost:27018/test_db",
+    # 'metadata_store': "mysql://root:root123@localhost:3306/test_db",
+    'metadata_store': "sqlite://:memory:",
+    # 'data_backend': "mysql://root:root123@localhost:3306/test_db",
+    # 'metadata_store': "sqlite://mydb.sqlite",
+    'artifact_store': 'filesystem:///tmp/superduperdb_test',
+}

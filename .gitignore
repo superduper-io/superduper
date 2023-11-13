@@ -189,3 +189,4 @@ test/sleep.json
 .vscode
 
 /tmp
+.superduperdb

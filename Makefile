@@ -94,6 +94,9 @@ integration-testing: ## Execute integration testing
 	# Make sure endpoints are discoverable
 	getent hosts mongodb scheduler #vector-search
 
+	# Install the latest version, required for dask workers.
+	pip install .[server,api]
+
 	# Run the test
 	pytest $(PYTEST_ARGUMENTS) ./test/integration
 

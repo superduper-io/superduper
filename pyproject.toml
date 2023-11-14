@@ -48,9 +48,6 @@ dependencies = [
     "typer>=0.7.0",
     "pylance>=0.6.1",
     "readerwriterlock>=1.0.9",
-    "flask>=2.2.3",
-    "flask-cors>=3.0.10",
-    "flask-httpauth>=4.7.0",
     "werkzeug>=2.2.3",
     "pydantic>=1",
     "pymongo>=4.3.3",
@@ -64,8 +61,6 @@ dependencies = [
     "mongomock>=4.1.2",
     "ibis-framework[sqlite]>=5.1.0",
     "ibis-framework[duckdb]>=5.1.0",
-    "uvicorn>=0.24.0",
-    "fastapi>=0.103.2"
 ]
 
 [project.optional-dependencies]
@@ -122,7 +117,10 @@ testing = [
 # Dependencies for server
 server = [
     "uvicorn>=0.24.0",
-    "fastapi>=0.103.2"
+    "fastapi>=0.103.2",
+    "flask>=2.2.3",
+    "flask-cors>=3.0.10",
+    "flask-httpauth>=4.7.0",
 ]
 
 dev = ["superduperdb[torch,apis,docs,quality,testing,server]"]

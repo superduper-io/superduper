@@ -46,7 +46,7 @@ services:
         cd /app
 
         # Require all computational dependencies
-        pip install .[server,apis]
+        pip install --user .[server,apis]
         python -m superduperdb vector-search
     healthcheck:
       test: curl http://localhost:8000/ || exit 1
@@ -81,7 +81,7 @@ services:
 
         # Basic stuff needed for pickling.
         # No complex dependencies
-        pip install .
+        pip install --user .
         dask scheduler
 
 
@@ -102,7 +102,7 @@ services:
         cd /app
 
         # Require all computational dependencies
-        pip install .[torch,apis,docs,quality,testing]
+        pip install --user .[torch,apis,docs,quality,testing]
         dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1

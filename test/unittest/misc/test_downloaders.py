@@ -1,7 +1,8 @@
 import os
+import tempfile
+import uuid
 
 import pytest
-import tdir
 
 from superduperdb import CFG
 from superduperdb.backends.mongodb.query import Collection
@@ -19,8 +20,9 @@ def test_s3_and_web():
 
 @pytest.fixture
 def patch_cfg_downloads(monkeypatch):
-    with tdir() as td:
-        monkeypatch.setattr(CFG.downloads, 'hybrid', True)
+    monkeypatch.setattr(CFG.downloads, 'hybrid', True)
+    td = str(uuid.uuid4())
+    with tempfile.TemporaryDirectory() as td:
         monkeypatch.setattr(CFG.downloads, 'root', td)
         yield
 
@@ -52,4 +54,4 @@ def test_file_blobs(local_empty_db, patch_cfg_downloads, image_url):
         Collection('documents').insert_many(to_insert), encoders=(pil_image,)
     )
     local_empty_db.execute(Collection('documents').find_one())
-    assert list(CFG.downloads.root.iterdir())
+    assert os.listdir(CFG.downloads.root)

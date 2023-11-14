@@ -6,39 +6,22 @@ and environment variables
 import os
 import sys
 import typing as t
-from pathlib import Path
-
-import fil
 
 Dict = t.Dict[str, object]
-Files = t.Sequence[t.Union[Path, str]]
 StrDict = t.Dict[str, str]
 
 SEP = '_'
 _NONE = object()
 
 
-def config_dicts(files: Files, parent: StrDict, prefix: str, environ: StrDict) -> Dict:
-    data = _read_all(files)
-    environ_dict = _environ_to_config_dict(prefix, parent, environ)
-    return _combine((*data, environ_dict))
-
-
-def _read_all(files: Files, fail: bool = False) -> t.Sequence[Dict]:
-    if fail:
-        return [fil.read(f) for f in files]
-    else:
-        return [fil.read(f, {}) for f in files]
-
-
-def _combine(dicts: t.Sequence[Dict]) -> Dict:
+def combine_configs(dicts: t.Sequence[Dict]) -> Dict:
     result: Dict = {}
     for d in dicts:
         _combine_one(result, d)
     return result
 
 
-def _environ_to_config_dict(
+def environ_to_config_dict(
     prefix: str,
     parent: StrDict,
     environ: t.Optional[StrDict] = None,
@@ -46,7 +29,6 @@ def _environ_to_config_dict(
     fail: bool = False,
 ):
     env_dict = _environ_dict(prefix, environ)
-
     good, bad = _env_dict_to_config_dict(env_dict, parent)
 
     if bad:

@@ -16,7 +16,7 @@ def index_data(monkeypatch):
         monkeypatch.setattr(CFG, 'lance_home', str(unique_dir))
         h = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0]])
         ids = [str(uuid.uuid4()) for _ in range(h.shape[0])]
-        yield h, ids
+        yield h, ids, unique_dir
 
 
 @pytest.mark.parametrize(
@@ -24,7 +24,7 @@ def index_data(monkeypatch):
 )
 @pytest.mark.parametrize("measure", ['l2', 'dot', 'cosine'])
 def test_index(index_data, measure, vector_index_cls):
-    h, ids = index_data
+    h, ids, ud = index_data
     h = vector_index_cls(
         identifier='my-index', h=h, index=ids, measure=measure, dimensions=3
     )

@@ -1,5 +1,6 @@
+import tempfile
+
 import pytest
-import tdir
 
 try:
     import torch
@@ -48,10 +49,15 @@ def test_transformer_predict(transformers_model):
     assert isinstance(predictions, list)
 
 
+@pytest.fixture
+def td():
+    with tempfile.TemporaryDirectory() as tmp:
+        yield tmp
+
+
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@tdir
-def test_tranformers_fit(transformers_model, local_empty_db):
-    repo_name = "test-superduperdb-sentiment-analysis"
+def test_tranformers_fit(transformers_model, local_empty_db, td):
+    repo_name = td
     training_args = TransformersTrainerConfiguration(
         identifier=repo_name,
         output_dir=repo_name,

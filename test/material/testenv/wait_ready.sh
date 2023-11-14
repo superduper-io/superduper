@@ -40,4 +40,4 @@ service_list=("mongo-init" "vector-search-init")
 # Wait for all the services to become ready.
 for service_name in "${service_list[@]}"; do
     wait_for_exit "${service_name}"
-done  
+done

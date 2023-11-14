@@ -119,7 +119,13 @@ testing = [
     "pytest-asyncio",
     "urllib3<2",  # see https://github.com/urllib3/urllib3/issues/3053
 ]
-dev = ["superduperdb[torch,apis,docs,quality,testing]"]
+# Dependencies for server
+server = [
+    "uvicorn>=0.24.0",
+    "fastapi>=0.103.2"
+]
+
+dev = ["superduperdb[torch,apis,docs,quality,testing,server]"]
 
 # Dependencies for supported Notebooks in examples dir.
 # Whatever modules are defined in the notebooks, must be also defined here.
@@ -132,12 +138,6 @@ demo = [
     "opencv-python",
     "matplotlib",
     "librosa",
-]
-
-# Dependencies for server
-server = [
-    "uvicorn>=0.24.0",
-    "fastapi>=0.103.2"
 ]
 
 [project.urls]

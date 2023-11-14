@@ -34,7 +34,7 @@ services:
     build: # Build the latest SuperDuperDB code
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
-    hostname: vectorsearch
+    hostname: vector-search
     volumes:
         - ../../../:/app # mount the root path
     ports:

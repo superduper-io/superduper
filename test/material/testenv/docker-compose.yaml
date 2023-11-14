@@ -17,7 +17,7 @@ services:
       - "27017:27017"
     command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]
 
-  mongo-init:
+  mongo-init: # Once finished, Mongo is assumed to be ready.
     image: mongo:6
     depends_on:
       - mongodb
@@ -47,8 +47,19 @@ services:
 
         # Require all computational dependencies
         pip install .[server,apis]
-        superduperdb vector-search 
+        python -m superduperdb vector-search
+    healthcheck:
+      test: curl http://localhost:8000/ || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
 
+  vector-search-init: # Once finished, Vector Search is assumed to be ready.
+    image: busybox
+    depends_on:
+      vector-search:
+        condition: service_healthy
 
   # Dask Parallel Computation
   # ------------------------------

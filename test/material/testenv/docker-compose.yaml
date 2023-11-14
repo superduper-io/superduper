@@ -30,37 +30,36 @@ services:
 
   # Vector Search Service
   # ------------------------------
-  vector-search:
-    build: # Build the latest SuperDuperDB code
-      context: ../../../. # Build from project's root
-      dockerfile: ./images/superduperdb/Dockerfile
-    hostname: vector-search
-    volumes:
-        - ../../../:/app # mount the root path
-    ports:
-      - "8000:8000"
-    command:
-      - /bin/sh
-      - -c
-      - |
-        set -eux
-        cd /app
+#  vector-search:
+#    build: # Build the latest SuperDuperDB code
+#      context: ../../../. # Build from project's root
+#      dockerfile: ./images/superduperdb/Dockerfile
+#    hostname: vector-search
+#    volumes:
+#        - ../../../:/app # mount the root path
+#    ports:
+#      - "8000:8000"
+#    command:
+#      - /bin/sh
+#      - -c
+#      - |
+#        cd /app
 
-        # Require all computational dependencies
-        pip install --user .[server,apis]
-        python -m superduperdb vector-search
-    healthcheck:
-      test: curl http://localhost:8000/ || exit 1
-      interval: 40s
-      timeout: 30s
-      retries: 10
-      start_period: 60s
+#        # Require all computational dependencies
+#        pip install --user .[server,apis]
+#        python -m superduperdb vector-search
+#    healthcheck:
+#      test: curl http://localhost:8000/ || exit 1
+#      interval: 40s
+#      timeout: 30s
+#      retries: 10
+#      start_period: 60s
 
-  vector-search-init: # Once finished, Vector Search is assumed to be ready.
-    image: busybox
-    depends_on:
-      vector-search:
-        condition: service_healthy
+#  vector-search-init: # Once finished, Vector Search is assumed to be ready.
+#    image: busybox
+#    depends_on:
+#      vector-search:
+#        condition: service_healthy
 
   # Dask Parallel Computation
   # ------------------------------
@@ -78,7 +77,6 @@ services:
       - /bin/sh
       - -c
       - |
-        set -eux
         cd /app
 
         # Basic stuff needed for pickling.
@@ -101,7 +99,6 @@ services:
       - /bin/sh
       - -c
       - |
-        set -eux
         cd /app
 
         # Require all computational dependencies

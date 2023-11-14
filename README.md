@@ -17,24 +17,17 @@
 
 
 <p align="center">
-	<a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">
-    <img src="https://img.shields.io/badge/slack-superduperdb-8A2BE2?logo=slack" alt="slack">
-    </a>
-    <a  href="https://twitter.com/superduperdb">
-<img  src="https://img.shields.io/badge/Twitter - Follow superduperdb-1DA1F2?logo=twitter"  alt="Twitter">
-</a>
-<a href="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main">
-    <img src="https://codecov.io/gh/SuperDuperDB/superduperdb/branch/main/graph/badge.svg" alt="Coverage">
-</a>
-<a href="https://pypi.org/project/superduperdb">
-    <img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version">
-</a>
-<a href="https://pypi.org/project/superduperdb">
-    <img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions">
-</a>    
-<a href="https://en.wikipedia.org/wiki/Apache_License#Apache_License_2.0">
-    <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg", alt="Apache License">
-</a> 
+  <a href="https://superduperdb.com"><img src="https://img.shields.io/badge/status-alpha-orange" alt="Status - Alpha"></a>	
+  <a href="https://github.com/superduperdb/superduperdb/actions"><img src="https://github.com/superduperdb/superduperdb/workflows/CI/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/superduperdb/superduperdb/branch/main"><img src="https://codecov.io/gh/superduperdb/superduperdb/branch/main/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
+  <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions"></a>      
+</p>
+<p align="center">  
+  <a href="https://github.com/superduperdb/superduperdb/stargazers/"><img src="https://img.shields.io/github/stars/superduperdb/superduperdb?style=social&label=Star&maxAge=2592000" /></a>		
+  <a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
+  <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA"><img src="https://img.shields.io/badge/slack-superduperdb-8A2BE2?logo=slack" alt="slack"></a>
+  <a href="https://github.com/superduperdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>		
 </p>
 
 
@@ -44,20 +37,23 @@
  </div>
 
 
-
-
 ---
+**SuperDuperDB isn't just another database; it's a framework that integrates AI models and APIs directly into your data infrastructure.**
+With SuperDuperDB, you can achieve real-time inference, model training, and vector search effortlessly, eliminating the need for complex MLOps pipelines and specialized vector databases—all using Python!
 
-**SuperDuperDB is not another database. It is a framework to integrate any AI models and APIs directly with your existing database, including real-time inference, model training and vector search — to build and deploy end-to-end AI applications without complex MLOps pipelines and the need for specialized vector databases. Only using Python!**
+**Key Features:**
 
-**SuperDuperDB transforms your favorite database into an AI powerhouse:**
-- *A single scalable AI deployment* of all your models and AI APIs, including output computation (inference) — always up-to-date as changing data is handled automatically and immediately.
-- *A model trainer* that allows easy training and fine-tuning of models simply by querying the database.
-- *A feature store* in which the model outputs are stored alongside the inputs in any data format.
-- *A fully functional vector database* that allows easy generalization of vector embeddings and vector indexes of the data with preferred models and APIs.
+- **[Deploy Model Predictions Directly on your Database](https://docs.superduperdb.com/docs/docs/apply_models):** Apply arbitary models to database without the need for additional pre-processing steps, ETL or boilerplate code.
+- **[Difficult Data-types](https://docs.superduperdb.com/docs/docs/encoding_special_data_types)**: Work on your datastore with images, video, audio and any type which can be encoded in Python.
+- **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Utilize data and computational optimizations to train AI models on large, diverse datasets while ensuring optimal performance and ease of management.
+- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Continuously make predictions as new data arrive, propagating results to downstream applications in real-time. 
+- **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Connect multiple models to create arbitrary interdependencies for the extraction of increasingly complex features and patterns.
+- **[Feature Store](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** No need for additional feature stores - use your datastore *as* a feature store, with arbitrary data-types supported.
+- **[Your Data *is now* a Vector-search Database](https://docs.superduperdb.com/docs/docs/vector_search):** No need for migration to additional new-fangled vector-search databases - use your datastore as a vector-search database.
+
 
 <p align="center">
-  <img width="100%" src="docs/hr/static/img/superduperdb.gif">
+  <img width="100%" src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/img/superduperdb.gif">
 </p>
 
 
@@ -65,7 +61,7 @@
 ## ⚡ Integrations (*more coming soon*):
 
 ### Supported Datastores 
-Super-duper your database and turn it into an AI development and deployment stack with one command `db = superduper(mongodb/postgres/sqlite/duckdb/snowflake...)`
+Unlock the power of SuperDuperDB to connect and manage various types of data sources effortlessly!
 <div align="left">
 <table>
     <tr>
@@ -107,11 +103,7 @@ Super-duper your database and turn it into an AI development and deployment stac
 <br>
 
 ### Supported AI Frameworks
-Integrate, train and manage any AI model directly with your datastore to automatically compute outputs with a single Python command (whether from open-source, commercial models or self-developed).
-Add model: 
-Train model:
-Inference: 
-Predict:
+Leverage SuperDuperDB to discover insights from your data using a variety of AI models!
 
 <div align="left">
 <table>
@@ -171,17 +163,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/image-search.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/video-search.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/semantic-search.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
       </a>
     </td>
   </tr>
@@ -199,17 +191,17 @@ Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.
   <tr>     
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/document-search.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/machine-learning.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
       </a>
     </td>
     <td width="30%">
       <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
-        <img src="docs/hr/static/icons/featured-examples/transfer-learning.svg" />
+        <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
       </a>
     </td>
   </tr>
@@ -241,9 +233,10 @@ pip install superduperdb
 docker run -p 8888:8888 superduperdb/demo:latest
 ```
 
-# 📚 Tutorial
+# 📚 Preview
 
-In this tutorial, you will learn how to Integrate, train, and manage any AI models and APIs directly with your database with your data. You can visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
+Here are snippets which give you a sense of how `superduperdb` works and how simple it is to use.
+You can visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
 
 
 #### - Deploy ML/AI models to your database:

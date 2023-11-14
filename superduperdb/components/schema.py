@@ -48,6 +48,12 @@ class Schema(Component):
                 yield v
 
     def decode(self, data: t.Mapping[str, t.Any]) -> t.Mapping[str, t.Any]:
+        """
+        Decode data using the schema's encoders
+
+        :param data: data to decode
+        """
+
         if self.trivial:
             return data
         decoded = {}
@@ -60,6 +66,11 @@ class Schema(Component):
         return decoded
 
     def encode(self, data: t.Mapping[str, t.Any]):
+        """
+        Encode data using the schema's encoders
+
+        :param data: data to encode
+        """
         if self.trivial:
             return data
         encoded_data = {}

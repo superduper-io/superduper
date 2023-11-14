@@ -1,7 +1,8 @@
+import tempfile
+
 import ibis
 import PIL.Image
 import pytest
-import tdir
 import torch.nn
 import torchvision
 
@@ -20,15 +21,15 @@ from superduperdb.ext.torch.model import TorchModel
 
 @pytest.fixture
 def sqllite_conn():
-    with tdir(chdir=False) as tmp_dir:
-        tmp_db = tmp_dir / 'mydb.sqlite'
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_db = f'{tmp_dir}/mydb.sqlite'
         yield ibis.connect('sqlite://' + str(tmp_db)), tmp_dir
 
 
 @pytest.fixture
 def duckdb_conn():
-    with tdir(chdir=False) as tmp_dir:
-        tmp_db = tmp_dir / 'mydb.ddb'
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_db = f'{tmp_dir}/mydb.ddb'
         yield ibis.connect('duckdb://' + str(tmp_db)), tmp_dir
 
 

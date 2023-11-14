@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 
+import yaml
+
 from . import config_dicts
 from .config import Config
 
@@ -50,14 +52,20 @@ class ConfigSettings:
     @cached_property
     def config(self) -> t.Any:
         """Read a Pydantic class"""
-        env = dict(os.environ if self.environ is None else self.environ)
-
-        files = env.pop(self.prefix + FILES_NAME, self.default_files)
-        if isinstance(files, str):
-            files = files.split(FILE_SEP)
 
         parent = self.cls().dict()
-        kwargs = config_dicts.config_dicts(files, parent, self.prefix, env)
+
+        env = dict(os.environ if self.environ is None else self.environ)
+        env = config_dicts.environ_to_config_dict('SUPERDUPERDB_', parent, env)
+
+        config_path = '.superduperdb/config.yaml'
+        if os.path.exists(config_path):
+            with open(config_path) as f:
+                kwargs = yaml.safe_load(f)
+        else:
+            kwargs = {}
+
+        kwargs = config_dicts.combine_configs((parent, kwargs, env))
         return self.cls(**kwargs)
 
 

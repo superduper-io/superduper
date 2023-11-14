@@ -56,7 +56,7 @@ class LanceVectorSearcher(BaseVectorSearcher):
             pa.field('values', pa.float32(), nullable=False), self.dimensions
         )
         vectors = self.to_list(vectors)
-        _vecs = pa.array(vectors, type=type)
+        _vecs = pa.array([v for v in vectors], type=type)
         _ids = pa.array(ids, type=pa.string())
         _table = pa.Table.from_arrays([_ids, _vecs], names=['id', 'vector'])
         lance.write_dataset(_table, self.dataset_path, mode=mode)

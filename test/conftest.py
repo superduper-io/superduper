@@ -6,7 +6,6 @@ from pathlib import Path
 from threading import Lock
 from typing import Iterator
 
-import fil
 import pytest
 
 import superduperdb as s
@@ -68,7 +67,8 @@ def _write(t):
         entry = SLEEPS.setdefault(module, [0, 0])
         entry[0] += 1
         entry[1] += t
-        fil.write(SLEEPS, SLEEP_FILE, indent=2)
+        with open(SLEEP_FILE, 'w') as f:
+            f.write(SLEEPS, f)
 
 
 @pytest.fixture(autouse=SDDB_USE_MONGOMOCK)

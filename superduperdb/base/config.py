@@ -49,11 +49,11 @@ class Cluster(JSONable):
     """
 
     # TODO - none of these are actually used apart from `dask`
-    distributed: bool = False
+    distributed: bool = True
     deserializers: t.List[str] = Factory(list)
     serializers: t.List[str] = Factory(list)
-    dask_scheduler: str = 'tcp://localhost:8786'
-    local: bool = True
+    dask_scheduler: str = 'tcp://scheduler:8786'
+    local: bool = False
     backfill_batch_size: int = 100
 
 
@@ -87,7 +87,7 @@ class Logging(JSONable):
     :param kwargs: Any additional keyword arguments
     """
 
-    level: LogLevel = LogLevel.INFO
+    level: LogLevel = LogLevel.DEBUG
     type: LogType = LogType.SYSTEM
     kwargs: dict = Factory(dict)
 
@@ -103,7 +103,7 @@ class Server(JSONable):
     host: str = '127.0.0.1'
     port: int = 3223
     protocol: str = 'http'
-    vector_search: str = 'http://localhost:8000'
+    vector_search: str = 'http://vector-search:8000'
     cdc: str = 'http://localhost:8001'
 
     @property

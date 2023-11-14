@@ -55,7 +55,8 @@ ENV PATH="${HOME}/.local/bin:$PATH"
 
 # Install common dependencies
 # ---------------
-RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade \
+RUN pip install --upgrade setuptools pip
+RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade --user \
     # JupyterLab extensions \
     theme-darcula \
     ipywidgets \
@@ -76,7 +77,7 @@ COPY --chown=superduper ./images/superduperdb/apputils-extension/themes.jupyterl
 FROM base AS build_sandbox
 ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
 ONBUILD WORKDIR ${HOME}/superduperdb
-ONBUILD RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade \
+ONBUILD RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade --user \
     .[${SUPERDUPERDB_EXTRAS}]    \
     # Purge pip cache
     && pip cache purge
@@ -87,7 +88,7 @@ ONBUILD RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --u
 # ---------------
 FROM base AS build_pypi
 ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
-ONBUILD RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade \
+ONBUILD RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade --user \
     superduperdb[${SUPERDUPERDB_EXTRAS}] \
     # Purge pip cache
     && pip cache purge

@@ -2,6 +2,8 @@ import typing as t
 
 from dask import distributed
 
+from superduperdb import logging
+
 
 class DaskClient:
     """
@@ -38,6 +40,8 @@ class DaskClient:
                 **kwargs,
             )
 
+        logging.info("Compute Client is ready.", self.client)
+
     def submit(self, function: t.Callable, **kwargs) -> distributed.Future:
         """
         Submits a function to the Dask server for execution.
@@ -47,6 +51,8 @@ class DaskClient:
         """
         future = self.client.submit(function, **kwargs)
         self.futures_collection[future.key] = future
+
+        logging.success(f"Job submitted.  function:{function} future:{future}")
         return future
 
     def submit_and_forget(self, function: t.Callable, **kwargs) -> distributed.Future:
@@ -59,11 +65,19 @@ class DaskClient:
         """
         future = self.submit(function, **kwargs)
         distributed.fire_and_forget(future)
+
+        logging.success(f"Submit job.  function:{function} future:{future}")
         return future
+
+    def disconnect(self) -> None:
+        """
+        Disconnect the Dask client.
+        """
+        self.client.close()
 
     def shutdown(self) -> None:
         """
-        Shuts down the Dask client.
+        Shuts down the Dask cluster.
         """
         self.client.shutdown()
 

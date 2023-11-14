@@ -27,51 +27,74 @@ services:
     - users.env
     command: sh -c "/scripts/mongo-init.sh"
 
-#  # Dask Parallel Computation
-#  # ------------------------------
-#  dask-scheduler:
-#    build: # Build the latest SuperDuperDB code
-#      context: ../../../. # Build from project's root
-#      dockerfile: ./images/superduperdb/Dockerfile
-#    hostname: scheduler
-#    ports:
-#      - "8786:8786" # Peer communication
-#      - "8787:8787" # HTTP Dashboard
-#    volumes:
-#        - ../../../:/app # mount the root path
-#    command:
-#      - /bin/sh
-#      - -c
-#      - |
-#        cd /app
-#
-#        # Basic stuff needed for pickling.
-#        # No complex dependencies
-#        pip install .
-#        dask scheduler
-#
-#
-#  dask-worker:
-#    depends_on:
-#      -   dask-scheduler
-#    build: # Build the latest SuperDuperDB code
-#      context: ../../../. # Build from project's root
-#      dockerfile: ./images/superduperdb/Dockerfile
-#    volumes:
-#        - ../../../:/app # mount the root path
-##    environment:
-##        - SUPERDUPERDB_DATA_BACKEND = 'mongodb://mongodb:27017'
-#    command:
-#      - /bin/sh
-#      - -c
-#      - |
-#        cd /app
-#
-#        # Require all computational dependencies
-#        pip install .[torch,apis,docs,quality,testing]
-#        dask worker "tcp://scheduler:8786"
-#    deploy:
-#      replicas: 1
+
+  # Vector Search Service
+  # ------------------------------
+  vector-search:
+    build: # Build the latest SuperDuperDB code
+      context: ../../../. # Build from project's root
+      dockerfile: ./images/superduperdb/Dockerfile
+    hostname: vectorsearch
+    volumes:
+        - ../../../:/app # mount the root path
+    ports:
+      - "8000:8000"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /app
+
+        # Require all computational dependencies
+        pip install .[server,apis]
+        superduperdb vector-search 
+
+
+  # Dask Parallel Computation
+  # ------------------------------
+  dask-scheduler:
+    build: # Build the latest SuperDuperDB code
+      context: ../../../. # Build from project's root
+      dockerfile: ./images/superduperdb/Dockerfile
+    hostname: scheduler
+    ports:
+      - "8786:8786" # Peer communication
+      - "8787:8787" # HTTP Dashboard
+    volumes:
+        - ../../../:/app # mount the root path
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /app
+
+        # Basic stuff needed for pickling.
+        # No complex dependencies
+        pip install .
+        dask scheduler
+
+
+  dask-worker:
+    depends_on:
+      -   dask-scheduler
+    build: # Build the latest SuperDuperDB code
+      context: ../../../. # Build from project's root
+      dockerfile: ./images/superduperdb/Dockerfile
+    volumes:
+        - ../../../:/app # mount the root path
+    environment:
+        - SUPERDUPERDB_DATA_BACKEND = 'mongodb://superduper:superduper@mongodb:27017'
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /app
+
+        # Require all computational dependencies
+        pip install .[torch,apis,docs,quality,testing]
+        dask worker "tcp://scheduler:8786"
+    deploy:
+      replicas: 1
 
 
   # SuperDuperDB Notebooks

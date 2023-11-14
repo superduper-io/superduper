@@ -11,7 +11,7 @@ To check that everything is working correctly cut and paste this code into a Jup
 ```python
 import numpy as np
 from mongomock import MongoClient
-from superduperdb.container.document import Document as D
+from superduperdb import Document as D
 from superduperdb.ext.numpy.array import array
 from superduperdb.db.mongodb.query import Collection
 import superduperdb as s

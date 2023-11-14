@@ -43,6 +43,7 @@ services:
       - /bin/sh
       - -c
       - |
+        set -eux
         cd /app
 
         # Require all computational dependencies
@@ -77,6 +78,7 @@ services:
       - /bin/sh
       - -c
       - |
+        set -eux
         cd /app
 
         # Basic stuff needed for pickling.
@@ -93,12 +95,13 @@ services:
       dockerfile: ./images/superduperdb/Dockerfile
     volumes:
         - ../../../:/app # mount the root path
-    environment:
-        - SUPERDUPERDB_DATA_BACKEND = 'mongodb://superduper:superduper@mongodb:27017'
+#    environment:
+#        - SUPERDUPERDB_DATA_BACKEND = 'mongodb://superduper:superduper@mongodb:27017'
     command:
       - /bin/sh
       - -c
       - |
+        set -eux
         cd /app
 
         # Require all computational dependencies

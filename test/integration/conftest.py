@@ -116,9 +116,10 @@ def local_dask_client(monkeypatch, request):
 
     monkeypatch.setenv('SUPERDUPERDB_DATA_BACKEND', data_backend)
 
+    # Change the default value
     client = dask_client(
         uri=CFG.cluster.dask_scheduler,
-        local=CFG.cluster.local,
+        local=False,
     )
 
     yield client

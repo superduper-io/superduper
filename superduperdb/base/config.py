@@ -49,11 +49,11 @@ class Cluster(JSONable):
     """
 
     # TODO - none of these are actually used apart from `dask`
-    distributed: bool = True
+    distributed: bool = False
     deserializers: t.List[str] = Factory(list)
     serializers: t.List[str] = Factory(list)
     dask_scheduler: str = 'tcp://scheduler:8786'
-    local: bool = False
+    local: bool = True # Use local as the default, because we want it for unit testing.
     backfill_batch_size: int = 100
 
 

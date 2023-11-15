@@ -77,9 +77,6 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 ##@ CI Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
-	# Install the latest version, required for dask workers.
-	pip install .[server,api]
-
 	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans
 
 testenv_shutdown: ## Terminate the local Testing environment

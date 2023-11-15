@@ -67,6 +67,9 @@ services:
     build: # Build the latest SuperDuperDB code
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
+      args:
+        - BUILD_ENV="sandbox"
+        - SUPERDUPERDB_EXTRAS="server,apis"
     hostname: scheduler
     ports:
       - "8786:8786" # Peer communication
@@ -91,6 +94,9 @@ services:
     build: # Build the latest SuperDuperDB code
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
+      args:
+        - BUILD_ENV="sandbox"
+        - SUPERDUPERDB_EXTRAS="server,apis"
     volumes:
         - ../../../:/app # mount the root path
 #    environment:

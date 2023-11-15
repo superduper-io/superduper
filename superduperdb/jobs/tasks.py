@@ -4,7 +4,6 @@ import traceback
 
 
 def method_job(
-    cfg,
     type_id,
     identifier,
     method_name,
@@ -16,7 +15,6 @@ def method_job(
     """
     Run a method on a component in the database.
 
-    :param cfg: ``CFG`` instance
     :param type_id: type of component
     :param identifier: identifier of component
     :param method_name: name of method to run
@@ -26,9 +24,11 @@ def method_job(
     :param dependencies: other jobs that this job depends on
     """
     from superduperdb.base.build import build_datalayer
+    from superduperdb.base.configs import build_config
 
-    cfg.cluster.distributed = False
-    db = build_datalayer(cfg)
+    CFG = build_config()
+    CFG.cluster.distributed = False
+    db = build_datalayer(CFG)
 
     component = db.load(type_id, identifier)
     method = getattr(component, method_name)
@@ -74,7 +74,6 @@ def handle_function_output(function, db, job_id, args, kwargs):
 
 
 def callable_job(
-    cfg,
     function_to_call,
     args,
     kwargs,
@@ -82,9 +81,11 @@ def callable_job(
     dependencies=(),
 ):
     from superduperdb.base.build import build_datalayer
+    from superduperdb.base.configs import build_config
 
-    cfg.cluster.distributed = False
-    db = build_datalayer(cfg)
+    CFG = build_config()
+    CFG.cluster.distributed = False
+    db = build_datalayer(CFG)
     db.metadata.update_job(job_id, 'status', 'running')
     output = None
     if 'distributed' in inspect.signature(function_to_call).parameters:

@@ -1,5 +1,6 @@
 version: "3.9"
 services:
+
   # Resolv container hostnames
   # ------------------------------
   # MongoDB Datastore
@@ -19,9 +20,10 @@ services:
       - mongodb
     volumes:
       - ./mongo-init.sh:/scripts/mongo-init.sh
-    env_file: # Read From
+    env_file:
     - users.env
     command: sh -c "/scripts/mongo-init.sh"
+
 
    # Vector Search Service
    # ------------------------------
@@ -34,10 +36,11 @@ services:
       dockerfile: ./images/superduperdb/Dockerfile
       args:
         - BUILD_ENV=sandbox # Use local code
-        - SUPERDUPERDB_EXTRAS=server,apis # Install dependencies
+        - SUPERDUPERDB_EXTRAS=testing,server,apis # Install dependencies
     hostname: vector-search
     ports:
       - "8000:8000"
+      - "8001:8001"
     volumes:
         - ../../../:/app # mount the root path
     command:
@@ -46,10 +49,12 @@ services:
       - |
         # Install the latest version of the code (avoid cached layers).
         cd /app; pip install --user .       
+
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' nohup  python -m superduperdb cdc &
         SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb vector-search
 
     healthcheck:
-      test: curl http://localhost:8000/ || exit 1
+      test: curl http://localhost:8000/health || exit 1
       interval: 40s
       timeout: 30s
       retries: 10
@@ -61,43 +66,6 @@ services:
       vector-search:
         condition: service_healthy
 
-   # CDC Service
-   # ------------------------------
-  cdc:
-    depends_on:
-      - mongo-init
-    restart: on-failure        
-    build: # Build the latest SuperDuperDB code
-      context: ../../../. # Build from project's root
-      dockerfile: ./images/superduperdb/Dockerfile
-      args:
-        - BUILD_ENV=sandbox # Use local code
-        - SUPERDUPERDB_EXTRAS=server,apis # Install dependencies
-    hostname: vector-search
-    ports:
-      - "8001:8001"
-    volumes:
-        - ../../../:/app # mount the root path
-    command:
-      - /bin/sh
-      - -c
-      - |
-        # Install the latest version of the code (avoid cached layers).
-        cd /app; pip install --user .       
-        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb cdc
-
-    healthcheck:
-      test: curl http://localhost:8001/ || exit 1
-      interval: 40s
-      timeout: 30s
-      retries: 10
-      start_period: 60s
-
-  cdc-init: # Once finished, Vector Search is assumed to be ready.
-    image: busybox
-    depends_on:
-      cdc:
-        condition: service_healthy
 
   # Dask Parallel Computation
   # ------------------------------
@@ -123,7 +91,6 @@ services:
         # Install the latest version of the code (avoid cached layers).
         cd /app; pip install --user .        
         SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask scheduler
-
   dask-worker:
     depends_on:
       -   dask-scheduler
@@ -144,3 +111,27 @@ services:
         SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1
+
+#  Demo SuperDuperDB Notebooks
+#  ------------------------------
+#  demo-notebooks:
+#    depends_on:
+#      - mongo-init
+#      - vector-search-init
+#      - dask-scheduler
+#    build: # Build the latest SuperDuperDB code
+#      context: ../../../. # Build from project's root
+#      dockerfile: ./images/superduperdb/Dockerfile
+#      args:
+#        - BUILD_ENV=sandbox # Use local code
+#        - SUPERDUPERDB_EXTRAS=demo # Install dependencies
+#    hostname: demo
+#    ports:
+#      - "8888:8888" # HTTP Notebooks
+#    volumes:
+#        - ../../../:/app # mount the root path
+#    command:
+#      - /bin/sh
+#      - -c
+#      - |
+#        jupyter lab --port=8888 --no-browser --ip=0.0.0.0

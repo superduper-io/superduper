@@ -32,6 +32,10 @@ class SuperDuperApp:
         self._user_startup = False
         self._user_shutdown = False
 
+        @self.router.get('/health')
+        def health():
+            return {'status': 200}
+
     @cached_property
     def db(self):
         return app.state.pool

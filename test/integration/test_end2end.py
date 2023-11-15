@@ -1,6 +1,7 @@
 import random
 
 import numpy as np
+import pytest
 from PIL import Image
 
 from superduperdb.backends.mongodb.query import Collection
@@ -59,15 +60,22 @@ class Model2:
         return x
 
 
-def test_advance_setup(test_db, image_url, local_dask_client):
-    # Take empty database
-    db = test_db
+@pytest.fixture
+def distributed_db(test_db, local_dask_client):
     from superduperdb import CFG
 
     CFG.mode = 'production'
+    test_db._distributed_client = local_dask_client
+    test_db.distributed = True
+    yield test_db
+    test_db.distributed = False
+    test_db._distributed_client = None
+    CFG.mode = 'development'
 
-    db._distributed_client = local_dask_client
-    db.distributed = True
+
+def test_advance_setup(distributed_db, image_url):
+    db = distributed_db
+    # Take empty database
 
     image = [
         {

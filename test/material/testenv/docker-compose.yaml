@@ -41,7 +41,7 @@ services:
       dockerfile: ./images/superduperdb/Dockerfile
       args:
         - BUILD_ENV=sandbox # Use local code
-        - SUPERDUPERDB_EXTRAS=["server","apis"] # Install dependencies
+        - SUPERDUPERDB_EXTRAS=server,apis # Install dependencies
     hostname: vector-search
     ports:
       - "8000:8000"

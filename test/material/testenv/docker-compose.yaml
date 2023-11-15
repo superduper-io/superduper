@@ -68,8 +68,8 @@ services:
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
       args:
-        - BUILD_ENV="sandbox" # Use local code
-        - SUPERDUPERDB_EXTRAS="server,apis" # Install dependencies
+        - BUILD_ENV=sandbox # Use local code
+        - SUPERDUPERDB_EXTRAS=dev # Install dependencies
     hostname: scheduler
     ports:
       - "8786:8786" # Peer communication
@@ -92,8 +92,8 @@ services:
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
       args:
-        - BUILD_ENV="sandbox" # Load the local code
-        - SUPERDUPERDB_EXTRAS="server,apis" # Install dependencies
+        - BUILD_ENV=sandbox # Load the local code
+        - SUPERDUPERDB_EXTRAS=dev # Install dependencies
     volumes:
         - ../../../:/app # mount the root path
 #    environment:

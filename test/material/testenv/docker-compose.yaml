@@ -31,7 +31,8 @@ services:
    # ------------------------------
   vector-search:
     depends_on:
-      - mongodb
+      - mongo-init
+    restart: on-failure        
     build: # Build the latest SuperDuperDB code
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile

@@ -21,7 +21,6 @@ db = s.superduper(MongoClient().documents)
 collection = Collection('docs')
 
 a = array('float64', shape=(32,))
-db.add(a)
 
 db.execute(
     collection.insert_many([

@@ -28,39 +28,6 @@ services:
     command: sh -c "/scripts/mongo-init.sh"
 
 
-  # Vector Search Service
-  # ------------------------------
-#  vector-search:
-#    build: # Build the latest SuperDuperDB code
-#      context: ../../../. # Build from project's root
-#      dockerfile: ./images/superduperdb/Dockerfile
-#    hostname: vector-search
-#    volumes:
-#        - ../../../:/app # mount the root path
-#    ports:
-#      - "8000:8000"
-#    command:
-#      - /bin/sh
-#      - -c
-#      - |
-#        cd /app
-
-#        # Require all computational dependencies
-#        pip install --user .[server,apis]
-#        python -m superduperdb vector-search
-#    healthcheck:
-#      test: curl http://localhost:8000/ || exit 1
-#      interval: 40s
-#      timeout: 30s
-#      retries: 10
-#      start_period: 60s
-
-#  vector-search-init: # Once finished, Vector Search is assumed to be ready.
-#    image: busybox
-#    depends_on:
-#      vector-search:
-#        condition: service_healthy
-
   # Dask Parallel Computation
   # ------------------------------
   dask-scheduler:
@@ -84,7 +51,6 @@ services:
         cd /app; pip install --user .        
         dask scheduler
 
-
   dask-worker:
     depends_on:
       -   dask-scheduler
@@ -96,8 +62,6 @@ services:
         - SUPERDUPERDB_EXTRAS=dev # Install dependencies
     volumes:
         - ../../../:/app # mount the root path
-#    environment:
-#        - SUPERDUPERDB_DATA_BACKEND = 'mongodb://superduper:superduper@mongodb:27017'
     command:
       - /bin/sh
       - -c
@@ -107,18 +71,3 @@ services:
         dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1
-
-
-  # SuperDuperDB Notebooks
-  # ------------------------------
-  #superduperdb:
-  #  depends_on:
-  #    - mongodb
-  #    - dask-scheduler
-  #  image: superduperdb/demo:0.0.15
-  #  ports:
-  #    - "8888:8888"
-  #  command: ["jupyter", "lab", "--ip='*'", "--LabApp.token=''"]
-  #  environment:
-  #      DASK_URI: "tcp://dask-scheduler:8786"
-  #      MONGODB_URI: "mongodb://${SDDB_USER}:${SDDB_PASS}@mongodb"

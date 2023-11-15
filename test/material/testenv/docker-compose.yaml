@@ -27,10 +27,49 @@ services:
     - users.env
     command: sh -c "/scripts/mongo-init.sh"
 
+   # Vector Search Service
+   # ------------------------------
+  vector-search:
+    depends_on:
+      - mongo-init
+    restart: on-failure        
+    build: # Build the latest SuperDuperDB code
+      context: ../../../. # Build from project's root
+      dockerfile: ./images/superduperdb/Dockerfile
+      args:
+        - BUILD_ENV=sandbox # Use local code
+        - SUPERDUPERDB_EXTRAS=server,apis # Install dependencies
+    hostname: vector-search
+    ports:
+      - "8000:8000"
+    volumes:
+        - ../../../:/app # mount the root path
+    command:
+      - /bin/sh
+      - -c
+      - |
+        # Install the latest version of the code (avoid cached layers).
+        cd /app; pip install --user .       
+        python -m superduperdb vector-search
+    healthcheck:
+      test: curl http://localhost:8000/ || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
+
+  vector-search-init: # Once finished, Vector Search is assumed to be ready.
+    image: busybox
+    depends_on:
+      vector-search:
+        condition: service_healthy
+
 
   # Dask Parallel Computation
   # ------------------------------
   dask-scheduler:
+    depends_on:
+      - mongodb
     build: # Build the latest SuperDuperDB code
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile

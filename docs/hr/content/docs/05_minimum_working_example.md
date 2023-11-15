@@ -27,7 +27,7 @@ db.execute(
     collection.insert_many([
         D({'x': a(np.random.randn(32))})
         for _ in range(100)
-    ])
+    ]), encoders = (a,)
 )
 
 model = Model(

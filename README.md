@@ -17,12 +17,13 @@
 
 
 <p align="center">
-	<a href="https://github.com/superduperdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>		
-  <a href="https://github.com/superduperdb/superduperdb/actions"><img src="https://github.com/superduperdb/superduperdb/workflows/CI/badge.svg" alt="CI"></a>
-  <a href="https://codecov.io/gh/superduperdb/superduperdb/branch/main"><img src="https://codecov.io/gh/superduperdb/superduperdb/branch/main/graph/badge.svg" alt="Coverage"></a>
-  <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
-  <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions"></a>      	
-  <a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
+	<a href="https://github.com/superduperdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License - Apache 2.0"></a>	
+	 <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
+  <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions"></a>    
+<a href="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml"><img src="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_code.yml/badge.svg?branch=main" /></a>	
+	<a href="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_notebooks.yml"><img src="https://github.com/SuperDuperDB/superduperdb/actions/workflows/ci_notebooks.yml/badge.svg?branch=main" /></a>		
+	<a href="https://codecov.io/gh/superduperdb/superduperdb/branch/main"><img src="https://codecov.io/gh/superduperdb/superduperdb/branch/main/graph/badge.svg" alt="Coverage"></a>
+	<a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
 </p>
 
 
@@ -49,7 +50,9 @@ Leave a star to be informed of more exciting updates!
 ---
 ## What is SuperDuperDB? 
 
-🔮 **SuperDuperDB** is not another database, it in-fact **"super-dupers" your existing preferred database**. SuperDuperDB is a general-purpose AI development and deployment framework for integrating any AI models and APIs directly with your existing data infrastructure, including real-time inference, model training and vector search. SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!
+🔮 SuperDuperDB is not another database, it "super-dupers" your existing preferred database. SuperDuperDB is a general-purpose AI development and deployment framework for integrating any AI models and APIs directly with your existing data infrastructure, including real-time inference, model training and vector search. 
+
+SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!
 
 - Generative AI & LLM-Chat
 - Vector Search

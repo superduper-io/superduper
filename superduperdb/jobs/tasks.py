@@ -1,5 +1,6 @@
 import contextlib
 import inspect
+import logging
 import traceback
 
 
@@ -26,6 +27,11 @@ def method_job(
     :param dependencies: other jobs that this job depends on
     """
     from superduperdb.base.build import build_datalayer
+
+    from superduperdb import  CFG
+    cfg = CFG
+    logging.info("CFG ", cfg)
+
 
     cfg.cluster.distributed = False
     db = build_datalayer(cfg)
@@ -82,6 +88,10 @@ def callable_job(
     dependencies=(),
 ):
     from superduperdb.base.build import build_datalayer
+
+    from superduperdb import  CFG
+    cfg = CFG
+    logging.info("CFG ", cfg)
 
     cfg.cluster.distributed = False
     db = build_datalayer(cfg)

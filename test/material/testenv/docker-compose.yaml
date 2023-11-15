@@ -44,7 +44,7 @@ services:
       - |
         # Install the latest version of the code (avoid cached layers).
         cd /app; pip install --user .       
-        python -m superduperdb vector-search
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb/test_db' python -m superduperdb vector-search
     healthcheck:
       test: curl http://localhost:8000/ || exit 1
       interval: 40s

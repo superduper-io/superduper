@@ -2,6 +2,8 @@ import uuid
 
 import pytest
 
+from superduperdb import logging
+
 try:
     import torch
 except ImportError:
@@ -66,16 +68,26 @@ def test_taskgraph_futures_with_dask(
 def test_insert_with_dask(
     local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
-    db = database_with_default_encoders_and_model
     collection_name = str(uuid.uuid4())
+
     with patch.object(CFG.cluster, "distributed", True):
         with add_and_cleanup_listener(
-            database_with_default_encoders_and_model, collection_name
+            database_with_default_encoders_and_model,
+            collection_name,
         ) as db:
+            # Submit job
             db.distributed = True
             db._distributed_client = local_dask_client
             db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
+
+            # Barrier
             local_dask_client.wait_all_pending_tasks()
+
+            # Get distributed logs
+            logs = local_dask_client.client.get_worker_logs()
+            logging.info("worker logs", logs)
+
+            # Assert result
             q = Collection(identifier=collection_name).find({'update': True})
             r = next(db.execute(q))
             assert 'model_linear_a' in r['_outputs']['x']

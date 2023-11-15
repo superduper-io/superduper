@@ -46,6 +46,8 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
 
     # Helper function to build a data backend based on the URI.
     def build(uri, mapping):
+        logging.debug(f"Parsing data connection URI:{uri}")
+
         if re.match('^mongodb:\/\/|^mongodb\+srv:\/\/', uri) is not None:
             name = uri.split('/')[-1]
             conn = pymongo.MongoClient(
@@ -66,7 +68,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     # Connect to data backend.
     try:
         databackend = build(cfg.data_backend, data_backends)
-        logging.success("Initializing DataBackend Client: ", databackend.conn)
+        logging.info("Data Client is ready.", databackend.conn)
     except Exception as e:
         # Exit quickly if a connection fails.
         logging.error("Error initializing to DataBackend Client:", str(e))

@@ -68,8 +68,8 @@ services:
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
       args:
-        - BUILD_ENV="sandbox"
-        - SUPERDUPERDB_EXTRAS="server,apis"
+        - BUILD_ENV="sandbox" # Use local code
+        - SUPERDUPERDB_EXTRAS="server,apis" # Install dependencies
     hostname: scheduler
     ports:
       - "8786:8786" # Peer communication
@@ -80,11 +80,8 @@ services:
       - /bin/sh
       - -c
       - |
-        cd /app
-
-        # Basic stuff needed for pickling.
-        # No complex dependencies
-        pip install --user .
+        # Install the latest version of the code (avoid cached layers).
+        cd /app; pip install --user .        
         dask scheduler
 
 
@@ -95,8 +92,8 @@ services:
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
       args:
-        - BUILD_ENV="sandbox"
-        - SUPERDUPERDB_EXTRAS="server,apis"
+        - BUILD_ENV="sandbox" # Load the local code
+        - SUPERDUPERDB_EXTRAS="server,apis" # Install dependencies
     volumes:
         - ../../../:/app # mount the root path
 #    environment:
@@ -105,10 +102,8 @@ services:
       - /bin/sh
       - -c
       - |
-        cd /app
-
-        # Require all computational dependencies
-        pip install --user .[torch,apis,docs,quality,testing]
+        # Install the latest version of the code (avoid cached layers).
+        cd /app; pip install --user .
         dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1

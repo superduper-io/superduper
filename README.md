@@ -49,7 +49,7 @@ Leave a star to be informed of more exciting updates!
 ---
 ## What is SuperDuperDB? 
 
-🔮 SuperDuperDB is not another database, it in-fact **"super-dupers"** your existing preferred database. SuperDuperDB is a general-purpose AI development and deployment framework for integrating any AI models and APIs directly with your existing data infrastructure, including real-time inference, model training and vector search. SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!
+🔮 **SuperDuperDB** is not another database, it in-fact **"super-dupers" your existing preferred database**. SuperDuperDB is a general-purpose AI development and deployment framework for integrating any AI models and APIs directly with your existing data infrastructure, including real-time inference, model training and vector search. SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!
 
 - Generative AI & LLM-Chat
 - Vector Search
@@ -61,7 +61,7 @@ Leave a star to be informed of more exciting updates!
 - **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, propagating results to downstream applications in real-time, keeping your deployment always up-to-date.
 - **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Train AI models on large, diverse datasets simply by query-defining your training data, while ensuring optimal performance and ease of management, utilizing in-build computational optimizations.
 - **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
-- **[Difficult Data-types](https://docs.superduperdb.com/docs/docs/encoding_special_data_types)**: You know integrate work directly with images, video, audio in your datastore, and any type which can be encoded as `bytes` in Python.
+- **[Difficult Data-Types](https://docs.superduperdb.com/docs/docs/encoding_special_data_types)**: You know integrate work directly with images, video, audio in your datastore, and any type which can be encoded as `bytes` in Python.
 - **[Feature Store](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
 - **[Vector Search](https://docs.superduperdb.com/docs/docs/vector_search):** No need for duplicating and migrating your data to additional specialized vector databases - turn your existing battle-tested datastore into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
@@ -103,7 +103,7 @@ Leave a star to be informed of more exciting updates!
     </tr>
 </table> 
 
-**Transform your existing database into a Python-only AI development and deployment stack with one command.**
+**Transform your existing database into a Python-only AI development and deployment stack with one command:**
 
 ```
 db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
@@ -125,7 +125,7 @@ db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
     </tr>
 </table>
 
-**Integrate, train and manage any AI model (whether from open-source, commercial models or self-developed) directly with your datastore to automatically compute outputs with a single Python command.**
+**Integrate, train and manage any AI model (whether from open-source, commercial models or self-developed) directly with your datastore to automatically compute outputs with a single Python command:**
 
 - Install and deploy model:
 

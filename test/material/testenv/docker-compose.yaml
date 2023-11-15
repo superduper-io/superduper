@@ -1,13 +1,5 @@
 version: "3.9"
 services:
-  # Resolv container hostnames
-  # ------------------------------
-  host-mapper:
-    image: dvdarias/docker-hoster
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock
-      - /etc/hosts:/tmp/hosts
-
   # MongoDB Datastore
   # ------------------------------
   mongodb:
@@ -44,6 +36,8 @@ services:
       - "8000:8000"
     volumes:
         - ../../../:/app # mount the root path
+    environment:
+       SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb/test_db'
     command:
       - /bin/sh
       - -c
@@ -69,7 +63,7 @@ services:
   # ------------------------------
   dask-scheduler:
     depends_on:
-      - mongodb
+      - mongo-init
     build: # Build the latest SuperDuperDB code
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
@@ -82,6 +76,8 @@ services:
       - "8787:8787" # HTTP Dashboard
     volumes:
         - ../../../:/app # mount the root path
+    environment:
+       SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb/test_db'
     command:
       - /bin/sh
       - -c
@@ -101,6 +97,8 @@ services:
         - SUPERDUPERDB_EXTRAS=dev # Install dependencies
     volumes:
         - ../../../:/app # mount the root path
+    environment:
+       SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb/test_db'
     command:
       - /bin/sh
       - -c

@@ -103,8 +103,7 @@ class Server(JSONable):
     host: str = '127.0.0.1'
     port: int = 3223
     protocol: str = 'http'
-    # vector_search: str = 'http://vector-search:8000'
-    vector_search: str = 'http://localhost:8000'
+    vector_search: str = 'http://vector-search:8000'
     cdc: str = 'http://localhost:8001'
 
     @property

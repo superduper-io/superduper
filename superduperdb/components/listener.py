@@ -49,9 +49,11 @@ class Listener(Component):
     def on_create(self, db: Datalayer) -> None:
         if isinstance(self.model, str):
             self.model = t.cast(Model, db.load('model', self.model))
-
+    
+    @override
+    def on_load(self, db: Datalayer) -> None:
         # Start cdc service if enabled
-        if self.select is not None and self.active:
+        if self.select is not None and self.active and not db.server_mode:
             if CFG.mode == 'production':
                 request_server(
                     service='cdc',

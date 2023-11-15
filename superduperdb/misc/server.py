@@ -1,8 +1,10 @@
 import json
+import base64
 
 import requests
 
 from superduperdb import CFG
+from superduperdb.ext.utils import superduperencode
 
 
 def request_server(
@@ -10,6 +12,11 @@ def request_server(
 ):
     url = getattr(CFG.server, service) + '/' + service + '/' + endpoint
     if type == 'post':
+
+        data = superduperencode(data)
+        if isinstance(data, dict):
+            if '_content' in data:
+                data['_content']['bytes'] = base64.b64encode(data['_content']['bytes']).decode()
         response = requests.post(url, json=data, params=args)
         result = json.loads(response.content)
     else:

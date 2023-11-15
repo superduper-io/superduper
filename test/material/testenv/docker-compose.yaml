@@ -2,12 +2,6 @@ version: "3.9"
 services:
   # Resolv container hostnames
   # ------------------------------
-  host-mapper:
-    image: dvdarias/docker-hoster
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock
-      - /etc/hosts:/tmp/hosts
-
   # MongoDB Datastore
   # ------------------------------
   mongodb:

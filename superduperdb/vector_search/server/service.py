@@ -5,8 +5,9 @@ from fastapi import Request
 
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.vector_search.base import VectorItem
+from superduperdb.ext.utils import superduperdecode
 
-ListVectorType = t.List[t.Union[float, int]]
+ListVectorType = t.Union[t.List[t.Union[float, int]], t.Dict]
 
 VectorSearchResultType = t.Tuple[t.List[str], t.List[float]]
 
@@ -20,6 +21,7 @@ def _vector_search(
 ) -> VectorSearchResultType:
     vi = db.fast_vector_searchers[vector_index]
     if by_array:
+        x = superduperdecode(x, db.encoders)
         ids, scores = vi.searcher.find_nearest_from_array(x, n=n)
     else:
         ids, scores = vi.searcher.find_nearest_from_id(x, n=n)
@@ -36,8 +38,7 @@ def list_search(db: Datalayer):
 
 
 def create_search(vector_index: str, db=None):
-    # TODO: add searcher type
-    db.initialize_vector_searcher(vector_index, backfill=True)
+    db.fast_vector_searchers.update({vector_index: db.initialize_vector_searcher(vector_index, backfill=True)})
 
 
 def query_search_from_array(

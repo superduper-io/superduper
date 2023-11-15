@@ -5,22 +5,26 @@ import numpy as np
 from superduperdb import CFG
 from superduperdb.misc.server import request_server
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
+
 
 
 class FastVectorSearcher(BaseVectorSearcher):
-    def __init__(self, vector_searcher, vector_index: str):
+    def __init__(self, db: 'Datalayer', vector_searcher, vector_index: str):
         self.searcher = vector_searcher
         self.vector_index = vector_index
 
         if CFG.mode == 'production':
-            request_server(
-                service='vector_search',
-                endpoint='create/search',
-                args={
-                    'vector_index': self.vector_index,
-                },
-                type='get',
-            )
+            if not db.server_mode:
+                request_server(
+                    service='vector_search',
+                    endpoint='create/search',
+                    args={
+                        'vector_index': self.vector_index,
+                    },
+                    type='get',
+                )
 
     def __len__(self):
         return len(self.searcher)
@@ -99,6 +103,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param n: number of nearest vectors to return
         """
         if CFG.mode == 'production':
+
             response = request_server(
                 service='vector_search',
                 data=h,

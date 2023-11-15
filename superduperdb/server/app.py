@@ -1,4 +1,5 @@
 from functools import cached_property
+import sys
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, Request
@@ -78,7 +79,9 @@ class SuperDuperApp:
 
         @app.on_event('startup')
         def startup_db_client():
+            sys.path.append('./')
             db = build_datalayer()
+            db.server_mode = True
             if function:
                 function(db=db)
             app.state.pool = db

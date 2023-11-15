@@ -8,7 +8,7 @@ ARG BUILD_ENV=pypi
 # ---------------
 FROM jupyterhub/k8s-singleuser-sample:3.1.0 as base
 
-ARG SUPERDUPERDB_EXTRAS
+ARG SUPERDUPERDB_EXTRAS='" "'
 
 ENV NB_USER=superduper \
     NB_UID=1000 \

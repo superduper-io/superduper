@@ -1,5 +1,6 @@
 version: "3.9"
 services:
+
   # Resolv container hostnames
   # ------------------------------
   host-mapper:
@@ -7,6 +8,7 @@ services:
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock
       - /etc/hosts:/tmp/hosts
+
 
   # MongoDB Datastore
   # ------------------------------
@@ -23,9 +25,10 @@ services:
       - mongodb
     volumes:
       - ./mongo-init.sh:/scripts/mongo-init.sh
-    env_file: # Read From
+    env_file:
     - users.env
     command: sh -c "/scripts/mongo-init.sh"
+
 
    # Vector Search Service
    # ------------------------------
@@ -38,7 +41,7 @@ services:
       dockerfile: ./images/superduperdb/Dockerfile
       args:
         - BUILD_ENV=sandbox # Use local code
-        - SUPERDUPERDB_EXTRAS=server,apis # Install dependencies
+        - SUPERDUPERDB_EXTRAS=["server","apis"] # Install dependencies
     hostname: vector-search
     ports:
       - "8000:8000"
@@ -110,3 +113,27 @@ services:
         dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1
+
+  # Demo SuperDuperDB Notebooks
+  # ------------------------------
+#  demo-notebooks:
+#    depends_on:
+#      - mongo-init
+#      - vector-search-init
+#      - dask-scheduler
+#    build: # Build the latest SuperDuperDB code
+#      context: ../../../. # Build from project's root
+#      dockerfile: ./images/superduperdb/Dockerfile
+#      args:
+#        - BUILD_ENV=sandbox # Use local code
+#        - SUPERDUPERDB_EXTRAS=demo # Install dependencies
+#    hostname: demo
+#    ports:
+#      - "8888:8888" # HTTP Notebooks
+#    volumes:
+#        - ../../../:/app # mount the root path
+#    command:
+#      - /bin/sh
+#      - -c
+#      - |
+#        jupyter lab --port=8888 --no-browser --ip=0.0.0.0

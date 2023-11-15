@@ -23,11 +23,6 @@
   <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
   <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions"></a>      	
   <a href="https://twitter.com/superduperdb" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow @SuperDuperDB"></a>
-  <a href="https://superduperdb.com"><img src="https://img.shields.io/badge/status-alpha-orange" alt="Status - Alpha"></a>	
-  <a href="https://github.com/superduperdb/superduperdb/actions"><img src="https://github.com/superduperdb/superduperdb/workflows/CI/badge.svg" alt="CI"></a>
-  <a href="https://codecov.io/gh/superduperdb/superduperdb/branch/main"><img src="https://codecov.io/gh/superduperdb/superduperdb/branch/main/graph/badge.svg" alt="Coverage"></a>
-  <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/v/superduperdb?color=%23007ec6&label=pypi%20package" alt="Package version"></a>
-  <a href="https://pypi.org/project/superduperdb"><img src="https://img.shields.io/pypi/pyversions/superduperdb.svg" alt="Supported Python versions"></a>      
 </p>
 
 
@@ -41,19 +36,6 @@
 
 
 ---
-**SuperDuperDB isn't just another database; it's a framework that integrates AI models and APIs directly into your data infrastructure.**
-With SuperDuperDB, you can achieve real-time inference, model training, and vector search effortlessly, eliminating the need for complex MLOps pipelines and specialized vector databases—all using Python!
-
-**Key Features:**
-
-- **[Deploy Model Predictions Directly on your Database](https://docs.superduperdb.com/docs/docs/apply_models):** Apply arbitary models to database without the need for additional pre-processing steps, ETL or boilerplate code.
-- **[Difficult Data-types](https://docs.superduperdb.com/docs/docs/encoding_special_data_types)**: Work on your datastore with images, video, audio and any type which can be encoded in Python.
-- **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Utilize data and computational optimizations to train AI models on large, diverse datasets while ensuring optimal performance and ease of management.
-- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Continuously make predictions as new data arrive, propagating results to downstream applications in real-time. 
-- **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Connect multiple models to create arbitrary interdependencies for the extraction of increasingly complex features and patterns.
-- **[Feature Store](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** No need for additional feature stores - use your datastore *as* a feature store, with arbitrary data-types supported.
-- **[Your Data *is now* a Vector-search Database](https://docs.superduperdb.com/docs/docs/vector_search):** No need for migration to additional new-fangled vector-search databases - use your datastore as a vector-search database.
-
 ## What is SuperDuperDB? 
 
 🔮 SuperDuperDB is not another database, it in-fact **"super-dupers"** your existing preferred database: A framework for integrating any AI models and APIs directly with your existing data infrastructure, including real-time inference, model training and vector search. SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!

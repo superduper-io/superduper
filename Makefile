@@ -77,6 +77,9 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 ##@ CI Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
+	# Install the latest version, required for dask workers.
+	pip install .[server,api]
+
 	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans
 
 testenv_shutdown: ## Terminate the local Testing environment
@@ -93,9 +96,6 @@ integration-testing: ## Execute integration testing
 
 	# Make sure endpoints are discoverable
 	getent hosts mongodb scheduler #vector-search
-
-	# Install the latest version, required for dask workers.
-	pip install .[server,api]
 
 	# Run the test
 	pytest $(PYTEST_ARGUMENTS) ./test/integration

@@ -11,24 +11,26 @@ To check that everything is working correctly cut and paste this code into a Jup
 ```python
 import numpy as np
 from mongomock import MongoClient
-from superduperdb.container.document import Document as D
-from superduperdb.ext.numpy.array import array
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.base.document import Document as D
+from superduperdb.components.model import Model
+from superduperdb.ext.numpy import array
+from superduperdb.backends.mongodb.query import Collection
 import superduperdb as s
 
 db = s.superduper(MongoClient().documents)
-collection = Collection(name='docs')
+collection = Collection('docs')
 
 a = array('float64', shape=(32,))
+db.add(a)
 
 db.execute(
     collection.insert_many([
         D({'x': a(np.random.randn(32))})
         for _ in range(100)
-    ], encoders=(a,))
+    ])
 )
 
-model = s.container.model.Model(
+model = Model(
     identifier='test-model',
     object=lambda x: x + 1,
     encoder=a,

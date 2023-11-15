@@ -75,8 +75,6 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
 
     db = build_datalayer(CFG)
 
-    db.databackend.conn.is_mongos
-
     yield db
 
     logging.info("Dropping database ", {db_name})

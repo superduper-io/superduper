@@ -78,6 +78,8 @@ class Datalayer:
                                Artifactstore
         :param distributed_client:
         """
+        logging.info("Building Data Layer")
+
         self.metrics = LoadDict(self, field='metric')
         self.models = LoadDict(self, field='model')
         self.encoders = LoadDict(self, field='encoder')
@@ -664,6 +666,8 @@ class Datalayer:
         dependencies=(),
         verbose: bool = True,
     ) -> TaskWorkflow:
+        logging.debug(f"Building task workflow graph. Query:{query}")
+
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)
         # TODO use these job_ids as dependencies for every job

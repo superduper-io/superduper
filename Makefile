@@ -85,14 +85,14 @@ testenv_shutdown: ## Terminate the local Testing environment
 ##@ CI Testing Functions
 
 unit-testing: ## Execute unit testing
-	pytest -n auto $(PYTEST_ARGUMENTS) ./test/unittest/
+	pytest $(PYTEST_ARGUMENTS) ./test/unittest/
 
 integration-testing: ## Execute integration testing
 	# Block waiting for the testenv to become ready.
 	cd ./test/material/testenv/; ./wait_ready.sh
 
 	# Make sure endpoints are discoverable
-	getent hosts mongodb #scheduler
+	getent hosts mongodb scheduler
 
 	# Run the test
 	pytest $(PYTEST_ARGUMENTS) ./test/integration
@@ -105,7 +105,7 @@ fix-and-test: ##  Lint the code before testing
 	# Linting
 	mypy superduperdb
 	# Unit testing
-	pytest -n auto $(PYTEST_ARGUMENTS)
+	pytest $(PYTEST_ARGUMENTS)
 	# Check for missing docstrings
 	interrogate superduperdb
 	# Check for unused dependencies
@@ -115,7 +115,7 @@ test-and-fix: ## Test the code before linting
 	# Linting
 	mypy superduperdb
 	# Unit testing
-	pytest -n auto $(PYTEST_ARGUMENTS)
+	pytest  $(PYTEST_ARGUMENTS)
 	# Code formatting
 	black $(DIRECTORIES)
 	# Linter and code formatting

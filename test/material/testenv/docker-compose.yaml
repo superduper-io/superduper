@@ -30,6 +30,8 @@ services:
    # Vector Search Service
    # ------------------------------
   vector-search:
+    depends_on:
+      - mongodb
     build: # Build the latest SuperDuperDB code
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile
@@ -39,10 +41,14 @@ services:
     hostname: vector-search
     ports:
       - "8000:8000"
+    volumes:
+        - ../../../:/app # mount the root path
     command:
       - /bin/sh
       - -c
       - |
+        # Install the latest version of the code (avoid cached layers).
+        cd /app; pip install --user .       
         python -m superduperdb vector-search
     healthcheck:
       test: curl http://localhost:8000/ || exit 1
@@ -61,6 +67,8 @@ services:
   # Dask Parallel Computation
   # ------------------------------
   dask-scheduler:
+    depends_on:
+      - mongodb
     build: # Build the latest SuperDuperDB code
       context: ../../../. # Build from project's root
       dockerfile: ./images/superduperdb/Dockerfile

@@ -1,6 +1,8 @@
 import inspect
 import os
+import random
 import time
+from pathlib import Path
 from threading import Lock
 from typing import Iterator
 
@@ -9,8 +11,31 @@ import pytest
 
 import superduperdb as s
 from superduperdb import logging
-from superduperdb.base.datalayer import Datalayer
 from superduperdb.misc import superduper
+
+try:
+    import torch
+
+    from superduperdb.ext.torch.encoder import tensor
+    from superduperdb.ext.torch.model import TorchModel
+except ImportError:
+    torch = None
+
+from superduperdb import CFG
+from superduperdb.backends.mongodb.query import Collection
+from superduperdb.base.build import build_datalayer
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.base.document import Document
+from superduperdb.components.dataset import Dataset
+from superduperdb.components.listener import Listener
+from superduperdb.components.vector_index import VectorIndex
+from superduperdb.ext.pillow.encoder import pil_image
+
+GLOBAL_TEST_N_DATA_POINTS = 250
+LOCAL_TEST_N_DATA_POINTS = 5
+
+MONGOMOCK_URI = 'mongomock:///test_db'
+
 
 _sleep = time.sleep
 
@@ -81,34 +106,6 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
 
     db.databackend.conn.drop_database(db_name)
     db.databackend.conn.drop_database(f'_filesystem:{db_name}')
-
-import random
-from pathlib import Path
-
-import pytest
-
-try:
-    import torch
-
-    from superduperdb.ext.torch.encoder import tensor
-    from superduperdb.ext.torch.model import TorchModel
-except ImportError:
-    torch = None
-
-from superduperdb import CFG
-from superduperdb.backends.mongodb.query import Collection
-from superduperdb.base.build import build_datalayer
-from superduperdb.base.datalayer import Datalayer
-from superduperdb.base.document import Document
-from superduperdb.components.dataset import Dataset
-from superduperdb.components.listener import Listener
-from superduperdb.components.vector_index import VectorIndex
-from superduperdb.ext.pillow.encoder import pil_image
-
-GLOBAL_TEST_N_DATA_POINTS = 250
-LOCAL_TEST_N_DATA_POINTS = 5
-
-MONGOMOCK_URI = 'mongomock:///test_db'
 
 
 @pytest.fixture

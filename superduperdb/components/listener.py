@@ -49,7 +49,7 @@ class Listener(Component):
     def on_create(self, db: Datalayer) -> None:
         if isinstance(self.model, str):
             self.model = t.cast(Model, db.load('model', self.model))
-    
+
     @override
     def on_load(self, db: Datalayer) -> None:
         # Start cdc service if enabled

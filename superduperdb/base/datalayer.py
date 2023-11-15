@@ -1186,4 +1186,3 @@ class LoadDict(dict):
             assert self.callable is not None, msg
             value = self[key] = self.callable(key)
         return value
-    

@@ -4,8 +4,8 @@ import typing as t
 from fastapi import Request
 
 from superduperdb.base.datalayer import Datalayer
-from superduperdb.vector_search.base import VectorItem
 from superduperdb.ext.utils import superduperdecode
+from superduperdb.vector_search.base import VectorItem
 
 ListVectorType = t.Union[t.List[t.Union[float, int]], t.Dict]
 
@@ -38,7 +38,9 @@ def list_search(db: Datalayer):
 
 
 def create_search(vector_index: str, db=None):
-    db.fast_vector_searchers.update({vector_index: db.initialize_vector_searcher(vector_index, backfill=True)})
+    db.fast_vector_searchers.update(
+        {vector_index: db.initialize_vector_searcher(vector_index, backfill=True)}
+    )
 
 
 def query_search_from_array(

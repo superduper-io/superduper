@@ -1,5 +1,5 @@
-from functools import cached_property
 import sys
+from functools import cached_property
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, Request

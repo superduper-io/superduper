@@ -36,6 +36,17 @@
 
 
 ---
+***📣 Important Release Announcement!***
+
+On the 5th of December, we are going to officially launch SuperDuperDB with the release of v0.1, including:
+- Integration of PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino.
+- Massive overhaul of the docs
+- Revamped and modularized testing suite
+
+Leave a star to be informed of more exciting updates!
+
+
+---
 ## What is SuperDuperDB? 
 
 🔮 SuperDuperDB is not another database, it in-fact **"super-dupers"** your existing preferred database. SuperDuperDB is a general-purpose AI development and deployment framework for integrating any AI models and APIs directly with your existing data infrastructure, including real-time inference, model training and vector search. SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!

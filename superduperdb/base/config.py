@@ -52,7 +52,7 @@ class Cluster(JSONable):
     distributed: bool = False
     deserializers: t.List[str] = Factory(list)
     serializers: t.List[str] = Factory(list)
-    dask_scheduler: str = 'tcp://scheduler:8786'
+    dask_scheduler: str = 'tcp://localhost:8786'
     local: bool = True  # Use local as the default, because we want it for unit testing.
     backfill_batch_size: int = 100
 
@@ -103,7 +103,7 @@ class Server(JSONable):
     host: str = '127.0.0.1'
     port: int = 3223
     protocol: str = 'http'
-    vector_search: str = 'http://vector-search:8000'
+    vector_search: str = 'http://localhost:8000'
     cdc: str = 'http://localhost:8001'
 
     @property
@@ -141,9 +141,9 @@ class Config(JSONable):
     def self_hosted_vector_search(self) -> bool:
         return self.data_backend == self.vector_search
 
-    data_backend: str = 'mongodb://superduper:superduper@mongodb:27017/test_db'
+    data_backend: str = 'mongodb://superduper:superduper@localhost:27017/test_db'
 
-    #: The configuration for the vector search
+    # The configuration for the vector search
     vector_search: 'str' = 'in_memory'  # "in_memory" / "lance"
     lance_home: str = os.path.join('.superduperdb', 'vector_indices')
 

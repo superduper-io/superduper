@@ -8,4 +8,4 @@ echo "Starting Dask Scheduler"
 dask scheduler &
 
 echo "Starting Dask Worker"
-dask worker "tcp://localhost:8786" &
+SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask worker "tcp://localhost:8786" &

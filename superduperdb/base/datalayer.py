@@ -94,6 +94,16 @@ class Datalayer:
         self.databackend = databackend
         self._distributed_client = distributed_client
         self.cdc = DatabaseChangeDataCapture(self)
+        self._server_mode = False
+
+    @property
+    def server_mode(self):
+        return self._server_mode
+
+    @server_mode.setter
+    def server_mode(self, is_server: bool):
+        assert isinstance(is_server, bool)
+        self._server_mode = is_server
 
     def initialize_vector_searcher(
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
@@ -123,9 +133,8 @@ class Datalayer:
         if backfill or s.CFG.mode != 'production':
             self.backfill_vector_search(vi, vector_comparison)
 
-        if s.CFG.mode != 'production':
-            vector_comparison = FastVectorSearcher(vector_comparison, vi.identifier)
-        return vector_comparison
+        vi = FastVectorSearcher(self, vector_comparison, vi.identifier)
+        return vi
 
     def backfill_vector_search(self, vi, searcher):
         if vi.indexing_listener.select is None:

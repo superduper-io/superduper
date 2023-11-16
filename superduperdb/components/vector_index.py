@@ -109,7 +109,11 @@ class VectorIndex(Component):
             model_input = document[key]
 
         model = db.models[model_name]
-        return model.predict(model_input, one=True), model.identifier, key
+        return (
+            model.predict(model_input, one=True, distributed=False),
+            model.identifier,
+            key,
+        )
 
     def get_nearest(
         self,

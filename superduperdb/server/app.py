@@ -1,3 +1,4 @@
+import sys
 from functools import cached_property
 
 import uvicorn
@@ -30,6 +31,10 @@ class SuperDuperApp:
         self.router = APIRouter(prefix='/' + self.service)
         self._user_startup = False
         self._user_shutdown = False
+
+        @self.router.get('/health')
+        def health():
+            return {'status': 200}
 
     @cached_property
     def db(self):
@@ -78,7 +83,9 @@ class SuperDuperApp:
 
         @app.on_event('startup')
         def startup_db_client():
+            sys.path.append('./')
             db = build_datalayer()
+            db.server_mode = True
             if function:
                 function(db=db)
             app.state.pool = db

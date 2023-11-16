@@ -20,10 +20,10 @@ echo "Starting Dask Scheduler"
 dask scheduler &
 
 echo "Starting Dask Worker"
-SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask worker "tcp://localhost:8786" &
+SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@localost:27017/test_db' dask worker "tcp://localhost:8786" &
 
 echo "Starting Vector Search Service"
-SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb vector-search &
+SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@localost:27017/test_db' python -m superduperdb vector-search &
 
 echo "Starting Change Data Capture (CDC) Service"
-SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb cdc
+SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@localost:27017/test_db' python -m superduperdb cdc

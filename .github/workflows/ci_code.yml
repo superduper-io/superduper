@@ -77,7 +77,7 @@ jobs:
         if: ${{ startsWith(matrix.python-version, '3.11') }} # Dask requires local python and Dockerfile to be in sync
         run: |
           # Run testing environment on the background, but get the logs
-          nohup make testenv_init  &
+          make testenv_init 
           echo 127.0.0.1 mongodb | sudo tee -a /etc/hosts
           
           make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"

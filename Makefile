@@ -83,7 +83,7 @@ testenv_init: ## Initialize a local Testing environment
 	--build-arg SUPERDUPERDB_EXTRAS="dev"
 
 	@echo "===> Run Docker-Compose using superduperdb/sandbox"
-	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans
+	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans &
 
 testenv_shutdown: ## Terminate the local Testing environment
 	docker compose -f test/material/testenv/docker-compose.yaml down

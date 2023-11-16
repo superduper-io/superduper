@@ -34,7 +34,8 @@ wait_for_exit() {
 
 
 # Define an array
-service_list=("mongo-init" "vector-search-init")
+#service_list=("mongo-init" "vector-search-init")
+service_list=("mongo-init")
 
 # Wait for all the services to become ready.
 for service_name in "${service_list[@]}"; do

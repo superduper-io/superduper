@@ -1,8 +1,6 @@
 version: "3.9"
 services:
 
-  # Resolv container hostnames
-  # ------------------------------
   # MongoDB Datastore
   # ------------------------------
   mongodb:

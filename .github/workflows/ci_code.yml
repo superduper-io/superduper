@@ -78,7 +78,6 @@ jobs:
         run: |
           # Run testing environment on the background, but get the logs
           make testenv_init
-          ./test/material/testenv/set_hosts.sh
           
           make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
           make testenv_shutdown

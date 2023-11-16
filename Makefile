@@ -79,8 +79,11 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 testenv_init: ## Initialize a local Testing environment
 	@echo "===> Build superduperdb/sandbox"
 	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
-	--build-arg BUILD_ENV="sandbox" \
-	--build-arg SUPERDUPERDB_EXTRAS="dev"
+		--build-arg BUILD_ENV="sandbox" \
+		--build-arg SUPERDUPERDB_EXTRAS="dev"
+
+	@echo "===> Updating host files"
+	./test/material/testenv/set_hosts.sh
 
 	@echo "===> Run Docker-Compose using superduperdb/sandbox"
 	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans &

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -eux
 
 # Maximum number of retries
 max_retries=100
@@ -10,6 +10,8 @@ wait_for_exit() {
   service_name=$1
 
   for ((i=1; i<=""$max_retries""; i++)); do
+    docker compose ps -qa --filter status=exited "${service_name}"
+
     # Check if mongo-init has exited (indicating mongo initialization)
     # Count the number of lines in the result
     line_count=$(docker compose ps -qa --filter status=exited "${service_name}" | wc -l)

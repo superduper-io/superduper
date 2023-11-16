@@ -1,7 +1,6 @@
 version: "3.9"
 services:
 
-  # Resolv container hostnames
   # ------------------------------
   # MongoDB Datastore
   # ------------------------------
@@ -30,28 +29,20 @@ services:
   vector-search:
     depends_on:
       - mongo-init
-    restart: on-failure        
-    build: # Build the latest SuperDuperDB code
-      context: ../../../. # Build from project's root
-      dockerfile: ./images/superduperdb/Dockerfile
-      args:
-        - BUILD_ENV=sandbox # Use local code
-        - SUPERDUPERDB_EXTRAS=testing,server,apis # Install dependencies
+    restart: on-failure
+    image: superduperdb/sandbox
     hostname: vector-search
     ports:
       - "8000:8000"
       - "8001:8001"
-    volumes:
-        - ../../../:/app # mount the root path
+    environment:
+      - SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db'
     command:
       - /bin/sh
       - -c
       - |
-        # Install the latest version of the code (avoid cached layers).
-        cd /app; pip install --user .       
-
-        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' nohup  python -m superduperdb cdc &
-        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb vector-search
+        python -m superduperdb cdc &
+        python -m superduperdb vector-search
 
     healthcheck:
       test: curl http://localhost:8000/health || exit 1
@@ -72,43 +63,24 @@ services:
   dask-scheduler:
     depends_on:
       - mongodb
-    build: # Build the latest SuperDuperDB code
-      context: ../../../. # Build from project's root
-      dockerfile: ./images/superduperdb/Dockerfile
-      args:
-        - BUILD_ENV=sandbox # Use local code
-        - SUPERDUPERDB_EXTRAS=dev # Install dependencies
+    image: superduperdb/sandbox
     hostname: scheduler
     ports:
       - "8786:8786" # Peer communication
       - "8787:8787" # HTTP Dashboard
-    volumes:
-        - ../../../:/app # mount the root path
-    command:
-      - /bin/sh
-      - -c
-      - |
-        # Install the latest version of the code (avoid cached layers).
-        cd /app; pip install --user .        
-        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask scheduler
+    environment:
+      - SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db'
+    command: ["dask", "scheduler"]
+
   dask-worker:
     depends_on:
       -   dask-scheduler
-    build: # Build the latest SuperDuperDB code
-      context: ../../../. # Build from project's root
-      dockerfile: ./images/superduperdb/Dockerfile
-      args:
-        - BUILD_ENV=sandbox # Load the local code
-        - SUPERDUPERDB_EXTRAS=dev # Install dependencies
+    image: superduperdb/sandbox
     volumes:
         - ../../../:/app # mount the root path
-    command:
-      - /bin/sh
-      - -c
-      - |
-        # Install the latest version of the code (avoid cached layers).
-        cd /app; pip install --user .
-        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask worker "tcp://scheduler:8786"
+    environment:
+      - SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db'
+    command: ["dask", "worker", "tcp://scheduler:8786"]
     deploy:
       replicas: 1
 

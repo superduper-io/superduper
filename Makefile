@@ -77,6 +77,12 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 ##@ CI Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
+	@echo "===> Build superduperdb/sandbox"
+	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
+	--build-arg BUILD_ENV="sandbox" \
+	--build-arg SUPERDUPERDB_EXTRAS="dev"
+
+	@echo "===> Run Docker-Compose using superduperdb/sandbox"
 	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans
 
 testenv_shutdown: ## Terminate the local Testing environment
@@ -139,16 +145,6 @@ test_notebooks: ## Test notebooks (argument: NOTEBOOKS=<test|dir>)
 
 
 ##@ Development Sandbox Management
-
-# superduperdb/sandbox is a bloated image that contains everything we will need for the development.  we don't need to expose this one to the user.
-build_sandbox: ##  Build a development Docker image
-	@echo "===> release superduperdb/sandbox"
-	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
-	--build-arg BUILD_ENV="sandbox" \
-	--build-arg SUPERDUPERDB_EXTRAS="dev,demo"
-
-run_sandbox: ## Run the local repository in a sandbox environment
-	docker run -p 8888:8888 superduperdb/sandbox
 
 run_sandbox-pr: ## Run a pull request in the sandbox (argument: PR_NUMBER=555)
 	@if [[ -z "${PR_NUMBER}" ]]; then echo "Usage: make run_sandbox-pr PR_NUMBER=<pull-request-number>"; exit -1; fi

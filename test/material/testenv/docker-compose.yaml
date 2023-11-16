@@ -32,14 +32,12 @@ services:
     image: superduperdb/sandbox
     hostname: vector-search
     ports:
-      - "800:8000"
-    environment:
-      - SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db'
+      - "8000:8000"
     command:
       - /bin/sh
       - -c
       - |
-        python -m superduperdb vector-search
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb vector-search
 
     healthcheck:
       test: curl http://localhost:8000/health || exit 1
@@ -64,13 +62,11 @@ services:
     hostname: cdc
     ports:
       - "8001:8001"
-    environment:
-      - SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db'
     command:
       - /bin/sh
       - -c
       - |
-        python -m superduperdb cdc
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb cdc
 
     healthcheck:
       test: curl http://localhost:8000/health || exit 1
@@ -96,19 +92,21 @@ services:
     ports:
       - "8786:8786" # Peer communication
       - "8787:8787" # HTTP Dashboard
-    environment:
-      - SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db'
-    command: ["dask", "scheduler"]
+    command:
+      - /bin/sh
+      - -c
+      - |
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask scheduler
 
   dask-worker:
     depends_on:
       -   dask-scheduler
     image: superduperdb/sandbox
-    volumes:
-        - ../../../:/app # mount the root path
-    environment:
-      - SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db'
-    command: ["dask", "worker", "tcp://scheduler:8786"]
+    command:
+      - /bin/sh
+      - -c
+      - |
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1
 

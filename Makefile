@@ -97,9 +97,6 @@ integration-testing: ## Execute integration testing
 	# Block waiting for the testenv to become ready.
 	cd ./test/material/testenv/; ./wait_ready.sh
 
-	# Make sure endpoints are discoverable
-	getent hosts mongodb scheduler vector-search
-
 	# Run the test
 	pytest $(PYTEST_ARGUMENTS) ./test/integration
 

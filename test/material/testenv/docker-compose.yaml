@@ -28,7 +28,8 @@ services:
    # ------------------------------
   vector-search:
     depends_on:
-      - mongo-init
+      mongo-init:
+        condition: service_completed_successfully
     image: superduperdb/sandbox
     hostname: vector-search
     ports:
@@ -57,7 +58,8 @@ services:
    # ------------------------------
   cdc:
     depends_on:
-      - mongo-init
+      mongo-init:
+        condition: service_completed_successfully
     image: superduperdb/sandbox
     hostname: cdc
     ports:
@@ -86,7 +88,8 @@ services:
   # ------------------------------
   dask-scheduler:
     depends_on:
-      - mongodb
+      mongo-init:
+        condition: service_completed_successfully
     image: superduperdb/sandbox
     hostname: scheduler
     ports:

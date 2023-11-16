@@ -29,19 +29,16 @@ services:
   vector-search:
     depends_on:
       - mongo-init
-    restart: on-failure
     image: superduperdb/sandbox
     hostname: vector-search
     ports:
-      - "8000:8000"
-      - "8001:8001"
+      - "800:8000"
     environment:
       - SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db'
     command:
       - /bin/sh
       - -c
       - |
-        python -m superduperdb cdc &
         python -m superduperdb vector-search
 
     healthcheck:
@@ -55,6 +52,37 @@ services:
     image: busybox
     depends_on:
       vector-search:
+        condition: service_healthy
+
+
+   # Change Data Capture Service
+   # ------------------------------
+  cdc:
+    depends_on:
+      - mongo-init
+    image: superduperdb/sandbox
+    hostname: cdc
+    ports:
+      - "8001:8001"
+    environment:
+      - SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db'
+    command:
+      - /bin/sh
+      - -c
+      - |
+        python -m superduperdb cdc
+
+    healthcheck:
+      test: curl http://localhost:8000/health || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
+
+  cdc-init: # Once finished, CDC is assumed to be ready.
+    image: busybox
+    depends_on:
+      cdc:
         condition: service_healthy
 
 

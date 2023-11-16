@@ -44,13 +44,13 @@ On the 5th of December, we are going to officially launch SuperDuperDB with the 
 - Massive overhaul of the docs
 - Revamped and modularized testing suite
 
-Leave a star to be informed of more exciting updates!
+⭐️ Leave a star to be informed of more exciting updates!
 
 
 ---
 ## What is SuperDuperDB? 
 
-🔮 SuperDuperDB is not another database, it "super-dupers" your existing preferred database. SuperDuperDB is a general-purpose AI development and deployment framework for integrating any AI models and APIs directly with your existing data infrastructure, including real-time inference, model training and vector search. 
+🔮 SuperDuperDB is a general-purpose AI development and deployment framework for integrating any AI models and APIs directly with your existing data infrastructure, including real-time inference, model training and vector search. SuperDuperDB is not another database, it "super-dupers" your existing preferred database. 
 
 SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!
 

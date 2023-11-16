@@ -1,98 +1,103 @@
 # Cataloguing voice-memos for a self managed personal assistant
 
-In this example we show-case SuperDuperDB's ability to combine models across data modalities, 
-in this case audio and text, to devise highly sophisticated data based apps, with very little 
-boilerplate code.
+## Introduction
 
-The aim, is to:
+Discover the magic of SuperDuperDB as we seamlessly integrate models across different data modalities, such as audio and text. Experience the creation of highly sophisticated data-based applications with minimal boilerplate code.
 
-- Maintain a database of audio recordings
-- Index the content of these audio recordings
-- Search and interrogate the content of these audio recordings
+### Objectives:
 
-We accomplish this by:
+1. Maintain a database of audio recordings
+2. Index the content of these audio recordings
+3. Search and interrogate the content of these audio recordings
 
-1. Use a `transformers` model by Facebook's AI team to transcribe the audio to text
-2. Use an OpenAI vectorization model to index the transcribed text
-3. Use OpenAI's ChatGPT model in combination with relevant recordings to interrogate the contents
-  of the audio database
+### Our approach involves:
 
+* Utilizing a transformers model by Facebook's AI team to transcribe audio to text.
+* Employing an OpenAI vectorization model to index the transcribed text.
+* Harnessing OpenAI ChatGPT model in conjunction with relevant recordings to query the audio database.
 
-```python
-!pip install superduperdb==0.0.12
-!pip install torchaudio==2.1.0
-!pip install datasets==2.10.1   # 2.14 seems to be broken so rolling back version
-```
+## Prerequisites
 
-This functionality could be accomplised using any audio, in particular audio 
-hosted on the web, or in an `s3` bucket. For instance, if you have a repository
-of audio of conference calls, or memos, this may be indexed in the same way.
-
-To make matters simpler, we use a dataset of audio recordings from the `datasets` library, to demonstrate the 
-functionality:
+Before diving into the implementation, ensure that you have the necessary libraries installed by running the following commands:
 
 
 ```python
-from datasets import load_dataset
-
-SAMPLING_RATE = 16000
-
-data = load_dataset("hf-internal-testing/librispeech_asr_demo", "clean", split="validation")
+!pip install superduperdb
+!pip install transformers soundfile torchaudio librosa openai
+!pip install -U datasets
 ```
 
-As usual we wrap our MongoDB connector, to connect to the `Datalayer`:
+Additionally, ensure that you have set your openai API key as an environment variable. You can uncomment the following code and add your API key:
 
 
 ```python
 import os
-from superduperdb import superduper
 
-# Uncomment one of the following lines to use a bespoke MongoDB deployment
-# For testing the default connection is to mongomock
+#os.environ['OPENAI_API_KEY'] = 'sk-XXXX'
+
+if 'OPENAI_API_KEY' not in os.environ:
+    raise Exception('Environment variable "OPENAI_API_KEY" not set')
+```
+
+## Connect to datastore 
+
+First, we need to establish a connection to a MongoDB datastore via SuperDuperDB. You can configure the `MongoDB_URI` based on your specific setup. 
+Here are some examples of MongoDB URIs:
+
+* For testing (default connection): `mongomock://test`
+* Local MongoDB instance: `mongodb://localhost:27017`
+* MongoDB with authentication: `mongodb://superduper:superduper@mongodb:27017/documents`
+* MongoDB Atlas: `mongodb+srv://<username>:<password>@<atlas_cluster>/<database>`
+
+
+```python
+from superduperdb import superduper
+from superduperdb.backends.mongodb import Collection
+import os
 
 mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
-# mongodb_uri = "mongodb://localhost:27017"
-# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
-# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
-# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
-
-# Super-Duper your Database!
-from superduperdb import superduper
 db = superduper(mongodb_uri)
+
+# Create a collection for Voice memos
+voice_collection = Collection('voice-memos')
 ```
 
-Using an `Encoder`, we may add the audio data directly to a MongoDB collection:
+
+## Load Dataset
+
+In this example se use `LibriSpeech` as our voice recording dataset. It is a corpus of approximately 1000 hours of read English speech. The same functionality could be accomplised using any audio, in particular audio hosted on the web, or in an `s3` bucket. For instance, if you have a repository of audio of conference calls, or memos, this may be indexed in the same way. 
 
 
 ```python
-from superduperdb.db.mongodb.query import Collection
-from superduperdb.ext.numpy.array import array
-from superduperdb.container.document import Document as D
+from datasets import load_dataset
+from superduperdb.ext.numpy import array
+from superduperdb import Document
 
-collection = Collection('voice-memos')
-enc = array('float32', shape=(None,))
+data = load_dataset("hf-internal-testing/librispeech_asr_demo", "clean", split="validation")
 
-db.execute(collection.insert_many([
-    D({'audio': enc(r['audio']['array'])}) for r in data
-], encoders=(enc,)))
+# Using an `Encoder`, we may add the audio data directly to a MongoDB collection:
+enc = array('float64', shape=(None,))
+
+db.add(enc)
+
+db.execute(voice_collection.insert_many([
+    Document({'audio': enc(r['audio']['array'])}) for r in data
+]))
 ```
 
-Now that we've done that, let's apply a pretrained `transformers` model to this data:
+## Install Pre-Trained Model (LibreSpeech) into Database
+
+Apply a pretrained `transformers` model to the data: 
 
 
 ```python
-import torch
 from transformers import Speech2TextProcessor, Speech2TextForConditionalGeneration
+from superduperdb.ext.transformers import Pipeline
 
 model = Speech2TextForConditionalGeneration.from_pretrained("facebook/s2t-small-librispeech-asr")
 processor = Speech2TextProcessor.from_pretrained("facebook/s2t-small-librispeech-asr")
-```
 
-We wrap this model using the SuperDuperDB wrapper for `transformers`:
-
-
-```python
-from superduperdb.ext.transformers.model import Pipeline
+SAMPLING_RATE = 16000
 
 transcriber = Pipeline(
     identifier='transcription',
@@ -105,51 +110,22 @@ transcriber = Pipeline(
 )
 ```
 
-Let's verify this `Pipeline` works on a sample datapoint
+# Run Predictions on All Recordings in the Collection
+Apply the `Pipeline` to all audio recordings:
 
 
 ```python
-import IPython
-
-IPython.display.Audio(data[0]['audio']['array'], rate=SAMPLING_RATE)
+transcriber.predict(X='audio', db=db, select=voice_collection.find(), max_chunk_size=10)
 ```
 
+## Ask Questions to Your Voice Assistant
 
-```python
-transcriber.predict(data[0]['audio']['array'], one=True)
-```
-
-Now let's apply the `Pipeline` to all of the audio recordings:
+Ask questions to your voice assistant, targeting specific queries and utilizing the power of MongoDB for vector-search and filtering rules:
 
 
 ```python
-transcriber.predict(X='audio', db=db, select=collection.find(), max_chunk_size=10)
-```
-
-We may now verify that all of the recordings have been transcribed in the database
-
-
-```python
-list(db.execute(
-    Collection('voice-memos').find({}, {'_outputs.audio.transcription': 1})
-))
-```
-
-As in previous examples, we can use OpenAI's text-embedding models to vectorize and search the 
-textual transcriptions directly in MongoDB:
-
-
-```python
-import os
-os.environ['OPENAI_API_KEY'] = '<YOUR-API-KEY>'
-```
-
-
-```python
-from superduperdb.container.vector_index import VectorIndex
-from superduperdb.container.listener import Listener
-from superduperdb.ext.openai.model import OpenAIEmbedding
-from superduperdb.db.mongodb.query import Collection
+from superduperdb import VectorIndex, Listener
+from superduperdb.ext.openai import OpenAIEmbedding
 
 db.add(
     VectorIndex(
@@ -157,33 +133,36 @@ db.add(
         indexing_listener=Listener(
             model=OpenAIEmbedding(model='text-embedding-ada-002'),
             key='_outputs.audio.transcription',
-            select=Collection(name='voice-memos').find(),
+            select=voice_collection.find(),
         ),
     )
 )
 ```
 
-Let's confirm this has worked, by searching for the "royal cavern"
+Let's confirm this has worked, by searching for the `royal cavern`.
 
 
 ```python
+# Define the search parameters
+search_term = 'royal cavern'
+num_results = 2
+
 list(db.execute(
-    Collection('voice-memos').like(
-        {'_outputs.audio.transcription': 'royal cavern'},
-        n=2,
+    voice_collection.like(
+        {'_outputs.audio.transcription': search_term},
+        n=num_results,
         vector_index='my-index',
     ).find({}, {'_outputs.audio.transcription': 1})
 ))
 ```
 
-Now we can connect the previous steps with the `gpt-3.5.turbo`, which is a chat-completion 
-model on OpenAI. The plan is to seed the completions with the most relevant audio recordings, 
-as judged by their textual transcriptions. These transcriptions are retrieved using 
-the previously configured `VectorIndex`:
+## Enrich it with Chat-Completion 
+
+Connect the previous steps with the gpt-3.5.turbo, a chat-completion model on OpenAI. The plan is to seed the completions with the most relevant audio recordings, as judged by their textual transcriptions. These transcriptions are retrieved using the previously configured `VectorIndex`. 
 
 
 ```python
-from superduperdb.ext.openai.model import OpenAIChatCompletion
+from superduperdb.ext.openai import OpenAIChatCompletion
 
 chat = OpenAIChatCompletion(
     model='gpt-3.5-turbo',
@@ -199,20 +178,21 @@ db.add(chat)
 print(db.show('model'))
 ```
 
-Let's test the full model! We can ask a question which asks about a specific fact 
-mentioned somewhere in the audio recordings. The model will retrieve the most relevant
-recordings, and use these in formulating its answer:
+## Full Voice-Assistant Experience
+
+Test the full model by asking a question about a specific fact mentioned in the audio recordings. The model will retrieve the most relevant recordings and use them to formulate its answer:
+
 
 
 ```python
-from superduperdb.container.document import Document
+from superduperdb import Document
 
 q = 'Is anything really Greek?'
 
 print(db.predict(
-    model='gpt-3.5-turbo',
+    model_name='gpt-3.5-turbo',
     input=q,
-    context_select=Collection('voice-memos').like(
+    context_select=voice_collection.like(
         Document({'_outputs.audio.transcription': q}), vector_index='my-index'
     ).find(),
     context_key='_outputs.audio.transcription',

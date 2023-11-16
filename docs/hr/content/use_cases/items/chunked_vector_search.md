@@ -36,8 +36,8 @@ As before we insert the data using `pymongo`-similar syntax:
 
 ```python
 import json
-from superduperdb.db.mongodb.query import Collection
-from superduperdb.container.document import Document as D
+from superduperdb.backends.mongodb import Collection
+from superduperdb import Document as D
 
 with open('wikipedia-sample.json') as f:
     data = json.load(f)[:100]
@@ -49,8 +49,6 @@ Let's have a look at a document:
 
 
 ```python
-from superduperdb.db.mongodb.query import Collection
-
 r = db.execute(Collection('wikipedia').find_one()).unpack()
 r
 ```
@@ -60,7 +58,7 @@ the raw text into parts, and save those parts in another collecion:
 
 
 ```python
-from superduperdb.container.model import Model
+from superduperdb import Model
 
 def splitter(r):
     out = [r['title']]
@@ -103,10 +101,8 @@ We can search this data in a manner similar to previously:
 
 
 ```python
-from superduperdb.container.vector_index import VectorIndex
-from superduperdb.container.listener import Listener
-from superduperdb.ext.numpy.array import array
-from superduperdb.ext.openai.model import OpenAIEmbedding
+from superduperdb import VectorIndex, Listener
+from superduperdb.ext.openai import OpenAIEmbedding
 
 model = OpenAIEmbedding(model='text-embedding-ada-002')
 
@@ -134,8 +130,8 @@ highlighting which text was found to be relevant:
 
 
 ```python
-from superduperdb.db.mongodb.query import Collection
-from superduperdb.container.document import Document as D
+from superduperdb.backends.mongodb import Collection
+from superduperdb import Document as D
 from IPython.display import *
 
 query = 'politics'

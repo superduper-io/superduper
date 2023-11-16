@@ -78,7 +78,6 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 
 local_testenv_init: ## Initialize a Local Testing environment
 	cd ./test/material/testenv/; ./_local_env_init.sh
-	cd ./test/material/testenv/; ./set_hosts.sh
 
 local_testenv_shutdown: ## Terminate the Local Testing environment
 	cd ./test/material/testenv/; ./_local_env_stop.sh

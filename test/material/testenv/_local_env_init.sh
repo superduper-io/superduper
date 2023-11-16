@@ -5,6 +5,8 @@ set -eux
 echo "Starting Mongo Server"
 docker compose up mongodb --detach --remove-orphans
 
+echo "Setting host names"
+
 echo "Initializing Mongo Server"
 docker compose up mongo-init
 

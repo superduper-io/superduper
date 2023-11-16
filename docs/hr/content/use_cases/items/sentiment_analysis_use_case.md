@@ -12,15 +12,12 @@ data-backend.
 
 
 ```python
-from datasets import load_dataset, load_metric
+from datasets import load_dataset
 import numpy
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-import superduperdb
-from superduperdb.misc.superduper import superduper
-from superduperdb.container.document import Document as D
-from superduperdb.ext.transformers.model import TransformersTrainerConfiguration, Pipeline
-from superduperdb.container.dataset import Dataset
+from superduperdb import Document as D, Dataset 
+from superduperdb.ext.transformers import TransformersTrainerConfiguration, Pipeline
 ```
 
 SuperDuperDB supports MongoDB as a databackend.
@@ -30,7 +27,7 @@ to a SuperDuper Datalayer:
 
 ```python
 import os
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb import Collection
 
 # Uncomment one of the following lines to use a bespoke MongoDB deployment
 # For testing the default connection is to mongomock
@@ -118,7 +115,7 @@ Now we're ready to train the model:
 
 
 ```python
-from superduperdb.container.metric import Metric
+from superduperdb import Metric
 
 model.fit(
     X='text',

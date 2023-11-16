@@ -22,7 +22,7 @@ As usual, we instantiate the `Datalayer` like this
 ```python
 import os
 from superduperdb import superduper
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb import Collection
 
 # Uncomment one of the following lines to use a bespoke MongoDB deployment
 # For testing the default connection is to mongomock
@@ -49,8 +49,8 @@ overhead or job definition required.
 import glob
 import random
 
-from superduperdb.container.document import Document as D
-from superduperdb.ext.pillow.image import pil_image as i
+from superduperdb import Document as D
+from superduperdb.ext.pillow import pil_image as i
 
 uris = [f'file://{x}' for x in glob.glob('valsmall2014/*.jpg')]
 
@@ -83,8 +83,7 @@ import torchvision.models as models
 
 import warnings
 
-from superduperdb.ext.torch.model import TorchModel
-from superduperdb.ext.torch.tensor import tensor
+from superduperdb.ext.torch import TorchModel, tensor
 
 t = transforms.Compose([
     transforms.Resize((224, 224)),   #must same as here

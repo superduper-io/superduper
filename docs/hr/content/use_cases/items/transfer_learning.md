@@ -1,54 +1,55 @@
-# Transfer learning using Sentence Transformers and Scikit-Learn
+# Transfer Learning with Sentence Transformers and Scikit-Learn
+
+## Introduction
+
+In this notebook, we will explore the process of transfer learning using SuperDuperDB. We will demonstrate how to connect to a MongoDB datastore, load a dataset, create a SuperDuperDB model based on Sentence Transformers, train a downstream model using Scikit-Learn, and apply the trained model to the database. Transfer learning is a powerful technique that can be used in various applications, such as vector search and downstream learning tasks.
+
+## Prerequisites
+
+Before diving into the implementation, ensure that you have the necessary libraries installed by running the following commands:
 
 
 ```python
 !pip install superduperdb
-!pip install sentence-transformers
+!pip install ipython numpy datasets sentence-transformers
 ```
 
-In this example, we'll be demonstrating how to simply implement transfer learning using SuperDuperDB.
-You'll find related examples on vector-search and simple training examples using scikit-learn in the 
-the notebooks directory of the project. Transfer learning leverages similar components, and may be used synergistically with vector-search. Vectors are, after all, simultaneously featurizations of 
-data and may be used in downstream learning tasks.
+## Connect to datastore 
 
-Let's first connect to MongoDB via SuperDuperDB, you read explanations of how to do this in 
-the docs, and in the `notebooks/` directory.
+First, we need to establish a connection to a MongoDB datastore via SuperDuperDB. You can configure the `MongoDB_URI` based on your specific setup. 
+Here are some examples of MongoDB URIs:
+
+* For testing (default connection): `mongomock://test`
+* Local MongoDB instance: `mongodb://localhost:27017`
+* MongoDB with authentication: `mongodb://superduper:superduper@mongodb:27017/documents`
+* MongoDB Atlas: `mongodb+srv://<username>:<password>@<atlas_cluster>/<database>`
 
 
 ```python
 from superduperdb import superduper
-from superduperdb.db.mongodb.query import Collection
+from superduperdb.backends.mongodb import Collection
 import os
 
-# Uncomment one of the following lines to use a bespoke MongoDB deployment
-# For testing the default connection is to mongomock
-
 mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
-# mongodb_uri = "mongodb://localhost:27017"
-# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
-# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
-# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
-
-# Super-Duper your Database!
-from superduperdb import superduper
 db = superduper(mongodb_uri)
 
 collection = Collection('transfer')
 ```
 
-We'll use textual data labelled with sentiment, to test the functionality. Transfer learning 
-can be used on any data which can be processed with SuperDuperDB models.
+## Load Dataset
+
+Transfer learning can be applied to any data that can be processed with SuperDuperDB models.
+For our example, we will use a labeled textual dataset with sentiment analysis.  We'll load a subset of the IMDb dataset.
 
 
 ```python
 import numpy
 from datasets import load_dataset
-
-from superduperdb.container.document import Document as D
+from superduperdb import Document as D
 
 data = load_dataset("imdb")
 
-N_DATAPOINTS = 500    # increase in order to improve quality
+N_DATAPOINTS = 500    # Increase for higher quality
 
 train_data = [
     D({'_fold': 'train', **data['train'][int(i)]}) 
@@ -61,22 +62,17 @@ valid_data = [
 ][:N_DATAPOINTS // 10]
 
 db.execute(collection.insert_many(train_data))
-
-r = db.execute(collection.find_one())
-r
 ```
 
-Let's create a SuperDuperDB model based on a `sentence_transformers` model.
-You'll notice that we don't necessarily need a native SuperDuperDB integration to a model library 
-in order to leverage its power with SuperDuperDB. For example, in this case, we just need 
-to configure the `Model` wrapper to interoperate correctly with the `SentenceTransformer` class. After doing this, we can link the model to a collection, and daemonize the model using the `listen=True` keyword:
+## Run Model
+
+We'll create a SuperDuperDB model based on the `sentence_transformers` library. This demonstrates that you don't necessarily need a native SuperDuperDB integration with a model library to leverage its power. We configure the `Model wrapper` to work with the `SentenceTransformer class`. After configuration, we can link the model to a collection and daemonize the model with the `listen=True` keyword.
 
 
 ```python
-from superduperdb.container.model import Model
+from superduperdb import Model
 import sentence_transformers
-
-from superduperdb.ext.numpy.array import array
+from superduperdb.ext.numpy import array
 
 m = Model(
     identifier='all-MiniLM-L6-v2',
@@ -94,8 +90,8 @@ m.predict(
 )
 ```
 
-Now that we've created and added the model which computes features for the `"text"`, we can train a 
-downstream model using Scikit-Learn:
+## Train Downstream Model
+Now that we've created and added the model that computes features for the `"text"`, we can train a downstream model using Scikit-Learn.
 
 
 ```python
@@ -114,8 +110,9 @@ model.fit(
 )
 ```
 
-Now that the model has been trained, we can apply the model to the database, also daemonizing the model 
-with `listen=True`.
+## Run Downstream Model
+
+With the model trained, we can now apply it to the database. 
 
 
 ```python
@@ -127,7 +124,9 @@ model.predict(
 )
 ```
 
-To verify that this process has worked, we can sample a few records, to inspect the sanity of the predictions
+## Verification
+
+To verify that the process has worked, we can sample a few records to inspect the sanity of the predictions.
 
 
 ```python

@@ -52,4 +52,11 @@ jobs:
       #---------------------------------------------------
 
       - name: Install Dev Dependencies
-        run: python -m pip install --upgrade .[dev]
+        run: |
+          python -m pip install --upgrade .[dev]
+          pip cache purge
+          
+
+      - name: Docker-compose
+        run:
+          make testenv_init

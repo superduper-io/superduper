@@ -1,94 +1,92 @@
-# Training and maintaining MNIST predictions
+# Training and Maintaining MNIST Predictions with SuperDuperDB
 
-In this notebook we'll be implementing a classic machine learning classification task: MNIST hand written digit
-recognition, using a convolution neural network, but with a twist: we'll be implementing the task *in database* using SuperDuperDB.
+## Introduction
+
+This notebook outlines the process of implementing a classic machine learning classification task - MNIST handwritten digit recognition, using a convolutional neural network. However, we introduce a unique twist by performing the task in a database using SuperDuperDB.
+
+## Prerequisites
+
+Before diving into the implementation, ensure that you have the necessary libraries installed by running the following commands:
 
 
 ```python
-!pip install matplotlib
-!pip install superduperdb[torch]
+!pip install superduperdb
+!pip install torch torchvision matplotlib
 ```
 
-SuperDuperDB supports MongoDB as a databackend. Correspondingly, we'll import the python MongoDB client `pymongo`
-and "wrap" our database to convert it to a SuperDuper `Datalayer`:
+## Connect to datastore 
+
+First, we need to establish a connection to a MongoDB datastore via SuperDuperDB. You can configure the `MongoDB_URI` based on your specific setup. 
+Here are some examples of MongoDB URIs:
+
+* For testing (default connection): `mongomock://test`
+* Local MongoDB instance: `mongodb://localhost:27017`
+* MongoDB with authentication: `mongodb://superduper:superduper@mongodb:27017/documents`
+* MongoDB Atlas: `mongodb+srv://<username>:<password>@<atlas_cluster>/<database>`
+
+
+```python
+from superduperdb import superduper
+from superduperdb.backends.mongodb import Collection
+import os
+
+mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
+db = superduper(mongodb_uri)
+
+# Create a collection for MNIST
+mnist_collection = Collection('mnist')
+```
+
+
+## Load Dataset
+
+After connecting to MongoDB, we add the MNIST dataset. SuperDuperDB excels at handling "difficult" data types, and we achieve this using an `Encoder`, which works in tandem with the `Document` wrappers. Together, they enable Python dictionaries containing non-JSONable or bytes objects to be inserted into the underlying data infrastructure. 
+
+
+
+```python
+import torchvision
+from superduperdb.ext.pillow import pil_image
+from superduperdb import Document
+from superduperdb.backends.mongodb import Collection
+
+import random
+
+# Load MNIST images as Python objects using the Python Imaging Library.
+mnist_data = list(torchvision.datasets.MNIST(root='./data', download=True))
+document_list = [Document({'img': pil_image(x[0]), 'class': x[1]}) for x in mnist_data]
+
+# Shuffle the data and select a subset of 1000 documents
+random.shuffle(document_list)
+data = document_list[:1000]
+
+# Insert the selected data into the mnist_collection
+db.execute(
+    mnist_collection.insert_many(data[:-100]),  # Insert all but the last 100 documents
+    encoders=(pil_image,) # Encode images using the Pillow library.
+)
+```
+
+Now that the images and their classes are inserted into the database, we can query the data in its original format. Particularly, we can use the `PIL.Image` instances to inspect the data.
+
+
+```python
+# Get and display one of the images
+r = db.execute(mnist_collection.find_one())
+r.unpack()['img']
+```
+
+## Build Model
+
+Next, we create our machine learning model. SuperDuperDB supports various frameworks out of the box, and in this case, we are using PyTorch, which is well-suited for computer vision tasks. In this example, we combine torch with torchvision.
+
+We create `postprocess` and `preprocess` functions to handle the communication with the SuperDuperDB `Datalayer`, and then wrap model, preprocessing and postprocessing to create a native SuperDuperDB handler.
+
 
 
 ```python
 import torch
-import torchvision
 
-import os
-
-# Uncomment one of the following lines to use a bespoke MongoDB deployment
-# For testing the default connection is to mongomock
-
-mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
-# mongodb_uri = "mongodb://localhost:27017"
-# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
-# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
-# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
-
-# Super-Duper your Database!
-from superduperdb import superduper
-db = superduper(mongodb_uri)
-```
-
-Now that we've connected to SuperDuperDB, let's add some data. MNIST is a good show case for one of the 
-key benefits of SuperDuperDB - adding "difficult" data types. This can be done using an `Encoder` 
-which is a key wrapper in SuperDuperDB's arsenal. The `Encoder` works closely together with the `Document` 
-wrapper. Together they allow Python dictionaries containing non-JSONable/ `bytes` objects, to be insert into
-SuperDuperDB:
-
-
-```python
-from superduperdb.ext.pillow.image import pil_image as i
-from superduperdb.container.document import Document as D
-from superduperdb.db.mongodb.query import Collection
-
-import random
-
-collection = Collection(name='mnist')
-
-mnist_data = list(torchvision.datasets.MNIST(root='./data', download=True))
-data = [D({'img': i(x[0]), 'class': x[1]}) for x in mnist_data]
-random.shuffle(data)
-data = data[:1000]
-
-db.execute(
-    collection.insert_many(data[:-100], encoders=[i])
-)
-```
-
-Now that we've inserted the images and their classes to the database, let's query some data:
-
-
-```python
-r = db.execute(collection.find_one())
-r.unpack()
-```
-
-When we query the data, it's in exactly the format we inserted it. In particular, we can use the `PIL.Image` instances
-to inspect the data:
-
-
-```python
-r.unpack()['img']
-```
-
-Now let's create our model. SuperDuperDB supports these frameworks, out-of-the-box:
-
-- `torch`
-- `sklearn`
-- `transformers`
-- `sentence_transformers`
-- `openai`
-- `langchain`
-
-In this case, we're going to use PyTorch, since it's great for computer vision use-cases.
-We can combine `torch` with `torchvision` in SuperDuperDB.
-
-
-```python
 class LeNet5(torch.nn.Module):
     def __init__(self, num_classes):
         super().__init__()
@@ -130,43 +128,32 @@ def preprocess(x):
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize(mean=(0.1307,), std=(0.3081,))]
     )(x)
-```
-
-We've created `postprocess` and `preprocess` functions to handle the communication with the SuperDuperDB
-`Datalayer`. In order to create a native SuperDuperDB model, we wrap the model, preprocessing and postprocessing:
 
 
-```python
-model = superduper(LeNet5(10), preprocess=preprocess, postprocess=postprocess)
+# Create and insert a SuperDuperDB model into the database
+model = superduper(LeNet5(10), preprocess=preprocess, postprocess=postprocess, preferred_devices=('cpu',))
 db.add(model)
 ```
 
-The model predicts human readable outputs, directly from the `PIL.Image` objects. All 
-models in SuperDuperDB are equipped with a `sklearn`-style `.predict` method. This makes 
-it easy to know how each AI-framework will operate in combination with the `Datalayer`.
+## Train Model
 
+Now we are ready to "train" or "fit" the model. Trainable models in SuperDuperDB come with a sklearn-like `.fit` method. 
 
-```python
-model.predict([r['img'] for r in data[:10]])
-```
-
-Now we're ready to "train" or "fit" the model. Trainable models in SuperDuperDB are equipped 
-with a `sklearn`-like `.fit` method:
 
 
 ```python
 from torch.nn.functional import cross_entropy
 
-from superduperdb.container.metric import Metric
-from superduperdb.container.dataset import Dataset
+from superduperdb import Metric
+from superduperdb import Dataset
 from superduperdb.ext.torch.model import TorchTrainerConfiguration
 
-
+# Fit the model to the training data
 job = model.fit(
-    X='img',
-    y='class',
-    db=db,
-    select=collection.find(),
+    X='img', # Feature matrix used as input data 
+    y='class', # Target variable for training
+    db=db, # Database used for data retrieval
+    select=mnist_collection.find(), # Select the dataset
     configuration=TorchTrainerConfiguration(
         identifier='my_configuration',
         objective=cross_entropy,
@@ -178,39 +165,53 @@ job = model.fit(
     validation_sets=[
         Dataset(
             identifier='my_valid',
-            select=Collection(name='mnist').find({'_fold': 'valid'}),
+            select=Collection('mnist').find({'_fold': 'valid'}),
         )
     ],
-    distributed=False
+    distributed=False,
 )
 ```
+
+## Monitoring Training Efficiency
+You can monitor the training efficiency with visualization tools like Matplotlib:
 
 
 ```python
 from matplotlib import pyplot as plt
 
+# Load the model from the database
 model = db.load('model', model.identifier)
 
+# Plot the accuracy values
 plt.plot(model.metric_values['my_valid/acc'])
 plt.show()
 ```
 
-Now that the model has been trained, we can use it to "listen" the data for incoming changes. 
-This is set up with a simple predict "on" the database (without loading all the data client-side).
 
-The `listen` toggle "activates" the model:
+## On-the-fly Predictions
+Once the model is trained, you can use it to continuously predict on new data as it arrives. This is set up by enabling a `listener` for the database (without loading all the data client-side). The listen toggle activates the model to make predictions on incoming data changes.
+
 
 
 ```python
-model.predict(X='img', db=db, select=collection.find(), listen=True, max_chunk_size=100)
+model.predict(
+    X='img', # Input feature  
+    db=db,  # Database used for data retrieval
+    select=mnist_collection.find(), # Select the dataset
+    listen=True, # Continuous predictions on incoming data 
+    max_chunk_size=100, # Number of predictions to return at once
+)
 ```
 
 We can see that predictions are available in `_outputs.img.lenet5`.
 
 
 ```python
-db.execute(collection.find_one({'_fold': 'valid'})).unpack()
+r = db.execute(mnist_collection.find_one({'_fold': 'valid'}))
+r.unpack()
 ```
+
+## Verification
 
 The models "activated" can be seen here:
 
@@ -226,12 +227,12 @@ We can verify that the model is activated, by inserting the rest of the data:
 for r in data[-100:]:
     r['update'] = True
 
-db.execute(collection.insert_many(data[-100:]))
+db.execute(mnist_collection.insert_many(data[-100:]))
 ```
 
 You can see that the inserted data, are now also populated with predictions:
 
 
 ```python
-db.execute(collection.find_one({'update': True}))['_outputs']
+db.execute(mnist_collection.find_one({'update': True}))['_outputs']
 ```

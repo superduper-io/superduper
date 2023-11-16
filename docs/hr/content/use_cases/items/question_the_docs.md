@@ -1,72 +1,95 @@
-# Ask the docs anything about SuperDuperDB
+# Building Q&A Assistant Using Mongo and OpenAI
 
-In this notebook we show you how to implement the much-loved document Q&A task, using SuperDuperDB
-together with MongoDB.
+## Introduction
+
+This notebook is designed to demonstrate how to implement a document Question-and-Answer (Q&A) task using SuperDuperDB in conjunction with OpenAI and MongoDB. It provides a step-by-step guide and explanation of each component involved in the process.
+
+
+## Prerequisites
+
+Before diving into the implementation, ensure that you have the necessary libraries installed by running the following commands:
 
 
 ```python
 !pip install superduperdb
+!pip install ipython openai==0.27.6
 ```
+
+Additionally, ensure that you have set your openai API key as an environment variable. You can uncomment the following code and add your API key:
 
 
 ```python
 import os
+
+#os.environ['OPENAI_API_KEY'] = 'sk-...'
 
 if 'OPENAI_API_KEY' not in os.environ:
     raise Exception('Environment variable "OPENAI_API_KEY" not set')
 ```
 
+## Connect to datastore 
+
+First, we need to establish a connection to a MongoDB datastore via SuperDuperDB. You can configure the `MongoDB_URI` based on your specific setup. 
+Here are some examples of MongoDB URIs:
+
+* For testing (default connection): `mongomock://test`
+* Local MongoDB instance: `mongodb://localhost:27017`
+* MongoDB with authentication: `mongodb://superduper:superduper@mongodb:27017/documents`
+* MongoDB Atlas: `mongodb+srv://<username>:<password>@<atlas_cluster>/<database>`
+
 
 ```python
-import os
 from superduperdb import superduper
-from superduperdb.db.mongodb.query import Collection
-
-# Uncomment one of the following lines to use a bespoke MongoDB deployment
-# For testing the default connection is to mongomock
+from superduperdb.backends.mongodb import Collection
+import os
 
 mongodb_uri = os.getenv("MONGODB_URI","mongomock://test")
-# mongodb_uri = "mongodb://localhost:27017"
-# mongodb_uri = "mongodb://superduper:superduper@mongodb:27017/documents"
-# mongodb_uri = "mongodb://<user>:<pass>@<mongo_cluster>/<database>"
-# mongodb_uri = "mongodb+srv://<username>:<password>@<atlas_cluster>/<database>"
-
-# Super-Duper your Database!
-from superduperdb import superduper
 db = superduper(mongodb_uri)
 
 collection = Collection('questiondocs')
 ```
 
-In this example we use the internal textual data from the `superduperdb` project's API documentation, with the "meta"-goal of 
-creating a chat-bot to tell us about the project which we are using!
 
-Uncomment the following cell if you have the superduperdb docs locally.
-Otherwise you can load the data in the following cells.
+```python
+db.metadata
+```
+
+## Load Dataset 
+
+In this example we use the internal textual data from the `superduperdb` project's API documentation. The goal is to create a chatbot that can provide information about the project. You can either load the data from your local project or use the provided data. 
+
+If you have the SuperDuperDB project locally and want to load the latest version of the API, uncomment the following cell:
 
 
 ```python
 # import glob
 
-# ROOT = '../docs/content/docs'
+# ROOT = '../docs/hr/content/docs/'
 
-# STRIDE = 5       # stride in numbers of lines
-# WINDOW = 10       # length of window in numbers of lines
+# STRIDE = 3       # stride in numbers of lines
+# WINDOW = 25       # length of window in numbers of lines
 
-# content = sum([open(file).readlines() 
-#                for file in glob.glob(f'{ROOT}/*/*.md') 
-#                + glob.glob('{ROOT}/*.md')], [])
+# files = sorted(glob.glob(f'{ROOT}/*.md') + glob.glob(f'{ROOT}/*.mdx'))
+
+# content = sum([open(file).read().split('\n') for file in files], [])
 # chunks = ['\n'.join(content[i: i + WINDOW]) for i in range(0, len(content), STRIDE)]
+```
+
+Otherwise, you can load the data from an external source. The chunks of text contain code snippets and explanations, which will be used to build the document Q&A chatbot. 
+
+
+```python
+from IPython.display import *
+
+Markdown(chunks[20])
 ```
 
 
 ```python
 !curl -O https://superduperdb-public.s3.eu-west-1.amazonaws.com/superduperdb_docs.json
-```
 
-
-```python
 import json
+from IPython.display import Markdown
 
 with open('superduperdb_docs.json') as f:
     chunks = json.load(f)
@@ -75,47 +98,88 @@ with open('superduperdb_docs.json') as f:
 You can see that the chunks of text contain bits of code, and explanations, 
 which can become useful in building a document Q&A chatbot.
 
-
-```python
-from IPython.display import Markdown
-Markdown(chunks[1])
-```
-
-As usual we insert the data:
+As usual we insert the data. The `Document` wrapper allows `superduperdb` to handle records with special data types such as images,
+video, and custom data-types.
 
 
 ```python
-from superduperdb.container.document import Document
+from superduperdb import Document
 
 db.execute(collection.insert_many([Document({'txt': chunk}) for chunk in chunks]))
 ```
 
-We set up a standard `superduperdb` vector-search index using `openai` (although there are many options
+## Create a Vector-Search Index
+
+To enable question-answering over your documents, we need to setup a standard `superduperdb` vector-search index using `openai` (although there are many options
 here: `torch`, `sentence_transformers`, `transformers`, ...)
+
+A `Model` is a wrapper around a self-built or ecosystem model, such as `torch`, `transformers`, `openai`.
 
 
 ```python
-from superduperdb.container.vector_index import VectorIndex
-from superduperdb.container.listener import Listener
-from superduperdb.ext.openai.model import OpenAIEmbedding
+from superduperdb.ext.openai import OpenAIEmbedding
+
+model = OpenAIEmbedding(model='text-embedding-ada-002')
+```
+
+
+```python
+model.predict('This is a test', one=True)
+```
+
+A `Listener` "deploys" a `Model` to "listen" to incoming data, and compute outputs, which are saved in the database, via `db`.
+
+
+```python
+from superduperdb import Listener
+
+listener = Listener(model=model, key='txt', select=collection.find())
+```
+
+A `VectorIndex` wraps a `Listener`, making its outputs searchable.
+
+
+```python
+from superduperdb import VectorIndex
 
 db.add(
-    VectorIndex(
-        identifier='my-index',
-        indexing_listener=Listener(
-            model=OpenAIEmbedding(model='text-embedding-ada-002'),
-            key='txt',
-            select=collection.find(),
-        ),
-    )
+    VectorIndex(identifier='my-index', indexing_listener=listener)
 )
 ```
 
-Now we create a chat-completion component, and add this to the system:
+
+```python
+db.execute(collection.find_one())
+```
 
 
 ```python
-from superduperdb.ext.openai.model import OpenAIChatCompletion
+from superduperdb.backends.mongodb import Collection
+from superduperdb import Document as D
+from IPython.display import *
+
+query = 'Code snippet how to create a `VectorIndex` with a torchvision model'
+
+result = db.execute(
+    collection
+        .like(D({'txt': query}), vector_index='my-index', n=5)
+        .find()
+)
+
+display(Markdown('---'))
+
+for r in result:
+    display(Markdown(r['txt']))
+    display(Markdown('---'))
+```
+
+## Create a Chat-Completion Component
+
+In this step, a chat-completion component is created and added to the system. This component is essential for the Q&A functionality:
+
+
+```python
+from superduperdb.ext.openai import OpenAIChatCompletion
 
 chat = OpenAIChatCompletion(
     model='gpt-3.5-turbo',
@@ -129,36 +193,42 @@ chat = OpenAIChatCompletion(
 )
 
 db.add(chat)
-```
 
-We can view that this is now registed in the system:
-
-
-```python
 print(db.show('model'))
 ```
 
-Finally, asking questions about the documents can be targeted with a particular query.
-Using the power of MongoDB, this allows users to use vector-search in combination with
-important filtering rules:
+## Ask Questions to Your Docs
+
+Finally, you can ask questions about the documents. You can target specific queries and use the power of MongoDB for vector-search and filtering rules. Here's an example of asking a question:
 
 
 ```python
-from superduperdb.container.document import Document
-from IPython.display import display, Markdown
+from superduperdb import Document
+from IPython.display import Markdown
 
-q = 'Can you give me a code-snippet to set up a `VectorIndex`?'
+# Define the search parameters
+search_term = 'Can you give me a code-snippet to set up a `VectorIndex`?'
+num_results = 5
 
 output, context = db.predict(
     model_name='gpt-3.5-turbo',
-    input=q,
+    input=search_term,
     context_select=(
         collection
-            .like(Document({'txt': q}), vector_index='my-index', n=5)
+            .like(Document({'txt': search_term}), vector_index='my-index', n=num_results)
             .find()
     ),
     context_key='txt',
 )
 
 Markdown(output.content)
+```
+
+Reset the demo
+
+
+```python
+db.remove('vector_index', 'my-index', force=True)
+db.remove('listener', 'text-embedding-ada-002/txt', force=True)
+db.remove('model', 'text-embedding-ada-002', force=True)
 ```

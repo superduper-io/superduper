@@ -78,6 +78,7 @@ jobs:
         run: |
           # Run testing environment on the background, but get the logs
           nohup make testenv_init  &
+          echo 127.0.0.1 mongodb | sudo tee -a /etc/hosts
           
           make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
           make testenv_shutdown

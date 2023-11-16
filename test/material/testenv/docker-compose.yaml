@@ -3,18 +3,13 @@ services:
 
   # Resolv container hostnames
   # ------------------------------
-  host-mapper:
-    image: dvdarias/docker-hoster
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock
-      - /etc/hosts:/tmp/hosts
-
-
   # MongoDB Datastore
   # ------------------------------
   mongodb:
     image: mongo:6
     hostname: mongodb
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=localhost
     ports:
       - "27017:27017"
     command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]
@@ -41,10 +36,11 @@ services:
       dockerfile: ./images/superduperdb/Dockerfile
       args:
         - BUILD_ENV=sandbox # Use local code
-        - SUPERDUPERDB_EXTRAS=server,apis # Install dependencies
+        - SUPERDUPERDB_EXTRAS=testing,server,apis # Install dependencies
     hostname: vector-search
     ports:
       - "8000:8000"
+      - "8001:8001"
     volumes:
         - ../../../:/app # mount the root path
     command:
@@ -53,9 +49,12 @@ services:
       - |
         # Install the latest version of the code (avoid cached layers).
         cd /app; pip install --user .       
-        python -m superduperdb vector-search
+
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' nohup  python -m superduperdb cdc &
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb vector-search
+
     healthcheck:
-      test: curl http://localhost:8000/ || exit 1
+      test: curl http://localhost:8000/health || exit 1
       interval: 40s
       timeout: 30s
       retries: 10
@@ -91,8 +90,7 @@ services:
       - |
         # Install the latest version of the code (avoid cached layers).
         cd /app; pip install --user .        
-        dask scheduler
-
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask scheduler
   dask-worker:
     depends_on:
       -   dask-scheduler
@@ -110,12 +108,12 @@ services:
       - |
         # Install the latest version of the code (avoid cached layers).
         cd /app; pip install --user .
-        dask worker "tcp://scheduler:8786"
+        SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1
 
-  # Demo SuperDuperDB Notebooks
-  # ------------------------------
+#  Demo SuperDuperDB Notebooks
+#  ------------------------------
 #  demo-notebooks:
 #    depends_on:
 #      - mongo-init

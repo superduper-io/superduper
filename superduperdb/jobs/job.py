@@ -131,10 +131,8 @@ class FunctionJob(Job):
         :param client: dask client
         :param dependencies: list of dependencies
         """
-        CFG = s.configs.build_config()  # TODO Why not use s.CFG or s.CFG.deepcopy()
         self.future = client.submit(
             callable_job,
-            cfg=CFG,
             function_to_call=self.callable,
             job_id=self.identifier,
             args=self.args,
@@ -205,10 +203,8 @@ class ComponentJob(Job):
         :param client: dask client
         :param dependencies: list of dependencies
         """
-        CFG = s.configs.build_config()  # Why?
         self.future = client.submit(
             method_job,
-            cfg=CFG,
             type_id=self.type_id,
             identifier=self.component_identifier,
             method_name=self.method_name,

@@ -12,7 +12,7 @@ services:
 
   # MongoDB Datastore
   # ------------------------------
-  mongo-db:
+  mongodb:
     image: mongo:6
     hostname: mongodb
     ports:

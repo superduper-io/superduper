@@ -2,7 +2,7 @@
 
 
 echo "Terminating Mongo Server"
-docker compose down mongodb
+docker compose down
 
 echo "Terminating Dask "
 pkill dask

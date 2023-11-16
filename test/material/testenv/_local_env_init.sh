@@ -24,4 +24,4 @@ echo "Starting Vector Search Service"
 SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb vector-search &
 
 echo "Starting Change Data Capture (CDC) Service"
-SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb cdc
+SUPERDUPERDB_DATA_BACKEND='mongodb://superduper:superduper@mongodb:27017/test_db' python -m superduperdb cdc &

@@ -44,7 +44,7 @@ On the 5th of December, we are going to officially launch SuperDuperDB with the 
 - Massive overhaul of the docs
 - Revamped and modularized testing suite
 
-Leave a star to be informed of more exciting updates!
+⭐️ Leave a star to be informed of more exciting updates!
 
 
 ---

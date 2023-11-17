@@ -29,6 +29,9 @@ class MongoDataBackend(BaseDataBackend):
         super().__init__(conn=conn, name=name)
         self._db = self.conn[self.name]
 
+    def url(self):
+        return self.conn.HOST + ':' + str(self.conn.PORT) + '/' + self.name
+
     @property
     def db(self):
         return self._db

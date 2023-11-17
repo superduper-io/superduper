@@ -27,6 +27,13 @@ class MetaDataStore(ABC):
         self.conn = conn
 
     @abstractmethod
+    def url(self):
+        """
+        Metadata store connection url
+        """
+        pass
+
+    @abstractmethod
     def create_component(self, info: t.Dict):
         """
         Create a component in the metadata store.

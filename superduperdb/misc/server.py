@@ -1,5 +1,6 @@
 import base64
 import json
+from functools import lru_cache
 
 import requests
 
@@ -7,7 +8,20 @@ from superduperdb import CFG, logging
 from superduperdb.ext.utils import superduperencode
 
 
-def request_server(
+@lru_cache(maxsize=None)
+def _handshake(service: str):
+    endpoint = 'handshake/config'
+    cfg = json.dumps(CFG.comparables)
+    try:
+        _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
+    except Exception:
+        raise Exception(
+            'Service {service} not compatible with current client,\
+             its configured with different configuration.'
+        )
+
+
+def _request_server(
     service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
 ):
     url = getattr(CFG.server, service) + '/' + service + '/' + endpoint
@@ -30,3 +44,12 @@ def request_server(
         logging.error(msg)
         raise Exception(msg)
     return result
+
+
+def request_server(
+    service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
+):
+    _handshake(service)
+    return _request_server(
+        service=service, data=data, endpoint=endpoint, args=args, type=type
+    )

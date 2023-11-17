@@ -5,14 +5,37 @@ canot contain any other imports from this project.
 """
 # TODO further simplify these configurations
 
+import json
 import os
 import typing as t
 from enum import Enum
 
+from pydantic import Field
+
 from .jsonable import Factory, JSONable
 
+_CONFIG_IMMUTABLE = True
 
-class Retry(JSONable):
+
+class BaseConfigJSONable(JSONable):
+    def force_set(self, name, value):
+        '''
+        Forcefully setattr of BaseConfigJSONable instance
+
+        NOTE: Not recommended to be used.
+        '''
+        super().__setattr__(name, value)
+
+    def __setattr__(self, name, value):
+        if not _CONFIG_IMMUTABLE:
+            super().__setattr__(name, value)
+            return
+        raise AttributeError(
+            "Config is immutable, please restart the client with updated config."
+        )
+
+
+class Retry(BaseConfigJSONable):
     """Describes how to retry using the `tenacity` library
 
     :param stop_after_attempt: The number of attempts to make
@@ -29,7 +52,7 @@ class Retry(JSONable):
     wait_multiplier: float = 1.0
 
 
-class Apis(JSONable):
+class Apis(BaseConfigJSONable):
     """A container for API connections
 
     :param retry: A ``Retry`` object
@@ -38,7 +61,7 @@ class Apis(JSONable):
     retry: Retry = Factory(Retry)
 
 
-class Cluster(JSONable):
+class Cluster(BaseConfigJSONable):
     """Describes a connection to distributed work via Dask
 
     :param distributed: Whether to use distributed task management via Dask or not
@@ -79,7 +102,7 @@ class LogType(str, Enum):
     LOKI = "LOKI"
 
 
-class Logging(JSONable):
+class Logging(BaseConfigJSONable):
     """Describe how we are going to log. This isn't yet used.
 
     :param level: The log level
@@ -92,7 +115,7 @@ class Logging(JSONable):
     kwargs: dict = Factory(dict)
 
 
-class Server(JSONable):
+class Server(BaseConfigJSONable):
     """Configure the SuperDuperDB server connection information
 
     :param host: The host for the connection
@@ -111,7 +134,7 @@ class Server(JSONable):
         return f'{self.protocol}://{self.host}:{self.port}'
 
 
-class Downloads(JSONable):
+class Downloads(BaseConfigJSONable):
     """
     Configure how downloads are saved in the database
     or to hybrid filestorage (references to filesystem from datastore)
@@ -158,8 +181,56 @@ class Config(JSONable):
     #: Probability of validation fold
     fold_probability: float = 0.05
 
-    # mode
-    mode: str = 'development'
+    # mode: development or production
+    mode: str = Field(default='development', pattern='^(development|production)$')
 
     class Config(JSONable.Config):
         protected_namespaces = ()
+
+    def __setattr__(self, name, value):
+        if name == 'mode':
+            raise AttributeError('Not allowed to change mode')
+
+        if not _CONFIG_IMMUTABLE:
+            super().__setattr__(name, value)
+            return
+
+        raise AttributeError(
+            'Config is immutable in production mode,\
+             please restart the client with updated config.'
+        )
+
+    @property
+    def comparables(self):
+        '''
+        A dict of `self` excluding some defined attributes.
+        '''
+        _dict = self.dict()
+        list(map(_dict.pop, ('cluster', 'server', 'apis', 'logging', 'mode')))
+        return _dict
+
+    def match(self, cfg: dict):
+        '''
+        Match the target cfg dict with `self` comparables dict.
+        '''
+        self_cfg = self.comparables
+        return hash(json.dumps(self_cfg, sort_keys=True)) == hash(
+            json.dumps(cfg, sort_keys=True)
+        )
+
+    def force_set(self, name, value):
+        '''
+        Brings immutable behaviour to `CFG` instance.
+
+        CAUTION: Only use it in development mode with caution,
+        as this can bring unexpected behaviour.
+        '''
+        parent = self
+        names = name.split('.')
+        if len(names) > 1:
+            name = names[-1]
+            for n in names[:-1]:
+                parent = getattr(parent, n)
+            parent.force_set(name, value)
+        else:
+            super().__setattr__(name, value)

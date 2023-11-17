@@ -17,6 +17,13 @@ class BaseDataBackend(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def url(self):
+        """
+        Databackend connection url
+        """
+        pass
+
+    @abstractmethod
     def build_metadata(self):
         """
         Build a default metadata store based on current connection.

@@ -1,3 +1,4 @@
+import subprocess
 import typing as t
 
 import superduperdb as s
@@ -14,9 +15,14 @@ def serve():
     serve(db)
 
 
-@command(help='Start local dask cluster')
-def local_dask():
-    raise NotImplementedError
+@command(help='Start local dask scheduler')
+def dask_scheduler():
+    subprocess.Popen(["dask", "scheduler"])
+
+
+@command(help='Start local dask worker')
+def dask_worker():
+    subprocess.Popen(["dask", "worker", "tcp://localhost:8786"])
 
 
 @command(help='Start local cluster: server, dask and change data capture')

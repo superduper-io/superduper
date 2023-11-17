@@ -7,8 +7,6 @@ services:
   mongodb:
     image: mongo:6
     hostname: mongodb
-#    environment:
-#      - MONGODB_ADVERTISED_HOSTNAME=localhost
     ports:
       - "27017:27017"
     command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]

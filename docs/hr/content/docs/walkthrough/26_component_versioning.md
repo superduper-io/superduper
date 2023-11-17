@@ -4,7 +4,7 @@ sidebar_position: 26
 
 # Component versioning
 
-Whenever a `Component` is created (see [here](09_component_abstraction.md) for overview of `Component` classes),
+Whenever a `Component` is created (see [here](../Fundamentals/09_component_abstraction.md) for overview of `Component` classes),
 information about that `Component` is saved in the `db.metadata` store.
 
 All components come with attributes `.identifier` which is a unique identifying string for that `Component` instance.

@@ -154,6 +154,7 @@ def test_advance_setup(distributed_db, image_url):
     )
 
     search_phrase = '96'
+
     r = next(
         db.execute(
             Collection('_outputs.int.model1')
@@ -164,5 +165,6 @@ def test_advance_setup(distributed_db, image_url):
         )
     )
     r = r.unpack()
+
     assert '_outputs' in r
     assert np.allclose(np.asarray([9600] * 10), r['_outputs']['int']['model1']['int'])

@@ -140,13 +140,19 @@ class Datalayer:
         if vi.indexing_listener.select is None:
             raise ValueError('.select must be set')
 
+        key = vi.indexing_listener.key
+        if key.startswith('_outputs.'):
+            key = key.split('.')[1]
+
+        query = vi.indexing_listener.select.outputs(
+            **{key: vi.indexing_listener.model.identifier}
+        )
+
+        logging.info(str(query))
+
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
-            self.execute(
-                vi.indexing_listener.select.outputs(
-                    vi.indexing_listener.key, vi.indexing_listener.model.identifier
-                )
-            ),
+            self.execute(query),
             s.CFG.cluster.backfill_batch_size,
         ):
             items = []
@@ -168,13 +174,6 @@ class Datalayer:
     @property
     def distributed_client(self):
         return self._distributed_client
-
-    def create_output_table(self, *args):
-        """
-        Create output table for a model, This is valid for sql databases,
-        and databases with seperate output table configuration.
-        """
-        pass
 
     def drop(self, force: bool = False):
         """
@@ -749,9 +748,7 @@ class Datalayer:
                 f'{download_content.__name__}()',
                 f'{model}.predict({key})',
             )
-            deps = self._get_dependencies_for_listener(
-                identifier
-            )  # TODO remove features as explicit argument to listener
+            deps = self._get_dependencies_for_listener(identifier)
             for dep in deps:
                 dep_model, _, dep_key = dep.rpartition('/')
                 G.add_edge(
@@ -805,19 +802,15 @@ class Datalayer:
         _ids,
         select: Select,
         key='_base',
-        features=None,
         model=None,
         predict_kwargs=None,
     ):
         s.logging.info('finding documents under filter')
-        features = features or {}
         model_identifier = model_info['identifier']
-        if features is None:
-            features = {}
         documents = list(self.execute(select.select_using_ids(_ids)))
         s.logging.info('done.')
         documents = [x.unpack() for x in documents]
-        if key != '_base' or '_base' in features:
+        if key != '_base':
             passed_docs = [r[key] for r in documents]
         else:
             passed_docs = documents
@@ -866,7 +859,7 @@ class Datalayer:
             self
         )  # TODO do I really need to call this here? Could be handled by `.on_create`?
         jobs = object.schedule_jobs(self, dependencies=dependencies)
-        return jobs
+        return jobs, object
 
     def _create_children(self, component: Component, serialized: t.Dict):
         for k, child_type_id in component.child_components:
@@ -1037,10 +1030,7 @@ class Datalayer:
         info = self.metadata.get_component('listener', identifier)
         if info is None:
             return []
-        listener_features = info.get('features', {})
         out = []
-        for k in listener_features:
-            out.append(f'{self.features[k]}/{k}')
         if info['dict']['key'].startswith('_outputs.'):
             _, key, model = info['dict']['key'].split('.')
             out.append(f'{model}/{key}')
@@ -1104,7 +1094,6 @@ class Datalayer:
             ids,
             select,
             key=listener_info['key'],
-            features=listener_info.get('features', {}),
             model=model,
             predict_kwargs=listener_info.get('predict_kwargs', {}),
         )

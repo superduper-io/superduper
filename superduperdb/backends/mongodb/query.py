@@ -11,7 +11,6 @@ from superduperdb import CFG
 from superduperdb.backends.base.query import (
     CompoundSelect,
     Delete,
-    Featurize,
     Insert,
     Like,
     QueryComponent,
@@ -63,6 +62,7 @@ class FindOne(QueryComponent):
         )
 
 
+@dc.dataclass
 class Find(QueryComponent):
     """
     Wrapper around ``pymongo.Collection.find``
@@ -70,6 +70,24 @@ class Find(QueryComponent):
     :param args: Positional arguments to ``pymongo.Collection.find``
     :param kwargs: Named arguments to ``pymongo.Collection.find``
     """
+
+    output_fields: t.Optional[t.Dict[str, str]] = None
+
+    def __post_init__(self):
+        if not self.args:
+            self.args = [{}]
+        else:
+            self.args = list(self.args)
+        if not self.args[1:]:
+            self.args.append({})
+
+        if self.output_fields is not None:
+            # if outputs are specified, then project to those outputs
+            self.args[1].update(
+                {f'_outputs.{k}.{v}': 1 for k, v in self.output_fields.items()}
+            )
+            if '_id' not in self.args[1]:
+                self.args[1]['_id'] = 1
 
     @property
     def select_ids(self):
@@ -89,13 +107,13 @@ class Find(QueryComponent):
             kwargs=self.kwargs,
         )
 
-    def outputs(self, key: str, model: str):
-        # TODO: This was needed due to vector initialize ``.outputs``.
+    def outputs(self, **kwargs):
         return Find(
             name=self.name,
             type=self.type,
             args=self.args,
             kwargs=self.kwargs,
+            output_fields=kwargs,
         )
 
     def select_using_ids(self, ids):
@@ -256,7 +274,11 @@ class MongoCompoundSelect(CompoundSelect):
             table_or_collection=table_or_collection, members=members
         )
 
-    def outputs(self, key: str, model: str):
+    @property
+    def output_fields(self):
+        return self.query_linker.output_fields
+
+    def outputs(self, **kwargs):
         """
         This method returns a query which joins a query with the outputs
         for a table.
@@ -270,7 +292,7 @@ class MongoCompoundSelect(CompoundSelect):
         return MongoCompoundSelect(
             table_or_collection=self.table_or_collection,
             pre_like=self.pre_like,
-            query_linker=self.query_linker.outputs(key, model),
+            query_linker=self.query_linker.outputs(**kwargs),
             post_like=self.post_like,
         )
 
@@ -313,9 +335,6 @@ class MongoCompoundSelect(CompoundSelect):
             return Document(Document.decode(output, encoders=db.encoders))
         return output
 
-    def featurize(self, features: t.Dict):
-        return Featurize(features=features, parent=self)
-
     def download_update(self, db, id: str, key: str, bytes: bytearray) -> None:
         """
         Update to set the content of ``key`` in the document ``id``.
@@ -344,6 +363,14 @@ class MongoQueryLinker(QueryLinker):
     def query_components(self):
         return self.table_or_collection.query_components
 
+    @property
+    def output_fields(self):
+        out = {}
+        for member in self.members:
+            if hasattr(member, 'output_fields'):
+                out.update(member.output_fields)
+        return out
+
     def add_fold(self, fold):
         new_members = []
         for member in self.members:
@@ -356,11 +383,11 @@ class MongoQueryLinker(QueryLinker):
             members=new_members,
         )
 
-    def outputs(self, key: str, model: str):
+    def outputs(self, **kwargs):
         new_members = []
         for member in self.members:
             if hasattr(member, 'outputs'):
-                new_members.append(member.outputs(key, model))
+                new_members.append(member.outputs(**kwargs))
             else:
                 new_members.append(member)
 

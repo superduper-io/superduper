@@ -23,7 +23,6 @@ class Listener(Component):
     :param model: Model for processing data
     :param select: Object for selecting which data is processed
     :param active: Toggle to ``False`` to deactivate change data triggering
-    :param features: Dictionary of mappings from keys to model
     :param identifier: A string used to identify the model.
     :param predict_kwargs: Keyword arguments to self.model.predict
     :param version: Version number of the model(?)
@@ -33,7 +32,6 @@ class Listener(Component):
     model: t.Union[str, Model]
     select: CompoundSelect
     active: bool = True
-    features: t.Optional[t.Dict] = None
     identifier: t.Optional[str] = None
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
     version: t.Optional[int] = None
@@ -67,12 +65,11 @@ class Listener(Component):
     @property
     def dependencies(self) -> t.List[str]:
         out = []
-        if self.features:
-            for k in self.features:
-                out.append(f'{self.features[k]}/{k}')
         if self.key.startswith('_outputs.'):
             _, key, model = self.key.split('.')
             out.append(f'{model}/{key}')
+        if self.select.output_fields:
+            out.extend([f'{v}/{k}' for k, v in self.select.output_fields.items()])
         return out
 
     @property
@@ -87,10 +84,6 @@ class Listener(Component):
                 self.identifier = f'{self.model}/{self.id_key}'
             else:
                 self.identifier = f'{self.model.identifier}/{self.id_key}'
-        self.features = {}
-
-        if 'features' in dir(self.select):
-            self.features = self.select.features
 
     @override
     def schedule_jobs(

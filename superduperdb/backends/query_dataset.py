@@ -21,7 +21,6 @@ class QueryDataset:
     :param fold: The fold to be used for the dataset.
     :param suppress: A list of keys to be suppressed from the dataset.
     :param transform: A callable which can be used to transform the dataset.
-    :param features: A dictionary of features to be returned from the dataset.
     :param db: A ``DB`` object to be used for the dataset.
     :param ids: A list of ids to be used for the dataset.
     :param in_memory: A boolean flag to indicate if the dataset should be loaded
@@ -36,7 +35,6 @@ class QueryDataset:
         fold: t.Union[str, None] = 'train',
         suppress: t.Sequence[str] = (),
         transform: t.Optional[t.Callable] = None,
-        features: t.Optional[t.Dict] = None,
         db=None,
         ids: t.Optional[t.List[str]] = None,
         in_memory: bool = True,
@@ -69,7 +67,6 @@ class QueryDataset:
                 self._ids = ids
             self.select_one = self.select.select_single_id
         self.suppress = suppress
-        self.features = features or {}
         self.extract = extract
 
     @property
@@ -95,12 +92,10 @@ class QueryDataset:
             )
         r = MongoStyleDict(input.unpack())
         s = MongoStyleDict({})
-        for k in self.features:
-            r[k] = r['_outputs'][k][self.features[k]]
 
         if self.keys is not None:
             for k in self.keys:
-                if k == '_base' and k not in self.features:
+                if k == '_base':
                     s[k] = r
                 else:
                     s[k] = r[k]
@@ -130,7 +125,6 @@ class CachedQueryDataset:
         fold='train',
         suppress=(),
         transform=None,
-        features=None,
         database=None,
         prefetch_size: int = 100,
     ):
@@ -142,7 +136,6 @@ class CachedQueryDataset:
 
         self.ids = [doc.id for doc in self.database.execute(self.select.select_ids)]
         self.suppress = suppress
-        self.features = features or {}
         self._max_cache_size = prefetch_size
         self._cache: ExpiryCache = self._fetch_cache()
         self._total_documents = self.count_documents()
@@ -170,12 +163,10 @@ class CachedQueryDataset:
         for document in documents:
             r = MongoStyleDict(document.unpack())
             s = MongoStyleDict({})
-            for k in self.features:
-                r[k] = r['_outputs'][k][self.features[k]]
 
             if self.keys is not None:
                 for k in self.keys:
-                    if k == '_base' and k not in self.features:
+                    if k == '_base':
                         s[k] = r
                     else:
                         s[k] = r[k]
@@ -201,12 +192,10 @@ class CachedQueryDataset:
         self._backfill_cache()
         r = MongoStyleDict(document.unpack())
         s = MongoStyleDict({})
-        for k in self.features:
-            r[k] = r['_outputs'][k][self.features[k]]
 
         if self.keys is not None:
             for k in self.keys:
-                if k == '_base' and k not in self.features:
+                if k == '_base':
                     s[k] = r
                 else:
                     s[k] = r[k]

@@ -17,13 +17,13 @@ def test_query_dataset(db):
             {}, {'_id': 0, 'x': 1, '_fold': 1, '_outputs': 1}
         ),
         fold='train',
-        features={'x': 'linear_a'},
     )
     r = train_data[0]
     assert '_id' not in r
     assert r['_fold'] == 'train'
     assert 'y' not in r
-    assert r['x'].shape[0] == 16
+
+    assert r['_outputs']['x']['linear_a'].shape[0] == 16
 
     train_data = QueryDataset(
         db=db,

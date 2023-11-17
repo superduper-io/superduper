@@ -1,11 +1,10 @@
 import dataclasses as dc
 import enum
 import typing as t
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from typing import Any
 
 from superduperdb import logging
-from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable
 
@@ -32,8 +31,7 @@ class Select(Serializable, ABC):
     Base class for all select queries.
     """
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def id_field(self):
         pass
 
@@ -60,8 +58,7 @@ class Select(Serializable, ABC):
             **kwargs,
         )
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def select_table(self):
         pass
 
@@ -73,8 +70,7 @@ class Select(Serializable, ABC):
     def select_using_ids(self, ids: t.Sequence[str]) -> 'Select':
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def select_ids(self) -> 'Select':
         pass
 
@@ -92,58 +88,6 @@ class Select(Serializable, ABC):
         Execute the query on the DB instance.
         """
         pass
-
-
-@dc.dataclass(repr=False)
-class Featurize(_ReprMixin, Select):
-    features: t.Dict
-    parent: Select
-
-    @property
-    def table_or_collection(self):
-        return self.parent.table_or_collection
-
-    @property
-    def id_field(self):
-        return self.parent.id_field
-
-    def repr_(self):
-        return f'{self.parent.repr_()}.featurize({self.features})'
-
-    def execute(self, db):
-        out = self.parent.execute(db)
-        if isinstance(out, dict):
-            out = SuperDuperCursor.add_features(out, self.features)
-        elif isinstance(out, SuperDuperCursor):
-            out = out.featurize(self.features)
-        return out
-
-    def add_fold(self, fold: str):
-        return Featurize(parent=self.parent.add_fold(fold), features=self.features)
-
-    @property
-    def select_table(self):
-        return Featurize(parent=self.parent.select_table, features=self.features)
-
-    @property
-    def select_ids(self):
-        return Featurize(parent=self.parent.select_ids, features=self.features)
-
-    def select_single_id(self, id: str):
-        return Featurize(
-            parent=self.parent.select_single_id(id), features=self.features
-        )
-
-    def select_ids_of_missing_outputs(self, key: str, model: str):
-        return Featurize(
-            parent=self.parent.select_ids_of_missing_outputs(key=key, model=model),
-            features=self.features,
-        )
-
-    def select_using_ids(self, ids):
-        return Featurize(
-            parent=self.parent.select_using_ids(ids), features=self.features
-        )
 
 
 @dc.dataclass(repr=False)
@@ -203,6 +147,10 @@ class CompoundSelect(_ReprMixin, Select, ABC):
     post_like: t.Optional['Like'] = None
     query_linker: t.Optional['QueryLinker'] = None
 
+    @abstractproperty
+    def output_fields(self):
+        pass
+
     @property
     def id_field(self):
         return self.primary_id
@@ -210,10 +158,6 @@ class CompoundSelect(_ReprMixin, Select, ABC):
     @property
     def primary_id(self):
         return self.table_or_collection.primary_id
-
-    @property
-    def features(self):
-        return {}
 
     def add_fold(self, fold: str):
         assert self.pre_like is None

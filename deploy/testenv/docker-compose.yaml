@@ -122,7 +122,7 @@ services:
 #      - dask-scheduler
 #    build: # Build the latest SuperDuperDB code
 #      context: ../../../. # Build from project's root
-#      dockerfile: ./images/superduperdb/Dockerfile
+#      dockerfile: ./deploy/images/superduperdb/Dockerfile
 #      args:
 #        - BUILD_ENV=sandbox # Use local code
 #        - SUPERDUPERDB_EXTRAS=demo # Install dependencies

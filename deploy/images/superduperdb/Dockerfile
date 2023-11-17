@@ -1,18 +1,15 @@
 # syntax = docker/dockerfile:experimental
 
+# ---------------
+# Global Parameters
+# ---------------
 # BUILD_ENV choses whether to use local source (sandbox) or released wheel (pypi).
-ARG BUILD_ENV=pypi
+ARG BUILD_ENV=release
 
 # ---------------
 # Configure Basic Template
 # ---------------
 FROM jupyterhub/k8s-singleuser-sample:3.1.0 as base
-
-ARG SUPERDUPERDB_EXTRAS='" "'
-
-ENV NB_USER=superduper \
-    NB_UID=1000 \
-    HOME=/home/superduper
 
 # Temporarily switch to the root for privileged operations.
 # ---------------
@@ -36,6 +33,10 @@ RUN apt-get update \
 
 # Replace the default Jupyter user with a SuperDuper user
 # ---------------
+ENV NB_USER=superduper \
+    NB_UID=1000 \
+    HOME=/home/superduper
+
 RUN deluser jovyan && rm -rf /home/jovyan \
     && adduser \
         --disabled-password \
@@ -56,7 +57,7 @@ ENV PATH="${HOME}/.local/bin:$PATH"
 # Install common dependencies
 # ---------------
 RUN pip install --upgrade setuptools pip
-RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade --user \
+RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --upgrade --user \
     # JupyterLab extensions \
     theme-darcula \
     ipywidgets \
@@ -67,28 +68,31 @@ RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade -
 
 # Install Jupyterlab extensions
 # ---------------
-COPY --chown=superduper ./images/superduperdb/labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
-COPY --chown=superduper ./images/superduperdb/apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
-
+COPY --chown=superduper ./deploy/images/superduperdb/labextensions/@superduperdb ${HOME}/.local/share/jupyter/labextensions/@superduperdb
+COPY --chown=superduper ./deploy/images/superduperdb/apputils-extension/themes.jupyterlab-settings ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
 
 # ---------------
-# Configure Sandbox Build
+# Build Sandbox
 # ---------------
 FROM base AS build_sandbox
+
+ONBUILD ARG SUPERDUPERDB_EXTRAS="' '"
 ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
 ONBUILD WORKDIR ${HOME}/superduperdb
-ONBUILD RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade --user \
-    .[${SUPERDUPERDB_EXTRAS}]    \
-    # Purge pip cache
-    && pip cache purge
+# Do our best for caching.
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --upgrade --user \
+    .[${SUPERDUPERDB_EXTRAS}]
 
 
 # ---------------
-# Configure pypi Build
+# Build Release
 # ---------------
-FROM base AS build_pypi
+FROM base AS build_release
+
+ONBUILD ARG SUPERDUPERDB_EXTRAS="' '"
 ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
-ONBUILD RUN --mount=type=cache,mode=0755,target=/root/.cache/pip pip install --upgrade --user \
+# Drop cache to reduce image size.
+ONBUILD RUN pip install --upgrade --user \
     superduperdb[${SUPERDUPERDB_EXTRAS}] \
     # Purge pip cache
     && pip cache purge

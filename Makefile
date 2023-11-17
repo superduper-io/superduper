@@ -77,19 +77,20 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 ##@ CI Testing Environment
 
 testenv_init: ## Initialize a local Testing environment
+	@echo "===> Ensure hostnames"
+	@deploy/testenv/validate_hostnames.sh
+
 	@echo "===> Build superduperdb/sandbox"
-	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
+	docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
 		--build-arg SUPERDUPERDB_EXTRAS="dev"
 
-	@echo "===> Updating host files"
-	./test/material/testenv/set_hosts.sh
-
 	@echo "===> Run Docker-Compose using superduperdb/sandbox"
-	docker compose -f test/material/testenv/docker-compose.yaml up --remove-orphans &
+	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
 
 testenv_shutdown: ## Terminate the local Testing environment
-	docker compose -f test/material/testenv/docker-compose.yaml down
+	@echo "===> Shutting down the local Testing environment"
+	docker compose -f deploy/testenv/docker-compose.yaml down
 
 ##@ CI Testing Functions
 
@@ -98,7 +99,7 @@ unit-testing: ## Execute unit testing
 
 integration-testing: ## Execute integration testing
 	# Block waiting for the testenv to become ready.
-	cd ./test/material/testenv/; ./wait_ready.sh
+	@cd deploy/testenv/; ./wait_ready.sh
 
 	# Run the test
 	pytest $(PYTEST_ARGUMENTS) ./test/integration
@@ -175,8 +176,8 @@ run_sandbox-pr: ## Run a pull request in the sandbox (argument: PR_NUMBER=555)
 # superduperdb/superduperdb is a minimal image contains only what is needed for the framework.
 build_superduperdb: ## Build a minimal Docker image for general use
 	echo "===> build superduperdb/superduperdb:$(RELEASE_VERSION:v%=%)"
-	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
-	--build-arg BUILD_ENV="pypi"
+	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/superduperdb:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	--build-arg BUILD_ENV="release"
 
 
 push_superduperdb: ## Push the superduperdb/superduperdb:latest image
@@ -193,8 +194,8 @@ push_superduperdb: ## Push the superduperdb/superduperdb:latest image
 # superduperdb/demo is a bloated image that contains everything we need to run the online demo.
 build_demo: ## Build a feature-rich Docker image for demonstrations
 	echo "===> build superduperdb/demo:$(RELEASE_VERSION:v%=%)"
-	docker build . -f ./images/superduperdb/Dockerfile -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
-	--build-arg BUILD_ENV="pypi" \
+	docker build . -f ./deploy/images/superduperdb/Dockerfile -t superduperdb/demo:$(RELEASE_VERSION:v%=%) --progress=plain --no-cache \
+	--build-arg BUILD_ENV="release" \
 	--build-arg SUPERDUPERDB_EXTRAS="demo"
 
 push_demo: ## Push the superduperdb/demo:latest image

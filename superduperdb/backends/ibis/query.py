@@ -88,6 +88,10 @@ class IbisCompoundSelect(CompoundSelect):
     def _get_query_linker(cls, table_or_collection, members) -> 'IbisQueryLinker':
         return IbisQueryLinker(table_or_collection=table_or_collection, members=members)
 
+    @property
+    def output_fields(self):
+        return self.query_linker.output_fields
+
     def _get_query_component(
         self,
         name: str,
@@ -101,7 +105,7 @@ class IbisCompoundSelect(CompoundSelect):
             kwargs = {}
         return IbisQueryComponent(name, type=type, args=args, kwargs=kwargs)
 
-    def outputs(self, key: str, model: str):
+    def outputs(self, **kwargs):
         """
         This method returns a query which joins a query with the outputs
         for a table.
@@ -117,7 +121,7 @@ class IbisCompoundSelect(CompoundSelect):
         return IbisCompoundSelect(
             table_or_collection=self.table_or_collection,
             pre_like=self.pre_like,
-            query_linker=self.query_linker._outputs(key, model, str(hash(self))),
+            query_linker=self.query_linker._outputs(query_id=str(hash(self)), **kwargs),
             post_like=self.post_like,
         )
 
@@ -152,8 +156,21 @@ class IbisCompoundSelect(CompoundSelect):
         for tab in tables:
             component_tables.append(db.load('table', tab))
         fields = {}
+
         for tab in component_tables:
-            fields.update(tab.schema.fields)
+            fields_copy = tab.schema.fields.copy()
+            if '_outputs' in tab.identifier and self.renamings:
+                model = tab.identifier.split('/')[1]
+                for k in self.renamings.values():
+                    if k.endswith(model):
+                        fields_copy[k] = fields_copy['output']
+                        del fields_copy['output']
+            else:
+                for k in fields_copy:
+                    if k in self.renamings.values():
+                        fields_copy[k] = fields_copy[self.renamings[k]]
+                        del fields_copy[k]
+            fields.update(fields_copy)
         return fields
 
     @property
@@ -172,9 +189,7 @@ class IbisCompoundSelect(CompoundSelect):
                 similar_ids
             )
         )
-
         new_query_linker = query_linker_stub
-
         if self.query_linker is not None:
             new_query_linker = IbisQueryLinker(
                 table_or_collection=self.table_or_collection,
@@ -204,17 +219,26 @@ class IbisCompoundSelect(CompoundSelect):
 
         return self.query_linker.execute(db), None
 
+    @property
+    def renamings(self):
+        if self.query_linker is not None:
+            return self.query_linker.renamings
+        return {}
+
     def execute(self, db):
         output, scores = self._execute(db)
         fields = self._get_all_fields(db)
+
         for column in output.columns:
             try:
                 type = fields[column]
             except KeyError:
                 logging.warn(f'Disambiguation not yet supported of {column}: TODO!')
                 continue
+
             if isinstance(type, Encoder):
                 output[column] = output[column].map(type.decode)
+
         if scores is not None:
             output['scores'] = output[self.primary_id].map(scores)
 
@@ -322,11 +346,29 @@ class _LogicalExprMixin:
 
 @dc.dataclass(repr=False)
 class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
+    @property
+    def renamings(self):
+        out = {}
+        for m in self.members:
+            out.update(m.renamings)
+        return out
+
+    def __post_init__(self):
+        self._output_fields = {}
+
     def repr_(self) -> str:
         out = super().repr_()
         out = re.sub('\. ', ' ', out)
         out = re.sub('\.\[', '[', out)
         return out
+
+    @property
+    def output_fields(self):
+        return self._output_fields
+
+    @output_fields.setter
+    def output_fields(self, value):
+        self._output_fields = value
 
     def __eq__(self, other):
         return self.eq(other, members=self.members, collection=self.table_or_collection)
@@ -355,6 +397,13 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
     def __getitem__(self, other):
         return self.getitem(
             other, members=self.members, collection=self.table_or_collection
+        )
+
+    @classmethod
+    def _get_query_linker(cls, table_or_collection, members):
+        return cls(
+            table_or_collection=table_or_collection,
+            members=members,
         )
 
     def _get_query_component(self, k):
@@ -396,19 +445,20 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             out.extend(member.get_all_tables())
         return list(set(out))
 
-    def _outputs(self, key: str, model: str, query_id: str):
-        symbol_table = IbisQueryTable(
-            identifier=f'_outputs/{model}',
-            primary_id='output_id',
-        )
-        attr = getattr(  # type: ignore[call-overload]
-            self, self.table_or_collection.primary_id
-        )
-        other_query = self.join(symbol_table, symbol_table.input_id == attr)
-        other_query.filter(
-            symbol_table.key == key and symbol_table.query_id == query_id
-        )
-        return other_query
+    def _outputs(self, query_id: str, **kwargs):
+        for key, model in kwargs.items():
+            symbol_table = IbisQueryTable(
+                identifier=f'_outputs/{model}',
+                primary_id='output_id',
+            ).relabel({'output': f'_outputs.{key}.{model}'})
+            attr = getattr(  # type: ignore[call-overload]
+                self, self.table_or_collection.primary_id
+            )
+            other_query = self.join(symbol_table, symbol_table.input_id == attr)
+            other_query.filter(
+                symbol_table.key == key and symbol_table.query_id == query_id
+            )
+            return other_query
 
     def compile(self, db: 'Datalayer', tables: t.Optional[t.Dict] = None):
         table_id = self.table_or_collection.identifier
@@ -493,10 +543,10 @@ class Table(Component):
             identifier=self.identifier, primary_id=self.primary_id
         ).like(r=r, vector_index=vector_index, n=n)
 
-    def outputs(self, *args, **kwargs):
+    def outputs(self, **kwargs):
         return IbisQueryTable(
             identifier=self.identifier, primary_id=self.primary_id
-        ).outputs(*args, **kwargs)
+        ).outputs(**kwargs)
 
     def __getattr__(self, item):
         return getattr(
@@ -547,7 +597,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
     def add_fold(self, fold: str) -> Select:
         return self.filter(self.fold == fold)
 
-    def outputs(self, key: str, model: str):
+    def outputs(self, **kwargs):
         """
         This method returns a query which joins a query with the outputs
         for a table.
@@ -561,7 +611,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         """
         return IbisCompoundSelect(
             table_or_collection=self, query_linker=self._get_query_linker(members=[])
-        ).outputs(key, model)
+        ).outputs(**kwargs)
 
     @property
     def id_field(self):
@@ -677,6 +727,28 @@ class IbisQueryComponent(QueryComponent):
     """
 
     __doc__ = __doc__ + QueryComponent.__doc__  # type: ignore[operator]
+
+    @property
+    def renamings(self):
+        if self.name == 'rename':
+            return self.args[0]
+        elif self.name == 'relabel':
+            return self.args[0]
+        else:
+            out = {}
+            if self.args is not None:
+                for a in self.args:
+                    if isinstance(
+                        a, (IbisCompoundSelect, IbisQueryLinker, IbisQueryComponent)
+                    ):
+                        out.update(a.renamings)
+            if self.kwargs is not None:
+                for v in self.kwargs.values():
+                    if isinstance(
+                        v, (IbisCompoundSelect, IbisQueryLinker, IbisQueryComponent)
+                    ):
+                        out.update(v.renamings)
+            return out
 
     def repr_(self) -> str:
         """

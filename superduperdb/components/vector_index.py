@@ -74,23 +74,15 @@ class VectorIndex(Component):
         keys: t.List[str],
         db: t.Any = None,
         outputs: t.Optional[t.Dict] = None,
-        featurize: bool = True,
     ):
         document = MongoStyleDict(like.unpack())
-        if featurize:
+        if outputs is not None:
             outputs = outputs or {}
             if '_outputs' not in document:
                 document['_outputs'] = {}
             document['_outputs'].update(outputs)
 
             assert not isinstance(self.indexing_listener, str)
-            features = self.indexing_listener.features or ()
-            for subkey in features:
-                subout = document['_outputs'].setdefault(subkey, {})
-                f_subkey = features[subkey]
-                if f_subkey not in subout:
-                    subout[f_subkey] = db.models[f_subkey]._predict(document[subkey])
-                document[subkey] = subout[f_subkey]
         available_keys = list(document.keys()) + ['_base']
         try:
             model_name, key = next(
@@ -121,7 +113,6 @@ class VectorIndex(Component):
         db: t.Any,
         id_field: str = '_id',
         outputs: t.Optional[t.Dict] = None,
-        featurize: bool = True,
         ids: t.Optional[t.Sequence[str]] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
@@ -131,7 +122,6 @@ class VectorIndex(Component):
         :param like: The document to compare against
         :param db: The datastore to use
         :param outputs: An optional dictionary
-        :param featurize: Enable featurization
         :param ids: A list of ids to match
         :param n: Number of items to return
         """
@@ -151,7 +141,6 @@ class VectorIndex(Component):
             keys=keys,
             db=db,
             outputs=outputs,
-            featurize=featurize,
         )[0]
 
         return db.fast_vector_searchers[self.identifier].find_nearest_from_array(

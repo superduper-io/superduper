@@ -29,6 +29,9 @@ class FileSystemArtifactStore(ArtifactStore):
             logging.info('Creating artifact store directory')
             os.makedirs(self.conn, exist_ok=True)
 
+    def url(self):
+        return self.conn
+
     def delete(self, file_id: str):
         """
         Delete artifact from artifact store

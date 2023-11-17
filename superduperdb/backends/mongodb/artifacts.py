@@ -19,6 +19,9 @@ class MongoArtifactStore(ArtifactStore):
         self.db = self.conn[self.name]
         self.filesystem = gridfs.GridFS(self.db)
 
+    def url(self):
+        return self.conn.HOST + ':' + str(self.conn.PORT) + '/' + self.name
+
     def drop(self, force: bool = False):
         if not force:
             if not click.confirm(

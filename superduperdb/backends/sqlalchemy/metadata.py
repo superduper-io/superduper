@@ -104,6 +104,9 @@ class SQLAlchemyMetadata(MetaDataStore):
 
         self._lock = threading.Lock()
 
+    def url(self):
+        return self.conn.url + self.name
+
     def drop(self, force: bool = False):
         """
         Drop the metadata store.

@@ -91,11 +91,16 @@ class Datalayer:
         )
 
         self.distributed = s.CFG.cluster.distributed
+
+        # stores
         self.metadata = metadata
         self.artifact_store = artifact_store
         self.databackend = databackend
-        self._distributed_client = distributed_client
+        # TODO: force set config stores connection url
+
         self.cdc = DatabaseChangeDataCapture(self)
+
+        self._distributed_client = distributed_client
         self._server_mode = False
 
     @property

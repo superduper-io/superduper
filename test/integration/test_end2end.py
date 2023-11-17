@@ -64,13 +64,18 @@ class Model2:
 def distributed_db(test_db, local_dask_client):
     from superduperdb import CFG
 
-    CFG.mode = 'production'
+    CFG.force_set('mode', 'production')
+    existing_databackend = CFG.data_backend
+    CFG.force_set(
+        'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
+    )
     test_db._distributed_client = local_dask_client
     test_db.distributed = True
     yield test_db
     test_db.distributed = False
     test_db._distributed_client = None
-    CFG.mode = 'development'
+    CFG.force_set('mode', 'development')
+    CFG.force_set('data_backend', existing_databackend)
 
 
 def test_advance_setup(distributed_db, image_url):

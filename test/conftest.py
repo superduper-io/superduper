@@ -8,6 +8,11 @@ from typing import Iterator
 
 import pytest
 
+# ruff: noqa: E402
+from superduperdb.base import config as _config
+
+_config._CONFIG_IMMUTABLE = False
+
 import superduperdb as s
 from superduperdb import logging
 from superduperdb.base import superduper

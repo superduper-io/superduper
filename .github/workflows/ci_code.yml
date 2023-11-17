@@ -76,6 +76,9 @@ jobs:
       - name: Integration Testing
         if: ${{ startsWith(matrix.python-version, '3.11') }} # Dask requires local python and Dockerfile to be in sync
         run: |
+          # Update hostnames
+          echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
+          
           # Run testing environment on the background, but get the logs
           make testenv_init
           

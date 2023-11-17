@@ -40,7 +40,7 @@ class TestComponent(Component):
     child: Optional['TestComponent'] = None
     artifact: Optional[Artifact] = None
 
-    def on_create(self, db):
+    def pre_create(self, db):
         self.is_on_create = True
 
     def on_load(self, db):
@@ -376,6 +376,7 @@ def test_get_context(local_empty_db):
 
     model = Model(object=lambda x: x, identifier='model', takes_context=True)
     context_select = MagicMock(spec=Select)
+    context_select.variables = []
     context_select.execute.return_value = fake_contexts
 
     # Test get_context without context_key

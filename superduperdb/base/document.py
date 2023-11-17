@@ -39,14 +39,19 @@ class Document:
             return _encode_with_schema(self.content, schema)
         return _encode(self.content)
 
-    def outputs(self, key: str, model: str) -> t.Any:
+    def outputs(self, key: str, model: str, version: t.Optional[int] = None) -> t.Any:
         """
         Get document ouputs on ``key`` from ``model``
 
         :param key: Document key to get outputs from.
         :param model: Model name to get outputs from.
         """
-        document = self.unpack()[_OUTPUTS_KEY][key][model]
+        if version is not None:
+            document = self.unpack()[_OUTPUTS_KEY][key][model][version]
+        else:
+            tmp = self.unpack()[_OUTPUTS_KEY][key][model]
+            version = max(list(tmp.keys()))
+            return tmp[version]
         return document
 
     @staticmethod

@@ -44,9 +44,11 @@ class Listener(Component):
         return [('model', 'model')]
 
     @override
-    def on_create(self, db: Datalayer) -> None:
+    def pre_create(self, db: Datalayer) -> None:
         if isinstance(self.model, str):
             self.model = t.cast(Model, db.load('model', self.model))
+        if self.select is not None and self.select.variables:
+            self.select = t.cast(CompoundSelect, self.select.set_variables(db))
 
     @override
     def on_load(self, db: Datalayer) -> None:
@@ -119,6 +121,7 @@ class Listener(Component):
 
         :param database: The DB instance to process
         """
+        # TODO - this doesn't seem to do anything
         if (cleanup := getattr(self.select, 'model_cleanup', None)) is not None:
             assert not isinstance(self.model, str)
             cleanup(database, model=self.model.identifier, key=self.key)

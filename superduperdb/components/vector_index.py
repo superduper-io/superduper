@@ -40,7 +40,7 @@ class VectorIndex(Component):
     type_id: t.ClassVar[str] = 'vector_index'
 
     @override
-    def on_create(self, db: Datalayer) -> None:
+    def pre_create(self, db: Datalayer) -> None:
         if s.CFG.vector_search == s.CFG.data_backend:
             if (create := getattr(db.databackend, 'create_vector_index', None)) is None:
                 msg = 'VectorIndex is not supported by the current database backend'

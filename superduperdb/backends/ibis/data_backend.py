@@ -51,14 +51,17 @@ class IbisDataBackend(BaseDataBackend):
             'key': dtype('string'),
         }
         return Table(
-            identifier=f'_outputs/{model.identifier}',
-            schema=Schema(identifier=f'_schema/{model.identifier}', fields=fields),
+            identifier=f'_outputs/{model.identifier}/{model.version}',
+            schema=Schema(
+                identifier=f'_schema/{model.identifier}/{model.version}', fields=fields
+            ),
         )
 
     def create_table_and_schema(self, identifier: str, mapping: dict):
         """
         Create a schema in the data-backend.
         """
+
         try:
             t = self.conn.create_table(identifier, schema=ibis.schema(mapping))
         except Exception as e:

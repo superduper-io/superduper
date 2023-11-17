@@ -27,11 +27,20 @@ class Component(Serializable):
         identifier: t.Optional[str]
         version: t.Optional[int]
 
-    def on_create(self, db: Datalayer) -> None:
+    def pre_create(self, db: Datalayer) -> None:
         """Called the first time this component is created
 
         :param db: the db that creates the component
         """
+        assert db
+
+    def post_create(self, db: Datalayer) -> None:
+        """Called after the first time this component is created.
+        Generally used if ``self.version`` is important in this logic.
+
+        :param db: the db that creates the component
+        """
+        assert db
         assert db
 
     def on_load(self, db: Datalayer) -> None:

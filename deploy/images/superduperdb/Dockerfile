@@ -83,7 +83,6 @@ ONBUILD WORKDIR ${HOME}/superduperdb
 ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --upgrade --user \
     .[${SUPERDUPERDB_EXTRAS}]
 
-
 # ---------------
 # Build Release
 # ---------------
@@ -96,7 +95,7 @@ ONBUILD RUN pip install --upgrade --user \
     superduperdb[${SUPERDUPERDB_EXTRAS}] \
     # Purge pip cache
     && pip cache purge
-
+ONBUILD WORKDIR ${HOME}/examples
 
 # ---------------
 # Select Build

@@ -2,7 +2,7 @@
 sidebar_position: 9
 ---
 
-# The component abstraction
+# Component Abstraction
 
 A **`Component`** is an object which is a combination of `JSON`-able parameters, and classes which are not 
 serializable by `JSON`, but are saved as `bytes`-blobs.

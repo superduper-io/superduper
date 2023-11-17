@@ -4,7 +4,7 @@ tags:
   - quickstart
 ---
 
-# Overview of the SuperDuperDB datalayer
+# Datalayer
 
 The abstraction coordinates models, data and backends is the `superduperdb.base.datalayer.Datalayer` class.
 

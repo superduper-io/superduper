@@ -22,6 +22,7 @@ from superduperdb.backends.base.query import (
 )
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
+from superduperdb.base.serializable import Variable
 
 
 class FindOne(QueryComponent):
@@ -108,6 +109,25 @@ class Find(QueryComponent):
         )
 
     def outputs(self, **kwargs):
+        args = list(self.args[:])
+        if not args:
+            args = [{}]
+        if not args[1:]:
+            args.append({})
+
+        for k, v in kwargs.items():
+            if '/' in v:
+                model, version = v.split('/')
+                args[1][f'_outputs.{k}.{model}.{version}'] = 1
+            else:
+                args[1][
+                    Variable(
+                        f'_outputs.{k}.{v}' + '.{version}',
+                        lambda db, value: value.format(
+                            version=db.show('model', model)[-1]
+                        ),
+                    )
+                ] = 1
         return Find(
             name=self.name,
             type=self.type,
@@ -129,11 +149,16 @@ class Find(QueryComponent):
             kwargs=self.kwargs,
         )
 
-    def select_ids_of_missing_outputs(self, key: str, model: str):
+    def select_ids_of_missing_outputs(self, key: str, model: str, version: int):
         assert self.type == QueryType.QUERY
         if self.args:
             args = [
-                {'$and': [self.args[0], {f'_outputs.{key}.{model}': {'$exists': 0}}]},
+                {
+                    '$and': [
+                        self.args[0],
+                        {f'_outputs.{key}.{model}.{version}': {'$exists': 0}},
+                    ]
+                },
                 *self.args[1],
             ]
         else:
@@ -209,7 +234,7 @@ class Aggregate(Select):
     def select_using_ids(self):
         raise NotImplementedError
 
-    def select_ids_of_missing_outputs(self, key: str, model: str):
+    def select_ids_of_missing_outputs(self, key: str, model: str, version: int):
         raise NotImplementedError
 
     @staticmethod
@@ -423,11 +448,13 @@ class MongoQueryLinker(QueryLinker):
             members=new_members,
         )
 
-    def _select_ids_of_missing_outputs(self, key: str, model: str):
+    def _select_ids_of_missing_outputs(self, key: str, model: str, version: int):
         new_members = []
         for member in self.members:
             if hasattr(member, 'select_ids_of_missing_outputs'):
-                new_members.append(member.select_ids_of_missing_outputs(key, model))
+                new_members.append(
+                    member.select_ids_of_missing_outputs(key, model, version=version)
+                )
         return MongoQueryLinker(
             table_or_collection=self.table_or_collection,
             members=new_members,
@@ -692,6 +719,7 @@ class Collection(TableOrCollection):
         ids: t.Sequence[t.Any],
         key: str,
         model: str,
+        version: int,
         outputs: t.Sequence[t.Any],
         document_embedded: bool = True,
         flatten: bool = False,
@@ -713,7 +741,7 @@ class Collection(TableOrCollection):
                 [
                     _UpdateOne(
                         {'_id': ObjectId(id)},
-                        {'$set': {f'_outputs.{key}.{model}': outputs[i]}},
+                        {'$set': {f'_outputs.{key}.{model}.{version}': outputs[i]}},
                     )
                     for i, id in enumerate(ids)
                 ]
@@ -728,7 +756,9 @@ class Collection(TableOrCollection):
                             bulk_docs.append(
                                 _InsertOne(
                                     {
-                                        '_outputs': {key: {model: output}},
+                                        '_outputs': {
+                                            key: {model: {str(version): output}}
+                                        },
                                         '_source': ObjectId(id),
                                         '_offset': offset,
                                     }
@@ -738,7 +768,9 @@ class Collection(TableOrCollection):
                         bulk_docs.append(
                             _InsertOne(
                                 {
-                                    '_outputs': {key: {model: _outputs}},
+                                    '_outputs': {
+                                        key: {model: {str(version): _outputs}}
+                                    },
                                     '_source': ObjectId(id),
                                     '_offset': 0,
                                 }
@@ -748,7 +780,10 @@ class Collection(TableOrCollection):
             else:
                 bulk_docs = [
                     _InsertOne(
-                        {'_id': ObjectId(id), '_outputs': {key: {model: outputs[i]}}}
+                        {
+                            '_id': ObjectId(id),
+                            '_outputs': {key: {model: {str(version): outputs[i]}}},
+                        }
                     )
                     for i, id in enumerate(ids)
                 ]

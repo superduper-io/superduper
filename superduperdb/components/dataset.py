@@ -40,7 +40,7 @@ class Dataset(Component):
     type_id: t.ClassVar[str] = 'dataset'
 
     @override
-    def on_create(self, db: Datalayer) -> None:
+    def pre_create(self, db: Datalayer) -> None:
         if self.raw_data is None:
             if self.select is None:
                 raise ValueError('select cannot be None')

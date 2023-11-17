@@ -30,4 +30,4 @@ def remove_listener(name: str, db: Datalayer = superduperapp.DatalayerDependency
     listener = db.load('listener', name)
     assert isinstance(listener, Listener)
     on = listener.select.table_or_collection.identifier
-    db.cdc.stop(on)
+    db.cdc.stop(on)  # type: ignore[arg-type]

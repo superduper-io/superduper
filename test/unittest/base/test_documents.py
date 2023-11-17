@@ -13,8 +13,7 @@ from superduperdb.base.document import Document
 @pytest.fixture
 def document():
     t = tensor(torch.float, shape=(20,))
-
-    yield Document({'x': t(torch.randn(20)), '_outputs': {'x': {'model_test': 1}}})
+    yield Document({'x': t(torch.randn(20)), '_outputs': {'x': {'model_test': {0: 1}}}})
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')

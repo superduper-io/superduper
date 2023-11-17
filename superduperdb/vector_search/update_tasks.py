@@ -47,9 +47,10 @@ def copy_vectors(
     docs = [doc.unpack() for doc in docs]
     key = vi.indexing_listener.key
     model = vi.indexing_listener.model.identifier
+    version = vi.indexing_listener.model.version
     vectors = [
         {
-            'vector': MongoStyleDict(doc)[f'_outputs.{key}.{model}'],
+            'vector': MongoStyleDict(doc)[f'_outputs.{key}.{model}.{version}'],
             'id': str(doc['_id']),
         }
         for doc in docs

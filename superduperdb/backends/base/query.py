@@ -6,11 +6,11 @@ from typing import Any
 
 from superduperdb import logging
 from superduperdb.base.document import Document
-from superduperdb.base.serializable import Serializable
+from superduperdb.base.serializable import Serializable, Variable
 
 GREEN = '\033[92m'
 BOLD = '\033[1m'
-END = '\033[0m'
+END = '\033[0m}'
 
 
 class _ReprMixin(ABC):
@@ -39,7 +39,16 @@ class Select(Serializable, ABC):
     def query_components(self):
         return self.table_or_collection.query_components
 
-    def model_update(self, db, ids, key, model, outputs, **kwargs):
+    def model_update(
+        self,
+        db,
+        ids: t.Sequence[str],
+        key: str,
+        model: str,
+        version: int,
+        outputs: t.Sequence[t.Any],
+        **kwargs,
+    ):
         """
         Update model outputs for a set of ids.
 
@@ -55,6 +64,7 @@ class Select(Serializable, ABC):
             key=key,
             model=model,
             outputs=outputs,
+            version=version,
             **kwargs,
         )
 
@@ -75,7 +85,9 @@ class Select(Serializable, ABC):
         pass
 
     @abstractmethod
-    def select_ids_of_missing_outputs(self, key: str, model: str) -> 'Select':
+    def select_ids_of_missing_outputs(
+        self, key: str, model: str, version: int
+    ) -> 'Select':
         pass
 
     @abstractmethod
@@ -182,7 +194,7 @@ class CompoundSelect(_ReprMixin, Select, ABC):
             query_linker=self.query_linker.select_ids,
         )
 
-    def select_ids_of_missing_outputs(self, key: str, model: str):
+    def select_ids_of_missing_outputs(self, key: str, model: str, version: int):
         """
         Query which selects ids where outputs are missing.
         """
@@ -194,7 +206,7 @@ class CompoundSelect(_ReprMixin, Select, ABC):
         return self._query_from_parts(
             table_or_collection=self.table_or_collection,
             query_linker=self.query_linker._select_ids_of_missing_outputs(
-                key=key, model=model
+                key=key, model=model, version=version
             ),
         )
 
@@ -234,7 +246,7 @@ class CompoundSelect(_ReprMixin, Select, ABC):
         """
 
         components = []
-        components.append(self.table_or_collection.identifier)
+        components.append(str(self.table_or_collection.identifier))
         if self.pre_like:
             components.append(str(self.pre_like))
         if self.query_linker:
@@ -550,7 +562,7 @@ class TableOrCollection(Serializable, ABC):
 
     query_components: t.ClassVar[t.Dict] = {}
     type_id: t.ClassVar[str] = 'table_or_collection'
-    identifier: str
+    identifier: t.Union[str, Variable]
 
     @abstractmethod
     def _get_query_linker(self, members) -> QueryLinker:

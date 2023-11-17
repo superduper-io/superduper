@@ -112,8 +112,8 @@ def test_update_many(local_db):
     assert all(r['x'].x == to_update)
     assert all(s['x'].x == to_update)
     assert (
-        r['_outputs']['x']['linear_a'].x.tolist()
-        == s['_outputs']['x']['linear_a'].x.tolist()
+        r['_outputs']['x']['linear_a']['0'].x.tolist()
+        == s['_outputs']['x']['linear_a']['0'].x.tolist()
     )
 
 

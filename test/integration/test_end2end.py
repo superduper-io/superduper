@@ -144,7 +144,7 @@ def test_advance_setup(distributed_db, image_url):
             measure='l2',
             indexing_listener=Listener(
                 model=model2,
-                key='_outputs.int.model1.int',
+                key='_outputs.int.model1.0.int',
                 select=Collection('_outputs.int.model1').find(),
             ),
             compatible_listener=Listener(
@@ -167,4 +167,6 @@ def test_advance_setup(distributed_db, image_url):
     r = r.unpack()
 
     assert '_outputs' in r
-    assert np.allclose(np.asarray([9600] * 10), r['_outputs']['int']['model1']['int'])
+    assert np.allclose(
+        np.asarray([9600] * 10), r['_outputs']['int']['model1']['0']['int']
+    )

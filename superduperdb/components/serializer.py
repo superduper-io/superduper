@@ -17,7 +17,7 @@ class Serializer(Component):
 
     version: t.Optional[int]
 
-    def on_create(self, db: 'Datalayer'):
+    def pre_create(self, db: 'Datalayer'):
         serializers.add(self.identifier, self.object)
 
         self.object = t.cast(t.Type, self.identifier)

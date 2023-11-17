@@ -1,8 +1,3 @@
-"""
-TODO:
-- select_ids_of_missing_outputs
-"""
-
 import dataclasses as dc
 import enum
 import json
@@ -25,6 +20,7 @@ from superduperdb.backends.base.query import (
     _ReprMixin,
 )
 from superduperdb.backends.ibis.cursor import SuperDuperIbisResult
+from superduperdb.base.serializable import Variable
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.schema import Schema
@@ -110,12 +106,11 @@ class IbisCompoundSelect(CompoundSelect):
         This method returns a query which joins a query with the outputs
         for a table.
 
+        :param key: The key on which the model was evaluated
         :param model: The model identifier for which to get the outputs
+        :param version: The version of the model for which to get the outputs (optional)
 
-        >>> q = t.filter(t.age > 25).outputs('model_name', db)
-
-        The above query will return the outputs of the `model_name` model
-        with t.filter() ids.
+        >>> q = t.filter(t.age > 25).outputs('txt', 'model_name')
         """
         assert self.query_linker is not None
         return IbisCompoundSelect(
@@ -162,7 +157,10 @@ class IbisCompoundSelect(CompoundSelect):
             if '_outputs' in tab.identifier and self.renamings:
                 model = tab.identifier.split('/')[1]
                 for k in self.renamings.values():
-                    if k.endswith(model):
+                    if (
+                        re.match(f'^_outputs/{model}/[0-9]+$', tab.identifier)
+                        is not None
+                    ):
                         fields_copy[k] = fields_copy['output']
                         del fields_copy['output']
             else:
@@ -247,7 +245,7 @@ class IbisCompoundSelect(CompoundSelect):
             output, id_field=self.table_or_collection.primary_id
         )
 
-    def select_ids_of_missing_outputs(self, key: str, model: str):
+    def select_ids_of_missing_outputs(self, key: str, model: str, version: int):
         """
         Query which selects ids where outputs are missing.
         """
@@ -263,6 +261,7 @@ class IbisCompoundSelect(CompoundSelect):
                 key=key,
                 model=model,
                 query_id=query_id,
+                version=version,
             ),
         )
         return out
@@ -273,6 +272,7 @@ class IbisCompoundSelect(CompoundSelect):
         ids: t.Sequence[t.Any],
         key: str,
         model: str,
+        version: int,
         outputs: t.Sequence[t.Any],
         flatten: bool = False,
     ):
@@ -286,7 +286,6 @@ class IbisCompoundSelect(CompoundSelect):
             return
 
         query_id = str(hash(self))
-        # TODO generalize this to multiple queries per table/ model
         table_records = []
         for ix in range(len(outputs)):
             d = {
@@ -301,7 +300,7 @@ class IbisCompoundSelect(CompoundSelect):
         for r in table_records:
             if isinstance(r['output'], dict) and '_content' in r['output']:
                 r['output'] = r['output']['_content']['bytes']
-        db.databackend.insert(f'_outputs/{model}', table_records)
+        db.databackend.insert(f'_outputs/{model}/{version}', table_records)
 
 
 class _LogicalExprMixin:
@@ -426,9 +425,11 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
             ).isin(ids)
         )
 
-    def _select_ids_of_missing_outputs(self, key: str, model: str, query_id: str):
+    def _select_ids_of_missing_outputs(
+        self, key: str, model: str, query_id: str, version: int
+    ):
         output_table = IbisQueryTable(
-            identifier=f'_outputs/{model}',
+            identifier=f'_outputs/{model}/{version}',
             primary_id='output_id',
         )
         filtered = output_table.filter(
@@ -447,10 +448,36 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
 
     def _outputs(self, query_id: str, **kwargs):
         for key, model in kwargs.items():
+            version = None
+            if '/' in model:
+                model, version = model.split('/')
             symbol_table = IbisQueryTable(
-                identifier=f'_outputs/{model}',
+                identifier=(
+                    f'_outputs/{model}/{version}'
+                    if version is not None
+                    else Variable(
+                        f'_outputs/{model}' + '/{version}',
+                        lambda db, value: value.format(
+                            version=db.show('model', model)[-1]
+                        ),
+                    )
+                ),
                 primary_id='output_id',
-            ).relabel({'output': f'_outputs.{key}.{model}'})
+            )
+            symbol_table = symbol_table.relabel(
+                {
+                    'output': (
+                        f'_outputs.{key}.{model}.{version}'
+                        if version is not None
+                        else Variable(
+                            f'_outputs.{key}.{model}' + '.{version}',
+                            lambda db, value: value.format(
+                                version=db.show('model', model)[-1]
+                            ),
+                        )
+                    )
+                }
+            )
             attr = getattr(  # type: ignore[call-overload]
                 self, self.table_or_collection.primary_id
             )
@@ -506,7 +533,7 @@ class Table(Component):
     version: t.Optional[int] = None
     type_id: t.ClassVar[str] = 'table'
 
-    def on_create(self, db: 'Datalayer'):
+    def pre_create(self, db: 'Datalayer'):
         assert self.schema is not None, "Schema must be set"
         for e in self.schema.encoders:
             db.add(e)
@@ -599,8 +626,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
 
     def outputs(self, **kwargs):
         """
-        This method returns a query which joins a query with the outputs
-        for a table.
+        This method returns a query which joins a query with the model outputs.
 
         :param model: The model identifier for which to get the outputs
 
@@ -628,9 +654,11 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
     def select_using_ids(self, ids: t.Sequence[t.Any]) -> Select:
         return self.filter(self[self.primary_id].isin(ids))
 
-    def select_ids_of_missing_outputs(self, key: str, model: str) -> Select:
+    def select_ids_of_missing_outputs(
+        self, key: str, model: str, version: int
+    ) -> Select:
         output_table = IbisQueryTable(
-            identifier=f'_outputs/{model}',
+            identifier=f'_outputs/{model}/{version}',
             primary_id='output_id',
         )
         query_id = str(hash(self))

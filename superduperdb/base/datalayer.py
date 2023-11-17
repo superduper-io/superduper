@@ -144,8 +144,11 @@ class Datalayer:
         if key.startswith('_outputs.'):
             key = key.split('.')[1]
 
+        model_id = vi.indexing_listener.model.identifier
+        model_version = vi.indexing_listener.model.version
+
         query = vi.indexing_listener.select.outputs(
-            **{key: vi.indexing_listener.model.identifier}
+            **{key: f'{model_id}/{model_version}'}
         )
 
         logging.info(str(query))
@@ -257,6 +260,7 @@ class Datalayer:
         assert context_select is not None
         context = list(self.execute(context_select))
         context = [x.unpack() for x in context]
+
         if context_key is not None:
             context = [MongoStyleDict(x)[context_key] for x in context]
         return context
@@ -415,6 +419,8 @@ class Datalayer:
 
         :param select: select query object
         """
+        if select.variables:
+            select = select.set_variables(self)  # type: ignore[assignment]
         return select.execute(self)
 
     def refresh_after_delete(
@@ -828,7 +834,7 @@ class Datalayer:
         serialized: t.Optional[t.Dict] = None,
         parent: t.Optional[str] = None,
     ):
-        object.on_create(self)
+        object.pre_create(self)
         assert hasattr(object, 'identifier')
         assert hasattr(object, 'version')
 
@@ -855,9 +861,11 @@ class Datalayer:
         self.metadata.create_component(serialized)
         if parent is not None:
             self.metadata.create_parent_child(parent, object.unique_id)
+
+        object.post_create(self)
         object.on_load(
             self
-        )  # TODO do I really need to call this here? Could be handled by `.on_create`?
+        )  # TODO do I really need to call this here? Could be handled by `.pre_create`?
         jobs = object.schedule_jobs(self, dependencies=dependencies)
         return jobs, object
 
@@ -1106,6 +1114,7 @@ class Datalayer:
             db=self,
             model=listener_info['model'],
             key=listener_info['key'],
+            version=listener_info['version'],
             outputs=outputs,
             ids=ids,
         )

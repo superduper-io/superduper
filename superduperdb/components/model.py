@@ -80,6 +80,7 @@ class PredictMixin:
     preprocess: t.Union[t.Callable, Artifact, None] = None
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
+    version: t.Optional[int] = None
     batch_predict: bool
     takes_context: bool
     to_call: t.Callable
@@ -308,7 +309,11 @@ class PredictMixin:
     ):
         ids = []
         if not overwrite:
-            query = select.select_ids_of_missing_outputs(key=X, model=self.identifier)
+            query = select.select_ids_of_missing_outputs(
+                key=X,
+                model=self.identifier,
+                version=t.cast(int, self.version),
+            )
         else:
             query = select.select_ids
 
@@ -389,11 +394,14 @@ class PredictMixin:
                     encoded_ouputs.append(encoded_output)
             outputs = encoded_ouputs if encoded_ouputs else outputs
 
+        assert isinstance(self.version, int)
+
         select.model_update(
             db=db,
             model=self.identifier,
             outputs=outputs,
             key=X,
+            version=self.version,
             ids=ids,
             flatten=self.flatten,
             **self.model_update_kwargs,
@@ -469,6 +477,13 @@ class Model(Component, PredictMixin):
         if self.model_to_device_method is not None:
             self._artifact_method = getattr(self, self.model_to_device_method)
 
+    def post_create(self, db: Datalayer) -> None:
+        if isinstance(self.output_schema, Schema):
+            db.add(self.output_schema)
+        output_component = db.databackend.create_model_table_or_collection(self)
+        if output_component is not None:
+            db.add(output_component)
+
     def on_load(self, db: Datalayer) -> None:
         if self._artifact_method and self.preferred_devices:
             for i, device in enumerate(self.preferred_devices):
@@ -479,8 +494,6 @@ class Model(Component, PredictMixin):
                 except Exception:
                     if i == len(self.preferred_devices) - 1:
                         raise
-        if isinstance(self.output_schema, Schema):
-            db.add(self.output_schema)
 
     @property
     def child_components(self) -> t.Sequence[t.Tuple[str, str]]:
@@ -525,13 +538,9 @@ class Model(Component, PredictMixin):
             value=self.metric_values,
         )
 
-    def on_create(self, db: Datalayer):
+    def pre_create(self, db: Datalayer):
         if isinstance(self.encoder, str):
             self.encoder = db.load('encoder', self.encoder)  # type: ignore[assignment]
-        # TODO: check if output table should be created
-        output_component = db.databackend.create_model_table_or_collection(self)
-        if output_component is not None:
-            db.add(output_component)
 
     def _validate(
         self,

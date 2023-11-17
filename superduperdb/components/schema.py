@@ -15,11 +15,11 @@ class Schema(Component):
 
     type_id: t.ClassVar[str] = 'schema'
 
-    def on_create(self, db) -> None:
+    def pre_create(self, db) -> None:
         for v in self.fields.values():
             if isinstance(v, Encoder):
                 db.add(v)
-        return super().on_create(db)
+        return super().pre_create(db)
 
     def __post_init__(self):
         assert self.identifier is not None, 'Schema must have an identifier'

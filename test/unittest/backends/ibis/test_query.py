@@ -1,5 +1,4 @@
-import os
-import shutil
+import tempfile
 
 import numpy
 import pandas
@@ -42,39 +41,53 @@ def test_serialize_table():
 
 @pytest.fixture
 def duckdb():
-    os.makedirs('.superduperdb', exist_ok=True)
-    db = superduper('duckdb://.superduperdb/test.ddb')
+    with tempfile.TemporaryDirectory() as d:
+        db = superduper(f'duckdb://{d}/test.ddb')
 
-    _, t = db.add(
-        Table(
-            'test',
-            primary_id='id',
-            schema=Schema(
-                'my-schema',
-                fields={'x': dtype(str), 'id': dtype(str)},
-            ),
+        _, t = db.add(
+            Table(
+                'test',
+                primary_id='id',
+                schema=Schema(
+                    'my-schema',
+                    fields={'x': dtype(str), 'id': dtype(str)},
+                ),
+            )
         )
-    )
 
-    db.execute(
-        t.insert(pandas.DataFrame([{'x': 'test', 'id': str(i)} for i in range(20)]))
-    )
+        db.execute(
+            t.insert(pandas.DataFrame([{'x': 'test', 'id': str(i)} for i in range(20)]))
+        )
 
-    model = Model(
-        object=lambda _: numpy.random.randn(32),
-        identifier='test',
-        encoder=array('float64', shape=(32,)),
-    )
-    model.predict('x', select=t, db=db)
+        model = Model(
+            object=lambda _: numpy.random.randn(32),
+            identifier='test',
+            encoder=array('float64', shape=(32,)),
+        )
+        model.predict('x', select=t, db=db)
 
-    yield db
-
-    shutil.rmtree('.superduperdb')
+        yield db
 
 
 def test_renamings(duckdb):
     t = duckdb.load('table', 'test')
 
+    q = t.outputs(x='test')
+
+    print(q)
+
     data = duckdb.execute(t.outputs(x='test'))
 
-    assert isinstance(data[0]['_outputs.x.test'].x, numpy.ndarray)
+    print(data.as_pandas())
+
+    assert isinstance(data[0]['_outputs.x.test.0'].x, numpy.ndarray)
+
+
+def test_serialize_deserialize():
+    from superduperdb.backends.ibis.query import Table
+
+    t = Table('test', 'id')
+
+    q = t.filter(t.id == 1).select(t.id, t.x)
+
+    print(Serializable.deserialize(q.serialize()))

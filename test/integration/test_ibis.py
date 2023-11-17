@@ -162,7 +162,7 @@ def end2end_workflow(ibis_db, memory_table=False):
     q = t.outputs(image='resnet18').select('id', 'image', 'age').filter(t.age > 25)
 
     # Get the results
-    result = list(q.execute(db))
+    result = list(db.execute(q))
     assert result
     assert 'image' in result[0].unpack()
 
@@ -174,8 +174,8 @@ def end2end_workflow(ibis_db, memory_table=False):
     )
 
     # Get the results
-    result = list(q.execute(db))
-    assert '_outputs.image.model_linear_a' in result[0].unpack()
+    result = list(db.execute(q))
+    assert '_outputs.image.model_linear_a.0' in result[0].unpack()
 
     # Raw query
     if not memory_table:

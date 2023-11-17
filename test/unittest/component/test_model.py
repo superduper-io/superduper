@@ -89,6 +89,7 @@ def predict_mixin(request) -> PredictMixin:
     predict_mixin.output_schema = None
     predict_mixin.encoder = None
     predict_mixin.model_update_kwargs = {}
+    predict_mixin.version = 0
     return predict_mixin
 
 
@@ -416,7 +417,7 @@ def test_model_on_create():
     # Check the encoder is loaded if encoder is string
     model = Model('test', object(), encoder='test_encoder')
     with patch.object(db, 'load') as db_load:
-        model.on_create(db)
+        model.pre_create(db)
         db_load.assert_called_with('encoder', 'test_encoder')
 
     # Check the output_component table is added by datalayer
@@ -424,7 +425,7 @@ def test_model_on_create():
     output_component = MagicMock()
     db.databackend.create_model_table_or_collection.return_value = output_component
     with patch.object(db, 'add') as db_load:
-        model.on_create(db)
+        model.post_create(db)
         db_load.assert_called_with(output_component)
 
 

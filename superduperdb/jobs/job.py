@@ -133,6 +133,7 @@ class FunctionJob(Job):
         """
         self.future = client.submit(
             callable_job,
+            cfg=s.CFG,
             function_to_call=self.callable,
             job_id=self.identifier,
             args=self.args,
@@ -205,6 +206,7 @@ class ComponentJob(Job):
         """
         self.future = client.submit(
             method_job,
+            cfg=s.CFG,
             type_id=self.type_id,
             identifier=self.component_identifier,
             method_name=self.method_name,

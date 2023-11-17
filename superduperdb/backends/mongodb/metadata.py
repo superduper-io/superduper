@@ -30,6 +30,10 @@ class MongoMetaDataStore(MetaDataStore):
         self.component_collection = self.db['_objects']
         self.job_collection = self.db['_jobs']
         self.parent_child_mappings = self.db['_parent_child_mappings']
+        self.conn = conn
+
+    def url(self):
+        return self.conn.HOST + ':' + str(self.conn.PORT) + '/' + self.name
 
     def drop(self, force: bool = False):
         if not force:

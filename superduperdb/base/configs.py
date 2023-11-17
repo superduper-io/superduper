@@ -48,12 +48,16 @@ class ConfigSettings:
     default_files: t.Union[t.Sequence[Path], str]
     prefix: str
     environ: t.Optional[t.Dict] = None
+    base_config: t.Optional[Config] = None
 
     @cached_property
     def config(self) -> t.Any:
         """Read a Pydantic class"""
 
-        parent = self.cls().dict()
+        if self.base_config:
+            parent = self.base_config.dict()
+        else:
+            parent = self.cls().dict()
 
         env = dict(os.environ if self.environ is None else self.environ)
         env = config_dicts.environ_to_config_dict('SUPERDUPERDB_', parent, env)
@@ -69,11 +73,11 @@ class ConfigSettings:
         return self.cls(**kwargs)
 
 
-def build_config() -> Config:
+def build_config(cfg: t.Optional[Config] = None) -> Config:
     """
     Build the config object from the environment variables and config files.
     """
-    CONFIG = ConfigSettings(Config, _ALL_CONFIGS, PREFIX)
+    CONFIG = ConfigSettings(Config, _ALL_CONFIGS, PREFIX, base_config=cfg)
     return CONFIG.config
 
 

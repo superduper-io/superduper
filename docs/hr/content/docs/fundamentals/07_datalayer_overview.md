@@ -36,7 +36,7 @@ The databackend typically connects to your database (although `superduperdb` als
 and dispatches queries written in an query API which is compatible with that databackend, but which also includes additional aspects
 specific to `superduperdb`.
 
-Read more [here](../WalkThrough/11_supported_query_APIs.md).
+Read more [here](../walkthrough/11_supported_query_APIs.md).
 
 The databackend is configured by setting the URI `CFG.databackend` in the [configuration system](../Getting%20Started/03_configuration.md).
 

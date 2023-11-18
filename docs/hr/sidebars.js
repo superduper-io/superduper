@@ -64,7 +64,7 @@ const sidebars = {
                 },
             ],
         },
-        // Walkthough
+        // Walkthrough
         {
             type: 'category',
             label: 'WalkThrough',

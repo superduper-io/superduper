@@ -6,13 +6,18 @@ from superduperdb.base.configs import CFG
 __all__ = ('superduper',)
 
 
-def superduper(item: t.Any, **kwargs) -> t.Any:
+def superduper(item: t.Optional[t.Any] = None, **kwargs) -> t.Any:
     """
     Attempts to automatically wrap an item in a superduperdb container by
     using duck typing to recognize it.
 
     :param item: A database or model
     """
+
+    if item is None:
+        from superduperdb.base.build import build_datalayer
+
+        return build_datalayer()
 
     if isinstance(item, str):
         return _auto_identify_connection_string(item, **kwargs)
@@ -35,7 +40,7 @@ def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
 
     else:
         if re.match(r'^[a-zA-Z0-9]+://', item) is None:
-            raise NotImplementedError(f'{item} is not a valid connection string')
+            raise ValueError(f'{item} is not a valid connection string')
         CFG.data_backend = item
     return build_datalayer(CFG, **kwargs)
 
@@ -48,7 +53,7 @@ class _DuckTyper:
     def run(item: t.Any, **kwargs) -> t.Any:
         dts = [dt for dt in _DuckTyper._DUCK_TYPES if dt.accept(item)]
         if not dts:
-            raise NotImplementedError(
+            raise ValueError(
                 f'Couldn\'t auto-identify {item}, please wrap explicitly using '
                 '``superduperdb.container.*``'
             )

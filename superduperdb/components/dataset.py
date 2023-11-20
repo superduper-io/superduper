@@ -35,8 +35,9 @@ class Dataset(Component):
     random_seed: t.Optional[int] = None
     creation_date: t.Optional[str] = None
     raw_data: t.Optional[t.Union[Artifact, t.Any]] = None
-    version: t.Optional[int] = None
 
+    # Don't set these manually
+    version: t.Optional[int] = None
     type_id: t.ClassVar[str] = 'dataset'
 
     @override

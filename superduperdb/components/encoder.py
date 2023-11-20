@@ -37,11 +37,7 @@ class Encoder(Component):
                         `CFG.hybrid` mode
     """
 
-    type_id: t.ClassVar[str] = 'encoder'
-    # TODO what's this for?
-    encoders: t.ClassVar[t.List] = []
     artifact_artibutes: t.ClassVar[t.Sequence[str]] = ['decoder', 'encoder']
-
     identifier: str
     decoder: t.Union[t.Callable, Artifact] = dc.field(
         default_factory=lambda: Artifact(artifact=_pickle_decoder)
@@ -50,8 +46,13 @@ class Encoder(Component):
         default_factory=lambda: Artifact(artifact=_pickle_encoder)
     )
     shape: t.Optional[t.Sequence] = None
-    version: t.Optional[int] = None
     load_hybrid: bool = True
+
+    # Don't set this manually
+    version: t.Optional[int] = None
+    type_id: t.ClassVar[str] = 'encoder'
+    # TODO what's this for?
+    encoders: t.ClassVar[t.List] = []
 
     def __post_init__(self):
         self.encoders.append(self.identifier)

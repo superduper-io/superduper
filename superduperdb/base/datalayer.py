@@ -16,6 +16,7 @@ from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.backends.ibis.query import Table
 from superduperdb.base import serializable
 from superduperdb.base.document import Document
+from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encodable, Encoder
@@ -76,7 +77,8 @@ class Datalayer:
         :param metadata: metadata object containing connection to Metadatastore
         :param artifact_store: artifact_store object containing connection to
                                Artifactstore
-        :param distributed_client:
+        :param distributed_client: distributed_client object containing connection to
+                                   ``dask`` cluster (leave alone)
         """
         logging.info("Building Data Layer")
 
@@ -483,7 +485,7 @@ class Datalayer:
 
     def add(
         self,
-        object: t.Union[Component, t.Sequence[Component]],
+        object: t.Union[Component, t.Sequence[Component], t.Any],
         dependencies: t.Sequence[Job] = (),
     ):
         """
@@ -506,9 +508,7 @@ class Datalayer:
         elif isinstance(object, Component):
             return self._add(object=object, dependencies=dependencies)
         else:
-            raise ValueError(
-                'object should be a sequence of `Component` or `Component`'
-            )
+            return self._add(superduper(object))
 
     def remove(
         self,

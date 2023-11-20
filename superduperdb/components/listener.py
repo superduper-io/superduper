@@ -34,6 +34,8 @@ class Listener(Component):
     active: bool = True
     identifier: t.Optional[str] = None
     predict_kwargs: t.Optional[t.Dict] = dc.field(default_factory=dict)
+
+    # Don't set this manually
     version: t.Optional[int] = None
 
     type_id: t.ClassVar[str] = 'listener'

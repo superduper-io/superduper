@@ -6,7 +6,7 @@ from anthropic import APIConnectionError, APIError, APIStatusError, APITimeoutEr
 
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
-from superduperdb.components.model import PredictMixin
+from superduperdb.components.model import Predictor
 from superduperdb.ext.utils import format_prompt, get_key
 from superduperdb.misc.retry import Retry
 
@@ -18,7 +18,7 @@ KEY_NAME = 'ANTHROPIC_API_KEY'
 
 
 @dc.dataclass
-class Anthropic(Component, PredictMixin):
+class Anthropic(Component, Predictor):
     """Anthropic predictor.
 
     :param model: The model to use, e.g. ``'claude-2'``.

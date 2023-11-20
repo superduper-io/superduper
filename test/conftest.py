@@ -10,7 +10,7 @@ import pytest
 
 import superduperdb as s
 from superduperdb import logging
-from superduperdb.misc import superduper
+from superduperdb.base import superduper
 
 try:
     import torch

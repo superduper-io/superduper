@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses as dc
 import multiprocessing
 import typing as t
+from abc import abstractmethod
 from functools import wraps
 
 import tqdm
@@ -43,11 +44,11 @@ class _TrainingConfiguration(Component):
 
     :param identifier: Unique identifier of configuration
     :param **kwargs: Key-values pairs, the variables which configure training.
-    :param version: Version number of the configuration
     """
 
     identifier: str
     kwargs: t.Optional[t.Dict] = None
+
     version: t.Optional[int] = None
 
     type_id: t.ClassVar[str] = 'training_configuration'
@@ -59,18 +60,21 @@ class _TrainingConfiguration(Component):
             return self.kwargs.get(k, default)
 
 
-class PredictMixin:
+class Predictor:
     """
     Mixin class for components which can predict.
 
     :param identifier: Unique identifier of model
     :param encoder: Encoder instance (optional)
+    :param output_schema: Output schema (mapping of encoders) (optional)
+    :param flatten: Flatten the model outputs
     :param preprocess: Preprocess function (optional)
     :param postprocess: Postprocess function (optional)
     :param collate_fn: Collate function (optional)
     :param batch_predict: Whether to batch predict (optional)
     :param takes_context: Whether the model takes context into account (optional)
     :param to_call: The method to use for prediction (optional)
+    :param model_update_kwargs: The kwargs to use for model update (optional)
     """
 
     identifier: str
@@ -80,11 +84,13 @@ class PredictMixin:
     preprocess: t.Union[t.Callable, Artifact, None] = None
     postprocess: t.Union[t.Callable, Artifact, None] = None
     collate_fn: t.Union[t.Callable, Artifact, None] = None
-    version: t.Optional[int] = None
     batch_predict: bool
     takes_context: bool
     to_call: t.Callable
     model_update_kwargs: t.Dict
+
+    version: t.Optional[int] = None
+    type_id: t.ClassVar[str] = 'model'
 
     def create_predict_job(
         self,
@@ -161,7 +167,6 @@ class PredictMixin:
         elif self.collate_fn is not None:
             X = self.collate_fn(X)
 
-        # TODO: Miss hanlding the context in _forward
         outputs = self._forward(X, **predict_kwargs)
 
         if isinstance(self.postprocess, Artifact):
@@ -409,7 +414,7 @@ class PredictMixin:
 
 
 @dc.dataclass
-class Model(Component, PredictMixin):
+class Model(Component, Predictor):
     """Model component which wraps a model to become serializable
 
     :param identifier: Unique identifier of model
@@ -425,7 +430,15 @@ class Model(Component, PredictMixin):
     :param model_to_device_method: The method to transfer the model to a device
     :param batch_predict: Whether to batch predict (optional)
     :param takes_context: Whether the model takes context into account (optional)
-    :param serializer: Serializer to store model to artifact store(optional)
+    :param train_X: The key of the input data to use for training (optional)
+    :param train_y: The key of the target data to use for training (optional)
+    :param training_select: The select to use for training (optional)
+    :param metric_values: The metric values (optional)
+    :param training_configuration: The training configuration (optional)
+    :param model_update_kwargs: The kwargs to use for model update (optional)
+    :param serializer: Serializer to store model to artifact store (optional)
+    :param device: The device to use (optional)
+    :param preferred_devices: The preferred devices to use (optional)
     """
 
     identifier: str
@@ -448,16 +461,14 @@ class Model(Component, PredictMixin):
     training_configuration: t.Union[str, _TrainingConfiguration, None] = None
     model_update_kwargs: dict = dc.field(default_factory=dict)
     serializer: str = 'dill'
-
-    version: t.Optional[int] = None
-    future: t.Optional[Future] = None
     device: str = "cpu"
-
-    # TODO: handle situation with multiple GPUs
     preferred_devices: t.Union[None, t.Sequence[str]] = ("cuda", "mps", "cpu")
 
-    artifact_attributes: t.ClassVar[t.Sequence[str]] = ['object']
+    # Don't set these manually
+    future: t.Optional[Future] = None
+    version: t.Optional[int] = None
 
+    artifact_attributes: t.ClassVar[t.Sequence[str]] = ['object']
     type_id: t.ClassVar[str] = 'model'
 
     def __post_init__(self):
@@ -585,6 +596,7 @@ class Model(Component, PredictMixin):
             },
         )
 
+    @abstractmethod
     def _fit(
         self,
         X: t.Any,
@@ -597,7 +609,7 @@ class Model(Component, PredictMixin):
         select: t.Optional[Select] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
     ):
-        raise NotImplementedError
+        pass
 
     def fit(
         self,
@@ -615,6 +627,17 @@ class Model(Component, PredictMixin):
     ) -> t.Optional[Pipeline]:
         """
         Fit the model on the given data.
+
+        :param X: The key of the input data to use for training
+        :param y: The key of the target data to use for training
+        :param configuration: The training configuration (optional)
+        :param data_prefetch: Whether to prefetch the data (optional)
+        :param db: The datalayer (optional)
+        :param dependencies: The dependencies (optional)
+        :param distributed: Whether to distribute the job (optional)
+        :param metrics: The metrics to evaluate on (optional)
+        :param select: The select to use for training (optional)
+        :param validation_sets: The validation ``Dataset`` instances to use (optional)
         """
         if isinstance(select, dict):
             select = Serializable.deserialize(select)

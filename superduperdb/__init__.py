@@ -1,6 +1,6 @@
 # ruff: noqa: E402
 from .base import config, configs, jsonable, logger
-from .misc.superduper import superduper
+from .base.superduper import superduper
 
 ICON = '🔮'
 CFG = configs.CFG

@@ -6,7 +6,7 @@ except ImportError:
     torch = None
 
 from superduperdb import superduper
-from superduperdb.misc.superduper import SklearnTyper, TorchTyper
+from superduperdb.base.superduper import SklearnTyper, TorchTyper
 
 
 def test_sklearn_typer():
@@ -31,10 +31,10 @@ def test_superduper_model():
 
 
 def test_superduper_raise():
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError):
         superduper(1)
 
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError):
         superduper("string")
 
 

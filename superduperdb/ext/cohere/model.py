@@ -7,7 +7,7 @@ from cohere.error import CohereAPIError, CohereConnectionError
 
 from superduperdb.components.component import Component
 from superduperdb.components.encoder import Encoder
-from superduperdb.components.model import PredictMixin
+from superduperdb.components.model import Predictor
 from superduperdb.components.vector_index import vector
 from superduperdb.ext.utils import format_prompt, get_key
 from superduperdb.misc.retry import Retry
@@ -18,7 +18,7 @@ KEY_NAME = 'COHERE_API_KEY'
 
 
 @dc.dataclass
-class Cohere(Component, PredictMixin):
+class Cohere(Component, Predictor):
     """Cohere predictor
 
     :param model: The model to use, e.g. ``'base-light'``.

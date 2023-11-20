@@ -76,16 +76,26 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 
 ##@ CI Testing Environment
 
-testenv_init: ## Initialize a local Testing environment
-	@echo "===> Ensure hostnames"
-	@deploy/testenv/validate_hostnames.sh
-
+testenv_image: ## Build a sandbox image
 	@echo "===> Build superduperdb/sandbox"
 	docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
 		--build-arg SUPERDUPERDB_EXTRAS="dev"
 
-	@echo "===> Run Docker-Compose using superduperdb/sandbox"
+testenv_init: ## Initialize a local Testing environment
+	@echo "===> Ensure hostnames"
+	@deploy/scripts/validate_hostnames.sh
+
+	@echo "===> Ensure Images"
+	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \
+        echo "superduper/sandbox found";\
+        echo "*************************************************************************";\
+        echo "** If Dask behaves funny, rebuild the image using 'make testenv_image'";\
+        echo "*************************************************************************";\
+    else \
+      	echo "superduper/sandbox not found. Please run 'make testenv_image'";\
+    fi
+
 	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &
 
 testenv_shutdown: ## Terminate the local Testing environment
@@ -99,7 +109,7 @@ unit-testing: ## Execute unit testing
 
 integration-testing: ## Execute integration testing
 	# Block waiting for the testenv to become ready.
-	@cd deploy/testenv/; ./wait_ready.sh
+	@cd deploy/scripts/; ./wait_testenv_ready.sh
 
 	# Run the test
 	pytest $(PYTEST_ARGUMENTS) ./test/integration

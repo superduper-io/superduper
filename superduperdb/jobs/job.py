@@ -158,7 +158,7 @@ class FunctionJob(Job):
             db = build_datalayer()
 
         if distributed is None:
-            distributed = s.CFG.cluster.distributed
+            distributed = s.CFG.mode == 'production'
         self.db = db
         db.metadata.create_job(self.dict())
         if not distributed:
@@ -233,11 +233,12 @@ class ComponentJob(Job):
         self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
     ):
         if distributed is None:
-            distributed = s.CFG.cluster.distributed
+            distributed = s.CFG.mode == 'production'
         if db is None:
             from superduperdb.base.build import build_datalayer
 
             db = build_datalayer()
+
         self.db = db
         db.metadata.create_job(self.dict())
         if self.component is None:

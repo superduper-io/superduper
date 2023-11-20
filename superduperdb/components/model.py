@@ -219,7 +219,7 @@ class Predictor:
                 logging.info('Done.')
 
             if distributed is None:
-                distributed = s.CFG.cluster.distributed
+                distributed = s.CFG.mode == 'production'
 
             if listen:
                 assert db is not None
@@ -676,7 +676,7 @@ class Model(Component, Predictor):
                 db.add(self)
 
             if distributed is None:
-                distributed = s.CFG.cluster.distributed
+                distributed = s.CFG.mode == 'production'
 
             if distributed:
                 return self.create_fit_job(

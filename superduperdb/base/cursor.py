@@ -59,8 +59,8 @@ class SuperDuperCursor:
         r = self.cursor_next()
         if self.scores is not None:
             r['score'] = self.scores[str(r[self.id_field])]
-        if CFG.downloads.hybrid:
-            load_uris(r, CFG.downloads.root, encoders=self.encoders)
+        if CFG.hybrid_storage:
+            load_uris(r, CFG.downloads_folder, encoders=self.encoders)
         return self.wrap_document(r, self.encoders)
 
     next = __next__

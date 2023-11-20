@@ -109,6 +109,11 @@ class Find(QueryComponent):
         )
 
     def outputs(self, **kwargs):
+        """
+        Join the query with the outputs for a table.
+
+        :param **kwargs: key=model/version or key=model pairs
+        """
         args = list(self.args[:])
         if not args:
             args = [{}]

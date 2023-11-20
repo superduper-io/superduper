@@ -81,6 +81,7 @@ def test_insert_with_dask(
 
         # Get distributed logs
         logs = local_dask_client.client.get_worker_logs()
+
         logging.info("worker logs", logs)
 
         # Assert result

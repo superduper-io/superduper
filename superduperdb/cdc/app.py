@@ -3,7 +3,7 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.listener import Listener
 from superduperdb.server import app as superduperapp
 
-port = int(CFG.server.cdc.split(':')[-1])
+port = int(CFG.cluster.cdc.split(':')[-1])
 app = superduperapp.SuperDuperApp('cdc', port=port)
 
 

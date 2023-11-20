@@ -93,7 +93,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             serializers=cfg.cluster.serializers,
             deserializers=cfg.cluster.deserializers,
         )
-        if cfg.cluster.distributed
+        if cfg.mode == 'production'
         else None,
     )
 

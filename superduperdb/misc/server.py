@@ -24,7 +24,7 @@ def _handshake(service: str):
 def _request_server(
     service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
 ):
-    url = getattr(CFG.server, service) + '/' + service + '/' + endpoint
+    url = getattr(CFG.cluster, service) + '/' + service + '/' + endpoint
     logging.debug(f'Trying to connect {service} at {url} method: {type}')
     if type == 'post':
         data = superduperencode(data)

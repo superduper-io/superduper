@@ -88,10 +88,7 @@ class Datalayer:
         self.fast_vector_searchers = LoadDict(
             self, callable=self.initialize_vector_searcher
         )
-
-        self.distributed = s.CFG.cluster.distributed
-
-        # stores
+        self.distributed = s.CFG.mode == 'production'
         self.metadata = metadata
         self.artifact_store = artifact_store
         self.databackend = databackend

@@ -15,7 +15,7 @@ __all__ = ('Logging',)
 
 
 class Logging:
-    if CFG.logging.type == LogType.LOKI:  # Send logs to Loki
+    if CFG.logging_type == LogType.LOKI:  # Send logs to Loki
         custom_handler = LokiLoggerHandler(
             url=os.environ["LOKI_URI"],
             labels={"application": "Test", "environment": "Develop"},
@@ -50,7 +50,7 @@ class Logging:
         logger.add(
             lambda msg: tqdm.write(msg, end=""),
             format=fmt,
-            level=CFG.logging.level,
+            level=CFG.log_level,
             filter=lambda record: record["level"].no < 40,
             colorize=True,
         )

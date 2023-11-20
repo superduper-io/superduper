@@ -154,9 +154,9 @@ class BaseDownloader:
 
     def _check_exists_if_hybrid(self, uri):
         if uri.startswith('file://'):
-            file = f'{CFG.downloads.root}/{uri.split("file://")[-1]}'
+            file = f'{CFG.downloads_folder}/{uri.split("file://")[-1]}'
         else:
-            file = f'{CFG.downloads.root}/{hashlib.sha1(uri.encode()).hexdigest()}'
+            file = f'{CFG.downloads_folder}/{hashlib.sha1(uri.encode()).hexdigest()}'
         if os.path.exists(file):
             return True
         return False
@@ -240,7 +240,7 @@ class Downloader(BaseDownloader):
         self.fetcher = Fetcher(headers=headers, n_workers=n_workers)
 
     def _download(self, i):
-        if CFG.downloads.hybrid:
+        if CFG.hybrid_storage:
             if self._check_exists_if_hybrid(self.uris[i]):
                 return
         content = self.fetcher(self.uris[i])
@@ -378,8 +378,8 @@ def download_content(
         except exceptions.MetadatastoreException:
             pass
 
-    if CFG.downloads.hybrid:
-        _download_update = SaveFile(CFG.downloads.root)
+    if CFG.hybrid_storage:
+        _download_update = SaveFile(CFG.downloads_folder)
     else:
 
         def _download_update(key, id, bytes_, **kwargs):  # type: ignore[misc]

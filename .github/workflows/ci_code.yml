@@ -79,10 +79,16 @@ jobs:
           # Update hostnames
           echo  127.0.0.1 mongodb | sudo tee -a /etc/hosts
           
-          # Run testing environment on the background, but get the logs
+          # Build sandbox image for testing.
+          make testenv_image
+          
+          # Run the integrated testing environment
           make testenv_init
           
+          # Run the test-suite
           make integration-testing PYTEST_ARGUMENTS="--cov=superduperdb --cov-report=xml"
+          
+          # Destroy the testing environment
           make testenv_shutdown
 
       - name: Upload code coverage to Codecov

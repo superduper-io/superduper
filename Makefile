@@ -84,7 +84,7 @@ testenv_image: ## Build a sandbox image
 
 testenv_init: ## Initialize a local Testing environment
 	@echo "===> Ensure hostnames"
-	@deploy/scripts/validate_hostnames.sh
+	@deploy/testenv/validate_hostnames.sh
 
 	@echo "===> Ensure Images"
 	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \
@@ -110,7 +110,7 @@ unit-testing: ## Execute unit testing
 
 integration-testing: ## Execute integration testing
 	# Block waiting for the testenv to become ready.
-	@cd deploy/scripts/; ./wait_testenv_ready.sh
+	@cd deploy/testenv/; ./wait_ready.sh
 
 	# Run the test
 	pytest $(PYTEST_ARGUMENTS) ./test/integration

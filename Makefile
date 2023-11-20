@@ -94,6 +94,7 @@ testenv_init: ## Initialize a local Testing environment
         echo "*************************************************************************";\
     else \
       	echo "superduper/sandbox not found. Please run 'make testenv_image'";\
+      	exit -1;\
     fi
 
 	docker compose -f deploy/testenv/docker-compose.yaml up --remove-orphans &

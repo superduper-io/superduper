@@ -42,7 +42,6 @@ services:
       - /bin/sh
       - -c
       - |
-        pip install -e .
         python -m superduperdb vector-search
 
     healthcheck:
@@ -77,7 +76,6 @@ services:
       - /bin/sh
       - -c
       - |
-        pip install -e .
         python -m superduperdb cdc
 
     healthcheck:
@@ -113,7 +111,6 @@ services:
       - /bin/sh
       - -c
       - |
-        pip install -e .
         dask scheduler
 
   dask-worker:
@@ -128,7 +125,6 @@ services:
       - /bin/sh
       - -c
       - |
-        pip install -e .
         dask worker "tcp://scheduler:8786"
     deploy:
       replicas: 1

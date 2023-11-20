@@ -80,7 +80,7 @@ ONBUILD ARG SUPERDUPERDB_EXTRAS="' '"
 ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
 ONBUILD WORKDIR ${HOME}/superduperdb
 # Do our best for caching.
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --upgrade --user \
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --upgrade --user --editable \
     .[${SUPERDUPERDB_EXTRAS}]
 
 # ---------------

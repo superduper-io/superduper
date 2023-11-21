@@ -390,7 +390,6 @@ class Datalayer:
             if isinstance(query, RawQuery):
                 return query.execute(self)
         except Exception as e:
-            breakpoint()
             QueryExceptionCls = exceptions.query_exceptions(query)
             raise QueryExceptionCls(f"Error while executing {str(query)} query") from e
 
@@ -924,7 +923,7 @@ class Datalayer:
 
             object.post_create(self)
             object.on_load(self)
-            jobs = object.schedule_jobs(self, dependencies=dependencies)
+            jobs = object.schedule_jobs(self, dependencies=dependencies, distributed=self.distributed)
             return jobs, object
         except Exception as e:
             raise exceptions.DatalayerException(

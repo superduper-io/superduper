@@ -3,6 +3,7 @@ import typing as t
 import numpy as np
 
 from superduperdb import CFG
+from superduperdb.base import exceptions
 from superduperdb.misc.server import request_server
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 
@@ -35,19 +36,29 @@ class FastVectorSearcher(BaseVectorSearcher):
 
         :param items: t.Sequence of VectorItems
         """
-        vector_items = [{'vector': i.vector, 'id': i.id} for i in items]
-        if CFG.mode == 'production':
-            request_server(
-                service='vector_search',
-                data=vector_items,
-                endpoint='add/search',
-                args={
-                    'vector_index': self.vector_index,
-                },
-            )
-            return
+        try:
+            vector_items = [{'vector': i.vector, 'id': i.id} for i in items]
+            if CFG.mode == 'production':
+                request_server(
+                    service='vector_search',
+                    data=vector_items,
+                    endpoint='add/search',
+                    args={
+                        'vector_index': self.vector_index,
+                    },
+                )
+                return
 
-        return self.searcher.add(items)
+            return self.searcher.add(items)
+        except Exception as e:
+            local_msg = (
+                'remote vector search service'
+                if CFG.mode == 'production'
+                else 'local vector search'
+            )
+            raise exceptions.VectorSearchException(
+                f'Error while adding vector to {local_msg}'
+            ) from e
 
     def delete(self, ids: t.Sequence[str]) -> None:
         """
@@ -55,18 +66,28 @@ class FastVectorSearcher(BaseVectorSearcher):
 
         :param ids: t.Sequence of ids of vectors.
         """
-        if CFG.mode == 'production':
-            request_server(
-                service='vector_search',
-                data=ids,
-                endpoint='delete/search',
-                args={
-                    'vector_index': self.vector_index,
-                },
-            )
-            return
+        try:
+            if CFG.mode == 'production':
+                request_server(
+                    service='vector_search',
+                    data=ids,
+                    endpoint='delete/search',
+                    args={
+                        'vector_index': self.vector_index,
+                    },
+                )
+                return
 
-        return self.searcher.delete(ids)
+            return self.searcher.delete(ids)
+        except Exception as e:
+            local_msg = (
+                'remote vector search service'
+                if CFG.mode == 'production'
+                else 'local vector search'
+            )
+            raise exceptions.VectorSearchException(
+                f'Error while deleting ids {ids} from {local_msg}'
+            ) from e
 
     def find_nearest_from_id(
         self,
@@ -80,15 +101,25 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param _id: id of the vector
         :param n: number of nearest vectors to return
         """
-        if CFG.mode == 'production':
-            response = request_server(
-                service='vector_search',
-                endpoint='query/id/search',
-                args={'vector_index': self.vector_index, 'n': n, 'id': _id},
-            )
-            return response['ids'], response['scores']
+        try:
+            if CFG.mode == 'production':
+                response = request_server(
+                    service='vector_search',
+                    endpoint='query/id/search',
+                    args={'vector_index': self.vector_index, 'n': n, 'id': _id},
+                )
+                return response['ids'], response['scores']
 
-        return self.searcher.find_nearest_from_id(_id, n=n, within_ids=within_ids)
+            return self.searcher.find_nearest_from_id(_id, n=n, within_ids=within_ids)
+        except Exception as e:
+            local_msg = (
+                'remote vector search service'
+                if CFG.mode == 'production'
+                else 'local vector search'
+            )
+            raise exceptions.VectorSearchException(
+                f'Error while finding nearest id {_id} from {local_msg}'
+            ) from e
 
     def find_nearest_from_array(
         self,
@@ -102,13 +133,25 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param h: vector
         :param n: number of nearest vectors to return
         """
-        if CFG.mode == 'production':
-            response = request_server(
-                service='vector_search',
-                data=h,
-                endpoint='query/search',
-                args={'vector_index': self.vector_index, 'n': n},
-            )
-            return response['ids'], response['scores']
+        try:
+            if CFG.mode == 'production':
+                response = request_server(
+                    service='vector_search',
+                    data=h,
+                    endpoint='query/search',
+                    args={'vector_index': self.vector_index, 'n': n},
+                )
+                return response['ids'], response['scores']
 
-        return self.searcher.find_nearest_from_array(h=h, n=n, within_ids=within_ids)
+            return self.searcher.find_nearest_from_array(
+                h=h, n=n, within_ids=within_ids
+            )
+        except Exception as e:
+            local_msg = (
+                'remote vector search service'
+                if CFG.mode == 'production'
+                else 'local vector search'
+            )
+            raise exceptions.VectorSearchException(
+                f'Error while finding nearest array from {local_msg}'
+            ) from e

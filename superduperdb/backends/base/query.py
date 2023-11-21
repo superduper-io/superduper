@@ -544,7 +544,7 @@ class Like(Serializable):
     n: int = 10
 
     def execute(self, db, ids: t.Optional[t.Sequence[str]] = None):
-        return db._select_nearest(
+        return db.select_nearest(
             like=self.r,
             vector_index=self.vector_index,
             ids=ids,

@@ -50,7 +50,7 @@ On the 5th of December, we are going to officially launch SuperDuperDB with the 
 ---
 ## What is SuperDuperDB? 
 
-🔮 SuperDuperDB is a general-purpose AI development and deployment framework for integrating any ML models (i.e. from PyTorch, Sklearn, HuggingFace) and AI APIs (like OpenAI, Antrophic, Cohere) directly with your existing data infrastructure, including real-time inference, model training and vector search. SuperDuperDB is not another database, it "super-dupers" your existing preferred database. 
+🔮 SuperDuperDB is a general-purpose AI development and deployment framework for **integrating any ML models** (i.e. from PyTorch, Sklearn, HuggingFace) **and AI APIs** (like OpenAI, Antrophic, Cohere) **directly with your existing databases**, including real-time inference, model training and vector search. SuperDuperDB is not another database, it "super-dupers" your existing preferred database. 
 
 SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!
 
@@ -60,28 +60,24 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 - Highly custom AI use-cases involving ultra specialized models
 
 ### Key Features:
-- **[Seamless Integration of your AI and your database](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate any AI models and APIs directly with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
-- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, propagating results to downstream applications in real-time, keeping your deployment always up-to-date.
-- **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Train AI models on large, diverse datasets simply by query-defining your training data, while ensuring optimal performance and ease of management, utilizing in-build computational optimizations.
+- **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
+- **[Real-Time Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
+- **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Train AI models on large, diverse datasets simply by query-defining your training data. Ensured optimal performance via in-build computational optimizations.
 - **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
-- **[Simple, but Extendable Interface](https://docs.superduperdb.com/docs/docs/procedural_vs_declarative_api)**: Operating SuperDuperDB only requires simple Python commands, while still allowing you to drill down on any layer as deep as it gets, up until the inner workings of your models. Add and leverage any function, programm, script or algorithm from the Python ecosystem to enhance your workflows, by turning them into a model. 
+- **[Simple, but Extendable Interface](https://docs.superduperdb.com/docs/docs/procedural_vs_declarative_api)**: Add and leverage any function, programm, script or algorithm from the Python ecosystem to enhance your workflows and applications. Drill down on any layer as deep as it gets, up until the inner workings of your models while operating SuperDuperDB with simple Python commands.
 - **[Difficult Data-Types](https://docs.superduperdb.com/docs/docs/encoding_special_data_types)**: Work directly with images, video, audio in your datastore, and any type which can be encoded as `bytes` in Python.
-- **[Feature Store](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
+- **[Feature Storing](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
 - **[Vector Search](https://docs.superduperdb.com/docs/docs/vector_search):** No need for duplicating and migrating your data to additional specialized vector databases - turn your existing battle-tested datastore into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
 ### Why opt for SuperDuperDB?
 | With SuperDuperDB | Without |
 |----------|----------|
-| Data stays where it is, in the database, minimizing data management overhead, reducing vulnerability, and maintaining compatibility with downstream applications.    |  Data duplicating and migration to different environments, and specialized vector databases.        |
-| A single environment to build, ship, and manage all your AI application, with seamless integration with distributed compute platforms like Dask, facilitating scalability and optimal compute efficiency.    |  Complex and fragmented, partially duplicated pipelines and infrastructure that are hard to maintain and control, creating massive overhead.        |
-| Minimal learning curve due to a simple and declarative API, allowing for effortless integration and management of AI models, data backends, and compute platforms in just a few lines of Python code.    |     Hundreds of lines of code and high costs of adoption of various methods, environments, and tools of standard AI and MLOps training and deployment/inference pipelines.     |
-
-1. Data stays where it is, in the database, minimizing data management overhead, reducing vulnerability, and maintaining compatibility with downstream applications - instead of duplicating and moving it into different environments, pipelines, and specialized vector databases.
-2. A single environment to build, ship, and manage all your AI application, with seamless integration with distributed compute platforms like Dask, facilitating scalability and optimal compute efficiency - instead of complex and fragmented, partially duplicated pipelines and infrastructure that is hard to maintain and control, creating massive overhead.
-3. Minimal learning curve due to a simple and declarative API, allowing for effortless integration and management of AI models, data backends, and compute platforms in just a few lines of Python code - instead of hundreds of lines of code and high costs of adoption of various methods, environments, and tools of standard AI and MLOps training and deployment/inference pipelines.
+| Data stays where it belongs, minimizing data management overhead, reducing vulnerability, and maintaining compatibility with downstream applications.    |  Data duplicating and migration to different environments, and specialized vector databases.        |
+| A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex and fragmented, partially duplicated pipelines, infrastructure coming with high adoption and maintenance costs. |
+| Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
 
 
-## 🌐 Supported Datastores (*more coming soon*):
+## 🌐 Supported Datastores (*more coming soon*):a
 
 <table>
     <tr>

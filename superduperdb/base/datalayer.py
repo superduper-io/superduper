@@ -393,8 +393,9 @@ class Datalayer:
             if isinstance(query, RawQuery):
                 return query.execute(self)
         except Exception as e:
-            QueryExceptionCls = exceptions.query_exceptions[str(query.__class__)]
-            raise QueryExceptionCls(f"Error while executing {query} query") from e
+            breakpoint()
+            QueryExceptionCls = exceptions.query_exceptions(query)
+            raise QueryExceptionCls(f"Error while executing {str(query)} query") from e
 
         raise TypeError(
             f'Wrong type of {query}; '
@@ -514,17 +515,17 @@ class Datalayer:
                 verbose=verbose,
             )
         except Exception as e:
-            raise exceptions.TaskWorklowException(
+            raise exceptions.TaskWorkflowException(
                 'Error while building task workflow'
             ) from e
         try:
             task_workflow.run_jobs(distributed=self.distributed)
-        except Exception:
+        except Exception as e:
             if self.distributed:
                 raise exceptions.DistributedJobException(
                     'Error while running job on a distributed platform'
-                )
-            raise exceptions.JobException('Error while running job')
+                ) from e
+            raise exceptions.JobException('Error while running job') from e
         return task_workflow
 
     def update(self, update: Update, refresh: bool = True) -> UpdateResult:

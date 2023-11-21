@@ -34,15 +34,11 @@ class ComponentAddException(ComponentException):
     ComponentAddException
     '''
 
-    pass
-
 
 class ComponentReplaceException(ComponentException):
     '''
     ComponentReplaceException
     '''
-
-    pass
 
 
 class ComponentLoadException(ComponentException):
@@ -50,15 +46,11 @@ class ComponentLoadException(ComponentException):
     ComponentLoadException
     '''
 
-    pass
-
 
 class DatabaseConnectionException(BaseException):
     '''
     DatabackendException
     '''
-
-    pass
 
 
 class DatabackendException(BaseException):
@@ -66,15 +58,11 @@ class DatabackendException(BaseException):
     DatabackendException
     '''
 
-    pass
-
 
 class MetadatastoreException(BaseException):
     '''
     MetadatastoreException
     '''
-
-    pass
 
 
 class ArtifactStoreException(BaseException):
@@ -82,7 +70,23 @@ class ArtifactStoreException(BaseException):
     ArtifactStoreException
     '''
 
-    pass
+
+class ArtifactStoreDeleteException(ArtifactStoreException):
+    '''
+    ArtifactStoreException
+    '''
+
+
+class ArtifactStoreLoadException(ArtifactStoreException):
+    '''
+    ArtifactStoreException
+    '''
+
+
+class ArtifactStoreSaveException(ArtifactStoreException):
+    '''
+    ArtifactStoreException
+    '''
 
 
 class DatalayerException(BaseException):
@@ -90,15 +94,11 @@ class DatalayerException(BaseException):
     DatalayerException
     '''
 
-    pass
-
 
 class FileNotFoundException(BaseException):
     '''
     FileNotFoundException
     '''
-
-    pass
 
 
 class ServiceException(BaseException):
@@ -106,15 +106,11 @@ class ServiceException(BaseException):
     ServiceException
     '''
 
-    pass
-
 
 class ModelException(BaseException):
     '''
     ModelException
     '''
-
-    pass
 
 
 class VectorSearchException(ComponentException):
@@ -122,15 +118,11 @@ class VectorSearchException(ComponentException):
     VectorSearchException
     '''
 
-    pass
-
 
 class EncoderException(ComponentException):
     '''
     EncoderException
     '''
-
-    pass
 
 
 class QueryException(ComponentException):
@@ -138,15 +130,11 @@ class QueryException(ComponentException):
     QueryException
     '''
 
-    pass
-
 
 class SelectQueryException(QueryException):
     '''
     SelectQueryException
     '''
-
-    pass
 
 
 class DeleteQueryException(QueryException):
@@ -154,15 +142,11 @@ class DeleteQueryException(QueryException):
     DeleteQueryException
     '''
 
-    pass
-
 
 class InsertQueryException(QueryException):
     '''
     InsertQueryException
     '''
-
-    pass
 
 
 class UpdateQueryException(QueryException):
@@ -170,15 +154,11 @@ class UpdateQueryException(QueryException):
     UpdateQueryException
     '''
 
-    pass
-
 
 class TableQueryException(QueryException):
     '''
     TableQueryException
     '''
-
-    pass
 
 
 class RawQueryException(QueryException):
@@ -186,15 +166,11 @@ class RawQueryException(QueryException):
     RawQueryException
     '''
 
-    pass
-
 
 class JobException(ComponentException):
     '''
     JobException
     '''
-
-    pass
 
 
 class DistributedJobException(ComponentException):
@@ -202,18 +178,50 @@ class DistributedJobException(ComponentException):
     DistributedJobException
     '''
 
-    pass
-
 
 class TaskWorkflowException(ComponentException):
     '''
     TaskWorkflowException
     '''
 
-    pass
+
+class MetaDataStoreDeleteException(MetadatastoreException):
+    '''
+    MetaDataStoreDeleteException
+    '''
 
 
-query_exceptions = {
+class MetaDataStoreJobException(MetadatastoreException):
+    '''
+    MetaDataStoreJobException
+    '''
+
+
+class MetaDataStoreCreateException(MetadatastoreException):
+    '''
+    MetaDataStoreCreateException
+    '''
+
+
+class MetaDataStoreUpdateException(MetadatastoreException):
+    '''
+    MetaDataStoreUpdateException
+    '''
+
+
+class ModelPredictException(ModelException):
+    '''
+    ModelPredictException
+    '''
+
+
+class ModelFitException(ModelException):
+    '''
+    ModelFitException
+    '''
+
+
+_query_exceptions = {
     'Delete': DeleteQueryException,
     'Update': UpdateQueryException,
     'Table': TableQueryException,
@@ -221,3 +229,12 @@ query_exceptions = {
     'Select': SelectQueryException,
     'RawQuery': RawQueryException,
 }
+
+
+def query_exceptions(query):
+    query = str(query)
+    for k, v in _query_exceptions.items():
+        if k in query:
+            return v
+    else:
+        return QueryException

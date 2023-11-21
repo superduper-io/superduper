@@ -18,6 +18,7 @@ from superduperdb.backends.base.compute import ComputeBackend
 from superduperdb.backends.base.datastore import DataStore
 from superduperdb.backends.base.metadata import MetadataStore
 from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, Update
+from superduperdb.backends.compute.local import LocalComputeBackend
 from superduperdb.backends.ibis.query import Table
 from superduperdb.base import exceptions, serializable
 from superduperdb.base.cursor import SuperDuperCursor
@@ -68,7 +69,7 @@ class Datalayer:
         databackend: DataStore,
         metadata: MetadataStore,
         artifact_store: ArtifactStore,
-        compute: ComputeBackend,
+        compute: ComputeBackend = LocalComputeBackend(),
     ):
         """
         :param databackend: object containing connection to Datastore

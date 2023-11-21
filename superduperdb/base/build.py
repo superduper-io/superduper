@@ -85,8 +85,6 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             serializers=cfg.cluster.serializers,
             deserializers=cfg.cluster.deserializers,
         )
-    else:
-        compute = DaskComputeBackend("", local=True)
 
     # Build DataLayer
     # ------------------------------

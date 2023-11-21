@@ -78,6 +78,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
 
     # Connect to compute backend.
     # ------------------------------
+    compute = None
     if cfg.cluster.distributed:
         compute = DaskComputeBackend(
             cfg.cluster.dask_scheduler,

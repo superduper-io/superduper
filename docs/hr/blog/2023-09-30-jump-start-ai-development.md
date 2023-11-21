@@ -67,7 +67,7 @@ SuperDuperDB also allows developers to:
 - **[GitHub](https://github.com/SuperDuperDB/superduperdb)**
 - **[Documentation](https://docs.superduperdb.com/docs/docs/intro.html)**
 - **[Blog](https://docs.superduperdb.com/blog)**
-- **[Example Use-Cases & Apps](https://docs.superduperdb.com/docs/category/use-cases)**
+- **[Example Use Cases & Apps](https://docs.superduperdb.com/docs/category/use-cases)**
 - **[Slack Community](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA)**
 - **[LinkedIn](https://www.linkedin.com/company/superduperdb/)**
 - **[Twitter](https://twitter.com/superduperdb)**

@@ -5,18 +5,17 @@ authors: [nenb]
 tags: [RAG, vector-search]
 ---
 
-*Imagine effortlessly infusing AI into your data repositories—databases, data warehouses, or data lakes—without breaking a sweat. With SuperDuperDB, we aim to make this dream a reality.
+_Imagine effortlessly infusing AI into your data repositories—databases, data warehouses, or data lakes—without breaking a sweat. With SuperDuperDB, we aim to make this dream a reality.
 We want to provide everyone with the tools to build AI applications directly on top of their data stores,
-with just a pinch of Python magic sprinkled on top!* 🐍✨
+with just a pinch of Python magic sprinkled on top!_ 🐍✨
 
-*In this latest blog post we take a dive into one such example - a Retrieval Augmented Generation (RAG) app we built directly on top of our MongoDB store.*
+_In this latest blog post we take a dive into one such example - a Retrieval Augmented Generation (RAG) app we built directly on top of our MongoDB store._
 
 <!--truncate-->
 
--------------------------------------
+---
 
-import Bot from "./rag-question-answering-components/Bot"
-
+import Bot from './rag-question-answering-components/Bot';
 
 Since we’re in the business of building open-source software, a logical in-house application of our own technology is a question-answering app, directly on our own documentation. We built this app using SuperDuperDB together with FastAPI, React and MongoDB (the “FARMS” stack).
 
@@ -26,7 +25,10 @@ Although SuperDuperDB’s functionality is more general than simply RAG and vect
 
 ** 🤖 Let's ask the chatbot to tell us more about SuperDuperDB.**
 
-<Bot question='What is SuperDuperDB?' answer='SuperDuperDB is a Python package that provides tools for developers to apply AI and machine learning in their already deployed datastore. It also facilitates the setup of a scalable, open-source, and auditable environment for AI development. SuperDuperDB aims to make the integration of AI and data easier, extensible, and comprehensive. It allows for easy evaluation of model predictions and insertion back into the datastore and enables training deployment with a simple one-line command.' />
+<Bot
+  question="What is SuperDuperDB?"
+  answer="SuperDuperDB is a Python package that provides tools for developers to apply AI and machine learning in their already deployed datastore. It also facilitates the setup of a scalable, open-source, and auditable environment for AI development. SuperDuperDB aims to make the integration of AI and data easier, extensible, and comprehensive. It allows for easy evaluation of model predictions and insertion back into the datastore and enables training deployment with a simple one-line command."
+/>
 
 ### Choosing our stack
 
@@ -62,7 +64,10 @@ backend
 
 ** 🤖 Let's Question The Docs to learn more about Artifacts.**
 
-<Bot question='What is an Artifact?' answer='An Artifact carries the necessary information and serialization method to save an object in a configured artifact store. The Artifact ensures that an object can be serialized and stored in a permanent and centralized location for future retrieval. An example of an artifact could be an image file named my_image.jpg that is saved in a configured artifact store, such as gridfs on MongoDB.' />
+<Bot
+  question="What is an Artifact?"
+  answer="An Artifact carries the necessary information and serialization method to save an object in a configured artifact store. The Artifact ensures that an object can be serialized and stored in a permanent and centralized location for future retrieval. An example of an artifact could be an image file named my_image.jpg that is saved in a configured artifact store, such as gridfs on MongoDB."
+/>
 
 To build a program, you first must understand its data, and a RAG app is no different. Here, our data source are Markdown files, and we want to process them in a way which is most suitable for answering the questions we would like the LLM to answer. Here there's a trade-off: splitting the text into too large chunks, makes it harder to get good specificity in the vector-search step of RAG. However, splitting the docs into larger chunks, allows the LLM to use coherently ordered text to contextualize the answer it formulates.
 
@@ -84,7 +89,10 @@ db.execute(Collection(name="NAME").insert_many(documents))
 
 ** 🤖 QtD again!**
 
-<Bot question='Give examples of Components.' answer="SuperDuperDB has several components that work together to provide a unified user experience for the programmer. The DB component handles the underlying datastore and provides the functionality for storing and retrieving data. It is the core component of SuperDuperDB. The Models component defines the structure and behavior of the data to be stored in the DB. It includes classes or structures that represent different types of data and their relationships. The Encoders component is responsible for encoding and decoding data between different formats. It allows data to be transformed into a compatible format for storage in the DB. These are only some of the components that are provided by SuperDuperDB." />
+<Bot
+  question="Give examples of Components."
+  answer="SuperDuperDB has several components that work together to provide a unified user experience for the programmer. The DB component handles the underlying datastore and provides the functionality for storing and retrieving data. It is the core component of SuperDuperDB. The Models component defines the structure and behavior of the data to be stored in the DB. It includes classes or structures that represent different types of data and their relationships. The Encoders component is responsible for encoding and decoding data between different formats. It allows data to be transformed into a compatible format for storage in the DB. These are only some of the components that are provided by SuperDuperDB."
+/>
 
 We are only going to use that first feature, and install our AI models inside our database.
 
@@ -101,7 +109,7 @@ Our app is a particularly simple example of a CRUD app without the UPDATE or DEL
 Using SuperDuperDB to build a query to search for relevant text snippets is very similar to using a standard MongoDB driver such as `pymongo`, but with additional keyword arguments like n in this example, which says how many similar items to return from the database.
 
 ```python
-from superduperdb.db.mongodb.query import Collection            
+from superduperdb.db.mongodb.query import Collection
 
 context = (
     Collection(name="NAME")
@@ -113,7 +121,6 @@ context = (
     .find()
 )
 ```
-
 
 ### Dispatching QA queries
 
@@ -134,7 +141,6 @@ db = superduper(mongo_db)  # It's now a super duper database!
 db.execute(context)  # proceed as normal
 ```
 
-
 ### Summary
 
 The FARM stack works well with SuperDuperDB in Python to build RAG applications.
@@ -143,12 +149,14 @@ SuperDuperDB’s support for vector search allows developers to minimize the pro
 
 Many RAG and question-answering applications use `langchain`, but SuperDuperDB stands out with its lightweight third-party integrations, support for “bring your own model”, and greater scope, incorporating scalable inference and training directly in your database.
 
-
 ### SuperDuperDB into the future!
 
 ** 🤖 Let's see if the bot can help us decide what to do next.**
 
-<Bot question="What is SuperDuperDB's mission?" answer="SuperDuperDB's mission is to facilitate and accelerate the developer journey between data and AI models by creating an easy-to-use, extensible, and comprehensive Python framework for integrating AI and ML directly to the datastore. They aim to empower developers, data scientists, and architects to leverage the open-source ecosystem in their datastore deployments. They also aim to enable scalability and industrial scale deployment, provide easy-to-use tools for individual developers, allow continued use of already existing or deployed datastores without data migration, follow a fully open-source approach, and enable individuals and organizations to circumvent vendor lock-in strategies." />
+<Bot
+  question="What is SuperDuperDB's mission?"
+  answer="SuperDuperDB's mission is to facilitate and accelerate the developer journey between data and AI models by creating an easy-to-use, extensible, and comprehensive Python framework for integrating AI and ML directly to the datastore. They aim to empower developers, data scientists, and architects to leverage the open-source ecosystem in their datastore deployments. They also aim to enable scalability and industrial scale deployment, provide easy-to-use tools for individual developers, allow continued use of already existing or deployed datastores without data migration, follow a fully open-source approach, and enable individuals and organizations to circumvent vendor lock-in strategies."
+/>
 
 Thanks for reading! If you have any questions about this article, or SuperDuperDB in general, please don’t hesitate to contact us at opensource@superduperdb.com.
 
@@ -159,7 +167,7 @@ Thanks for reading! If you have any questions about this article, or SuperDuperD
 - **[GitHub](https://github.com/SuperDuperDB/superduperdb)**
 - **[Documentation](https://docs.superduperdb.com/docs/docs/intro.html)**
 - **[Blog](https://docs.superduperdb.com/blog)**
-- **[Example Use-Cases & Apps](https://docs.superduperdb.com/docs/category/use-cases)**
+- **[Example Use Cases & Apps](https://docs.superduperdb.com/docs/category/use-cases)**
 - **[Slack Community](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA)**
 - **[LinkedIn](https://www.linkedin.com/company/superduperdb/)**
 - **[Twitter](https://twitter.com/superduperdb)**

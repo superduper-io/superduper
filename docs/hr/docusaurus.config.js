@@ -1,7 +1,7 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
-const lightCodeTheme = require('prism-react-renderer').themes.github;
-const darkCodeTheme = require('prism-react-renderer').themes.dracula;
+const lightCodeTheme = require('prism-react-renderer').themes.vsLight;
+const darkCodeTheme = require('prism-react-renderer').themes.vsDark;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -151,7 +151,7 @@ const config = {
             type: 'docSidebar',
             sidebarId: 'useCasesSidebar',
             position: 'left',
-            label: 'Use-Cases',
+            label: 'Use cases',
           },
           { to: '/blog', label: 'Blog', position: 'left' },
           {
@@ -161,8 +161,10 @@ const config = {
           },
           {
             href: 'https://github.com/SuperDuperDB/superduperdb',
-            label: 'GitHub',
+            // label: 'GitHub',
             position: 'right',
+            className: 'header-github-link',
+            'aria-label': 'GitHub repository',
           },
         ],
       },
@@ -181,7 +183,7 @@ const config = {
                 to: '/docs/docs/intro',
               },
               {
-                label: 'Use-Cases',
+                label: 'Use cases',
                 to: '/docs/category/use_cases',
               },
               {

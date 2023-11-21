@@ -2,7 +2,7 @@
 sidebar_position: 10
 ---
 
-# `Document`/ `Encoder` / `Schema` - `superduperdb`'s mechanisms for specialized data.
+# DataType Encoders
 
 In AI, typical types of data are:
 

@@ -6,9 +6,9 @@ sidebar_position: 20
 
 `superduperdb` provides 2 principle approaches for applying AI to the database
 
-| Method | Description | Example |
-| --- | --- | --- | 
-| Procedural | *Telling SuperDuperDB **what** to do* | `model.predict(X='txt', db=db)` |
+| Method      | Description                                            | Example                                                     |
+|-------------|--------------------------------------------------------|-------------------------------------------------------------| 
+| Procedural  | *Telling SuperDuperDB **what** to do*                  | `model.predict(X='txt', db=db)`                             |
 | Declarative | *Telling SuperDuperDB which **state** it should be in* | `db.add(Listener(model=model, key='txt', select=c.find()))` |
 
 ### Procedural API
@@ -54,4 +54,4 @@ db.add(
 )
 ```
 
-Read more about the `VectorIndex` concept [here](25_vector_search.mdx).
+    Read more about the `VectorIndex` concept [here](../walkthrough/25_vector_search.mdx).

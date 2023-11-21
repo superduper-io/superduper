@@ -1,41 +1,53 @@
-# Website
+# SuperDuperDB Documentation Website
 
-This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
+This documentation website is built using [Docusaurus 3.0](https://docusaurus.io/), a modern static website generator.
 
-### Installation
+## Installation
 
-```
-$ yarn
-```
+As Docusaurus 3.0 lacks support for search functionality, we utilize Docusaurus 2.4 plugins. When installing, include the `--legacy-peer-deps` keyword to handle legacy peer dependencies.
 
-### Local Development
-
-```
-$ yarn start
+```bash
+npm install --legacy-peer-deps
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+## Local Development
 
-### Build
+To initiate a local development server and open a browser window, execute the following command. Most changes are reflected live without requiring a server restart.
 
-```
-$ yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
-
-Using SSH:
-
-```
-$ USE_SSH=true yarn deploy
+```bash
+npm run start
 ```
 
-Not using SSH:
+## Local Development with Search Feature
 
-```
-$ GIT_USER=<Your GitHub username> yarn deploy
+Since we employ local searching features, you need to build first and then serve it to see the result, as it builds its index during runtime.
+
+```bash
+npm run search
 ```
 
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+It will do both and show you a result. You have to run it again, if you want to see more changes.
+
+## Build
+
+Generate static content into the `build` directory using the following command. The output can be served using any static content hosting service.
+
+```bash
+npm run build
+```
+
+## Deployment
+
+### Using SSH:
+
+```bash
+USE_SSH=true npm run deploy
+```
+
+### Without SSH:
+
+```bash
+GIT_USER=<Your GitHub username> npm run deploy
+```
+
+If you use GitHub Pages for hosting, this command conveniently builds the website and pushes it to the `gh-pages` branch.

@@ -15,11 +15,14 @@ class BaseException(Exception):
     exception
     '''
 
-    def __init__(self, msg):
+    def __init__(self, msg, exception_on_raise=True):
         self.msg = msg
+        self.exception_on_raise = exception_on_raise
 
     def __str__(self):
-        logging.error(self.msg)
+        if self.exception_on_raise:
+            self.exception_on_raise = False
+            logging.exception(self.msg, e=self)
         return self.msg
 
 
@@ -101,7 +104,7 @@ class FileNotFoundException(BaseException):
     '''
 
 
-class ServiceException(BaseException):
+class ServiceRequestException(BaseException):
     '''
     ServiceException
     '''

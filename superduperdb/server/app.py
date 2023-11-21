@@ -1,6 +1,7 @@
 import json
 import sys
 from functools import cached_property
+from traceback import format_exc
 
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, Request
@@ -151,10 +152,27 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)
         except Exception as e:
-            logging.error(f'Error while serving {request} :: {e}')
+            host = getattr(getattr(request, "client", None), "host", None)
+            port = getattr(getattr(request, "client", None), "port", None)
+            url = (
+                f"{request.url.path}?{request.query_params}"
+                if request.query_params
+                else request.url.path
+            )
+            exception_type, exception_value, _ = sys.exc_info()
+            exception_traceback = format_exc()
+            exception_name = getattr(exception_type, "__name__", None)
+            msg = f'{host}:{port} - "{request.method} {url}"\
+                    500 Internal Server Error <{exception_name}:\
+                    {exception_value}>'
+            logging.exception(msg, e=e)
             return JSONResponse(
                 status_code=500,
-                content={'error': e.__class__.__name__, 'messages': e.args},
+                content={
+                    'error': exception_name,
+                    'messages': msg,
+                    'traceback': exception_traceback,
+                },
             )
 
 

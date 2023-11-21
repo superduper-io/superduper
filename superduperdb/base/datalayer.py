@@ -68,7 +68,7 @@ class Datalayer:
         databackend: DataStore,
         metadata: MetadataStore,
         artifact_store: ArtifactStore,
-        compute: tuple[ComputeBackend | None],
+        compute: ComputeBackend,
     ):
         """
         :param databackend: object containing connection to Datastore

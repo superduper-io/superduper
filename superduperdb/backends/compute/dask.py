@@ -31,7 +31,7 @@ class DaskComputeBackend(ComputeBackend):
         self.futures_collection: t.Dict[str, distributed.Future] = {}
 
         if local:
-            cluster = distributed.LocalCluster(env=envs)
+            cluster = distributed.LocalCluster(processes=False)
             self.client = distributed.Client(cluster, **kwargs)
         else:
             self.client = distributed.Client(

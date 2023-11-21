@@ -67,6 +67,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         setattr(cfg, k, v)
 
     # Connect to data backend.
+    # ------------------------------
     try:
         databackend = build(cfg.data_backend, data_backends)
         logging.info("Data Client is ready.", databackend.conn)
@@ -75,7 +76,20 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         logging.error("Error initializing to DataBackend Client:", str(e))
         sys.exit(1)
 
-    # Build a Datalayer object with the specified components.
+    # Connect to compute backend.
+    # ------------------------------
+    if cfg.cluster.distributed:
+        compute = DaskComputeBackend(
+            cfg.cluster.dask_scheduler,
+            local=cfg.cluster.local,
+            serializers=cfg.cluster.serializers,
+            deserializers=cfg.cluster.deserializers,
+        )
+    else:
+        compute = DaskComputeBackend("", local=True)
+
+    # Build DataLayer
+    # ------------------------------
     db = Datalayer(
         databackend=databackend,
         metadata=(
@@ -88,16 +102,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             if cfg.artifact_store is not None
             else databackend.build_artifact_store()
         ),
-        compute=(
-            DaskComputeBackend(
-                cfg.cluster.dask_scheduler,
-                local=cfg.cluster.local,
-                serializers=cfg.cluster.serializers,
-                deserializers=cfg.cluster.deserializers,
-            )
-            if cfg.cluster.distributed
-            else None,
-        ),
+        compute=compute,
     )
 
     return db

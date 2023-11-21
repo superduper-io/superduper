@@ -14,7 +14,7 @@ import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.backends.ibis.query import Table
-from superduperdb.base import serializable
+from superduperdb.base import exceptions, serializable
 from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
@@ -37,7 +37,6 @@ from ..backends.base.metadata import MetaDataStore
 from ..backends.base.query import Delete, Insert, RawQuery, Select, Update
 from ..misc.download import download_content
 from .cursor import SuperDuperCursor
-from .exceptions import ComponentInUseError, ComponentInUseWarning
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -115,33 +114,37 @@ class Datalayer:
     def initialize_vector_searcher(
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
     ) -> BaseVectorSearcher:
-        searcher_type = searcher_type or s.CFG.vector_search
-        logging.info(f'loading of vectors of vector-index: {identifier}')
-        vi = self.vector_indices[identifier]
+        try:
+            searcher_type = searcher_type or s.CFG.vector_search
+            logging.info(f'loading of vectors of vector-index: {identifier}')
+            vi = self.vector_indices[identifier]
 
-        clt = vi.indexing_listener.select.table_or_collection
+            clt = vi.indexing_listener.select.table_or_collection
 
-        if self.cdc.running:
-            msg = 'CDC only supported for vector search via lance format'
-            assert s.CFG.vector_search == 'lance', msg
+            if self.cdc.running:
+                msg = 'CDC only supported for vector search via lance format'
+                assert s.CFG.vector_search == 'lance', msg
 
-        vector_search_cls = vector_searcher_implementations[searcher_type]
-        vector_comparison = vector_search_cls(
-            identifier=vi.identifier,
-            dimensions=vi.dimensions,
-            measure=vi.measure,
-        )
-        assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
+            vector_search_cls = vector_searcher_implementations[searcher_type]
+            vector_comparison = vector_search_cls(
+                identifier=vi.identifier,
+                dimensions=vi.dimensions,
+                measure=vi.measure,
+            )
+            assert isinstance(clt.identifier, str), 'clt.identifier must be a string'
 
-        if self.cdc.running:
-            # In this case, loading has already happened on disk via CDC mechanism
-            return vector_comparison
+            if self.cdc.running:
+                # In this case, loading has already happened on disk via CDC mechanism
+                return vector_comparison
 
-        if backfill or s.CFG.mode != 'production':
-            self.backfill_vector_search(vi, vector_comparison)
+            if backfill or s.CFG.mode != 'production':
+                self.backfill_vector_search(vi, vector_comparison)
 
-        vi = FastVectorSearcher(self, vector_comparison, vi.identifier)
-        return vi
+            return FastVectorSearcher(self, vector_comparison, vi.identifier)
+        except Exception as e:
+            raise exceptions.VectorSearchException(
+                'Failed to initialize vector search index {identifier}'
+            ) from e
 
     def backfill_vector_search(self, vi, searcher):
         if vi.indexing_listener.select is None:
@@ -197,9 +200,22 @@ class Datalayer:
         ):
             logging.warn('Aborting...')
 
-        self.databackend.drop(force=True)
-        self.metadata.drop(force=True)
-        self.artifact_store.drop(force=True)
+        try:
+            self.databackend.drop(force=True)
+        except Exception as e:
+            raise exceptions.DatabackendException('Failed to drop data backend') from e
+        try:
+            self.metadata.drop(force=True)
+        except Exception as e:
+            raise exceptions.MetadatastoreException(
+                'Failed to drop metadata store'
+            ) from e
+        try:
+            self.artifact_store.drop(force=True)
+        except Exception as e:
+            raise exceptions.ArtifactStoreException(
+                'Failed to drop artifact store'
+            ) from e
 
     def validate(
         self,
@@ -294,15 +310,22 @@ class Datalayer:
 
         if context_select is not None:
             context = self._get_context(model, context_select, context_key)
+        try:
+            out = await model.apredict(
+                input.unpack() if isinstance(input, Document) else input,
+                one=True,
+                context=context,
+                **kwargs,
+            )
+        except Exception as e:
+            raise exceptions.ModelException('Error while model async predict') from e
 
-        out = await model.apredict(
-            input.unpack() if isinstance(input, Document) else input,
-            one=True,
-            context=context,
-            **kwargs,
-        )
-        if model.encoder is not None:
-            out = model.encoder(out)
+        try:
+            if model.encoder is not None:
+                out = model.encoder(out)
+        except Exception as e:
+            raise exceptions.EncoderException('Error while encoding model') from e
+
         if context is not None:
             return Document(out), [Document(x) for x in context]
         return Document(out), []
@@ -330,14 +353,22 @@ class Datalayer:
         if context_select is not None:
             context = self._get_context(model, context_select, context_key)
 
-        out = model.predict(
-            input.unpack() if isinstance(input, Document) else input,
-            one=True,
-            context=context,
-            **kwargs,
-        )
-        if model.encoder is not None:
-            out = model.encoder(out)
+        try:
+            out = model.predict(
+                input.unpack() if isinstance(input, Document) else input,
+                one=True,
+                context=context,
+                **kwargs,
+            )
+        except Exception as e:
+            raise exceptions.ModelException('Error while model predict') from e
+
+        try:
+            if model.encoder is not None:
+                out = model.encoder(out)
+        except Exception as e:
+            raise exceptions.EncoderException('Error while encoding model') from e
+
         if context is not None:
             return Document(out), [Document(x) for x in context]
         return Document(out), []
@@ -348,18 +379,23 @@ class Datalayer:
 
         :param query: select, insert, delete, update,
         """
-        if isinstance(query, Delete):
-            return self.delete(query, *args, **kwargs)
-        if isinstance(query, Insert):
-            return self.insert(query, *args, **kwargs)
-        if isinstance(query, Select):
-            return self.select(query, *args, **kwargs)
-        if isinstance(query, Table):
-            return self.select(query.to_query(), *args, **kwargs)
-        if isinstance(query, Update):
-            return self.update(query, *args, **kwargs)
-        if isinstance(query, RawQuery):
-            return query.execute(self)
+        try:
+            if isinstance(query, Delete):
+                return self.delete(query, *args, **kwargs)
+            if isinstance(query, Insert):
+                return self.insert(query, *args, **kwargs)
+            if isinstance(query, Select):
+                return self.select(query, *args, **kwargs)
+            if isinstance(query, Table):
+                return self.select(query.to_query(), *args, **kwargs)
+            if isinstance(query, Update):
+                return self.update(query, *args, **kwargs)
+            if isinstance(query, RawQuery):
+                return query.execute(self)
+        except Exception as e:
+            breakpoint()
+            QueryExceptionCls = exceptions.query_exceptions(query)
+            raise QueryExceptionCls(f"Error while executing {str(query)} query") from e
 
         raise TypeError(
             f'Wrong type of {query}; '
@@ -443,13 +479,21 @@ class Datalayer:
         :param ids: ids which reduce scopy of computations
         :param verbose: Toggle to ``True`` to get more output
         """
-        task_workflow: TaskWorkflow = self._build_delete_task_workflow(
-            query,
-            ids=ids,
-            verbose=verbose,
-        )
-        task_workflow.run_jobs(distributed=self.distributed)
-        return task_workflow
+        try:
+            task_workflow: TaskWorkflow = self._build_delete_task_workflow(
+                query,
+                ids=ids,
+                verbose=verbose,
+            )
+        except Exception as e:
+            raise exceptions.TaskWorkflowException(
+                'Error while building task workflow'
+            ) from e
+        try:
+            task_workflow.run_jobs(distributed=self.distributed)
+            return task_workflow
+        except Exception as e:
+            raise exceptions.JobException('Error while running task workflow') from e
 
     def refresh_after_update_or_insert(
         self,
@@ -464,12 +508,24 @@ class Datalayer:
         :param ids: ids which reduce scopy of computations
         :param verbose: Toggle to ``True`` to get more output
         """
-        task_workflow: TaskWorkflow = self._build_task_workflow(
-            query.select_table,  # TODO can be replaced by select_using_ids
-            ids=ids,
-            verbose=verbose,
-        )
-        task_workflow.run_jobs(distributed=self.distributed)
+        try:
+            task_workflow: TaskWorkflow = self._build_task_workflow(
+                query.select_table,  # TODO can be replaced by select_using_ids
+                ids=ids,
+                verbose=verbose,
+            )
+        except Exception as e:
+            raise exceptions.TaskWorkflowException(
+                'Error while building task workflow'
+            ) from e
+        try:
+            task_workflow.run_jobs(distributed=self.distributed)
+        except Exception as e:
+            if self.distributed:
+                raise exceptions.DistributedJobException(
+                    'Error while running job on a distributed platform'
+                ) from e
+            raise exceptions.JobException('Error while running job') from e
         return task_workflow
 
     def update(self, update: Update, refresh: bool = True) -> UpdateResult:
@@ -551,12 +607,12 @@ class Datalayer:
                     f"{self.metadata.get_component_version_parents(unique_id)}",
                 )
             if not force:
-                raise ComponentInUseError(
+                raise exceptions.ComponentInUseError(
                     f'Component versions: {component_versions_in_use} are in use'
                 )
             else:
                 warnings.warn(
-                    ComponentInUseWarning(
+                    exceptions.ComponentInUseWarning(
                         f'Component versions: {component_versions_in_use}'
                         ', marking as hidden'
                     )
@@ -593,47 +649,52 @@ class Datalayer:
                              components
         :param info_only: toggle to ``True`` to return metadata only
         """
-        info = self.metadata.get_component(
-            type_id=type_id,
-            identifier=identifier,
-            version=version,
-            allow_hidden=allow_hidden,
-        )
-
-        if info is None:
-            raise Exception(
-                f'No such object of type "{type_id}", '
-                f'"{identifier}" has been registered.'
+        try:
+            info = self.metadata.get_component(
+                type_id=type_id,
+                identifier=identifier,
+                version=version,
+                allow_hidden=allow_hidden,
             )
 
-        if info_only:
-            return info
+            if info is None:
+                raise Exception(
+                    f'No such object of type "{type_id}", '
+                    f'"{identifier}" has been registered.'
+                )
 
-        def get_children(info):
-            return {
-                k: v
-                for k, v in info['dict'].items()
-                if isinstance(v, dict) and serializable.is_component_metadata(v)
-            }
+            if info_only:
+                return info
 
-        def replace_children(r):
-            if isinstance(r, dict):
-                children = get_children(r)
-                for k, v in children.items():
-                    r['dict'][k] = replace_children(
-                        self.metadata.get_component(**v, allow_hidden=True)
-                    )
-            return r
+            def get_children(info):
+                return {
+                    k: v
+                    for k, v in info['dict'].items()
+                    if isinstance(v, dict) and serializable.is_component_metadata(v)
+                }
 
-        info = replace_children(info)
-        info = self.artifact_store.load(info, lazy=True)
+            def replace_children(r):
+                if isinstance(r, dict):
+                    children = get_children(r)
+                    for k, v in children.items():
+                        r['dict'][k] = replace_children(
+                            self.metadata.get_component(**v, allow_hidden=True)
+                        )
+                return r
 
-        m = Component.deserialize(info)
-        m.on_load(self)
+            info = replace_children(info)
+            info = self.artifact_store.load(info, lazy=True)
 
-        if cm := self.type_id_to_cache_mapping.get(type_id):
-            getattr(self, cm)[m.identifier] = m
-        return m
+            m = Component.deserialize(info)
+            m.on_load(self)
+
+            if cm := self.type_id_to_cache_mapping.get(type_id):
+                getattr(self, cm)[m.identifier] = m
+            return m
+        except Exception as e:
+            raise exceptions.ComponentException(
+                f'Error while loading {type_id} with id {identifier}'
+            ) from e
 
     def _build_delete_task_workflow(
         self,
@@ -694,21 +755,17 @@ class Datalayer:
         G = TaskWorkflow(self)
 
         # TODO extract this logic from this class
-        try:
-            G.add_node(
-                f'{download_content.__name__}()',
-                job=FunctionJob(
-                    callable=download_content,
-                    args=[],
-                    kwargs=dict(
-                        ids=ids,
-                        query=query.serialize(),
-                    ),
+        G.add_node(
+            f'{download_content.__name__}()',
+            job=FunctionJob(
+                callable=download_content,
+                args=[],
+                kwargs=dict(
+                    ids=ids,
+                    query=query.serialize(),
                 ),
-            )
-        except Exception as e:
-            logging.info(query)
-            raise e
+            ),
+        )
 
         listeners = self.show('listener')
         if not listeners:
@@ -839,40 +896,43 @@ class Datalayer:
         serialized: t.Optional[t.Dict] = None,
         parent: t.Optional[str] = None,
     ):
-        object.pre_create(self)
-        assert hasattr(object, 'identifier')
-        assert hasattr(object, 'version')
+        try:
+            object.pre_create(self)
+            assert hasattr(object, 'identifier')
+            assert hasattr(object, 'version')
 
-        existing_versions = self.show(object.type_id, object.identifier)
-        if isinstance(object.version, int) and object.version in existing_versions:
-            s.logging.debug(f'{object.unique_id} already exists - doing nothing')
-            return
+            existing_versions = self.show(object.type_id, object.identifier)
+            if isinstance(object.version, int) and object.version in existing_versions:
+                s.logging.debug(f'{object.unique_id} already exists - doing nothing')
+                return
 
-        if existing_versions:
-            object.version = max(existing_versions) + 1
-        else:
-            object.version = 0
+            if existing_versions:
+                object.version = max(existing_versions) + 1
+            else:
+                object.version = 0
 
-        if serialized is None:
-            serialized, artifacts = object.serialized
-            artifact_info = self.artifact_store.save(artifacts)
-            serialized = self.artifact_store.replace(serialized, artifact_info)
+            if serialized is None:
+                serialized, artifacts = object.serialized
+                artifact_info = self.artifact_store.save(artifacts)
+                serialized = self.artifact_store.replace(serialized, artifact_info)
 
-        else:
-            serialized['version'] = object.version
-            serialized['dict']['version'] = object.version
+            else:
+                serialized['version'] = object.version
+                serialized['dict']['version'] = object.version
 
-        self._create_children(object, serialized)
-        self.metadata.create_component(serialized)
-        if parent is not None:
-            self.metadata.create_parent_child(parent, object.unique_id)
+            self._create_children(object, serialized)
+            self.metadata.create_component(serialized)
+            if parent is not None:
+                self.metadata.create_parent_child(parent, object.unique_id)
 
-        object.post_create(self)
-        object.on_load(
-            self
-        )  # TODO do I really need to call this here? Could be handled by `.pre_create`?
-        jobs = object.schedule_jobs(self, dependencies=dependencies)
-        return jobs, object
+            object.post_create(self)
+            object.on_load(self)
+            jobs = object.schedule_jobs(self, dependencies=dependencies)
+            return jobs, object
+        except Exception as e:
+            raise exceptions.DatalayerException(
+                f'Error while adding object with id: {object.identifier}'
+            ) from e
 
     def _create_children(self, component: Component, serialized: t.Dict):
         for k, child_type_id in component.child_components:
@@ -1136,26 +1196,32 @@ class Datalayer:
         :param upsert: toggle to ``True`` to enable even if object doesn't exist yet
         """
         try:
-            info = self.metadata.get_component(
-                object.type_id, object.identifier, version=object.version
-            )
-        except FileNotFoundError as e:
-            if upsert:
-                return self.add(
-                    object,
+            try:
+                info = self.metadata.get_component(
+                    object.type_id, object.identifier, version=object.version
                 )
-            raise e
-        # If object has no version, update the last version
-        object.version = info['version']
-        new_info = self.artifact_store.update(object, metadata_info=info)
-        self.metadata.replace_object(
-            new_info,
-            identifier=object.identifier,
-            type_id='model',
-            version=object.version,
-        )
+            except FileNotFoundError as e:
+                if upsert:
+                    return self.add(
+                        object,
+                    )
+                raise exceptions.FileNotFoundException(str(e)) from e
 
-    def _select_nearest(
+            # If object has no version, update the last version
+            object.version = info['version']
+            new_info = self.artifact_store.update(object, metadata_info=info)
+            self.metadata.replace_object(
+                new_info,
+                identifier=object.identifier,
+                type_id='model',
+                version=object.version,
+            )
+        except Exception as e:
+            raise exceptions.ComponentException(
+                f'Error while replacing component {object.identifier}'
+            ) from e
+
+    def select_nearest(
         self,
         like: Document,
         vector_index: str,
@@ -1163,16 +1229,20 @@ class Datalayer:
         outputs: t.Optional[Document] = None,
         n: int = 100,
     ) -> t.Tuple[t.List[str], t.List[float]]:
-        like = self._get_content_for_filter(like)
-        vi = self.vector_indices[vector_index]
-
-        if outputs is None:
-            outs = {}
-        else:
-            outs = outputs.encode()
-            if not isinstance(outs, dict):
-                raise TypeError(f'Expected dict, got {type(outputs)}')
-        return vi.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
+        try:
+            like = self._get_content_for_filter(like)
+            vi = self.vector_indices[vector_index]
+            if outputs is None:
+                outs = {}
+            else:
+                outs = outputs.encode()
+                if not isinstance(outs, dict):
+                    raise TypeError(f'Expected dict, got {type(outputs)}')
+            return vi.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
+        except Exception as e:
+            raise exceptions.VectorSearchException(
+                f'Error while vector search on index {vector_index}'
+            ) from e
 
 
 @dc.dataclass

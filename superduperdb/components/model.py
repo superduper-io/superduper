@@ -18,6 +18,7 @@ from superduperdb.backends.base.query import CompoundSelect, Select
 from superduperdb.backends.ibis.field_types import FieldType
 from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import QueryDataset
+from superduperdb.base import exceptions
 from superduperdb.base.artifact import Artifact
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component
@@ -192,78 +193,93 @@ class Predictor:
         overwrite: bool = False,
         **kwargs,
     ) -> t.Any:
-        if one:
-            assert db is None, 'db must be None when ``one=True`` (direct call)'
+        predict_type = 'batch prediction'
 
-        if isinstance(select, dict):
-            select = Serializable.deserialize(select)
+        try:
+            if one:
+                assert db is None, 'db must be None when ``one=True`` (direct call)'
 
-        if isinstance(select, Table):
-            select = select.to_query()
+            if isinstance(select, dict):
+                select = Serializable.deserialize(select)
 
-        if db is not None:
-            if isinstance(select, IbisCompoundSelect):
-                try:
-                    _ = db.metadata.get_query(str(hash(select)))
-                except NonExistentMetadataError:
-                    logging.info(f'Query {select} not found in metadata, adding...')
-                    db.metadata.add_query(select, self.identifier)
-                    logging.info('Done')
-            logging.info(f'Adding model {self.identifier} to db')
-            assert isinstance(self, Component)
-            db.add(self)
-            logging.info('Done.')
+            if isinstance(select, Table):
+                select = select.to_query()
 
-        if distributed is None:
-            distributed = s.CFG.cluster.distributed
+            if db is not None:
+                if isinstance(select, IbisCompoundSelect):
+                    try:
+                        _ = db.metadata.get_query(str(hash(select)))
+                    except NonExistentMetadataError:
+                        logging.info(f'Query {select} not found in metadata, adding...')
+                        db.metadata.add_query(select, self.identifier)
+                        logging.info('Done')
+                logging.info(f'Adding model {self.identifier} to db')
+                assert isinstance(self, Component)
+                db.add(self)
+                logging.info('Done.')
 
-        if listen:
-            assert db is not None
-            assert select is not None
-            return self._predict_and_listen(
-                X=X,
-                db=db,
-                select=select,
-                max_chunk_size=max_chunk_size,
-                **kwargs,
-            )
+            if distributed is None:
+                distributed = s.CFG.cluster.distributed
 
-        if distributed:
-            return self.create_predict_job(
-                X,
-                select=select,
-                ids=ids,
-                max_chunk_size=max_chunk_size,
-                overwrite=overwrite,
-                **kwargs,
-            )(db=db, distributed=distributed, dependencies=dependencies)
-        else:
-            if select is not None and ids is None:
+            if listen:
                 assert db is not None
-                return self._predict_with_select(
+                assert select is not None
+                return self._predict_and_listen(
                     X=X,
-                    select=select,
                     db=db,
-                    in_memory=in_memory,
+                    select=select,
+                    max_chunk_size=max_chunk_size,
+                    **kwargs,
+                )
+
+            if distributed:
+                return self.create_predict_job(
+                    X,
+                    select=select,
+                    ids=ids,
                     max_chunk_size=max_chunk_size,
                     overwrite=overwrite,
                     **kwargs,
-                )
-            elif select is not None and ids is not None:
-                assert db is not None
-                return self._predict_with_select_and_ids(
-                    X=X,
-                    select=select,
-                    ids=ids,
-                    db=db,
-                    max_chunk_size=max_chunk_size,
-                    in_memory=in_memory,
-                    **kwargs,
-                )
+                )(db=db, distributed=distributed, dependencies=dependencies)
             else:
-                if self.takes_context:
-                    kwargs['context'] = context
-                return self._predict(X, one=one, **kwargs)
+                if select is not None and ids is None:
+                    assert db is not None
+                    return self._predict_with_select(
+                        X=X,
+                        select=select,
+                        db=db,
+                        in_memory=in_memory,
+                        max_chunk_size=max_chunk_size,
+                        overwrite=overwrite,
+                        **kwargs,
+                    )
+                elif select is not None and ids is not None:
+                    assert db is not None
+                    return self._predict_with_select_and_ids(
+                        X=X,
+                        select=select,
+                        ids=ids,
+                        db=db,
+                        max_chunk_size=max_chunk_size,
+                        in_memory=in_memory,
+                        **kwargs,
+                    )
+                else:
+                    predict_type = 'single prediction'
+                    if self.takes_context:
+                        kwargs['context'] = context
+                    return self._predict(X, one=one, **kwargs)
+        except Exception as e:
+            select_collection = None
+            if select:
+                assert isinstance(select, Select)
+                select_collection = select.table_or_collection.identifier
+
+            raise exceptions.ModelPredictException(
+                f'Error while model prediction\
+                \ninfo: predict type: {predict_type}, \
+                Collection: {select_collection}, Model: {self.identifier}'
+            ) from e
 
     async def apredict(
         self,
@@ -272,9 +288,14 @@ class Predictor:
         one: bool = False,
         **kwargs,
     ):
-        if self.takes_context:
-            kwargs['context'] = context
-        return await self._apredict(X, one=one, **kwargs)
+        try:
+            if self.takes_context:
+                kwargs['context'] = context
+            return await self._apredict(X, one=one, **kwargs)
+        except Exception as e:
+            raise exceptions.ModelPredictException(
+                f'Error while async model prediction Model: {self.identifier}'
+            ) from e
 
     def _predict_and_listen(
         self,
@@ -639,41 +660,49 @@ class Model(Component, Predictor):
         :param select: The select to use for training (optional)
         :param validation_sets: The validation ``Dataset`` instances to use (optional)
         """
-        if isinstance(select, dict):
-            select = Serializable.deserialize(select)
+        try:
+            if isinstance(select, dict):
+                select = Serializable.deserialize(select)
 
-        if validation_sets:
-            validation_sets = list(validation_sets)
-            for i, vs in enumerate(validation_sets):
-                if isinstance(vs, Dataset):
-                    assert db is not None
-                    db.add(vs)
-                    validation_sets[i] = vs.identifier
+            if validation_sets:
+                validation_sets = list(validation_sets)
+                for i, vs in enumerate(validation_sets):
+                    if isinstance(vs, Dataset):
+                        assert db is not None
+                        db.add(vs)
+                        validation_sets[i] = vs.identifier
 
-        if db is not None:
-            db.add(self)
+            if db is not None:
+                db.add(self)
 
-        if distributed is None:
-            distributed = s.CFG.cluster.distributed
+            if distributed is None:
+                distributed = s.CFG.cluster.distributed
 
-        if distributed:
-            return self.create_fit_job(
-                X,
-                select=select,
-                y=y,
-                **kwargs,
-            )(db=db, distributed=True, dependencies=dependencies)
-        else:
-            return self._fit(
-                X,
-                y=y,
-                configuration=configuration,
-                data_prefetch=data_prefetch,
-                db=db,
-                metrics=metrics,
-                select=select,
-                validation_sets=validation_sets,
-                **kwargs,
+            if distributed:
+                return self.create_fit_job(
+                    X,
+                    select=select,
+                    y=y,
+                    **kwargs,
+                )(db=db, distributed=True, dependencies=dependencies)
+            else:
+                return self._fit(
+                    X,
+                    y=y,
+                    configuration=configuration,
+                    data_prefetch=data_prefetch,
+                    db=db,
+                    metrics=metrics,
+                    select=select,
+                    validation_sets=validation_sets,
+                    **kwargs,
+                )
+        except Exception:
+            assert isinstance(select, Select)
+            raise exceptions.ModelFitException(
+                f'Error while model fit\
+                \ninfo: Collection {select.table_or_collection.identifier},\
+                Model {self.identifier}'
             )
 
 

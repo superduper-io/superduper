@@ -15,7 +15,8 @@ import dataclasses as dc
 from unittest.mock import MagicMock, patch
 
 from superduperdb.backends.mongodb.query import Collection
-from superduperdb.base.artifact import Artifact, ArtifactSavingError
+from superduperdb.base import exceptions
+from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.base.exceptions import ComponentInUseError, ComponentInUseWarning
@@ -113,10 +114,10 @@ def test_add_version(local_empty_db):
     assert local_empty_db.show('test-component', 'test') == [0, 1, 2]
 
 
-def test_add_compenent_with_bad_artifact(local_empty_db):
+def test_add_component_with_bad_artifact(local_empty_db):
     artifact = Artifact({'data': lambda x: x}, serializer='pickle')
     component = TestComponent(identifier='test', artifact=artifact)
-    with pytest.raises(ArtifactSavingError):
+    with pytest.raises(exceptions.DatalayerException):
         local_empty_db.add(component)
 
 
@@ -144,7 +145,7 @@ def test_add_child(local_empty_db):
     assert parents == [component.unique_id]
 
     component_2 = TestComponent(identifier='test-2', child='child-2')
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(exceptions.DatalayerException):
         local_empty_db.add(component_2)
 
     child_component_2 = TestComponent(identifier='child-2')
@@ -233,7 +234,7 @@ def test_remove_component_from_data_layer_dict(local_empty_db):
     test_encoder = Encoder(identifier='test_encoder', version=0)
     local_empty_db.add(test_encoder)
     local_empty_db._remove_component_version('encoder', 'test_encoder', 0, force=True)
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(exceptions.ComponentException):
         local_empty_db.encoders['test_encoder']
 
 
@@ -281,7 +282,7 @@ def test_remove_multi_version(local_empty_db):
 
 
 def test_remove_not_exist_component(local_empty_db):
-    with pytest.raises(FileNotFoundError) as e:
+    with pytest.raises(exceptions.ComponentException) as e:
         local_empty_db.remove('test-component', 'test', 0, force=True)
         assert 'test' in str(e.value)
 

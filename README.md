@@ -60,7 +60,7 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 - Highly custom AI use-cases involving ultra specialized models
 
 ### Key Features:
-- **[Direct Integration AI with your database](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate any AI models and APIs directly with your databases in a single scalable deployment that is easy-to-manage, without the need for additional pre-processing steps, ETL or boilerplate code.
+- **[Seamless Integration of your AI and your database](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate any AI models and APIs directly with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
 - **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, propagating results to downstream applications in real-time, keeping your deployment always up-to-date.
 - **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Train AI models on large, diverse datasets simply by query-defining your training data, while ensuring optimal performance and ease of management, utilizing in-build computational optimizations.
 - **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.

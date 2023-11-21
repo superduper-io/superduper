@@ -118,7 +118,11 @@ class FastVectorSearcher(BaseVectorSearcher):
                 else 'local vector search'
             )
             raise exceptions.VectorSearchException(
-                f'Error while finding nearest id {_id} from {local_msg}'
+                f'Error while finding nearest array from {local_msg} \n\
+                The problem might be either wrong id {_id} provided or vector database \
+                is empty (Not initialized properly), check if model/listener outputs \
+                are successfully computed, generally have issues \
+                when computes is distributed to dask for example. '
             ) from e
 
     def find_nearest_from_array(
@@ -153,5 +157,9 @@ class FastVectorSearcher(BaseVectorSearcher):
                 else 'local vector search'
             )
             raise exceptions.VectorSearchException(
-                f'Error while finding nearest array from {local_msg}'
+                f'Error while finding nearest array from {local_msg} \n\
+                The problem might be either wrong vector provided or vector database \
+                is empty (Not initialized properly), check if model/listener outputs \
+                are successfully computed, generally have issues \
+                when computes is distributed to dask for example. '
             ) from e

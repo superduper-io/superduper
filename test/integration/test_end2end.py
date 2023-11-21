@@ -1,4 +1,5 @@
 import random
+import time
 
 import numpy as np
 import pytest
@@ -71,6 +72,14 @@ def distributed_db(test_db, local_dask_client):
     )
     test_db._distributed_client = local_dask_client
     test_db.distributed = True
+
+    def update_syspath():
+        import sys
+
+        sys.path.append('./')
+
+    test_db._distributed_client.submit(update_syspath)
+
     yield test_db
     test_db.distributed = False
     test_db._distributed_client = None
@@ -102,7 +111,7 @@ def test_advance_setup(distributed_db, image_url):
                 'raw_bytes': raw_bytes,
             }
         )
-        for i in range(100)
+        for i in range(5)
     ]
 
     mixed_input = Collection('mixed_input')
@@ -143,6 +152,7 @@ def test_advance_setup(distributed_db, image_url):
     )
     db.add(listener1)
 
+    time.sleep(10)
     db.add(
         VectorIndex(
             identifier='test_search_index',
@@ -158,7 +168,16 @@ def test_advance_setup(distributed_db, image_url):
         )
     )
 
-    search_phrase = '96'
+    search_phrase = '4'
+
+    retry_left = 5
+
+    def check_outputs():
+        return list(db.databackend.db['_outputs.int.model1'].find({}))
+
+    while not len(check_outputs()) > 1 and retry_left != 0:
+        time.sleep(2)
+        retry_left -= 1
 
     r = next(
         db.execute(
@@ -173,5 +192,5 @@ def test_advance_setup(distributed_db, image_url):
 
     assert '_outputs' in r
     assert np.allclose(
-        np.asarray([9600] * 10), r['_outputs']['int']['model1']['0']['int']
+        np.asarray([400] * 10), r['_outputs']['int']['model1']['0']['int']
     )

@@ -59,14 +59,21 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 - Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation etc.)
 - Highly custom AI use-cases involving ultra specialized models
 
-#### Key Features:
-- **[Deploy AI Models and APIs directly on your database](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate all your AI models and APIs directly with your database with a simple Python command in a single scalable deployment that is easy-to-manage, without the need for additional pre-processing steps, ETL or boilerplate code.
+### Key Features:
+- **[Direct Integration of any AI Models and AI APIs with your database](https://docs.superduperdb.com/docs/docs/apply_models):** A single scalable deployment of all your AI models and API integrations on your database that is easy-to-manage, without the need for additional pre-processing steps, ETL or boilerplate code.
 - **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, propagating results to downstream applications in real-time, keeping your deployment always up-to-date.
 - **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Train AI models on large, diverse datasets simply by query-defining your training data, while ensuring optimal performance and ease of management, utilizing in-build computational optimizations.
 - **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
+- **[Simple, Extendable Interface](https://docs.superduperdb.com/docs/docs/procedural_vs_declarative_api)**: Operating SuperDuperDB only requires simple Python commands, while still allowing you to drill down on any layer as deep as it gets, up until the inner workings of your models. Add and leverage any function, programm, script or algorithm from the Python ecosystem to enhance your workflows, by turning them into a model. 
 - **[Difficult Data-Types](https://docs.superduperdb.com/docs/docs/encoding_special_data_types)**: Work directly with images, video, audio in your datastore, and any type which can be encoded as `bytes` in Python.
 - **[Feature Store](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
 - **[Vector Search](https://docs.superduperdb.com/docs/docs/vector_search):** No need for duplicating and migrating your data to additional specialized vector databases - turn your existing battle-tested datastore into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
+
+### Why opt for SuperDuperDB?
+1. Data stays where it is, in the database, minimizing data management overhead, reducing vulnerability, and maintaining compatibility with downstream applications - instead of duplicating and moving it into different environments, pipelines, and specialized vector databases.
+2. A single environment with seamless integration with distributed compute platforms like Dask, facilitating a scalable deployment and optimal compute efficiency to build, ship, and manage all your AI applications - instead of complex and fragmented, partially duplicated pipelines and infrastructure that is hard to maintain and control, creating massive overhead.
+3. Minimal learning curve due to a simple and declarative API, allowing for effortless integration and management of AI models, data backends, and compute platforms in just a few lines of Python code - instead of hundreds of lines of code and high costs of adoption of various methods, environments, and tools of standard AI and MLOps training and deployment/inference pipelines.
+
 
 ## 🌐 Supported Datastores (*more coming soon*):
 

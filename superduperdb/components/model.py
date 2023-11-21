@@ -205,6 +205,8 @@ class Predictor:
             if isinstance(select, Table):
                 select = select.to_query()
 
+            # Setting Data Backend
+            # ------------------------------
             if db is not None:
                 if isinstance(select, IbisCompoundSelect):
                     try:
@@ -216,11 +218,14 @@ class Predictor:
                 logging.info(f'Adding model {self.identifier} to db')
                 assert isinstance(self, Component)
                 db.add(self)
-                logging.info('Done.')
 
+            # Setting Compute Backend
+            # ------------------------------
             if distributed is None:
                 distributed = s.CFG.cluster.distributed
 
+            # Watch Database for Changes
+            # ------------------------------
             if listen:
                 assert db is not None
                 assert select is not None

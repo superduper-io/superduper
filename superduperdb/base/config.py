@@ -101,6 +101,9 @@ class LogType(str, Enum):
     # LOKI a format that is compatible with the Loki Log aggregation system.
     LOKI = "LOKI"
 
+    # DATABASE sends all logs to the database.
+    Database = "DATABASE"
+
 
 class Logging(BaseConfigJSONable):
     """Describe how we are going to log. This isn't yet used.

@@ -12,9 +12,14 @@ from dask.distributed import Future
 
 import superduperdb as s
 from superduperdb import logging
+from superduperdb.backends.base.artifact import ArtifactStore
 from superduperdb.backends.base.backends import vector_searcher_implementations
+from superduperdb.backends.base.data_backend import BaseDataBackend
+from superduperdb.backends.base.metadata import MetaDataStore
+from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, Update
 from superduperdb.backends.ibis.query import Table
 from superduperdb.base import exceptions, serializable
+from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
 from superduperdb.cdc.cdc import DatabaseChangeDataCapture
@@ -25,18 +30,11 @@ from superduperdb.jobs.job import ComponentJob, FunctionJob, Job
 from superduperdb.jobs.task_workflow import TaskWorkflow
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.data import ibatch
-from superduperdb.misc.download import Downloader, gather_uris
+from superduperdb.misc.download import Downloader, download_content, gather_uris
 from superduperdb.misc.special_dicts import MongoStyleDict
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 from superduperdb.vector_search.interface import FastVectorSearcher
 from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
-
-from ..backends.base.artifact import ArtifactStore
-from ..backends.base.data_backend import BaseDataBackend
-from ..backends.base.metadata import MetaDataStore
-from ..backends.base.query import Delete, Insert, RawQuery, Select, Update
-from ..misc.download import download_content
-from .cursor import SuperDuperCursor
 
 DBResult = t.Any
 TaskGraph = t.Any
@@ -746,7 +744,7 @@ class Datalayer:
         dependencies=(),
         verbose: bool = True,
     ) -> TaskWorkflow:
-        logging.debug(f"Building task workflow graph. Query:{query}")
+        logging.info("Building task workflow graph.")
 
         job_ids: t.Dict[str, t.Any] = defaultdict(lambda: [])
         job_ids.update(dependencies)

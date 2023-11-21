@@ -7,6 +7,7 @@ from loguru import logger
 from loki_logger_handler.loki_logger_handler import LoguruFormatter, LokiLoggerHandler
 from tqdm import tqdm
 
+from superduperdb.backends.base.logging_backend import BaseLoggingBackend
 from superduperdb.base.config import LogLevel, LogType
 
 from .configs import CFG
@@ -15,7 +16,16 @@ __all__ = ('Logging',)
 
 
 class Logging:
-    if CFG.logging.type == LogType.LOKI:  # Send logs to Loki
+    if CFG.logging.type == LogType.Database:  # Send logs to Database
+        custom_handler = BaseLoggingBackend(
+            database="",  # TODO: to be completed
+            session_id="",  # TODO: to be completed
+            stream="stderr",
+        )
+
+        logger.configure(handlers=[{"sink": custom_handler, "serialize": True}])
+
+    elif CFG.logging.type == LogType.LOKI:  # Send logs to Loki
         custom_handler = LokiLoggerHandler(
             url=os.environ["LOKI_URI"],
             labels={"application": "Test", "environment": "Develop"},

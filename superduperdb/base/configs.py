@@ -77,8 +77,8 @@ def build_config(cfg: t.Optional[Config] = None) -> Config:
     """
     Build the config object from the environment variables and config files.
     """
-    CONFIG = ConfigSettings(Config, _ALL_CONFIGS, PREFIX, base_config=cfg)
-    return CONFIG.config
+    config = ConfigSettings(Config, _ALL_CONFIGS, PREFIX, base_config=cfg)
+    return config.config
 
 
 CFG = build_config()

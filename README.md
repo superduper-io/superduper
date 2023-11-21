@@ -39,9 +39,9 @@
 ---
 ***📣 Important Release Announcement!***
 
-On the 5th of December, we are going to officially launch SuperDuperDB with the release of v0.1, including:
+On the 5th of December, we will officially launch SuperDuperDB with the release of v0.1, including:
 - Integration of PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino.
-- Massive overhaul of the docs
+- Overhaul of the documentation
 - Revamped and modularized testing suite
 
 ⭐️ Leave a star to be informed of more exciting updates!
@@ -61,12 +61,12 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 
 #### Key Features:
 - **[Deploy AI Models and APIs directly on your database](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate all your AI models and APIs directly with your database with a simple Python command in a single scalable deployment that is easy-to-manage, without the need for additional pre-processing steps, ETL or boilerplate code.
-- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, propagating results to downstream applications in real-time, keeping your deployment always up-to-date.
+- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Activate your models to compute outputs automatically and immediately as new data arrives, propagating results to downstream applications in real-time, keeping your deployment up-to-date.
 - **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Train AI models on large, diverse datasets simply by query-defining your training data, while ensuring optimal performance and ease of management, utilizing in-build computational optimizations.
 - **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
 - **[Difficult Data-Types](https://docs.superduperdb.com/docs/docs/encoding_special_data_types)**: Work directly with images, video, audio in your datastore, and any type which can be encoded as `bytes` in Python.
 - **[Feature Store](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
-- **[Vector Search](https://docs.superduperdb.com/docs/docs/vector_search):** No need for duplicating and migrating your data to additional specialized vector databases - turn your existing battle-tested datastore into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
+- **[Vector Search](https://docs.superduperdb.com/docs/docs/vector_search):** No need to duplicate or migrate your data to specialized vector databases - turn your existing battle-tested datastore into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
 ## 🌐 Supported Datastores (*more coming soon*):
 

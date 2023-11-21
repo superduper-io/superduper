@@ -10,7 +10,7 @@ class NonExistentMetadataError(Exception):
     ...
 
 
-class MetaDataStore(ABC):
+class MetadataStore(ABC):
     """
     Abstraction for storing meta-data separately from primary data.
 

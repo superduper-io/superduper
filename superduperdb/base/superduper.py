@@ -99,7 +99,7 @@ class MongoDbTyper(_DuckTyper):
         from pymongo.database import Database
 
         from superduperdb import logging
-        from superduperdb.backends.mongodb.data_backend import MongoDataBackend
+        from superduperdb.backends.mongodb.datastore import MongoDataBackend
         from superduperdb.base.build import build_datalayer
 
         if not isinstance(item, (Database, MockDatabase)):

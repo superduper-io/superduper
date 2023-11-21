@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from superduperdb.components.model import Model
 
 
-class BaseDataBackend(ABC):
+class DataStore(ABC):
     id_field = 'id'
 
     def __init__(self, conn: t.Any, name: str):

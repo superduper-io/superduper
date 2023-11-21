@@ -4,7 +4,7 @@ import ibis
 import pandas
 from ibis.backends.base import BaseBackend
 
-from superduperdb.backends.base.data_backend import BaseDataBackend
+from superduperdb.backends.base.datastore import DataStore
 from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import Table
@@ -13,7 +13,7 @@ from superduperdb.components.model import Model
 from superduperdb.components.schema import Schema
 
 
-class IbisDataBackend(BaseDataBackend):
+class IbisDataBackend(DataStore):
     def __init__(self, conn: BaseBackend, name: str, in_memory: bool = False):
         super().__init__(conn=conn, name=name)
         self.in_memory = in_memory

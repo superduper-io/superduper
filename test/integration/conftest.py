@@ -12,11 +12,11 @@ except ImportError:
     torch = None
 
 from superduperdb import CFG
+from superduperdb.backends.compute.dask import DaskComputeBackend
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.vector_index import VectorIndex
-from superduperdb.server.dask_client import dask_client
 
 '''
 All pytest fixtures with _package scope_ are defined in this module.
@@ -117,8 +117,8 @@ def local_dask_client(monkeypatch, request):
     monkeypatch.setenv('SUPERDUPERDB_DATA_BACKEND', data_backend)
 
     # Change the default value
-    client = dask_client(
-        uri=CFG.cluster.dask_scheduler,
+    client = DaskComputeBackend(
+        address=CFG.cluster.dask_scheduler,
         local=False,
     )
 

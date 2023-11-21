@@ -7,7 +7,7 @@ import torch.nn
 import torchvision
 
 from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
-from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.ibis.datastore import IbisDataBackend
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import RawSQL, Table
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata

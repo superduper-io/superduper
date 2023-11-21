@@ -68,7 +68,7 @@ class Select(Serializable, ABC):
             **kwargs,
         )
 
-    @abstractproperty
+    @property
     def select_table(self):
         pass
 
@@ -80,7 +80,8 @@ class Select(Serializable, ABC):
     def select_using_ids(self, ids: t.Sequence[str]) -> 'Select':
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def select_ids(self) -> 'Select':
         pass
 

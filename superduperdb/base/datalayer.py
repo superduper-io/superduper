@@ -14,8 +14,9 @@ import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.artifact import ArtifactStore
 from superduperdb.backends.base.backends import vector_searcher_implementations
-from superduperdb.backends.base.data_backend import BaseDataBackend
-from superduperdb.backends.base.metadata import MetaDataStore
+from superduperdb.backends.base.compute import ComputeBackend
+from superduperdb.backends.base.datastore import DataStore
+from superduperdb.backends.base.metadata import MetadataStore
 from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, Update
 from superduperdb.backends.ibis.query import Table
 from superduperdb.base import exceptions, serializable
@@ -52,7 +53,7 @@ ENDPOINTS = 'delete', 'execute', 'insert', 'like', 'select', 'update'
 
 class Datalayer:
     """
-    Base database connector for SuperDuperDB
+    Base backend connector for SuperDuperDB
     """
 
     type_id_to_cache_mapping = {
@@ -64,18 +65,16 @@ class Datalayer:
 
     def __init__(
         self,
-        databackend: BaseDataBackend,
-        metadata: MetaDataStore,
+        databackend: DataStore,
+        metadata: MetadataStore,
         artifact_store: ArtifactStore,
-        distributed_client=None,
+        compute: tuple[ComputeBackend | None],
     ):
         """
-        :param databackend: databackend object containing connection to Datastore
-        :param metadata: metadata object containing connection to Metadatastore
-        :param artifact_store: artifact_store object containing connection to
-                               Artifactstore
-        :param distributed_client: distributed_client object containing connection to
-                                   ``dask`` cluster (leave alone)
+        :param databackend: object containing connection to Datastore
+        :param metadata: object containing connection to Metadatastore
+        :param artifact_store: object containing connection to Artifactstore
+        :param compute: object containing connection to ComputeBackend
         """
         logging.info("Building Data Layer")
 
@@ -97,7 +96,7 @@ class Datalayer:
 
         self.cdc = DatabaseChangeDataCapture(self)
 
-        self._distributed_client = distributed_client
+        self._distributed_client = compute
         self._server_mode = False
 
     @property

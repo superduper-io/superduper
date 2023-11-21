@@ -7,7 +7,7 @@ from loguru import logger
 from loki_logger_handler.loki_logger_handler import LoguruFormatter, LokiLoggerHandler
 from tqdm import tqdm
 
-from superduperdb.backends.base.logging_backend import BaseLoggingBackend
+from superduperdb.backends.base.logstore import BaseLoggingBackend
 from superduperdb.base.config import LogLevel, LogType
 
 from .configs import CFG

@@ -5,13 +5,13 @@ import tenacity
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 from superduperdb import logging
-from superduperdb.backends.base.metadata import MetaDataStore
+from superduperdb.backends.base.metadata import MetadataStore
 from superduperdb.base import exceptions
 from superduperdb.components.component import Component
 from superduperdb.misc.colors import Colors
 
 
-class MongoMetaDataStore(MetaDataStore):
+class MongoMetaDataStore(MetadataStore):
     """
     Metadata store for MongoDB.
 

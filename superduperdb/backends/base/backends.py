@@ -2,9 +2,9 @@ from ibis.backends.base import BaseBackend
 from pymongo import MongoClient
 
 from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
-from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.ibis.datastore import IbisDataBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
-from superduperdb.backends.mongodb.data_backend import MongoDataBackend
+from superduperdb.backends.mongodb.datastore import MongoDataBackend
 from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.vector_search.in_memory import InMemoryVectorSearcher

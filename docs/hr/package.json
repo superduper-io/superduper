@@ -5,6 +5,7 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
+    "search": "docusaurus build && docusaurus serve",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
@@ -14,6 +15,7 @@
     "write-heading-ids": "docusaurus write-heading-ids"
   },
   "dependencies": {
+    "@cmfcmf/docusaurus-search-local": "^1.1.0",
     "@docusaurus/core": "3.0.0",
     "@docusaurus/preset-classic": "3.0.0",
     "@mdx-js/react": "^3.0.0",

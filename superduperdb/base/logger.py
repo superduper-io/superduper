@@ -86,8 +86,13 @@ class Logging:
     def multikey_error(msg: str, *args):
         logger.opt(depth=1).error(" ".join(map(str, (msg, *args))))
 
+    @staticmethod
+    def multikey_exception(msg: str, *args, e=None):
+        logger.opt(depth=1, exception=e).error(" ".join(map(str, (msg, *args))))
+
     debug = multikey_debug
     info = multikey_info
     success = multikey_success
     warn = multikey_warn
     error = multikey_error
+    exception = multikey_exception

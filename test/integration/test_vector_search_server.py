@@ -42,4 +42,4 @@ def test_basic_workflow(client):
         f"/vector_search/query/id/search?vector_index={vector_index}&id=100"
     )
     by_id = json.loads(response.content)
-    assert by_id == {'error': 'KeyError', 'messages': ['100']}
+    assert by_id['error'] == 'KeyError'

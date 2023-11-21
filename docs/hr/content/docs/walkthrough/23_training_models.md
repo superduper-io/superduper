@@ -48,6 +48,7 @@ db.add(
 ```mdx-code-block
 </TabItem>
 </Tabs>
+```
 
 ## Fitting/ training models by framework
 

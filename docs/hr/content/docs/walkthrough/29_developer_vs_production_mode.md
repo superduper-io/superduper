@@ -19,7 +19,7 @@ To set production mode, configure:
 ```python
 from superduperdb import CFG
 
-s.CFG.mode = 'production'
+s.CFG.production = True
 ```
 
 With production mode configured, the system assumes the existence of:

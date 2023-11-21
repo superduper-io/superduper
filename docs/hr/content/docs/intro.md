@@ -81,7 +81,7 @@ We endeavour to provide strong support across the **database** and **AI** spectr
 
 :::info
 The connection to SuperDuperDB is referred to as `db` without further comment or explanation
-throughout the documentation, with the exception of the documentation of [how to connect to SuperDuperDB](04_connecting.md).
+throughout the documentation, with the exception of the documentation of [how to connect to SuperDuperDB](walkthrough/04_connecting.md).
 :::
 
 Here are a few subsets of the documenation which you can follow for your specific needs.
@@ -90,32 +90,32 @@ Here are a few subsets of the documenation which you can follow for your specifi
 
 - [Installation](02_installation.md)
 - [Configuration](03_configuration.md)
-- [Connecting](04_connecting.md)
-- [Minimum working example](05_minimum_working_example.md)
+- [Connecting](walkthrough/04_connecting.md)
+- [Minimum working example](walkthrough/05_minimum_working_example.md)
 
 ### Do you want to get started with pre-trained models quickly?
 
-- [Predictors and models](17_supported_ai_frameworks.md)
-- [AI Models](18_ai_models.mdx)
-- [AI APIs](19_ai_apis.md)
-- [Applying models and predictors](21_apply_models.mdx)
+- [Predictors and models](walkthrough/17_supported_ai_frameworks.md)
+- [AI Models](walkthrough/18_ai_models.mdx)
+- [AI APIs](walkthrough/19_ai_apis.md)
+- [Applying models and predictors](walkthrough/21_apply_models.mdx)
 
 ### Are you interested in MongoDB specific functionality?
 
-- [Supported Query APIs](11_supported_query_APIs.md)
-- [Mongo Query API](12_mongodb_query_API.md)
-- [Change data capture](32_change_data_capture.md)
+- [Supported Query APIs](walkthrough/11_supported_query_APIs.md)
+- [Mongo Query API](walkthrough/12_mongodb_query_API.md)
+- [Change data capture](walkthrough/32_change_data_capture.md)
 
 ### Are you interested in vector-search and document Q&A?
 
-- [Applying models](21_apply_models.mdx)
-- [Vector search](25_vector_search.mdx)
+- [Applying models](walkthrough/21_apply_models.mdx)
+- [Vector search](walkthrough/25_vector_search.mdx)
 - [Example Q&A application](/docs/use_cases/items/question_the_docs)
 
 ### Do you want to know more about the production ready features of SuperDuperDB
 
-- [Production mode](29_developer_vs_production_mode.md)
-- [CLI](30_command_line_interface.md)
-- [Dask integration](31_non_blocking_dask_jobs.md)
-- [CDC](32_change_data_capture.md)
-- [Vector searcher service](33_vector_comparison_service.md)
+- [Production mode](walkthrough/29_developer_vs_production_mode.md)
+- [CLI](walkthrough/30_command_line_interface.md)
+- [Dask integration](walkthrough/31_non_blocking_dask_jobs.md)
+- [CDC](walkthrough/32_change_data_capture.md)
+- [Vector searcher service](walkthrough/33_vector_comparison_service.md)

@@ -12,7 +12,7 @@ To configure this feature, configure:
 ```python
 from superduperdb import CFG
 
-CFG.mode = 'production'
+CFG.production = True
 ```
 
 When this is so-configured the following functions push their computations to the `dask` cluster:

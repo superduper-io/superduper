@@ -74,9 +74,9 @@ db.execute(
 )
 ```
 
-### Support for raw-sql
+### Coming soon: support for raw-sql
 
-... the first query above is equivalent to:
+... the first query above will be equivalent to:
 
 ```python
 db.execute(

@@ -6,7 +6,7 @@ tags:
 
 # Connecting to your datastore
 
-Now that you have configured `superduperdb` with either `superduperdb.CFG` or environment variables (see [here](03_configuration.md)),
+Now that you have configured `superduperdb` with either `superduperdb.CFG` or environment variables (see [here](../Getting%20Started/03_configuration.md)),
 you are ready to connect to your database.
 
 :::info
@@ -44,4 +44,4 @@ db = superduper('mongodb://localhost:27018', CFG=CFG)
 ```
 
 The `db` object is an instance of `superduperdb.base.datalayer.Datalayer`.
-The `Datalayer` class handles AI models and communicates with the databackend and associated components. Read more [here](07_datalayer_overview.md).
+The `Datalayer` class handles AI models and communicates with the databackend and associated components. Read more [here](../Fundamentals/07_datalayer_overview.md).

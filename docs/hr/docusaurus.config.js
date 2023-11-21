@@ -1,8 +1,7 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
-
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const lightCodeTheme = require('prism-react-renderer').themes.github;
+const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -34,20 +33,20 @@ const config = {
 
   scripts: [
     {
-      src: "https://main.d1eg28j9pwrt0l.amplifyapp.com/widget.js",
-      id:'my-api',
-      "data-api-key":"superduperdb",
+      src: 'https://main.d1eg28j9pwrt0l.amplifyapp.com/widget.js',
+      id: 'my-api',
+      'data-api-key': 'superduperdb',
       async: true,
     },
     {
-      src: "https://tag.clearbitscripts.com/v1/pk_0beed107418c6889a934fd8a58e1054e/tags.js",
-      referrerPolicy: "strict-origin-when-cross-origin",
+      src: 'https://tag.clearbitscripts.com/v1/pk_0beed107418c6889a934fd8a58e1054e/tags.js',
+      referrerPolicy: 'strict-origin-when-cross-origin',
       async: true,
     },
     {
-      src: "https://www.googletagmanager.com/gtag/js?id=G-Q97F3ZHCQD",
-      strategy: "lazyOnload",
-      id: "gtag-script_2",
+      src: 'https://www.googletagmanager.com/gtag/js?id=G-Q97F3ZHCQD',
+      strategy: 'lazyOnload',
+      id: 'gtag-script_2',
       async: true,
     },
   ],
@@ -56,8 +55,8 @@ const config = {
     {
       tagName: 'script',
       attributes: {
-        id: "gtm-script_1",
-        strategy: "lazyOnload"
+        id: 'gtm-script_1',
+        strategy: 'lazyOnload',
       },
       innerHTML: `
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -65,35 +64,34 @@ const config = {
       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
       })(window,document,'script','dataLayer','GTM-5BXCZJTF');
-              `
+              `,
     },
     {
       tagName: 'script',
       attributes: {
-        id: "gtag-config",
-        strategy: "lazyOnload"
+        id: 'gtag-config',
+        strategy: 'lazyOnload',
       },
       innerHTML: `
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-Q97F3ZHCQD'); `
+      gtag('config', 'G-Q97F3ZHCQD'); `,
     },
     {
       tagName: 'script',
-      attributes: {
-      },
+      attributes: {},
       innerHTML: `
       !function(t){if(window.ko)return;window.ko=[],["identify","track","removeListeners","open","on","off","qualify","ready"].forEach(function(t){ko[t] = function () { var n = [].slice.call(arguments); return n.unshift(t), ko.push(n), ko }});var n=document.createElement("script");n.async=!0,n.setAttribute("src","https://cdn.getkoala.com/v1/pk_92927e86e628c69d1ec3b7b4e887e6997bab/sdk.js"),(document.body || document.head).appendChild(n)}();
-              `
+              `,
     },
     {
       tagName: 'iframe',
       attributes: {
-        src: "https://www.googletagmanager.com/ns.html?id=GTM-5BXCZJTF",
-        height: "0",
-        width: "0",
-        style: "display: none; visibility: hidden;",
+        src: 'https://www.googletagmanager.com/ns.html?id=GTM-5BXCZJTF',
+        height: '0',
+        width: '0',
+        style: 'display: none; visibility: hidden;',
       },
     },
   ],
@@ -130,9 +128,6 @@ const config = {
       }),
     ],
   ],
-  
-  
-
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -157,9 +152,8 @@ const config = {
             sidebarId: 'useCasesSidebar',
             position: 'left',
             label: 'Use-Cases',
-            
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+          { to: '/blog', label: 'Blog', position: 'left' },
           {
             href: 'https://docs.superduperdb.com/apidocs/source/superduperdb.html',
             label: 'API',
@@ -246,10 +240,12 @@ const config = {
         darkTheme: darkCodeTheme,
       },
       metadata: [
-        {property: 'og:image', content: 'https://docs.superduperdb.com/img/superDuperDB_img.png'},
+        {
+          property: 'og:image',
+          content: 'https://docs.superduperdb.com/img/superDuperDB_img.png',
+        },
       ],
     }),
-
 };
 
 module.exports = config;

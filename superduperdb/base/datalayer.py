@@ -923,7 +923,9 @@ class Datalayer:
 
             object.post_create(self)
             object.on_load(self)
-            jobs = object.schedule_jobs(self, dependencies=dependencies, distributed=self.distributed)
+            jobs = object.schedule_jobs(
+                self, dependencies=dependencies, distributed=self.distributed
+            )
             return jobs, object
         except Exception as e:
             raise exceptions.DatalayerException(

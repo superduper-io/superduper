@@ -42,7 +42,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
 
     # Update configuration with keyword arguments.
     for k, v in kwargs.items():
-        setattr(cfg, k, v)
+        cfg.force_set(k, v)
 
     # Helper function to build a data backend based on the URI.
     def build(uri, mapping):

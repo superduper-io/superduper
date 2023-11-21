@@ -1,4 +1,6 @@
+import io
 import uuid
+from contextlib import redirect_stdout
 
 import pytest
 
@@ -128,3 +130,30 @@ def test_dependencies_with_dask(
     assert futures[1].status == 'finished'
     assert futures[0].result() == 1
     assert futures[1].result() == 2
+
+
+def test_model_job_logs(
+    database_with_default_encoders_and_model, fake_updates, local_dask_client
+):
+    collection_name = str(uuid.uuid4())
+    database_with_default_encoders_and_model.distributed = True
+    database_with_default_encoders_and_model._distributed_client = local_dask_client
+    listener_x = Listener(
+        key='x',
+        model='model_linear_a',
+        select=Collection(identifier=collection_name).find(),
+    )
+    job, _ = database_with_default_encoders_and_model.add(listener_x)
+
+    database_with_default_encoders_and_model.execute(
+        Collection(identifier=collection_name).insert_many(fake_updates)
+    )
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        job.watch()
+    s = f.getvalue()
+    logs = s.split('\n')
+    assert 'Adding model model_linear_a to db' in logs[0]
+    assert 'model/model_linear_a/0 already exists' in logs[1]
+    assert 'Done.' in logs[2]

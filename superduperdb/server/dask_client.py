@@ -28,7 +28,6 @@ class DaskClient:
     ):
         envs = envs or {}
         self.futures_collection: t.Dict[str, distributed.Future] = {}
-
         if local:
             cluster = distributed.LocalCluster(env=envs)
             self.client = distributed.Client(cluster, **kwargs)

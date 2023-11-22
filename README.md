@@ -30,13 +30,6 @@
 ---
 
 
-<div align="center">	
-
- `🔮 SuperDuperDB is open-source: Please leave a star ⭐️ to support the project!`
- </div>
-
-
----
 ***📣 Important Release Announcement!***
 
 On the 5th of December, we will officially launch SuperDuperDB with the release of v0.1, including:
@@ -44,31 +37,41 @@ On the 5th of December, we will officially launch SuperDuperDB with the release 
 - Overhaul of the documentation
 - Revamped and modularized testing suite
 
-⭐️ Leave a star to be informed of more exciting updates!
-
+ `⭐️ SuperDuperDB is open-source: Please leave a star to support the project! ⭐️`
 
 ---
-## What is SuperDuperDB? 
 
-🔮 SuperDuperDB is a general-purpose AI development and deployment framework for integrating any AI models and APIs directly with your existing data infrastructure, including real-time inference, model training and vector search. SuperDuperDB is not another database, it "super-dupers" your existing preferred database. 
+## What is SuperDuperDB? 🔮 
 
-SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!
+SuperDuperDB is a general-purpose AI development and deployment framework for **integrating any ML models** (i.e. from PyTorch, Sklearn, HuggingFace) **and AI APIs** (like OpenAI, Antrophic, Cohere) **directly with your existing databases**, including streaming inference, model training and vector search. SuperDuperDB is not another database, it "super-dupers" your existing preferred database. 
+
+SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications efficiently and flexibly with a simple Python interface!
 
 - Generative AI & LLM-Chat
 - Vector Search
 - Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation etc.)
 - Highly custom AI use-cases involving ultra specialized models
 
-#### Key Features:
-- **[Deploy AI Models and APIs directly on your database](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate all your AI models and APIs directly with your database with a simple Python command in a single scalable deployment that is easy-to-manage, without the need for additional pre-processing steps, ETL or boilerplate code.
-- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Activate your models to compute outputs automatically and immediately as new data arrives, propagating results to downstream applications in real-time, keeping your deployment up-to-date.
-- **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Train AI models on large, diverse datasets simply by querying your training data, while ensuring improved performance and ease of management, utilizing in-built optimizations.
-- **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
-- **[Difficult Data-Types](https://docs.superduperdb.com/docs/docs/encoding_special_data_types)**: Work directly with images, video, audio in your datastore, and any type which can be encoded as `bytes` in Python.
-- **[Feature Store](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
-- **[Vector Search](https://docs.superduperdb.com/docs/docs/vector_search):** No need to duplicate or migrate your data to specialized vector databases - turn your existing battle-tested datastore into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
-## 🌐 Supported Datastores (*more coming soon*):
+### Key Features:
+- **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
+- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
+- **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Train AI models on large, diverse datasets simply by querying your training data. Ensured optimal performance via in-build computational optimizations.
+- **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
+- **[Simple, but Extendable Interface](https://docs.superduperdb.com/docs/docs/procedural_vs_declarative_api)**: Add and leverage any function, program, script or algorithm from the Python ecosystem to enhance your workflows and applications. Drill down on any layer as deep as it gets, up until the inner workings of your models while operating SuperDuperDB with simple Python commands.
+- **[Difficult Data-Types](https://docs.superduperdb.com/docs/docs/encoding_special_data_types)**: Work directly with images, video, audio in your datastore, and any type which can be encoded as `bytes` in Python.
+- **[Feature Storing](https://docs.superduperdb.com/docs/docs/mongodb_query_API#inserts):** Turn your database into a centralized repository for storing and managing inputs and outputs of AI models of arbitrary data-types, making them available in a structured format and known environment.
+- **[Vector Search](https://docs.superduperdb.com/docs/docs/vector_search):** No need for duplicating and migrating your data to additional specialized vector databases - turn your existing battle-tested datastore into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
+
+### Why opt for SuperDuperDB?
+|| With SuperDuperDB | Without |
+|-|-|-|
+| Data Management & Security | Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management.  |  Data duplicating and migration to different environments, and specialized vector databases, imposing data management overhead.   |
+|Infrastructure| A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex and fragmented, partially duplicated pipelines, infrastructure coming with high adoption and maintenance costs and increasing security risks. |
+|Code| Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
+
+
+## Supported Datastores (*more coming soon*):
 
 <table>
     <tr>
@@ -112,7 +115,7 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
 ```
 
-## 🧠 Supported AI Frameworks and Models (*more coming soon*):
+## Supported AI Frameworks and Models (*more coming soon*):
 
 <table>
     <tr>
@@ -157,7 +160,7 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
 
 
 
-## 🤖 Pre-Integrated AI APIs (*more coming soon*):
+## Pre-Integrated AI APIs (*more coming soon*):
 
 <table >
     <tr>
@@ -184,7 +187,7 @@ m = db.add(
 
 
 
-## 🏗 Infrastructure Diagram
+## Infrastructure Diagram
 
 <p align="center">
   <img width="100%" src="docs/hr/static/img/superduperdb.gif">
@@ -192,7 +195,7 @@ m = db.add(
 
 
 
-## 🔥 Featured Examples
+## Featured Examples
 
 Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.com). 
 
@@ -260,7 +263,7 @@ Also find use-cases and apps built by the community in the [superduper-community
 
 
 
-## 🚀 Installation
+## Installation
 #### 1. Install SuperDuperDB via `pip` *(~1 minute)*
 ```
 pip install superduperdb
@@ -273,7 +276,7 @@ pip install superduperdb
 docker run -p 8888:8888 superduperdb/demo:latest
 ```
 
-## 📚 Preview
+## Preview
 
 Here are snippets which give you a sense of how `superduperdb` works and how simple it is to use.
 You can visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
@@ -406,7 +409,7 @@ model.predict(
 
 
 
-## 🤝 Community & Getting Help 
+## Community & Getting Help 
 
 #### If you have any problems, questions, comments, or ideas:
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
@@ -418,7 +421,7 @@ model.predict(
 
 
 
-## 🌱 Contributing  
+## Contributing  
 
 #### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 
@@ -431,7 +434,7 @@ model.predict(
 
 Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## ❤️ Contributors
+## Contributors
 #### Thanks goes to these wonderful people:
 
 <a href="https://github.com/SuperDuperDB/superduperdb/graphs/contributors">

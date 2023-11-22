@@ -55,7 +55,7 @@ db.execute(
 )
 ```
 
-Read more about vector-search [here](25_vector_search.mdx).
+Read more about vector-search [here](../fundamentals/25_vector_search.mdx).
 
 ## Deletes
 
@@ -68,4 +68,4 @@ db.execute(collection.delete_many({}))
 Aggregates are exactly as in `pymongo`, with the exception that a `$vectorSearch` stage may be
 fed with an additional field `'like': Document({...})`, which plays the same role as in selects.
 
-Read more about this in [the vector-search section](25_vector_search.mdx).
+Read more about this in [the vector-search section](../fundamentals/25_vector_search.mdx).

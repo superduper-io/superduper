@@ -118,7 +118,7 @@ def distributed_db(test_db, local_dask_client):
     yield test_db
     test_db.distributed = False
     test_db._distributed_client = None
-    CFG.force_set('mode', 'development')
+    CFG.force_set('mode', Mode.Development)
     CFG.force_set('data_backend', existing_databackend)
 
 

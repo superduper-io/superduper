@@ -107,7 +107,7 @@ class Config(BaseConfigJSONable):
     :param downloads_folder: Settings for downloading files
 
     :param fold_probability: The probability of validation fold
-    :param mode: The mode of the application {'development', Mode.Production}
+    :param mode: The mode of the application {Mode.Development, Mode.Production}
 
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use

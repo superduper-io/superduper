@@ -13,7 +13,6 @@ class LocalComputeBackend(ComputeBackend):
         self,
     ):
         self.futures_collection: t.Dict[str, t.Any] = {}
-        logging.info("Local compute engine is ready")
 
     def submit(self, function: t.Callable, **kwargs) -> None:
         """

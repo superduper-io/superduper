@@ -38,8 +38,6 @@ class DaskComputeBackend(ComputeBackend):
                 **kwargs,
             )
 
-        logging.info("Compute Client is ready.", self.client)
-
     def submit(self, function: t.Callable, **kwargs) -> distributed.Future:
         """
         Submits a function to the Dask server for execution.

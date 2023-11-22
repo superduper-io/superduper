@@ -61,6 +61,8 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     :param cfg: Configuration to use. If None, use ``superduperdb.CFG``.
     """
 
+    # Configuration
+    # ------------------------------
     # Use the provided configuration or fall back to the default configuration.
     cfg = cfg or s.CFG
 
@@ -69,6 +71,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         cfg.force_set(k, v)
 
     # Connect to data backend.
+    # ------------------------------
     try:
         databackend = build(cfg.data_backend, data_backends)
         logging.info("Data Client is ready.", databackend.conn)
@@ -76,19 +79,6 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         # Exit quickly if a connection fails.
         logging.error("Error initializing to DataBackend Client:", str(e))
         sys.exit(1)
-
-    # Connect to compute backend.
-    # ------------------------------
-    compute = None
-    if cfg.mode == Mode.Production:
-        compute = DaskComputeBackend(
-            cfg.cluster.dask_scheduler,
-            local=cfg.cluster.local,
-            serializers=cfg.cluster.serializers,
-            deserializers=cfg.cluster.deserializers,
-        )
-    else:
-        compute =  LocalComputeBackend(), # DaskComputeBackend("", local=True)
 
     # Build DataLayer
     # ------------------------------
@@ -104,7 +94,16 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             if cfg.artifact_store is not None
             else databackend.build_artifact_store()
         ),
-        compute=compute,
+        compute=(
+            DaskComputeBackend(
+                cfg.cluster.dask_scheduler,
+                local=cfg.cluster.local,
+                serializers=cfg.cluster.serializers,
+                deserializers=cfg.cluster.deserializers,
+            )
+            if cfg.mode == Mode.Production
+            else LocalComputeBackend()  # Development mode
+        ),
     )
 
     return db

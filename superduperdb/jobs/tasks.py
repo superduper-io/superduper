@@ -2,6 +2,8 @@ import contextlib
 import inspect
 import traceback
 
+from superduperdb.base.config import Mode
+
 
 def method_job(
     cfg,
@@ -29,7 +31,7 @@ def method_job(
     from superduperdb.base.configs import build_config
 
     cfg = build_config(cfg)
-    cfg.force_set('mode', 'development')
+    cfg.force_set('mode', Mode.Development)
     db = build_datalayer(cfg)
 
     component = db.load(type_id, identifier)
@@ -87,7 +89,7 @@ def callable_job(
     from superduperdb.base.configs import build_config
 
     CFG = build_config(cfg)
-    CFG.force_set('mode', 'development')
+    CFG.force_set('mode', Mode.Development)
     db = build_datalayer(CFG)
     db.metadata.update_job(job_id, 'status', 'running')
     output = None

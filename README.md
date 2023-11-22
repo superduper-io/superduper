@@ -77,7 +77,7 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 | Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
 
 
-## 🌐 Supported Datastores (*more coming soon*):a
+## Supported Datastores (*more coming soon*):
 
 <table>
     <tr>
@@ -121,7 +121,7 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
 ```
 
-## 🧠 Supported AI Frameworks and Models (*more coming soon*):
+## Supported AI Frameworks and Models (*more coming soon*):
 
 <table>
     <tr>
@@ -166,7 +166,7 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
 
 
 
-## 🤖 Pre-Integrated AI APIs (*more coming soon*):
+## Pre-Integrated AI APIs (*more coming soon*):
 
 <table >
     <tr>
@@ -193,7 +193,7 @@ m = db.add(
 
 
 
-## 🏗 Infrastructure Diagram
+## Infrastructure Diagram
 
 <p align="center">
   <img width="100%" src="docs/hr/static/img/superduperdb.gif">
@@ -201,7 +201,7 @@ m = db.add(
 
 
 
-## 🔥 Featured Examples
+## Featured Examples
 
 Try our ready-to-use notebooks [live on your browser](https://demo.superduperdb.com). 
 
@@ -269,7 +269,7 @@ Also find use-cases and apps built by the community in the [superduper-community
 
 
 
-## 🚀 Installation
+## Installation
 #### 1. Install SuperDuperDB via `pip` *(~1 minute)*
 ```
 pip install superduperdb
@@ -282,7 +282,7 @@ pip install superduperdb
 docker run -p 8888:8888 superduperdb/demo:latest
 ```
 
-## 📚 Preview
+## Preview
 
 Here are snippets which give you a sense of how `superduperdb` works and how simple it is to use.
 You can visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
@@ -415,7 +415,7 @@ model.predict(
 
 
 
-## 🤝 Community & Getting Help 
+## Community & Getting Help 
 
 #### If you have any problems, questions, comments, or ideas:
 - Join <a href="https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA">our Slack</a> (we look forward to seeing you there).
@@ -427,7 +427,7 @@ model.predict(
 
 
 
-## 🌱 Contributing  
+## Contributing  
 
 #### There are many ways to contribute, and they are not limited to writing code. We welcome all contributions such as:
 
@@ -440,7 +440,7 @@ model.predict(
 
 Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## ❤️ Contributors
+## Contributors
 #### Thanks goes to these wonderful people:
 
 <a href="https://github.com/SuperDuperDB/superduperdb/graphs/contributors">

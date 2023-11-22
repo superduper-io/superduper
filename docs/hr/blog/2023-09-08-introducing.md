@@ -80,7 +80,7 @@ In the weeks and months to come we’ll be:
 
 - **[Website](https://superduperdb.com/)**
 - **[GitHub](https://github.com/SuperDuperDB/superduperdb)**
-- **[Documentation](https://docs.superduperdb.com/docs/docs/intro.html)**
+- **[Documentation](https://docs.superduperdb.com/docs/category/get-started)**
 - **[Blog](https://docs.superduperdb.com/blog)**
 - **[Example Use Cases & Apps](https://docs.superduperdb.com/docs/category/use-cases)**
 - **[Slack Community](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA)**

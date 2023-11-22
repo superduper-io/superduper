@@ -279,7 +279,7 @@ docker run -p 8888:8888 superduperdb/demo:latest
 ## Preview
 
 Here are snippets which give you a sense of how `superduperdb` works and how simple it is to use.
-You can visit the <a href="https://docs.superduperdb.com/docs/docs/intro">docs</a> to learn more.
+You can visit the <a href="https://docs.superduperdb.com/docs/category/get-started">docs</a> to learn more.
 
 
 #### - Deploy ML/AI models to your database:

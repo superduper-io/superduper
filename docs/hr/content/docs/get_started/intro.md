@@ -81,7 +81,7 @@ We endeavour to provide strong support across the **database** and **AI** spectr
 
 :::info
 The connection to SuperDuperDB is referred to as `db` without further comment or explanation
-throughout the documentation, with the exception of the documentation of [how to connect to SuperDuperDB](../walkthrough/04_connecting.md).
+throughout the documentation, with the exception of the documentation of [how to connect to SuperDuperDB](../fundamentals/04_connecting.md).
 :::
 
 Here are a few subsets of the documenation which you can follow for your specific needs.
@@ -90,15 +90,15 @@ Here are a few subsets of the documenation which you can follow for your specifi
 
 - [Installation](installation.md)
 - [Configuration](../walkthrough/01_configuration.md)
-- [Connecting](../walkthrough/04_connecting.md)
+- [Connecting](../fundamentals/04_connecting.md)
 - [Minimum working example](../walkthrough/05_minimum_working_example.md)
 
 ### Do you want to get started with pre-trained models quickly?
 
-- [Predictors and models](../walkthrough/17_supported_ai_frameworks.md)
+- [Predictors and models](../fundamentals/17_supported_ai_frameworks.md)
 - [AI Models](../walkthrough/18_ai_models.mdx)
 - [AI APIs](../walkthrough/19_ai_apis.md)
-- [Applying models and predictors](../walkthrough/21_apply_models.mdx)
+- [Applying models and predictors](../fundamentals/21_apply_models.mdx)
 
 ### Are you interested in MongoDB specific functionality?
 
@@ -108,8 +108,8 @@ Here are a few subsets of the documenation which you can follow for your specifi
 
 ### Are you interested in vector-search and document Q&A?
 
-- [Applying models](../walkthrough/21_apply_models.mdx)
-- [Vector search](../walkthrough/25_vector_search.mdx)
+- [Applying models](../fundamentals/21_apply_models.mdx)
+- [Vector search](../fundamentals/25_vector_search.mdx)
 - [Example Q&A application](/docs/use_cases/items/question_the_docs)
 
 ### Do you want to know more about the production ready features of SuperDuperDB

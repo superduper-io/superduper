@@ -4,7 +4,7 @@ sidebar_position: 8
 
 # Datalayer functionality
 
-Once you have connected to your database with `superduperdb` (see [here](../walkthrough/04_connecting.md)),
+Once you have connected to your database with `superduperdb` (see [here](../fundamentals/04_connecting.md)),
 you are ready to use your `db: Datalayer` object to combine two aspects of your workflow:
 
 - Querying, and utilizing your database through the `databackend`
@@ -45,4 +45,4 @@ Validate your components (mostly models)
 
 ### `db.predict`
 
-Infer predictions from models hosted by `superduperdb`. Read more about this and about models [here](../walkthrough/21_apply_models.mdx).
+Infer predictions from models hosted by `superduperdb`. Read more about this and about models [here](../fundamentals/21_apply_models.mdx).

@@ -8,6 +8,13 @@ class ComputeBackend(ABC):
     """
 
     @abstractmethod
+    def name(self) -> str:
+        """
+        Return the name of current compute engine
+        """
+        pass
+
+    @abstractmethod
     def submit(self, function: t.Callable, **kwargs) -> t.Any:
         """
         Submits a function to the Dask server for execution.

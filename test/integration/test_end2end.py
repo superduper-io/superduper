@@ -105,7 +105,9 @@ def distributed_db(test_db, local_dask_client):
     CFG.force_set(
         'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
     )
-    test_db._distributed_client = local_dask_client
+
+    # Bad hack just to get the
+    test_db.set_compute(local_dask_client)
     test_db.distributed = True
 
     def update_syspath():
@@ -117,13 +119,13 @@ def distributed_db(test_db, local_dask_client):
 
     yield test_db
     test_db.distributed = False
-    test_db._distributed_client = None
     CFG.force_set('mode', Mode.Development)
     CFG.force_set('data_backend', existing_databackend)
 
 
 def test_advance_setup(distributed_db, image_url):
     db = distributed_db
+
     # Take empty database
 
     image = [

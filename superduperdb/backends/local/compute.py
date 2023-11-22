@@ -14,6 +14,9 @@ class LocalComputeBackend(ComputeBackend):
     ):
         self.futures_collection: t.Dict[str, t.Any] = {}
 
+    def name(self) -> str:
+        return "Local"
+
     def submit(self, function: t.Callable, **kwargs) -> None:
         """
         Submits a function for local execution.

@@ -69,11 +69,11 @@ class Job:
         return out
 
     @abstractmethod
-    def run_on_dask(self, client, dependencies=()):
+    def submit(self, compute, dependencies=()):
         """
-        Run the job on a dask cluster.
+        Submit job for execution
 
-        :param client: dask client
+        :param compute: compute engine
         :param dependencies: list of dependencies
         """
         raise NotImplementedError
@@ -126,15 +126,15 @@ class FunctionJob(Job):
         d['cls'] = 'FunctionJob'
         return d
 
-    def run_on_dask(self, client, dependencies=()):
+    def submit(self, compute, dependencies=()):
         """
-        Run the job on a dask cluster.
+        Submit job for execution
 
-        :param client: dask client
+        :param compute: compute engine
         :param dependencies: list of dependencies
         """
         try:
-            self.future = client.submit(
+            self.future = compute.submit(
                 callable_job,
                 cfg=s.CFG,
                 function_to_call=self.callable,
@@ -165,7 +165,7 @@ class FunctionJob(Job):
         if not distributed:
             self.run_locally(db)
         else:
-            self.run_on_dask(client=db.distributed_client, dependencies=dependencies)
+            self.submit(compute=db.get_compute(), dependencies=dependencies)
         return self
 
 
@@ -204,15 +204,15 @@ class ComponentJob(Job):
         self._component = value
         self.callable = getattr(self._component, self.method_name)
 
-    def run_on_dask(self, client, dependencies=()):
+    def submit(self, compute, dependencies=()):
         """
-        Run the job on a dask cluster.
+        Submit job for execution
 
-        :param client: dask client
+        :param compute: compute engine
         :param dependencies: list of dependencies
         """
         try:
-            self.future = client.submit(
+            self.future = compute.submit(
                 method_job,
                 cfg=s.CFG,
                 type_id=self.type_id,
@@ -247,7 +247,7 @@ class ComponentJob(Job):
         if not distributed:
             self.run_locally(db)
         else:
-            self.run_on_dask(client=db.distributed_client, dependencies=dependencies)
+            self.submit(compute=db.get_compute(), dependencies=dependencies)
         return self
 
     def dict(self):

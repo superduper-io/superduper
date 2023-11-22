@@ -40,7 +40,7 @@ def test_taskgraph_futures_with_dask(
 ):
     collection_name = str(uuid.uuid4())
     database_with_default_encoders_and_model.distributed = True
-    database_with_default_encoders_and_model._distributed_client = local_dask_client
+    database_with_default_encoders_and_model.set_compute(local_dask_client)
     _, graph = database_with_default_encoders_and_model.execute(
         Collection(identifier=collection_name).insert_many(fake_updates)
     )
@@ -75,7 +75,7 @@ def test_insert_with_dask(
     ) as db:
         # Submit job
         db.distributed = True
-        db._distributed_client = local_dask_client
+        db.set_compute(local_dask_client)
         db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
 
         # Barrier
@@ -121,7 +121,7 @@ def test_dependencies_with_dask(
     local_dask_client.futures_collection.clear()
 
     database.distributed = True
-    database._distributed_client = local_dask_client
+    database.set_compute(local_dask_client)
     G.run_jobs(distributed=True)
     local_dask_client.wait_all_pending_tasks()
     futures = list(local_dask_client.futures_collection.values())

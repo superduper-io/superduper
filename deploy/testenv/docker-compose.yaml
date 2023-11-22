@@ -92,42 +92,42 @@ services:
         condition: service_healthy
 
 
-#  # Dask Parallel Computation
-#  # ------------------------------
-#  dask-scheduler:
-#    depends_on:
-#      mongo-init:
-#        condition: service_completed_successfully
-#    image: superduperdb/sandbox
-#    hostname: scheduler
-#    ports:
-#      - "8786:8786" # Peer communication
-#      - "8787:8787" # HTTP Dashboard
-#    volumes:
-#      - ../../:/home/superduper/superduperdb # mount the project path
-#    environment:
-#      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
-#    command:
-#      - /bin/sh
-#      - -c
-#      - |
-#        dask scheduler
-#
-#  dask-worker:
-#    depends_on:
-#      -   dask-scheduler
-#    image: superduperdb/sandbox
-#    volumes:
-#      - ../../:/home/superduper/superduperdb # mount the project path
-#    environment:
-#      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
-#    command:
-#      - /bin/sh
-#      - -c
-#      - |
-#        dask worker "tcp://scheduler:8786"
-#    deploy:
-#      replicas: 1
+  # Dask Parallel Computation
+  # ------------------------------
+  dask-scheduler:
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    image: superduperdb/sandbox
+    hostname: scheduler
+    ports:
+      - "8786:8786" # Peer communication
+      - "8787:8787" # HTTP Dashboard
+    volumes:
+      - ../../:/home/superduper/superduperdb # mount the project path
+    environment:
+      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+    command:
+      - /bin/sh
+      - -c
+      - |
+        dask scheduler
+
+  dask-worker:
+    depends_on:
+      -   dask-scheduler
+    image: superduperdb/sandbox
+    volumes:
+      - ../../:/home/superduper/superduperdb # mount the project path
+    environment:
+      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+    command:
+      - /bin/sh
+      - -c
+      - |
+        dask worker "tcp://scheduler:8786"
+    deploy:
+      replicas: 1
 
 #  Demo SuperDuperDB Notebooks
 #  ------------------------------

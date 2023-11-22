@@ -8,7 +8,6 @@ from collections import defaultdict
 import click
 import networkx
 import tqdm
-from dask.distributed import Future
 
 import superduperdb as s
 from superduperdb import logging
@@ -95,7 +94,7 @@ class Datalayer:
 
         self.cdc = DatabaseChangeDataCapture(self)
 
-        self._distributed_client = compute
+        self.compute = compute
         self._server_mode = False
 
     @property
@@ -180,9 +179,24 @@ class Datalayer:
             searcher.add(items)
             progress.update(len(items))
 
-    @property
-    def distributed_client(self):
-        return self._distributed_client
+    def set_compute(self, new: ComputeBackend):
+        """
+        Set a new compute engine
+        """
+        logging.warn(
+            f"Change compute engine from '{self.compute.name()}' to '{new.name()}'"
+        )
+
+        self.compute.disconnect()
+        logging.success(
+            f"Succesfully disconnected from compute engine: '{self.compute.name()}'"
+        )
+
+        logging.info(f"Connecting to compute engine: {new.name()}")
+        self.compute = new
+
+    def get_compute(self):
+        return self.compute
 
     def drop(self, force: bool = False):
         """
@@ -295,7 +309,7 @@ class Datalayer:
         """
         Apply model to input using asyncio.
 
-        :param model: model identifier
+        :param model_name: model identifier
         :param input: input to be passed to the model.
                       Must be possible to encode with registered encoders
         :param context_select: select query object to provide context
@@ -433,23 +447,6 @@ class Datalayer:
                 insert, ids=inserted_ids, verbose=False
             )
         return inserted_ids, None
-
-    def run(
-        self,
-        job,
-        depends_on: t.Optional[t.Sequence[Future]] = None,
-        distributed: t.Optional[bool] = None,
-    ):
-        """
-        Run job. See ``container.job.Job``, ``container.job.FunctionJob``,
-        ``container.job.ComponentJob``.
-
-        :param job:
-        :param depends_on: t.Sequence of dependencies
-        """
-        if distributed is None:
-            distributed = s.CFG.cluster.distributed
-        return job(db=self, dependencies=depends_on, distributed=distributed)
 
     def select(self, select: Select) -> SelectResult:
         """

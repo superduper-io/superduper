@@ -38,6 +38,9 @@ class DaskComputeBackend(ComputeBackend):
                 **kwargs,
             )
 
+    def name(self) -> str:
+        return "Dask"
+
     def submit(self, function: t.Callable, **kwargs) -> distributed.Future:
         """
         Submits a function to the Dask server for execution.

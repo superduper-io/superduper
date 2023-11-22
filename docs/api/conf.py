@@ -16,6 +16,7 @@ extensions = extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
+    'myst_parser',
 ]
 
 autoclass_content = "both"

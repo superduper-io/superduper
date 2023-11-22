@@ -5,6 +5,7 @@ from abc import abstractmethod
 
 import superduperdb as s
 from superduperdb.base import exceptions
+from superduperdb.base.config import Mode
 from superduperdb.jobs.tasks import callable_job, method_job
 
 
@@ -158,7 +159,7 @@ class FunctionJob(Job):
             db = build_datalayer()
 
         if distributed is None:
-            distributed = s.CFG.mode == 'production'
+            distributed = s.CFG.mode == Mode.Production
         self.db = db
         db.metadata.create_job(self.dict())
         if not distributed:
@@ -233,7 +234,7 @@ class ComponentJob(Job):
         self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
     ):
         if distributed is None:
-            distributed = s.CFG.mode == 'production'
+            distributed = s.CFG.mode == Mode.Production
         if db is None:
             from superduperdb.base.build import build_datalayer
 

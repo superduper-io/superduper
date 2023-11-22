@@ -3,9 +3,10 @@ import typing as t
 from dask import distributed
 
 from superduperdb import logging
+from superduperdb.backends.base.compute import ComputeBackend
 
 
-class DaskClient:
+class DaskComputeBackend(ComputeBackend):
     """
     A client for interacting with a Dask cluster. Initialize the DaskClient.
 
@@ -23,13 +24,11 @@ class DaskClient:
         serializers: t.Optional[t.Sequence[t.Callable]] = None,
         deserializers: t.Optional[t.Sequence[t.Callable]] = None,
         local: bool = False,
-        envs: t.Optional[t.Dict[str, t.Any]] = None,
         **kwargs,
     ):
-        envs = envs or {}
         self.futures_collection: t.Dict[str, distributed.Future] = {}
         if local:
-            cluster = distributed.LocalCluster(env=envs)
+            cluster = distributed.LocalCluster(processes=False)
             self.client = distributed.Client(cluster, **kwargs)
         else:
             self.client = distributed.Client(
@@ -52,20 +51,6 @@ class DaskClient:
         self.futures_collection[future.key] = future
 
         logging.success(f"Job submitted.  function:{function} future:{future}")
-        return future
-
-    def submit_and_forget(self, function: t.Callable, **kwargs) -> distributed.Future:
-        """
-        Submits a function to the Dask server and keep executing the future
-        even if it is no longer referenced.
-
-        :param function: The function to be executed.
-        :param kwargs: Additional keyword arguments to be passed to the function.
-        """
-        future = self.submit(function, **kwargs)
-        distributed.fire_and_forget(future)
-
-        logging.success(f"Submit job.  function:{function} future:{future}")
         return future
 
     def disconnect(self) -> None:
@@ -96,31 +81,3 @@ class DaskClient:
         """
         future = self.futures_collection[identifier]
         return self.client.gather(future)
-
-
-def dask_client(
-    uri: str,
-    serializers: t.Optional[t.Sequence[t.Callable]] = None,
-    deserializers: t.Optional[t.Sequence[t.Callable]] = None,
-    envs: t.Optional[t.Dict[str, t.Any]] = None,
-    local: bool = False,
-    **kwargs,
-) -> DaskClient:
-    """
-    Creates a DaskClient instance.
-
-    :param uri: The address of the Dask cluster.
-    :param serializers: A list of serializers to be used by the client. (optional)
-    :param deserializers: A list of deserializers to be used by the client. (optional)
-    :param envs: An environment dict for cluster.
-    :param local: Set to True to create a local Dask cluster. (optional)
-    :param **kwargs: Additional keyword arguments to be passed to the DaskClient.
-    """
-    return DaskClient(
-        address=uri,
-        serializers=serializers,
-        deserializers=deserializers,
-        envs=envs,
-        local=local,
-        **kwargs,
-    )

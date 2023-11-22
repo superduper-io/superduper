@@ -28,9 +28,9 @@ def method_job(
     from superduperdb.base.build import build_datalayer
     from superduperdb.base.configs import build_config
 
-    CFG = build_config(cfg)
-    CFG.force_set('mode', 'development')
-    db = build_datalayer(CFG)
+    cfg = build_config(cfg)
+    cfg.force_set('mode', 'development')
+    db = build_datalayer(cfg)
 
     component = db.load(type_id, identifier)
     method = getattr(component, method_name)

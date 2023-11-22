@@ -5,9 +5,9 @@ import pandas
 from ibis.backends.base import BaseBackend
 
 from superduperdb.backends.base.data_backend import BaseDataBackend
-from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
 from superduperdb.backends.ibis.field_types import FieldType, dtype
 from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.components.model import Model
 from superduperdb.components.schema import Schema

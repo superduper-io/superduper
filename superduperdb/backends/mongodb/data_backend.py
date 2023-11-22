@@ -43,7 +43,7 @@ class MongoDataBackend(BaseDataBackend):
         from mongomock import MongoClient as MockClient
 
         if isinstance(self.conn, MockClient):
-            from superduperdb.backends.filesystem.artifacts import (
+            from superduperdb.backends.local.artifacts import (
                 FileSystemArtifactStore,
             )
 

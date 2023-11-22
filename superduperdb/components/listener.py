@@ -5,6 +5,7 @@ from overrides import override
 
 from superduperdb import CFG
 from superduperdb.backends.base.query import CompoundSelect
+from superduperdb.base.config import Mode
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.misc.server import request_server
 
@@ -56,7 +57,7 @@ class Listener(Component):
     def on_load(self, db: Datalayer) -> None:
         # Start cdc service if enabled
         if self.select is not None and self.active and not db.server_mode:
-            if CFG.mode == 'production':
+            if CFG.mode == Mode.Production:
                 request_server(
                     service='cdc',
                     endpoint='listener/add',

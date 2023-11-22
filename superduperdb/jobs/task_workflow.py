@@ -8,6 +8,7 @@ import networkx
 from networkx import DiGraph, ancestors
 
 import superduperdb as s
+from superduperdb.base import exceptions
 
 from .job import ComponentJob, FunctionJob, Job
 
@@ -47,7 +48,7 @@ class TaskWorkflow:
         :param distributed: if True, use dask to distribute these tasks
         """
         if distributed is None:
-            distributed = s.CFG.cluster.distributed
+            distributed = s.CFG.mode == 'production'
         pred = self.G.predecessors
         current_group = [n for n in self.G.nodes if not ancestors(self.G, n)]
         done = set()
@@ -56,7 +57,17 @@ class TaskWorkflow:
             for node in current_group:
                 job: Job = self.G.nodes[node]['job']
                 dependencies = [self.G.nodes[a]['job'].future for a in pred(node)]
-                job(self.database, dependencies=dependencies, distributed=distributed)
+                try:
+                    job(
+                        self.database,
+                        dependencies=dependencies,
+                        distributed=distributed,
+                    )
+                except Exception as e:
+                    raise exceptions.TaskWorkflowException(
+                        f'Error while running job {job} with \
+                          dependencies {dependencies} with distributed {distributed}'
+                    ) from e
                 done.add(node)
 
             current_group = [

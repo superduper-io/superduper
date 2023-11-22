@@ -2,7 +2,7 @@
 sidebar_position: 11
 ---
 
-# Query API syntax and approach
+# Query API Syntax and Approach
 
 In order to specify the action of models on the data, we provide an interface to pythonic ecosystem query APIs.
 In particular, we provide wrappers to these projects to create database queries:

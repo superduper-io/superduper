@@ -32,9 +32,9 @@
 
 ***📣 Important Release Announcement!***
 
-On the 5th of December, we are going to officially launch SuperDuperDB with the release of v0.1, including:
+On the 5th of December, we will officially launch SuperDuperDB with the release of v0.1, including:
 - Integration of PostgreSQL, MySQL, SQLite, DuckDB, Snowflake, BigQuery, ClickHouse, DataFusion, Druid, Impala, MSSQL, Oracle, pandas, Polars, PySpark, and Trino.
-- Massive overhaul of the docs
+- Overhaul of the documentation
 - Revamped and modularized testing suite
 
  `⭐️ SuperDuperDB is open-source: Please leave a star to support the project! ⭐️`
@@ -51,6 +51,7 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 - Vector Search
 - Standard Machine Learning Use-Cases (Classification, Segmentation, Recommendation etc.)
 - Highly custom AI use-cases involving ultra specialized models
+
 
 ### Key Features:
 - **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.

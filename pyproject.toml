@@ -73,7 +73,6 @@ apis = [
     "cohere",
     "anthropic",
     ]
-# TODO lots of these now unused
 docs = [
     "furo",
     "sphinx",

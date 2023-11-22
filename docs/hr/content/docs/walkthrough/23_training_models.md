@@ -4,7 +4,7 @@ sidebar_position: 23
 
 # Training models directly on your datastore
 
-Similarly to [applying models to create predictions](21_apply_models.mdx), training models is possible both procedurally and declaratively in `superduperdb`.
+Similarly to [applying models to create predictions](../fundamentals/21_apply_models.mdx), training models is possible both procedurally and declaratively in `superduperdb`.
 
 When models are trained, if `CFG.production = True` is configured, then `superduperdb` deploys [a job on the configured `dask` cluster](31_non_blocking_dask_jobs.md).
 
@@ -48,6 +48,7 @@ db.add(
 ```mdx-code-block
 </TabItem>
 </Tabs>
+```
 
 ## Fitting/ training models by framework
 

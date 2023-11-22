@@ -151,7 +151,7 @@ def _encode_with_schema(r: t.Any, schema: Schema) -> t.Any:
 
 def _unpack(item: t.Any) -> t.Any:
     if isinstance(item, Encodable):
-        if CFG.downloads.hybrid and not item.encoder.load_hybrid and item.x is None:
+        if CFG.hybrid_storage and not item.encoder.load_hybrid and item.x is None:
             return get_file_from_uri(item.uri)
         return item.x
     elif isinstance(item, dict):

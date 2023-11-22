@@ -604,9 +604,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
     This is a symbolic representation of a table
     for building ``IbisCompoundSelect`` queries.
 
-    :param identifier: The name of the table
     :param primary_id: The primary id of the table
-    :param version: The version of the table
     """
 
     primary_id: str = 'id'

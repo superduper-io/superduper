@@ -4,9 +4,9 @@ tags:
   - quickstart
 ---
 
-# Connecting to your datastore
+# Connect your database
 
-Now that you have configured `superduperdb` with either `superduperdb.CFG` or environment variables (see [here](03_configuration.md)),
+Now that you have configured `superduperdb` with either `superduperdb.CFG` or environment variables (see [here](../walkthrough/01_configuration.md)),
 you are ready to connect to your database.
 
 :::info

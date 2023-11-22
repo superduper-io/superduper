@@ -58,7 +58,7 @@ def test_has_thread():
 if __name__ == '__main__':
     # A little sandbox for experimenting with threads.
 
-    s.CFG.logging.level = s.config.LogLevel.DEBUG
+    s.CFG.log_level = s.config.LogLevel.DEBUG
     start = time.time()
     LOOPING = False
 

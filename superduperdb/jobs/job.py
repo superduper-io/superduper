@@ -4,6 +4,7 @@ import uuid
 from abc import abstractmethod
 
 import superduperdb as s
+from superduperdb.base import exceptions
 from superduperdb.jobs.tasks import callable_job, method_job
 
 
@@ -63,7 +64,7 @@ class Job:
             db.metadata.update_job(self.identifier, 'status', 'success')
         except Exception as e:
             db.metadata.update_job(self.identifier, 'status', 'failed')
-            raise e
+            raise exceptions.JobException('Error while running local job') from e
         return out
 
     @abstractmethod
@@ -131,16 +132,21 @@ class FunctionJob(Job):
         :param client: dask client
         :param dependencies: list of dependencies
         """
-        self.future = client.submit(
-            callable_job,
-            cfg=s.CFG,
-            function_to_call=self.callable,
-            job_id=self.identifier,
-            args=self.args,
-            kwargs=self.kwargs,
-            key=self.identifier,
-            dependencies=dependencies,
-        )
+        try:
+            self.future = client.submit(
+                callable_job,
+                cfg=s.CFG,
+                function_to_call=self.callable,
+                job_id=self.identifier,
+                args=self.args,
+                kwargs=self.kwargs,
+                key=self.identifier,
+                dependencies=dependencies,
+            )
+        except Exception as e:
+            raise exceptions.DistributedJobException(
+                'Error while submitting job to distributed_client'
+            ) from e
         return
 
     def __call__(
@@ -152,7 +158,7 @@ class FunctionJob(Job):
             db = build_datalayer()
 
         if distributed is None:
-            distributed = s.CFG.cluster.distributed
+            distributed = s.CFG.mode == 'production'
         self.db = db
         db.metadata.create_job(self.dict())
         if not distributed:
@@ -204,29 +210,35 @@ class ComponentJob(Job):
         :param client: dask client
         :param dependencies: list of dependencies
         """
-        self.future = client.submit(
-            method_job,
-            cfg=s.CFG,
-            type_id=self.type_id,
-            identifier=self.component_identifier,
-            method_name=self.method_name,
-            job_id=self.identifier,
-            args=self.args,
-            kwargs=self.kwargs,
-            key=self.identifier,
-            dependencies=dependencies,
-        )
+        try:
+            self.future = client.submit(
+                method_job,
+                cfg=s.CFG,
+                type_id=self.type_id,
+                identifier=self.component_identifier,
+                method_name=self.method_name,
+                job_id=self.identifier,
+                args=self.args,
+                kwargs=self.kwargs,
+                key=self.identifier,
+                dependencies=dependencies,
+            )
+        except Exception as e:
+            raise exceptions.DistributedJobException(
+                'Error while submitting job to distributed_client'
+            ) from e
         return
 
     def __call__(
         self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
     ):
         if distributed is None:
-            distributed = s.CFG.cluster.distributed
+            distributed = s.CFG.mode == 'production'
         if db is None:
             from superduperdb.base.build import build_datalayer
 
             db = build_datalayer()
+
         self.db = db
         db.metadata.create_job(self.dict())
         if self.component is None:

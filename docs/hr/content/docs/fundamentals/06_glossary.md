@@ -1,10 +1,8 @@
 ---
-sidebar_position: 6
-tags:
-  - quickstart
+sidebar_position: 1
 ---
 
-# Glossary of concepts and classes
+# Glossary
 
 | Concept | Description |
 | - | - |

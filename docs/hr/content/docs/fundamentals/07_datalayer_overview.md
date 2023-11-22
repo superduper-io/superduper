@@ -1,30 +1,30 @@
 ---
 sidebar_position: 7
-tags:
-  - quickstart
 ---
 
-# Overview of the SuperDuperDB datalayer
+# Datalayer
 
 The abstraction coordinates models, data and backends is the `superduperdb.base.datalayer.Datalayer` class.
 
-The `Datalayer` is a highly configurable class which "wires together" three important 
-backends involved in the AI workflow:
+The `Datalayer` is a highly configurable class which "wires together" three important backends involved in the AI workflow:
 
 - Querying the database via the **databackend**
 - Storing and retrieving serialized model-weights and other artifacts from the **artifact store**
-- Storing and retrieval important meta-data, from the **meta-data store** and information about models and other 
-  components which are to be installed with `superduperdb`
+- Storing and retrieval important meta-data, from the **meta-data store** and information about models and other components which are to be installed with `superduperdb`
 
 ```python
->>> from superduperdb import superduper
->>> db = superduper()
->>> db.databackend
-<superduperdb.backends.mongodb.data_backend.MongoDataBackend at 0x1562815d0>
->>> db.artifact_store
-<superduperdb.backends.mongodb.artifacts.MongoArtifactStore at 0x156869f50>
->>> db.metadata
-<superduperdb.backends.mongodb.metadata.MongoMetaDataStore at 0x156866a10>
+from superduperdb import superduper
+
+db = superduper()
+
+db.databackend
+# <superduperdb.backends.mongodb.data_backend.MongoDataBackend at 0x1562815d0>
+
+db.artifact_store
+# <superduperdb.backends.mongodb.artifacts.MongoArtifactStore at 0x156869f50>
+
+db.metadata
+# <superduperdb.backends.mongodb.metadata.MongoMetaDataStore at 0x156866a10>
 ```
 
 Our aim is to make it easy to set-up each aspect of the `Datalayer` with your preferred
@@ -36,9 +36,9 @@ The databackend typically connects to your database (although `superduperdb` als
 and dispatches queries written in an query API which is compatible with that databackend, but which also includes additional aspects
 specific to `superduperdb`.
 
-Read more [here](11_supported_query_APIs.md).
+Read more [here](../walkthrough/11_supported_query_APIs.md).
 
-The databackend is configured by setting the URI `CFG.databackend` in the [configuration system](03_configuration.md).
+The databackend is configured by setting the URI `CFG.databackend` in the [configuration system](../walkthrough/01_configuration.md).
 
 We support the same databackends as supported by the [`ibis` project](https://ibis-project.org/):
 

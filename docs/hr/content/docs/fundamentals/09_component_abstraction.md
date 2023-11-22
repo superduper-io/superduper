@@ -2,7 +2,7 @@
 sidebar_position: 9
 ---
 
-# The component abstraction
+# Component Abstraction
 
 A **`Component`** is an object which is a combination of `JSON`-able parameters, and classes which are not 
 serializable by `JSON`, but are saved as `bytes`-blobs.
@@ -56,7 +56,7 @@ instances.
 
 ### `Stack`
 
-A `Stack` is a way of connecting diverse and interoperating sets of functionality. See [here](28_creating_stacks_of_functionality.md) for more details.
+A `Stack` is a way of connecting diverse and interoperating sets of functionality. See [here](../walkthrough/28_creating_stacks_of_functionality.md) for more details.
 
 ## Activating components
 

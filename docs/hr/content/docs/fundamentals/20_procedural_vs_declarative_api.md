@@ -2,13 +2,13 @@
 sidebar_position: 20
 ---
 
-# Procedural vs. declarative API
+# Procedural vs. Declarative API
 
 `superduperdb` provides 2 principle approaches for applying AI to the database
 
-| Method | Description | Example |
-| --- | --- | --- | 
-| Procedural | *Telling SuperDuperDB **what** to do* | `model.predict(X='txt', db=db)` |
+| Method      | Description                                            | Example                                                     |
+|-------------|--------------------------------------------------------|-------------------------------------------------------------| 
+| Procedural  | *Telling SuperDuperDB **what** to do*                  | `model.predict(X='txt', db=db)`                             |
 | Declarative | *Telling SuperDuperDB which **state** it should be in* | `db.add(Listener(model=model, key='txt', select=c.find()))` |
 
 ### Procedural API

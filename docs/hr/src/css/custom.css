@@ -215,3 +215,7 @@ main-wrapper {
   background-color: transparent !important;
   color: inherit !important;
 }
+
+pre code {
+  background-color: #F5F5F5 !important; 
+}

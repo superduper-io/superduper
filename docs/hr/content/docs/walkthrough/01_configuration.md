@@ -1,10 +1,10 @@
 ---
-sidebar_position: 3
+sidebar_position: 1
 tags:
   - quickstart
 ---
 
-# Configuring SuperDuperDB
+# Configure
 
 The first step in SuperDuperDB is to configure a flexible range of options for setting
 up your environment:

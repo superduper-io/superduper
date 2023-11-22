@@ -30,13 +30,6 @@
 ---
 
 
-<div align="center">	
-
- `🔮 SuperDuperDB is open-source: Please leave a star ⭐️ to support the project!`
- </div>
-
-
----
 ***📣 Important Release Announcement!***
 
 On the 5th of December, we are going to officially launch SuperDuperDB with the release of v0.1, including:
@@ -44,10 +37,10 @@ On the 5th of December, we are going to officially launch SuperDuperDB with the 
 - Massive overhaul of the docs
 - Revamped and modularized testing suite
 
-⭐️ Leave a star to be informed of more exciting updates!
-
+ `⭐️ SuperDuperDB is open-source: Please leave a star to support the project! ⭐️`
 
 ---
+
 ## What is SuperDuperDB? 
 
 🔮 SuperDuperDB is a general-purpose AI development and deployment framework for **integrating any ML models** (i.e. from PyTorch, Sklearn, HuggingFace) **and AI APIs** (like OpenAI, Antrophic, Cohere) **directly with your existing databases**, including streaming inference, model training and vector search. SuperDuperDB is not another database, it "super-dupers" your existing preferred database. 
@@ -71,8 +64,8 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 
 ### Why opt for SuperDuperDB?
 || With SuperDuperDB | Without |
-|----------|----------|----------|
-|Data Management, Security and Privacy| Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management.  |  Data duplicating and migration to different environments, and specialized vector databases - imposing data management overhead.   |
+|-|-|-|
+| Data Management & Security | Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management.  |  Data duplicating and migration to different environments, and specialized vector databases, imposing data management overhead.   |
 |Infrastructure| A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex and fragmented, partially duplicated pipelines, infrastructure coming with high adoption and maintenance costs and increasing security risks. |
 |Code| Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
 

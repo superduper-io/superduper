@@ -1,10 +1,8 @@
 ---
 sidebar_position: 2
-tags:
-  - quickstart
 ---
 
-# Installation Guide
+# Installation
 
 There are two ways to get started:
 

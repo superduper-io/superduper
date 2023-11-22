@@ -252,7 +252,7 @@ const config = {
               },
               {
                 label: 'Documentation',
-                to: '/docs/docs/intro',
+                to: '/docs/category/get-started',
               },
               {
                 label: 'Use cases',

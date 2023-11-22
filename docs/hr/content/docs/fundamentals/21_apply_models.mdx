@@ -2,7 +2,7 @@
 sidebar_position: 21
 ---
 
-# Applying models and predictors to data
+# Applying Models and Predictors to Data
 
 `Model` and `Predictor` instances may be applied directly to data in the database without first fetching the data client-side.
 
@@ -12,7 +12,6 @@ Applying a model to data, is straightforward with `Model.predict`:
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-
 
 ### Out-of-database prediction
 
@@ -34,7 +33,6 @@ my_model.predict(X=<input_datum>, one=True)
 ```
 
 ### In-database, one-time model prediction
-
 
 It is possible to apply a model directly to the database with `Model.predict`.
 The parameter `X` refers to the field/column of data which is passed to the model.
@@ -91,10 +89,10 @@ my_model.predict(
 )
 ```
 
-Under-the-hood, this call creates a `Listener` which is deployed on 
+Under-the-hood, this call creates a `Listener` which is deployed on
 the query passed to the `.predict` call.
 
-Read more about the `Listener` abstraction [here](22_daemonizing_models_with_listeners.md)
+Read more about the `Listener` abstraction [here](../walkthrough/22_daemonizing_models_with_listeners.md)
 
 ### Activating models for vector-search with `create_vector_index=True`
 
@@ -110,7 +108,6 @@ my_model.predict(
 )
 ```
 
-
 ## Predictions by framework
 
 ```mdx-code-block
@@ -118,7 +115,7 @@ my_model.predict(
 <TabItem value="vanilla" label="Vanilla">
 ```
 
-By default, the `Model` component supports arbitrary callables to be used to 
+By default, the `Model` component supports arbitrary callables to be used to
 perform model predictions and transformations:
 
 ```python
@@ -224,7 +221,7 @@ m.predict(
 
 ## Predicting based on the `identifier` via the `Datalayer`
 
-Instead of calling the model directly, it's also possible to 
+Instead of calling the model directly, it's also possible to
 predict on single data points using `db.predict`.
 
 I.e. the following are equivalent:
@@ -260,7 +257,7 @@ my_model.predict(<input_data>, context=context)
 
 ## Models with special outputs
 
-If a model has outputs which aren't directly compatible with the underlying database, then one adds either 
+If a model has outputs which aren't directly compatible with the underlying database, then one adds either
 an `Encoder` or a `Schema` to the `Model` at initialization.
 
 Here's a model which outputs images:

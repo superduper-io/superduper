@@ -6,13 +6,11 @@ sidebar_position: 7
 
 The abstraction coordinates models, data and backends is the `superduperdb.base.datalayer.Datalayer` class.
 
-The `Datalayer` is a highly configurable class which "wires together" three important 
-backends involved in the AI workflow:
+The `Datalayer` is a highly configurable class which "wires together" three important backends involved in the AI workflow:
 
 - Querying the database via the **databackend**
 - Storing and retrieving serialized model-weights and other artifacts from the **artifact store**
-- Storing and retrieval important meta-data, from the **meta-data store** and information about models and other 
-  components which are to be installed with `superduperdb`
+- Storing and retrieval important meta-data, from the **meta-data store** and information about models and other components which are to be installed with `superduperdb`
 
 ```python
 from superduperdb import superduper
@@ -40,7 +38,7 @@ specific to `superduperdb`.
 
 Read more [here](../walkthrough/11_supported_query_APIs.md).
 
-The databackend is configured by setting the URI `CFG.databackend` in the [configuration system](../Getting%20Started/03_configuration.md).
+The databackend is configured by setting the URI `CFG.databackend` in the [configuration system](../walkthrough/01_configuration.md).
 
 We support the same databackends as supported by the [`ibis` project](https://ibis-project.org/):
 

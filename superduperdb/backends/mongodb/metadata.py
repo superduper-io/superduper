@@ -6,6 +6,7 @@ from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 from superduperdb import logging
 from superduperdb.backends.base.metadata import MetaDataStore
+from superduperdb.base import exceptions
 from superduperdb.components.component import Component
 from superduperdb.misc.colors import Colors
 
@@ -30,36 +31,60 @@ class MongoMetaDataStore(MetaDataStore):
         self.component_collection = self.db['_objects']
         self.job_collection = self.db['_jobs']
         self.parent_child_mappings = self.db['_parent_child_mappings']
+        self.conn = conn
+
+    def url(self):
+        return self.conn.HOST + ':' + str(self.conn.PORT) + '/' + self.name
 
     def drop(self, force: bool = False):
-        if not force:
-            if not click.confirm(
-                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
-                'Are you sure you want to drop all meta-data? ',
-                default=False,
-            ):
-                logging.warn('Aborting...')
-        self.db.drop_collection(self.meta_collection.name)
-        self.db.drop_collection(self.component_collection.name)
-        self.db.drop_collection(self.job_collection.name)
-        self.db.drop_collection(self.parent_child_mappings.name)
+        try:
+            if not force:
+                if not click.confirm(
+                    f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+                    f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                    'Are you sure you want to drop all meta-data? ',
+                    default=False,
+                ):
+                    logging.warn('Aborting...')
+            self.db.drop_collection(self.meta_collection.name)
+            self.db.drop_collection(self.component_collection.name)
+            self.db.drop_collection(self.job_collection.name)
+            self.db.drop_collection(self.parent_child_mappings.name)
+        except Exception as e:
+            raise exceptions.MetaDataStoreDeleteException(
+                'Error while dropping in metadata store'
+            ) from e
 
     def create_parent_child(self, parent: str, child: str) -> None:
-        self.parent_child_mappings.insert_one(
-            {
-                'parent': parent,
-                'child': child,
-            }
-        )
+        try:
+            self.parent_child_mappings.insert_one(
+                {
+                    'parent': parent,
+                    'child': child,
+                }
+            )
+        except Exception as e:
+            raise exceptions.MetaDataStoreDeleteException(
+                'Error while creating parent child'
+            ) from e
 
     def create_component(self, info: t.Dict) -> InsertOneResult:
-        if 'hidden' not in info:
-            info['hidden'] = False
-        return self.component_collection.insert_one(info)
+        try:
+            if 'hidden' not in info:
+                info['hidden'] = False
+            return self.component_collection.insert_one(info)
+        except Exception as e:
+            raise exceptions.MetaDataStoreCreateException(
+                'Error while creating component in metadata store'
+            ) from e
 
     def create_job(self, info: t.Dict) -> InsertOneResult:
-        return self.job_collection.insert_one(info)
+        try:
+            return self.job_collection.insert_one(info)
+        except Exception as e:
+            raise exceptions.MetaDataStoreJobException(
+                'Error while creating job in metadata store'
+            ) from e
 
     def get_parent_child_relations(self):
         c = self.parent_child_mappings.find()
@@ -69,16 +94,38 @@ class MongoMetaDataStore(MetaDataStore):
         return self.parent_child_mappings.distinct('child', {'parent': unique_id})
 
     def get_job(self, identifier: str):
-        return self.job_collection.find_one({'identifier': identifier})
+        try:
+            return self.job_collection.find_one({'identifier': identifier})
+        except Exception as e:
+            raise exceptions.MetaDataStoreJobException(
+                'Error while getting job in metadata store'
+            ) from e
 
     def create_metadata(self, key: str, value: str):
-        return self.meta_collection.insert_one({'key': key, 'value': value})
+        try:
+            return self.meta_collection.insert_one({'key': key, 'value': value})
+        except Exception as e:
+            raise exceptions.MetaDataStoreCreateException(
+                'Error while creating metadata in metadata store'
+            ) from e
 
     def get_metadata(self, key: str):
-        return self.meta_collection.find_one({'key': key})['value']
+        try:
+            return self.meta_collection.find_one({'key': key})['value']
+        except Exception as e:
+            raise exceptions.MetadatastoreException(
+                'Error while getting metadata in metadata store'
+            ) from e
 
     def update_metadata(self, key: str, value: str):
-        return self.meta_collection.update_one({'key': key}, {'$set': {'value': value}})
+        try:
+            return self.meta_collection.update_one(
+                {'key': key}, {'$set': {'value': value}}
+            )
+        except Exception as e:
+            raise exceptions.MetaDataStoreUpdateException(
+                'Error while updating metadata in metadata store'
+            ) from e
 
     def get_latest_version(
         self, type_id: str, identifier: str, allow_hidden: bool = False

@@ -1,3 +1,4 @@
+import json
 import sys
 from functools import cached_property
 
@@ -6,9 +7,9 @@ from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from superduperdb import CFG, logging
 from superduperdb.base.build import build_datalayer
 from superduperdb.base.datalayer import Datalayer
-from superduperdb.base.logger import logger
 
 app = FastAPI()
 
@@ -32,9 +33,26 @@ class SuperDuperApp:
         self._user_startup = False
         self._user_shutdown = False
 
+    def default_endpoints(self):
+        '''
+        A list of default endpoints, health and config handshake
+        comes out of box with `SuperDuperApp`
+        '''
+
         @self.router.get('/health')
         def health():
             return {'status': 200}
+
+        @self.router.post('/handshake/config')
+        def handshake(cfg: str):
+            cfg_dict = json.loads(cfg)
+            if CFG.match(cfg_dict):
+                return {'status': 200, 'msg': 'matched'}
+
+            return JSONResponse(
+                status_code=400,
+                content={'error': 'Config is not match'},
+            )
 
     @cached_property
     def db(self):
@@ -62,12 +80,15 @@ class SuperDuperApp:
         '''
         This method is used to start the application server
         '''
+
+        self.default_endpoints()
+
         if not self._user_startup:
             self.startup()
-
         if not self._user_shutdown:
             self.shutdown()
         assert self.app
+
         uvicorn.run(
             app,
             host=self.app_host,
@@ -130,7 +151,7 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)
         except Exception as e:
-            logger.exception(f'Error while serving {request} :: {e}')
+            logging.error(f'Error while serving {request} :: {e}')
             return JSONResponse(
                 status_code=500,
                 content={'error': e.__class__.__name__, 'messages': e.args},

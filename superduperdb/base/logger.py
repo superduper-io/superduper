@@ -1,5 +1,6 @@
 import os
 import socket
+import uuid
 from sys import stderr
 
 from loguru import logger
@@ -14,7 +15,7 @@ __all__ = ('Logging',)
 
 
 class Logging:
-    if CFG.logging.type == LogType.LOKI:  # Send logs to Loki
+    if CFG.logging_type == LogType.LOKI:  # Send logs to Loki
         custom_handler = LokiLoggerHandler(
             url=os.environ["LOKI_URI"],
             labels={"application": "Test", "environment": "Develop"},
@@ -32,6 +33,7 @@ class Logging:
         logger.configure(
             extra={
                 "hostname": socket.gethostname(),
+                "session_id": str(uuid.uuid4()),
             }
         )
 
@@ -39,6 +41,7 @@ class Logging:
             "<green> {time:YYYY-MMM-DD HH:mm:ss.SS}</green>"
             "| <level>{level: <8}</level> "
             "| <cyan>{extra[hostname]: <8}</cyan>"
+            "| <cyan>{extra[session_id]}</cyan>"
             "| <cyan>{name}</cyan>:<cyan>{line: <4}</cyan> "
             "| <level>{message}</level>"
         )
@@ -47,7 +50,7 @@ class Logging:
         logger.add(
             lambda msg: tqdm.write(msg, end=""),
             format=fmt,
-            level=CFG.logging.level,
+            level=CFG.log_level,
             filter=lambda record: record["level"].no < 40,
             colorize=True,
         )

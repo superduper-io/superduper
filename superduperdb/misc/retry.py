@@ -22,7 +22,7 @@ class Retry:
     cfg: t.Optional[s.config.Retry] = None
 
     def __call__(self, f: t.Callable) -> t.Any:
-        cfg = self.cfg or s.CFG.apis.retry
+        cfg = self.cfg or s.CFG.retries
         retry = tenacity.retry_if_exception_type(self.exception_types)
         stop = tenacity.stop_after_attempt(cfg.stop_after_attempt)
         wait = tenacity.wait_exponential(

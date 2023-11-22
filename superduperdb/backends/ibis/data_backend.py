@@ -18,6 +18,9 @@ class IbisDataBackend(BaseDataBackend):
         super().__init__(conn=conn, name=name)
         self.in_memory = in_memory
 
+    def url(self):
+        return self.conn.con.url + self.name
+
     def build_artifact_store(self):
         return FileSystemArtifactStore(conn='.superduperdb/artifacts/', name='ibis')
 

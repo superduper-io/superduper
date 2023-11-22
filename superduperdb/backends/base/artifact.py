@@ -136,6 +136,13 @@ class ArtifactStore(ABC, ArtifactStoreMixin):
         self.conn = conn
 
     @abstractmethod
+    def url(self):
+        """
+        Artifact store connection url
+        """
+        pass
+
+    @abstractmethod
     def delete(self, file_id: str):
         """
         Delete artifact from artifact store

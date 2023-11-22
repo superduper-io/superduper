@@ -50,9 +50,9 @@ On the 5th of December, we are going to officially launch SuperDuperDB with the 
 ---
 ## What is SuperDuperDB? 
 
-🔮 SuperDuperDB is a general-purpose AI development and deployment framework for **integrating any ML models** (i.e. from PyTorch, Sklearn, HuggingFace) **and AI APIs** (like OpenAI, Antrophic, Cohere) **directly with your existing databases**, including real-time inference, model training and vector search. SuperDuperDB is not another database, it "super-dupers" your existing preferred database. 
+🔮 SuperDuperDB is a general-purpose AI development and deployment framework for **integrating any ML models** (i.e. from PyTorch, Sklearn, HuggingFace) **and AI APIs** (like OpenAI, Antrophic, Cohere) **directly with your existing databases**, including streaming inference, model training and vector search. SuperDuperDB is not another database, it "super-dupers" your existing preferred database. 
 
-SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications only using Python!
+SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vector databases, enabling you to build end-to-end AI applications efficiently and flexibly with a simple Python interface!
 
 - Generative AI & LLM-Chat
 - Vector Search
@@ -61,7 +61,7 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 
 ### Key Features:
 - **[Integration of AI with your existing data infrastructure](https://docs.superduperdb.com/docs/docs/apply_models):** Integrate any AI models and APIs with your databases in a single scalable deployment, without the need for additional pre-processing steps, ETL or boilerplate code.
-- **[Real-Time Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
+- **[Streaming Inference](https://docs.superduperdb.com/docs/docs/daemonizing_models_with_listeners):** Have your models compute outputs automatically and immediately as new data arrives, keeping your deployment always up-to-date.
 - **[Scalable Model Training](https://docs.superduperdb.com/docs/docs/training_models):** Train AI models on large, diverse datasets simply by querying your training data. Ensured optimal performance via in-build computational optimizations.
 - **[Model Chaining](https://docs.superduperdb.com/docs/docs/linking_interdependent_models)**: Easily setup complex workflows by connecting models and APIs to work together in an interdependent and sequential manner.
 - **[Simple, but Extendable Interface](https://docs.superduperdb.com/docs/docs/procedural_vs_declarative_api)**: Add and leverage any function, program, script or algorithm from the Python ecosystem to enhance your workflows and applications. Drill down on any layer as deep as it gets, up until the inner workings of your models while operating SuperDuperDB with simple Python commands.
@@ -72,8 +72,8 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 ### Why opt for SuperDuperDB?
 || With SuperDuperDB | Without |
 |----------|----------|----------|
-|Data Management, Security and Privacy| Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be controlled with the databases acess management.  |  Data duplicating and migration to different environments, and specialized vector databases - imposing data management overhead.       |
-|Infrastructure| A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex and fragmented, partially duplicated pipelines, infrastructure coming with high adoption and maintenance costs. |
+|Data Management, Security and Privacy| Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be externally controlled via database access management.  |  Data duplicating and migration to different environments, and specialized vector databases - imposing data management overhead.   |
+|Infrastructure| A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex and fragmented, partially duplicated pipelines, infrastructure coming with high adoption and maintenance costs and increasing security risks. |
 |Code| Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
 
 

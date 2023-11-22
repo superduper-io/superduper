@@ -70,11 +70,11 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 - **[Vector Search](https://docs.superduperdb.com/docs/docs/vector_search):** No need for duplicating and migrating your data to additional specialized vector databases - turn your existing battle-tested datastore into a fully-fledged multi-modal vector-search database, including easy generation of vector embeddings and vector indexes of your data with preferred models and APIs.
 
 ### Why opt for SuperDuperDB?
-| With SuperDuperDB | Without |
-|----------|----------|
-| Data stays in the database, minimizing management overhead, with AI outputs stored alongside inputs available to downstream applications.    |  Data duplicating and migration to different environments, and specialized vector databases.        |
-| A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex and fragmented, partially duplicated pipelines, infrastructure coming with high adoption and maintenance costs. |
-| Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
+|| With SuperDuperDB | Without |
+|----------|----------|----------|
+|Data Management, Security and Privacy| Data stays in the database, with AI outputs stored alongside inputs available to downstream applications. Data access and security to be controlled with the databases acess management.  |  Data duplicating and migration to different environments, and specialized vector databases - imposing data management overhead.       |
+|Infrastructure| A single environment to build, ship, and manage your AI applications, facilitating scalability and optimal compute efficiency.    |  Complex and fragmented, partially duplicated pipelines, infrastructure coming with high adoption and maintenance costs. |
+|Code| Minimal learning curve due to a simple and declarative API, requiring simple Python commands. |  Hundreds of lines of codes and settings in different environemts and tools.     |
 
 
 ## Supported Datastores (*more coming soon*):

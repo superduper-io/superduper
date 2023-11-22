@@ -2,7 +2,7 @@
 sidebar_position: 10
 ---
 
-# DataType Encoders
+# Datatype Encoders
 
 In AI, typical types of data are:
 

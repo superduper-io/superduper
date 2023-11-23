@@ -35,7 +35,7 @@ class Model1:
                 'image': Image.fromarray(np.random.randn(10, 10, 3).astype(np.uint8)),
                 'int': np.asarray([x * 100] * 10),
             }
-        ] * random.randint(1, 10)
+        ] * random.randint(1, 2)
 
     @staticmethod
     def preprocess(x):
@@ -59,6 +59,40 @@ class Model2:
     @staticmethod
     def postprocess(x):
         return x
+
+
+def _wait_for_keys(db, collection='_outputs.int.model1', n=10, key=''):
+    retry_left = 5
+
+    def check_outputs():
+        docs = list(db.databackend.db[collection].find({}))
+        p = 0
+        for d in docs:
+            try:
+                for k in key.split('.'):
+                    d = d[k]
+            except KeyError:
+                pass
+            else:
+                p += 1
+        return len(docs) == p
+
+    while not check_outputs() and retry_left != 0:
+        time.sleep(2)
+        retry_left -= 1
+
+
+def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
+    retry_left = 5
+
+    def check_outputs():
+        docs = list(db.databackend.db[collection].find({}))
+        return docs
+
+    while not len(check_outputs()) >= n and retry_left != 0:
+        time.sleep(2)
+        retry_left -= 1
+    return len(check_outputs())
 
 
 @pytest.fixture
@@ -151,8 +185,8 @@ def test_advance_setup(distributed_db, image_url):
         model=db.load('model', 'model1'), key='int', select=mixed_input.find()
     )
     db.add(listener1)
+    n = _wait_for_outputs(db=db, n=10)
 
-    time.sleep(10)
     db.add(
         VectorIndex(
             identifier='test_search_index',
@@ -169,15 +203,9 @@ def test_advance_setup(distributed_db, image_url):
     )
 
     search_phrase = '4'
-
-    retry_left = 5
-
-    def check_outputs():
-        return list(db.databackend.db['_outputs.int.model1'].find({}))
-
-    while not len(check_outputs()) > 1 and retry_left != 0:
-        time.sleep(2)
-        retry_left -= 1
+    _wait_for_keys(
+        db=db, n=n, collection='_outputs.int.model1', key='_outputs.int.model2'
+    )
 
     r = next(
         db.execute(

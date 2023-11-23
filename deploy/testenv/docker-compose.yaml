@@ -111,7 +111,7 @@ services:
       - /bin/sh
       - -c
       - |
-        dask scheduler
+        dask scheduler --preload deploy/testenv/preload.py
 
   dask-worker:
     depends_on:
@@ -125,30 +125,27 @@ services:
       - /bin/sh
       - -c
       - |
-        dask worker "tcp://scheduler:8786"
+        dask worker "tcp://scheduler:8786" --preload deploy/testenv/preload.py
     deploy:
       replicas: 1
 
 #  Demo SuperDuperDB Notebooks
 #  ------------------------------
-#  demo-notebooks:
-#    depends_on:
-#      - mongo-init
-#      - vector-search-init
-#      - dask-scheduler
-#    build: # Build the latest SuperDuperDB code
-#      context: ../../../. # Build from project's root
-#      dockerfile: ./deploy/images/superduperdb/Dockerfile
-#      args:
-#        - BUILD_ENV=sandbox # Use local code
-#        - SUPERDUPERDB_EXTRAS=demo # Install dependencies
-#    hostname: demo
-#    ports:
-#      - "8888:8888" # HTTP Notebooks
-#    volumes:
-#        - ../../../:/app # mount the root path
-#    command:
-#      - /bin/sh
-#      - -c
-#      - |
-#        jupyter lab --port=8888 --no-browser --ip=0.0.0.0
+  demo-notebooks:
+    image: superduperdb/sandbox
+    hostname: demo
+    depends_on:
+      - mongo-init
+      - vector-search-init
+      - dask-scheduler
+      - dask-worker
+      - cdc-init
+    ports:
+      - "8888:8888" # HTTP Notebooks
+    volumes:
+        - ../../:/home/superduper/superduperdb # mount the project path
+    command:
+      - /bin/sh
+      - -c
+      - |
+        jupyter lab --port=8888 --no-browser --ip=0.0.0.0

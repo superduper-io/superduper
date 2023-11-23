@@ -219,12 +219,6 @@ const config = {
             position: 'left',
             label: 'Documentation',
           },
-          {
-            type: 'docSidebar',
-            sidebarId: 'useCasesSidebar',
-            position: 'left',
-            label: 'Use cases',
-          },
           { to: '/blog', label: 'Blog', position: 'left' },
           {
             href: 'https://docs.superduperdb.com/apidocs/source/superduperdb.html',

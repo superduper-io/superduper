@@ -95,7 +95,6 @@ class Listener(Component):
         self,
         database: Datalayer,
         dependencies: t.Sequence[Job] = (),
-        distributed: bool = False,
         verbose: bool = False,
     ) -> t.Sequence[t.Any]:
         """
@@ -103,7 +102,6 @@ class Listener(Component):
 
         :param database: The DB instance to process
         :param dependencies: A list of dependencies
-        :param distributed: Whether to run the job on a distributed system
         :param verbose: Whether to print verbose output
         """
         if not self.active:
@@ -115,7 +113,6 @@ class Listener(Component):
                 X=self.key,
                 db=database,
                 select=self.select,
-                distributed=distributed,
                 dependencies=dependencies,
                 **(self.predict_kwargs or {}),
             )

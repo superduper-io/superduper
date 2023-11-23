@@ -86,7 +86,6 @@ class Datalayer:
         self.fast_vector_searchers = LoadDict(
             self, callable=self.initialize_vector_searcher
         )
-        self.distributed = s.CFG.mode == Mode.Production
         self.metadata = metadata
         self.artifact_store = artifact_store
         self.databackend = databackend
@@ -185,15 +184,15 @@ class Datalayer:
         The standard procedure is to set compute engine during initialization.
         """
         logging.warn(
-            f"Change compute engine from '{self.compute.name()}' to '{new.name()}'"
+            f"Change compute engine from '{self.compute.name}' to '{new.name}'"
         )
 
         self.compute.disconnect()
         logging.success(
-            f"Succesfully disconnected from compute engine: '{self.compute.name()}'"
+            f"Succesfully disconnected from compute engine: '{self.compute.name}'"
         )
 
-        logging.info(f"Connecting to compute engine: {new.name()}")
+        logging.info(f"Connecting to compute engine: {new.name}")
         self.compute = new
 
     def get_compute(self):
@@ -483,7 +482,7 @@ class Datalayer:
                 'Error while building task workflow'
             ) from e
         try:
-            task_workflow.run_jobs(distributed=self.distributed)
+            task_workflow.run_jobs()
             return task_workflow
         except Exception as e:
             raise exceptions.JobException('Error while running task workflow') from e
@@ -512,7 +511,7 @@ class Datalayer:
                 'Error while building task workflow'
             ) from e
         try:
-            task_workflow.run_jobs(distributed=self.distributed)
+            task_workflow.run_jobs()
         except Exception as e:
             raise exceptions.JobException('Error while running job') from e
         return task_workflow
@@ -916,12 +915,7 @@ class Datalayer:
 
             object.post_create(self)
             object.on_load(self)
-            jobs.extend(
-                object.schedule_jobs(
-                    self, dependencies=dependencies, distributed=self.distributed
-                )
-            )
-            return jobs, object
+            return object.schedule_jobs(self, dependencies=dependencies), object
         except Exception as e:
             raise exceptions.DatalayerException(
                 f'Error while adding object with id: {object.identifier}'
@@ -1152,7 +1146,6 @@ class Datalayer:
                     model=model,
                     recompute=recompute,
                     listener_info=listener_info,
-                    distributed=False,
                     **kwargs,
                 )
             return []

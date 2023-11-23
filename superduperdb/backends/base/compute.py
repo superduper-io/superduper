@@ -1,5 +1,5 @@
 import typing as t
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 
 
 class ComputeBackend(ABC):
@@ -7,7 +7,14 @@ class ComputeBackend(ABC):
     Abstraction for sending jobs to a distributed compute platform.
     """
 
-    @abstractmethod
+    @abstractproperty
+    def type(self) -> str:
+        """
+        Return the type of compute engine
+        """
+        pass
+
+    @abstractproperty
     def name(self) -> str:
         """
         Return the name of current compute engine

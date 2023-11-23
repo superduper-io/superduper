@@ -7,11 +7,9 @@ from abc import abstractmethod
 from functools import wraps
 
 import tqdm
-from dask.distributed import Future
 from numpy import ndarray
 from sklearn.pipeline import Pipeline
 
-import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.metadata import NonExistentMetadataError
 from superduperdb.backends.base.query import CompoundSelect, Select
@@ -20,7 +18,6 @@ from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base import exceptions
 from superduperdb.base.artifact import Artifact
-from superduperdb.base.config import Mode
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component
 from superduperdb.components.dataset import Dataset
@@ -108,7 +105,6 @@ class Predictor:
             type_id='model',
             args=[X],
             kwargs={
-                'distributed': False,
                 'select': select.serialize() if select else None,
                 'ids': ids,
                 'max_chunk_size': max_chunk_size,
@@ -183,7 +179,6 @@ class Predictor:
         X: t.Any,
         db: t.Optional[Datalayer] = None,
         select: t.Optional[Select] = None,
-        distributed: t.Optional[bool] = None,
         ids: t.Optional[t.List[str]] = None,
         max_chunk_size: t.Optional[int] = None,
         dependencies: t.Sequence[Job] = (),
@@ -218,9 +213,6 @@ class Predictor:
                 assert isinstance(self, Component)
                 db.add(self)
 
-            if distributed is None:
-                distributed = s.CFG.mode == Mode.Production
-
             if listen:
                 assert db is not None
                 assert select is not None
@@ -232,7 +224,7 @@ class Predictor:
                     **kwargs,
                 )
 
-            if distributed:
+            if db is not None and db.compute.type == 'distributed':
                 return self.create_predict_job(
                     X,
                     select=select,
@@ -240,7 +232,7 @@ class Predictor:
                     max_chunk_size=max_chunk_size,
                     overwrite=overwrite,
                     **kwargs,
-                )(db=db, distributed=distributed, dependencies=dependencies)
+                )(db=db, dependencies=dependencies)
             else:
                 if select is not None and ids is None:
                     assert db is not None
@@ -401,7 +393,7 @@ class Predictor:
                 keys=[X],
             )
 
-        outputs = self.predict(X=X_data, one=False, distributed=False, **kwargs)
+        outputs = self.predict(X=X_data, one=False, **kwargs)
 
         if isinstance(self.encoder, Encoder):
             if self.flatten:
@@ -486,7 +478,6 @@ class Model(Component, Predictor):
     preferred_devices: t.Union[None, t.Sequence[str]] = ("cuda", "mps", "cpu")
 
     # Don't set these manually
-    future: t.Optional[Future] = None
     version: t.Optional[int] = None
 
     artifact_attributes: t.ClassVar[t.Sequence[str]] = ['object']
@@ -611,7 +602,6 @@ class Model(Component, Predictor):
             args=[X],
             kwargs={
                 'y': y,
-                'distributed': False,
                 'select': select.serialize() if select else None,
                 **kwargs,
             },
@@ -640,7 +630,6 @@ class Model(Component, Predictor):
         data_prefetch: bool = False,
         db: t.Optional[Datalayer] = None,
         dependencies: t.Sequence[Job] = (),
-        distributed: t.Optional[bool] = None,
         metrics: t.Optional[t.Sequence[Metric]] = None,
         select: t.Optional[Select] = None,
         validation_sets: t.Optional[t.Sequence[t.Union[str, Dataset]]] = None,
@@ -655,7 +644,6 @@ class Model(Component, Predictor):
         :param data_prefetch: Whether to prefetch the data (optional)
         :param db: The datalayer (optional)
         :param dependencies: The dependencies (optional)
-        :param distributed: Whether to distribute the job (optional)
         :param metrics: The metrics to evaluate on (optional)
         :param select: The select to use for training (optional)
         :param validation_sets: The validation ``Dataset`` instances to use (optional)
@@ -675,16 +663,13 @@ class Model(Component, Predictor):
             if db is not None:
                 db.add(self)
 
-            if distributed is None:
-                distributed = s.CFG.mode == Mode.Production
-
-            if distributed:
+            if db is not None and db.compute.type == 'distributed':
                 return self.create_fit_job(
                     X,
                     select=select,
                     y=y,
                     **kwargs,
-                )(db=db, distributed=True, dependencies=dependencies)
+                )(db=db, dependencies=dependencies)
             else:
                 return self._fit(
                     X,

@@ -1,4 +1,5 @@
 import typing as t
+import uuid
 
 from superduperdb import logging
 from superduperdb.backends.base.compute import ComputeBackend
@@ -12,24 +13,30 @@ class LocalComputeBackend(ComputeBackend):
     def __init__(
         self,
     ):
-        self.__outputs: t.Dict[str, t.Any] = {}
+        self.__outputs: t.Dict = {}
 
+    @property
+    def type(self) -> str:
+        return "local"
+
+    @property
     def name(self) -> str:
-        return "Local"
+        return "local"
 
-    def submit(self, function: t.Callable, **kwargs) -> None:
+    def submit(self, function: t.Callable, *args, **kwargs) -> str:
         """
         Submits a function for local execution.
 
         :param function: The function to be executed.
-        :param kwargs: Additional keyword arguments to be passed to the function.
         """
         logging.info(f"Submitting job. function:{function}")
-        future = function(**kwargs)
-        self.__outputs[future.key] = future
+        future = function(*args, **kwargs)
 
-        logging.success(f"Job submitted.  function:{function} future:{future}")
-        return future
+        future_key = str(uuid.uuid4())
+        self.__outputs[future_key] = future
+
+        logging.success(f"Job submitted.  function:{function} future:{future_key}")
+        return future_key
 
     def list_all_pending_tasks(self) -> t.Dict[str, t.Any]:
         """

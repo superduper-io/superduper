@@ -6,7 +6,6 @@ import pytest
 from PIL import Image
 
 from superduperdb.backends.mongodb.query import Collection
-from superduperdb.base.config import Mode
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import Model
@@ -100,14 +99,11 @@ def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
 def distributed_db(test_db, local_dask_client):
     from superduperdb import CFG
 
-    CFG.force_set('mode', Mode.Production)
+    CFG.force_set('mode', 'production')
     existing_databackend = CFG.data_backend
     CFG.force_set(
         'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
     )
-
-    # Set Dask as compute engine.
-    # ------------------------------
     test_db.set_compute(local_dask_client)
     test_db.distributed = True
 
@@ -120,13 +116,13 @@ def distributed_db(test_db, local_dask_client):
 
     yield test_db
     test_db.distributed = False
-    CFG.force_set('mode', Mode.Development)
+    test_db._distributed_client = None
+    CFG.force_set('mode', 'development')
     CFG.force_set('data_backend', existing_databackend)
 
 
 def test_advance_setup(distributed_db, image_url):
     db = distributed_db
-
     # Take empty database
 
     image = [
@@ -205,7 +201,6 @@ def test_advance_setup(distributed_db, image_url):
             ),
         )
     )
-    time.sleep(10)
 
     search_phrase = '4'
     _wait_for_keys(

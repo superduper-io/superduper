@@ -232,6 +232,11 @@ const config = {
             position: 'left',
           },
           {
+            href: 'https://www.question-the-docs.superduperdb.com/',
+            label: 'Ask our docs',
+            position: 'left',
+          },
+          {
             href: 'https://github.com/SuperDuperDB/superduperdb',
             // label: 'GitHub',
             position: 'right',

@@ -176,12 +176,6 @@ class JobException(ComponentException):
     '''
 
 
-class DistributedJobException(ComponentException):
-    '''
-    DistributedJobException
-    '''
-
-
 class TaskWorkflowException(ComponentException):
     '''
     TaskWorkflowException

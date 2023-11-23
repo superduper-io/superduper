@@ -24,6 +24,7 @@ class LocalComputeBackend(ComputeBackend):
         :param function: The function to be executed.
         :param kwargs: Additional keyword arguments to be passed to the function.
         """
+        logging.info(f"Submitting job. function:{function}")
         future = function(**kwargs)
         self.__outputs[future.key] = future
 

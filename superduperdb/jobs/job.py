@@ -145,9 +145,7 @@ class FunctionJob(Job):
                 dependencies=dependencies,
             )
         except Exception as e:
-            raise exceptions.DistributedJobException(
-                'Error while submitting job to distributed_client'
-            ) from e
+            raise exceptions.JobException('Error while submitting job') from e
         return
 
     def __call__(
@@ -226,9 +224,7 @@ class ComponentJob(Job):
                 dependencies=dependencies,
             )
         except Exception as e:
-            raise exceptions.DistributedJobException(
-                'Error while submitting job to distributed_client'
-            ) from e
+            raise exceptions.JobException('Error while submitting job') from e
         return
 
     def __call__(

@@ -181,7 +181,8 @@ class Datalayer:
 
     def set_compute(self, new: ComputeBackend):
         """
-        Set a new compute engine
+        Set a new compute engine at runtime. Use it only if you know what you do.
+        The standard procedure is to set compute engine during initialization.
         """
         logging.warn(
             f"Change compute engine from '{self.compute.name()}' to '{new.name()}'"
@@ -513,10 +514,6 @@ class Datalayer:
         try:
             task_workflow.run_jobs(distributed=self.distributed)
         except Exception as e:
-            if self.distributed:
-                raise exceptions.DistributedJobException(
-                    'Error while running job on a distributed platform'
-                ) from e
             raise exceptions.JobException('Error while running job') from e
         return task_workflow
 

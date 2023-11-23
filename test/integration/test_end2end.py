@@ -106,7 +106,8 @@ def distributed_db(test_db, local_dask_client):
         'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
     )
 
-    # Bad hack just to get the
+    # Set Dask as compute engine.
+    # ------------------------------
     test_db.set_compute(local_dask_client)
     test_db.distributed = True
 
@@ -115,7 +116,7 @@ def distributed_db(test_db, local_dask_client):
 
         sys.path.append('./')
 
-    test_db._distributed_client.submit(update_syspath)
+    test_db.get_compute().submit(update_syspath)
 
     yield test_db
     test_db.distributed = False
@@ -204,6 +205,7 @@ def test_advance_setup(distributed_db, image_url):
             ),
         )
     )
+    time.sleep(10)
 
     search_phrase = '4'
     _wait_for_keys(

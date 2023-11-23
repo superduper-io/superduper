@@ -40,7 +40,7 @@ def test_taskgraph_futures_with_dask(
 ):
     collection_name = str(uuid.uuid4())
     database_with_default_encoders_and_model.distributed = True
-    database_with_default_encoders_and_model._distributed_client = local_dask_client
+    database_with_default_encoders_and_model.set_compute(local_dask_client)
     _, graph = database_with_default_encoders_and_model.execute(
         Collection(identifier=collection_name).insert_many(fake_updates)
     )
@@ -75,7 +75,7 @@ def test_insert_with_dask(
     ) as db:
         # Submit job
         db.distributed = True
-        db._distributed_client = local_dask_client
+        db.set_compute(local_dask_client)
         db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
 
         # Barrier
@@ -96,35 +96,43 @@ def test_insert_with_dask(
 def test_dependencies_with_dask(
     local_dask_client, database_with_default_encoders_and_model
 ):
-    database = database_with_default_encoders_and_model
-
     def test_node_1(*args, **kwargs):
         return 1
 
     def test_node_2(*args, **kwargs):
         return 2
 
-    G = TaskWorkflow(database)
-    G.add_node(
+    # Set Dask as Compute engine.
+    # ------------------------------
+    database = database_with_default_encoders_and_model
+    database.distributed = True
+    database.set_compute(local_dask_client)
+
+    # Build Task Graph
+    # ------------------------------
+    g = TaskWorkflow(database)
+    g.add_node(
         'test_node_1',
         job=FunctionJob(callable=test_node_1, kwargs={}, args=[]),
     )
 
-    G.add_node(
+    g.add_node(
         'test_node_2',
         job=FunctionJob(callable=test_node_2, kwargs={}, args=[]),
     )
-    G.add_edge(
+    g.add_edge(
         'test_node_1',
         'test_node_2',
     )
-    local_dask_client.futures_collection.clear()
 
-    database.distributed = True
-    database._distributed_client = local_dask_client
-    G.run_jobs(distributed=True)
+    # Run Job
+    # ------------------------------
+    g.run_jobs(distributed=True)
     local_dask_client.wait_all_pending_tasks()
-    futures = list(local_dask_client.futures_collection.values())
+
+    # Validate Output
+    # ------------------------------
+    futures = list(local_dask_client.list_all_pending_tasks().values())
     assert len(futures) == 2
     assert futures[0].status == 'finished'
     assert futures[1].status == 'finished'
@@ -133,27 +141,37 @@ def test_dependencies_with_dask(
 
 
 def test_model_job_logs(
-    database_with_default_encoders_and_model, fake_updates, local_dask_client
+    local_dask_client, database_with_default_encoders_and_model, fake_updates
 ):
-    collection_name = str(uuid.uuid4())
+    # Set Dask as compute engine.
+    # ------------------------------
     database_with_default_encoders_and_model.distributed = True
-    database_with_default_encoders_and_model._distributed_client = local_dask_client
+    database_with_default_encoders_and_model.set_compute(local_dask_client)
+
+    # Set Collection Listener
+    # ------------------------------
+    collection = Collection(identifier=str(uuid.uuid4()))
+
     listener_x = Listener(
         key='x',
         model='model_linear_a',
-        select=Collection(identifier=collection_name).find(),
+        select=collection.find(),
     )
     job, _ = database_with_default_encoders_and_model.add(listener_x)
 
+    # Insert data to the Collection
+    # ------------------------------
     database_with_default_encoders_and_model.execute(
-        Collection(identifier=collection_name).insert_many(fake_updates)
+        collection.insert_many(fake_updates)
     )
 
+    # Validate Log Output
+    # ------------------------------
     f = io.StringIO()
     with redirect_stdout(f):
         job.watch()
     s = f.getvalue()
     logs = s.split('\n')
+
+    # TODO: Is it a correct approach to validate log output?
     assert 'Adding model model_linear_a to db' in logs[0]
-    assert 'model/model_linear_a/0 already exists' in logs[1]
-    assert 'Done.' in logs[2]

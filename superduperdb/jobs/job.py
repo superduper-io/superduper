@@ -5,6 +5,7 @@ from abc import abstractmethod
 
 import superduperdb as s
 from superduperdb.base import exceptions
+from superduperdb.base.config import Mode
 from superduperdb.jobs.tasks import callable_job, method_job
 
 
@@ -68,11 +69,11 @@ class Job:
         return out
 
     @abstractmethod
-    def run_on_dask(self, client, dependencies=()):
+    def submit(self, compute, dependencies=()):
         """
-        Run the job on a dask cluster.
+        Submit job for execution
 
-        :param client: dask client
+        :param compute: compute engine
         :param dependencies: list of dependencies
         """
         raise NotImplementedError
@@ -125,15 +126,15 @@ class FunctionJob(Job):
         d['cls'] = 'FunctionJob'
         return d
 
-    def run_on_dask(self, client, dependencies=()):
+    def submit(self, compute, dependencies=()):
         """
-        Run the job on a dask cluster.
+        Submit job for execution
 
-        :param client: dask client
+        :param compute: compute engine
         :param dependencies: list of dependencies
         """
         try:
-            self.future = client.submit(
+            self.future = compute.submit(
                 callable_job,
                 cfg=s.CFG,
                 function_to_call=self.callable,
@@ -144,9 +145,7 @@ class FunctionJob(Job):
                 dependencies=dependencies,
             )
         except Exception as e:
-            raise exceptions.DistributedJobException(
-                'Error while submitting job to distributed_client'
-            ) from e
+            raise exceptions.JobException('Error while submitting job') from e
         return
 
     def __call__(
@@ -158,13 +157,14 @@ class FunctionJob(Job):
             db = build_datalayer()
 
         if distributed is None:
-            distributed = s.CFG.mode == 'production'
+            distributed = s.CFG.mode == Mode.Production
         self.db = db
         db.metadata.create_job(self.dict())
+
         if not distributed:
             self.run_locally(db)
         else:
-            self.run_on_dask(client=db.distributed_client, dependencies=dependencies)
+            self.submit(compute=db.get_compute(), dependencies=dependencies)
         return self
 
 
@@ -203,15 +203,15 @@ class ComponentJob(Job):
         self._component = value
         self.callable = getattr(self._component, self.method_name)
 
-    def run_on_dask(self, client, dependencies=()):
+    def submit(self, compute, dependencies=()):
         """
-        Run the job on a dask cluster.
+        Submit job for execution
 
-        :param client: dask client
+        :param compute: compute engine
         :param dependencies: list of dependencies
         """
         try:
-            self.future = client.submit(
+            self.future = compute.submit(
                 method_job,
                 cfg=s.CFG,
                 type_id=self.type_id,
@@ -224,16 +224,14 @@ class ComponentJob(Job):
                 dependencies=dependencies,
             )
         except Exception as e:
-            raise exceptions.DistributedJobException(
-                'Error while submitting job to distributed_client'
-            ) from e
+            raise exceptions.JobException('Error while submitting job') from e
         return
 
     def __call__(
         self, db: t.Any = None, distributed: t.Optional[bool] = None, dependencies=()
     ):
         if distributed is None:
-            distributed = s.CFG.mode == 'production'
+            distributed = s.CFG.mode == Mode.Production
         if db is None:
             from superduperdb.base.build import build_datalayer
 
@@ -246,7 +244,7 @@ class ComponentJob(Job):
         if not distributed:
             self.run_locally(db)
         else:
-            self.run_on_dask(client=db.distributed_client, dependencies=dependencies)
+            self.submit(compute=db.get_compute(), dependencies=dependencies)
         return self
 
     def dict(self):

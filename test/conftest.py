@@ -8,14 +8,22 @@ from typing import Iterator
 
 import pytest
 
+import superduperdb as s
+from superduperdb import CFG, logging
+from superduperdb.backends.mongodb.query import Collection
+
 # ruff: noqa: E402
-from superduperdb.base import config as _config
+from superduperdb.base import config as _config, superduper
+from superduperdb.base.build import build_datalayer
+from superduperdb.base.datalayer import Datalayer
+from superduperdb.base.document import Document
+from superduperdb.components.dataset import Dataset
+from superduperdb.components.listener import Listener
+from superduperdb.components.vector_index import VectorIndex
+from superduperdb.ext.pillow.encoder import pil_image
 
 _config._CONFIG_IMMUTABLE = False
 
-import superduperdb as s
-from superduperdb import logging
-from superduperdb.base import superduper
 
 try:
     import torch
@@ -25,21 +33,10 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb import CFG
-from superduperdb.backends.mongodb.query import Collection
-from superduperdb.base.build import build_datalayer
-from superduperdb.base.datalayer import Datalayer
-from superduperdb.base.document import Document
-from superduperdb.components.dataset import Dataset
-from superduperdb.components.listener import Listener
-from superduperdb.components.vector_index import VectorIndex
-from superduperdb.ext.pillow.encoder import pil_image
-
 GLOBAL_TEST_N_DATA_POINTS = 250
 LOCAL_TEST_N_DATA_POINTS = 5
 
 MONGOMOCK_URI = 'mongomock:///test_db'
-
 
 _sleep = time.sleep
 

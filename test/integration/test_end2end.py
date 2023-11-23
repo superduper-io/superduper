@@ -6,6 +6,7 @@ import pytest
 from PIL import Image
 
 from superduperdb.backends.mongodb.query import Collection
+from superduperdb.base.config import Mode
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import Model
@@ -99,12 +100,12 @@ def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
 def distributed_db(test_db, local_dask_client):
     from superduperdb import CFG
 
-    CFG.force_set('mode', 'production')
+    CFG.force_set('mode', Mode.Production)
     existing_databackend = CFG.data_backend
     CFG.force_set(
         'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
     )
-    test_db._distributed_client = local_dask_client
+    test_db.set_compute(local_dask_client)
     test_db.distributed = True
 
     def update_syspath():
@@ -112,7 +113,7 @@ def distributed_db(test_db, local_dask_client):
 
         sys.path.append('./')
 
-    test_db._distributed_client.submit(update_syspath)
+    test_db.get_compute().submit(update_syspath)
 
     yield test_db
     test_db.distributed = False

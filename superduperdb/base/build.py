@@ -8,10 +8,12 @@ import pymongo
 import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.backends import data_backends, metadata_stores
-from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
+from superduperdb.backends.dask.compute import DaskComputeBackend
+from superduperdb.backends.local.artifacts import FileSystemArtifactStore
+from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
+from superduperdb.base.config import Mode
 from superduperdb.base.datalayer import Datalayer
-from superduperdb.server.dask_client import dask_client
 
 
 def build_artifact_store(cfg):
@@ -30,6 +32,28 @@ def build_artifact_store(cfg):
         raise ValueError(f'Unknown artifact store: {cfg.artifact_store}')
 
 
+# Helper function to build a data backend based on the URI.
+def build(uri, mapping):
+    logging.debug(f"Parsing data connection URI:{uri}")
+
+    if re.match('^mongodb:\/\/|^mongodb\+srv:\/\/', uri) is not None:
+        name = uri.split('/')[-1]
+        conn = pymongo.MongoClient(
+            uri,
+            serverSelectionTimeoutMS=5000,
+        )
+
+        return mapping['mongodb'](conn, name)
+    elif uri.startswith('mongomock://'):
+        name = uri.split('/')[-1]
+        conn = mongomock.MongoClient()
+        return mapping['mongodb'](conn, name)
+    else:
+        name = uri.split('//')[0]
+        conn = ibis.connect(uri)
+        return mapping['ibis'](conn, name)
+
+
 def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     """
     Build a Datalayer object as per ``db = superduper(db)`` from configuration.
@@ -37,6 +61,8 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     :param cfg: Configuration to use. If None, use ``superduperdb.CFG``.
     """
 
+    # Configuration
+    # ------------------------------
     # Use the provided configuration or fall back to the default configuration.
     cfg = cfg or s.CFG
 
@@ -44,28 +70,8 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     for k, v in kwargs.items():
         cfg.force_set(k, v)
 
-    # Helper function to build a data backend based on the URI.
-    def build(uri, mapping):
-        logging.debug(f"Parsing data connection URI:{uri}")
-
-        if re.match('^mongodb:\/\/|^mongodb\+srv:\/\/', uri) is not None:
-            name = uri.split('/')[-1]
-            conn = pymongo.MongoClient(
-                uri,
-                serverSelectionTimeoutMS=5000,
-            )
-
-            return mapping['mongodb'](conn, name)
-        elif uri.startswith('mongomock://'):
-            name = uri.split('/')[-1]
-            conn = mongomock.MongoClient()
-            return mapping['mongodb'](conn, name)
-        else:
-            name = uri.split('//')[0]
-            conn = ibis.connect(uri)
-            return mapping['ibis'](conn, name)
-
     # Connect to data backend.
+    # ------------------------------
     try:
         databackend = build(cfg.data_backend, data_backends)
         logging.info("Data Client is ready.", databackend.conn)
@@ -74,7 +80,8 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         logging.error("Error initializing to DataBackend Client:", str(e))
         sys.exit(1)
 
-    # Build a Datalayer object with the specified components.
+    # Build DataLayer
+    # ------------------------------
     db = Datalayer(
         databackend=databackend,
         metadata=(
@@ -87,14 +94,16 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             if cfg.artifact_store is not None
             else databackend.build_artifact_store()
         ),
-        distributed_client=dask_client(
-            cfg.cluster.dask_scheduler,
-            local=cfg.cluster.local,
-            serializers=cfg.cluster.serializers,
-            deserializers=cfg.cluster.deserializers,
-        )
-        if cfg.mode == 'production'
-        else None,
+        compute=(
+            DaskComputeBackend(
+                cfg.cluster.dask_scheduler,
+                local=cfg.cluster.local,
+                serializers=cfg.cluster.serializers,
+                deserializers=cfg.cluster.deserializers,
+            )
+            if cfg.mode == Mode.Production
+            else LocalComputeBackend()  # Development mode
+        ),
     )
 
     return db

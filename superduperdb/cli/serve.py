@@ -27,14 +27,14 @@ def dask_worker():
 
 @command(help='Start local cluster: server, dask and change data capture')
 def local_cluster(on: t.List[str] = []):
+    from superduperdb.backends.dask.compute import DaskComputeBackend
     from superduperdb.backends.mongodb.query import Collection
     from superduperdb.base.build import build_datalayer
-    from superduperdb.server.dask_client import dask_client
     from superduperdb.server.server import serve
 
     db = build_datalayer()
-    dask_client(
-        uri=s.CFG.cluster.dask_scheduler,
+    DaskComputeBackend(
+        address=s.CFG.cluster.dask_scheduler,
         local=True,
     )
     for collection in on:

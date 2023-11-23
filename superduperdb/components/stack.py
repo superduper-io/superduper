@@ -4,7 +4,7 @@ import os
 import tarfile
 import typing as t
 
-from superduperdb.backends.filesystem.artifacts import FileSystemArtifactStore
+from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.base.serializable import Serializable
 
 from .component import Component

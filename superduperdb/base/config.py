@@ -9,8 +9,6 @@ import os
 import typing as t
 from enum import Enum
 
-from pydantic import Field
-
 from .jsonable import Factory, JSONable
 
 _CONFIG_IMMUTABLE = True
@@ -87,6 +85,14 @@ class LogType(str, Enum):
     LOKI = "LOKI"
 
 
+class Mode(str, Enum):
+    """Enumerate the standard operation modes"""
+
+    Development = "DEVELOPMENT"
+
+    Production = "PRODUCTION"
+
+
 class Config(BaseConfigJSONable):
     """The data class containing all configurable superduperdb values
 
@@ -101,7 +107,7 @@ class Config(BaseConfigJSONable):
     :param downloads_folder: Settings for downloading files
 
     :param fold_probability: The probability of validation fold
-    :param mode: The mode of the application {'development', 'production'}
+    :param mode: The mode of the application {Mode.Development, Mode.Production}
 
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
@@ -122,13 +128,11 @@ class Config(BaseConfigJSONable):
 
     cluster: Cluster = Factory(Cluster)
     retries: Retry = Factory(Retry)
+    mode: Mode = Mode.Development
 
     hybrid_storage: bool = False
     downloads_folder: str = '.superduperdb/downloads'
     fold_probability: float = 0.05
-
-    # mode: development or production
-    mode: str = Field(default='development', pattern='^(development|production)$')
 
     log_level: LogLevel = LogLevel.DEBUG
     logging_type: LogType = LogType.SYSTEM
@@ -138,29 +142,29 @@ class Config(BaseConfigJSONable):
 
     @property
     def comparables(self):
-        '''
+        """
         A dict of `self` excluding some defined attributes.
-        '''
+        """
         _dict = self.dict()
         list(map(_dict.pop, ('cluster', 'retries', 'mode', 'downloads_folder')))
         return _dict
 
     def match(self, cfg: dict):
-        '''
+        """
         Match the target cfg dict with `self` comparables dict.
-        '''
+        """
         self_cfg = self.comparables
         return hash(json.dumps(self_cfg, sort_keys=True)) == hash(
             json.dumps(cfg, sort_keys=True)
         )
 
     def force_set(self, name, value):
-        '''
+        """
         Brings immutable behaviour to `CFG` instance.
 
         CAUTION: Only use it in development mode with caution,
         as this can bring unexpected behaviour.
-        '''
+        """
         parent = self
         names = name.split('.')
         if len(names) > 1:

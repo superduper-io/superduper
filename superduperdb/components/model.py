@@ -20,6 +20,7 @@ from superduperdb.backends.ibis.query import IbisCompoundSelect, Table
 from superduperdb.backends.query_dataset import QueryDataset
 from superduperdb.base import exceptions
 from superduperdb.base.artifact import Artifact
+from superduperdb.base.config import Mode
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component
 from superduperdb.components.dataset import Dataset
@@ -216,10 +217,9 @@ class Predictor:
                 logging.info(f'Adding model {self.identifier} to db')
                 assert isinstance(self, Component)
                 db.add(self)
-                logging.info('Done.')
 
             if distributed is None:
-                distributed = s.CFG.mode == 'production'
+                distributed = s.CFG.mode == Mode.Production
 
             if listen:
                 assert db is not None
@@ -676,7 +676,7 @@ class Model(Component, Predictor):
                 db.add(self)
 
             if distributed is None:
-                distributed = s.CFG.mode == 'production'
+                distributed = s.CFG.mode == Mode.Production
 
             if distributed:
                 return self.create_fit_job(

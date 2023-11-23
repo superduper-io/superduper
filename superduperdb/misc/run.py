@@ -2,8 +2,6 @@ import subprocess
 import typing as t
 from subprocess import PIPE, CalledProcessError
 
-from superduperdb import logging
-
 __all__ = (
     'CalledProcessError',
     'PIPE',
@@ -28,7 +26,7 @@ def run(
     :param **kwargs: Additional arguments to pass to ``subprocess.run``.
     """
     if verbose:
-        logging.info('$', *args)
+        print('$', *args)
     return subprocess.run(args, text=text, check=check, **kwargs)
 
 

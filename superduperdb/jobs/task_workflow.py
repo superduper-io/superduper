@@ -9,6 +9,7 @@ from networkx import DiGraph, ancestors
 
 import superduperdb as s
 from superduperdb.base import exceptions
+from superduperdb.base.config import Mode
 
 from .job import ComponentJob, FunctionJob, Job
 
@@ -48,7 +49,7 @@ class TaskWorkflow:
         :param distributed: if True, use dask to distribute these tasks
         """
         if distributed is None:
-            distributed = s.CFG.mode == 'production'
+            distributed = s.CFG.mode == Mode.Production
         pred = self.G.predecessors
         current_group = [n for n in self.G.nodes if not ancestors(self.G, n)]
         done = set()

@@ -1,8 +1,0 @@
-{
-  "label": "Use cases",
-  "position": 4,
-  "link": {
-    "type": "generated-index",
-    "description": "Common and useful use-cases implemented in SuperDuperDB with a walkthrough"
-  }
-}

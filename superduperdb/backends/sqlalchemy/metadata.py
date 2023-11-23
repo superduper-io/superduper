@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
 from superduperdb import logging
-from superduperdb.backends.base.metadata import MetaDataStore, NonExistentMetadataError
+from superduperdb.backends.base.metadata import MetadataStore, NonExistentMetadataError
 from superduperdb.base import exceptions
 from superduperdb.base.serializable import Serializable
 from superduperdb.misc.colors import Colors
@@ -86,7 +86,7 @@ class Meta(Base, DictMixin):  # type: ignore[valid-type, misc]
     value = Column(String)
 
 
-class SQLAlchemyMetadata(MetaDataStore):
+class SQLAlchemyMetadata(MetadataStore):
     """
     Abstraction for storing meta-data separately from primary data.
 
@@ -383,7 +383,7 @@ class SQLAlchemyMetadata(MetaDataStore):
             with self.session_context() as session:
                 return session.query(Meta).filter(Meta.key == key).first().value
         except Exception as e:
-            raise exceptions.MetadatastoreException(
+            raise exceptions.MetadataStoreException(
                 'Error while getting metadata in metadata store'
             ) from e
 

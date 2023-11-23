@@ -49,9 +49,8 @@ db = superduper(mongodb_uri)
 collection = Collection('questiondocs')
 ```
 
-
 ```python
-db.metadata
+db.metadata_store
 ```
 
 ## Load Dataset 

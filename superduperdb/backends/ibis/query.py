@@ -135,7 +135,7 @@ class IbisCompoundSelect(CompoundSelect):
         if tables is None:
             tables = {}
         if table_id not in tables:
-            tables[table_id] = db.databackend.conn.table(table_id)
+            tables[table_id] = db.data_store.conn.table(table_id)
         return self.query_linker.compile(db, tables=tables)
 
     def get_all_tables(self):
@@ -300,7 +300,7 @@ class IbisCompoundSelect(CompoundSelect):
         for r in table_records:
             if isinstance(r['output'], dict) and '_content' in r['output']:
                 r['output'] = r['output']['_content']['bytes']
-        db.databackend.insert(f'_outputs/{model}/{version}', table_records)
+        db.data_store.insert(f'_outputs/{model}/{version}', table_records)
 
 
 class _LogicalExprMixin:
@@ -492,7 +492,7 @@ class IbisQueryLinker(QueryLinker, _LogicalExprMixin):
         if tables is None:
             tables = {}
         if table_id not in tables:
-            tables = {table_id: db.databackend.conn.table(table_id)}
+            tables = {table_id: db.data_store.conn.table(table_id)}
         result = tables[table_id]
         for member in self.members:
             result, tables = member.compile(parent=result, db=db, tables=tables)
@@ -537,12 +537,12 @@ class Table(Component):
         assert self.schema is not None, "Schema must be set"
         for e in self.schema.encoders:
             db.add(e)
-        if db.databackend.in_memory:
+        if db.data_store.in_memory:
             logging.info(f'Using in-memory tables "{self.identifier}" so doing nothing')
             return
 
         try:
-            db.databackend.create_ibis_table(  # type: ignore[attr-defined]
+            db.data_store.create_ibis_table(  # type: ignore[attr-defined]
                 self.identifier, schema=ibis.schema(self.schema.raw)
             )
         except Exception as e:
@@ -613,7 +613,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         if tables is None:
             tables = {}
         if self.identifier not in tables:
-            tables[self.identifier] = db.databackend.conn.table(self.identifier)
+            tables[self.identifier] = db.data_store.conn.table(self.identifier)
         return tables[self.identifier], tables
 
     def repr_(self):
@@ -712,7 +712,7 @@ class IbisQueryTable(_ReprMixin, TableOrCollection, Select):
         return super()._delete(*args, **kwargs)
 
     def execute(self, db):
-        return db.databackend.conn.table(self.identifier).execute()
+        return db.data_store.conn.table(self.identifier).execute()
 
 
 def _compile_item(item, db, tables):
@@ -828,7 +828,7 @@ class IbisInsert(Insert):
         encoded_documents = self._encode_documents(table=table)
         ids = [r[table.primary_id] for r in encoded_documents]
 
-        db.databackend.insert(
+        db.data_store.insert(
             self.table_or_collection.identifier, raw_documents=encoded_documents
         )
         return ids
@@ -853,6 +853,6 @@ class RawSQL(RawQuery):
     id_field: str = 'id'
 
     def execute(self, db):
-        cursor = db.databackend.conn.raw_sql(self.query).mappings().all()
+        cursor = db.data_store.conn.raw_sql(self.query).mappings().all()
         cursor = _SQLDictIterable(cursor)
         return SuperDuperIbisResult(cursor, id_field=self.id_field)

@@ -34,6 +34,6 @@ def test_sklearn(local_empty_db):
         encoder=tensor(torch.float, shape=(32,)),
     )
     local_empty_db.add(m)
-    assert local_empty_db.metadata.component_collection.count_documents({}) == 2
+    assert local_empty_db.metadata_store.component_collection.count_documents({}) == 2
     reloaded = local_empty_db.load(type_id='model', identifier='test')
     assert isinstance(reloaded.object, Artifact)

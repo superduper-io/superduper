@@ -125,7 +125,7 @@ def test_add_artifact_auto_replace(local_empty_db):
     # Check artifact is automatically replaced to metadata
     artifact = Artifact({'data': 1})
     component = TestComponent(identifier='test', artifact=artifact)
-    with patch.object(local_empty_db.metadata, 'create_component') as create_component:
+    with patch.object(local_empty_db.metadata_store, 'create_component') as create_component:
         local_empty_db.add(component)
         serialized = create_component.call_args[0][0]
         assert serialized['dict']['artifact']['sha1'] == artifact.sha1
@@ -139,7 +139,7 @@ def test_add_child(local_empty_db):
     assert local_empty_db.show('test-component', 'test') == [0]
     assert local_empty_db.show('test-component', 'child') == [0]
 
-    parents = local_empty_db.metadata.get_component_version_parents(
+    parents = local_empty_db.metadata_store.get_component_version_parents(
         child_component.unique_id
     )
     assert parents == [component.unique_id]
@@ -154,7 +154,7 @@ def test_add_child(local_empty_db):
     assert local_empty_db.show('test-component', 'test-2') == [0]
     assert local_empty_db.show('test-component', 'child-2') == [0]
 
-    parents = local_empty_db.metadata.get_component_version_parents(
+    parents = local_empty_db.metadata_store.get_component_version_parents(
         child_component_2.unique_id
     )
     assert parents == [component_2.unique_id]
@@ -203,7 +203,7 @@ def test_remove_component_version(local_empty_db):
 
 
 def test_remove_component_with_parent(local_empty_db):
-    # Can not remove the child component if the parent exists
+    # Cannot remove the child component if the parent exists
     local_empty_db.add(
         TestComponent(
             identifier='test_3_parent',
@@ -244,7 +244,7 @@ def test_remove_component_with_artifact(local_empty_db):
         identifier='test_with_artifact', version=0, artifact=Artifact({'test': 'test'})
     )
     local_empty_db.add(component_with_artifact)
-    info_with_artifact = local_empty_db.metadata.get_component(
+    info_with_artifact = local_empty_db.metadata_store.get_component(
         'test-component', 'test_with_artifact', 0
     )
     artifact_file_id = info_with_artifact['dict']['artifact']['file_id']

@@ -42,7 +42,7 @@ OPENAI_API_KEY = "<your-open-ai-api-key>"
 
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
-CFG.data_backend = ATLAS_URI
+CFG.data_store_uri = ATLAS_URI
 CFG.vector_search = ATLAS_URI
 
 db = build_datalayer()

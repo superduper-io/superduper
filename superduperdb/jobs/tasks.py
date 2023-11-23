@@ -36,7 +36,7 @@ def method_job(
 
     component = db.load(type_id, identifier)
     method = getattr(component, method_name)
-    db.metadata.update_job(job_id, 'status', 'running')
+    db.metadata_store.update_job(job_id, 'status', 'running')
 
     if 'distributed' in inspect.signature(method).parameters:
         kwargs['distributed'] = False
@@ -50,10 +50,10 @@ def method_job(
         )
     except Exception as e:
         tb = traceback.format_exc()
-        db.metadata.update_job(job_id, 'status', 'failed')
-        db.metadata.update_job(job_id, 'msg', tb)
+        db.metadata_store.update_job(job_id, 'status', 'failed')
+        db.metadata_store.update_job(job_id, 'msg', tb)
         raise e
-    db.metadata.update_job(job_id, 'status', 'success')
+    db.metadata_store.update_job(job_id, 'status', 'success')
 
 
 class Logger:
@@ -63,7 +63,7 @@ class Logger:
         self.stream = stream
 
     def write(self, message):
-        self.database.metadata.write_output_to_job(
+        self.database.metadata_store.write_output_to_job(
             self.id_, message, stream=self.stream
         )
 
@@ -91,7 +91,7 @@ def callable_job(
     CFG = build_config(cfg)
     CFG.force_set('mode', Mode.Development)
     db = build_datalayer(CFG)
-    db.metadata.update_job(job_id, 'status', 'running')
+    db.metadata_store.update_job(job_id, 'status', 'running')
     output = None
     if 'distributed' in inspect.signature(function_to_call).parameters:
         kwargs['distributed'] = False
@@ -105,9 +105,9 @@ def callable_job(
         )
     except Exception as e:
         tb = traceback.format_exc()
-        db.metadata.update_job(job_id, 'status', 'failed')
-        db.metadata.update_job(job_id, 'msg', tb)
+        db.metadata_store.update_job(job_id, 'status', 'failed')
+        db.metadata_store.update_job(job_id, 'msg', tb)
         raise e
     else:
-        db.metadata.update_job(job_id, 'status', 'success')
+        db.metadata_store.update_job(job_id, 'status', 'success')
     return output

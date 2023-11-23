@@ -112,13 +112,13 @@ class BaseDatabaseListener(ABC):
         from superduperdb.backends.base import backends
         from superduperdb.backends.mongodb.cdc.base import MongoDBPacket
 
-        if isinstance(self.db.databackend, backends.MongoDataBackend):
+        if isinstance(self.db.data_store, backends.MongoDataStore):
             self.db_type = 'mongodb'
             self.packet = lambda ids, query, event_type: MongoDBPacket(
                 ids, query, event_type
             )
         else:
-            raise NotImplementedError(f'{self.db.databackend} not supported yet!')
+            raise NotImplementedError(f'{self.db.data_store} not supported yet!')
 
     @property
     def identity(self) -> str:
@@ -372,10 +372,10 @@ class DatabaseChangeDataCapture:
         """
         from superduperdb.backends.base import backends
 
-        if isinstance(self.db.databackend, backends.MongoDataBackend):
+        if isinstance(self.db.data_store, backends.MongoDataStore):
             db_type = 'mongodb'
         else:
-            raise NotImplementedError(f'{self.db.databackend} not supported yet!')
+            raise NotImplementedError(f'{self.db.data_store} not supported yet!')
 
         if not self.cdc_change_handler:
             cdc_change_handler = CDCHandler(

@@ -47,9 +47,8 @@ db = superduper(mongodb_uri, artifact_store='filesystem://./data/')
 doc_collection = Collection('documents')
 ```
 
-
 ```python
-db.metadata
+db.metadata_store
 ```
 
 ## Load Dataset 

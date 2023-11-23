@@ -362,20 +362,20 @@ def download_content(
 
     if n_download_workers is None:
         try:
-            n_download_workers = db.metadata.get_metadata(key='n_download_workers')
-        except exceptions.MetadatastoreException:
+            n_download_workers = db.metadata_store.get_metadata(key='n_download_workers')
+        except exceptions.MetadataStoreException:
             n_download_workers = 0
 
     if headers is None:
         try:
-            headers = db.metadata.get_metadata(key='headers')
-        except exceptions.MetadatastoreException:
+            headers = db.metadata_store.get_metadata(key='headers')
+        except exceptions.MetadataStoreException:
             pass
 
     if timeout is None:
         try:
-            timeout = db.metadata.get_metadata(key='download_timeout')
-        except exceptions.MetadatastoreException:
+            timeout = db.metadata_store.get_metadata(key='download_timeout')
+        except exceptions.MetadataStoreException:
             pass
 
     if CFG.hybrid_storage:

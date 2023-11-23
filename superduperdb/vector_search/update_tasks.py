@@ -30,7 +30,7 @@ def copy_vectors(
 ):
     """
     A helper fxn to copy vectors of a ``VectorIndex`` component
-    from the databackend to the fast_vector_search backend.
+    from the data_store to the fast_vector_search backend.
 
     :param vector-index: A identifier of the vector-index.
     :param query: A query which was used by `db._build_task_workflow` method

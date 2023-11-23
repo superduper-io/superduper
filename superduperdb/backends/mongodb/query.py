@@ -280,7 +280,7 @@ class Aggregate(Select):
         return pipeline
 
     def execute(self, db):
-        collection = db.databackend.get_table_or_collection(
+        collection = db.data_store.get_table_or_collection(
             self.table_or_collection.identifier
         )
         cursor = collection.aggregate(
@@ -377,7 +377,7 @@ class MongoCompoundSelect(CompoundSelect):
         if self.collection is None:
             raise ValueError('collection cannot be None')
         update = {'$set': {f'{key}._content.bytes': bytes}}
-        collection = db.databackend.get_table_or_collection(
+        collection = db.data_store.get_table_or_collection(
             self.table_or_collection.identifier
         )
         return collection.update_one({'_id': id}, update)
@@ -477,7 +477,7 @@ class MongoQueryLinker(QueryLinker):
         )
 
     def execute(self, db):
-        parent = db.databackend.get_table_or_collection(
+        parent = db.data_store.get_table_or_collection(
             self.table_or_collection.identifier
         )
         for member in self.members:
@@ -490,7 +490,7 @@ class MongoInsert(Insert):
     one: bool = False
 
     def execute(self, db):
-        collection = db.databackend.get_table_or_collection(
+        collection = db.data_store.get_table_or_collection(
             self.table_or_collection.identifier
         )
         documents = [r.encode() for r in self.documents]
@@ -511,7 +511,7 @@ class MongoDelete(Delete):
         return self.table_or_collection
 
     def execute(self, db):
-        collection = db.databackend.get_table_or_collection(
+        collection = db.data_store.get_table_or_collection(
             self.table_or_collection.identifier
         )
         if self.one:
@@ -533,7 +533,7 @@ class MongoUpdate(Update):
         return self.table_or_collection.find()
 
     def execute(self, db):
-        collection = db.databackend.get_table_or_collection(
+        collection = db.data_store.get_table_or_collection(
             self.table_or_collection.identifier
         )
 
@@ -567,7 +567,7 @@ class MongoReplaceOne(Update):
         return self.table_or_collection.find()
 
     def execute(self, db):
-        collection = db.databackend.get_table_or_collection(
+        collection = db.data_store.get_table_or_collection(
             self.table_or_collection.identifier
         )
 
@@ -594,7 +594,7 @@ class ChangeStream:
     kwargs: t.Dict = dc.field(default_factory=dict)
 
     def __call__(self, db):
-        collection = db.databackend.get_table_or_collection(self.collection)
+        collection = db.data_store.get_table_or_collection(self.collection)
         return collection.watch(**self.kwargs)
 
 
@@ -604,7 +604,7 @@ class Collection(TableOrCollection):
     primary_id: t.ClassVar[str] = '_id'
 
     def get_table(self, db):
-        collection = db.databackend.get_table_or_collection(self.collection.identifier)
+        collection = db.data_store.get_table_or_collection(self.collection.identifier)
         return collection
 
     def change_stream(self, *args, **kwargs):
@@ -682,7 +682,7 @@ class Collection(TableOrCollection):
         return self._insert([document], *args, **kwargs)
 
     def like(self, r: Document, vector_index: str, n: int = 10):
-        if CFG.data_backend != CFG.vector_search:
+        if CFG.data_store_uri != CFG.vector_search:
             return super().like(r=r, n=n, vector_index=vector_index)
         else:
 
@@ -741,7 +741,7 @@ class Collection(TableOrCollection):
                     'Please use `document_embedded = False` option with flatten = True'
                 )
             assert self.collection is not None
-            collection = db.databackend.get_table_or_collection(self.identifier)
+            collection = db.data_store.get_table_or_collection(self.identifier)
             collection.bulk_write(
                 [
                     _UpdateOne(
@@ -794,5 +794,5 @@ class Collection(TableOrCollection):
                 ]
 
             collection_name = f'_outputs.{key}.{model}'
-            collection = db.databackend.get_table_or_collection(collection_name)
+            collection = db.data_store.get_table_or_collection(collection_name)
             collection.bulk_write(bulk_docs)

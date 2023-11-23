@@ -104,5 +104,5 @@ Updates are not covered for `superduperdb` SQL integrations.
 ## Deleting data
 
 ```python
-db.databackend.drop_table('my-table')
+db.data_store.drop_table('my-table')
 ```

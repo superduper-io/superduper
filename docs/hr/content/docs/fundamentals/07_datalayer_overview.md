@@ -17,13 +17,13 @@ from superduperdb import superduper
 
 db = superduper()
 
-db.databackend
-# <superduperdb.backends.mongodb.data_backend.MongoDataBackend at 0x1562815d0>
+db.data_store
+# <superduperdb.backends.mongodb.data_store_uri.MongoDataBackend at 0x1562815d0>
 
 db.artifact_store
 # <superduperdb.backends.mongodb.artifacts.MongoArtifactStore at 0x156869f50>
 
-db.metadata
+db.metadata_store
 # <superduperdb.backends.mongodb.metadata.MongoMetaDataStore at 0x156866a10>
 ```
 
@@ -89,7 +89,7 @@ related components are kept:
 Similarly to the databackend and artifact store, the metadata store is configurable:
 
 ```python
-CFG.metadata = 'mongodb://localhost:27017/documents'
+CFG.metadata_store = 'mongodb://localhost:27017/documents'
 ```
 
 We support metadata store via:

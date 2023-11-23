@@ -37,7 +37,7 @@ services:
     volumes:
       - ../../:/home/superduper/superduperdb # mount the project path
     environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+      SUPERDUPERDB_DATA_STORE_URI: 'mongodb://superduper:superduper@mongodb:27017/test_db'
     command:
       - /bin/sh
       - -c
@@ -71,7 +71,7 @@ services:
     volumes:
       - ../../:/home/superduper/superduperdb # mount the project path
     environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+      SUPERDUPERDB_DATA_STORE_URI: 'mongodb://superduper:superduper@mongodb:27017/test_db'
     command:
       - /bin/sh
       - -c
@@ -106,7 +106,7 @@ services:
     volumes:
       - ../../:/home/superduper/superduperdb # mount the project path
     environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+      SUPERDUPERDB_DATA_STORE_URI: 'mongodb://superduper:superduper@mongodb:27017/test_db'
     command:
       - /bin/sh
       - -c
@@ -120,7 +120,7 @@ services:
     volumes:
       - ../../:/home/superduper/superduperdb # mount the project path
     environment:
-      SUPERDUPERDB_DATA_BACKEND: 'mongodb://superduper:superduper@mongodb:27017/test_db'
+      SUPERDUPERDB_DATA_STORE_URI: 'mongodb://superduper:superduper@mongodb:27017/test_db'
     command:
       - /bin/sh
       - -c

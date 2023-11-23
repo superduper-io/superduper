@@ -66,7 +66,7 @@ def _wait_for_keys(db, collection='_outputs.int.model1', n=10, key=''):
     retry_left = 5
 
     def check_outputs():
-        docs = list(db.databackend.db[collection].find({}))
+        docs = list(db.data_store.db[collection].find({}))
         p = 0
         for d in docs:
             try:
@@ -87,7 +87,7 @@ def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
     retry_left = 5
 
     def check_outputs():
-        docs = list(db.databackend.db[collection].find({}))
+        docs = list(db.data_store.db[collection].find({}))
         return docs
 
     while not len(check_outputs()) >= n and retry_left != 0:
@@ -100,14 +100,18 @@ def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
 def distributed_db(test_db, local_dask_client):
     from superduperdb import CFG
 
+    # Set Mongo as current Datastore
+    # ------------------------------
     CFG.force_set('mode', Mode.Production)
-    existing_databackend = CFG.data_backend
+    data_store_uri = CFG.data_store_uri
     CFG.force_set(
-        'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
+        'data_store_uri', 'mongodb://superduper:superduper@mongodb:27017/test_db'
     )
     test_db.set_compute(local_dask_client)
     test_db.distributed = True
 
+    # Submit Job
+    # ------------------------------
     def update_syspath():
         import sys
 
@@ -116,10 +120,13 @@ def distributed_db(test_db, local_dask_client):
     test_db.get_compute().submit(update_syspath)
 
     yield test_db
+
+    # Replace default Datastore
+    # ------------------------------
     test_db.distributed = False
     test_db._distributed_client = None
-    CFG.force_set('mode', 'development')
-    CFG.force_set('data_backend', existing_databackend)
+    CFG.force_set('mode', Mode.Development)
+    CFG.force_set('data_store_uri', data_store_uri)
 
 
 def test_advance_setup(distributed_db, image_url):

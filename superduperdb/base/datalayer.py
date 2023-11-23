@@ -14,8 +14,8 @@ from superduperdb import logging
 from superduperdb.backends.base.artifact import ArtifactStore
 from superduperdb.backends.base.backends import vector_searcher_implementations
 from superduperdb.backends.base.compute import ComputeBackend
-from superduperdb.backends.base.data_backend import BaseDataBackend
-from superduperdb.backends.base.metadata import MetaDataStore
+from superduperdb.backends.base.data import DataStore
+from superduperdb.backends.base.metadata import MetadataStore
 from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, Update
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.local.compute import LocalComputeBackend
@@ -66,19 +66,29 @@ class Datalayer:
 
     def __init__(
         self,
-        databackend: BaseDataBackend,
-        metadata: MetaDataStore,
+        data_store: DataStore,
+        metadata_store: MetadataStore,
         artifact_store: ArtifactStore,
         compute: ComputeBackend = LocalComputeBackend(),
     ):
         """
-        :param databackend: object containing connection to Datastore
-        :param metadata: object containing connection to Metadatastore
+        :param data_store: object containing connection to Datastore
+        :param metadata_store: object containing connection to Metadatastore
         :param artifact_store: object containing connection to Artifactstore
         :param compute: object containing connection to ComputeBackend
         """
         logging.info("Building Data Layer")
 
+        # Set User-Defined Parameters
+        # ------------------------------
+        self.data_store = data_store
+        self.metadata_store = metadata_store
+        self.artifact_store = artifact_store
+        self.compute = compute
+
+        # Set Derivative Parameters
+        # ------------------------------
+        self.cdc = DatabaseChangeDataCapture(self)
         self.metrics = LoadDict(self, field='metric')
         self.models = LoadDict(self, field='model')
         self.encoders = LoadDict(self, field='encoder')
@@ -86,15 +96,8 @@ class Datalayer:
         self.fast_vector_searchers = LoadDict(
             self, callable=self.initialize_vector_searcher
         )
+
         self.distributed = s.CFG.mode == Mode.Production
-        self.metadata = metadata
-        self.artifact_store = artifact_store
-        self.databackend = databackend
-        # TODO: force set config stores connection url
-
-        self.cdc = DatabaseChangeDataCapture(self)
-
-        self.compute = compute
         self._server_mode = False
 
     @property
@@ -169,7 +172,7 @@ class Datalayer:
                 if key.startswith('_outputs.'):
                     key = key.split('.')[1]
 
-                id = record[self.databackend.id_field]
+                id = record[self.data_store.id_field]
                 assert not isinstance(vi.indexing_listener.model, str)
                 h = record.outputs(key, vi.indexing_listener.model.identifier)
                 if isinstance(h, Encodable):
@@ -212,13 +215,13 @@ class Datalayer:
             logging.warn('Aborting...')
 
         try:
-            self.databackend.drop(force=True)
+            self.data_store.drop(force=True)
         except Exception as e:
-            raise exceptions.DatabackendException('Failed to drop data backend') from e
+            raise exceptions.DataStoreException('Failed to drop data backend') from e
         try:
-            self.metadata.drop(force=True)
+            self.metadata_store.drop(force=True)
         except Exception as e:
-            raise exceptions.MetadatastoreException(
+            raise exceptions.MetadataStoreException(
                 'Failed to drop metadata store'
             ) from e
         try:
@@ -273,10 +276,10 @@ class Datalayer:
             raise ValueError(f'must specify {identifier} to go with {version}')
 
         if identifier is None:
-            return self.metadata.show_components(type_id=type_id)
+            return self.metadata_store.show_components(type_id=type_id)
 
         if version is None:
-            return self.metadata.show_component_versions(
+            return self.metadata_store.show_component_versions(
                 type_id=type_id, identifier=identifier
             )
 
@@ -581,10 +584,10 @@ class Datalayer:
             return self._remove_component_version(
                 type_id, identifier, version=version, force=force
             )
-        versions = self.metadata.show_component_versions(type_id, identifier)
+        versions = self.metadata_store.show_component_versions(type_id, identifier)
         versions_in_use = []
         for v in versions:
-            if self.metadata.component_version_has_parents(type_id, identifier, v):
+            if self.metadata_store.component_version_has_parents(type_id, identifier, v):
                 versions_in_use.append(v)
 
         if versions_in_use:
@@ -593,7 +596,7 @@ class Datalayer:
                 unique_id = Component.make_unique_id(type_id, identifier, v)
                 component_versions_in_use.append(
                     f"{unique_id} -> "
-                    f"{self.metadata.get_component_version_parents(unique_id)}",
+                    f"{self.metadata_store.get_component_version_parents(unique_id)}",
                 )
             if not force:
                 raise exceptions.ComponentInUseError(
@@ -615,7 +618,7 @@ class Datalayer:
                 self._remove_component_version(type_id, identifier, v, force=True)
 
             for v in sorted(versions_in_use):
-                self.metadata.hide_component_version(type_id, identifier, v)
+                self.metadata_store.hide_component_version(type_id, identifier, v)
         else:
             logging.warn('aborting.')
 
@@ -639,7 +642,7 @@ class Datalayer:
         :param info_only: toggle to ``True`` to return metadata only
         """
         try:
-            info = self.metadata.get_component(
+            info = self.metadata_store.get_component(
                 type_id=type_id,
                 identifier=identifier,
                 version=version,
@@ -667,7 +670,7 @@ class Datalayer:
                     children = get_children(r)
                     for k, v in children.items():
                         r['dict'][k] = replace_children(
-                            self.metadata.get_component(**v, allow_hidden=True)
+                            self.metadata_store.get_component(**v, allow_hidden=True)
                         )
                 return r
 
@@ -762,7 +765,7 @@ class Datalayer:
         listener_selects = {}
 
         for identifier in listeners:
-            info = self.metadata.get_component('listener', identifier)
+            info = self.metadata_store.get_component('listener', identifier)
             listener_query = info['dict']['select']
 
             listener_select = serializable.Serializable.deserialize(listener_query)
@@ -909,9 +912,9 @@ class Datalayer:
                 serialized['dict']['version'] = object.version
 
             self._create_children(object, serialized)
-            self.metadata.create_component(serialized)
+            self.metadata_store.create_component(serialized)
             if parent is not None:
-                self.metadata.create_parent_child(parent, object.unique_id)
+                self.metadata_store.create_parent_child(parent, object.unique_id)
 
             object.post_create(self)
             object.on_load(self)
@@ -932,9 +935,9 @@ class Datalayer:
                 serialized_dict = {
                     'type_id': child_type_id,
                     'identifier': child,
-                    'version': self.metadata.get_latest_version(child_type_id, child),
+                    'version': self.metadata_store.get_latest_version(child_type_id, child),
                 }
-                self.metadata.create_parent_child(
+                self.metadata_store.create_parent_child(
                     component.unique_id, Component.make_unique_id(**serialized_dict)
                 )
             else:
@@ -952,9 +955,9 @@ class Datalayer:
 
     def _create_plan(self):
         G = networkx.DiGraph()
-        for identifier in self.metadata.show_components('listener', active=True):
+        for identifier in self.metadata_store.show_components('listener', active=True):
             G.add_node('listener', job=identifier)
-        for identifier in self.metadata.show_components('listener'):
+        for identifier in self.metadata_store.show_components('listener'):
             deps = self._get_dependencies_for_listener(identifier)
             for dep in deps:
                 G.add_edge(('listener', dep), ('listener', identifier))
@@ -973,8 +976,8 @@ class Datalayer:
         force: bool = False,
     ):
         unique_id = Component.make_unique_id(type_id, identifier, version)
-        if self.metadata.component_version_has_parents(type_id, identifier, version):
-            parents = self.metadata.get_component_version_parents(unique_id)
+        if self.metadata_store.component_version_has_parents(type_id, identifier, version):
+            parents = self.metadata_store.get_component_version_parents(unique_id)
             raise Exception(f'{unique_id} is involved in other components: {parents}')
 
         if force or click.confirm(
@@ -982,7 +985,7 @@ class Datalayer:
             default=False,
         ):
             component = self.load(type_id, identifier, version=version)
-            info = self.metadata.get_component(type_id, identifier, version=version)
+            info = self.metadata_store.get_component(type_id, identifier, version=version)
             if hasattr(component, 'cleanup'):
                 component.cleanup(self)
             if type_id in self.type_id_to_cache_mapping:
@@ -996,7 +999,7 @@ class Datalayer:
             if hasattr(component, 'artifact_attributes'):
                 for a in component.artifact_attributes:
                     self.artifact_store.delete(info['dict'][a]['file_id'])
-            self.metadata.delete_component_version(type_id, identifier, version=version)
+            self.metadata_store.delete_component_version(type_id, identifier, version=version)
 
     def _download_content(  # TODO: duplicated function
         self,
@@ -1034,7 +1037,7 @@ class Datalayer:
 
         if n_download_workers is None:
             try:
-                n_download_workers = self.metadata.get_metadata(
+                n_download_workers = self.metadata_store.get_metadata(
                     key='n_download_workers'
                 )
             except TypeError:
@@ -1042,13 +1045,13 @@ class Datalayer:
 
         if headers is None:
             try:
-                headers = self.metadata.get_metadata(key='headers')
+                headers = self.metadata_store.get_metadata(key='headers')
             except TypeError:
                 headers = 0
 
         if timeout is None:
             try:
-                timeout = self.metadata.get_metadata(key='download_timeout')
+                timeout = self.metadata_store.get_metadata(key='download_timeout')
             except TypeError:
                 timeout = None
 
@@ -1069,7 +1072,7 @@ class Datalayer:
         if update_db:
             return
         for id_, key in zip(place_ids, keys):
-            documents[id_] = self.databackend.set_content_bytes(
+            documents[id_] = self.data_store.set_content_bytes(
                 documents[id_], key, downloader.results[id_]  # type: ignore[index]
             )
         return documents
@@ -1090,7 +1093,7 @@ class Datalayer:
         return filter
 
     def _get_dependencies_for_listener(self, identifier):
-        info = self.metadata.get_component('listener', identifier)
+        info = self.metadata_store.get_component('listener', identifier)
         if info is None:
             return []
         out = []
@@ -1106,7 +1109,7 @@ class Datalayer:
         return r
 
     def _get_object_info(self, identifier, type_id, version=None):
-        return self.metadata.get_component(type_id, identifier, version=version)
+        return self.metadata_store.get_component(type_id, identifier, version=version)
 
     def _apply_listener(
         self,
@@ -1121,7 +1124,7 @@ class Datalayer:
     ) -> t.List:
         # NOTE: this method is never called anywhere except for itself!
         if listener_info is None:
-            listener_info = self.metadata.get_component('listener', identifier)
+            listener_info = self.metadata_store.get_component('listener', identifier)
 
         select = serializable.Serializable.deserialize(listener_info['select'])
         if ids is None:
@@ -1151,7 +1154,7 @@ class Datalayer:
                 )
             return []
 
-        model_info = self.metadata.get_component('model', listener_info['model'])
+        model_info = self.metadata_store.get_component('model', listener_info['model'])
         outputs = self._compute_model_outputs(
             model_info,
             ids,
@@ -1187,7 +1190,7 @@ class Datalayer:
         """
         try:
             try:
-                info = self.metadata.get_component(
+                info = self.metadata_store.get_component(
                     object.type_id, object.identifier, version=object.version
                 )
             except FileNotFoundError as e:
@@ -1200,7 +1203,7 @@ class Datalayer:
             # If object has no version, update the last version
             object.version = info['version']
             new_info = self.artifact_store.update(object, metadata_info=info)
-            self.metadata.replace_object(
+            self.metadata_store.replace_object(
                 new_info,
                 identifier=object.identifier,
                 type_id='model',

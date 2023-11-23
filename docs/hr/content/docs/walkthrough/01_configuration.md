@@ -22,15 +22,15 @@ Here are the configurable settings and their project defaults
 # URI of your database
 # All URIs are of the form:
 # <db_prefix>://<user-and-password-and-host-info>/<database-name>
-data_backend: mongodb://localhost:27017/documents
+data_store_uri: mongodb://localhost:27017/documents
 
-# in_memory/ lance/ or CFG.data_backend vector-comparison implementation
+# in_memory/ lance/ or CFG.data_store_uri vector-comparison implementation
 vector_search: in_memory
 
-# URI of your artifact store (defaults to `data_backend`)
+# URI of your artifact store (defaults to `data_store_uri`)
 artifact_store: null
 
-# URI of your metadata store (defaults to `data_backend`)
+# URI of your metadata store (defaults to `data_store_uri`)
 metadata_store: null
 
 # Probability of new data assigned to "valid"
@@ -53,13 +53,13 @@ In Python
 ```python
 from superduperdb import CFG
 
-CFG.data_backend = 'mongodb://localhost:27018/documents
+CFG.data_store_uri = 'mongodb://localhost:27018/documents
 ```
 
 ... or
 
 ```bash
-$ export SUPERDUPERDB_DATA_BACKEND='mongodb://localhost:27018/documents'
+$ export SUPERDUPERDB_DATA_STORE_URI='mongodb://localhost:27018/documents'
 $ python -c 'import superduperdb; print(superduperdb.CFG.databackend)'
 mongodb://localhost:27018/documents
 ```

@@ -54,7 +54,7 @@ class Job:
         """
         Watch the stdout of the job.
         """
-        return self.db.metadata.watch_job(identifier=self.identifier)
+        return self.db.metadata_store.watch_job(identifier=self.identifier)
 
     def run_locally(self, db):
         """
@@ -62,9 +62,9 @@ class Job:
         """
         try:
             out = self.callable(*self.args, db=db, **self.kwargs)
-            db.metadata.update_job(self.identifier, 'status', 'success')
+            db.metadata_store.update_job(self.identifier, 'status', 'success')
         except Exception as e:
-            db.metadata.update_job(self.identifier, 'status', 'failed')
+            db.metadata_store.update_job(self.identifier, 'status', 'failed')
             raise exceptions.JobException('Error while running local job') from e
         return out
 
@@ -159,7 +159,7 @@ class FunctionJob(Job):
         if distributed is None:
             distributed = s.CFG.mode == Mode.Production
         self.db = db
-        db.metadata.create_job(self.dict())
+        db.metadata_store.create_job(self.dict())
 
         if not distributed:
             self.run_locally(db)
@@ -238,7 +238,7 @@ class ComponentJob(Job):
             db = build_datalayer()
 
         self.db = db
-        db.metadata.create_job(self.dict())
+        db.metadata_store.create_job(self.dict())
         if self.component is None:
             self.component = db.load(self.type_id, self.component_identifier)
         if not distributed:

@@ -7,15 +7,15 @@ import click
 import pymongo
 
 from superduperdb import logging
-from superduperdb.backends.base.data_backend import BaseDataBackend
+from superduperdb.backends.base.data import DataStore
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
-from superduperdb.backends.mongodb.metadata import MongoMetaDataStore
+from superduperdb.backends.mongodb.metadata import MongoMetadataStore
 from superduperdb.base.serializable import Serializable
 from superduperdb.misc.colors import Colors
 from superduperdb.misc.special_dicts import MongoStyleDict
 
 
-class MongoDataBackend(BaseDataBackend):
+class MongoDataStore(DataStore):
     """
     Data backend for MongoDB.
 
@@ -37,7 +37,7 @@ class MongoDataBackend(BaseDataBackend):
         return self._db
 
     def build_metadata(self):
-        return MongoMetaDataStore(self.conn, self.name)
+        return MongoMetadataStore(self.conn, self.name)
 
     def build_artifact_store(self):
         from mongomock import MongoClient as MockClient

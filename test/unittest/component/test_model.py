@@ -268,8 +268,9 @@ def test_pm_predict_with_select(predict_mixin):
 
     db = MagicMock(spec=Datalayer)
     db.execute.side_effect = return_value
-    db.databackend = MagicMock()
-    db.databackend.id_field = 'id_field'
+
+    db.data_store = MagicMock()
+    db.data_store.id_field = 'id_field'
 
     # overwrite = True
     with patch.object(predict_mixin, '_predict_with_select_and_ids') as mock_predict:
@@ -412,7 +413,7 @@ def test_model_child_components():
 
 def test_model_on_create():
     db = MagicMock(spec=Datalayer)
-    db.databackend = MagicMock()
+    db.data_store = MagicMock()
 
     # Check the encoder is loaded if encoder is string
     model = Model('test', object(), encoder='test_encoder')
@@ -423,7 +424,7 @@ def test_model_on_create():
     # Check the output_component table is added by datalayer
     model = Model('test', object(), encoder=Encoder(identifier='test'))
     output_component = MagicMock()
-    db.databackend.create_model_table_or_collection.return_value = output_component
+    db.data_store.create_model_table_or_collection.return_value = output_component
     with patch.object(db, 'add') as db_load:
         model.post_create(db)
         db_load.assert_called_with(output_component)
@@ -447,7 +448,7 @@ def test_model_append_metrics():
 
 @patch.object(Model, '_validate')
 def test_model_validate(mock_validate):
-    # Check the metadadata recieves the correct values
+    # Check the metadata receives the correct values
     mock_validate.return_value = {'acc': 0.5, 'loss': 0.5}
     model = Model('test', object())
     db = MagicMock(spec=Datalayer)

@@ -96,9 +96,9 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
     from superduperdb.base.build import build_datalayer
 
     db_name = "test_db"
-    data_backend = f'mongodb://superduper:superduper@localhost:27017/{db_name}'
+    data_store_uri = f'mongodb://superduper:superduper@localhost:27017/{db_name}'
 
-    monkeypatch.setattr(CFG, 'data_backend', data_backend)
+    monkeypatch.setattr(CFG, 'data_store_uri', data_store_uri)
 
     db = build_datalayer(CFG)
 
@@ -106,8 +106,8 @@ def test_db(monkeypatch, request) -> Iterator[Datalayer]:
 
     logging.info("Dropping database ", {db_name})
 
-    db.databackend.conn.drop_database(db_name)
-    db.databackend.conn.drop_database(f'_filesystem:{db_name}')
+    db.data_store.conn.drop_database(db_name)
+    db.data_store.conn.drop_database(f'_filesystem:{db_name}')
 
 
 @pytest.fixture
@@ -215,14 +215,14 @@ def setup_db(db, **kwargs):
 
 @pytest.fixture(scope='session')
 def db() -> Datalayer:
-    db = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
+    db = build_datalayer(CFG, data_store_uri=MONGOMOCK_URI)
     setup_db(db)
     return db
 
 
 @pytest.fixture
 def local_db(request) -> Datalayer:
-    db = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
+    db = build_datalayer(CFG, data_store_uri=MONGOMOCK_URI)
     setup_config = getattr(request, 'param', {'n_data': LOCAL_TEST_N_DATA_POINTS})
     setup_db(db, **setup_config)
     return db
@@ -230,5 +230,5 @@ def local_db(request) -> Datalayer:
 
 @pytest.fixture
 def local_empty_db(request) -> Datalayer:
-    db = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
+    db = build_datalayer(CFG, data_store_uri=MONGOMOCK_URI)
     return db

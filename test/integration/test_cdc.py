@@ -129,7 +129,7 @@ def test_task_workflow(
         )
 
         def state_check():
-            doc = database_with_listeners.databackend.get_table_or_collection(
+            doc = database_with_listeners.data_store.get_table_or_collection(
                 name
             ).find_one({'_id': inserted_ids[0]})
             assert '_outputs' in list(doc.keys())
@@ -139,7 +139,7 @@ def test_task_workflow(
         # state_check_2 can't be merged with state_check because the
         # '_outputs' key needs to be present in 'doc'
         def state_check_2():
-            doc = database_with_listeners.databackend.get_table_or_collection(
+            doc = database_with_listeners.data_store.get_table_or_collection(
                 name
             ).find_one({'_id': inserted_ids[0]})
             state = []

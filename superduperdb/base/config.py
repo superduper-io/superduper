@@ -16,9 +16,9 @@ _CONFIG_IMMUTABLE = True
 
 class BaseConfigJSONable(JSONable):
     def force_set(self, name, value):
-        '''
+        """
         Forcefully setattr of BaseConfigJSONable instance
-        '''
+        """
         super().__setattr__(name, value)
 
     def __setattr__(self, name, value):
@@ -33,7 +33,8 @@ class BaseConfigJSONable(JSONable):
 
 
 class Retry(BaseConfigJSONable):
-    """Describes how to retry using the `tenacity` library
+    """
+    Describes how to retry using the `tenacity` library
 
     :param stop_after_attempt: The number of attempts to make
     :param wait_max: The maximum time to wait between attempts
@@ -48,7 +49,8 @@ class Retry(BaseConfigJSONable):
 
 
 class Cluster(BaseConfigJSONable):
-    """Describes a connection to distributed work via Dask
+    """
+    Describes a connection to distributed work via Dask
 
     :param dask_scheduler: The Dask scheduler URI
     :param backfill_batch_size: The number of rows to backfill at a time
@@ -64,7 +66,9 @@ class Cluster(BaseConfigJSONable):
 
 
 class LogLevel(str, Enum):
-    """Enumerate log severity level"""
+    """
+    Enumerate log severity level
+    """
 
     DEBUG = 'DEBUG'
     INFO = 'INFO'
@@ -86,7 +90,9 @@ class LogType(str, Enum):
 
 
 class Mode(str, Enum):
-    """Enumerate the standard operation modes"""
+    """
+    Enumerate the standard operation modes
+    """
 
     Development = "DEVELOPMENT"
 
@@ -94,9 +100,10 @@ class Mode(str, Enum):
 
 
 class Config(BaseConfigJSONable):
-    """The data class containing all configurable superduperdb values
+    """
+    The data class containing all configurable superduperdb values
 
-    :param data_backend: The URI for the data backend
+    :param data_store_uri: The URI for the data backend
     :param vector_search: The configuration for the vector search {'in_memory', 'lance'}
     :param artifact_store: The URI for the artifact store
     :param metadata_store: The URI for the metadata store
@@ -111,14 +118,13 @@ class Config(BaseConfigJSONable):
 
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
-
     """
 
     @property
     def self_hosted_vector_search(self) -> bool:
-        return self.data_backend == self.vector_search
+        return self.data_store_uri == self.vector_search
 
-    data_backend: str = 'mongodb://superduper:superduper@localhost:27017/test_db'
+    data_store_uri: str = 'mongodb://superduper:superduper@localhost:27017/test_db'
 
     vector_search: 'str' = 'in_memory'
     lance_home: str = os.path.join('.superduperdb', 'vector_indices')

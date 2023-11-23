@@ -5,13 +5,13 @@ import tenacity
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 from superduperdb import logging
-from superduperdb.backends.base.metadata import MetaDataStore
+from superduperdb.backends.base.metadata import MetadataStore
 from superduperdb.base import exceptions
 from superduperdb.components.component import Component
 from superduperdb.misc.colors import Colors
 
 
-class MongoMetaDataStore(MetaDataStore):
+class MongoMetadataStore(MetadataStore):
     """
     Metadata store for MongoDB.
 
@@ -113,7 +113,7 @@ class MongoMetaDataStore(MetaDataStore):
         try:
             return self.meta_collection.find_one({'key': key})['value']
         except Exception as e:
-            raise exceptions.MetadatastoreException(
+            raise exceptions.MetadataStoreException(
                 'Error while getting metadata in metadata store'
             ) from e
 

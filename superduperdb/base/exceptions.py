@@ -10,10 +10,10 @@ class ComponentInUseWarning(Warning):
 
 
 class BaseException(Exception):
-    '''
+    """
     BaseException which logs a message after
     exception
-    '''
+    """
 
     def __init__(self, msg, exception_on_raise=True):
         self.msg = msg
@@ -27,195 +27,195 @@ class BaseException(Exception):
 
 
 class ComponentException(BaseException):
-    '''
+    """
     ComponentException
-    '''
+    """
 
 
 class ComponentAddException(ComponentException):
-    '''
+    """
     ComponentAddException
-    '''
+    """
 
 
 class ComponentReplaceException(ComponentException):
-    '''
+    """
     ComponentReplaceException
-    '''
+    """
 
 
 class ComponentLoadException(ComponentException):
-    '''
+    """
     ComponentLoadException
-    '''
+    """
 
 
 class DatabaseConnectionException(BaseException):
-    '''
-    DatabackendException
-    '''
+    """
+    DatabaseConnectionException
+    """
 
 
-class DatabackendException(BaseException):
-    '''
-    DatabackendException
-    '''
+class DataStoreException(BaseException):
+    """
+    DataStoreException
+    """
 
 
-class MetadatastoreException(BaseException):
-    '''
-    MetadatastoreException
-    '''
+class MetadataStoreException(BaseException):
+    """
+    MetadataStoreException
+    """
 
 
 class ArtifactStoreException(BaseException):
-    '''
+    """
     ArtifactStoreException
-    '''
+    """
 
 
 class ArtifactStoreDeleteException(ArtifactStoreException):
-    '''
+    """
     ArtifactStoreException
-    '''
+    """
 
 
 class ArtifactStoreLoadException(ArtifactStoreException):
-    '''
-    ArtifactStoreException
-    '''
+    """
+    ArtifactStoreLoadException
+    """
 
 
 class ArtifactStoreSaveException(ArtifactStoreException):
-    '''
-    ArtifactStoreException
-    '''
+    """
+    ArtifactStoreSaveException
+    """
 
 
 class DatalayerException(BaseException):
-    '''
+    """
     DatalayerException
-    '''
+    """
 
 
 class FileNotFoundException(BaseException):
-    '''
+    """
     FileNotFoundException
-    '''
+    """
 
 
 class ServiceRequestException(BaseException):
-    '''
+    """
     ServiceException
-    '''
+    """
 
 
 class ModelException(BaseException):
-    '''
+    """
     ModelException
-    '''
+    """
 
 
 class VectorSearchException(ComponentException):
-    '''
+    """
     VectorSearchException
-    '''
+    """
 
 
 class EncoderException(ComponentException):
-    '''
+    """
     EncoderException
-    '''
+    """
 
 
 class QueryException(ComponentException):
-    '''
+    """
     QueryException
-    '''
+    """
 
 
 class SelectQueryException(QueryException):
-    '''
+    """
     SelectQueryException
-    '''
+    """
 
 
 class DeleteQueryException(QueryException):
-    '''
+    """
     DeleteQueryException
-    '''
+    """
 
 
 class InsertQueryException(QueryException):
-    '''
+    """
     InsertQueryException
-    '''
+    """
 
 
 class UpdateQueryException(QueryException):
-    '''
+    """
     UpdateQueryException
-    '''
+    """
 
 
 class TableQueryException(QueryException):
-    '''
+    """
     TableQueryException
-    '''
+    """
 
 
 class RawQueryException(QueryException):
-    '''
+    """
     RawQueryException
-    '''
+    """
 
 
 class JobException(ComponentException):
-    '''
+    """
     JobException
-    '''
+    """
 
 
 class TaskWorkflowException(ComponentException):
-    '''
+    """
     TaskWorkflowException
-    '''
+    """
 
 
-class MetaDataStoreDeleteException(MetadatastoreException):
-    '''
+class MetaDataStoreDeleteException(MetadataStoreException):
+    """
     MetaDataStoreDeleteException
-    '''
+    """
 
 
-class MetaDataStoreJobException(MetadatastoreException):
-    '''
+class MetaDataStoreJobException(MetadataStoreException):
+    """
     MetaDataStoreJobException
-    '''
+    """
 
 
-class MetaDataStoreCreateException(MetadatastoreException):
-    '''
+class MetaDataStoreCreateException(MetadataStoreException):
+    """
     MetaDataStoreCreateException
-    '''
+    """
 
 
-class MetaDataStoreUpdateException(MetadatastoreException):
-    '''
+class MetaDataStoreUpdateException(MetadataStoreException):
+    """
     MetaDataStoreUpdateException
-    '''
+    """
 
 
 class ModelPredictException(ModelException):
-    '''
+    """
     ModelPredictException
-    '''
+    """
 
 
 class ModelFitException(ModelException):
-    '''
+    """
     ModelFitException
-    '''
+    """
 
 
 _query_exceptions = {

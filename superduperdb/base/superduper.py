@@ -29,19 +29,19 @@ def _auto_identify_connection_string(item: str, **kwargs) -> t.Any:
     from superduperdb.base.build import build_datalayer
 
     if item.startswith('mongomock://'):
-        CFG.force_set('data_backend', item)
+        CFG.force_set('data_store_uri', item)
 
     elif item.startswith('mongodb://'):
-        CFG.force_set('data_backend', item)
+        CFG.force_set('data_store_uri', item)
 
     elif item.startswith('mongodb+srv://') and 'mongodb.net' in item:
-        CFG.force_set('data_backend', item)
+        CFG.force_set('data_store_uri', item)
         CFG.force_set('vector_search', item)
 
     else:
         if re.match(r'^[a-zA-Z0-9]+://', item) is None:
             raise ValueError(f'{item} is not a valid connection string')
-        CFG.force_set('data_backend', item)
+        CFG.force_set('data_store_uri', item)
     return build_datalayer(CFG, **kwargs)
 
 
@@ -99,15 +99,15 @@ class MongoDbTyper(_DuckTyper):
         from pymongo.database import Database
 
         from superduperdb import logging
-        from superduperdb.backends.mongodb.data_backend import MongoDataBackend
+        from superduperdb.backends.mongodb.data import MongoDataStore
         from superduperdb.base.build import build_datalayer
 
         if not isinstance(item, (Database, MockDatabase)):
             raise TypeError(f'Expected Database but got {type(item)}')
 
         logging.warn('Note: This is only recommended in development mode')
-        databackend = MongoDataBackend(conn=item.client, name=item.name)
-        return build_datalayer(cfg=CFG, data_backend=databackend, **kwargs)
+        data_store = MongoDataStore(conn=item.client, name=item.name)
+        return build_datalayer(cfg=CFG, data_store=data_store, **kwargs)
 
 
 class SklearnTyper(_DuckTyper):

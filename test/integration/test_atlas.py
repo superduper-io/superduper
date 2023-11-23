@@ -23,7 +23,7 @@ def random_vector_model(x):
 @pytest.fixture()
 def atlas_search_config():
     previous = s.CFG.vector_search
-    s.CFG.vector_search = s.CFG.data_backend
+    s.CFG.vector_search = s.CFG.data_store_uri
     yield
     s.CFG.vector_search = previous
 
@@ -37,7 +37,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
     db = superduper(client.test_atlas_vector_search)
     collection = Collection('docs')
 
-    vector_indexes = db.databackend.list_vector_indexes()
+    vector_indexes = db.data_store.list_vector_indexes()
 
     assert not vector_indexes
 
@@ -58,7 +58,7 @@ def test_setup_atlas_vector_search(atlas_search_config):
     )
 
     assert 'test-vector-index' in db.show('vector_index')
-    assert 'test-vector-index' in db.databackend.list_vector_indexes()
+    assert 'test-vector-index' in db.data_store.list_vector_indexes()
 
 
 @pytest.mark.skipif(ATLAS_VECTOR_URI is None, reason='Only atlas deployments relevant.')

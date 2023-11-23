@@ -6,7 +6,7 @@ import pytest
 import torch.nn
 import torchvision
 
-from superduperdb.backends.ibis.data_backend import IbisDataBackend
+from superduperdb.backends.ibis.data import IbisDataStore
 from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.backends.ibis.query import RawSQL, Table
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
@@ -54,8 +54,8 @@ def ibis_pandas_db(sqllite_conn):
 
 def make_ibis_db(db_conn, metadata_conn, tmp_dir, in_memory=False):
     return Datalayer(
-        databackend=IbisDataBackend(conn=db_conn, name='ibis', in_memory=in_memory),
-        metadata=SQLAlchemyMetadata(conn=metadata_conn.con, name='ibis'),
+        data_store=IbisDataStore(conn=db_conn, name='ibis', in_memory=in_memory),
+        metadata_store=SQLAlchemyMetadata(conn=metadata_conn.con, name='ibis'),
         artifact_store=FileSystemArtifactStore(conn=tmp_dir, name='ibis'),
     )
 

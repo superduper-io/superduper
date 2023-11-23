@@ -7,7 +7,7 @@ import pymongo
 
 import superduperdb as s
 from superduperdb import logging
-from superduperdb.backends.base.backends import data_backends, metadata_stores
+from superduperdb.backends.base.backends import data_stores, metadata_stores
 from superduperdb.backends.dask.compute import DaskComputeBackend
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.local.compute import LocalComputeBackend
@@ -73,26 +73,26 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     # Connect to data backend.
     # ------------------------------
     try:
-        databackend = build(cfg.data_backend, data_backends)
-        logging.info("Data Client is ready.", databackend.conn)
+        data_store = build(cfg.data_store_uri, data_stores)
+        logging.info("Data Client is ready.", data_store.conn)
     except Exception as e:
         # Exit quickly if a connection fails.
-        logging.error("Error initializing to DataBackend Client:", str(e))
+        logging.error("Error initializing to DataStore Client:", str(e))
         sys.exit(1)
 
     # Build DataLayer
     # ------------------------------
     db = Datalayer(
-        databackend=databackend,
-        metadata=(
+        data_store=data_store,
+        metadata_store=(
             build(cfg.metadata_store, metadata_stores)
             if cfg.metadata_store is not None
-            else databackend.build_metadata()
+            else data_store.build_metadata()
         ),
         artifact_store=(
             build_artifact_store(cfg)
             if cfg.artifact_store is not None
-            else databackend.build_artifact_store()
+            else data_store.build_artifact_store()
         ),
         compute=(
             DaskComputeBackend(

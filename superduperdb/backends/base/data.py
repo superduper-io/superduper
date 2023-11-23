@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from superduperdb.components.model import Model
 
 
-class BaseDataBackend(ABC):
+class DataStore(ABC):
     id_field = 'id'
 
     def __init__(self, conn: t.Any, name: str):
@@ -19,7 +19,7 @@ class BaseDataBackend(ABC):
     @abstractmethod
     def url(self):
         """
-        Databackend connection url
+        DataStore connection url
         """
         pass
 
@@ -50,6 +50,6 @@ class BaseDataBackend(ABC):
     @abstractmethod
     def drop(self, force: bool = False):
         """
-        Drop the databackend.
+        Drop the DataStore.
         """
         pass

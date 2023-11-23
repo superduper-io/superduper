@@ -30,12 +30,10 @@ class DaskComputeBackend(ComputeBackend):
         self.__futures_collection: t.Dict[str, distributed.Future] = {}
 
         if local:
-            # Create a local cluster
-            cluster = distributed.LocalCluster(processes=False)
-            # Connect to the local cluster
-            self.client = distributed.Client(cluster, **kwargs)
+            # Create and connect to the local cluster.
+            self.client = distributed.Client(processes=False)
         else:
-            # Connect to a remote cluster
+            # Connect to a remote cluster.
             self.client = distributed.Client(
                 address=address,
                 serializers=serializers,

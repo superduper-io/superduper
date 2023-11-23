@@ -26,11 +26,16 @@ class DaskComputeBackend(ComputeBackend):
         local: bool = False,
         **kwargs,
     ):
-        self.futures_collection: t.Dict[str, distributed.Future] = {}
+        # Private field
+        self.__futures_collection: t.Dict[str, distributed.Future] = {}
+
         if local:
+            # Create a local cluster
             cluster = distributed.LocalCluster(processes=False)
+            # Connect to the local cluster
             self.client = distributed.Client(cluster, **kwargs)
         else:
+            # Connect to a remote cluster
             self.client = distributed.Client(
                 address=address,
                 serializers=serializers,
@@ -49,10 +54,33 @@ class DaskComputeBackend(ComputeBackend):
         :param kwargs: Additional keyword arguments to be passed to the function.
         """
         future = self.client.submit(function, **kwargs)
-        self.futures_collection[future.key] = future
+        self.__futures_collection[future.key] = future
 
         logging.success(f"Job submitted.  function:{function} future:{future}")
         return future
+
+    def list_all_pending_tasks(self) -> t.Dict[str, distributed.Future]:
+        """
+        List for all pending tasks
+        """
+        return self.__futures_collection
+
+    def wait_all_pending_tasks(self) -> None:
+        """
+        Waits for all pending tasks to complete.
+        """
+        futures = list(self.__futures_collection.values())
+        distributed.wait(futures)
+
+    def get_result(self, identifier: str) -> t.Any:
+        """
+        Retrieves the result of a previously submitted task.
+        Note: This will block until the future is completed.
+
+        :param identifier: The identifier of the submitted task.
+        """
+        future = self.__futures_collection[identifier]
+        return self.client.gather(future)
 
     def disconnect(self) -> None:
         """
@@ -65,20 +93,3 @@ class DaskComputeBackend(ComputeBackend):
         Shuts down the Dask cluster.
         """
         self.client.shutdown()
-
-    def wait_all_pending_tasks(self) -> None:
-        """
-        Waits for all pending tasks to complete.
-        """
-        futures = list(self.futures_collection.values())
-        distributed.wait(futures)
-
-    def get_result(self, identifier: str) -> t.Any:
-        """
-        Retrieves the result of a previously submitted task.
-        Note: This will block until the future is completed.
-
-        :param identifier: The identifier of the submitted task.
-        """
-        future = self.futures_collection[identifier]
-        return self.client.gather(future)

@@ -118,13 +118,12 @@ def test_dependencies_with_dask(
         'test_node_1',
         'test_node_2',
     )
-    local_dask_client.futures_collection.clear()
 
     database.distributed = True
     database.set_compute(local_dask_client)
     G.run_jobs(distributed=True)
     local_dask_client.wait_all_pending_tasks()
-    futures = list(local_dask_client.futures_collection.values())
+    futures = list(local_dask_client.list_all_pending_tasks().values())
     assert len(futures) == 2
     assert futures[0].status == 'finished'
     assert futures[1].status == 'finished'

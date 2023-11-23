@@ -12,7 +12,7 @@ class LocalComputeBackend(ComputeBackend):
     def __init__(
         self,
     ):
-        self.futures_collection: t.Dict[str, t.Any] = {}
+        self.__outputs: t.Dict[str, t.Any] = {}
 
     def name(self) -> str:
         return "Local"
@@ -25,22 +25,16 @@ class LocalComputeBackend(ComputeBackend):
         :param kwargs: Additional keyword arguments to be passed to the function.
         """
         future = function(**kwargs)
-        self.futures_collection[future.key] = future
+        self.__outputs[future.key] = future
 
         logging.success(f"Job submitted.  function:{function} future:{future}")
         return future
 
-    def disconnect(self) -> None:
+    def list_all_pending_tasks(self) -> t.Dict[str, t.Any]:
         """
-        Disconnect the local client.
+        List for all pending tasks
         """
-        pass
-
-    def shutdown(self) -> None:
-        """
-        Shuts down the local cluster.
-        """
-        pass
+        return self.__outputs
 
     def wait_all_pending_tasks(self) -> None:
         """
@@ -55,5 +49,16 @@ class LocalComputeBackend(ComputeBackend):
 
         :param identifier: The identifier of the submitted task.
         """
-        future = self.futures_collection[identifier]
-        return future
+        return self.__outputs[identifier]
+
+    def disconnect(self) -> None:
+        """
+        Disconnect the local client.
+        """
+        pass
+
+    def shutdown(self) -> None:
+        """
+        Shuts down the local cluster.
+        """
+        pass

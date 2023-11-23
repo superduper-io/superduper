@@ -25,16 +25,9 @@ class ComputeBackend(ABC):
         pass
 
     @abstractmethod
-    def disconnect(self) -> None:
+    def list_all_pending_tasks(self) -> t.Any:
         """
-        Disconnect the client.
-        """
-        pass
-
-    @abstractmethod
-    def shutdown(self) -> None:
-        """
-        Shuts down the compute cluster.
+        List for all pending tasks
         """
         pass
 
@@ -52,5 +45,19 @@ class ComputeBackend(ABC):
         Note: This will block until the future is completed.
 
         :param identifier: The identifier of the submitted task.
+        """
+        pass
+
+    @abstractmethod
+    def disconnect(self) -> None:
+        """
+        Disconnect the client.
+        """
+        pass
+
+    @abstractmethod
+    def shutdown(self) -> None:
+        """
+        Shuts down the compute cluster.
         """
         pass

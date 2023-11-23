@@ -162,6 +162,7 @@ class FunctionJob(Job):
             distributed = s.CFG.mode == Mode.Production
         self.db = db
         db.metadata.create_job(self.dict())
+
         if not distributed:
             self.run_locally(db)
         else:

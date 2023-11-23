@@ -587,7 +587,9 @@ class Datalayer:
         versions = self.metadata_store.show_component_versions(type_id, identifier)
         versions_in_use = []
         for v in versions:
-            if self.metadata_store.component_version_has_parents(type_id, identifier, v):
+            if self.metadata_store.component_version_has_parents(
+                type_id, identifier, v
+            ):
                 versions_in_use.append(v)
 
         if versions_in_use:
@@ -935,7 +937,9 @@ class Datalayer:
                 serialized_dict = {
                     'type_id': child_type_id,
                     'identifier': child,
-                    'version': self.metadata_store.get_latest_version(child_type_id, child),
+                    'version': self.metadata_store.get_latest_version(
+                        child_type_id, child
+                    ),
                 }
                 self.metadata_store.create_parent_child(
                     component.unique_id, Component.make_unique_id(**serialized_dict)
@@ -976,7 +980,9 @@ class Datalayer:
         force: bool = False,
     ):
         unique_id = Component.make_unique_id(type_id, identifier, version)
-        if self.metadata_store.component_version_has_parents(type_id, identifier, version):
+        if self.metadata_store.component_version_has_parents(
+            type_id, identifier, version
+        ):
             parents = self.metadata_store.get_component_version_parents(unique_id)
             raise Exception(f'{unique_id} is involved in other components: {parents}')
 
@@ -985,7 +991,9 @@ class Datalayer:
             default=False,
         ):
             component = self.load(type_id, identifier, version=version)
-            info = self.metadata_store.get_component(type_id, identifier, version=version)
+            info = self.metadata_store.get_component(
+                type_id, identifier, version=version
+            )
             if hasattr(component, 'cleanup'):
                 component.cleanup(self)
             if type_id in self.type_id_to_cache_mapping:
@@ -999,7 +1007,9 @@ class Datalayer:
             if hasattr(component, 'artifact_attributes'):
                 for a in component.artifact_attributes:
                     self.artifact_store.delete(info['dict'][a]['file_id'])
-            self.metadata_store.delete_component_version(type_id, identifier, version=version)
+            self.metadata_store.delete_component_version(
+                type_id, identifier, version=version
+            )
 
     def _download_content(  # TODO: duplicated function
         self,

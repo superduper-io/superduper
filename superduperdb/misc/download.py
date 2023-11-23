@@ -362,7 +362,9 @@ def download_content(
 
     if n_download_workers is None:
         try:
-            n_download_workers = db.metadata_store.get_metadata(key='n_download_workers')
+            n_download_workers = db.metadata_store.get_metadata(
+                key='n_download_workers'
+            )
         except exceptions.MetadataStoreException:
             n_download_workers = 0
 

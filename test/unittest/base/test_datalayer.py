@@ -125,7 +125,9 @@ def test_add_artifact_auto_replace(local_empty_db):
     # Check artifact is automatically replaced to metadata
     artifact = Artifact({'data': 1})
     component = TestComponent(identifier='test', artifact=artifact)
-    with patch.object(local_empty_db.metadata_store, 'create_component') as create_component:
+    with patch.object(
+        local_empty_db.metadata_store, 'create_component'
+    ) as create_component:
         local_empty_db.add(component)
         serialized = create_component.call_args[0][0]
         assert serialized['dict']['artifact']['sha1'] == artifact.sha1

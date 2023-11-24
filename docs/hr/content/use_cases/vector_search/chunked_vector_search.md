@@ -103,9 +103,7 @@ r = db.execute(Collection('wikipedia').find_one()).unpack()
 r
 ```
 
-To create the search functionality, we establish a straightforward model
-designed to break down the raw text into segments. These segments are
-then stored in another collection:
+To create the search functionality, we establish a straightforward model designed to break down the raw text into segments. These segments are then stored in another collection:
 
 ``` python
 from superduperdb import Model

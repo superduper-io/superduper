@@ -1,0 +1,10 @@
+{
+  "label": "Vector Search",
+  "position": 1,
+  "collapsed": false,
+  "collapsible": false,
+  "link": {
+    "type": "generated-index",
+    "description": "Get started with Vector Search with SuperDuperDB"
+  }
+}

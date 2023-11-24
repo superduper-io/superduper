@@ -1,0 +1,10 @@
+{
+  "label": "Chatbot",
+  "position": 3,
+  "collapsed": false,
+  "collapsible": false,
+  "link": {
+    "type": "generated-index",
+    "description": "Get started with Chatbot with SuperDuperDB"
+  }
+}

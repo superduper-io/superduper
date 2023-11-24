@@ -6,10 +6,10 @@ import numpy
 import pyarrow as pa
 
 from superduperdb import CFG
-from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
+from superduperdb.backends.base.vectors import VectorItem, VectorSearchEngine
 
 
-class LanceVectorSearcher(BaseVectorSearcher):
+class LanceVectorSearchEngine(VectorSearchEngine):
     """
     Implementation of a vector index using the ``lance`` library.
 

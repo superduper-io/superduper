@@ -3,9 +3,9 @@ import typing as t
 
 from fastapi import Request
 
+from superduperdb.backends.base.vectors import VectorItem
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.ext.utils import superduperdecode
-from superduperdb.vector_search.base import VectorItem
 
 ListVectorType = t.Union[t.List[t.Union[float, int]], t.Dict]
 

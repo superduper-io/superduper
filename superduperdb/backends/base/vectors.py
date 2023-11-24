@@ -9,7 +9,7 @@ import numpy
 import numpy.typing
 
 
-class BaseVectorSearcher(ABC):
+class VectorSearchEngine(ABC):
     @abstractmethod
     def __init__(
         self,
@@ -115,7 +115,7 @@ class VectorItem:
         id: str,
         vector: numpy.typing.ArrayLike,
     ) -> VectorItem:
-        return VectorItem(id=id, vector=BaseVectorSearcher.to_numpy(vector))
+        return VectorItem(id=id, vector=VectorSearchEngine.to_numpy(vector))
 
     def to_dict(self) -> t.Dict:
         return {'id': self.id, 'vector': self.vector}

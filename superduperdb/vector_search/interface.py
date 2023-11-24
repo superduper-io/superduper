@@ -3,16 +3,16 @@ import typing as t
 import numpy as np
 
 from superduperdb import CFG
+from superduperdb.backends.base.vectors import VectorItem, VectorSearchEngine
 from superduperdb.base import exceptions
 from superduperdb.base.config import Mode
 from superduperdb.misc.server import request_server
-from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
 
-class FastVectorSearcher(BaseVectorSearcher):
+class FastVectorSearchEngine(VectorSearchEngine):
     def __init__(self, db: 'Datalayer', vector_searcher, vector_index: str):
         self.searcher = vector_searcher
         self.vector_index = vector_index

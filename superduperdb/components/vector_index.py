@@ -4,6 +4,7 @@ import typing as t
 from overrides import override
 
 import superduperdb as s
+from superduperdb.backends.base.vectors import VectorIndexMeasureType
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.component import Component
@@ -11,7 +12,6 @@ from superduperdb.components.encoder import Encoder
 from superduperdb.components.listener import Listener
 from superduperdb.ext.utils import str_shape
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.vector_search.base import VectorIndexMeasureType
 
 if t.TYPE_CHECKING:
     pass

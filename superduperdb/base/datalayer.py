@@ -12,11 +12,12 @@ import tqdm
 import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.artifact import ArtifactStore
-from superduperdb.backends.base.backends import vector_searcher_implementations
+from superduperdb.backends.base.backends import vector_search_engines
 from superduperdb.backends.base.compute import ComputeEngine
 from superduperdb.backends.base.data import DataStore
 from superduperdb.backends.base.metadata import MetadataStore
 from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, Update
+from superduperdb.backends.base.vectors import VectorItem, VectorSearchEngine
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.local.compute import LocalComputeEngine
 from superduperdb.base import exceptions, serializable
@@ -34,8 +35,7 @@ from superduperdb.misc.colors import Colors
 from superduperdb.misc.data import ibatch
 from superduperdb.misc.download import Downloader, download_content, gather_uris
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
-from superduperdb.vector_search.interface import FastVectorSearcher
+from superduperdb.vector_search.interface import FastVectorSearchEngine
 from superduperdb.vector_search.update_tasks import copy_vectors, delete_vectors
 
 DBResult = t.Any
@@ -111,7 +111,7 @@ class Datalayer:
 
     def initialize_vector_searcher(
         self, identifier, searcher_type: t.Optional[str] = None, backfill=False
-    ) -> BaseVectorSearcher:
+    ) -> VectorSearchEngine:
         try:
             searcher_type = searcher_type or s.CFG.vector_search
             logging.info(f'loading of vectors of vector-index: {identifier}')
@@ -123,7 +123,7 @@ class Datalayer:
                 msg = 'CDC only supported for vector search via lance format'
                 assert s.CFG.vector_search == 'lance', msg
 
-            vector_search_cls = vector_searcher_implementations[searcher_type]
+            vector_search_cls = vector_search_engines[searcher_type]
             vector_comparison = vector_search_cls(
                 identifier=vi.identifier,
                 dimensions=vi.dimensions,
@@ -138,29 +138,45 @@ class Datalayer:
             if backfill or s.CFG.mode != Mode.Production:
                 self.backfill_vector_search(vi, vector_comparison)
 
-            return FastVectorSearcher(self, vector_comparison, vi.identifier)
+            return FastVectorSearchEngine(self, vector_comparison, vi.identifier)
         except Exception as e:
             raise exceptions.VectorSearchException(
                 'Failed to initialize vector search index {identifier}'
             ) from e
 
-    def backfill_vector_search(self, vi, searcher):
-        if vi.indexing_listener.select is None:
+    def backfill_vector_search(self, vector_index, vector_searcher):
+        """
+        Populate vector index with missing vectors.
+
+        :param vector_index: Index container vectors.
+        :param vector_searcher: Vector search Implementation.
+        :return: None
+        """
+
+        # Extract Listener Key
+        # ------------------------------
+        if vector_index.indexing_listener.select is None:
             raise ValueError('.select must be set')
 
-        key = vi.indexing_listener.key
+        key = vector_index.indexing_listener.key
         if key.startswith('_outputs.'):
             key = key.split('.')[1]
 
-        model_id = vi.indexing_listener.model.identifier
-        model_version = vi.indexing_listener.model.version
+        # Extract Model Info
+        # ------------------------------
+        model_id = vector_index.indexing_listener.model.identifier
+        model_version = vector_index.indexing_listener.model.version
 
-        query = vi.indexing_listener.select.outputs(
+        # Select Vectors from Model
+        # ------------------------------
+        query = vector_index.indexing_listener.select.outputs(
             **{key: f'{model_id}/{model_version}'}
         )
 
         logging.info(str(query))
 
+        # Ingest Vectors to the Index
+        # ------------------------------
         progress = tqdm.tqdm(desc='Loading vectors into vector-table...')
         for record_batch in ibatch(
             self.execute(query),
@@ -168,18 +184,18 @@ class Datalayer:
         ):
             items = []
             for record in record_batch:
-                key = vi.indexing_listener.key
+                key = vector_index.indexing_listener.key
                 if key.startswith('_outputs.'):
                     key = key.split('.')[1]
 
                 id = record[self.data_store.id_field]
-                assert not isinstance(vi.indexing_listener.model, str)
-                h = record.outputs(key, vi.indexing_listener.model.identifier)
+                assert not isinstance(vector_index.indexing_listener.model, str)
+                h = record.outputs(key, vector_index.indexing_listener.model.identifier)
                 if isinstance(h, Encodable):
                     h = h.x
                 items.append(VectorItem.create(id=str(id), vector=h))
 
-            searcher.add(items)
+            vector_searcher.add(items)
             progress.update(len(items))
 
     def set_compute(self, new: ComputeEngine):
@@ -313,7 +329,7 @@ class Datalayer:
         """
         Apply model to input using asyncio.
 
-        :param model_name: model identifier
+        :param model_name: Model identifier
         :param input: input to be passed to the model.
                       Must be possible to encode with registered encoders
         :param context_select: select query object to provide context
@@ -355,7 +371,7 @@ class Datalayer:
         """
         Apply model to input.
 
-        :param model_name: model identifier
+        :param model_name: Model identifier
         :param input: input to be passed to the model.
                       Must be possible to encode with registered encoders
         :param context_select: select query object to provide context
@@ -696,11 +712,11 @@ class Datalayer:
         ids: t.Sequence[str],
         verbose: bool = False,
     ):
-        G = TaskWorkflow(self)
+        g = TaskWorkflow(self)
         vector_indices = self.show('vector_index')
 
         if not vector_indices:
-            return G
+            return g
 
         deleted_table_or_collection = query.table_or_collection.identifier
 
@@ -719,7 +735,7 @@ class Datalayer:
             ):
                 continue
 
-            G.add_node(
+            g.add_node(
                 f'{vi.identifier}.{delete_vectors.__name__}()',
                 job=FunctionJob(
                     callable=delete_vectors,
@@ -731,7 +747,7 @@ class Datalayer:
                 ),
             )
 
-        return G
+        return g
 
     def _build_task_workflow(
         self,

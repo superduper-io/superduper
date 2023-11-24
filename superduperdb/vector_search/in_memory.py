@@ -3,10 +3,10 @@ import typing as t
 import numpy
 
 from superduperdb import logging
-from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem, measures
+from superduperdb.backends.base.vectors import VectorItem, VectorSearchEngine, measures
 
 
-class InMemoryVectorSearcher(BaseVectorSearcher):
+class InMemoryVectorSearchEngine(VectorSearchEngine):
     """
     Simple hash-set for looking up with vector similarity.
 

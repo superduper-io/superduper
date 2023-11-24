@@ -1,9 +1,9 @@
 import typing as t
 
 from superduperdb.backends.base.query import CompoundSelect
+from superduperdb.backends.base.vectors import VectorItem
 from superduperdb.base.serializable import Serializable
 from superduperdb.misc.special_dicts import MongoStyleDict
-from superduperdb.vector_search.base import VectorItem
 
 
 def delete_vectors(

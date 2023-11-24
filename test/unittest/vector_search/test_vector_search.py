@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 
 from superduperdb import CFG
-from superduperdb.vector_search.base import VectorItem
-from superduperdb.vector_search.in_memory import InMemoryVectorSearcher
-from superduperdb.vector_search.lance import LanceVectorSearcher
+from superduperdb.backends.base.vectors import VectorItem
+from superduperdb.vector_search.in_memory import InMemoryVectorSearchEngine
+from superduperdb.vector_search.lance import LanceVectorSearchEngine
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def index_data(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "vector_index_cls", [InMemoryVectorSearcher, LanceVectorSearcher]
+    "vector_index_cls", [InMemoryVectorSearchEngine, LanceVectorSearchEngine]
 )
 @pytest.mark.parametrize("measure", ['l2', 'dot', 'cosine'])
 def test_index(index_data, measure, vector_index_cls):

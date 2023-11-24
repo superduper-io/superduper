@@ -5,13 +5,19 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def client(database_with_default_encoders_and_model):
+def client(monkeypatch, database_with_default_encoders_and_model):
+    from superduperdb import CFG
+
+    vector_search = 'http://localhost:8000'
+    monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
+
     from superduperdb.vector_search.server.app import app
 
     app.app.state.pool = database_with_default_encoders_and_model
     client = TestClient(app.app)
 
     yield client
+    monkeypatch.setattr(CFG.cluster, 'vector_search', None)
 
 
 def test_basic_workflow(client):

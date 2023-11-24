@@ -20,7 +20,7 @@ class DaskComputeBackend(ComputeBackend):
 
     def __init__(
         self,
-        address: str,
+        address: t.Optional[str] = None,
         serializers: t.Optional[t.Sequence[t.Callable]] = None,
         deserializers: t.Optional[t.Sequence[t.Callable]] = None,
         local: bool = False,
@@ -33,6 +33,7 @@ class DaskComputeBackend(ComputeBackend):
             # Create and connect to the local cluster.
             self.client = distributed.Client(processes=False)
         else:
+            assert address, 'Address cannot be ``None`` for non local dask client'
             # Connect to a remote cluster.
             self.client = distributed.Client(
                 address=address,

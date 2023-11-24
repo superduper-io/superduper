@@ -2,8 +2,6 @@ import contextlib
 import traceback
 import typing as t
 
-from superduperdb.base.config import Mode
-
 if t.TYPE_CHECKING:
     from superduperdb.base.datalayer import Datalayer
 
@@ -37,7 +35,7 @@ def method_job(
 
     if db is None:
         cfg = build_config(cfg)
-        cfg.force_set('mode', Mode.Development)
+        cfg.force_set('cluster.compute', None)
         db = build_datalayer(cfg)
 
     component = db.load(type_id, identifier)
@@ -99,7 +97,7 @@ def callable_job(
 
     if db is None:
         CFG = build_config(cfg)
-        CFG.force_set('mode', Mode.Development)
+        cfg.force_set('cluster.compute', None)
         db = build_datalayer(CFG)
     db.metadata.update_job(job_id, 'status', 'running')
     output = None

@@ -2,10 +2,10 @@ import sys
 
 import click
 
-from superduperdb.cli import app, config, info, vector_search
-from superduperdb.cli.serve import local_cluster, serve
+from superduperdb.cli import app, config, info
+from superduperdb.cli.serve import cdc, local_cluster, vector_search
 
-__all__ = 'config', 'info', 'local_cluster', 'serve', 'vector_search'
+__all__ = 'config', 'info', 'local_cluster', 'vector_search', 'cdc'
 
 
 def run():

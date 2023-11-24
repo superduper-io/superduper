@@ -4,7 +4,6 @@ import numpy as np
 
 from superduperdb import CFG
 from superduperdb.base import exceptions
-from superduperdb.base.config import Mode
 from superduperdb.misc.server import request_server
 from superduperdb.vector_search.base import BaseVectorSearcher, VectorItem
 
@@ -17,7 +16,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         self.searcher = vector_searcher
         self.vector_index = vector_index
 
-        if CFG.mode == Mode.Production:
+        if CFG.cluster.vector_search:
             if not db.server_mode:
                 request_server(
                     service='vector_search',
@@ -39,7 +38,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         """
         try:
             vector_items = [{'vector': i.vector, 'id': i.id} for i in items]
-            if CFG.mode == Mode.Production:
+            if CFG.cluster.vector_search:
                 request_server(
                     service='vector_search',
                     data=vector_items,
@@ -54,7 +53,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         except Exception as e:
             local_msg = (
                 'remote vector search service'
-                if CFG.mode == Mode.Production
+                if CFG.cluster.vector_search
                 else 'local vector search'
             )
             raise exceptions.VectorSearchException(
@@ -68,7 +67,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param ids: t.Sequence of ids of vectors.
         """
         try:
-            if CFG.mode == Mode.Production:
+            if CFG.cluster.vector_search:
                 request_server(
                     service='vector_search',
                     data=ids,
@@ -83,7 +82,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         except Exception as e:
             local_msg = (
                 'remote vector search service'
-                if CFG.mode == Mode.Production
+                if CFG.cluster.vector_search
                 else 'local vector search'
             )
             raise exceptions.VectorSearchException(
@@ -103,7 +102,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param n: number of nearest vectors to return
         """
         try:
-            if CFG.mode == Mode.Production:
+            if CFG.cluster.vector_search:
                 response = request_server(
                     service='vector_search',
                     endpoint='query/id/search',
@@ -115,7 +114,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         except Exception as e:
             local_msg = (
                 'remote vector search service'
-                if CFG.mode == Mode.Production
+                if CFG.cluster.vector_search
                 else 'local vector search'
             )
             raise exceptions.VectorSearchException(
@@ -139,7 +138,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         :param n: number of nearest vectors to return
         """
         try:
-            if CFG.mode == Mode.Production:
+            if CFG.cluster.vector_search:
                 response = request_server(
                     service='vector_search',
                     data=h,
@@ -154,7 +153,7 @@ class FastVectorSearcher(BaseVectorSearcher):
         except Exception as e:
             local_msg = (
                 'remote vector search service'
-                if CFG.mode == Mode.Production
+                if CFG.cluster.vector_search
                 else 'local vector search'
             )
             raise exceptions.VectorSearchException(

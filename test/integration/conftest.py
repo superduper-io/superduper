@@ -11,7 +11,6 @@ try:
 except ImportError:
     torch = None
 
-from superduperdb import CFG
 from superduperdb.backends.dask.compute import DaskComputeBackend
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
@@ -71,15 +70,18 @@ def database_with_default_encoders_and_model(test_db):
     )
     test_db.add(vi)
     yield test_db
-    test_db.remove('model', 'model_linear_a', force=True)
-    test_db.remove('encoder', 'torch.float32[16]', force=True)
-    test_db.remove('encoder', 'torch.float32[32]', force=True)
+    try:
+        test_db.remove('model', 'model_linear_a', force=True)
+        test_db.remove('encoder', 'torch.float32[16]', force=True)
+        test_db.remove('encoder', 'torch.float32[32]', force=True)
+    except Exception:
+        print('Already removed, skipping model and encoder removal')
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def fake_tensor_data(encoder, update: bool = True):
     data = []
-    for i in range(10):
+    for _ in range(10):
         x = torch.randn(32)
         y = int(random.random() > 0.5)
         z = torch.randn(32)
@@ -118,8 +120,8 @@ def local_dask_client(monkeypatch, request):
 
     # Change the default value
     client = DaskComputeBackend(
-        address=CFG.cluster.dask_scheduler,
-        local=False,
+        address='tcp://localhost:8786',
+        local=True,
     )
 
     yield client

@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - 'examples/official-notebooks/**'
+      - 'examples/**'
   # Nightly is needed to ensure that code and notebooks are interopeable
   schedule:
     - cron: "30 1 * * *"
@@ -56,4 +56,4 @@ jobs:
           env:
             OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           run: |
-              make test_notebooks NOTEBOOKS=./examples/official-notebooks
+              make test_notebooks NOTEBOOKS=./examples

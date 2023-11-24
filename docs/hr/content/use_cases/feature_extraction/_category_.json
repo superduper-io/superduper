@@ -1,0 +1,10 @@
+{
+  "label": "Feature Extraction",
+  "position": 5,
+  "collapsed": false,
+  "collapsible": false,
+  "link": {
+    "type": "generated-index",
+    "description": "Get started with feature extraction with SuperDuperDB"
+  }
+}

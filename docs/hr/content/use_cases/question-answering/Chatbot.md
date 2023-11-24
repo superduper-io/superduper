@@ -1,4 +1,4 @@
-# QA Assistant & RAG 
+# Chatbot with OpenAI
 
 ## Building Q&A Assistant Using Mongo and OpenAI
 

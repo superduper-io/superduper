@@ -1,4 +1,4 @@
-# Voice Memo Cataloging
+# Voice Memo Assistant
 
 ## Cataloguing voice-memos for a self managed personal assistant
 
@@ -170,9 +170,7 @@ search_results = list(
 )
 ```
 
-## Enrich
-
- it with Chat-Completion
+## Enrich with Chat-Completion
 
 Connect the previous steps with gpt-3.5.turbo, a chat-completion model on OpenAI. The goal is to enhance completions by seeding them with the most relevant audio recordings, determined by their textual transcriptions. Retrieve these transcriptions using the previously configured `VectorIndex`.
 

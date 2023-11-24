@@ -1,4 +1,4 @@
-# Image Feature Extraction
+# Image
 
 # Building an Image Feature Database in `torchvision`
 

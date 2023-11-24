@@ -884,6 +884,7 @@ class Datalayer:
         serialized: t.Optional[t.Dict] = None,
         parent: t.Optional[str] = None,
     ):
+        jobs = []
         try:
             object.pre_create(self)
             assert hasattr(object, 'identifier')
@@ -892,7 +893,7 @@ class Datalayer:
             existing_versions = self.show(object.type_id, object.identifier)
             if isinstance(object.version, int) and object.version in existing_versions:
                 s.logging.debug(f'{object.unique_id} already exists - doing nothing')
-                return
+                return [], object
 
             if existing_versions:
                 object.version = max(existing_versions) + 1
@@ -908,15 +909,17 @@ class Datalayer:
                 serialized['version'] = object.version
                 serialized['dict']['version'] = object.version
 
-            self._create_children(object, serialized)
+            jobs.extend(self._create_children(object, serialized))
             self.metadata.create_component(serialized)
             if parent is not None:
                 self.metadata.create_parent_child(parent, object.unique_id)
 
             object.post_create(self)
             object.on_load(self)
-            jobs = object.schedule_jobs(
-                self, dependencies=dependencies, distributed=self.distributed
+            jobs.extend(
+                object.schedule_jobs(
+                    self, dependencies=dependencies, distributed=self.distributed
+                )
             )
             return jobs, object
         except Exception as e:
@@ -925,6 +928,7 @@ class Datalayer:
             ) from e
 
     def _create_children(self, component: Component, serialized: t.Dict):
+        jobs = []
         for k, child_type_id in component.child_components:
             assert isinstance(k, str)
             child = getattr(component, k)
@@ -938,17 +942,19 @@ class Datalayer:
                     component.unique_id, Component.make_unique_id(**serialized_dict)
                 )
             else:
-                self._add(
+                sub_jobs = self._add(
                     child,
                     serialized=serialized['dict'][k],
                     parent=component.unique_id,
-                )
+                )[0]
+                jobs.extend(sub_jobs)
                 serialized_dict = {
                     'type_id': child.type_id,
                     'identifier': child.identifier,
                     'version': child.version,
                 }
             serialized['dict'][k] = serialized_dict
+        return jobs
 
     def _create_plan(self):
         G = networkx.DiGraph()

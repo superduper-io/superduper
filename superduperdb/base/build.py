@@ -97,9 +97,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
         compute=(
             DaskComputeBackend(
                 cfg.cluster.dask_scheduler,
-                local=cfg.cluster.local,
-                serializers=cfg.cluster.serializers,
-                deserializers=cfg.cluster.deserializers,
+                local=False,
             )
             if cfg.mode == Mode.Production
             else LocalComputeBackend()  # Development mode

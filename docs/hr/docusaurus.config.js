@@ -1,6 +1,6 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
-const lightCodeTheme = require('prism-react-renderer').themes.vsLight;
+const lightCodeTheme = require('prism-react-renderer').themes.github;
 const darkCodeTheme = require('prism-react-renderer').themes.vsDark;
 
 /** @type {import('@docusaurus/types').Config} */
@@ -177,6 +177,7 @@ const config = {
           routeBasePath: 'docs',
           path: 'content',
           sidebarPath: require.resolve('./sidebars.js'),
+          // sidebarCollapsible: true,
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
@@ -255,7 +256,7 @@ const config = {
               },
               {
                 label: 'Use cases',
-                to: '/docs/category/use_cases',
+                to: '/docs/use_cases',
               },
               {
                 label: 'Blog',
@@ -318,6 +319,14 @@ const config = {
           content: 'https://docs.superduperdb.com/img/superDuperDB_img.png',
         },
       ],
+      announcementBar: {
+        id: 'support_us',
+        content:
+          '🔮 We are officially launching SuperDuperDB with the release of v0.1 on December 5th on Github! 🔮',
+        backgroundColor: '#7628f8',
+        textColor: '#fff',
+        isCloseable: true,
+      },
     }),
 };
 

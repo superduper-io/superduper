@@ -17,6 +17,12 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
   --aa-primary-color-rgb: #7628f8 !important;
   --aa-muted-color-rgb: #7628f8 !important;
+  /* --ifm-code-background: #f5f5f5; */
+  --prism-background-color: #f5f5f5 !important;
+}
+
+style attribute {
+  --prism-background-color: #f5f5f5;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
@@ -217,5 +223,5 @@ main-wrapper {
 }
 
 pre code {
-  background-color: #F5F5F5 !important; 
+  background-color: var(--ifm-pre-background);
 }

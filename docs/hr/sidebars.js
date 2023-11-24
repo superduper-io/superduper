@@ -38,7 +38,7 @@ const sidebars = {
         type: 'generated-index',
         description:
           'Common and useful use-cases implemented in SuperDuperDB with a walkthrough',
-        slug: 'use-cases',
+        // slug: 'use-cases',
       },
     },
     // {

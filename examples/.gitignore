@@ -1,0 +1,6 @@
+# Ignore everything
+*
+*/
+
+# Except for notebook files
+!*.ipynb

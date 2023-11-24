@@ -1,10 +1,10 @@
 {
-  "label": "Chatbot",
+  "label": "Question and Answer",
   "position": 3,
   "collapsed": false,
   "collapsible": false,
   "link": {
     "type": "generated-index",
-    "description": "Get started with Chatbot with SuperDuperDB"
+    "description": "Get started with Question and Answer with SuperDuperDB"
   }
 }

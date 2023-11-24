@@ -1,4 +1,4 @@
-# MNIST in Database
+# MNIST with Database
 
 ## Training and Managing MNIST Predictions in SuperDuperDB
 

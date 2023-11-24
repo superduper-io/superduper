@@ -7,6 +7,7 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.server.app import DatalayerDependency, SuperDuperApp
 from superduperdb.vector_search.server import service
 
+assert isinstance(CFG.cluster.vector_search, str)
 port = int(CFG.cluster.vector_search.split(':')[-1])
 app = SuperDuperApp('vector_search', port=port)
 
@@ -19,7 +20,6 @@ class VectorItem(BaseModel):
 @app.add("/create/search", status_code=200, method='get')
 def create_search(vector_index: str, db: Datalayer = DatalayerDependency()):
     service.create_search(vector_index=vector_index, db=db)
-    db.fast_vector_searchers['test_search_index'].searcher.h
     return {'message': 'Vector index created successfuly'}
 
 

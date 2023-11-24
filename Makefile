@@ -76,11 +76,13 @@ hr-docs: ## Generate Docusaurus documentation and blog posts
 
 ##@ CI Testing Environment
 
+SUPERDUPERDB_EXTRAS ?= dev
+
 testenv_image: ## Build a sandbox image
 	@echo "===> Build superduperdb/sandbox"
 	docker build . -f deploy/images/superduperdb/Dockerfile -t superduperdb/sandbox --progress=plain \
 		--build-arg BUILD_ENV="sandbox" \
-		--build-arg SUPERDUPERDB_EXTRAS="dev"
+		--build-arg SUPERDUPERDB_EXTRAS="$(SUPERDUPERDB_EXTRAS)"
 
 testenv_init: ## Initialize a local Testing environment
 	@echo "===> Ensure hostnames"
@@ -90,7 +92,7 @@ testenv_init: ## Initialize a local Testing environment
 	@if docker image ls superduperdb/sandbox | grep -q "latest"; then \
         echo "superduper/sandbox found";\
         echo "*************************************************************************";\
-        echo "** If Dask behaves funny, rebuild the image using 'make testenv_image'";\
+        echo "** If Dask behaves funny, rebuild the image using 'make testenv_image' **";\
         echo "*************************************************************************";\
     else \
       	echo "superduper/sandbox not found. Please run 'make testenv_image'";\
@@ -102,6 +104,8 @@ testenv_init: ## Initialize a local Testing environment
 testenv_shutdown: ## Terminate the local Testing environment
 	@echo "===> Shutting down the local Testing environment"
 	docker compose -f deploy/testenv/docker-compose.yaml down
+
+testenv_restart: testenv_shutdown testenv_init ## Restart the local Testing environment
 
 ##@ CI Testing Functions
 

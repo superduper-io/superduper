@@ -110,14 +110,16 @@ class Listener(Component):
             return ()
 
         assert not isinstance(self.model, str)
-        return self.model.predict(
-            X=self.key,
-            db=database,
-            select=self.select,
-            distributed=distributed,
-            dependencies=dependencies,
-            **(self.predict_kwargs or {}),
-        )
+        return [
+            self.model.predict(
+                X=self.key,
+                db=database,
+                select=self.select,
+                distributed=distributed,
+                dependencies=dependencies,
+                **(self.predict_kwargs or {}),
+            )
+        ]
 
     def cleanup(self, database: Datalayer) -> None:
         """Clean up when the listener is deleted

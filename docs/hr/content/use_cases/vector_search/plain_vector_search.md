@@ -1,4 +1,9 @@
-# Vector-search with SuperDuperDB
+---
+sidebar_position: 1
+---
+# Text
+
+## Vector-search with SuperDuperDB
 
 ## Introduction
 This notebook provides a detailed guide on performing vector search using SuperDuperDB. Vector search is a powerful technique for searching and retrieving documents based on their similarity to a query vector. In this guide, we will demonstrate how to set up SuperDuperDB for vector search and use it to search a dataset of documents.

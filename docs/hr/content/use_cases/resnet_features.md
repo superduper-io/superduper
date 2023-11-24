@@ -1,4 +1,6 @@
-# Creating a DB of image features in `torchvision`
+# Image Feature Extraction
+
+## Creating a DB of image features in `torchvision`
 
 
 ```python

@@ -223,10 +223,9 @@ res = db.execute(
 )
 ```
 
+Display images
+
 ```python
 # Display the image data from the fourth result in the search
 res[3]['image'].x
-```
-
-Feel free to let me know if you have any specific questions or if there's anything else I can help you with!
 ```

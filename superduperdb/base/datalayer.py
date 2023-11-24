@@ -204,12 +204,12 @@ class Datalayer:
         The standard procedure is to set compute engine during initialization.
         """
         logging.warn(
-            f"Change compute engine from '{self.compute_engine.name()}' to '{new.name()}'"
+            f"Replace compute engine: '{self.compute_engine.name()}' -> '{new.name()}'"
         )
 
         self.compute_engine.disconnect()
         logging.success(
-            f"Succesfully disconnected from compute engine: '{self.compute_engine.name()}'"
+            f"Disconnected from compute engine: '{self.compute_engine.name()}'"
         )
 
         logging.info(f"Connecting to compute engine: {new.name()}")

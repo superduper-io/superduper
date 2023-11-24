@@ -1,4 +1,9 @@
-# Chunked vector-search using multiple inputs per document
+---
+sidebar_position: 4
+---
+# Chunked
+
+## Chunked vector-search using multiple inputs per document
 
 In this example, we demonstrate how to implement vector-search, where the targets of search are envisaged
 to be smaller units of text than the raw data. For example, a developer might like to store whole documents, 

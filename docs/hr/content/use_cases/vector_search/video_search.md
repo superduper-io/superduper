@@ -1,4 +1,10 @@
-# Search within videos with text
+---
+sidebar_position: 3
+---
+
+# Video
+
+## Search within videos with text
 
 ## Introduction
 This notebook outlines the process of searching for specific textual information within videos and retrieving relevant video segments. To accomplish this, we utilize various libraries and techniques, such as:

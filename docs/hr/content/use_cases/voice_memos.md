@@ -1,6 +1,6 @@
-# Cataloguing voice-memos for a self managed personal assistant
+# Voice Memo Cataloging
 
-## Introduction
+## Cataloguing voice-memos for a self managed personal assistant
 
 Discover the magic of SuperDuperDB as we seamlessly integrate models across different data modalities, such as audio and text. Experience the creation of highly sophisticated data-based applications with minimal boilerplate code.
 

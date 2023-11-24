@@ -1,4 +1,10 @@
-# End-2-end example using SQL databases
+---
+sidebar_position: 2
+---
+
+# SQL Vector Search
+
+## End-2-end example using SQL databases
 
 SuperDuperDB allows users to connect to a MongoDB database, or any one of a range of SQL databases, i.e. from this selection:
 

@@ -254,58 +254,58 @@ Also find use-cases and apps built by the community in the [superduper-community
 <table>
   <tr>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/multimodal_image_search_clip.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/image-search.svg" />
       </a>
     </td>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/video_search.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/video-search.svg" />
       </a>
     </td>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/question_the_docs.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/semantic-search.svg" />
       </a>
     </td>
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/multimodal_image_search_clip.ipynb">Text-To-Image Search</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/video_search.ipynb">Text-To-Video Search</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/video_search.ipynb">Text-To-Video Search</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/question_the_docs.ipynb">Question the Docs</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/question_the_docs.ipynb">Question the Docs</a>
     </th>
   </tr>
   <tr>     
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/vector_search.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/document-search.svg" />
       </a>
     </td>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/mnist_torch.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/machine-learning.svg" />
       </a>
     </td>
     <td width="30%">
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/transfer_learning.ipynb">
         <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/featured-examples/transfer-learning.svg" />
       </a>
     </td>
   </tr>
   <tr>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/vector_search.ipynb">Semantic Search Engine</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/vector_search.ipynb">Semantic Search Engine</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/mnist_torch.ipynb">Classical Machine Learning</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/mnist_torch.ipynb">Classical Machine Learning</a>
     </th>
     <th>
-      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
+      <a href="https://demo.superduperdb.com/user-redirect/lab/tree/examples/official-notebooks/transfer_learning.ipynb">Cross-Framework Transfer Learning</a>
     </th>
   </tr>
 </table>

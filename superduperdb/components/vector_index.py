@@ -102,7 +102,7 @@ class VectorIndex(Component):
 
         model = db.models[model_name]
         return (
-            model.predict(model_input, one=True, distributed=False),
+            model.predict(model_input, one=True),
             model.identifier,
             key,
         )

@@ -1,8 +1,11 @@
 import contextlib
-import inspect
 import traceback
+import typing as t
 
 from superduperdb.base.config import Mode
+
+if t.TYPE_CHECKING:
+    from superduperdb.base.datalayer import Datalayer
 
 
 def method_job(
@@ -14,6 +17,8 @@ def method_job(
     kwargs,
     job_id,
     dependencies=(),
+    local=True,
+    db: t.Optional['Datalayer'] = None,
 ):
     """
     Run a method on a component in the database.
@@ -30,24 +35,26 @@ def method_job(
     from superduperdb.base.build import build_datalayer
     from superduperdb.base.configs import build_config
 
-    cfg = build_config(cfg)
-    cfg.force_set('mode', Mode.Development)
-    db = build_datalayer(cfg)
+    if db is None:
+        cfg = build_config(cfg)
+        cfg.force_set('mode', Mode.Development)
+        db = build_datalayer(cfg)
 
     component = db.load(type_id, identifier)
     method = getattr(component, method_name)
     db.metadata.update_job(job_id, 'status', 'running')
 
-    if 'distributed' in inspect.signature(method).parameters:
-        kwargs['distributed'] = False
     try:
-        handle_function_output(
-            method,
-            db=db,
-            job_id=job_id,
-            args=args,
-            kwargs=kwargs,
-        )
+        if local:
+            method(*args, db=db, **kwargs)
+        else:
+            handle_function_output(
+                method,
+                db=db,
+                job_id=job_id,
+                args=args,
+                kwargs=kwargs,
+            )
     except Exception as e:
         tb = traceback.format_exc()
         db.metadata.update_job(job_id, 'status', 'failed')
@@ -84,25 +91,29 @@ def callable_job(
     kwargs,
     job_id,
     dependencies=(),
+    local=True,
+    db: t.Optional['Datalayer'] = None,
 ):
     from superduperdb.base.build import build_datalayer
     from superduperdb.base.configs import build_config
 
-    CFG = build_config(cfg)
-    CFG.force_set('mode', Mode.Development)
-    db = build_datalayer(CFG)
+    if db is None:
+        CFG = build_config(cfg)
+        CFG.force_set('mode', Mode.Development)
+        db = build_datalayer(CFG)
     db.metadata.update_job(job_id, 'status', 'running')
     output = None
-    if 'distributed' in inspect.signature(function_to_call).parameters:
-        kwargs['distributed'] = False
     try:
-        output = handle_function_output(
-            function_to_call,
-            db=db,
-            job_id=job_id,
-            args=args,
-            kwargs=kwargs,
-        )
+        if local:
+            output = function_to_call(*args, db=db, **kwargs)
+        else:
+            output = handle_function_output(
+                function_to_call,
+                db=db,
+                job_id=job_id,
+                args=args,
+                kwargs=kwargs,
+            )
     except Exception as e:
         tb = traceback.format_exc()
         db.metadata.update_job(job_id, 'status', 'failed')

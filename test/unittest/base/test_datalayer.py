@@ -47,7 +47,7 @@ class TestComponent(Component):
     def on_load(self, db):
         self.is_on_load = True
 
-    def schedule_jobs(self, db, dependencies, distributed=False):
+    def schedule_jobs(self, db, dependencies):
         self.is_schedule_jobs = True
         return []
 

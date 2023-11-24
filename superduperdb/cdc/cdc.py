@@ -398,25 +398,29 @@ class DatabaseChangeDataCapture:
         Stop all registered listeners
         :param name: Listener name
         """
-        if name:
-            try:
-                self._CDC_LISTENERS[name].stop()
-            except KeyError:
-                raise KeyError(f'{name} is already down or not added yet')
-            else:
-                del self._CDC_LISTENERS[name]
+        try:
+            if name:
+                try:
+                    self._CDC_LISTENERS[name].stop()
+                except KeyError:
+                    raise KeyError(f'{name} is already down or not added yet')
+                else:
+                    del self._CDC_LISTENERS[name]
 
-        for _, listener in self._CDC_LISTENERS.items():
-            listener.stop()
-        self._CDC_LISTENERS = {}
+            for _, listener in self._CDC_LISTENERS.items():
+                listener.stop()
+        finally:
+            self._CDC_LISTENERS = {}
+            self.stop_handler()
 
     def stop_handler(self):
         """
         Stop the cdc handler thread
         """
-        self._cdc_stop_event.clear()
+        self._cdc_stop_event.set()
         if self.cdc_change_handler:
             self.cdc_change_handler.join()
+        self.cdc_change_handler = None
 
     def add(self, listener: 'Listener'):
         """

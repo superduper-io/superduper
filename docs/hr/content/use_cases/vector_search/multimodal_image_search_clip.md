@@ -1,6 +1,9 @@
-# Multimodal Search Using CLIP
+---
+sidebar_position: 2
+---
+# Image
 
-## Introduction
+## Multimodal Search Using CLIP
 
 This notebook showcases the capabilities of SuperDuperDB for performing multimodal searches using the `VectorIndex`. SuperDuperDB's flexibility enables users and developers to integrate various models into the system and use them for vectorizing diverse queries during search and inference. In this demonstration, we leverage the [CLIP multimodal architecture](https://openai.com/research/clip).
 

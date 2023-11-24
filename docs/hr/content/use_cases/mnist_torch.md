@@ -1,6 +1,6 @@
-# Training and Maintaining MNIST Predictions with SuperDuperDB
+# MNIST in Database
 
-## Introduction
+## Training and Maintaining MNIST Predictions with SuperDuperDB
 
 This notebook outlines the process of implementing a classic machine learning classification task - MNIST handwritten digit recognition, using a convolutional neural network. However, we introduce a unique twist by performing the task in a database using SuperDuperDB.
 

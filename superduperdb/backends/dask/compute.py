@@ -41,17 +41,21 @@ class DaskComputeBackend(ComputeBackend):
                 **kwargs,
             )
 
-    def name(self) -> str:
-        return "Dask"
+    @property
+    def type(self) -> str:
+        return "distributed"
 
-    def submit(self, function: t.Callable, **kwargs) -> distributed.Future:
+    @property
+    def name(self) -> str:
+        return "dask"
+
+    def submit(self, function: t.Callable, *args, **kwargs) -> distributed.Future:
         """
         Submits a function to the Dask server for execution.
 
         :param function: The function to be executed.
-        :param kwargs: Additional keyword arguments to be passed to the function.
         """
-        future = self.client.submit(function, **kwargs)
+        future = self.client.submit(function, *args, **kwargs)
         self.__futures_collection[future.key] = future
 
         logging.success(f"Job submitted.  function:{function} future:{future}")

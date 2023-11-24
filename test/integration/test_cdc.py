@@ -44,7 +44,7 @@ def listener_and_collection_name(database_with_default_encoders_and_model):
     listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
     db.cdc.cdc_change_handler._QUEUE_BATCH_SIZE = 1
 
-    yield listener, collection_name
+    yield listener, collection_name, db
 
     db.cdc.stop()
 
@@ -75,7 +75,7 @@ def listener_without_cdc_handler_and_collection_name(
     collection_name = 'documents'
     db.cdc._cdc_existing_collections = []
     listener = db.cdc.listen(on=Collection(collection_name), timeout=LISTEN_TIMEOUT)
-    yield listener, collection_name
+    yield listener, collection_name, db
     db.cdc.stop()
 
 
@@ -96,7 +96,7 @@ def retry_state_check(state_check):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_smoke(listener_without_cdc_handler_and_collection_name):
     """Health-check before we test stateful database changes"""
-    _, name = listener_without_cdc_handler_and_collection_name
+    _, name, db = listener_without_cdc_handler_and_collection_name
     assert isinstance(name, str)
 
 
@@ -104,18 +104,15 @@ def test_smoke(listener_without_cdc_handler_and_collection_name):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_task_workflow(
     listener_and_collection_name,
-    database_with_default_encoders_and_model,
     fake_inserts,
     fake_updates,
     op_type,
 ):
     """Test that task graph executed on `insert`"""
 
-    listener, name = listener_and_collection_name
+    _, name, db = listener_and_collection_name
 
-    with add_and_cleanup_listeners(
-        database_with_default_encoders_and_model, name
-    ) as database_with_listeners:
+    with add_and_cleanup_listeners(db, name) as database_with_listeners:
         # `refresh=False` to ensure `_outputs` not produced after `Insert` refresh.
         data = None
         if op_type == 'insert':
@@ -203,11 +200,10 @@ def test_vector_database_sync(
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_single_insert(
     listener_without_cdc_handler_and_collection_name,
-    database_with_default_encoders_and_model,
     fake_inserts,
 ):
-    listener, name = listener_without_cdc_handler_and_collection_name
-    database_with_default_encoders_and_model.execute(
+    listener, name, db = listener_without_cdc_handler_and_collection_name
+    db.execute(
         Collection(name).insert_many([fake_inserts[0]]),
         refresh=False,
     )
@@ -221,11 +217,10 @@ def test_single_insert(
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_many_insert(
     listener_without_cdc_handler_and_collection_name,
-    database_with_default_encoders_and_model,
     fake_inserts,
 ):
-    listener, name = listener_without_cdc_handler_and_collection_name
-    database_with_default_encoders_and_model.execute(
+    listener, name, db = listener_without_cdc_handler_and_collection_name
+    db.execute(
         Collection(name).insert_many(fake_inserts),
         refresh=False,
     )
@@ -239,18 +234,15 @@ def test_many_insert(
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_delete_one(
     listener_without_cdc_handler_and_collection_name,
-    database_with_default_encoders_and_model,
     fake_inserts,
 ):
-    listener, name = listener_without_cdc_handler_and_collection_name
-    inserted_ids, _ = database_with_default_encoders_and_model.execute(
+    listener, name, db = listener_without_cdc_handler_and_collection_name
+    inserted_ids, _ = db.execute(
         Collection(name).insert_many(fake_inserts),
         refresh=False,
     )
 
-    database_with_default_encoders_and_model.execute(
-        Collection(name).delete_one({'_id': inserted_ids[0]})
-    )
+    db.execute(Collection(name).delete_one({'_id': inserted_ids[0]}))
 
     def state_check():
         assert listener.info()["deletes"] == 1
@@ -261,16 +253,15 @@ def test_delete_one(
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_single_update(
     listener_without_cdc_handler_and_collection_name,
-    database_with_default_encoders_and_model,
     fake_updates,
 ):
-    listener, name = listener_without_cdc_handler_and_collection_name
-    inserted_ids, _ = database_with_default_encoders_and_model.execute(
+    listener, name, db = listener_without_cdc_handler_and_collection_name
+    inserted_ids, _ = db.execute(
         Collection(name).insert_many(fake_updates),
         refresh=False,
     )
-    encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
-    database_with_default_encoders_and_model.execute(
+    encoder = db.encoders['torch.float32[32]']
+    db.execute(
         Collection(name).update_many(
             {"_id": inserted_ids[0]},
             Document({'$set': {'x': encoder(torch.randn(32))}}),
@@ -286,15 +277,14 @@ def test_single_update(
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_many_update(
     listener_without_cdc_handler_and_collection_name,
-    database_with_default_encoders_and_model,
     fake_updates,
 ):
-    listener, name = listener_without_cdc_handler_and_collection_name
-    inserted_ids, _ = database_with_default_encoders_and_model.execute(
+    listener, name, db = listener_without_cdc_handler_and_collection_name
+    inserted_ids, _ = db.execute(
         Collection(name).insert_many(fake_updates), refresh=False
     )
-    encoder = database_with_default_encoders_and_model.encoders['torch.float32[32]']
-    database_with_default_encoders_and_model.execute(
+    encoder = db.encoders['torch.float32[32]']
+    db.execute(
         Collection(name).update_many(
             {"_id": {"$in": inserted_ids[:5]}},
             Document({'$set': {'x': encoder(torch.randn(32))}}),
@@ -310,16 +300,14 @@ def test_many_update(
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_insert_without_cdc_handler(
     listener_without_cdc_handler_and_collection_name,
-    database_with_default_encoders_and_model,
     fake_inserts,
 ):
     """Test that `insert` without CDC handler does not execute task graph"""
-    _, name = listener_without_cdc_handler_and_collection_name
-    inserted_ids, _ = database_with_default_encoders_and_model.execute(
+    _, name, db = listener_without_cdc_handler_and_collection_name
+    inserted_ids, _ = db.execute(
         Collection(name).insert_many(fake_inserts),
         refresh=False,
     )
-    db = database_with_default_encoders_and_model
     doc = db.execute(Collection(name).find_one({'_id': inserted_ids[0]}))
     assert '_outputs' not in doc.content.keys()
 
@@ -327,7 +315,7 @@ def test_insert_without_cdc_handler(
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_cdc_stop(listener_and_collection_name):
     """Test that CDC listen service stopped properly"""
-    listener, _ = listener_and_collection_name
+    listener, _, _ = listener_and_collection_name
     listener.stop()
 
     def state_check():

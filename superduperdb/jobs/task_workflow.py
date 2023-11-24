@@ -7,9 +7,7 @@ from functools import wraps
 import networkx
 from networkx import DiGraph, ancestors
 
-import superduperdb as s
 from superduperdb.base import exceptions
-from superduperdb.base.config import Mode
 
 from .job import ComponentJob, FunctionJob, Job
 
@@ -43,13 +41,10 @@ class TaskWorkflow:
         for node in list(networkx.topological_sort(self.G)):
             self.G.nodes[node]['job'].watch()
 
-    def run_jobs(self, distributed: t.Optional[bool] = False):
-        """Run all the jobs in this workflow
-
-        :param distributed: if True, use dask to distribute these tasks
-        """
-        if distributed is None:
-            distributed = s.CFG.mode == Mode.Production
+    def run_jobs(
+        self,
+    ):
+        """Run all the jobs in this workflow"""
         pred = self.G.predecessors
         current_group = [n for n in self.G.nodes if not ancestors(self.G, n)]
         done = set()
@@ -62,12 +57,11 @@ class TaskWorkflow:
                     job(
                         self.database,
                         dependencies=dependencies,
-                        distributed=distributed,
                     )
                 except Exception as e:
                     raise exceptions.TaskWorkflowException(
                         f'Error while running job {job} with \
-                          dependencies {dependencies} with distributed {distributed}'
+                          dependencies {dependencies}'
                     ) from e
                 done.add(node)
 

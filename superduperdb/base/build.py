@@ -12,7 +12,6 @@ from superduperdb.backends.dask.compute import DaskComputeBackend
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
-from superduperdb.base.config import Mode
 from superduperdb.base.datalayer import Datalayer
 
 
@@ -52,6 +51,21 @@ def build(uri, mapping):
         name = uri.split('//')[0]
         conn = ibis.connect(uri)
         return mapping['ibis'](conn, name)
+
+
+def build_compute(cfg):
+    compute = cfg.cluster.compute
+    if compute == 'local' or compute is None:
+        return LocalComputeBackend()
+
+    if compute == 'dask+thread':
+        return DaskComputeBackend('', local=True)
+
+    if compute.split('://')[0] == 'dask+tcp':
+        uri = compute.split('+')[-1]
+        return DaskComputeBackend(uri)
+
+    return LocalComputeBackend()
 
 
 def build_datalayer(cfg=None, **kwargs) -> Datalayer:
@@ -94,14 +108,7 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             if cfg.artifact_store is not None
             else databackend.build_artifact_store()
         ),
-        compute=(
-            DaskComputeBackend(
-                cfg.cluster.dask_scheduler,
-                local=False,
-            )
-            if cfg.mode == Mode.Production
-            else LocalComputeBackend()  # Development mode
-        ),
+        compute=build_compute(cfg),
     )
 
     return db

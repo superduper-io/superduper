@@ -349,13 +349,24 @@ def add_and_cleanup_listeners(database, collection_name):
 
 
 @pytest.fixture
-def client(database_with_default_encoders_and_model):
-    from superduperdb.cdc.app import app as cdc_app
+def client(monkeypatch, database_with_default_encoders_and_model):
+    from superduperdb import CFG
+
+    cdc = 'http://localhost:8001'
+    vector_search = 'http://localhost:8000'
+
+    monkeypatch.setattr(CFG.cluster, 'cdc', cdc)
+    monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
 
     database_with_default_encoders_and_model.cdc.start()
+    from superduperdb.cdc.app import app as cdc_app
+
     cdc_app.app.state.pool = database_with_default_encoders_and_model
     client = TestClient(cdc_app.app)
     yield client
+
+    monkeypatch.setattr(CFG.cluster, 'cdc', None)
+    monkeypatch.setattr(CFG.cluster, 'vector_search', None)
 
 
 def test_basic_workflow(client):

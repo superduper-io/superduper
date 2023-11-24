@@ -6,7 +6,6 @@ import pytest
 from PIL import Image
 
 from superduperdb.backends.mongodb.query import Collection
-from superduperdb.base.config import Mode
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import Model
@@ -97,16 +96,18 @@ def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
 
 
 @pytest.fixture
-def distributed_db(test_db, local_dask_client):
+def distributed_db(monkeypatch, test_db, local_dask_client):
     from superduperdb import CFG
 
-    CFG.force_set('mode', Mode.Production)
     existing_databackend = CFG.data_backend
     CFG.force_set(
         'data_backend', 'mongodb://superduper:superduper@mongodb:27017/test_db'
     )
+    cdc = 'http://localhost:8001'
+    vector_search = 'http://localhost:8000'
+    monkeypatch.setattr(CFG.cluster, 'cdc', cdc)
+    monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
     test_db.set_compute(local_dask_client)
-    test_db.distributed = True
 
     def update_syspath():
         import sys
@@ -116,10 +117,9 @@ def distributed_db(test_db, local_dask_client):
     test_db.get_compute().submit(update_syspath)
 
     yield test_db
-    test_db.distributed = False
-    test_db._distributed_client = None
-    CFG.force_set('mode', 'development')
     CFG.force_set('data_backend', existing_databackend)
+    monkeypatch.setattr(CFG.cluster, 'cdc', None)
+    monkeypatch.setattr(CFG.cluster, 'vector_search', None)
 
 
 def test_advance_setup(distributed_db, image_url):

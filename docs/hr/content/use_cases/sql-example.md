@@ -4,9 +4,9 @@ sidebar_position: 2
 
 # SQL Vector Search
 
-## End-2-end example using SQL databases
+## End-to-End Example Using SQL Databases
 
-SuperDuperDB allows users to connect to a MongoDB database, or any one of a range of SQL databases, i.e. from this selection:
+SuperDuperDB offers the flexibility to connect to various SQL databases, including but not limited to:
 
 - MongoDB
 - PostgreSQL
@@ -26,75 +26,87 @@ SuperDuperDB allows users to connect to a MongoDB database, or any one of a rang
 - Snowflake
 - Trino
 
-In this example we show case how to implement multimodal vector-search with DuckDB.
-This is a simple extension of multimodal vector-search with MongoDB, which is 
-just slightly easier to set-up (see [here](https://docs.superduperdb.com/docs/use_cases/items/multimodal_image_search_clip)).
-Everything we do here applies equally to any of the above supported SQL databases, as well as to tabular data formats on disk, such as `pandas`.
+In this example, we showcase how to implement multimodal vector-search with DuckDB. This is an extension of multimodal vector-search with MongoDB, which is just slightly easier to set up (see [here](https://docs.superduperdb.com/docs/use_cases/items/multimodal_image_search_clip)). Everything demonstrated here applies equally to any of the supported SQL databases mentioned above, as well as to tabular data formats on disk, such as `pandas`.
+
+Real life use cases could be vectorizing diverse things like images, texts and searching it efficiently with SuperDuperDB.
 
 ## Prerequisites
 
-Before working on this use-case, make sure that you've installed the software requirements:
+Before proceeding with this use-case, ensure that you have installed the necessary software requirements:
 
-
-```python
+```bash
 !pip install superduperdb[demo]
 ```
 
-## Connect to datastore
+## Connect to Datastore
 
-The first step in any `superduperdb` workflow is to connect to your datastore.
-In order to connect to a different datastore, add a different `URI`, e.g. `postgres://...`.
-
+The initial step in any `superduperdb` workflow is to connect to your datastore. To connect to a different datastore, simply add a different `URI`, for example, `postgres://...`.
 
 ```python
 import os
 from superduperdb import superduper
 
 os.makedirs('.superduperdb', exist_ok=True)
+
+# Let's super duper your SQL database
 db = superduper('duckdb://.superduperdb/test.ddb')
 ```
 
-## Load dataset
+## Load Dataset
 
-Now, Once connected, add some data to the datastore:
-
+Now that you're connected, add some data to the datastore:
 
 ```python
+# Download the coco_sample.zip file
 !curl -O https://superduperdb-public.s3.eu-west-1.amazonaws.com/coco_sample.zip
+
+# Download the captions_tiny.json file
 !curl -O https://superduperdb-public.s3.eu-west-1.amazonaws.com/captions_tiny.json
+
+# Unzip the contents of coco_sample.zip
 !unzip coco_sample.zip
+
+# Create a directory named 'data/coco'
 !mkdir -p data/coco
+
+# Move the 'images_small' directory to 'data/coco/images'
 !mv images_small data/coco/images
 ```
 
-
 ```python
+# Import necessary libraries
 import json
-import pandas
-import PIL.Image
+import pandas as pd
+from PIL import Image
 
-with open(captions_tiny.json') as f:
+# Open the 'captions_tiny.json' file and load its contents
+with open('captions_tiny.json') as f:
     data = json.load(f)[:500]
-    
-data = pandas.DataFrame([
+
+# Create a DataFrame from a list comprehension with image paths and captions
+data = pd.DataFrame([
     {
-        'image': r['image']['_content']['path'], 
-         'captions': r['captions']
-    } for r in data   
+        'image': r['image']['_content']['path'],
+        'captions': r['captions']
+    } for r in data
 ])
-data['id'] = pandas.Series(data.index).apply(str)
+
+# Add an 'id' column to the DataFrame
+data['id'] = pd.Series(data.index).apply(str)
+
+# Create a DataFrame with 'id' and 'image' columns
 images_df = data[['id', 'image']]
 
-images_df['image'] = images_df['image'].apply(PIL.Image.open)
+# Open each image using PIL.Image
+images_df['image'] = images_df['image'].apply(Image.open)
+
+# Create a DataFrame with 'id' and 'captions' columns, exploding the 'captions' column
 captions_df = data[['id', 'captions']].explode('captions')
 ```
 
-## Define schema
+## Define Schema
 
-This use-case requires a table with images, and a table with text. 
-SuperDuperDB extends standard SQL functionality, by allowing developers to define
-their own data-types via the `Encoder` abstraction.
-
+For this use-case, you need a table with images and another table with text. SuperDuperDB extends standard SQL functionality, allowing developers to define their own data types through the `Encoder` abstraction.
 
 ```python
 from superduperdb.backends.ibis.query import Table
@@ -102,8 +114,9 @@ from superduperdb.backends.ibis.field_types import dtype
 from superduperdb.ext.pillow import pil_image
 from superduperdb import Schema
 
+# Define the 'captions' table
 captions = Table(
-    'captions', 
+    'captions',
     primary_id='id',
     schema=Schema(
         'captions-schema',
@@ -111,8 +124,9 @@ captions = Table(
     )
 )
 
+# Define the 'images' table
 images = Table(
-    'images', 
+    'images',
     primary_id='id',
     schema=Schema(
         'images-schema',
@@ -120,23 +134,24 @@ images = Table(
     )
 )
 
+# Add the 'captions' and 'images' tables to the SuperDuperDB database
 db.add(captions)
 db.add(images)
 ```
 
 ## Add data to the datastore
 
-
 ```python
+# Insert data from the 'images_df' DataFrame into the 'images' table
 _ = db.execute(images.insert(images_df))
+
+# Insert data from the 'captions_df' DataFrame into the 'captions' table
 _ = db.execute(captions.insert(captions_df))
 ```
 
-## Build SuperDuperDB `Model` instances
+## Build SuperDuperDB `Model` Instances
 
-This use-case uses the `superduperdb.ext.torch` extension. 
-Both models used, output `torch` tensors, which are encoded with `tensor`:
-
+This use-case utilizes the `superduperdb.ext.torch` extension. Both models used output `torch` tensors, which are encoded with `tensor`:
 
 ```python
 import clip
@@ -169,13 +184,12 @@ visual_model = TorchModel(
 
 ## Create a Vector-Search Index
 
-Let's define a mult-modal search index on the basis of the models imported above.
-The `visual_model` is applied to the images, to make the `images` table searchable.
-
+Define a multimodal search index based on the imported models. The `visual_model` is applied to the images, making the `images` table searchable.
 
 ```python
 from superduperdb import VectorIndex, Listener
 
+# Add a VectorIndex
 db.add(
     VectorIndex(
         'my-index',
@@ -196,12 +210,12 @@ db.add(
 
 ## Search Images Using Text
 
-Now we can demonstrate searching for images using text queries:
-
+Now, let's demonstrate how to search for images using text queries:
 
 ```python
 from superduperdb import Document
 
+# Execute a query to find images with captions containing 'dog catches frisbee'
 res = db.execute(
     images
         .like(Document({'captions': 'dog catches frisbee'}), vector_index='my-index', n=10)
@@ -209,7 +223,10 @@ res = db.execute(
 )
 ```
 
-
 ```python
+# Display the image data from the fourth result in the search
 res[3]['image'].x
+```
+
+Feel free to let me know if you have any specific questions or if there's anything else I can help you with!
 ```

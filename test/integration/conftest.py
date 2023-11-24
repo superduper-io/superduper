@@ -12,7 +12,7 @@ except ImportError:
     torch = None
 
 from superduperdb import CFG
-from superduperdb.backends.dask.compute import DaskComputeBackend
+from superduperdb.backends.dask.compute import DaskComputeEngine
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 from superduperdb.components.listener import Listener
@@ -117,7 +117,7 @@ def local_dask_client(monkeypatch, request):
     monkeypatch.setenv('SUPERDUPERDB_DATA_STORE_URI', data_store_uri)
 
     # Change the default value
-    client = DaskComputeBackend(
+    client = DaskComputeEngine(
         address=CFG.cluster.dask_scheduler,
         local=False,
     )

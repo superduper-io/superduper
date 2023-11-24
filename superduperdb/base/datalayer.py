@@ -13,12 +13,12 @@ import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.artifact import ArtifactStore
 from superduperdb.backends.base.backends import vector_searcher_implementations
-from superduperdb.backends.base.compute import ComputeBackend
+from superduperdb.backends.base.compute import ComputeEngine
 from superduperdb.backends.base.data import DataStore
 from superduperdb.backends.base.metadata import MetadataStore
 from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, Update
 from superduperdb.backends.ibis.query import Table
-from superduperdb.backends.local.compute import LocalComputeBackend
+from superduperdb.backends.local.compute import LocalComputeEngine
 from superduperdb.base import exceptions, serializable
 from superduperdb.base.config import Mode
 from superduperdb.base.cursor import SuperDuperCursor
@@ -69,13 +69,13 @@ class Datalayer:
         data_store: DataStore,
         metadata_store: MetadataStore,
         artifact_store: ArtifactStore,
-        compute: ComputeBackend = LocalComputeBackend(),
+        compute_engine: ComputeEngine = LocalComputeEngine(),
     ):
         """
-        :param data_store: object containing connection to Datastore
-        :param metadata_store: object containing connection to Metadatastore
-        :param artifact_store: object containing connection to Artifactstore
-        :param compute: object containing connection to ComputeBackend
+        :param data_store: object containing connection to DataStore
+        :param metadata_store: object containing connection to MetadataStore
+        :param artifact_store: object containing connection to ArtifactStore
+        :param compute_engine: object containing connection to ComputeBackend
         """
         logging.info("Building Data Layer")
 
@@ -84,7 +84,7 @@ class Datalayer:
         self.data_store = data_store
         self.metadata_store = metadata_store
         self.artifact_store = artifact_store
-        self.compute = compute
+        self.compute_engine = compute_engine
 
         # Set Derivative Parameters
         # ------------------------------
@@ -182,25 +182,25 @@ class Datalayer:
             searcher.add(items)
             progress.update(len(items))
 
-    def set_compute(self, new: ComputeBackend):
+    def set_compute(self, new: ComputeEngine):
         """
         Set a new compute engine at runtime. Use it only if you know what you do.
         The standard procedure is to set compute engine during initialization.
         """
         logging.warn(
-            f"Change compute engine from '{self.compute.name()}' to '{new.name()}'"
+            f"Change compute engine from '{self.compute_engine.name()}' to '{new.name()}'"
         )
 
-        self.compute.disconnect()
+        self.compute_engine.disconnect()
         logging.success(
-            f"Succesfully disconnected from compute engine: '{self.compute.name()}'"
+            f"Succesfully disconnected from compute engine: '{self.compute_engine.name()}'"
         )
 
         logging.info(f"Connecting to compute engine: {new.name()}")
-        self.compute = new
+        self.compute_engine = new
 
     def get_compute(self):
-        return self.compute
+        return self.compute_engine
 
     def drop(self, force: bool = False):
         """
@@ -399,16 +399,16 @@ class Datalayer:
             if isinstance(query, Insert):
                 return self.insert(query, *args, **kwargs)
             if isinstance(query, Select):
-                return self.select(query, *args, **kwargs)
+                return self.select(query)
             if isinstance(query, Table):
-                return self.select(query.to_query(), *args, **kwargs)
+                return self.select(query.to_query())
             if isinstance(query, Update):
                 return self.update(query, *args, **kwargs)
             if isinstance(query, RawQuery):
                 return query.execute(self)
         except Exception as e:
-            QueryExceptionCls = exceptions.query_exceptions(query)
-            raise QueryExceptionCls(f"Error while executing {str(query)} query") from e
+            exception = exceptions.query_exceptions(query)
+            raise exception(f"Error while executing {str(query)} query") from e
 
         raise TypeError(
             f'Wrong type of {query}; '

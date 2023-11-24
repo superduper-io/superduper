@@ -1,10 +1,10 @@
 import typing as t
 
 from superduperdb import logging
-from superduperdb.backends.base.compute import ComputeBackend
+from superduperdb.backends.base.compute import ComputeEngine
 
 
-class LocalComputeBackend(ComputeBackend):
+class LocalComputeEngine(ComputeEngine):
     """
     A mockup backend for running jobs locally.
     """

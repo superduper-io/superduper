@@ -16,13 +16,13 @@ app = FastAPI()
 
 
 class SuperDuperApp:
-    '''
+    """
     This is a wrapper class which helps to create a fastapi application
     in the realm of superduperdb.
 
     This class prepares a basic api setup and only endpoint implementation
     are need to be added into the app
-    '''
+    """
 
     def __init__(self, service='vector_search', port=8000):
         self.service = service
@@ -35,10 +35,10 @@ class SuperDuperApp:
         self._user_shutdown = False
 
     def default_endpoints(self):
-        '''
+        """
         A list of default endpoints, health and config handshake
         comes out of box with `SuperDuperApp`
-        '''
+        """
 
         @self.router.get('/health')
         def health():
@@ -60,9 +60,9 @@ class SuperDuperApp:
         return app.state.pool
 
     def add(self, *args, method='post', **kwargs):
-        '''
+        """
         Register an endpoint with this method.
-        '''
+        """
 
         def decorator(function):
             self.router.add_api_route(
@@ -78,9 +78,9 @@ class SuperDuperApp:
         return app
 
     def start(self):
-        '''
+        """
         This method is used to start the application server
-        '''
+        """
 
         self.default_endpoints()
 
@@ -98,9 +98,9 @@ class SuperDuperApp:
         )
 
     def startup(self, function=None):
-        '''
+        """
         This method is used to register a startup function
-        '''
+        """
         self._user_startup = True
 
         @app.on_event('startup')
@@ -115,9 +115,9 @@ class SuperDuperApp:
         return
 
     def shutdown(self, function=None):
-        '''
+        """
         This method is used to register a shutdown function
-        '''
+        """
         self._user_shutdown = True
 
         @app.on_event('shutdown')
@@ -137,10 +137,10 @@ def database(request: Request) -> Datalayer:
 
 
 def DatalayerDependency():
-    '''
+    """
     A helper method to be used for injecting datalayer instance
     into endpoint implementation
-    '''
+    """
     return Depends(database)
 
 

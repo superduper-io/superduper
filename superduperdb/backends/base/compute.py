@@ -2,7 +2,7 @@ import typing as t
 from abc import ABC, abstractmethod
 
 
-class ComputeBackend(ABC):
+class ComputeEngine(ABC):
     """
     Abstraction for sending jobs to a distributed compute platform.
     """

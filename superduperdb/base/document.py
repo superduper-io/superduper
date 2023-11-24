@@ -41,7 +41,7 @@ class Document:
 
     def outputs(self, key: str, model: str, version: t.Optional[int] = None) -> t.Any:
         """
-        Get document ouputs on ``key`` from ``model``
+        Get document outputs on ``key`` from ``model``
 
         :param key: Document key to get outputs from.
         :param model: Model name to get outputs from.
@@ -74,14 +74,17 @@ class Document:
         self.content[key] = value
 
     def unpack(self) -> t.Any:
-        """Returns the content, but with any encodables replacecs by their contents"""
+        """
+        Returns the content, but with encodables replaced by their contents
+        """
         return _unpack(self.content)
 
 
 def dump_bsons(documents: t.Sequence[Document]) -> bytes:
-    """Dump a sequence of documents into BSON and encode as bytes
+    """
+    Dump a sequence of documents into BSON and encode as bytes
 
-    :param documents: the sequence of documents to dump
+    :param documents: The sequence of documents to dump
     """
     return bytes(bson.encode({'docs': [d.encode() for d in documents]}))
 
@@ -89,8 +92,8 @@ def dump_bsons(documents: t.Sequence[Document]) -> bytes:
 def load_bson(content: t.ByteString, encoders: t.Dict[str, t.Any]) -> Document:
     """Load a Document from bson-encoded content
 
-    :param content: the content to decode
-    :param encoders: a dict of encoders
+    :param content: The content to decode
+    :param encoders: A dict of encoders
     """
     document: t.Dict = bson.decode(content)
     return Document(Document.decode(document, encoders=encoders))
@@ -99,8 +102,8 @@ def load_bson(content: t.ByteString, encoders: t.Dict[str, t.Any]) -> Document:
 def load_bsons(content: t.ByteString, encoders: t.Dict) -> t.List[Document]:
     """Load a list of Documents from bson-encoded content
 
-    :param content: the content to decode
-    :param encoders: a dict of encoders
+    :param content: The content to decode
+    :param encoders: A dict of encoders
     """
     d = t.cast(t.Dict, bson.decode(content))
     documents = d['docs']

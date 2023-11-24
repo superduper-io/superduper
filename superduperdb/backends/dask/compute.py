@@ -3,10 +3,10 @@ import typing as t
 from dask import distributed
 
 from superduperdb import logging
-from superduperdb.backends.base.compute import ComputeBackend
+from superduperdb.backends.base.compute import ComputeEngine
 
 
-class DaskComputeBackend(ComputeBackend):
+class DaskComputeEngine(ComputeEngine):
     """
     A client for interacting with a Dask cluster. Initialize the DaskClient.
 

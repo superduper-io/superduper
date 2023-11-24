@@ -8,9 +8,9 @@ import pymongo
 import superduperdb as s
 from superduperdb import logging
 from superduperdb.backends.base.backends import data_stores, metadata_stores
-from superduperdb.backends.dask.compute import DaskComputeBackend
+from superduperdb.backends.dask.compute import DaskComputeEngine
 from superduperdb.backends.local.artifacts import FileSystemArtifactStore
-from superduperdb.backends.local.compute import LocalComputeBackend
+from superduperdb.backends.local.compute import LocalComputeEngine
 from superduperdb.backends.mongodb.artifacts import MongoArtifactStore
 from superduperdb.base.config import Mode
 from superduperdb.base.datalayer import Datalayer
@@ -94,15 +94,15 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
             if cfg.artifact_store is not None
             else data_store.build_artifact_store()
         ),
-        compute=(
-            DaskComputeBackend(
+        compute_engine=(
+            DaskComputeEngine(
                 cfg.cluster.dask_scheduler,
                 local=cfg.cluster.local,
                 serializers=cfg.cluster.serializers,
                 deserializers=cfg.cluster.deserializers,
             )
             if cfg.mode == Mode.Production
-            else LocalComputeBackend()  # Development mode
+            else LocalComputeEngine()  # Development mode
         ),
     )
 

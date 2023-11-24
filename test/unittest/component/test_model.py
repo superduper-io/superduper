@@ -6,6 +6,7 @@ import pytest
 from sklearn.metrics import accuracy_score, f1_score
 
 from superduperdb.backends.base.query import CompoundSelect, Select
+from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.base.artifact import Artifact
 from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
@@ -74,7 +75,7 @@ def mock_forward(self, x, **kwargs):
 
 
 class TestModel(Component, Predictor):
-    ...
+    batch_predict: bool = False
 
 
 @pytest.fixture
@@ -229,15 +230,13 @@ def test_pm_predict_and_listen(mock_add, predict_mixin, local_empty_db):
 def test_pm_predict(predict_mixin):
     # Check the logic of predict method, the mock method will be tested below
     db = MagicMock(spec=Datalayer)
+    db.compute = MagicMock(spec=LocalComputeBackend)
     db.metadata = MagicMock()
     select = MagicMock(spec=Select)
+    select.table_or_collection = MagicMock()
 
     with patch.object(predict_mixin, '_predict_and_listen') as predict_func:
         predict_mixin.predict('x', db, select, listen=True)
-        predict_func.assert_called_once()
-
-    with patch.object(predict_mixin, 'create_predict_job') as predict_func:
-        predict_mixin.predict('x', db, select, distributed=True)
         predict_func.assert_called_once()
 
     with patch.object(predict_mixin, '_predict') as predict_func:
@@ -491,25 +490,21 @@ def test_model_create_fit_job():
     assert job.component_identifier == model.identifier
     assert job.method_name == 'fit'
     assert job.args == ['x']
-    assert job.kwargs['distributed'] is False
 
 
 def test_model_fit(valid_dataset):
     # Check the logic of the fit method, the mock method was tested above
     model = Model('test', object())
-    with patch.object(model, 'create_fit_job') as create_fit_job:
-        model.fit('x', distributed=True)
-        create_fit_job.assert_called_once()
-
     with patch.object(model, '_fit') as model_fit:
-        model.fit('x', distributed=False)
+        model.fit('x')
         model_fit.assert_called_once()
 
     with patch.object(model, '_fit') as model_fit:
+        db = MagicMock(spec=Datalayer)
+        db.compute = MagicMock(spec=LocalComputeBackend)
         model.fit(
             valid_dataset,
-            db=MagicMock(spec=Datalayer),
-            distributed=False,
+            db=db,
             validation_sets=[valid_dataset],
         )
         _, kwargs = model_fit.call_args

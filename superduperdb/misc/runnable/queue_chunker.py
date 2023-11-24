@@ -24,8 +24,8 @@ class QueueChunker:
         def chunk():
             start = self.accumulate_timeouts and time.time()
 
-            for i in range(self.chunk_size):
-                if stop_event:
+            for _ in range(self.chunk_size):
+                if stop_event.is_set():
                     return
 
                 elapsed = self.accumulate_timeouts and time.time() - start

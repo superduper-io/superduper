@@ -77,7 +77,6 @@ class Component(Serializable):
             method_name='predict',
             type_id='model',
             kwargs={
-                'distributed': False,
                 'validation_set': validation_set,
                 'metrics': metrics,
             },
@@ -87,14 +86,12 @@ class Component(Serializable):
         self,
         database: Datalayer,
         dependencies: t.Sequence[Job] = (),
-        distributed: bool = False,
         verbose: bool = False,
     ) -> t.Sequence[t.Any]:
         """Run the job for this listener
 
         :param database: The db to process
         :param dependencies: A sequence of dependencies,
-        :param distributed: Is the computation distributed
         :param verbose: If true, print more information
         """
         return []

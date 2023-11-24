@@ -125,6 +125,8 @@ demo = [
     "librosa",
 ]
 
+sandbox = ["superduperdb[demo,server]"]
+
 [project.urls]
 homepage = "https://www.superduperdb.com/"
 documentation = "https://docs.superduperdb.com"

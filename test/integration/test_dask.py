@@ -157,7 +157,7 @@ def test_model_job_logs(
         model='model_linear_a',
         select=collection.find(),
     )
-    job, _ = database_with_default_encoders_and_model.add(listener_x)
+    jobs, _ = database_with_default_encoders_and_model.add(listener_x)
 
     # Insert data to the Collection
     # ------------------------------
@@ -169,7 +169,7 @@ def test_model_job_logs(
     # ------------------------------
     f = io.StringIO()
     with redirect_stdout(f):
-        job.watch()
+        jobs[0].watch()
     s = f.getvalue()
     logs = s.split('\n')
 

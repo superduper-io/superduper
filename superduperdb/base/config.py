@@ -54,13 +54,14 @@ class Cluster(BaseConfigJSONable):
     :param backfill_batch_size: The number of rows to backfill at a time
                                 for vector-search loading
     :param vector_search: The URI for the vector search service
-    :param cdc: The URI for the change data capture service
+    :param cdc: The URI for the change data capture service (if ``None``
+                then no cdc assumed)
     """
 
-    dask_scheduler: str = 'tcp://localhost:8786'
+    dask_scheduler: str = 'tcp://localhost:8786'  # None
     backfill_batch_size: int = 100
-    vector_search: str = 'http://localhost:8000'
-    cdc: str = 'http://localhost:8001'
+    vector_search: t.Optional[str] = 'http://localhost:8000'  # None
+    cdc: t.Optional[str] = 'http://localhost:8001'  # None
 
 
 class LogLevel(str, Enum):

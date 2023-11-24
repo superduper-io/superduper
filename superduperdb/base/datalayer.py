@@ -20,7 +20,6 @@ from superduperdb.backends.base.query import Delete, Insert, RawQuery, Select, U
 from superduperdb.backends.ibis.query import Table
 from superduperdb.backends.local.compute import LocalComputeBackend
 from superduperdb.base import exceptions, serializable
-from superduperdb.base.config import Mode
 from superduperdb.base.cursor import SuperDuperCursor
 from superduperdb.base.document import Document
 from superduperdb.base.superduper import superduper
@@ -130,8 +129,7 @@ class Datalayer:
             if self.cdc.running:
                 # In this case, loading has already happened on disk via CDC mechanism
                 return vector_comparison
-
-            if backfill or s.CFG.mode != Mode.Production:
+            if backfill or s.CFG.cluster.vector_search is None:
                 self.backfill_vector_search(vi, vector_comparison)
 
             return FastVectorSearcher(self, vector_comparison, vi.identifier)

@@ -21,6 +21,10 @@ class ComputeBackend(ABC):
         """
         pass
 
+    def get_local_client(self):
+        '''Returns a local version of self'''
+        pass
+
     @abstractmethod
     def submit(self, function: t.Callable, **kwargs) -> t.Any:
         """

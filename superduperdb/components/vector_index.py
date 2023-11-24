@@ -45,7 +45,6 @@ class VectorIndex(Component):
             if (create := getattr(db.databackend, 'create_vector_index', None)) is None:
                 msg = 'VectorIndex is not supported by the current database backend'
                 raise ValueError(msg)
-
             create(self)
 
     @override

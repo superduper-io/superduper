@@ -50,18 +50,27 @@ class Retry(BaseConfigJSONable):
 class Cluster(BaseConfigJSONable):
     """Describes a connection to distributed work via Dask
 
-    :param dask_scheduler: The Dask scheduler URI
     :param backfill_batch_size: The number of rows to backfill at a time
                                 for vector-search loading
+    :param compute: The URI for compute i.e 'local', 'dask+tcp://localhost:8786'
+                    "None": Run all jobs in local mode i.e simple function call
+                    "local": same as above
+                    "dask+thread": Run all jobs on a local threaded dask cluster
+                    "dask+tcp://<host>:<port>": Run all jobs on a remote dask cluster
+
     :param vector_search: The URI for the vector search service
-    :param cdc: The URI for the change data capture service (if ``None``
+                          "None": Run vector search on local
+                          "http://<host>:<port>": Connect a remote vector search service
+    :param cdc: The URI for the change data capture service (if "None"
                 then no cdc assumed)
+                "None": Run cdc on local as a thread.
+                "http://<host>:<port>": Connect a remote cdc service
     """
 
-    dask_scheduler: str = 'tcp://localhost:8786'  # None
+    compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local'
+    vector_search: t.Optional[str] = None  #'http://localhost:8000'  # None
+    cdc: t.Optional[str] = None  #'http://localhost:8001'  # None
     backfill_batch_size: int = 100
-    vector_search: t.Optional[str] = 'http://localhost:8000'  # None
-    cdc: t.Optional[str] = 'http://localhost:8001'  # None
 
 
 class LogLevel(str, Enum):
@@ -86,14 +95,6 @@ class LogType(str, Enum):
     LOKI = "LOKI"
 
 
-class Mode(str, Enum):
-    """Enumerate the standard operation modes"""
-
-    Development = "DEVELOPMENT"
-
-    Production = "PRODUCTION"
-
-
 class Config(BaseConfigJSONable):
     """The data class containing all configurable superduperdb values
 
@@ -108,7 +109,6 @@ class Config(BaseConfigJSONable):
     :param downloads_folder: Settings for downloading files
 
     :param fold_probability: The probability of validation fold
-    :param mode: The mode of the application {Mode.Development, Mode.Production}
 
     :param log_level: The severity level of the logs
     :param logging_type: The type of logging to use
@@ -129,7 +129,6 @@ class Config(BaseConfigJSONable):
 
     cluster: Cluster = Factory(Cluster)
     retries: Retry = Factory(Retry)
-    mode: Mode = Mode.Development
 
     hybrid_storage: bool = False
     downloads_folder: str = '.superduperdb/downloads'
@@ -147,7 +146,7 @@ class Config(BaseConfigJSONable):
         A dict of `self` excluding some defined attributes.
         """
         _dict = self.dict()
-        list(map(_dict.pop, ('cluster', 'retries', 'mode', 'downloads_folder')))
+        list(map(_dict.pop, ('cluster', 'retries', 'downloads_folder')))
         return _dict
 
     def match(self, cfg: dict):

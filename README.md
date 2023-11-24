@@ -107,19 +107,15 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
             <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xsnowflake.png" width="139px" />
-            <pre> Experimental </pre>
-        </td>
-        <td align="center" width="140" height="112.43">
             <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xbigquery.png" width="139px" />
             <pre> Experimental </pre>
         </td>
-    </tr>
-    <tr>
         <td align="center" width="140" height="112.43">
             <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xclickhouse.png" width="139px" />
             <pre> Experimental </pre>
         </td>
+    </tr>
+    <tr>
         <td align="center" width="140" height="112.43">
             <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xdatafusion.png" width="139px" />
             <pre> Experimental </pre>
@@ -136,12 +132,12 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
             <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xmssql.png" width="139px" />
             <pre> Experimental </pre>
         </td>
-    </tr>
-    <tr>
         <td align="center" width="140" height="112.43">
             <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xoracle.png" width="139px" />
             <pre> Experimental </pre>
         </td>
+    </tr>
+    <tr>
         <td align="center" width="140" height="112.43">
             <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xpandas.png" width="139px" />
             <pre> Experimental </pre>
@@ -173,13 +169,13 @@ db = superduper('mongodb|postgres|sqlite|duckdb|snowflake://<your-db-uri>')
 <table>
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/frameworks/pytorch.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/frameworks/2Xpytorch.png" width="139px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/frameworks/scikit-learn.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/frameworks/2Xscikit-learn.png" width="139px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/frameworks/huggingface-transformers.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/frameworks/2Xhuggingface-transformers.png" width="139px"/>
         </td>
     </tr>
 </table>
@@ -218,13 +214,13 @@ m.fit(X='<input_column_or_key>', y='<target_column_or_key>', db=db, select=<mong
 <table >
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/openai.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/2Xopenai.png" width="139px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/cohere.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/2Xcohere.png" width="139px"/>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/anthropic.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/apis/2Xanthropic.png" width="139px"/>
         </td>
     </tr>
 </table>

@@ -55,6 +55,8 @@ devkit: ## Add essential development tools
 	# Download tools for code quality testing
 	pip install .[quality]
 
+	# Set git to continuously update submodules
+	git config --global submodule.recurse true
 
 ##@ CI Doc Functions
 

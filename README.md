@@ -76,38 +76,91 @@ SuperDuperDB eliminates the need for complex MLOps pipelines and specialized vec
 <table>
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/mongodb.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xmongodb.png" width="139px" />
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/mongodb-atlas.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xmongodb-atlas.png" width="139px" />
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/aws-s3.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xaws-s3.png" width="139px" />
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/postgresql.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xpostgresql.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xmysql.png" width="139px" />
             <pre> Experimental </pre>
         </td>
     </tr>
     <tr>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/sqlite.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xsqlite.png" width="139px" />
             <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/duckdb.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xduckdb.png" width="139px" />
             <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/mysql.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xsnowflake.png" width="139px" />
             <pre> Experimental </pre>
         </td>
         <td align="center" width="140" height="112.43">
-            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/snowflake.png" width="139px"/>
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xsnowflake.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xbigquery.png" width="139px" />
             <pre> Experimental </pre>
         </td>
     </tr>
-</table> 
+    <tr>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xclickhouse.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xdatafusion.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xdruid.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Ximpala.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xmssql.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xoracle.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xpandas.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xpolars.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xpyspark.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+        <td align="center" width="140" height="112.43">
+            <img src="https://raw.githubusercontent.com/SuperDuperDB/superduperdb/main/docs/hr/static/icons/databases/2Xtrino.png" width="139px" />
+            <pre> Experimental </pre>
+        </td>
+    </tr>
+
+</table>
 
 **Transform your existing database into a Python-only AI development and deployment stack with one command:**
 

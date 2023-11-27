@@ -16,7 +16,7 @@ the [`Datalayer`](../fundamentals/datalayer_overview.md) based on your [configur
 
 You'll probably also want to ready about the query API which is relevant to your database:
 
-- [MongoDB Query API](../data_integrations/mongodb_query_API.md)
-- [Ibis Query API for SQL](../data_integrations/sql_query_API.md)
+- [MongoDB Query API](../data_integrations/mongodb.md)
+- [Ibis Query API for SQL](../data_integrations/sql.md)
 
 ![](/img/walkthrough.png)

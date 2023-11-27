@@ -47,24 +47,32 @@ audio = Encoder('audio', encoder=encoder, decoder=decoder)
 
 It's completely open to the user how exactly the `encoder` and `decoder` arguments are set.
 
-You may include this `Encoder` in models, data-insers and more. You can also directly 
-register `audio` in the system, using:
+You may include these `Encoder` instances in models, data-inserts and more. You can also directly 
+register the `Encoder` instances in the system, using:
 
 ```python
+db.add(my_array)
 db.add(audio)
+```
+
+To reload (for instance in another session) do:
+
+```python
+my_array_reloaded = db.load('encoder', 'my_array')
+audio_reloaded = db.load('encoder', 'audio')
 ```
 
 ## Schemas for SQL
 
-In SQL, one needs to define a schemas to work with tables in `superduperdb`. The `superduperdb.Schema` 
-builds on top of `Encoder` and allows developers to combine standard data-types used in standard 
-use-cases, with bespoke data-types via `Encoder`, as defined by, for instance, `audio` above.
+For SQL databases, one needs to define a schemas to work with tables in `superduperdb`. The `superduperdb.Schema` 
+builds on top of `Encoder` and allows developers to combine standard data-types traditionall used in SQL data-bases,
+with bespoke data-types via `Encoder`, as defined by, for instance, `audio` above.
 
 To register/ create a `Table` with a `Schema` in `superduperdb`, one uses `superduperdb.backends.ibis.Table`:
 
 ```python
 from superduperdb.backends.ibis import Table, dtype
-from superduperdb import Table
+from superduperdb import Schema 
 
 db.add(
     Table(

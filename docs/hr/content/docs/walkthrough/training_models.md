@@ -6,17 +6,11 @@ sidebar_position: 23
 
 Similarly to [applying models to create predictions](../fundamentals/21_apply_models.mdx), training models is possible both procedurally and declaratively in `superduperdb`.
 
-When models are trained, if `CFG.production = True` is configured, then `superduperdb` deploys [a job on the configured `dask` cluster](31_non_blocking_dask_jobs.md).
+When models are trained, if `CFG.cluster.dask_scheduler` has been configured (e.g. `dask://localhost:8786`), then `superduperdb` deploys [a job on the configured `dask` cluster](31_non_blocking_dask_jobs.md).
 
 ## Basic pattern
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
-```mdx-code-block
-<Tabs>
-<TabItem value="procedural" label="Procedural">
-```
+### Procedural API
 
 ```python
 model.fit(
@@ -27,10 +21,7 @@ model.fit(
 )
 ```
 
-```mdx-code-block
-</TabItem>
-<TabItem value="declarative" label="Declarative">
-```
+### Declarative API
 
 ```python
 db.add(
@@ -45,17 +36,9 @@ db.add(
 )
 ```
 
-```mdx-code-block
-</TabItem>
-</Tabs>
-```
-
 ## Fitting/ training models by framework
 
-```mdx-code-block
-<Tabs>
-<TabItem value="scikit-learn" label="Scikit-Learn">
-```
+### Scikit-learn
 
 ```python
 from superduperdb.ext.sklearn import Estimator
@@ -71,10 +54,7 @@ m.fit(
 )
 ```
 
-```mdx-code-block
-</TabItem>
-<TabItem value="transformers" label="Transformers">
-```
+### Transformers
 
 ```python
 from superduperdb.ext.transformers import Pipeline
@@ -91,10 +71,7 @@ m.fit(
 )
 ```
 
-```mdx-code-block
-</TabItem>
-<TabItem value="pytorch" label="PyTorch">
-```
+### PyTorch
 
 ```python
 import torch
@@ -114,9 +91,4 @@ model.fit(
     batch_size=100,  # any **kwargs supported by `superduperdb.ext.torch.TorchTrainerConfiguration`
     num_workers=4,
 )
-```
-
-```mdx-code-block
-</TabItem>
-</Tabs>
 ```

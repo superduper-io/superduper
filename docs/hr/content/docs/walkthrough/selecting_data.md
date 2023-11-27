@@ -4,11 +4,12 @@ sidebar_position: 5
 
 # Selecting data
 
-After inserting data to `superduperdb`, it may be queries with a `Select` query.
+After inserting data to `superduperdb`, it may be queried with a `Select` query.
 
 ## MongoDB
 
-MongoDB offers 2 types of basic `Select` query. All basic forms supported by the `pymongo` API are also supported.
+MongoDB offers two types of basic `Select` query, which reflect the possibilites supported 
+by the `pymongo` query API:
 
 ### Find
 
@@ -31,7 +32,7 @@ results = collection.aggregate([
 
 ## SQL
 
-Most `ibis` read-query types are supported. An important requirement, is that tables referred to have 
+Most [`ibis`](https://ibis-project.org/) read-query types are supported. An important requirement, is that tables referred to have 
 been [previously defined](./data_encodings_and_schemas.md) and loaded in order to create a query:
 
 ```python

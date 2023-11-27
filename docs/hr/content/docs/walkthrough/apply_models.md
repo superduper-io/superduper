@@ -8,18 +8,13 @@ sidebar_position: 21
 
 ## Procedural API
 
-Applying a model to data, is straightforward with `Model.predict`:
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
+Applying a model to data, is straightforward with `Model.predict`.
 
 ### Out-of-database prediction
 
 As is standard in `sklearn` and other AI libraries and frameworks, such as `tensorflow.keras`,
-all `superduperdb` models, support `.predict`, predicting directly on datapoints:
-
-To use this functionality, supply the datapoint directly to the `Model`:
+all `superduperdb` models, support `.predict`, predicting directly on datapoints.
+To use this functionality, supply the datapoints directly to the `Model`:
 
 ```python
 my_model = ...  # code to instantiate model
@@ -35,15 +30,11 @@ my_model.predict(X=<input_datum>, one=True)
 
 ### In-database, one-time model prediction
 
-
 It is possible to apply a model directly to the database with `Model.predict`.
-The parameter `X` refers to the field/column of data which is passed to the model.
+In this context, the parameter `X` refers to the field/column of data which is passed to the model.
 `X="_base"` passes all of the data (all columns/ fields).
 
-```mdx-code-block
-<Tabs>
-<TabItem value="mongodb" label="MongoDB">
-```
+#### MongoDB
 
 ```python
 my_model = ...  # code to instantiate model
@@ -55,10 +46,7 @@ my_model.predict(
 )
 ```
 
-```mdx-code-block
-</TabItem>
-<TabItem value="sql" label="SQL">
-```
+#### SQL
 
 ```python
 table = db.load('my-table', 'table_or_collection')
@@ -70,11 +58,6 @@ my_model.predict(
     db=db,
     select=table.filter(table.brand == 'Nike').select(table.myfield),
 )
-```
-
-```mdx-code-block
-</TabItem>
-</Tabs>
 ```
 
 ### In database, daemonized model predictions with `listen=True`

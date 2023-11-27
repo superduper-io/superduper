@@ -4,7 +4,7 @@ sidebar_position: 18
 
 # AI Models via `Model` and Descendants
 
-AI models may be wrapped and used in `superduperdb` by the `Model` class and descendants.
+AI models may be wrapped and used in `superduperdb` with the `Model` class and descendants.
 
 ### Creating AI Models in a Range of Frameworks
 
@@ -43,7 +43,8 @@ from superduperdb import superduper
 db.add(Pipeline(task='sentiment-analysis'))
 ```
 
-There is also support for building the pipeline in separate stages with a high degree of customization:
+There is also support for building the pipeline in separate stages with a high degree of customization.
+The following is a speech-to-text model published by [facebook research](https://arxiv.org/abs/2010.05171) and shared [on Hugging-Face](https://huggingface.co/facebook/s2t-small-librispeech-asr):
 
 ```python
 from superduperdb.ext.transformers import Pipeline
@@ -91,4 +92,3 @@ db.add(model)
 | `postprocess` | `Callable` applied to individual rows/items or output |
 | `encoder` | An `Encoder` instance applied to the model output to save that output in the database |
 | `schema` | A `Schema` instance applied to a model's output, whose rows are dictionaries |
-```

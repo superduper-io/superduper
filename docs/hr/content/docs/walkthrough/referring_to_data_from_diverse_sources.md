@@ -4,14 +4,17 @@ sidebar_position: 15
 
 # Working with external data sources
 
-Using the MongoDB query API, `superduperdb` supports data added from external data-sources.
-The trick is to pass the `uri` parameter to an encoder, instead of the raw-data:
+:::warning
+This functionality is currently supported for MongoDB only
+:::
 
+Using the MongoDB query API, `superduperdb` supports data added from external data-sources.
 When doing this, `superduperdb` supports:
 
 - web URLs
 - URIs of objects in `s3` buckets
 
+The trick is to pass the `uri` parameter to an encoder, instead of the raw-data.
 Here is an example where we add a `.pdf` file directly from a location 
 on the public internet.
 
@@ -22,14 +25,13 @@ from superduperdb.backends.mongodb import Collection
 
 collection = Collection('pdf-files')
 
-
 def load_pdf(bytes):
     text = []
     for page in PdfReader(io.BytesIO(bytes)).pages:
         text.append(page.extract_text())
     return '\n----NEW-PAGE----\n'.join(text)
 
-
+# no `encoder=...` parameter required since text is not converted to `.pdf` format
 pdf_enc = Encoder('my-pdf-encoder', decoder=load_pdf)
 
 PDF_URI = (
@@ -37,6 +39,9 @@ PDF_URI = (
     'c399862d3b9d6b76c8436e924a68c45b-Paper.pdf'
 )
 
+# This command inserts a record which refers to this URI
+# and also downloads the content from the URI and saves
+# it in the record
 db.execute(
     collection.insert_one(Document({'txt': pdf_enc(uri=PDF_URI)}))
 )

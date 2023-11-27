@@ -5,10 +5,10 @@ sidebar_position: 22
 # Daemonizing `.predict` with listeners
 
 In many AI applications, it's important that a catalogue of predictions is maintained for 
-all data in the database, or even all changed data.
+all data in the database, updated as soon after data-updates and streaming inserts as possible.
 
 In order to allow developers to implement this functionality, `superduperdb` offers
-the `Listener` abstraction:
+the `Listener` abstraction.
 
 ## Creating listeners in-line with `.predict`
 
@@ -41,10 +41,13 @@ db.add(
 )
 ```
 
-## Explanation
+## Outcome
 
 If a `Listener` has been created, whenever new data is added to `db`, 
 the `Predictor` instance is loaded and predictions are evaluated on the inserted data.
 
-If change-data-capture has been activated, this process applies, even if the data is inserted
-from a client other than `superduperdb`.
+:::info
+In MongoDB, if [change-data-capture (CDC)](../production/change_data_capture.md) has been configured, 
+data may even be inserted from third-party clients such as `pymongo`, and is nonetheless still processed
+by configured `Listeners` via the CDC service.
+:::

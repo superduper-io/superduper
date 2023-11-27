@@ -64,9 +64,6 @@ Read more about this [here](../walkthrough/11_supported_query_APIs.md).
 
 In order to use vector-search in a query, one combines these APIs with the `.like` operator.
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 The order of the standard parts of the query and `.like` may be permuted. This gives 
 2 different algorithms:
 
@@ -78,10 +75,7 @@ The order of the standard parts of the query and `.like` may be permuted. This g
 1. Find items with the brand `"Nike"`
 2. Find where these items are similar to `"something like this"` based on the `"txt"` field
 
-```mdx-code-block
-<Tabs>
-<TabItem value="pymongo" label="PyMongo">
-```
+### PyMongo
 
 In `pymongo` one does:
 
@@ -108,12 +102,9 @@ db.execute(
 )
 ```
 
-```mdx-code-block
-</TabItem>
-<TabItem value="ibis" label="Ibis/ SQL">
-```
+### SQL
 
-First you need to have set-up a table. Read how to do that [here](../walkthrough/13_sql_query_API.md).
+First you need to have set-up a table. Read how to do that [here](../data_integrations/sql.md).
 
 ```python
 from superduperdb import Document
@@ -137,9 +128,4 @@ db.execute(
         .limit(10)
         .like(Document({'txt': 'something like this'}), index='my-index')
 )
-```
-
-```mdx-code-block
-</TabItem>
-</Tabs>
 ```

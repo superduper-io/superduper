@@ -27,7 +27,7 @@ in tables/ collectios. To enable the system to save downloads separately, set:
 ```python
 CFG.downloads_folder = '<path-to-downloads-folder>'
 ```
-...or
+... or
 
 ```bash
 export SUPERDUPERDB_DOWNLOADS_FOLDER='<path-to-downloads-folder>'
@@ -36,4 +36,15 @@ export SUPERDUPERDB_DOWNLOADS_FOLDER='<path-to-downloads-folder>'
 Once this has been configured, inserting data proceeds exactly as before, with the difference 
 that items inserted via URI, are saved on the local filesystem, and referred to in the database.
 
-Read [here](15_referring_to_data_from_diverse_sources.md) for more details.
+That is, when a command such as the one below, is executed, a reference to the data is stored in the database
+instead of the raw-data itself. The raw-data is stored in the `CFG.downloads_folder` directory:
+
+```python
+uris = ... # list of URIs of content to be downloaded (local files, web URLs, s3 URIs)
+db.execute(
+    collection.insert_many([Document({'content': encoder(uri=uri)}) for uri in uris])
+)
+# Jobs are now queued which download the content behind the URIs and save it in `CFG.downloads_folder`
+```
+
+Read [here](./referring_to_data_from_diverse_sources.md) for more details on using URIs to insert data.

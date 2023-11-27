@@ -10,15 +10,17 @@ these providers is similar to instantiating a `Model`:
 
 ## OpenAI
 
-Supported:
+**Supported**
 
-- Embeddings
-- Chat models
-- Image generation models
-- Image edit models
-- Audio transcription models
+| Description | Class-name |
+| --- | --- |
+| Embeddings | `OpenAIEmbedding` |
+| Chat models | `OpenAIChatCompletion` |
+| Image generation models | `OpenAIImageCreation` |
+| Image edit models | `OpenAIImageEdit` |
+| Audio transcription models | `OpenAIAudioTranscription` |
 
-The general pattern is:
+**Usage**
 
 ```python
 from superduperdb.ext.openai import OpenAI<ModelType> as ModelCls
@@ -28,6 +30,15 @@ db.add(Modelcls(identifier='my-model', **kwargs))
 
 ## Cohere
 
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Embeddings | `CohereEmbedding` |
+| Chat models | `CohereChatCompletion` |
+
+**Usage**
+
 ```python
 from superduperdb.ext.cohere import Cohere<ModelType> as ModelCls
 
@@ -35,6 +46,14 @@ db.add(Modelcls(identifier='my-model', **kwargs))
 ```
 
 ## Anthropic
+
+**Supported**
+
+| Description | Class-name |
+| --- | --- |
+| Chat models | `AnthropicCompletions` |
+
+**Usage**
 
 ```python
 from superduperdb.ext.anthropic import Anthropic<ModelType> as ModelCls

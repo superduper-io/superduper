@@ -4,19 +4,19 @@ sidebar_position: 14
 
 # Inserting images, audio, video and other special data
 
-We discovered earlier, that an initial step in working with `superduperdb`
+An initial step in working with `superduperdb`
 is to establish the data-types one wishes to work with, create `Encoder` instances for
-those data-types, and potentially
-`Schema` objects for SQL tables.
+those data-types, and potentially `Schema` objects for SQL tables. See [here](./data_encodings_and_schemas.md) for 
+this information.
 
-If these have been created, data may be inserted which use these data-types.
-
-A previously defined `Encoder` may be used directly to insert data to the database.
+If these have been created, data may be inserted which use these data-types, including previously defined `Encoder` instances.
 
 ## MongoDB
 
 ```python
 from superduperdb import Document
+
+my_array = db.load('encoder', 'my_array')
 
 files = ... # list of paths to audio files
 
@@ -33,7 +33,12 @@ db.execute(
 
 ## SQL
 
+With SQL tables, it's important to acknowledge
+
 ```python
+files = ... # list of paths to audio files
+
+table = db.load('table', 'my-table')
 
 df = pandas.DataFrame([
     {
@@ -45,5 +50,3 @@ df = pandas.DataFrame([
 
 db.execute(table.insert(df))
 ```
-
-

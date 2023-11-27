@@ -49,4 +49,4 @@ l2 = Listener(
 ```
 
 This implies that whenever data is inserted to `collection`, `model_1` will compute outputs on that data first, 
-which we subsequently be consumed by `model_2` as inputs; it's outputs will then also be saved to SuperDuperDB.
+which will subsequently be consumed by `model_2` as inputs; its outputs will then also be saved to `db`.

@@ -4,6 +4,10 @@ sidebar_position: 3
 
 # SQL
 
+`superduperdb` supports SQL databases via the [`ibis` project](https://ibis-project.org/).
+With `superduperdb`, queries may be built which conform to the `ibis` API, with additional 
+support for complex data-types and vector-searches.
+
 ## Setup
 
 The first step in working with an SQL table, is to define a table and schema

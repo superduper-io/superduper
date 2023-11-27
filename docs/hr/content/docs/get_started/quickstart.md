@@ -1,41 +1,45 @@
 ---
-sidebar_position: 3
+sidebar_position: 1
 ---
 
 # Quickstart
 
-Let's start with SuperDuperDB quickly, your go-to solution for bringing AI in your datastore. Follow these steps to quickly get started:
+Follow these steps to quickly get started:
 
-## Step 1: Explore the Demo 
+1. **Explore the demo**
 
-Visit [https://demo.superduperdb.com](https://demo.superduperdb.com) to explore our interactive demo and get a feel for what SuperDuperDB has to offer. For a high-level overview of our framework, visit our website at [https://superduperdb.com](https://superduperdb.com). This provides a bird's-eye view of the capabilities and features SuperDuperDB has to offer.
+    Visit [https://demo.superduperdb.com](https://demo.superduperdb.com) to explore our interactive demo and get a feel for what SuperDuperDB has to offer. For a high-level overview of our framework, visit our website at [https://superduperdb.com](https://superduperdb.com). This provides a bird's-eye view of the capabilities and features SuperDuperDB has to offer. The notebooks
+    hosted there, can be executed directly in the environment, but can also be cloned in [their original form in the open source repo](https://github.com/SuperDuperDB/superduperdb/tree/main/examples), and executed locally.
+    These notebooks are also described on this documentation website in the [use-cases section](/docs/use-cases).
 
-## Step 2: Run Notebooks
+1. **Get setup**
 
-Execute the provided notebooks one by one to experience the capabilities of SuperDuperDB firsthand. These notebooks showcase various functionalities and use cases.
+    Follow [the installation guide](./installation.md) and check the [minimum-working example](./minimum_working_example.md)
+    to set-up your environment. For more detailed configuration, read the detailed [setup](/docs/category/setup) section.
 
-## Step 3: Dive into Documentation
+1. **Dive into the documentation**
 
-Refer to our comprehensive [`README.md`](https://github.com/superDuperDB/) and our documentation for a deeper understanding of SuperDuperDB. This documentation provides insights into features, usage, and best practices.
+    Refer to our comprehensive [`README.md`](https://github.com/superDuperDB/) for a high level of SuperDuperDB. The long-form documentation you are reading now provides deeper insights into features, usage, and best practices.
 
-## Step 4: Explore Community Apps Examples
+1. **Explore the community apps examples**
 
-Visit our [`community apps example`](https://github.com/superDuperDB/superduper-community-apps) repository to explore more examples of how SuperDuperDB can enhance your experience. Learn from real-world use cases and implementations.
+    Visit our [`community apps example`](https://github.com/superDuperDB/superduper-community-apps) repository to explore more examples of how SuperDuperDB can enhance your experience. Learn from real-world use cases and implementations.
 
-## Step 5: Grasp the Fundamentals
+1. **Grasp the fundamentals**
 
-Read through the [`Fundamentals`](https://docs.superduperdb.com/docs/docs/fundamentals/glossary) section to gain a solid understanding of SuperDuperDB's architecture and refer to the [`API References`](https://docs.superduperdb.com/apidocs/source/superduperdb.html) for detailed information on available functionalities.
+    Read through the [`Fundamentals`](../fundamentals/glossary) section to gain a solid understanding of SuperDuperDB's architecture and refer to the [`API References`](https://docs.superduperdb.com/apidocs/source/superduperdb.html) for detailed information on API usage.
 
-## Step 6: Develop your own Solutions with Ease
+1. **Engage with the Community**
 
-Utilize SuperDuperDB to create your own solutions with minimal code and optimal performance. Leverage the power of SuperDuperDB for efficient development.
+    If you encounter challenges, join our [Slack Channels](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA) for assistance. Report bugs and share feature requests [by raising an issue]((https://github.com/SuperDuperDB/superduperdb/issues).). Our community is here to support you.
 
-## Step 7: Engage with the Community
+    You are welcome to join the conversation on our [discussions forum](https://github.com/SuperDuperDB/superduperdb/discussions) and follow our open-source roadmap [here](https://github.com/orgs/SuperDuperDB/projects/1/views/10).
 
-If you encounter challenges, join our [Slack Channels](https://join.slack.com/t/superduperdb/shared_invite/zt-1zuojj0k0-RjAYBs1TDsvEa7yaFGa6QA) for assistance. Report bugs and share feature requests by raising an issue. Our community is here to support you.
+1. **Contribute and Share**
 
-## Step 8: Contribute and Share
+    Contribute to the SuperDuperDB community by sharing your solutions and experiences. 
+    Help us grow by promoting SuperDuperDB to your peers and the wider world. Your involvement is valuable to us! Don't forget to give us a star ⭐!
 
-Contribute to the SuperDuperDB community by sharing your solutions and experiences. Help us grow by promoting SuperDuperDB to your peers and the wider world. Your involvement is valuable to us! Don't forget to give us a star.
+    SuperDuperDB is a community effort and licensed under Apache 2.0. We encourage enthusiastic developers to contribute to the project. Read more [here](../setup/contributing) and [on GitHub](https://github.com/SuperDuperDB/superduperdb/) about getting setup and ways you can contribute.
 
 Thank you for choosing SuperDuperDB. We look forward to seeing the amazing solutions you create!

@@ -1244,7 +1244,7 @@ class Datalayer:
         logging.info("Disconnect from Artifact Store")
         self.artifact_store.disconnect()
 
-        logging.info("SDisconnect from  Compute Engine")
+        logging.info("Disconnect from Compute Engine")
         self.compute.disconnect()
 
         # TODO: gracefully close all opened connections

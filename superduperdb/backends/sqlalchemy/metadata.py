@@ -412,7 +412,7 @@ class SQLAlchemyMetadata(MetaDataStore):
 
     def get_query(self, query_hash: str):
         """
-        Get the query from query table corresponding to the query hash
+        Get the query from the query table corresponding to the query hash
         """
         try:
             with self.session_context() as session:

@@ -161,9 +161,10 @@ class Config(BaseConfigJSONable):
         Match the target cfg dict with `self` comparables dict.
         """
         self_cfg = self.comparables
-        return hash(json.dumps(self_cfg, sort_keys=True)) == hash(
-            json.dumps(cfg, sort_keys=True)
-        )
+
+        self_hash = hash(json.dumps(self_cfg, sort_keys=True))
+        cfg_hash = hash(json.dumps(cfg, sort_keys=True))
+        return self_hash == cfg_hash
 
     def force_set(self, name, value):
         """

@@ -16,16 +16,15 @@ def _handshake(service: str):
     try:
         _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
     except Exception:
-        raise Exception(
-            f"Incompatible configuration between client and service '{service}'"
-        )
+        raise Exception("Incompatible configuration")
 
 
 def _request_server(
     service: str = 'vector_search', data=None, endpoint='add', args={}, type='post'
 ):
-    url = getattr(CFG.cluster, service) + '/' + service + '/' + endpoint
+    url = getattr(CFG.cluster, service) + '/' + endpoint
     logging.debug(f'Trying to connect {service} at {url} method: {type}')
+
     if type == 'post':
         data = superduperencode(data)
         if isinstance(data, dict):

@@ -258,7 +258,10 @@ class Aggregate(Select):
         if indexing_key.startswith('_outputs'):
             indexing_key = indexing_key.split('.')[1]
         indexing_model = vector_index.indexing_listener.model.identifier
-        step['$vectorSearch']['path'] = f'_outputs.{indexing_key}.{indexing_model}'
+        indexing_version = vector_index.indexing_listener.model.version
+        step['$vectorSearch'][
+            'path'
+        ] = f'_outputs.{indexing_key}.{indexing_model}.{indexing_version}'
         step['$vectorSearch']['index'] = vector_index.identifier
         del step['$vectorSearch']['like']
         return step

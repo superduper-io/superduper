@@ -35,13 +35,20 @@ def build_artifact_store(cfg):
 def build(uri, mapping):
     logging.debug(f"Parsing data connection URI:{uri}")
 
-    if re.match('^mongodb:\/\/|^mongodb\+srv:\/\/', uri) is not None:
+    if re.match('^mongodb:\/\/', uri) is not None:
         name = uri.split('/')[-1]
         conn = pymongo.MongoClient(
             uri,
             serverSelectionTimeoutMS=5000,
         )
+        return mapping['mongodb'](conn, name)
 
+    elif re.match('^mongodb\+srv:\/\/', uri):
+        name = uri.split('/')[-1]
+        conn = pymongo.MongoClient(
+            '/'.join(uri.split('/')[:-1]),
+            serverSelectionTimeoutMS=5000,
+        )
         return mapping['mongodb'](conn, name)
     elif uri.startswith('mongomock://'):
         name = uri.split('/')[-1]

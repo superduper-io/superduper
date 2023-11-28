@@ -122,14 +122,33 @@ class MongoDataBackend(BaseDataBackend):
         if re.match('^_outputs\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+', key):
             key = key.split('.')[1]
         model = vector_index.indexing_listener.model.identifier
-        fields = {
-            model: [
+        version = vector_index.indexing_listener.model.version
+        fields4 = {
+            str(version): [
                 {
                     "dimensions": vector_index.dimensions,
                     "similarity": vector_index.measure,
                     "type": "knnVector",
                 }
             ]
+        }
+        fields3 = {
+            model: {
+                "fields": fields4,
+                "type": "document",
+            }
+        }
+        fields2 = {
+            key: {
+                "fields": fields3,
+                "type": "document",
+            }
+        }
+        fields1 = {
+            "_outputs": {
+                "fields": fields2,
+                "type": "document",
+            }
         }
         index_definition = {
             "createSearchIndexes": collection,
@@ -139,17 +158,7 @@ class MongoDataBackend(BaseDataBackend):
                     "definition": {
                         "mappings": {
                             "dynamic": True,
-                            "fields": {
-                                "_outputs": {
-                                    "fields": {
-                                        key: {
-                                            "fields": fields,
-                                            "type": "document",
-                                        }
-                                    },
-                                    "type": "document",
-                                }
-                            },
+                            "fields": fields1,
                         }
                     },
                 }

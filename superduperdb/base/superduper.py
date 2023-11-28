@@ -8,7 +8,7 @@ __all__ = ('superduper',)
 
 def superduper(item: t.Optional[t.Any] = None, **kwargs) -> t.Any:
     """
-    Attempts to automatically wrap an item in a superduperdb container by
+    Attempts to automatically wrap an item in a superduperdb component by
     using duck typing to recognize it.
 
     :param item: A database or model
@@ -55,7 +55,7 @@ class _DuckTyper:
         if not dts:
             raise ValueError(
                 f'Couldn\'t auto-identify {item}, please wrap explicitly using '
-                '``superduperdb.container.*``'
+                '``superduperdb.components.*``'
             )
 
         if len(dts) == 1:
@@ -75,7 +75,7 @@ class _DuckTyper:
 
     @classmethod
     def create(cls, item: t.Any, **kwargs) -> t.Any:
-        """Create a superduperdb container for an item that has already been accepted"""
+        """Create a superduperdb component for an item that has already been accepted"""
         raise NotImplementedError
 
     _DUCK_TYPES: t.List[t.Type] = []

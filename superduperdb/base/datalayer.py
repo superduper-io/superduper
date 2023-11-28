@@ -915,6 +915,7 @@ class Datalayer:
             object.on_load(self)
             return object.schedule_jobs(self, dependencies=dependencies), object
         except Exception as e:
+
             raise exceptions.DatalayerException(
                 f'Error while adding object with id: {object.identifier}'
             ) from e

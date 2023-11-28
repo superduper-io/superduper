@@ -105,7 +105,6 @@ class Config(BaseConfigJSONable):
     :param cluster: Settings distributed computing and change data capture
     :param retries: Settings for retrying failed operations
 
-    :param hybrid_storage: Toggle on to save large downloads on disk
     :param downloads_folder: Settings for downloading files
 
     :param fold_probability: The probability of validation fold
@@ -130,8 +129,7 @@ class Config(BaseConfigJSONable):
     cluster: Cluster = Factory(Cluster)
     retries: Retry = Factory(Retry)
 
-    hybrid_storage: bool = False
-    downloads_folder: str = '.superduperdb/downloads'
+    downloads_folder: t.Optional[str] = None
     fold_probability: float = 0.05
 
     log_level: LogLevel = LogLevel.DEBUG
@@ -139,6 +137,10 @@ class Config(BaseConfigJSONable):
 
     class Config(JSONable.Config):
         protected_namespaces = ()
+
+    @property
+    def hybrid_storage(self):
+        return self.downloads_folder is not None
 
     @property
     def comparables(self):

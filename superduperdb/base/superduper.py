@@ -105,9 +105,16 @@ class MongoDbTyper(_DuckTyper):
         if not isinstance(item, (Database, MockDatabase)):
             raise TypeError(f'Expected Database but got {type(item)}')
 
-        logging.warn('Note: This is only recommended in development mode')
+        logging.warn(
+            'Note: This is only recommended in development mode, since config\
+             still holds `data_backend` with the default value, services \
+             like vector search and cdc cannot be reached due to configuration\
+             mismatch. Services will be configured with a `data_backend` uri using \
+             config file hence this client config and\
+             services config will be different.'
+        )
         databackend = MongoDataBackend(conn=item.client, name=item.name)
-        return build_datalayer(cfg=CFG, data_backend=databackend, **kwargs)
+        return build_datalayer(cfg=CFG, databackend=databackend, **kwargs)
 
 
 class SklearnTyper(_DuckTyper):

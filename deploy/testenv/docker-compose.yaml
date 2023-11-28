@@ -7,8 +7,6 @@ services:
   mongodb:
     image: mongo:6
     hostname: mongodb
-#    environment:
-#      - MONGODB_ADVERTISED_HOSTNAME=localhost
     ports:
       - "27017:27017"
     command : ["/bin/sh", "-c", "mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /data/db/"]
@@ -131,17 +129,22 @@ services:
     deploy:
       replicas: 1
 
-#  Demo SuperDuperDB Notebooks
-#  ------------------------------
+  #  Demo SuperDuperDB Notebooks
+  #  ------------------------------
   demo-notebooks:
     image: superduperdb/sandbox
     hostname: demo
     depends_on:
-      - mongo-init
-      - vector-search-init
-      - dask-scheduler
-      - dask-worker
-      - cdc-init
+      mongo-init:
+        condition: service_completed_successfully
+      vector-search-init:
+        condition: service_completed_successfully
+      cdc-init:
+        condition: service_completed_successfully
+      dask-scheduler:
+        condition: service_started
+      dask-worker:
+        condition: service_started
     ports:
       - "8888:8888" # HTTP Notebooks
     volumes:

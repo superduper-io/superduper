@@ -9,7 +9,7 @@ from superduperdb.vector_search.server import service
 
 assert isinstance(
     CFG.cluster.vector_search, str
-), "Missing SUPERDUPERDB_CLUSTER_VECTOR_SEARCH"
+), "cluster.vector_search should be set with a valid uri"
 port = int(CFG.cluster.vector_search.split(':')[-1])
 app = SuperDuperApp('vector_search', port=port)
 

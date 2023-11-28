@@ -3,7 +3,7 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.components.listener import Listener
 from superduperdb.server import app as superduperapp
 
-assert isinstance(CFG.cluster.cdc, str), "Missing SUPERDUPERDB_CLUSTER_CDC"
+assert isinstance(CFG.cluster.cdc, str), "cluster.cdc should be set with a valid uri"
 port = int(CFG.cluster.cdc.split(':')[-1])
 app = superduperapp.SuperDuperApp('cdc', port=port)
 

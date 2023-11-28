@@ -109,7 +109,7 @@ class Datalayer:
     ) -> BaseVectorSearcher:
         try:
             searcher_type = searcher_type or s.CFG.vector_search
-            logging.info(f'loading of vectors of vector-index: {identifier}')
+            logging.info(f"loading of vectors of vector-index: '{identifier}'")
             vi = self.vector_indices[identifier]
 
             clt = vi.indexing_listener.select.table_or_collection
@@ -135,7 +135,7 @@ class Datalayer:
             return FastVectorSearcher(self, vector_comparison, vi.identifier)
         except Exception as e:
             raise exceptions.VectorSearchException(
-                'Failed to initialize vector search index {identifier}'
+                f"Failed to initialize vector search index '{identifier}'"
             ) from e
 
     def backfill_vector_search(self, vi, searcher):
@@ -1228,7 +1228,7 @@ class Datalayer:
             return vi.get_nearest(like, db=self, ids=ids, n=n, outputs=outs)
         except Exception as e:
             raise exceptions.VectorSearchException(
-                f'Error while vector search on index {vector_index}'
+                f"Error while vector search on index '{vector_index}'"
             ) from e
 
     def close(self):

@@ -17,8 +17,7 @@ def _handshake(service: str):
         _request_server(service, args={'cfg': cfg}, endpoint=endpoint)
     except Exception:
         raise Exception(
-            'Service {service} not compatible with current client,\
-             its configured with different configuration.'
+            f"Incompatible configuration between client and service '{service}'"
         )
 
 

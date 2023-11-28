@@ -75,11 +75,13 @@ def build_compute(cfg):
     return LocalComputeBackend()
 
 
-def build_datalayer(cfg=None, **kwargs) -> Datalayer:
+def build_datalayer(cfg=None, databackend=None, **kwargs) -> Datalayer:
     """
     Build a Datalayer object as per ``db = superduper(db)`` from configuration.
 
     :param cfg: Configuration to use. If None, use ``superduperdb.CFG``.
+    :param databackend: Databacked to use.
+                        If None, use ``superduperdb.CFG.data_backend``.
     """
 
     # Configuration
@@ -94,7 +96,8 @@ def build_datalayer(cfg=None, **kwargs) -> Datalayer:
     # Connect to data backend.
     # ------------------------------
     try:
-        databackend = build(cfg.data_backend, data_backends)
+        if not databackend:
+            databackend = build(cfg.data_backend, data_backends)
         logging.info("Data Client is ready.", databackend.conn)
     except Exception as e:
         # Exit quickly if a connection fails.

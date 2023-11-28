@@ -56,7 +56,7 @@ def build(uri, mapping):
         return mapping['mongodb'](conn, name)
     else:
         conn = ibis.connect(uri)
-        db_name = conn.current_database
+        db_name = uri.split('/')[-1]
         if 'ibis' in mapping:
             cls_ = mapping['ibis']
         elif 'sqlalchemy' in mapping:
@@ -64,11 +64,6 @@ def build(uri, mapping):
             conn = conn.con
         else:
             raise ValueError('No ibis or sqlalchemy backend specified')
-
-        # if ':memory:' in uri:
-        #     conn = uri
-        #     db_name = None
-
         return cls_(conn, db_name)
 
 

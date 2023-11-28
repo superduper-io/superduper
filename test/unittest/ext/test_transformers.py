@@ -17,7 +17,8 @@ from superduperdb.ext.transformers.model import (
 
 
 @pytest.fixture
-def transformers_model(local_empty_db):
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+def transformers_model(db):
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
     data = [
@@ -26,7 +27,7 @@ def transformers_model(local_empty_db):
         {'text': 'dummy text 1', 'label': 1},
     ]
     data = [D(d) for d in data]
-    local_empty_db.execute(Collection('train_documents').insert_many(data))
+    db.execute(Collection('train_documents').insert_many(data))
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = AutoModelForSequenceClassification.from_pretrained(
         "distilbert-base-uncased", num_labels=2
@@ -56,7 +57,8 @@ def td():
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_tranformers_fit(transformers_model, local_empty_db, td):
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+def test_tranformers_fit(transformers_model, db, td):
     repo_name = td
     training_args = TransformersTrainerConfiguration(
         identifier=repo_name,
@@ -72,7 +74,7 @@ def test_tranformers_fit(transformers_model, local_empty_db, td):
     transformers_model.fit(
         X='text',
         y='label',
-        db=local_empty_db,
+        db=db,
         select=Collection('train_documents').find(),
         configuration=training_args,
         validation_sets=[

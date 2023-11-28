@@ -6,15 +6,15 @@ from superduperdb.components.model import Model
 
 
 @pytest.fixture()
-def data_in_db(local_empty_db):
+def data_in_db(db):
     X = [1, 2, 3, 4, 5]
     y = [1, 2, 3, 4, 5]
-    local_empty_db.execute(
+    db.execute(
         Collection(identifier='documents').insert_many(
             [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
         )
     )
-    yield local_empty_db
+    yield db
 
 
 def test_function_predict_one():
@@ -27,6 +27,7 @@ def test_function_predict():
     assert function.predict([1, 1]) == [1, 1]
 
 
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
 def test_function_predict_with_document_embedded(data_in_db):
     function = Model(
         object=lambda x: x,
@@ -40,6 +41,7 @@ def test_function_predict_with_document_embedded(data_in_db):
     assert [o['_outputs']['X']['test']['0'] for o in out] == [1, 2, 3, 4, 5]
 
 
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
 def test_function_predict_without_document_embedded(data_in_db):
     function = Model(object=lambda x: x, identifier='test')
     function.predict(
@@ -49,6 +51,7 @@ def test_function_predict_without_document_embedded(data_in_db):
     assert [o['_outputs']['X']['test']['0'] for o in out] == [1, 2, 3, 4, 5]
 
 
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
 def test_function_predict_with_flatten_outputs(data_in_db):
     function = Model(
         object=lambda x: [x, x, x] if x > 2 else [x, x],
@@ -89,6 +92,7 @@ def test_function_predict_with_flatten_outputs(data_in_db):
 
 
 @pytest.mark.skip
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
 def test_function_predict_with_mix_flatten_outputs(data_in_db):
     function = Model(
         object=lambda x: x if x < 2 else [x, x, x],

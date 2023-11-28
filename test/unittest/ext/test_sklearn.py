@@ -43,13 +43,13 @@ class TestPipeline:
         yield [random.choice(dictionary) for _ in range(100)]
 
     @pytest.fixture()
-    def data_in_db(self, local_empty_db, X, y):
-        local_empty_db.execute(
+    def data_in_db(self, db, X, y):
+        db.execute(
             Collection('documents').insert_many(
                 [Document({'X': x, 'y': yy}) for x, yy in zip(X, y)]
             )
         )
-        yield local_empty_db
+        yield db
 
     @pytest.fixture()
     def y(self):
@@ -60,6 +60,7 @@ class TestPipeline:
         output = pipeline.predict(X)
         assert len(output) == len(X)
 
+    @pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
     def test_fit_db(self, pipeline, data_in_db):
         pipeline.fit(
             X='X',

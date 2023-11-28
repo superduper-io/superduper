@@ -26,7 +26,8 @@ def patch_cfg_downloads(monkeypatch):
         yield
 
 
-def test_file_blobs(local_empty_db, patch_cfg_downloads, image_url):
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+def test_file_blobs(db, patch_cfg_downloads, image_url):
     to_insert = [
         Document(
             {
@@ -49,8 +50,6 @@ def test_file_blobs(local_empty_db, patch_cfg_downloads, image_url):
         for _ in range(2)
     ]
 
-    local_empty_db.execute(
-        Collection('documents').insert_many(to_insert), encoders=(pil_image,)
-    )
-    local_empty_db.execute(Collection('documents').find_one())
+    db.execute(Collection('documents').insert_many(to_insert), encoders=(pil_image,))
+    db.execute(Collection('documents').find_one())
     assert os.listdir(CFG.downloads_folder)

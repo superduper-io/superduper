@@ -10,6 +10,9 @@ import pytest
 
 import superduperdb as s
 from superduperdb import CFG, logging
+from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import Collection
 
 # ruff: noqa: E402
@@ -19,6 +22,7 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.base.document import Document
 from superduperdb.components.dataset import Dataset
 from superduperdb.components.listener import Listener
+from superduperdb.components.schema import Schema
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.pillow.encoder import pil_image
 
@@ -37,6 +41,8 @@ GLOBAL_TEST_N_DATA_POINTS = 250
 LOCAL_TEST_N_DATA_POINTS = 5
 
 MONGOMOCK_URI = 'mongomock:///test_db'
+SQLITE_URI = 'sqlite://:memory:'
+
 
 _sleep = time.sleep
 
@@ -121,13 +127,54 @@ def valid_dataset():
     return d
 
 
-def add_random_data(
+def add_random_data_to_sql_db(
+    db: Datalayer,
+    table_name: str = 'documents',
+    number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
+):
+    float_tensor = db.encoders['torch.float32[32]']
+    data = []
+
+    schema = Schema(
+        identifier=table_name,
+        fields={
+            'id': dtype('str'),
+            'x': float_tensor,
+            'y': dtype('int32'),
+            'z': float_tensor,
+        },
+    )
+    t = Table(identifier=table_name, schema=schema)
+    db.add(t)
+
+    for i in range(number_data_points):
+        x = torch.randn(32)
+        y = int(random.random() > 0.5)
+        z = torch.randn(32)
+        data.append(
+            Document(
+                {
+                    'id': str(i),
+                    'x': x,
+                    'y': y,
+                    'z': z,
+                }
+            )
+        )
+    db.execute(
+        t.insert(data),
+        refresh=False,
+    )
+
+
+def add_random_data_to_mongo_db(
     db: Datalayer,
     collection_name: str = 'documents',
     number_data_points: int = GLOBAL_TEST_N_DATA_POINTS,
 ):
     float_tensor = db.encoders['torch.float32[32]']
     data = []
+
     for i in range(number_data_points):
         x = torch.randn(32)
         y = int(random.random() > 0.5)
@@ -142,11 +189,10 @@ def add_random_data(
             )
         )
 
-    if data:
-        db.execute(
-            Collection(collection_name).insert_many(data),
-            refresh=False,
-        )
+    db.execute(
+        Collection(collection_name).insert_many(data),
+        refresh=False,
+    )
 
 
 def add_encoders(db: Datalayer):
@@ -175,16 +221,25 @@ def add_vector_index(
     db: Datalayer, collection_name='documents', identifier='test_vector_search'
 ):
     # TODO: Support configurable key and model
+    is_mongodb_bachend = isinstance(db.databackend, MongoDataBackend)
+    if is_mongodb_bachend:
+        select_x = Collection(collection_name).find()
+        select_z = Collection(collection_name).find()
+    else:
+        table = db.load('table', collection_name).to_query()
+        select_x = table.select('id', 'x')
+        select_z = table.select('id', 'z')
+
     db.add(
         Listener(
-            select=Collection(collection_name).find(),
+            select=select_x,
             key='x',
             model='linear_a',
         )
     )
     db.add(
         Listener(
-            select=Collection(collection_name).find(),
+            select=select_z,
             key='z',
             model='linear_a',
         )
@@ -203,49 +258,52 @@ def image_url():
     return f'file://{path}'
 
 
-def setup_db(db, **kwargs):
+def create_db(CFG, **kwargs):
     # TODO: support more parameters to control the setup
+    db = build_datalayer(CFG)
+    if kwargs.get('empty', False):
+        return db
+
     add_encoders(db)
-    n_data = kwargs.get('n_data', GLOBAL_TEST_N_DATA_POINTS)
-    add_random_data(db, number_data_points=n_data)
+    n_data = kwargs.get('n_data', LOCAL_TEST_N_DATA_POINTS)
+
+    # prepare data
+    is_mongodb_bachend = isinstance(db.databackend, MongoDataBackend)
+    if is_mongodb_bachend:
+        add_random_data_to_mongo_db(db, number_data_points=n_data)
+    else:
+        add_random_data_to_sql_db(db, number_data_points=n_data)
+
+    # prepare models
     if kwargs.get('add_models', True):
         add_models(db)
+
+    # prepare vector index
     if kwargs.get('add_vector_index', True):
         add_vector_index(db)
 
-
-@pytest.fixture(scope='session')
-def db() -> Datalayer:
-    db = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
-    setup_db(db)
     return db
 
 
 @pytest.fixture
-def local_db(request) -> Datalayer:
-    db = build_datalayer(CFG, data_backend=MONGOMOCK_URI)
-    setup_config = getattr(request, 'param', {'n_data': LOCAL_TEST_N_DATA_POINTS})
-    setup_db(db, **setup_config)
-    return db
+def db(request, monkeypatch) -> Iterator[Datalayer]:
+    # TODO: Use pre-defined config instead of dict here
+    db_type, setup_config = (
+        request.param if hasattr(request, 'param') else ("mongodb", None)
+    )
+    setup_config = setup_config or {}
+    if db_type == "mongodb":
+        monkeypatch.setattr(CFG, 'data_backend', MONGOMOCK_URI)
+    elif db_type == "sqldb":
+        monkeypatch.setattr(CFG, 'data_backend', SQLITE_URI)
 
-
-@pytest.fixture
-def local_empty_db(request, monkeypatch) -> Datalayer:
-    for key, value in DB_CONFIGS.items():
-        monkeypatch.setattr(CFG, key, value)
-    db = build_datalayer(CFG)
+    db = create_db(CFG, **setup_config)
     yield db
-    db.drop(force=True)
 
-
-DB_CONFIGS = {
-    'data_backend': MONGOMOCK_URI,
-    # 'metadata_store': "sqlite://:memory:",
-    # 'data_backend': "sqlite://:memory:",
-    # 'data_backend': "mongodb://testmongodbuser:testmongodbpassword@localhost:27018/test_db",
-    # 'metadata_store': "mysql://root:root123@localhost:3306/test_db",
-    'metadata_store': "sqlite://:memory:",
-    # 'data_backend': "mysql://root:root123@localhost:3306/test_db",
-    # 'metadata_store': "sqlite://mydb.sqlite",
-    'artifact_store': 'filesystem:///tmp/superduperdb_test',
-}
+    if db_type == "mongodb":
+        db.drop(force=True)
+    elif db_type == "sqldb":
+        db.artifact_store.drop(force=True)
+        tables = db.databackend.conn.list_tables()
+        for table in tables:
+            db.databackend.conn.drop_table(table, force=True)

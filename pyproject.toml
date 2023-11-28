@@ -176,6 +176,11 @@ whitelist-regex = []
 [tool.ruff]
 extend-select = [
     "I", # Missing required import (auto-fixable)
+    "F", # PyFlakes
+    #"W", # PyCode Warning
+    "E", # PyCode Error
+    #"N", # pep8-naming
+    #"D", # pydocstyle
 ]
 
 [tool.ruff.isort]

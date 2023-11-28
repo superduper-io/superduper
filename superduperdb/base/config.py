@@ -70,8 +70,8 @@ class Cluster(BaseConfigJSONable):
     """
 
     compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local'
-    vector_search: t.Optional[str] = None  #'http://localhost:8000'  # None
-    cdc: t.Optional[str] = None  #'http://localhost:8001'  # None
+    vector_search: t.Optional[str] = None  # 'http://localhost:8000'  # None
+    cdc: t.Optional[str] = None  # 'http://localhost:8001'  # None
     backfill_batch_size: int = 100
 
 

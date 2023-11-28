@@ -79,9 +79,11 @@ FROM base AS build_sandbox
 ONBUILD ARG SUPERDUPERDB_EXTRAS="' '"
 ONBUILD COPY --chown=superduper ./ ${HOME}/superduperdb
 ONBUILD WORKDIR ${HOME}/superduperdb
-# Do our best for caching.
-ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --upgrade --user --editable \
+# Install project dependencies.
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --user --editable \
     .[${SUPERDUPERDB_EXTRAS}]
+# Install user-defined dependencies
+ONBUILD RUN --mount=type=cache,uid=1000,target=/home/superduper/.cache/pip pip install --user  -r requirements.txt
 
 # ---------------
 # Build Release

@@ -1,0 +1,23 @@
+# Instructions for Custom User Dependencies on Sandbox Image
+#
+#    Open this file, which contains custom user dependencies for your sandbox image.
+#
+#    Do not confuse these with project dependencies listed in pyproject.txt; those are separate.
+#
+#    To add a new module, such as the TensorFlow library, follow these steps:
+#    a. Type the module name on a new line.
+#    b. Specify the required version using the format: module_name==version_number.
+#
+#    Example:
+#        tensorflow==2.3.1
+#        uvicorn==0.12.2
+#        fastapi==0.63.0
+#
+# Once you have added all the necessary modules, save the document and rebuild the image using
+#        make testenv_image # Build new image
+#        docker image ls    # Validate the new image
+#
+# Your sandbox image will now incorporate these custom dependencies.
+
+
+tqdm>=4.64.1

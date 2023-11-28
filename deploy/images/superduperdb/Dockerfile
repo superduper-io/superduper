@@ -90,6 +90,7 @@ FROM base AS build_release
 
 ONBUILD ARG SUPERDUPERDB_EXTRAS="' '"
 ONBUILD COPY --chown=superduper ${PWD}/examples ./examples
+ONBUILD COPY --chown=superduper ${PWD}/contrib ./contrib
 # Drop cache to reduce image size.
 ONBUILD RUN pip install --upgrade --user \
     superduperdb[${SUPERDUPERDB_EXTRAS}] \

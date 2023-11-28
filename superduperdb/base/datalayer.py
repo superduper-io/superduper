@@ -1231,6 +1231,25 @@ class Datalayer:
                 f'Error while vector search on index {vector_index}'
             ) from e
 
+    def close(self):
+        """
+        Gracefully shutdown the Datalayer
+        """
+        logging.info("Disconnect from Data Store")
+        self.databackend.disconnect()
+
+        logging.info("Disconnect from Metadata Store")
+        self.metadata.disconnect()
+
+        logging.info("Disconnect from Artifact Store")
+        self.artifact_store.disconnect()
+
+        logging.info("SDisconnect from  Compute Engine")
+        self.compute.disconnect()
+
+        # TODO: gracefully close all opened connections
+        return
+
 
 @dc.dataclass
 class LoadDict(dict):

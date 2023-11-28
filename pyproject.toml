@@ -57,7 +57,8 @@ dependencies = [
     "mongomock>=4.1.2",
     "ibis-framework[sqlite]>=5.1.0",
     "ibis-framework[duckdb]>=5.1.0",
-    "PyYAML>=6.0.0"
+    "PyYAML>=6.0.0",
+    "prettytable",
 ]
 
 [project.optional-dependencies]

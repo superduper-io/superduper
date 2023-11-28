@@ -27,13 +27,13 @@ class _Client:
 
 
 def local_cluster(db):
-    '''
+    """
     This method is used to create a local cluster consisting of
     Vector search service, cdc service and dask setup.
 
     Once this cluster is up, user can offload vector search,
-    cdc on these service.
-    '''
+    cdc on these services.
+    """
     from superduperdb import CFG
 
     # vector search local service

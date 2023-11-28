@@ -8,6 +8,7 @@ from traceback import format_exc
 import uvicorn
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
+from prettytable import PrettyTable
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from superduperdb import logging
@@ -47,13 +48,10 @@ class ExceptionHandlerMiddleware(BaseHTTPMiddleware):
 
 
 class SuperDuperApp:
-    '''
-    This is a wrapper class which helps to create a fastapi application
-    in the realm of superduperdb.
-
-    This class prepares a basic api setup and only endpoint implementation
-    are need to be added into the app
-    '''
+    """
+    This is a wrapper class that prepares helper functions used to create a
+    fastapi application in the realm of superduperdb.
+    """
 
     def __init__(self, service='vector_search', port=8000):
         self.service = service
@@ -62,17 +60,37 @@ class SuperDuperApp:
         self.app_host = '0.0.0.0'
         self._app = FastAPI()
 
-        self.router = APIRouter(prefix='/' + self.service)
+        self.router = APIRouter()
         self._user_startup = False
         self._user_shutdown = False
 
         self._app.add_middleware(ExceptionHandlerMiddleware)
 
-    def default_endpoints(self):
-        '''
-        A list of default endpoints, health and config handshake
-        comes out of box with `SuperDuperApp`
-        '''
+    @cached_property
+    def app(self):
+        self._app.include_router(self.router)
+        return self._app
+
+    @cached_property
+    def db(self):
+        return self._app.state.pool
+
+    def add(self, *args, method='post', **kwargs):
+        """
+        Register an endpoint with this method.
+        """
+
+        def decorator(function):
+            self.router.add_api_route(
+                *args, **kwargs, endpoint=function, methods=[method]
+            )
+
+        return decorator
+
+    def add_default_endpoints(self):
+        """
+        Add a list of default endpoints which comes out of the box with `SuperDuperApp`
+        """
 
         @self.router.get('/health')
         def health():
@@ -91,30 +109,20 @@ class SuperDuperApp:
                 content={'error': 'Config is not match'},
             )
 
-    @cached_property
-    def db(self):
-        return self._app.state.pool
+    def print_routes(self):
+        table = PrettyTable()
 
-    def add(self, *args, method='post', **kwargs):
-        '''
-        Register an endpoint with this method.
-        '''
+        # Define the table headers
+        table.field_names = ["Path", "Methods", "Function"]
 
-        def decorator(function):
-            self.router.add_api_route(
-                *args, **kwargs, endpoint=function, methods=[method]
-            )
-            return
+        # Add rows to the table
+        for route in self._app.routes:
+            table.add_row([route.path, ", ".join(route.methods), route.name])
 
-        return decorator
-
-    @cached_property
-    def app(self):
-        self._app.include_router(self.router)
-        return self._app
+        logging.info(f"Routes for '{self.service}' app: \n{table}")
 
     def pre_start(self, cfg=None):
-        self.default_endpoints()
+        self.add_default_endpoints()
 
         if not self._user_startup:
             self.startup(cfg=cfg)
@@ -123,10 +131,12 @@ class SuperDuperApp:
         assert self.app
 
     def start(self):
-        '''
+        """
         This method is used to start the application server
-        '''
+        """
         self.pre_start()
+
+        self.print_routes()
 
         uvicorn.run(
             self._app,
@@ -136,9 +146,9 @@ class SuperDuperApp:
         )
 
     def startup(self, function=None, cfg=None):
-        '''
+        """
         This method is used to register a startup function
-        '''
+        """
         self._user_startup = True
 
         @self._app.on_event('startup')
@@ -153,9 +163,9 @@ class SuperDuperApp:
         return
 
     def shutdown(self, function=None):
-        '''
+        """
         This method is used to register a shutdown function
-        '''
+        """
         self._user_shutdown = True
 
         @self._app.on_event('shutdown')
@@ -167,18 +177,16 @@ class SuperDuperApp:
             except AttributeError:
                 raise Exception('Could not close the database properly')
 
-        return
-
 
 def database(request: Request) -> Datalayer:
     return request.app.state.pool
 
 
 def DatalayerDependency():
-    '''
+    """
     A helper method to be used for injecting datalayer instance
     into endpoint implementation
-    '''
+    """
     return Depends(database)
 
 

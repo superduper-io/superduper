@@ -7,7 +7,9 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.server.app import DatalayerDependency, SuperDuperApp
 from superduperdb.vector_search.server import service
 
-assert isinstance(CFG.cluster.vector_search, str)
+assert isinstance(
+    CFG.cluster.vector_search, str
+), "Missing SUPERDUPERDB_CLUSTER_VECTOR_SEARCH"
 port = int(CFG.cluster.vector_search.split(':')[-1])
 app = SuperDuperApp('vector_search', port=port)
 

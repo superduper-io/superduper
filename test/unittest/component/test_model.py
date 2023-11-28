@@ -204,7 +204,8 @@ def test_pm_create_predict_job(predict_mixin):
 
 
 @patch.object(Datalayer, 'add')
-def test_pm_predict_and_listen(mock_add, predict_mixin, local_empty_db):
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+def test_pm_predict_and_listen(mock_add, predict_mixin, db):
     X = 'x'
     select = MagicMock(CompoundSelect)
 
@@ -213,7 +214,7 @@ def test_pm_predict_and_listen(mock_add, predict_mixin, local_empty_db):
     predict_mixin._predict_and_listen(
         X,
         select,
-        db=local_empty_db,
+        db=db,
         max_chunk_size=max_chunk_size,
         in_memory=in_memory,
     )
@@ -461,23 +462,22 @@ def test_model_validate(mock_validate):
         assert kwargs.get('value') == {'acc': 0.5, 'loss': 0.5}
 
 
-@pytest.mark.parametrize('local_db', [{'n_data': 250}], indirect=True)
 @patch.object(Model, '_predict')
-def test_model_core_validate(model_predict, valid_dataset, local_db):
+def test_model_core_validate(model_predict, valid_dataset, db):
     # Check the validation is done correctly
-    local_db.add(valid_dataset)
+    db.add(valid_dataset)
     model = Model('test', object(), train_X='x', train_y='y')
     model_predict.side_effect = lambda x: [random.randint(0, 1) for _ in range(len(x))]
     metrics = [
         Metric('f1', f1_score),
         Metric('acc', accuracy_score),
     ]
-    results = model._validate(local_db, valid_dataset.identifier, metrics)
+    results = model._validate(db, valid_dataset.identifier, metrics)
     assert len(results) == 2
     assert isinstance(results.get(f'{valid_dataset.identifier}/f1'), float)
     assert isinstance(results.get(f'{valid_dataset.identifier}/acc'), float)
 
-    results = model._validate(local_db, valid_dataset, metrics)
+    results = model._validate(db, valid_dataset, metrics)
     assert len(results) == 2
     assert isinstance(results.get(f'{valid_dataset.identifier}/f1'), float)
     assert isinstance(results.get(f'{valid_dataset.identifier}/acc'), float)

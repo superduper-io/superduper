@@ -32,42 +32,44 @@ def get_new_data(encoder: Encoder, n=10, update=False):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_db', [{'n_data': 5}], indirect=True)
-def test_delete_many(local_db):
+def test_delete_many(db):
     collection = Collection('documents')
-    old_ids = {r['_id'] for r in local_db.execute(collection.find({}, {'_id': 1}))}
+    old_ids = {r['_id'] for r in db.execute(collection.find({}, {'_id': 1}))}
     deleted_ids = list(old_ids)[:2]
-    local_db.execute(collection.delete_many({'_id': {'$in': deleted_ids}}))
-    new_ids = {r['_id'] for r in local_db.execute(collection.find({}, {'_id': 1}))}
+    db.execute(collection.delete_many({'_id': {'$in': deleted_ids}}))
+    new_ids = {r['_id'] for r in db.execute(collection.find({}, {'_id': 1}))}
     assert len(new_ids) == 3
 
     assert old_ids - new_ids == set(deleted_ids)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_replace(local_db):
+def test_replace(db):
     collection = Collection('documents')
-    r = next(local_db.execute(collection.find()))
+    r = next(db.execute(collection.find()))
     x = torch.randn(32)
-    t = local_db.encoders['torch.float32[32]']
+    t = db.encoders['torch.float32[32]']
     new_x = t(x)
     r['x'] = new_x
-    local_db.execute(
+    db.execute(
         collection.replace_one(
             {'_id': r['_id']},
             r,
         )
     )
 
-    new_r = local_db.execute(collection.find_one({'_id': r['_id']}))
+    new_r = db.execute(collection.find_one({'_id': r['_id']}))
     assert new_r['x'].x.tolist() == new_x.x.tolist()
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_insert_from_uris(local_empty_db, image_url):
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+def test_insert_from_uris(db, image_url):
+    import PIL
+
     from superduperdb.ext.pillow.encoder import pil_image
 
-    local_empty_db.add(pil_image)
+    db.add(pil_image)
     collection = Collection('documents')
     to_insert = [
         Document(
@@ -90,24 +92,20 @@ def test_insert_from_uris(local_empty_db, image_url):
         )
         for _ in range(2)
     ]
-    local_empty_db.execute(collection.insert_many(to_insert))
-    '''
+    db.execute(collection.insert_many(to_insert))
 
-    r = local_empty_db.execute(collection.find_one())
+    r = db.execute(collection.find_one())
     assert isinstance(r['item'].x, PIL.Image.Image)
     assert isinstance(r['other']['item'].x, PIL.Image.Image)
-    '''
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_update_many(local_db):
+def test_update_many(db):
     collection = Collection('documents')
     to_update = torch.randn(32)
-    t = local_db.encoders['torch.float32[32]']
-    local_db.execute(
-        collection.update_many({}, Document({'$set': {'x': t(to_update)}}))
-    )
-    cur = local_db.execute(collection.find())
+    t = db.encoders['torch.float32[32]']
+    db.execute(collection.update_many({}, Document({'$set': {'x': t(to_update)}})))
+    cur = db.execute(collection.find())
     r = next(cur)
     s = next(cur)
 
@@ -120,14 +118,13 @@ def test_update_many(local_db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_db', [{'n_data': 5}], indirect=True)
-def test_insert_many(local_db):
+def test_insert_many(db):
     collection = Collection('documents')
-    an_update = get_new_data(local_db.encoders['torch.float32[32]'], 10, update=True)
-    local_db.execute(collection.insert_many(an_update))
-    r = next(local_db.execute(collection.find({'update': True})))
+    an_update = get_new_data(db.encoders['torch.float32[32]'], 10, update=True)
+    db.execute(collection.insert_many(an_update))
+    r = next(db.execute(collection.find({'update': True})))
     assert 'linear_a' in r['_outputs']['x']
-    assert len(list(local_db.execute(collection.find()))) == 5 + 10
+    assert len(list(db.execute(collection.find()))) == 5 + 10
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -143,26 +140,24 @@ def test_like(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_insert_one(local_db):
+def test_insert_one(db):
     # MARK: empty Collection + a_single_insert
     collection = Collection('documents')
-    a_single_insert = get_new_data(
-        local_db.encoders['torch.float32[32]'], 1, update=False
-    )[0]
-    out, _ = local_db.execute(collection.insert_one(a_single_insert))
-    r = local_db.execute(collection.find({'_id': out[0]}))
+    a_single_insert = get_new_data(db.encoders['torch.float32[32]'], 1, update=False)[0]
+    out, _ = db.execute(collection.insert_one(a_single_insert))
+    r = db.execute(collection.find({'_id': out[0]}))
     docs = list(r)
     assert docs[0]['x'].x.tolist() == a_single_insert['x'].x.tolist()
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_delete_one(local_db):
+def test_delete_one(db):
     # MARK: random data (change)
     collection = Collection('documents')
-    r = local_db.execute(collection.find_one())
-    local_db.execute(collection.delete_one({'_id': r['_id']}))
+    r = db.execute(collection.find_one())
+    db.execute(collection.delete_one({'_id': r['_id']}))
     with pytest.raises(StopIteration):
-        next(local_db.execute(Collection('documents').find({'_id': r['_id']})))
+        next(db.execute(Collection('documents').find({'_id': r['_id']})))
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -170,8 +165,8 @@ def test_find(db):
     collection = Collection('documents')
     r = db.execute(collection.find().limit(1))
     assert len(list(r)) == 1
-    r = db.execute(collection.find().limit(100))
-    assert len(list(r)) == 100
+    r = db.execute(collection.find().limit(5))
+    assert len(list(r)) == 5
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
@@ -182,19 +177,18 @@ def test_find_one(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_aggregate(db):
-    r = db.execute(Collection('documents').aggregate([{'$sample': {'size': 1}}]))
-    assert len(list(r)) == 1
+    r = db.execute(Collection('documents').aggregate([{'$sample': {'size': 2}}]))
+    assert len(list(r)) == 2
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_db', [{'n_data': 5}], indirect=True)
-def test_replace_one(local_db):
+def test_replace_one(db):
     collection = Collection('documents')
     # MARK: random data (change)
     new_x = torch.randn(32)
-    t = local_db.encoders['torch.float32[32]']
-    r = local_db.execute(collection.find_one())
+    t = db.encoders['torch.float32[32]']
+    r = db.execute(collection.find_one())
     r['x'] = t(new_x)
-    local_db.execute(collection.replace_one({'_id': r['_id']}, r))
-    doc = local_db.execute(collection.find_one({'_id': r['_id']}))
+    db.execute(collection.replace_one({'_id': r['_id']}, r))
+    doc = db.execute(collection.find_one({'_id': r['_id']}))
     assert doc.unpack()['x'].tolist() == new_x.tolist()

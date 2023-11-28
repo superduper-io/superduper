@@ -49,12 +49,12 @@ def acc(x, y):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
-    'local_db',
-    [{'add_vector_index': False, 'add_models': False}],
+    'db',
+    [('mongodb', {'add_vector_index': False, 'add_models': False, 'n_data': 500})],
     indirect=True,
 )
-def test_fit(local_db, valid_dataset):
-    local_db.add(valid_dataset)
+def test_fit(db, valid_dataset):
+    db.add(valid_dataset)
 
     m = TorchModel(
         object=torch.nn.Linear(32, 1),
@@ -72,7 +72,7 @@ def test_fit(local_db, valid_dataset):
     m.fit(
         X='x',
         y='y',
-        db=local_db,
+        db=db,
         select=Collection('documents').find(),
         metrics=[Metric(identifier='acc', object=acc)],
         validation_sets=['my_valid'],

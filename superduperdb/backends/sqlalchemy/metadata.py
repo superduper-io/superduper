@@ -339,9 +339,7 @@ class SQLAlchemyMetadata(MetaDataStore):
     def create_job(self, info: t.Dict):
         try:
             with self.session_context() as session:
-                job = Job(**info)
-                convert_object_id_type(job)
-                session.add(job)
+                session.add(Job(**info))
         except Exception as e:
             raise exceptions.MetaDataStoreJobException(
                 'Error while creating job in metadata store'

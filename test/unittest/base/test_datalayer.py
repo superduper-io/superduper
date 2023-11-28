@@ -14,6 +14,9 @@ except ImportError:
 import dataclasses as dc
 from unittest.mock import MagicMock, patch
 
+from superduperdb.backends.ibis.field_types import dtype
+from superduperdb.backends.ibis.query import Table
+from superduperdb.backends.mongodb.data_backend import MongoDataBackend
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base import exceptions
 from superduperdb.base.artifact import Artifact
@@ -25,6 +28,7 @@ from superduperdb.components.dataset import Dataset
 from superduperdb.components.encoder import Encoder
 from superduperdb.components.listener import Listener
 from superduperdb.components.model import Model
+from superduperdb.components.schema import Schema
 
 n_data_points = 250
 
@@ -65,29 +69,49 @@ class TestComponent(Component):
 
 
 def add_fake_model(db: Datalayer):
-    model = Model(object=lambda x: str(x), identifier='fake_model')
+    model = Model(
+        object=lambda x: str(x),
+        identifier='fake_model',
+        encoder=Encoder(identifier='base'),
+    )
     db.add(model)
+    if isinstance(db.databackend, MongoDataBackend):
+        select = Collection('documents').find()
+    else:
+        schema = Schema(
+            identifier='documents',
+            fields={
+                'id': dtype('str'),
+                'x': dtype('int'),
+            },
+        )
+        t = Table(identifier='documents', schema=schema)
+        db.add(t)
+        select = db.load('table', 'documents').to_query().select('id', 'x')
     db.add(
         Listener(
             model='fake_model',
-            select=Collection('documents').find(),
+            select=select,
             key='x',
         ),
     )
 
 
-def test_add_version(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_add_version(db):
     # Check the component functions are called
     component = TestComponent(identifier='test')
-    local_empty_db.add(component)
+    db.add(component)
     assert component.is_on_create is True
     assert component.is_on_load is True
     assert component.is_schedule_jobs is True
     assert component.version == 0
-    assert local_empty_db.show('test-component', 'test') == [0]
+    assert db.show('test-component', 'test') == [0]
 
     # Test the component saves the data correctly
-    component_loaded = local_empty_db.load('test-component', 'test')
+    component_loaded = db.load('test-component', 'test')
 
     original_serialized = component.serialized[0]
     saved_serialized = component_loaded.serialized[0]
@@ -97,115 +121,129 @@ def test_add_version(local_empty_db):
     assert original_serialized['identifier'] == saved_serialized['identifier']
 
     # Check duplicate components are not added
-    local_empty_db.add(component)
-    component_loaded = local_empty_db.load('test-component', 'test')
+    db.add(component)
+    component_loaded = db.load('test-component', 'test')
     assert component_loaded.version == 0
-    assert local_empty_db.show('test-component', 'test') == [0]
+    assert db.show('test-component', 'test') == [0]
 
     # Check the version is incremented
     component = TestComponent(identifier='test')
-    local_empty_db.add(component)
+    db.add(component)
     assert component.version == 1
-    assert local_empty_db.show('test-component', 'test') == [0, 1]
+    assert db.show('test-component', 'test') == [0, 1]
 
     component = TestComponent(identifier='test')
-    local_empty_db.add(component)
+    db.add(component)
     assert component.version == 2
-    assert local_empty_db.show('test-component', 'test') == [0, 1, 2]
+    assert db.show('test-component', 'test') == [0, 1, 2]
 
 
-def test_add_component_with_bad_artifact(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_add_component_with_bad_artifact(db):
     artifact = Artifact({'data': lambda x: x}, serializer='pickle')
     component = TestComponent(identifier='test', artifact=artifact)
     with pytest.raises(exceptions.DatalayerException):
-        local_empty_db.add(component)
+        db.add(component)
 
 
-def test_add_artifact_auto_replace(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_add_artifact_auto_replace(db):
     # Check artifact is automatically replaced to metadata
     artifact = Artifact({'data': 1})
     component = TestComponent(identifier='test', artifact=artifact)
-    with patch.object(local_empty_db.metadata, 'create_component') as create_component:
-        local_empty_db.add(component)
+    with patch.object(db.metadata, 'create_component') as create_component:
+        db.add(component)
         serialized = create_component.call_args[0][0]
         assert serialized['dict']['artifact']['sha1'] == artifact.sha1
 
 
-def test_add_child(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_add_child(db):
     child_component = TestComponent(identifier='child')
     component = TestComponent(identifier='test', child=child_component)
 
-    local_empty_db.add(component)
-    assert local_empty_db.show('test-component', 'test') == [0]
-    assert local_empty_db.show('test-component', 'child') == [0]
+    db.add(component)
+    assert db.show('test-component', 'test') == [0]
+    assert db.show('test-component', 'child') == [0]
 
-    parents = local_empty_db.metadata.get_component_version_parents(
-        child_component.unique_id
-    )
+    parents = db.metadata.get_component_version_parents(child_component.unique_id)
     assert parents == [component.unique_id]
 
     component_2 = TestComponent(identifier='test-2', child='child-2')
     with pytest.raises(exceptions.DatalayerException):
-        local_empty_db.add(component_2)
+        db.add(component_2)
 
     child_component_2 = TestComponent(identifier='child-2')
-    local_empty_db.add(child_component_2)
+    db.add(child_component_2)
     component_3 = TestComponent(identifier='test-3', child='child-2')
-    local_empty_db.add(component_3)
-    assert local_empty_db.show('test-component', 'test-3') == [0]
-    assert local_empty_db.show('test-component', 'child-2') == [0]
+    db.add(component_3)
+    assert db.show('test-component', 'test-3') == [0]
+    assert db.show('test-component', 'child-2') == [0]
 
-    parents = local_empty_db.metadata.get_component_version_parents(
-        child_component_2.unique_id
-    )
+    parents = db.metadata.get_component_version_parents(child_component_2.unique_id)
     assert parents == [component_3.unique_id]
 
 
-def test_add(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_add(db):
     component = TestComponent(identifier='test')
-    local_empty_db.add(component)
-    assert local_empty_db.show('test-component', 'test') == [0]
+    db.add(component)
+    assert db.show('test-component', 'test') == [0]
 
-    local_empty_db.add(
+    db.add(
         [
             TestComponent(identifier='test_list_1'),
             TestComponent(identifier='test_list_2'),
         ]
     )
-    assert local_empty_db.show('test-component', 'test_list_1') == [0]
-    assert local_empty_db.show('test-component', 'test_list_2') == [0]
+    assert db.show('test-component', 'test_list_1') == [0]
+    assert db.show('test-component', 'test_list_2') == [0]
 
     with pytest.raises(ValueError):
-        local_empty_db.add('test')
+        db.add('test')
 
 
-def test_remove_component_version(local_empty_db):
-    local_empty_db.add(
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_remove_component_version(db):
+    db.add(
         [
             TestComponent(identifier='test', version=0),
             TestComponent(identifier='test', version=1),
         ]
     )
-    assert local_empty_db.show('test-component', 'test') == [0, 1]
+    assert db.show('test-component', 'test') == [0, 1]
 
     # Don't remove if not confirmed
     with patch('click.confirm', return_value=False):
-        local_empty_db._remove_component_version('test-component', 'test', 0)
-        assert local_empty_db.show('test-component', 'test') == [0, 1]
+        db._remove_component_version('test-component', 'test', 0)
+        assert db.show('test-component', 'test') == [0, 1]
 
     # Remove if confirmed
     with patch('click.confirm', return_value=True):
-        local_empty_db._remove_component_version('test-component', 'test', 0)
-        assert local_empty_db.show('test-component', 'test') == [1]
+        db._remove_component_version('test-component', 'test', 0)
+        assert db.show('test-component', 'test') == [1]
 
     # Remove force
-    local_empty_db._remove_component_version('test-component', 'test', 1, force=True)
-    assert local_empty_db.show('test-component', 'test') == []
+    db._remove_component_version('test-component', 'test', 1, force=True)
+    assert db.show('test-component', 'test') == []
 
 
-def test_remove_component_with_parent(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_remove_component_with_parent(db):
     # Can not remove the child component if the parent exists
-    local_empty_db.add(
+    db.add(
         TestComponent(
             identifier='test_3_parent',
             version=0,
@@ -213,53 +251,63 @@ def test_remove_component_with_parent(local_empty_db):
         )
     )
 
-    # local_empty_db._remove_component_version('test-component', 'test_3_child', 0)
+    # db._remove_component_version('test-component', 'test_3_child', 0)
     with pytest.raises(Exception) as e:
-        local_empty_db._remove_component_version('test-component', 'test_3_child', 0)
+        db._remove_component_version('test-component', 'test_3_child', 0)
     assert 'is involved in other components' in str(e)
 
 
-def test_remove_component_with_clean_up(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_remove_component_with_clean_up(db):
     # Test clean up
     component_clean_up = TestComponent(
         identifier='test_clean_up', version=0, check_clean_up=True
     )
-    local_empty_db.add(component_clean_up)
+    db.add(component_clean_up)
     with pytest.raises(Exception) as e:
-        local_empty_db._remove_component_version(
-            'test-component', 'test_clean_up', 0, force=True
-        )
+        db._remove_component_version('test-component', 'test_clean_up', 0, force=True)
     assert 'cleanup' in str(e)
 
 
-def test_remove_component_from_data_layer_dict(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_remove_component_from_data_layer_dict(db):
     # Test component is deleted from datalayer
     test_encoder = Encoder(identifier='test_encoder', version=0)
-    local_empty_db.add(test_encoder)
-    local_empty_db._remove_component_version('encoder', 'test_encoder', 0, force=True)
+    db.add(test_encoder)
+    db._remove_component_version('encoder', 'test_encoder', 0, force=True)
     with pytest.raises(exceptions.ComponentException):
-        local_empty_db.encoders['test_encoder']
+        db.encoders['test_encoder']
 
 
-def test_remove_component_with_artifact(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_remove_component_with_artifact(db):
     # Test artifact is deleted from artifact store
     component_with_artifact = TestComponent(
         identifier='test_with_artifact', version=0, artifact=Artifact({'test': 'test'})
     )
-    local_empty_db.add(component_with_artifact)
-    info_with_artifact = local_empty_db.metadata.get_component(
+    db.add(component_with_artifact)
+    info_with_artifact = db.metadata.get_component(
         'test-component', 'test_with_artifact', 0
     )
     artifact_file_id = info_with_artifact['dict']['artifact']['file_id']
-    with patch.object(local_empty_db.artifact_store, 'delete') as mock_delete:
-        local_empty_db._remove_component_version(
+    with patch.object(db.artifact_store, 'delete') as mock_delete:
+        db._remove_component_version(
             'test-component', 'test_with_artifact', 0, force=True
         )
         mock_delete.assert_called_once_with(artifact_file_id)
 
 
-def test_remove_one_version(local_empty_db):
-    local_empty_db.add(
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_remove_one_version(db):
+    db.add(
         [
             TestComponent(identifier='test', version=0),
             TestComponent(identifier='test', version=1),
@@ -267,12 +315,15 @@ def test_remove_one_version(local_empty_db):
     )
 
     # Only remove the version
-    local_empty_db.remove('test-component', 'test', 1, force=True)
-    assert local_empty_db.show('test-component', 'test') == [0]
+    db.remove('test-component', 'test', 1, force=True)
+    assert db.show('test-component', 'test') == [0]
 
 
-def test_remove_multi_version(local_empty_db):
-    local_empty_db.add(
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_remove_multi_version(db):
+    db.add(
         [
             TestComponent(identifier='test', version=0),
             TestComponent(identifier='test', version=1),
@@ -280,20 +331,26 @@ def test_remove_multi_version(local_empty_db):
         ]
     )
 
-    local_empty_db.remove('test-component', 'test', force=True)
-    assert local_empty_db.show('test-component', 'test') == []
+    db.remove('test-component', 'test', force=True)
+    assert db.show('test-component', 'test') == []
 
 
-def test_remove_not_exist_component(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_remove_not_exist_component(db):
     with pytest.raises(exceptions.ComponentException) as e:
-        local_empty_db.remove('test-component', 'test', 0, force=True)
+        db.remove('test-component', 'test', 0, force=True)
     assert 'test' in str(e)
 
-    local_empty_db.remove('test-component', 'test', force=True)
+    db.remove('test-component', 'test', force=True)
 
 
-def test_show(local_empty_db):
-    local_empty_db.add(
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_show(db):
+    db.add(
         [
             TestComponent(identifier='a1', version=0),
             TestComponent(identifier='a2', version=1),
@@ -307,31 +364,42 @@ def test_show(local_empty_db):
     )
 
     with pytest.raises(ValueError) as e:
-        local_empty_db.show('test-component', version=1)
+        db.show('test-component', version=1)
     assert 'None' in str(e) and '1' in str(e)
 
-    assert sorted(local_empty_db.show('test-component')) == ['a1', 'a2', 'a3', 'b']
-    assert sorted(local_empty_db.show('encoder')) == ['c1', 'c2']
+    assert sorted(db.show('test-component')) == ['a1', 'a2', 'a3', 'b']
+    assert sorted(db.show('encoder')) == ['c1', 'c2']
 
-    assert sorted(local_empty_db.show('test-component', 'a1')) == [0]
-    assert sorted(local_empty_db.show('test-component', 'b')) == [0, 1, 2]
+    assert sorted(db.show('test-component', 'a1')) == [0]
+    assert sorted(db.show('test-component', 'b')) == [0, 1, 2]
 
     # Test get specific version
-    info = local_empty_db.show('test-component', 'b', 1)
+    info = db.show('test-component', 'b', 1)
     assert isinstance(info, dict)
     assert info['version'] == 1
     assert info['dict']['identifier'] == 'b'
     assert info['cls'] == 'TestComponent'
 
     # Test get last version
-    assert local_empty_db.show('test-component', 'b', -1)['version'] == 2
+    assert db.show('test-component', 'b', -1)['version'] == 2
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_predict(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_predict(db: Datalayer):
     models = [
-        TorchModel(object=torch.nn.Linear(16, 2), identifier='model1'),
-        TorchModel(object=torch.nn.Linear(16, 3), identifier='model2'),
+        TorchModel(
+            object=torch.nn.Linear(16, 2),
+            identifier='model1',
+            encoder=tensor(torch.float32, shape=(4, 2)),
+        ),
+        TorchModel(
+            object=torch.nn.Linear(16, 3),
+            identifier='model2',
+            encoder=tensor(torch.float32, shape=(4, 3)),
+        ),
         TorchModel(
             object=torch.nn.Linear(16, 3),
             identifier='model3',
@@ -342,38 +410,48 @@ def test_predict(local_empty_db):
             ),
         ),
     ]
-    local_empty_db.add(models)
+    db.add(models)
 
     # test model selection
     x = torch.randn(4, 16)
-    assert local_empty_db.predict('model1', x)[0].content.shape == torch.Size([4, 2])
-    assert local_empty_db.predict('model2', x)[0].content.shape == torch.Size([4, 3])
+    assert db.predict('model1', x)[0].content.x.shape == torch.Size([4, 2])
+    assert db.predict('model2', x)[0].content.x.shape == torch.Size([4, 3])
 
     # test encoder
-    result = local_empty_db.predict('model3', torch.randn(4, 16))[0].content.encode()
+    result = db.predict('model3', torch.randn(4, 16))[0].content.encode()
     assert result['_content']['bytes'].shape == torch.Size([4])
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_predict_context(local_empty_db):
-    local_empty_db.add(TorchModel(object=torch.nn.Linear(16, 2), identifier='model'))
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_predict_context(db: Datalayer):
+    db.add(
+        TorchModel(
+            object=torch.nn.Linear(16, 2),
+            identifier='model',
+            encoder=tensor(torch.float32, shape=(4, 2)),
+        )
+    )
 
-    y, context_out = local_empty_db.predict('model', torch.randn(4, 16))
+    y, context_out = db.predict('model', torch.randn(4, 16))
     assert not context_out
 
-    with patch.object(local_empty_db, '_get_context') as mock_get_context:
+    with patch.object(db, '_get_context') as mock_get_context:
         mock_get_context.return_value = [
             torch.randn(4, 2),
             torch.randn(4, 3),
         ]
-        y, context_out = local_empty_db.predict(
-            'model', torch.randn(4, 16), context_select=True
-        )
+        y, context_out = db.predict('model', torch.randn(4, 16), context_select=True)
         assert context_out[0].content.shape == torch.Size([4, 2])
         assert context_out[1].content.shape == torch.Size([4, 3])
 
 
-def test_get_context(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_get_context(db):
     from superduperdb.backends.base.query import Select
 
     fake_contexts = [Document(content={'text': f'hello world {i}'}) for i in range(10)]
@@ -384,55 +462,61 @@ def test_get_context(local_empty_db):
     context_select.execute.return_value = fake_contexts
 
     # Test get_context without context_key
-    return_contexts = local_empty_db._get_context(
-        model, context_select, context_key=None
-    )
+    return_contexts = db._get_context(model, context_select, context_key=None)
     assert return_contexts == [{'text': f'hello world {i}'} for i in range(10)]
 
     # Test get context without context
-    return_contexts = local_empty_db._get_context(
-        model, context_select, context_key='text'
-    )
+    return_contexts = db._get_context(model, context_select, context_key='text')
     assert return_contexts == [f'hello world {i}' for i in range(10)]
 
     # Testing models that cannot accept context
     model = Model(object=lambda x: x, identifier='model', takes_context=False)
     with pytest.raises(AssertionError):
-        local_empty_db._get_context(model, context_select, context_key=None)
+        db._get_context(model, context_select, context_key=None)
 
 
-def test_load(local_empty_db):
-    local_empty_db.add(
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_load(db):
+    db.add(
         [
             Encoder(identifier='e1', version=0),
             Encoder(identifier='e2', version=0),
-            Model(object=lambda x: x, identifier='m1', version=0),
-            Model(object=lambda x: x, identifier='m1', version=1),
-            Model(object=lambda x: x, identifier='m2', version=0),
+            Model(
+                object=lambda x: x, identifier='m1', version=0, encoder=dtype('int32')
+            ),
+            Model(
+                object=lambda x: x, identifier='m1', version=1, encoder=dtype('int32')
+            ),
+            Model(
+                object=lambda x: x, identifier='m2', version=0, encoder=dtype('int32')
+            ),
         ]
     )
 
     # Test load fails
     # error version
     with pytest.raises(Exception):
-        local_empty_db.load('encoder', 'e1', version=1)
+        db.load('encoder', 'e1', version=1)
 
     # error identifier
     with pytest.raises(Exception):
-        local_empty_db.load('encoder', 'm1')
+        db.load('encoder', 'm1')
 
-    info = local_empty_db.load('encoder', 'e1', info_only=True)
+    info = db.load('encoder', 'e1', info_only=True)
     assert isinstance(info, dict)
 
-    encoder = local_empty_db.load('encoder', 'e1')
+    encoder = db.load('encoder', 'e1')
     assert isinstance(encoder, Encoder)
 
-    assert 'e1' in local_empty_db.encoders
+    assert 'e1' in db.encoders
 
 
-def test_insert(local_empty_db):
-    add_fake_model(local_empty_db)
-    inserted_ids, _ = local_empty_db.insert(
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+def test_insert_mongo_db(db):
+    add_fake_model(db)
+    inserted_ids, _ = db.insert(
         Collection('documents').insert_many(
             [Document({'x': i, 'update': True}) for i in range(5)]
         )
@@ -440,129 +524,176 @@ def test_insert(local_empty_db):
     assert len(inserted_ids) == 5
 
     new_docs = list(
-        local_empty_db.execute(
-            Collection('documents').find().select_using_ids(inserted_ids)
-        )
+        db.execute(Collection('documents').find().select_using_ids(inserted_ids))
     )
     result = [doc.outputs('x', 'fake_model') for doc in new_docs]
     assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
-def test_update(local_empty_db):
-    add_fake_model(local_empty_db)
-    local_empty_db.insert(
+@pytest.mark.parametrize("db", [('sqldb', {'empty': True})], indirect=True)
+def test_insert_sql_db(db):
+    add_fake_model(db)
+    table = db.load('table', 'documents')
+    inserted_ids, _ = db.insert(
+        table.insert([Document({'id': str(i), 'x': i}) for i in range(5)])
+    )
+    assert len(inserted_ids) == 5
+
+    new_docs = list(db.execute(table.outputs(x='fake_model/0')))
+
+    result = [doc.unpack()['_outputs.x.fake_model.0'] for doc in new_docs]
+    assert sorted(result) == ['0', '1', '2', '3', '4']
+
+
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+def test_update_db(db):
+    # TODO: test update sql db after the update method is implemented
+    add_fake_model(db)
+    db.insert(
         Collection('documents').insert_many(
             [Document({'x': i, 'update': True}) for i in range(5)]
         )
     )
-    updated_ids, _ = local_empty_db.update(
+    updated_ids, _ = db.update(
         Collection('documents').update_many({}, Document({'$set': {'x': 100}}))
     )
     assert len(updated_ids) == 5
     new_docs = list(
-        local_empty_db.execute(
-            Collection('documents').find().select_using_ids(updated_ids)
-        )
+        db.execute(Collection('documents').find().select_using_ids(updated_ids))
     )
     result = [doc.outputs('x', 'fake_model') for doc in new_docs]
     assert result == ['100'] * 5
 
 
-def test_delete(local_empty_db):
-    local_empty_db.insert(
-        Collection('documents').insert_many(
-            [Document({'x': i, 'update': True}) for i in range(5)]
-        )
+@pytest.mark.parametrize(
+    "db",
+    [
+        ('mongodb', {'n_data': 6}),
+    ],
+    indirect=True,
+)
+def test_delete(db):
+    # TODO: add sqldb test after the delete method is implemented
+    db.delete(Collection('documents').delete_one({}))
+    new_docs = list(db.execute(Collection('documents').find()))
+    assert len(new_docs) == 5
+
+
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_replace(db):
+    model = Model(
+        object=lambda x: x + 1,
+        identifier='m',
+        version=0,
+        encoder=Encoder(identifier='base'),
     )
-    local_empty_db.delete(Collection('documents').delete_one({}))
-    new_docs = list(local_empty_db.execute(Collection('documents').find()))
-    assert len(new_docs) == 4
-
-
-def test_replace(local_empty_db):
-    model = Model(object=lambda x: x + 1, identifier='m', version=0)
     with pytest.raises(Exception):
-        local_empty_db.replace(model)
+        db.replace(model)
 
-    local_empty_db.replace(model, upsert=True)
+    db.replace(model, upsert=True)
 
-    assert local_empty_db.load('model', 'm').predict([1]) == [2]
+    assert db.load('model', 'm').predict([1]) == [2]
 
     # replace the 0 version of the model
     new_model = Model(object=lambda x: x + 2, identifier='m', version=0)
-    local_empty_db.replace(new_model)
-    assert local_empty_db.load('model', 'm').predict([1]) == [3]
+    db.replace(new_model)
+    assert db.load('model', 'm').predict([1]) == [3]
 
     # replace the last version of the model
     new_model = Model(object=lambda x: x + 3, identifier='m')
-    local_empty_db.replace(new_model)
-    assert local_empty_db.load('model', 'm').predict([1]) == [4]
+    db.replace(new_model)
+    assert db.load('model', 'm').predict([1]) == [4]
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_compound_component(local_empty_db):
+@pytest.mark.parametrize(
+    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+)
+def test_compound_component(db):
     m = TorchModel(
         object=torch.nn.Linear(16, 32),
         identifier='my-test-module',
         encoder=tensor(torch.float, shape=(32,)),
     )
 
-    local_empty_db.add(m)
-    assert 'torch.float32[32]' in local_empty_db.show('encoder')
-    assert 'my-test-module' in local_empty_db.show('model')
-    assert local_empty_db.show('model', 'my-test-module') == [0]
+    db.add(m)
+    assert 'torch.float32[32]' in db.show('encoder')
+    assert 'my-test-module' in db.show('model')
+    assert db.show('model', 'my-test-module') == [0]
 
-    local_empty_db.add(m)
-    assert local_empty_db.show('model', 'my-test-module') == [0]
-    assert local_empty_db.show('encoder', 'torch.float32[32]') == [0]
+    db.add(m)
+    assert db.show('model', 'my-test-module') == [0]
+    assert db.show('encoder', 'torch.float32[32]') == [0]
 
-    local_empty_db.add(
+    db.add(
         TorchModel(
             object=torch.nn.Linear(16, 32),
             identifier='my-test-module',
             encoder=tensor(torch.float, shape=(32,)),
         )
     )
-    assert local_empty_db.show('model', 'my-test-module') == [0, 1]
-    assert local_empty_db.show('encoder', 'torch.float32[32]') == [0, 1]
+    assert db.show('model', 'my-test-module') == [0, 1]
+    assert db.show('encoder', 'torch.float32[32]') == [0, 1]
 
-    m = local_empty_db.load(type_id='model', identifier='my-test-module')
+    m = db.load(type_id='model', identifier='my-test-module')
     assert isinstance(m.encoder, Encoder)
 
     with pytest.raises(ComponentInUseError):
-        local_empty_db.remove('encoder', 'torch.float32[32]')
+        db.remove('encoder', 'torch.float32[32]')
 
     with pytest.warns(ComponentInUseWarning):
-        local_empty_db.remove('encoder', 'torch.float32[32]', force=True)
+        db.remove('encoder', 'torch.float32[32]', force=True)
 
-    local_empty_db.remove('model', 'my-test-module', force=True)
+    db.remove('model', 'my-test-module', force=True)
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_reload_dataset(local_db):
+@pytest.mark.parametrize("db", [('mongodb', None), ('sqldb', None)], indirect=True)
+def test_reload_dataset(db):
     from superduperdb.components.dataset import Dataset
+
+    if isinstance(db.databackend, MongoDataBackend):
+        select = Collection('documents').find({'_fold': 'valid'})
+    else:
+        table = db.load('table', 'documents')
+        select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
 
     d = Dataset(
         identifier='my_valid',
-        select=Collection('documents').find({'_fold': 'valid'}),
+        select=select,
         sample_size=100,
     )
-    local_db.add(d)
-    new_d = local_db.load('dataset', 'my_valid')
+    db.add(d)
+    new_d = db.load('dataset', 'my_valid')
     assert new_d.sample_size == 100
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize('local_db', [{'add_vector_index': False}], indirect=True)
-def test_dataset(local_db):
+@pytest.mark.parametrize(
+    "db",
+    [
+        ('mongodb', {'add_vector_index': False, 'n_data': 500}),
+        ('sqldb', {'add_vector_index': False, 'n_data': 500}),
+    ],
+    indirect=True,
+)
+def test_dataset(db):
+    if isinstance(db.databackend, MongoDataBackend):
+        select = Collection('documents').find({'_fold': 'valid'})
+    else:
+        table = db.load('table', 'documents')
+        select = table.select('id', 'x', 'y', 'z').filter(table._fold == 'valid')
+
     d = Dataset(
         identifier='test_dataset',
-        select=Collection('documents').find({'_fold': 'valid'}),
+        select=select,
     )
-    local_db.add(d)
-    assert local_db.show('dataset') == ['test_dataset']
-    dataset = local_db.load('dataset', 'test_dataset')
-    assert len(dataset.data) == len(list(local_db.execute(dataset.select)))
+    db.add(d)
+    assert db.show('dataset') == ['test_dataset']
+    dataset = db.load('dataset', 'test_dataset')
+    assert len(dataset.data) == len(list(db.execute(dataset.select)))
 
 
 # TODO: add UT for task workflow

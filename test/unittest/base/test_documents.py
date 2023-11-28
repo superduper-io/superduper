@@ -32,11 +32,12 @@ def test_document_outputs(document):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_only_uri(local_db):
+@pytest.mark.parametrize("db", [('mongodb', None), ('sqldb', None)], indirect=True)
+def test_only_uri(db):
     r = Document(
         Document.decode(
             {'x': {'_content': {'uri': 'foo', 'encoder': 'torch.float32[8]'}}},
-            encoders=local_db.encoders,
+            encoders=db.encoders,
         )
     )
     assert r['x'].uri == 'foo'

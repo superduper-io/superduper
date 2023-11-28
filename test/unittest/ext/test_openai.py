@@ -24,7 +24,7 @@ def mock_lru_cache():
 
 
 @pytest.fixture
-def open_ai_with_rhymes(local_empty_db, monkeypatch):
+def open_ai_with_rhymes(db, monkeypatch):
     with open('test/material/data/rhymes.json') as f:
         data = json.load(f)
     for i, r in enumerate(data):
@@ -33,10 +33,10 @@ def open_ai_with_rhymes(local_empty_db, monkeypatch):
     if os.getenv('OPENAI_API_KEY') is None:
         monkeypatch.setattr(openai, 'api_key', 'sk-TopSecret')
         monkeypatch.setenv('OPENAI_API_KEY', 'sk-TopSecret')
-    local_empty_db.execute(Collection('openai').insert_many(data))
-    yield local_empty_db
-    local_empty_db.remove('model', 'gpt-3.5-turbo', force=True)
-    local_empty_db.remove('model', 'text-embedding-ada-002', force=True)
+    db.execute(Collection('openai').insert_many(data))
+    yield db
+    db.remove('model', 'gpt-3.5-turbo', force=True)
+    db.remove('model', 'text-embedding-ada-002', force=True)
 
 
 # TODO: Mock OpenAI API instead of using VCR in unittest
@@ -45,6 +45,7 @@ def open_ai_with_rhymes(local_empty_db, monkeypatch):
     filter_headers=['authorization'],
     record_on_exception=False,
 )
+@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
 def test_retrieve_with_similar_context(open_ai_with_rhymes):
     db = open_ai_with_rhymes
     m = OpenAIChatCompletion(

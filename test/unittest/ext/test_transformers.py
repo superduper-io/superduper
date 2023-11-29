@@ -7,6 +7,8 @@ try:
 except ImportError:
     torch = None
 
+from test.db_config import DBConfig
+
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document as D
 from superduperdb.components.dataset import Dataset
@@ -17,7 +19,7 @@ from superduperdb.ext.transformers.model import (
 
 
 @pytest.fixture
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def transformers_model(db):
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -57,8 +59,8 @@ def td():
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
-def test_tranformers_fit(transformers_model, db, td):
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
+def test_transformer_fit(transformers_model, db, td):
     repo_name = td
     training_args = TransformersTrainerConfiguration(
         identifier=repo_name,

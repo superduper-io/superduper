@@ -7,6 +7,8 @@ try:
 except ImportError:
     torch = None
 
+from test.db_config import DBConfig
+
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.components.metric import Metric
 
@@ -50,7 +52,7 @@ def acc(x, y):
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
     'db',
-    [('mongodb', {'add_vector_index': False, 'add_models': False, 'n_data': 500})],
+    [(DBConfig.mongodb_data, {'n_data': 500})],
     indirect=True,
 )
 def test_fit(db, valid_dataset):

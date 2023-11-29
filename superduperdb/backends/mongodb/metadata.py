@@ -223,28 +223,17 @@ class MongoMetaDataStore(MetaDataStore):
         if self._component_used(type_id, identifier, version=version):
             raise Exception('Component version already in use in other components!')
 
-        delete_result = self.component_collection.delete_many(
+        self.parent_child_mappings.delete_many(
+            {'parent': Component.make_unique_id(type_id, identifier, version)}
+        )
+
+        return self.component_collection.delete_many(
             {
                 'identifier': identifier,
                 'type_id': type_id,
                 'version': version,
             }
         )
-
-        parent_unique_id = Component.make_unique_id(type_id, identifier, version)
-
-        # TODO: Do we need to delete the child component here?
-        # We delete the child component in SQLAlchemyMetadata,
-        # but not in MongoMetaDataStore
-        children_unique_ids = [
-            r['child']
-            for r in self.parent_child_mappings.find({'parent': parent_unique_id})
-        ]
-        for child_unique_id in children_unique_ids:
-            type_id, identifier, version = Component.parse_unique_id(child_unique_id)
-            self.delete_component_version(type_id, identifier, version)
-
-        return delete_result
 
     def _get_component(
         self,

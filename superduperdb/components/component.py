@@ -99,8 +99,3 @@ class Component(Serializable):
     @classmethod
     def make_unique_id(cls, type_id: str, identifier: str, version: int) -> str:
         return f'{type_id}/{identifier}/{version}'
-
-    @classmethod
-    def parse_unique_id(cls, unique_id: str) -> t.Tuple[str, str, int]:
-        type_id, identifier, version = unique_id.split('/')
-        return type_id, identifier, int(version)

@@ -7,6 +7,8 @@ try:
 except ImportError:
     torch = None
 
+from test.db_config import DBConfig
+
 from superduperdb.base.document import Document
 
 
@@ -32,7 +34,7 @@ def test_document_outputs(document):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", [('mongodb', None), ('sqldb', None)], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb, DBConfig.sqldb], indirect=True)
 def test_only_uri(db):
     r = Document(
         Document.decode(

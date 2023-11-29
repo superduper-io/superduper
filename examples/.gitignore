@@ -4,3 +4,4 @@
 
 # Except for notebook files
 !*.ipynb
+!*.md

@@ -15,14 +15,11 @@ class BaseException(Exception):
     exception
     '''
 
-    def __init__(self, msg, exception_on_raise=True):
+    def __init__(self, msg):
         self.msg = msg
-        self.exception_on_raise = exception_on_raise
+        logging.exception(self.msg, e=self)
 
     def __str__(self):
-        if self.exception_on_raise:
-            self.exception_on_raise = False
-            logging.exception(self.msg, e=self)
         return self.msg
 
 

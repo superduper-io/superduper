@@ -18,6 +18,3 @@
 #        docker image ls    # Validate the new image
 #
 # Your sandbox image will now incorporate these custom dependencies.
-
-
-tqdm>=4.64.1

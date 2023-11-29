@@ -10,11 +10,20 @@ from superduperdb.backends.sqlalchemy.metadata import SQLAlchemyMetadata
 from superduperdb.vector_search.in_memory import InMemoryVectorSearcher
 from superduperdb.vector_search.lance import LanceVectorSearcher
 
-data_backends = {'mongodb': MongoDataBackend, 'ibis': IbisDataBackend}
+data_backends = {
+    'mongodb': MongoDataBackend,
+    'ibis': IbisDataBackend,
+}
 
-artifact_stores = {'mongodb': MongoArtifactStore, 'filesystem': FileSystemArtifactStore}
+artifact_stores = {
+    'mongodb': MongoArtifactStore,
+    'filesystem': FileSystemArtifactStore,
+}
 
-metadata_stores = {'mongodb': MongoMetaDataStore, 'sqlalchemy': SQLAlchemyMetadata}
+metadata_stores = {
+    'mongodb': MongoMetaDataStore,
+    'sqlalchemy': SQLAlchemyMetadata,
+}
 
 vector_searcher_implementations = {
     'lance': LanceVectorSearcher,

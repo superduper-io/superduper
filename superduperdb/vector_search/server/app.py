@@ -7,7 +7,10 @@ from superduperdb.base.datalayer import Datalayer
 from superduperdb.server.app import DatalayerDependency, SuperDuperApp
 from superduperdb.vector_search.server import service
 
-assert isinstance(CFG.cluster.vector_search, str)
+assert isinstance(
+    CFG.cluster.vector_search, str
+), "cluster.vector_search should be set with a valid uri"
+
 port = int(CFG.cluster.vector_search.split(':')[-1])
 app = SuperDuperApp('vector_search', port=port)
 
@@ -20,7 +23,7 @@ class VectorItem(BaseModel):
 @app.add("/create/search", status_code=200, method='get')
 def create_search(vector_index: str, db: Datalayer = DatalayerDependency()):
     service.create_search(vector_index=vector_index, db=db)
-    return {'message': 'Vector index created successfuly'}
+    return {'message': 'Vector index created successfully'}
 
 
 @app.add("/query/id/search", method='post')
@@ -53,7 +56,7 @@ def add_search(
     db: Datalayer = DatalayerDependency(),
 ):
     service.add_search(vectors, vector_index=vector_index, db=db)
-    return {'message': 'Added vectors successfuly'}
+    return {'message': 'Added vectors successfully'}
 
 
 @app.add("/delete/search")
@@ -61,7 +64,7 @@ def delete_search(
     ids: t.List[str], vector_index: str, db: Datalayer = DatalayerDependency()
 ):
     service.delete_search(ids, vector_index=vector_index, db=db)
-    return {'message': 'Ids deleted successfuly'}
+    return {'message': 'Ids deleted successfully'}
 
 
 @app.add("/list/search")

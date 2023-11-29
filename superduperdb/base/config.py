@@ -16,9 +16,9 @@ _CONFIG_IMMUTABLE = True
 
 class BaseConfigJSONable(JSONable):
     def force_set(self, name, value):
-        '''
+        """
         Forcefully setattr of BaseConfigJSONable instance
-        '''
+        """
         super().__setattr__(name, value)
 
     def __setattr__(self, name, value):
@@ -33,7 +33,8 @@ class BaseConfigJSONable(JSONable):
 
 
 class Retry(BaseConfigJSONable):
-    """Describes how to retry using the `tenacity` library
+    """
+    Describes how to retry using the `tenacity` library
 
     :param stop_after_attempt: The number of attempts to make
     :param wait_max: The maximum time to wait between attempts
@@ -48,7 +49,8 @@ class Retry(BaseConfigJSONable):
 
 
 class Cluster(BaseConfigJSONable):
-    """Describes a connection to distributed work via Dask
+    """
+    Describes a connection to distributed work via Dask
 
     :param backfill_batch_size: The number of rows to backfill at a time
                                 for vector-search loading
@@ -68,13 +70,15 @@ class Cluster(BaseConfigJSONable):
     """
 
     compute: str = 'local'  # 'dask+tcp://local', 'dask+thread', 'local'
-    vector_search: t.Optional[str] = None  #'http://localhost:8000'  # None
-    cdc: t.Optional[str] = None  #'http://localhost:8001'  # None
+    vector_search: t.Optional[str] = None  # 'http://localhost:8000'  # None
+    cdc: t.Optional[str] = None  # 'http://localhost:8001'  # None
     backfill_batch_size: int = 100
 
 
 class LogLevel(str, Enum):
-    """Enumerate log severity level"""
+    """
+    Enumerate log severity level
+    """
 
     DEBUG = 'DEBUG'
     INFO = 'INFO'
@@ -84,7 +88,9 @@ class LogLevel(str, Enum):
 
 
 class LogType(str, Enum):
-    """Enumerate the standard logs"""
+    """
+    Enumerate the standard logs
+    """
 
     # SYSTEM uses the systems STDOUT and STDERR for printing the logs.
     # DEBUG, INFO, and WARN go to STDOUT.
@@ -96,7 +102,8 @@ class LogType(str, Enum):
 
 
 class Config(BaseConfigJSONable):
-    """The data class containing all configurable superduperdb values
+    """
+    The data class containing all configurable superduperdb values
 
     :param data_backend: The URI for the data backend
     :param vector_search: The configuration for the vector search {'in_memory', 'lance'}
@@ -156,9 +163,10 @@ class Config(BaseConfigJSONable):
         Match the target cfg dict with `self` comparables dict.
         """
         self_cfg = self.comparables
-        return hash(json.dumps(self_cfg, sort_keys=True)) == hash(
-            json.dumps(cfg, sort_keys=True)
-        )
+
+        self_hash = hash(json.dumps(self_cfg, sort_keys=True))
+        cfg_hash = hash(json.dumps(cfg, sort_keys=True))
+        return self_hash == cfg_hash
 
     def force_set(self, name, value):
         """

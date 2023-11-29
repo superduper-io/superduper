@@ -411,9 +411,9 @@ class SQLAlchemyMetadata(MetaDataStore):
             session.add(QueryID(**row))
 
     def get_query(self, query_hash: str):
-        '''
-        Get the query from query table corresponding to the query hash
-        '''
+        """
+        Get the query from the query table corresponding to the query hash
+        """
         try:
             with self.session_context() as session:
                 out = (
@@ -432,9 +432,9 @@ class SQLAlchemyMetadata(MetaDataStore):
             raise NonExistentMetadataError(f'Query hash {query_hash} does not exist')
 
     def get_model_queries(self, model: str):
-        '''
+        """
         Get queries related to the given model.
-        '''
+        """
         with self.session_context() as session:
             queries = session.query(QueryID).filter(QueryID.model == model).all()
 
@@ -447,3 +447,10 @@ class SQLAlchemyMetadata(MetaDataStore):
                     {'query_id': id, 'query': query, 'sql': query.repr_()}
                 )
             return unpacked_queries
+
+    def disconnect(self):
+        """
+        Disconnect the client
+        """
+
+        # TODO: implement me

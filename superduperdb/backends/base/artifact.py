@@ -265,3 +265,9 @@ class ArtifactStore(ABC, ArtifactStoreMixin):
         :param cache: A cache dictionary of Artifacts, keyed by file_id
         """
         return ArtifactStoreMixin._load_artifacts_from_cache(info, cache)
+
+    @abstractmethod
+    def disconnect(self):
+        """
+        Disconnect the client
+        """

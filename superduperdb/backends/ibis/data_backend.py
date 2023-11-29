@@ -82,3 +82,10 @@ class IbisDataBackend(BaseDataBackend):
 
     def get_table_or_collection(self, identifier):
         return self.conn.table(identifier)
+
+    def disconnect(self):
+        """
+        Disconnect the client
+        """
+
+        # TODO: implement me

@@ -360,3 +360,9 @@ class MetaDataStore(ABC):
         Get all queries from query table corresponding
         to the model.
         """
+
+    @abstractmethod
+    def disconnect(self):
+        """
+        Disconnect the client
+        """

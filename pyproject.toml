@@ -59,6 +59,7 @@ dependencies = [
     "ibis-framework[duckdb]>=5.1.0",
     "PyYAML>=6.0.0",
     "prettytable",
+    "python-dotenv"
 ]
 
 [project.optional-dependencies]
@@ -73,7 +74,7 @@ apis = [
     "openai>=1.1.2",
     "cohere",
     "anthropic",
-    ]
+]
 docs = [
     "furo",
     "sphinx",
@@ -126,7 +127,7 @@ demo = [
     "librosa",
 ]
 
-sandbox = ["superduperdb[demo,server]"]
+sandbox = ["superduperdb[demo,server,apis]"]
 
 [project.urls]
 homepage = "https://www.superduperdb.com/"

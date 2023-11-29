@@ -112,7 +112,7 @@ def fake_updates(database_with_default_encoders_and_model):
 
 
 @pytest.fixture
-def local_dask_client(monkeypatch, request):
+def dask_client(monkeypatch, request):
     db_name = "test_db"
     data_backend = f'mongodb://superduper:superduper@localhost:27017/{db_name}'
 
@@ -121,7 +121,7 @@ def local_dask_client(monkeypatch, request):
     # Change the default value
     client = DaskComputeBackend(
         address='tcp://localhost:8786',
-        local=True,
+        local=False,
     )
 
     yield client

@@ -6,6 +6,7 @@ except ImportError:
     torch = None
 
 import random
+from test.db_config import DBConfig
 
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
@@ -63,7 +64,7 @@ def test_replace(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_insert_from_uris(db, image_url):
     import PIL
 

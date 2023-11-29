@@ -26,6 +26,8 @@ from superduperdb.components.schema import Schema
 from superduperdb.components.vector_index import VectorIndex
 from superduperdb.ext.pillow.encoder import pil_image
 
+from .db_config import DBConfig
+
 _config._CONFIG_IMMUTABLE = False
 
 
@@ -40,10 +42,6 @@ except ImportError:
 GLOBAL_TEST_N_DATA_POINTS = 250
 LOCAL_TEST_N_DATA_POINTS = 5
 
-MONGOMOCK_URI = 'mongomock:///test_db'
-SQLITE_URI = 'sqlite://:memory:'
-
-
 _sleep = time.sleep
 
 SCOPE = 'function'
@@ -54,6 +52,8 @@ MAX_SLEEP_TIME = float('inf')
 
 SDDB_USE_MONGOMOCK = 'SDDB_USE_MONGOMOCK' in os.environ
 SDDB_INSTRUMENT_TIME = 'SDDB_INSTRUMENT_TIME' in os.environ
+RANDOM_SEED = 42
+random.seed(RANDOM_SEED)
 
 
 @pytest.fixture(autouse=SDDB_INSTRUMENT_TIME, scope=SCOPE)
@@ -265,9 +265,9 @@ def create_db(CFG, **kwargs):
         return db
 
     add_encoders(db)
-    n_data = kwargs.get('n_data', LOCAL_TEST_N_DATA_POINTS)
 
     # prepare data
+    n_data = kwargs.get('n_data', LOCAL_TEST_N_DATA_POINTS)
     is_mongodb_bachend = isinstance(db.databackend, MongoDataBackend)
     if is_mongodb_bachend:
         add_random_data_to_mongo_db(db, number_data_points=n_data)
@@ -288,18 +288,24 @@ def create_db(CFG, **kwargs):
 @pytest.fixture
 def db(request, monkeypatch) -> Iterator[Datalayer]:
     # TODO: Use pre-defined config instead of dict here
-    db_type, setup_config = (
-        request.param if hasattr(request, 'param') else ("mongodb", None)
-    )
-    setup_config = setup_config or {}
-    if db_type == "mongodb":
-        monkeypatch.setattr(CFG, 'data_backend', MONGOMOCK_URI)
-    elif db_type == "sqldb":
-        monkeypatch.setattr(CFG, 'data_backend', SQLITE_URI)
+    param = request.param if hasattr(request, 'param') else DBConfig.mongodb
+    if isinstance(param, dict):
+        # e.g. @pytest.mark.parametrize("db", [DBConfig.sqldb], indirect=True)
+        setup_config = param.copy()
+    elif isinstance(param, tuple):
+        # e.g. @pytest.mark.parametrize(
+        #          "db", [(DBConfig.sqldb, {'n_data': 10})], indirect=True)
+        setup_config = param[0].copy()
+        setup_config.update(param[1] or {})
+    else:
+        raise ValueError(f'Unsupported param type: {type(param)}')
+
+    monkeypatch.setattr(CFG, 'data_backend', setup_config['data_backend'])
 
     db = create_db(CFG, **setup_config)
     yield db
 
+    db_type = setup_config.get('db_type', 'mongodb')
     if db_type == "mongodb":
         db.drop(force=True)
     elif db_type == "sqldb":

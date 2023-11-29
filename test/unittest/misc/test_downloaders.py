@@ -1,6 +1,7 @@
 import os
 import tempfile
 import uuid
+from test.db_config import DBConfig
 
 import pytest
 
@@ -26,7 +27,7 @@ def patch_cfg_downloads(monkeypatch):
         yield
 
 
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_file_blobs(db, patch_cfg_downloads, image_url):
     to_insert = [
         Document(

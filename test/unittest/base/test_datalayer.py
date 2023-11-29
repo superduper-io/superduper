@@ -12,6 +12,7 @@ except ImportError:
 
 
 import dataclasses as dc
+from test.db_config import DBConfig
 from unittest.mock import MagicMock, patch
 
 from superduperdb.backends.ibis.field_types import dtype
@@ -98,7 +99,7 @@ def add_fake_model(db: Datalayer):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_add_version(db):
     # Check the component functions are called
@@ -139,7 +140,7 @@ def test_add_version(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_add_component_with_bad_artifact(db):
     artifact = Artifact({'data': lambda x: x}, serializer='pickle')
@@ -149,7 +150,7 @@ def test_add_component_with_bad_artifact(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_add_artifact_auto_replace(db):
     # Check artifact is automatically replaced to metadata
@@ -162,7 +163,7 @@ def test_add_artifact_auto_replace(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_add_child(db):
     child_component = TestComponent(identifier='child')
@@ -191,7 +192,7 @@ def test_add_child(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_add(db):
     component = TestComponent(identifier='test')
@@ -212,7 +213,7 @@ def test_add(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_component_version(db):
     db.add(
@@ -239,7 +240,7 @@ def test_remove_component_version(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_component_with_parent(db):
     # Can not remove the child component if the parent exists
@@ -251,14 +252,13 @@ def test_remove_component_with_parent(db):
         )
     )
 
-    # db._remove_component_version('test-component', 'test_3_child', 0)
     with pytest.raises(Exception) as e:
         db._remove_component_version('test-component', 'test_3_child', 0)
     assert 'is involved in other components' in str(e)
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_component_with_clean_up(db):
     # Test clean up
@@ -272,7 +272,7 @@ def test_remove_component_with_clean_up(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_component_from_data_layer_dict(db):
     # Test component is deleted from datalayer
@@ -284,7 +284,7 @@ def test_remove_component_from_data_layer_dict(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_component_with_artifact(db):
     # Test artifact is deleted from artifact store
@@ -304,7 +304,7 @@ def test_remove_component_with_artifact(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_one_version(db):
     db.add(
@@ -320,7 +320,7 @@ def test_remove_one_version(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_multi_version(db):
     db.add(
@@ -336,7 +336,7 @@ def test_remove_multi_version(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_remove_not_exist_component(db):
     with pytest.raises(exceptions.ComponentException) as e:
@@ -347,7 +347,7 @@ def test_remove_not_exist_component(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_show(db):
     db.add(
@@ -386,7 +386,7 @@ def test_show(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_predict(db: Datalayer):
     models = [
@@ -424,7 +424,7 @@ def test_predict(db: Datalayer):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_predict_context(db: Datalayer):
     db.add(
@@ -449,7 +449,7 @@ def test_predict_context(db: Datalayer):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_get_context(db):
     from superduperdb.backends.base.query import Select
@@ -476,7 +476,7 @@ def test_get_context(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_load(db):
     db.add(
@@ -513,7 +513,7 @@ def test_load(db):
     assert 'e1' in db.encoders
 
 
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_insert_mongo_db(db):
     add_fake_model(db)
     inserted_ids, _ = db.insert(
@@ -530,7 +530,7 @@ def test_insert_mongo_db(db):
     assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
-@pytest.mark.parametrize("db", [('sqldb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.sqldb_empty], indirect=True)
 def test_insert_sql_db(db):
     add_fake_model(db)
     table = db.load('table', 'documents')
@@ -545,7 +545,7 @@ def test_insert_sql_db(db):
     assert sorted(result) == ['0', '1', '2', '3', '4']
 
 
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_update_db(db):
     # TODO: test update sql db after the update method is implemented
     add_fake_model(db)
@@ -568,7 +568,7 @@ def test_update_db(db):
 @pytest.mark.parametrize(
     "db",
     [
-        ('mongodb', {'n_data': 6}),
+        (DBConfig.mongodb_data, {'n_data': 6}),
     ],
     indirect=True,
 )
@@ -580,7 +580,7 @@ def test_delete(db):
 
 
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_replace(db):
     model = Model(
@@ -609,7 +609,7 @@ def test_replace(db):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
-    "db", [('mongodb', {'empty': True}), ('sqldb', {'empty': True})], indirect=True
+    "db", [DBConfig.mongodb_empty, DBConfig.sqldb_empty], indirect=True
 )
 def test_compound_component(db):
     m = TorchModel(
@@ -650,7 +650,7 @@ def test_compound_component(db):
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", [('mongodb', None), ('sqldb', None)], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb, DBConfig.sqldb], indirect=True)
 def test_reload_dataset(db):
     from superduperdb.components.dataset import Dataset
 
@@ -674,8 +674,8 @@ def test_reload_dataset(db):
 @pytest.mark.parametrize(
     "db",
     [
-        ('mongodb', {'add_vector_index': False, 'n_data': 500}),
-        ('sqldb', {'add_vector_index': False, 'n_data': 500}),
+        (DBConfig.mongodb_no_vector_index, {'n_data': 500}),
+        (DBConfig.sqldb_no_vector_index, {'n_data': 500}),
     ],
     indirect=True,
 )

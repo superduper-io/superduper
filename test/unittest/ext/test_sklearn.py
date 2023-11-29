@@ -1,4 +1,5 @@
 import random
+from test.db_config import DBConfig
 
 import numpy
 import pytest
@@ -60,7 +61,7 @@ class TestPipeline:
         output = pipeline.predict(X)
         assert len(output) == len(X)
 
-    @pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+    @pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
     def test_fit_db(self, pipeline, data_in_db):
         pipeline.fit(
             X='X',

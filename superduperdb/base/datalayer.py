@@ -464,20 +464,17 @@ class Datalayer:
         self,
         query: Delete,
         ids: t.Sequence[str],
-        verbose: bool = False,
     ):
         """
         Trigger cleanup jobs after data deletion.
 
         :param query: Select or Update which reduces scope of computations
         :param ids: ids which reduce scopy of computations
-        :param verbose: Toggle to ``True`` to get more output
         """
         try:
             task_workflow: TaskWorkflow = self._build_delete_task_workflow(
                 query,
                 ids=ids,
-                verbose=verbose,
             )
         except Exception as e:
             raise exceptions.TaskWorkflowException(
@@ -690,7 +687,6 @@ class Datalayer:
         self,
         query: Delete,
         ids: t.Sequence[str],
-        verbose: bool = False,
     ):
         G = TaskWorkflow(self)
         vector_indices = self.show('vector_index')

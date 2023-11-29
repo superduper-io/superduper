@@ -191,7 +191,6 @@ class BaseDatabaseListener(ABC):
         :param table_or_collection: The collection on which change was observed.
         :param event: CDC event type
         """
-        cdc_query = None
         # TODO why was this logic here? Why is the query always the same?
         # if event != DBEvent.delete:
         cdc_query = table_or_collection.find()

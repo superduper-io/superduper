@@ -245,8 +245,7 @@ class CompoundSelect(_ReprMixin, Select, ABC):
         String representation of the query.
         """
 
-        components = []
-        components.append(str(self.table_or_collection.identifier))
+        components = [str(self.table_or_collection.identifier)]
         if self.pre_like:
             components.append(str(self.pre_like))
         if self.query_linker:

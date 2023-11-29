@@ -139,9 +139,10 @@ def test_task_workflow(
             doc = database_with_listeners.databackend.get_table_or_collection(
                 name
             ).find_one({'_id': inserted_ids[0]})
-            state = []
-            state.append('model_linear_a' in doc['_outputs']['x'].keys())
-            state.append('model_linear_a' in doc['_outputs']['z'].keys())
+            state = [
+                'model_linear_a' in doc['_outputs']['x'].keys(),
+                'model_linear_a' in doc['_outputs']['z'].keys(),
+            ]
             assert all(state)
 
         retry_state_check(state_check_2)

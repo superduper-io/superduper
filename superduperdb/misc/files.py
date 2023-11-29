@@ -22,7 +22,7 @@ def get_file_from_uri(uri):
     ):
         file = f'{CFG.downloads_folder}/{hashlib.sha1(uri.encode()).hexdigest()}'
     else:
-        raise NotImplementedError(f'File type of {file} not supported')
+        raise NotImplementedError(f"File type of '{uri}' not supported")
     return file
 
 

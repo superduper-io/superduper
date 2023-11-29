@@ -3,7 +3,6 @@ import typing as t
 from contextlib import contextmanager
 
 import click
-from bson import ObjectId
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker

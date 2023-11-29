@@ -1,5 +1,6 @@
 import json
 import os
+from test.db_config import DBConfig
 
 import openai
 import pytest
@@ -45,7 +46,7 @@ def open_ai_with_rhymes(db, monkeypatch):
     filter_headers=['authorization'],
     record_on_exception=False,
 )
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_retrieve_with_similar_context(open_ai_with_rhymes):
     db = open_ai_with_rhymes
     m = OpenAIChatCompletion(

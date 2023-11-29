@@ -1,10 +1,12 @@
+from test.db_config import DBConfig
+
 import pytest
 
 from superduperdb.backends.mongodb.query import Collection
 from superduperdb.base.document import Document
 
 
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_execute_insert_and_find(db):
     collection = Collection('documents')
     collection.insert_many([Document({'this': 'is a test'})]).execute(db)
@@ -12,7 +14,7 @@ def test_execute_insert_and_find(db):
     assert r['this'] == 'is a test'
 
 
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_execute_complex_query(db):
     collection = Collection('documents')
     collection.insert_many(
@@ -25,7 +27,6 @@ def test_execute_complex_query(db):
     assert sorted(cur_this) == sorted(expected)
 
 
-@pytest.mark.parametrize("db", [('mongodb', None)], indirect=True)
 def test_execute_like_queries(db):
     collection = Collection('documents')
     # get a data point for testing

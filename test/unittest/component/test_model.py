@@ -1,4 +1,5 @@
 import random
+from test.db_config import DBConfig
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -204,7 +205,7 @@ def test_pm_create_predict_job(predict_mixin):
 
 
 @patch.object(Datalayer, 'add')
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_pm_predict_and_listen(mock_add, predict_mixin, db):
     X = 'x'
     select = MagicMock(CompoundSelect)

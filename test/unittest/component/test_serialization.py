@@ -6,6 +6,8 @@ try:
     from superduperdb.ext.torch.encoder import tensor
 except ImportError:
     torch = None
+from test.db_config import DBConfig
+
 from sklearn.svm import SVC
 
 from superduperdb.base.artifact import Artifact
@@ -27,7 +29,7 @@ def test_model():
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_sklearn(db):
     m = Estimator(
         identifier='test',
@@ -35,7 +37,7 @@ def test_sklearn(db):
         encoder=tensor(torch.float, shape=(32,)),
     )
     db.add(m)
-    # assert local_empty_db.metadata.component_collection.count_documents({}) == 2
+    assert db.metadata.component_collection.count_documents({}) == 2
     assert db.show('model') == ['test']
     assert db.show('encoder') == ['torch.float32[32]']
 

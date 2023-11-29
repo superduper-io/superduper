@@ -1,3 +1,5 @@
+from test.db_config import DBConfig
+
 import pytest
 
 from superduperdb.backends.mongodb.query import Collection
@@ -27,7 +29,7 @@ def test_function_predict():
     assert function.predict([1, 1]) == [1, 1]
 
 
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_with_document_embedded(data_in_db):
     function = Model(
         object=lambda x: x,
@@ -41,7 +43,7 @@ def test_function_predict_with_document_embedded(data_in_db):
     assert [o['_outputs']['X']['test']['0'] for o in out] == [1, 2, 3, 4, 5]
 
 
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_without_document_embedded(data_in_db):
     function = Model(object=lambda x: x, identifier='test')
     function.predict(
@@ -51,7 +53,7 @@ def test_function_predict_without_document_embedded(data_in_db):
     assert [o['_outputs']['X']['test']['0'] for o in out] == [1, 2, 3, 4, 5]
 
 
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_with_flatten_outputs(data_in_db):
     function = Model(
         object=lambda x: [x, x, x] if x > 2 else [x, x],
@@ -92,7 +94,7 @@ def test_function_predict_with_flatten_outputs(data_in_db):
 
 
 @pytest.mark.skip
-@pytest.mark.parametrize("db", [('mongodb', {'empty': True})], indirect=True)
+@pytest.mark.parametrize("db", [DBConfig.mongodb_empty], indirect=True)
 def test_function_predict_with_mix_flatten_outputs(data_in_db):
     function = Model(
         object=lambda x: x if x < 2 else [x, x, x],

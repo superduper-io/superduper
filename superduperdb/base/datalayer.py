@@ -168,7 +168,11 @@ class Datalayer:
 
                 id = record[self.databackend.id_field]
                 assert not isinstance(vi.indexing_listener.model, str)
-                h = record.outputs(key, vi.indexing_listener.model.identifier)
+                h = record.outputs(
+                    key,
+                    vi.indexing_listener.model.identifier,
+                    version=vi.indexing_listener.model.version,
+                )
                 if isinstance(h, Encodable):
                     h = h.x
                 items.append(VectorItem.create(id=str(id), vector=h))
@@ -915,7 +919,6 @@ class Datalayer:
             object.on_load(self)
             return object.schedule_jobs(self, dependencies=dependencies), object
         except Exception as e:
-
             raise exceptions.DatalayerException(
                 f'Error while adding object with id: {object.identifier}'
             ) from e

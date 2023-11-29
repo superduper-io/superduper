@@ -34,6 +34,15 @@ EncoderArg = t.Union[Encoder, FieldType, str, None]
 ObjectsArg = t.Sequence[t.Union[t.Any, Artifact]]
 
 
+class _to_call:
+    def __init__(self, callable, **kwargs):
+        self.callable = callable
+        self.kwargs = kwargs
+
+    def __call__(self, X):
+        return self.callable(X, **self.kwargs)
+
+
 @dc.dataclass
 class _TrainingConfiguration(Component):
     """
@@ -133,20 +142,23 @@ class Predictor:
 
         return output
 
-    def _forward(self, X: t.Sequence[int], num_workers: int = 0) -> t.Sequence[int]:
+    def _forward(
+        self, X: t.Sequence[int], num_workers: int = 0, **kwargs
+    ) -> t.Sequence[int]:
         if self.batch_predict:
-            return self.to_call(X)
+            return self.to_call(X, **kwargs)
 
         outputs = []
         if num_workers:
+            to_call = _to_call(self.to_call, **kwargs)
             pool = multiprocessing.Pool(processes=num_workers)
-            for r in pool.map(self.to_call, X):
+            for r in pool.map(to_call, X):
                 outputs.append(r)
             pool.close()
             pool.join()
         else:
             for r in X:
-                outputs.append(self.to_call(r))
+                outputs.append(self.to_call(r, **kwargs))
         return outputs
 
     def _predict(

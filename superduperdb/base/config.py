@@ -142,8 +142,16 @@ class Config(BaseConfigJSONable):
     log_level: LogLevel = LogLevel.DEBUG
     logging_type: LogType = LogType.SYSTEM
 
+    dot_env: t.Optional[str] = None
+
     class Config(JSONable.Config):
         protected_namespaces = ()
+
+    def __post_init__(self):
+        if self.dot_env:
+            import dotenv
+
+            dotenv.load_dotenv(self.dot_env)
 
     @property
     def hybrid_storage(self):

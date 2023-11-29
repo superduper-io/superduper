@@ -3,7 +3,6 @@ import io
 import pickle
 import typing as t
 
-from superduperdb.base import exceptions
 from superduperdb.base.artifact import Artifact
 from superduperdb.components.component import Component
 
@@ -68,14 +67,8 @@ class Encoder(Component):
         return Encodable(self, x=x, uri=uri)
 
     def decode(self, b: bytes) -> t.Any:
-        try:
-            assert isinstance(self.decoder, Artifact)
-            return self(self.decoder.artifact(b))
-        except Exception as e:
-            raise exceptions.EncoderException(
-                f'Error while decoding bytes \
-                  Encoder: {self.identifier} Shape: {self.shape}'
-            ) from e
+        assert isinstance(self.decoder, Artifact)
+        return self(self.decoder.artifact(b))
 
     def dump(self, other):
         return self.encoder.artifact(other)
@@ -86,37 +79,32 @@ class Encoder(Component):
         uri: t.Optional[str] = None,
         wrap: bool = True,
     ) -> t.Union[t.Optional[str], t.Dict[str, t.Any]]:
-        try:
-            # TODO clarify what is going on here
-            def _wrap_content(x):
-                return {
-                    '_content': {
-                        'bytes': self.encoder.artifact(x),
-                        'encoder': self.identifier,
-                    }
+        # TODO clarify what is going on here
+        def _wrap_content(x):
+            return {
+                '_content': {
+                    'bytes': self.encoder.artifact(x),
+                    'encoder': self.identifier,
                 }
+            }
 
-            if self.encoder is not None:
-                if x is not None:
-                    if wrap:
-                        return _wrap_content(x)
-                    return self.encoder.artifact(x)  # type: ignore[union-attr]
-                else:
-                    if wrap:
-                        return {
-                            '_content': {
-                                'uri': uri,
-                                'encoder': self.identifier,
-                            }
-                        }
-                    return uri
+        if self.encoder is not None:
+            if x is not None:
+                if wrap:
+                    return _wrap_content(x)
+                return self.encoder.artifact(x)  # type: ignore[union-attr]
             else:
-                assert x is not None
-                return x
-        except Exception as e:
-            raise exceptions.EncoderException(
-                f'Error while encoding x Encoder: {self.identifier} Shape: {self.shape}'
-            ) from e
+                if wrap:
+                    return {
+                        '_content': {
+                            'uri': uri,
+                            'encoder': self.identifier,
+                        }
+                    }
+                return uri
+        else:
+            assert x is not None
+            return x
 
 
 @dc.dataclass

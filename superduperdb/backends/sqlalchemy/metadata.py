@@ -9,7 +9,6 @@ from sqlalchemy.orm import relationship, sessionmaker
 
 from superduperdb import logging
 from superduperdb.backends.base.metadata import MetaDataStore, NonExistentMetadataError
-from superduperdb.base import exceptions
 from superduperdb.base.serializable import Serializable
 from superduperdb.components.component import Component as _Component
 from superduperdb.misc.colors import Colors
@@ -114,20 +113,15 @@ class SQLAlchemyMetadata(MetaDataStore):
         """
         Drop the metadata store.
         """
-        try:
-            if not force:
-                if not click.confirm(
-                    f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-                    f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
-                    'Are you sure you want to drop all meta-data? ',
-                    default=False,
-                ):
-                    logging.warn('Aborting...')
-            Base.metadata.drop_all(self.conn)
-        except Exception as e:
-            raise exceptions.MetaDataStoreDeleteException(
-                'Error while dropping in metadata store'
-            ) from e
+        if not force:
+            if not click.confirm(
+                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                'Are you sure you want to drop all meta-data? ',
+                default=False,
+            ):
+                logging.warn('Aborting...')
+        Base.metadata.drop_all(self.conn)
 
     @contextmanager
     def session_context(self):
@@ -159,28 +153,16 @@ class SQLAlchemyMetadata(MetaDataStore):
             )
 
     def create_component(self, info: t.Dict):
-        try:
-            if 'hidden' not in info:
-                info['hidden'] = False
-            info['id'] = f'{info["type_id"]}/{info["identifier"]}/{info["version"]}'
-            with self.session_context() as session:
-                session.add(Component(**info))
-        except Exception as e:
-            raise exceptions.MetaDataStoreCreateException(
-                'Error while creating component in metadata store'
-            ) from e
+        if 'hidden' not in info:
+            info['hidden'] = False
+        info['id'] = f'{info["type_id"]}/{info["identifier"]}/{info["version"]}'
+        with self.session_context() as session:
+            session.add(Component(**info))
 
     def create_parent_child(self, parent_id: str, child_id: str):
-        try:
-            with self.session_context() as session:
-                association = ParentChildAssociation(
-                    parent_id=parent_id, child_id=child_id
-                )
-                session.add(association)
-        except Exception as e:
-            raise exceptions.MetaDataStoreCreateException(
-                'Error while creating parent child in metadata store'
-            ) from e
+        with self.session_context() as session:
+            association = ParentChildAssociation(parent_id=parent_id, child_id=child_id)
+            session.add(association)
 
     def delete_component_version(self, type_id: str, identifier: str, version: int):
         with self.session_context() as session:
@@ -336,22 +318,12 @@ class SQLAlchemyMetadata(MetaDataStore):
     # --------------- JOBS -----------------
 
     def create_job(self, info: t.Dict):
-        try:
-            with self.session_context() as session:
-                session.add(Job(**info))
-        except Exception as e:
-            raise exceptions.MetaDataStoreJobException(
-                'Error while creating job in metadata store'
-            ) from e
+        with self.session_context() as session:
+            session.add(Job(**info))
 
     def get_job(self, job_id: str):
-        try:
-            with self.session_context() as session:
-                return session.query(Job).filter(Job.identifier == job_id).first()
-        except Exception as e:
-            raise exceptions.MetaDataStoreJobException(
-                'Error while getting job in metadata store'
-            ) from e
+        with self.session_context() as session:
+            return session.query(Job).filter(Job.identifier == job_id).first()
 
     def listen_job(self, identifier: str):
         # Not supported currently
@@ -362,13 +334,8 @@ class SQLAlchemyMetadata(MetaDataStore):
             return [j.identifier for j in session.query(Job).all()]
 
     def update_job(self, job_id: str, key: str, value: t.Any):
-        try:
-            with self.session_context() as session:
-                session.query(Job).filter(Job.identifier == job_id).update({key: value})
-        except Exception as e:
-            raise exceptions.MetaDataStoreJobException(
-                'Error while updating job in metadata store'
-            ) from e
+        with self.session_context() as session:
+            session.query(Job).filter(Job.identifier == job_id).update({key: value})
 
     def write_output_to_job(self, identifier, msg, stream):
         # Not supported currently
@@ -377,31 +344,16 @@ class SQLAlchemyMetadata(MetaDataStore):
     # --------------- METADATA -----------------
 
     def create_metadata(self, key, value):
-        try:
-            with self.session_context() as session:
-                session.add(Meta(key=key, value=value))
-        except Exception as e:
-            raise exceptions.MetaDataStoreCreateException(
-                'Error while creating metadata in metadata store'
-            ) from e
+        with self.session_context() as session:
+            session.add(Meta(key=key, value=value))
 
     def get_metadata(self, key):
-        try:
-            with self.session_context() as session:
-                return session.query(Meta).filter(Meta.key == key).first().value
-        except Exception as e:
-            raise exceptions.MetadatastoreException(
-                'Error while getting metadata in metadata store'
-            ) from e
+        with self.session_context() as session:
+            return session.query(Meta).filter(Meta.key == key).first().value
 
     def update_metadata(self, key, value):
-        try:
-            with self.session_context() as session:
-                session.query(Meta).filter(Meta.key == key).update({Meta.value: value})
-        except Exception as e:
-            raise exceptions.MetaDataStoreUpdateException(
-                'Error while updating metadata in metadata store'
-            ) from e
+        with self.session_context() as session:
+            session.query(Meta).filter(Meta.key == key).update({Meta.value: value})
 
     # --------------- Query ID -----------------
     def add_query(self, query: 'Select', model: str):

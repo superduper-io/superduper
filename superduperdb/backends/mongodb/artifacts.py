@@ -3,7 +3,6 @@ import gridfs
 
 from superduperdb import logging
 from superduperdb.backends.base.artifact import ArtifactStore
-from superduperdb.base import exceptions
 from superduperdb.misc.colors import Colors
 
 
@@ -24,44 +23,24 @@ class MongoArtifactStore(ArtifactStore):
         return self.conn.HOST + ':' + str(self.conn.PORT) + '/' + self.name
 
     def drop(self, force: bool = False):
-        try:
-            if not force:
-                if not click.confirm(
-                    f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
-                    f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
-                    'Are you sure you want to drop all artifacts? ',
-                    default=False,
-                ):
-                    logging.warn('Aborting...')
-            return self.db.client.drop_database(self.db.name)
-        except Exception as e:
-            raise exceptions.ArtifactStoreDeleteException(
-                'Error while dropping in artifact store'
-            ) from e
+        if not force:
+            if not click.confirm(
+                f'{Colors.RED}[!!!WARNING USE WITH CAUTION AS YOU '
+                f'WILL LOSE ALL DATA!!!]{Colors.RESET} '
+                'Are you sure you want to drop all artifacts? ',
+                default=False,
+            ):
+                logging.warn('Aborting...')
+        return self.db.client.drop_database(self.db.name)
 
     def delete(self, file_id: str):
-        try:
-            return self.filesystem.delete(file_id)
-        except Exception as e:
-            raise exceptions.ArtifactStoreDeleteException(
-                'Error while dropping in artifact store'
-            ) from e
+        return self.filesystem.delete(file_id)
 
     def load_bytes(self, file_id: str):
-        try:
-            return self.filesystem.get(file_id).read()
-        except Exception as e:
-            raise exceptions.ArtifactStoreLoadException(
-                'Error while saving artifacts'
-            ) from e
+        return self.filesystem.get(file_id).read()
 
     def save_artifact(self, serialized: bytes):
-        try:
-            return self.filesystem.put(serialized)
-        except Exception as e:
-            raise exceptions.ArtifactStoreSaveException(
-                'Error while saving artifacts'
-            ) from e
+        return self.filesystem.put(serialized)
 
     def disconnect(self):
         """

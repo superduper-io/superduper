@@ -36,10 +36,10 @@ def add_and_cleanup_listener(database, collection_name):
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 def test_taskgraph_futures_with_dask(
-    local_dask_client, database_with_default_encoders_and_model, fake_updates
+    dask_client, database_with_default_encoders_and_model, fake_updates
 ):
     collection_name = str(uuid.uuid4())
-    database_with_default_encoders_and_model.set_compute(local_dask_client)
+    database_with_default_encoders_and_model.set_compute(dask_client)
     _, graph = database_with_default_encoders_and_model.execute(
         Collection(identifier=collection_name).insert_many(fake_updates)
     )
@@ -49,7 +49,7 @@ def test_taskgraph_futures_with_dask(
             Collection(identifier=collection_name).find({'update': True})
         )
     )
-    local_dask_client.wait_all_pending_tasks()
+    dask_client.wait_all_pending_tasks()
 
     nodes = graph.G.nodes
     jobs = [nodes[node]['job'] for node in nodes]
@@ -59,12 +59,12 @@ def test_taskgraph_futures_with_dask(
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
 @pytest.mark.parametrize(
-    'local_dask_client, test_db',
+    'dask_client, test_db',
     [('test_insert_with_distributed', 'test_insert_with_distributed')],
     indirect=True,
 )
 def test_insert_with_dask(
-    local_dask_client, database_with_default_encoders_and_model, fake_updates
+    dask_client, database_with_default_encoders_and_model, fake_updates
 ):
     collection_name = str(uuid.uuid4())
 
@@ -73,14 +73,14 @@ def test_insert_with_dask(
         collection_name,
     ) as db:
         # Submit job
-        db.set_compute(local_dask_client)
+        db.set_compute(dask_client)
         db.execute(Collection(identifier=collection_name).insert_many(fake_updates))
 
         # Barrier
-        local_dask_client.wait_all_pending_tasks()
+        dask_client.wait_all_pending_tasks()
 
         # Get distributed logs
-        logs = local_dask_client.client.get_worker_logs()
+        logs = dask_client.client.get_worker_logs()
 
         logging.info("worker logs", logs)
 
@@ -91,9 +91,7 @@ def test_insert_with_dask(
 
 
 @pytest.mark.skipif(not torch, reason='Torch not installed')
-def test_dependencies_with_dask(
-    local_dask_client, database_with_default_encoders_and_model
-):
+def test_dependencies_with_dask(dask_client, database_with_default_encoders_and_model):
     def test_node_1(*args, **kwargs):
         return 1
 
@@ -103,7 +101,7 @@ def test_dependencies_with_dask(
     # Set Dask as Compute engine.
     # ------------------------------
     database = database_with_default_encoders_and_model
-    database.set_compute(local_dask_client)
+    database.set_compute(dask_client)
 
     # Build Task Graph
     # ------------------------------
@@ -125,11 +123,11 @@ def test_dependencies_with_dask(
     # Run Job
     # ------------------------------
     g.run_jobs()
-    local_dask_client.wait_all_pending_tasks()
+    dask_client.wait_all_pending_tasks()
 
     # Validate Output
     # ------------------------------
-    futures = list(local_dask_client.list_all_pending_tasks().values())
+    futures = list(dask_client.list_all_pending_tasks().values())
     assert len(futures) == 2
     assert futures[0].status == 'finished'
     assert futures[1].status == 'finished'
@@ -138,11 +136,11 @@ def test_dependencies_with_dask(
 
 
 def test_model_job_logs(
-    local_dask_client, database_with_default_encoders_and_model, fake_updates
+    dask_client, database_with_default_encoders_and_model, fake_updates
 ):
     # Set Dask as compute engine.
     # ------------------------------
-    database_with_default_encoders_and_model.set_compute(local_dask_client)
+    database_with_default_encoders_and_model.set_compute(dask_client)
 
     # Set Collection Listener
     # ------------------------------

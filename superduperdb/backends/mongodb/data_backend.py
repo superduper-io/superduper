@@ -167,3 +167,10 @@ class MongoDataBackend(BaseDataBackend):
         print(json.dumps(index_definition, indent=2))
         if not dry_run:
             self.db.command(index_definition)
+
+    def disconnect(self):
+        """
+        Disconnect the client
+        """
+
+        # TODO: implement me

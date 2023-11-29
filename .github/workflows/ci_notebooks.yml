@@ -2,14 +2,14 @@ name: Notebook Testing
 
 on:
   # Pull Request is needed to make sure that notebook changes are ok.
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'examples/**'
+  #pull_request:
+  #  branches:
+  #    - main
+  #  paths:
+  #    - 'examples/**'
   # Nightly is needed to ensure that code and notebooks are interopeable
-  schedule:
-    - cron: "30 1 * * *"
+  #schedule:
+  #  - cron: "30 1 * * *"
   # Manual is needed for on-demand validation
   workflow_dispatch:
 

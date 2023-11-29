@@ -371,11 +371,11 @@ def client(monkeypatch, database_with_default_encoders_and_model):
 
 def test_basic_workflow(client):
     listener = 'model_linear_a/x'
-    response = client.get(f"/cdc/listener/add?name={listener}")
+    response = client.get(f"/listener/add?name={listener}")
     assert response.status_code == 200
 
     db = client.app.state.pool
     assert 'documents' in db.cdc._CDC_LISTENERS
 
-    response = client.get(f"/cdc/listener/delete?name={listener}")
+    response = client.get(f"/listener/delete?name={listener}")
     assert 'documents' not in db.cdc._CDC_LISTENERS

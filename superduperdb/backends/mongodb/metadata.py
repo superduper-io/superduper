@@ -315,3 +315,10 @@ class MongoMetaDataStore(MetaDataStore):
             {'type_id': type_id, 'identifier': identifier, 'version': version},
             {'$set': {'hidden': True}},
         )
+
+    def disconnect(self):
+        """
+        Disconnect the client
+        """
+
+        # TODO: implement me

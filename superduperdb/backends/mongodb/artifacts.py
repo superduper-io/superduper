@@ -62,3 +62,10 @@ class MongoArtifactStore(ArtifactStore):
             raise exceptions.ArtifactStoreSaveException(
                 'Error while saving artifacts'
             ) from e
+
+    def disconnect(self):
+        """
+        Disconnect the client
+        """
+
+        # TODO: implement me

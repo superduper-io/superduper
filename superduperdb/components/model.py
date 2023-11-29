@@ -697,9 +697,9 @@ class Model(Component, Predictor):
         except Exception:
             assert isinstance(select, Select)
             raise exceptions.ModelFitException(
-                f'Error while model fit\
-                \ninfo: Collection {select.table_or_collection.identifier},\
-                Model {self.identifier}'
+                f"Error while model fit\
+                \ninfo: Collection:{select.table_or_collection.identifier} \
+                Model:{self.identifier}"
             )
 
 

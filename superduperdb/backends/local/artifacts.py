@@ -83,3 +83,10 @@ class FileSystemArtifactStore(ArtifactStore):
             raise exceptions.ArtifactStoreLoadException(
                 'Error while loading artifacts'
             ) from e
+
+    def disconnect(self):
+        """
+        Disconnect the client
+        """
+
+        # TODO: implement me

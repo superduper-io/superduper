@@ -15,7 +15,6 @@ from tqdm import tqdm
 
 from superduperdb import CFG, logging
 from superduperdb.backends.base.query import Insert, Select
-from superduperdb.base import exceptions
 from superduperdb.base.document import Document
 from superduperdb.base.serializable import Serializable
 
@@ -363,19 +362,19 @@ def download_content(
     if n_download_workers is None:
         try:
             n_download_workers = db.metadata.get_metadata(key='n_download_workers')
-        except exceptions.MetadatastoreException:
+        except TypeError:
             n_download_workers = 0
 
     if headers is None:
         try:
             headers = db.metadata.get_metadata(key='headers')
-        except exceptions.MetadatastoreException:
+        except TypeError:
             pass
 
     if timeout is None:
         try:
             timeout = db.metadata.get_metadata(key='download_timeout')
-        except exceptions.MetadatastoreException:
+        except TypeError:
             pass
 
     if CFG.hybrid_storage:

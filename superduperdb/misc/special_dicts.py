@@ -40,6 +40,9 @@ class MongoStyleDict(t.Dict[str, t.Any]):
         else:
             parent = key.split('.')[0]
             child = '.'.join(key.split('.')[1:])
-            parent_item = MongoStyleDict(self[parent])
+            try:
+                parent_item = MongoStyleDict(self[parent])
+            except KeyError:
+                parent_item = MongoStyleDict({})
             parent_item[child] = value
             self[parent] = parent_item

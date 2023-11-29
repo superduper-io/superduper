@@ -7,6 +7,7 @@ from superduperdb import CFG
 from superduperdb.components.encoder import Encodable, Encoder
 from superduperdb.components.schema import Schema
 from superduperdb.misc.files import get_file_from_uri
+from superduperdb.misc.special_dicts import MongoStyleDict
 
 ContentType = t.Union[t.Dict, Encodable]
 ItemType = t.Union[t.Dict[str, t.Any], Encodable, ObjectId]
@@ -46,10 +47,11 @@ class Document:
         :param key: Document key to get outputs from.
         :param model: Model name to get outputs from.
         """
+        r = MongoStyleDict(self.unpack())
         if version is not None:
-            document = self.unpack()[_OUTPUTS_KEY][key][model][version]
+            document = r[f'{_OUTPUTS_KEY}.{key}.{model}.{version}']
         else:
-            tmp = self.unpack()[_OUTPUTS_KEY][key][model]
+            tmp = r[f'{_OUTPUTS_KEY}.{key}.{model}']
             version = max(list(tmp.keys()))
             return tmp[version]
         return document

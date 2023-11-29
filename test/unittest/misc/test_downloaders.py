@@ -20,7 +20,6 @@ def test_s3_and_web():
 
 @pytest.fixture
 def patch_cfg_downloads(monkeypatch):
-    monkeypatch.setattr(CFG, 'hybrid_storage', True)
     td = str(uuid.uuid4())
     with tempfile.TemporaryDirectory() as td:
         monkeypatch.setattr(CFG, 'downloads_folder', td)

@@ -379,6 +379,7 @@ def download_content(
             pass
 
     if CFG.hybrid_storage:
+        assert isinstance(CFG.downloads_folder, str)
         _download_update = SaveFile(CFG.downloads_folder)
     else:
 

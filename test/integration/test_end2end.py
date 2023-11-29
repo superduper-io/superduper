@@ -96,7 +96,7 @@ def _wait_for_outputs(db, collection='_outputs.int.model1', n=10):
 
 
 @pytest.fixture
-def distributed_db(monkeypatch, test_db, local_dask_client):
+def distributed_db(monkeypatch, test_db, dask_client):
     from superduperdb import CFG
 
     existing_databackend = CFG.data_backend
@@ -107,7 +107,7 @@ def distributed_db(monkeypatch, test_db, local_dask_client):
     vector_search = 'http://localhost:8000'
     monkeypatch.setattr(CFG.cluster, 'cdc', cdc)
     monkeypatch.setattr(CFG.cluster, 'vector_search', vector_search)
-    test_db.set_compute(local_dask_client)
+    test_db.set_compute(dask_client)
 
     def update_syspath():
         import sys
